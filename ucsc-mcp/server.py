@@ -13,8 +13,10 @@ Use a read-only UCS Central account as well (defence in depth).
 
 import logging
 import os
+import queue
 import re
 import threading
+import time
 from collections import Counter
 from concurrent.futures import ThreadPoolExecutor
 
@@ -58,41 +60,86 @@ class ReadOnlyUcscHandle(UcscHandle):
     add_mo = set_mo = remove_mo = commit = commit_buffer_discard = _blocked
     file_upload = file_download = _blocked
 
+    # ucscsdk serialises EVERY request in the process with one module-level lock, so separate
+    # sessions (and separate UCS Centrals) could never run in parallel. Each handle here is used by
+    # one thread at a time (session pool), so a per-handle lock keeps the SDK's ordering guarantee.
+    def _tx_lock_acquire_conditional(self, elem):
+        if elem.tag != "aaaLogout":
+            self.__dict__.setdefault("_ro_tx_lock", threading.Lock()).acquire()
+
+    def _tx_lock_release_conditional(self, elem):
+        if elem.tag != "aaaLogout":
+            self.__dict__["_ro_tx_lock"].release()
+
 
 # --------------------------------------------------------------------------
 # Multi-instance connections (all configured from one Secret)
 # --------------------------------------------------------------------------
 
 class Central:
-    def __init__(self, name, host, username, password, port=443):
+    """One UCS Central instance with a small pool of logged-in sessions (UCSC_SESSIONS, default 3)
+    so independent queries run in parallel."""
+
+    def __init__(self, name, host, username, password, port=443, sessions=3):
         self.name, self.host, self.port = name, host, int(port)
         self._user, self._pw = username, password
-        self._h = None
-        self._lock = threading.Lock()
+        self._pool = queue.LifoQueue()
+        self._created = 0
+        self._max = max(1, int(sessions))
+        self._plock = threading.Lock()
+
+    def _login(self):
+        h = ReadOnlyUcscHandle(self.host, self._user, self._pw, port=self.port)
+        h.login()
+        log.info("Logged in to UCS Central %s (%s), version %s", self.name, self.host, h.version)
+        return h
+
+    def _acquire(self):
+        try:
+            return self._pool.get_nowait()
+        except queue.Empty:
+            pass
+        with self._plock:
+            grow = self._created < self._max
+            if grow:
+                self._created += 1
+        if grow:
+            try:
+                return self._login()
+            except Exception:
+                with self._plock:
+                    self._created -= 1
+                raise
+        return self._pool.get(timeout=600)
+
+    def _discard(self, h):
+        try:
+            h.logout()
+        except Exception:
+            pass
+        with self._plock:
+            self._created -= 1
 
     def call(self, fn):
-        """Run fn(handle); one automatic re-login on session or connection errors."""
-        with self._lock:
-            for attempt in (1, 2):
-                try:
-                    if self._h is None:
-                        h = ReadOnlyUcscHandle(self.host, self._user, self._pw, port=self.port)
-                        h.login()
-                        log.info("Logged in to UCS Central %s (%s), version %s", self.name, self.host, h.version)
-                        self._h = h
-                    return fn(self._h)
-                except ReadOnlyViolation:
+        """Run fn(handle) on a pooled session; one automatic re-login on session/connection errors."""
+        for attempt in (1, 2):
+            h = self._acquire()
+            try:
+                result = fn(h)
+            except ReadOnlyViolation:
+                self._pool.put(h)
+                raise
+            except (UcscException, OSError) as e:
+                self._discard(h)
+                if attempt == 2:
                     raise
-                except (UcscException, OSError) as e:
-                    if attempt == 2:
-                        raise
-                    log.warning("UCS Central %s call failed (%s); re-logging in", self.name, e)
-                    try:
-                        if self._h is not None:
-                            self._h.logout()
-                    except Exception:
-                        pass
-                    self._h = None
+                log.warning("UCS Central %s call failed (%s); retrying with a new session", self.name, e)
+                continue
+            except Exception:
+                self._pool.put(h)
+                raise
+            self._pool.put(h)
+            return result
 
 
 def _load_centrals() -> dict:
@@ -110,7 +157,8 @@ def _load_centrals() -> dict:
         if name in out:
             raise SystemExit(f"Duplicate UCS Central name {name!r}")
         out[name] = Central(name, env[p + "HOST"], env[p + "USERNAME"], env[p + "PASSWORD"],
-                            env.get(p + "PORT", "443"))
+                            env.get(p + "PORT", "443"),
+                            env.get(p + "SESSIONS", env.get("UCSC_SESSIONS", "3")))
     if not out:
         raise SystemExit("No UCS Central configured: set UCSC_1_HOST, UCSC_1_USERNAME, UCSC_1_PASSWORD "
                          "(and UCSC_2_... for more)")
@@ -180,12 +228,85 @@ def find_dn(dn: str, central: str = ""):
 # --------------------------------------------------------------------------
 
 _SAFE_VALUE = re.compile(r"^[\w.:/\-\[\] ]{1,256}$")
+_TYPES = {"eq": "eq", "ne": "ne", "re": "re", "wcard": "re"}
 
 
 def _filter(prop, value, ftype="eq"):
-    if not _SAFE_VALUE.match(value):
+    """One server-side filter term. Values are restricted to safe characters."""
+    if not _SAFE_VALUE.match(str(value)):
         raise ValueError(f"Unsupported characters in filter value: {value!r}")
-    return f'({prop}, "{value}", type="{ftype}")'
+    if ftype not in _TYPES:
+        raise ValueError("filter type must be eq, ne or wcard")
+    return f'({prop}, "{value}", type="{_TYPES[ftype]}")'
+
+
+def _contains(prop, text):
+    """Server-side case-insensitive 'contains' on a property (regex with escaped literal)."""
+    if not _SAFE_VALUE.match(text):
+        raise ValueError(f"Unsupported characters in search text: {text!r}")
+    lit = re.sub(r"([.\[\]])", r"\\\1", text)
+    return f'({prop}, "{lit}", type="re", flag="I")'
+
+
+def _under(dn_prefix):
+    """Server-side filter: objects whose DN is inside dn_prefix (e.g. a domain or an org)."""
+    p = dn_prefix.rstrip("/")
+    if not re.fullmatch(r"[\w.:\-/\[\]]{1,200}", p):
+        raise ValueError(f"Unsupported characters in DN: {dn_prefix!r}")
+    esc = re.sub(r"([.\[\]])", r"\\\1", p)
+    return f'(dn, "^{esc}/", type="re")'
+
+
+def _domain_filter(domain):
+    if not domain:
+        return None
+    if not re.fullmatch(r"\d{1,10}", str(domain)):
+        raise ValueError("domain must be the numeric id from list_domains")
+    return _under(f"compute/sys-{domain}")
+
+
+def _and(*parts):
+    parts = [p for p in parts if p]
+    return " and ".join(parts) if parts else None
+
+
+def _any_of(prop, values):
+    terms = [_filter(prop, v) for v in values]
+    if not terms:
+        return None
+    return terms[0] if len(terms) == 1 else "(" + " or ".join(terms) + ")"
+
+
+# ---- short-lived query cache: repeated questions in one conversation do not re-download -------
+_CACHE_TTL = float(os.getenv("UCSC_CACHE_TTL", "120"))
+_CACHE: dict = {}
+_CACHE_LOCK = threading.Lock()
+
+
+def query(c, class_id, flt=None):
+    """query_classid with a server-side filter and a TTL cache. If UCS Central rejects the filter,
+    fall back to an unfiltered query (callers always re-check in Python)."""
+    key = (c.name, class_id, flt)
+    now = time.time()
+    if _CACHE_TTL > 0:
+        with _CACHE_LOCK:
+            hit = _CACHE.get(key)
+        if hit and now - hit[0] < _CACHE_TTL:
+            return hit[1]
+    try:
+        mos = c.call(lambda h: h.query_classid(class_id, filter_str=flt))
+    except (UcscException, OSError) as e:
+        if not flt:
+            raise
+        log.warning("%s: filter on %s not accepted (%s); querying without filter", c.name, class_id, e)
+        mos = query(c, class_id, None)
+    if _CACHE_TTL > 0:
+        with _CACHE_LOCK:
+            _CACHE[key] = (now, mos)
+            if len(_CACHE) > 500:
+                for k, _ in sorted(_CACHE.items(), key=lambda kv: kv[1][0])[:100]:
+                    _CACHE.pop(k, None)
+    return mos
 
 
 def _to_dict(mo, props=None):
@@ -215,11 +336,8 @@ def _cap(items, limit, errors=None):
 
 def _class_rows(central, class_id, props=None, flt=None, keep=lambda mo: True):
     def one(c):
-        mos = c.call(lambda h: h.query_classid(class_id, filter_str=flt))
-        return [dict(_to_dict(m, props), central=c.name) for m in mos if keep(m)]
+        return [dict(_to_dict(m, props), central=c.name) for m in query(c, class_id, flt) if keep(m)]
     return fan_out(central, one)
-
-
 
 
 def _bad(op):
@@ -250,6 +368,17 @@ No tool can change anything; never tell the user you changed, acknowledged or fi
   to a physical server (pn_dn). The physical server's assigned_to_dn points back to the SP.
 - Fabric A / B = the two fabric interconnects; vHBA-A goes to fabric A and its SAN, vHBA-B to B.
 - WWPN format 20:00:00:25:B5:xx:xx:xx (input may be any case, with or without colons).
+
+== LARGE INVENTORIES: QUERY NARROWLY ==
+UCS Central can hold tens of thousands of objects. Every filter argument is applied ON UCS Central,
+so narrow calls are fast and broad ones are slow:
+- Know a name? list_service_profiles name_contains=... (add org= or sp_type="instance").
+- Know a server? get_server(dn) / get_service_profile(dn) read only that object's subtree.
+- Know a WWPN? find_wwpn - never list everything to search for it.
+- Scope to a domain (domain=) whenever the question is about one UCS domain.
+- Use problems_only / severity / unacked_only instead of listing everything and filtering yourself.
+- list results are capped (limit, default 200) and include totals and counts; raise limit only if
+  the user really needs the full list. Identical queries within ~2 minutes come from a cache.
 
 == WORKFLOWS ==
 Health overview ("how is UCS"): list_domains -> get_domain_health for each domain with faults
@@ -331,7 +460,8 @@ def list_domains(central: str = "", limit: int = 500) -> dict:
 def list_fabric_interconnects(domain: str = "", central: str = "") -> dict:
     """Fabric interconnects (A/B) per domain: model, serial, management IP, operability."""
     props = ("id", "model", "serial", "oob_if_ip", "operability", "total_memory")
-    rows, err = _class_rows(central, "networkElement", props, keep=lambda m: _in_domain(m.dn, domain))
+    rows, err = _class_rows(central, "networkElement", props, flt=_domain_filter(domain),
+                            keep=lambda m: _in_domain(m.dn, domain))
     for r in rows:
         r["domain"] = _domain_of(r["dn"])
     return _cap(rows, 1000, err)
@@ -341,17 +471,19 @@ def list_fabric_interconnects(domain: str = "", central: str = "") -> dict:
 def list_chassis(domain: str = "", central: str = "") -> dict:
     """Blade chassis per domain: model, serial, operability, oper state."""
     props = ("id", "model", "serial", "operability", "oper_state", "admin_state")
-    rows, err = _class_rows(central, "equipmentChassis", props, keep=lambda m: _in_domain(m.dn, domain))
+    rows, err = _class_rows(central, "equipmentChassis", props, flt=_domain_filter(domain),
+                            keep=lambda m: _in_domain(m.dn, domain))
     for r in rows:
         r["domain"] = _domain_of(r["dn"])
     return _cap(rows, 2000, err)
 
 
 @mcp.tool(annotations=RO)
-def list_servers(domain: str = "", kind: str = "all", problems_only: bool = False,
-                 central: str = "", limit: int = 1000) -> dict:
+def list_servers(domain: str = "", kind: str = "all", problems_only: bool = False, model: str = "",
+                 serial: str = "", central: str = "", limit: int = 200) -> dict:
     """Physical blade and rack servers. domain: numeric id (empty = all). kind: blade, rack or all.
-    problems_only: only servers whose operability/oper_state is not healthy."""
+    problems_only: only servers whose operability/oper_state is not healthy. model / serial: filter
+    (serial exact, model contains). Filters run on UCS Central, so narrow queries are fast."""
     props = ("model", "serial", "uuid", "oper_state", "operability", "oper_power", "association",
              "assigned_to_dn", "num_of_cpus", "num_of_cores", "total_memory", "num_of_fc_host_ifs", "usr_lbl")
     classes = {"blade": ["computeBlade"], "rack": ["computeRackUnit"]}.get(kind, ["computeBlade", "computeRackUnit"])
@@ -359,10 +491,18 @@ def list_servers(domain: str = "", kind: str = "all", problems_only: bool = Fals
     def keep(m):
         if not _in_domain(m.dn, domain):
             return False
+        if serial and (m.serial or "") != serial:
+            return False
+        if model and model.lower() not in (m.model or "").lower():
+            return False
         return not problems_only or _bad(m.operability) or m.oper_state not in ("ok", None, "")
+    flt = _and(_domain_filter(domain),
+               'not (operability, "operable", type="eq")' if problems_only else None,
+               _filter("serial", serial) if serial else None,
+               _contains("model", model) if model else None)
     rows, err = [], {}
     for cid in classes:
-        r, e = _class_rows(central, cid, props, keep=keep)
+        r, e = _class_rows(central, cid, props, flt=flt, keep=keep)
         rows += [dict(x, kind=cid, domain=_domain_of(x["dn"])) for x in r]
         err.update(e)
     return _cap(rows, limit, err)
@@ -373,19 +513,16 @@ def get_server(dn: str, central: str = "") -> dict:
     """Full view of one physical server (blade or rack) by DN: hardware, power, association to its
     service profile, adapters, physical host FC interfaces (WWPN, fabric, state), and active faults."""
     c, mo = find_dn(dn, central)
-
-    def f(h):
-        adapters = h.query_children(in_dn=dn, class_id="adaptorUnit")
-        fc_ifs = []
-        for a in adapters:
-            for i in h.query_children(in_dn=a.dn, class_id="adaptorHostFcIf"):
-                fc_ifs.append({"dn": i.dn, "name": i.name, "wwpn": i.wwn, "node_wwn": i.node_wwn,
-                               "fabric": i.switch_id, "oper_state": i.oper_state,
-                               "operability": i.operability, "peer_dn": i.peer_dn})
-        faults = [_to_dict(x, ("severity", "code", "descr", "created", "ack"))
-                  for x in h.query_classid("faultInst") if x.dn.startswith(dn + "/")]
-        return adapters, fc_ifs, faults
-    adapters, fc_ifs, faults = c.call(f)
+    sub = c.call(lambda h: h.query_dn(dn, hierarchy=True)) or []
+    by = {}
+    for m in sub:
+        by.setdefault(m.get_class_id(), []).append(m)
+    adapters = by.get("AdaptorUnit", [])
+    fc_ifs = [{"dn": i.dn, "name": i.name, "wwpn": i.wwn, "node_wwn": i.node_wwn, "fabric": i.switch_id,
+               "oper_state": i.oper_state, "operability": i.operability, "peer_dn": i.peer_dn}
+              for i in by.get("AdaptorHostFcIf", [])]
+    faults = [_to_dict(x, ("severity", "code", "descr", "created", "ack"))
+              for x in by.get("FaultInst", []) if x.severity != "cleared"]
     keys = ("model", "serial", "uuid", "oper_state", "operability", "oper_power", "association",
             "assigned_to_dn", "availability", "num_of_cpus", "num_of_cores", "total_memory",
             "num_of_adaptors", "usr_lbl", "admin_state", "discovery")
@@ -404,21 +541,31 @@ def get_domain_health(domain: str, central: str = "") -> dict:
         raise ValueError("Several centrals are configured; pass central=<name> with a domain id")
     c = cs[0]
 
-    def f(h):
-        def cls(cid):
-            return [m for m in h.query_classid(cid) if _in_domain(m.dn, domain)]
-        system = [m for m in h.query_classid("computeSystem") if m.id == str(domain)]
+    dfl = _domain_filter(domain)
+    not_ok = 'not (operability, "operable", type="eq")'
+
+    def cls(cid, extra=None):
+        return [m for m in query(c, cid, _and(dfl, extra)) if _in_domain(m.dn, domain)]
+
+    def f():
+        system = [m for m in query(c, "computeSystem", _filter("id", str(domain))) if m.id == str(domain)]
+        jobs = {cid: (cid, not_ok) for cid in ("networkElement", "equipmentChassis", "equipmentIOCard",
+                                               "equipmentPsu", "equipmentFan")}
+        jobs.update({"computeBlade": ("computeBlade", None), "computeRackUnit": ("computeRackUnit", None),
+                     "faultInst": ("faultInst", 'not (severity, "cleared", type="eq")')})
+        with ThreadPoolExecutor(max_workers=4) as ex:
+            res = dict(zip(jobs, ex.map(lambda j: cls(*j), jobs.values())))
         bad_hw = []
-        for cid in ("networkElement", "equipmentChassis", "equipmentIOCard", "equipmentPsu",
-                    "equipmentFan", "computeBlade", "computeRackUnit"):
-            for m in cls(cid):
+        for cid in ("networkElement", "equipmentChassis", "equipmentIOCard", "equipmentPsu", "equipmentFan",
+                    "computeBlade", "computeRackUnit"):
+            for m in res[cid]:
                 if _bad(getattr(m, "operability", None)):
                     bad_hw.append({"class": cid, "dn": m.dn, "operability": m.operability,
                                    "model": getattr(m, "model", None), "serial": getattr(m, "serial", None)})
-        servers = cls("computeBlade") + cls("computeRackUnit")
-        faults = [m for m in cls("faultInst") if m.severity != "cleared"]
+        servers = res["computeBlade"] + res["computeRackUnit"]
+        faults = [m for m in res["faultInst"] if m.severity != "cleared"]
         return system, bad_hw, servers, faults
-    system, bad_hw, servers, faults = c.call(f)
+    system, bad_hw, servers, faults = f()
     if not system:
         raise LookupError(f"Domain {domain} not found on {c.name}; see list_domains")
     s = system[0]
@@ -442,7 +589,10 @@ def list_faults(severity: str = "", domain: str = "", unacked_only: bool = False
     then newest first. severity: one or comma-separated. domain: numeric id (empty = all, including
     UCS Central's own). code: e.g. F0283. text: substring of the description."""
     sevs = [x.strip().lower() for x in severity.split(",") if x.strip()]
-    flt = _filter("severity", sevs[0]) if len(sevs) == 1 else None
+    flt = _and(_any_of("severity", sevs), _domain_filter(domain),
+               _filter("ack", "no") if unacked_only else None,
+               _filter("code", code.upper()) if code else None,
+               _contains("descr", text) if text else None)
     props = ("severity", "code", "cause", "descr", "created", "last_transition", "ack", "occur", "type")
 
     def keep(m):
@@ -469,7 +619,8 @@ def get_audit_log(user: str = "", text: str = "", central: str = "", limit: int 
     def keep(m):
         return (not user or (m.user or "").lower() == user.lower()) and \
                (not text or text.lower() in (m.descr or "").lower())
-    rows, err = _class_rows(central, "aaaModLR", props, keep=keep)
+    flt = _and(_filter("user", user) if user else None, _contains("descr", text) if text else None)
+    rows, err = _class_rows(central, "aaaModLR", props, flt=flt, keep=keep)
     rows.sort(key=lambda r: r["created"] or "", reverse=True)
     return _cap(rows, limit, err)
 
@@ -478,7 +629,7 @@ def get_audit_log(user: str = "", text: str = "", central: str = "", limit: int 
 def get_events(text: str = "", central: str = "", limit: int = 200) -> dict:
     """UCS Central event log (eventInst), newest first, optionally filtered by description text."""
     props = ("id", "created", "descr", "severity")
-    rows, err = _class_rows(central, "eventInst", props,
+    rows, err = _class_rows(central, "eventInst", props, flt=_contains("descr", text) if text else None,
                             keep=lambda m: not text or text.lower() in (m.descr or "").lower())
     rows.sort(key=lambda r: r["created"] or "", reverse=True)
     return _cap(rows, limit, err)
@@ -491,29 +642,51 @@ def get_events(text: str = "", central: str = "", limit: int = 200) -> dict:
 
 @mcp.tool(annotations=RO)
 def list_service_profiles(name_contains: str = "", sp_type: str = "", assoc_state: str = "",
-                          central: str = "", limit: int = 1000) -> dict:
+                          org: str = "", server_dn: str = "", central: str = "", limit: int = 200) -> dict:
     """Service profiles and templates with association state and the physical server they run on.
-    sp_type: instance, initial-template or updating-template. assoc_state: associated, unassociated..."""
+    Filters run on UCS Central (fast even with tens of thousands of profiles) - always pass at least
+    one when you can:
+      name_contains (case-insensitive), sp_type (instance, initial-template, updating-template),
+      assoc_state (associated, unassociated, ...), org (DN prefix, e.g. org-root/org-Prod),
+      server_dn (the physical server, to find which profile runs on it).
+    Returns counts by type and association state for everything that matched."""
     props = ("name", "type", "assoc_state", "assign_state", "pn_dn", "oper_state", "config_state",
              "oper_src_templ_name", "uuid", "domain", "usr_lbl")
-    rows, err = _class_rows(central, "lsServer", props, keep=lambda m: (
+    flt = _and(_contains("name", name_contains) if name_contains else None,
+               _filter("type", sp_type) if sp_type else None,
+               _filter("assoc_state", assoc_state) if assoc_state else None,
+               _under(org) if org else None,
+               _filter("pn_dn", server_dn) if server_dn else None)
+    rows, err = _class_rows(central, "lsServer", props, flt=flt, keep=lambda m: (
         (not sp_type or m.type == sp_type) and (not assoc_state or m.assoc_state == assoc_state)
-        and (not name_contains or name_contains.lower() in (m.name or "").lower())))
-    return _cap(sorted(rows, key=lambda r: r["name"] or ""), limit, err)
-
-
-def _vhbas(h, sp_dn):
-    out = []
-    for v in h.query_children(in_dn=sp_dn, class_id="vnicFc"):
-        ifs = h.query_children(in_dn=v.dn, class_id="vnicFcIf")
-        out.append({
-            "name": v.name, "wwpn": v.addr, "fabric": v.switch_id,
-            "wwpn_pool": v.oper_ident_pool_name or v.ident_pool_name,
-            "template": v.oper_nw_templ_name or v.nw_templ_name,
-            "order": v.oper_order or v.order, "dn": v.dn,
-            "vsan": [i.oper_vnet_name or i.name for i in ifs],
-        })
+        and (not name_contains or name_contains.lower() in (m.name or "").lower())
+        and (not org or m.dn.startswith(org.rstrip("/") + "/"))
+        and (not server_dn or m.pn_dn == server_dn)))
+    out = _cap(sorted(rows, key=lambda r: r["name"] or ""), limit, err)
+    out["by_type"] = dict(Counter(r["type"] for r in rows))
+    out["by_assoc_state"] = dict(Counter(r["assoc_state"] for r in rows))
+    if out["total"] > out["returned"]:
+        out["note"] = f"{out['total']} matched; narrow with name_contains / org / sp_type to see the rest."
     return out
+
+
+def _sp_subtree(c, sp_dn):
+    """vHBAs (with VSANs), vNICs and active faults of a service profile from ONE hierarchical read."""
+    sub = c.call(lambda h: h.query_dn(sp_dn, hierarchy=True)) or []
+    by = {}
+    for m in sub:
+        by.setdefault(m.get_class_id(), []).append(m)
+    vsans = {}
+    for i in by.get("VnicFcIf", []):
+        vsans.setdefault(i.dn.rsplit("/", 1)[0], []).append(i.oper_vnet_name or i.name)
+    vhbas = [{"name": v.name, "wwpn": v.addr, "fabric": v.switch_id,
+              "wwpn_pool": v.oper_ident_pool_name or v.ident_pool_name,
+              "template": v.oper_nw_templ_name or v.nw_templ_name, "order": v.oper_order or v.order,
+              "dn": v.dn, "vsan": vsans.get(v.dn, [])} for v in by.get("VnicFc", [])]
+    vnics = [{"name": v.name, "mac": v.addr, "fabric": v.switch_id, "dn": v.dn} for v in by.get("VnicEther", [])]
+    faults = [_to_dict(x, ("severity", "code", "descr", "created", "ack"))
+              for x in by.get("FaultInst", []) if x.severity != "cleared"]
+    return vhbas, vnics, faults
 
 
 @mcp.tool(annotations=RO)
@@ -521,14 +694,7 @@ def get_service_profile(sp_dn: str, central: str = "") -> dict:
     """Full service profile: association and config state, physical server, template, identity
     (UUID), policies, vHBAs (WWPN, fabric, VSAN), vNICs (MAC, fabric) and faults on the profile."""
     c, sp = find_dn(sp_dn, central)
-
-    def f(h):
-        vnics = [{"name": v.name, "mac": v.addr, "fabric": v.switch_id, "dn": v.dn}
-                 for v in h.query_children(in_dn=sp_dn, class_id="vnicEther")]
-        faults = [_to_dict(x, ("severity", "code", "descr", "created", "ack"))
-                  for x in h.query_classid("faultInst") if x.dn.startswith(sp_dn + "/")]
-        return _vhbas(h, sp_dn), vnics, faults
-    vhbas, vnics, faults = c.call(f)
+    vhbas, vnics, faults = _sp_subtree(c, sp_dn)
     keys = ("name", "type", "assoc_state", "assign_state", "config_state", "oper_state", "pn_dn",
             "oper_src_templ_name", "uuid", "domain", "domain_group", "oper_boot_policy_name",
             "oper_bios_profile_name", "oper_host_fw_policy_name", "oper_maint_policy_name",
@@ -543,7 +709,7 @@ def get_service_profile_vhbas(sp_dn: str, central: str = "") -> dict:
     MDS zoning/FLOGI checks and PowerMax masking."""
     c, sp = find_dn(sp_dn, central)
     return {"central": c.name, "service_profile": sp.name, "assoc_state": sp.assoc_state,
-            "server": sp.pn_dn, "vhbas": c.call(lambda h: _vhbas(h, sp_dn))}
+            "server": sp.pn_dn, "vhbas": _sp_subtree(c, sp_dn)[0]}
 
 
 @mcp.tool(annotations=RO)
@@ -601,7 +767,7 @@ def list_wwn_pools(central: str = "", limit: int = 500) -> dict:
 def list_vsans(domain: str = "", central: str = "") -> dict:
     """VSANs (global and per domain): id, name, fabric (A/B or dual), FCoE VLAN, zoning state."""
     props = ("id", "name", "switch_id", "fcoe_vlan", "zoning_state", "oper_state")
-    rows, err = _class_rows(central, "fabricVsan", props,
+    rows, err = _class_rows(central, "fabricVsan", props, flt=_domain_filter(domain),
                             keep=lambda m: not domain or _in_domain(m.dn, domain))
     return _cap(rows, 5000, err)
 
@@ -617,7 +783,9 @@ def list_fc_uplinks(domain: str = "", problems_only: bool = False, central: str 
         if not _in_domain(m.dn, domain):
             return False
         return not problems_only or (m.admin_state == "enabled" and m.oper_state != "up")
-    rows, err = _class_rows(central, "fcPIo", props, keep=keep)
+    flt = _and(_domain_filter(domain),
+               (_filter("admin_state", "enabled") + ' and not (oper_state, "up", type="eq")') if problems_only else None)
+    rows, err = _class_rows(central, "fcPIo", props, flt=flt, keep=keep)
     for r in rows:
         r["domain"] = _domain_of(r["dn"])
     return _cap(rows, 5000, err)
@@ -627,7 +795,8 @@ def list_fc_uplinks(domain: str = "", problems_only: bool = False, central: str 
 def list_firmware(domain: str = "", central: str = "", limit: int = 2000) -> dict:
     """Running firmware versions (UCS Central, fabric interconnects, IOMs, servers, adapters)."""
     props = ("type", "deployment", "version", "package_version")
-    rows, err = _class_rows(central, "firmwareRunning", props, keep=lambda m: _in_domain(m.dn, domain))
+    rows, err = _class_rows(central, "firmwareRunning", props, flt=_domain_filter(domain),
+                            keep=lambda m: _in_domain(m.dn, domain))
     return _cap(rows, limit, err)
 
 
@@ -666,6 +835,7 @@ def query_class(class_id: str, prop: str = "", value: str = "", match: str = "eq
         if not re.fullmatch(r"[a-z_][a-z0-9_]*", prop):
             raise ValueError("Invalid property name")
         flt = _filter(prop, value, match)
+    flt = _and(flt, _domain_filter(domain))
     rows, err = _class_rows(central, class_id, None, flt=flt, keep=lambda m: _in_domain(m.dn, domain))
     return _cap(rows, limit, err)
 

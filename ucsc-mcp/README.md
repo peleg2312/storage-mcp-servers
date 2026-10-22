@@ -44,13 +44,31 @@ that owns the object. Unreachable centrals are reported, not fatal.
 | `UCSC_<N>_NAME` | | the host |
 | `UCSC_<N>_PORT` | | `443` |
 
+| `UCSC_SESSIONS` / `UCSC_<N>_SESSIONS` | | `3` parallel logged-in sessions per UCS Central |
+| `UCSC_CACHE_TTL` | | `120` seconds; identical queries inside this window are served from memory (`0` = off) |
+
 Note: `ucscsdk` does not verify the UCS Central TLS certificate.
+
+## Performance on large UCS Centrals
+
+- **Filters run on UCS Central**, not in the pod: name, org, type, association, severity, ack,
+  fault code, domain, serial, model, problems-only. Only matching objects are sent back.
+- **Single-object tools read one subtree**: `get_server` / `get_service_profile` fetch only that
+  object and its children (adapters, vHBAs, vNICs, faults) in one request, instead of scanning
+  every fault in UCS Central.
+- **Real parallelism**: the Cisco SDK serialises every request in the process with one global
+  lock; this server replaces it with a per-session lock and keeps a small session pool, so
+  parallel questions and multiple UCS Centrals run at the same time.
+- **Short cache** for repeated identical queries, and list results are capped (default 200) with
+  totals and counts, so Claude doesn't receive tens of thousands of rows.
+- If a UCS Central version rejects a filter, the server automatically falls back to an unfiltered
+  query and filters in the pod (slower, still correct).
 
 ## Run
 
 ```bash
-docker load -i ucsc-mcp-2.0.tar.gz     # or: docker build -t ucsc-mcp:2.0 .
-docker run -d -p 8000:8000 --env-file .env ucsc-mcp:2.0
+docker load -i ucsc-mcp-2.1.tar.gz     # or: docker build -t ucsc-mcp:2.1 .
+docker run -d -p 8000:8000 --env-file .env ucsc-mcp:2.1
 ```
 
 OpenShift:

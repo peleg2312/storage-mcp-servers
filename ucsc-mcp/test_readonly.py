@@ -3,8 +3,10 @@ and write attempts never reach the network."""
 import asyncio
 import os
 import re
+import time
+import xml.etree.ElementTree as ET
 
-os.environ.update(UCSC_1_NAME="ucsc-dc1", UCSC_1_HOST="ucsc1.test", UCSC_1_USERNAME="ro", UCSC_1_PASSWORD="x",
+os.environ.update(UCSC_CACHE_TTL="0", UCSC_1_NAME="ucsc-dc1", UCSC_1_HOST="ucsc1.test", UCSC_1_USERNAME="ro", UCSC_1_PASSWORD="x",
                   UCSC_2_NAME="ucsc-dc2", UCSC_2_HOST="ucsc2.test", UCSC_2_USERNAME="ro", UCSC_2_PASSWORD="y")
 
 from ucscsdk.ucscsession import UcscSession  # noqa: E402
@@ -29,7 +31,9 @@ DC1 = {
     "faultInst": '<faultInst dn="compute/sys-1008/chassis-1/psu-2/fault-F0369" severity="major" code="F0369" ack="no" descr="PSU 2 failed" created="2026-10-20T10:00:00" />'
                  f'<faultInst dn="{SP}/fault-F0001" severity="critical" code="F0001" ack="no" descr="SP config failure" created="2026-10-19T10:00:00" />'
                  f'<faultInst dn="{BL}/fault-F0283" severity="minor" code="F0283" ack="yes" descr="vHBA link down" created="2026-10-21T09:00:00" />',
-    "lsServer": f'<lsServer dn="{SP}" name="esx01" type="instance" assocState="associated" configState="applied" pnDn="{BL}" />',
+    "lsServer": f'<lsServer dn="{SP}" name="esx01" type="instance" assocState="associated" configState="applied" pnDn="{BL}" />'
+                '<lsServer dn="org-root/org-Prod/ls-ORA-db01" name="ORA-db01" type="instance" assocState="unassociated" />'
+                '<lsServer dn="org-root/org-Prod/ls-tmpl-ora" name="tmpl-ora" type="updating-template" assocState="unassociated" />',
     "vnicFc": f'<vnicFc dn="{SP}/fc-vHBA-A" name="vHBA-A" addr="{W}" switchId="A" operIdentPoolName="org-root/wwn-pool-WWPN-A" />',
     "vnicFcIf": f'<vnicFcIf dn="{SP}/fc-vHBA-A/if-default" name="vsan-100" operVnetName="vsan-100" />',
     "vnicEther": f'<vnicEther dn="{SP}/ether-eth0" name="eth0" addr="00:25:B5:00:00:01" switchId="A" />',
@@ -48,6 +52,7 @@ DC1 = {
 }
 DC2 = {
     "computeSystem": '<computeSystem dn="compute/sys-2001" id="2001" name="dc2-ucs" address="10.1.0.5" />',
+    "eventInst": '<eventInst dn="event-log/9" id="9" created="2026-10-21T10:00:00" descr="Inventory sync done" severity="info" />',
     "computeBlade": '<computeBlade dn="compute/sys-2001/chassis-1/blade-1" model="UCSB-B200-M6" serial="FCH9" operState="ok" operability="operable" />',
     "faultInst": '<faultInst dn="compute/sys-2001/fault-F0207" severity="critical" code="F0207" ack="no" descr="FI B unreachable" created="2026-10-21T11:00:00" />',
 }
@@ -55,9 +60,45 @@ TOP = {"ucsc1.test": '<topSystem dn="sys" name="ucs-central-dc1" address="10.0.0
        "ucsc2.test": '<topSystem dn="sys" name="ucs-central-dc2" address="10.1.0.2" />'}
 
 
+LATENCY = 0.0
+FILTERS = []
+OBJ_RE = re.compile(r"<\w+ [^>]*/>")
+
+
+def _matches(f, attrs):
+    tag = f.tag
+    if tag == "filter":
+        return all(_matches(c, attrs) for c in f)
+    if tag == "and":
+        return all(_matches(c, attrs) for c in f)
+    if tag == "or":
+        return any(_matches(c, attrs) for c in f)
+    if tag == "not":
+        return not _matches(f[0], attrs)
+    val = attrs.get(f.get("property"), "")
+    if tag == "eq":
+        return val == f.get("value")
+    if tag == "ne":
+        return val != f.get("value")
+    if tag == "wcard":
+        return re.search(f.get("value"), val) is not None
+    raise AssertionError(tag)
+
+
+def _select(objs, xml_str):
+    m = re.search(r"<inFilter>(.*)</inFilter>", xml_str, re.S)
+    rows = OBJ_RE.findall(objs)
+    if not m or not m.group(1).strip():
+        return "".join(rows)
+    flt = ET.fromstring(m.group(1))
+    FILTERS.append(m.group(1))
+    return "".join(r for r in rows if _matches(flt, ET.fromstring(r).attrib))
+
+
 def fake_post_xml(self, xml_str, read=True, dme="central-mgr"):
     if isinstance(xml_str, bytes):
         xml_str = xml_str.decode()
+    time.sleep(LATENCY)
     method = re.match(r"\s*<(\w+)", xml_str).group(1)
     SENT.append((self.ip, method))
     data = DC1 if self.ip == "ucsc1.test" else DC2
@@ -66,17 +107,22 @@ def fake_post_xml(self, xml_str, read=True, dme="central-mgr"):
     if method == "configResolveDn":
         dn = re.search(r'dn="([^"]*)"', xml_str).group(1)
         body = ""
+        hier = 'inHierarchical="true"' in xml_str
         if dn == "sys":
             body = TOP[self.ip]
         else:
             for objs in data.values():
-                for m in re.finditer(r"<\w+ [^>]*/>", objs):
-                    if f'dn="{dn}"' in m.group(0):
-                        body = m.group(0)
+                for o in OBJ_RE.findall(objs):
+                    odn = re.search(r'dn="([^"]*)"', o).group(1)
+                    if odn == dn or (hier and odn.startswith(dn + "/")):
+                        body += o
         return f'<configResolveDn dn="{dn}" cookie="c1" response="yes"><outConfig>{body}</outConfig></configResolveDn>'
     if method in ("configResolveClass", "configResolveChildren"):
         cid = re.search(r'classId="(\w+)"', xml_str).group(1)
-        objs = data.get(cid, "")
+        if method == "configResolveClass" and cid == "eventInst" and "<inFilter>" in xml_str and "<filter" in xml_str:
+            return ('<configResolveClass cookie="c1" response="yes" errorCode="552" '
+                    'errorDescr="filter not supported" />')
+        objs = _select(data.get(cid, ""), xml_str) if method == "configResolveClass" else data.get(cid, "")
         if method == "configResolveChildren":
             parent = re.search(r'inDn="([^"]*)"', xml_str).group(1)
             objs = "".join(m.group(0) for m in re.finditer(r"<\w+ [^>]*/>", objs)
@@ -121,6 +167,22 @@ async def main():
     up = await call("list_fc_uplinks", problems_only=True)
     assert up["total"] == 1 and up["items"][0]["switch_id"] == "B"
     print("FC uplinks down:", [(u["domain"], u["switch_id"], u["port_id"], u["oper_state"]) for u in up["items"]])
+    sps = await call("list_service_profiles", name_contains="ora")
+    assert {r["name"] for r in sps["items"]} == {"ORA-db01", "tmpl-ora"}, sps
+    sps = await call("list_service_profiles", org="org-root/org-Prod", sp_type="instance")
+    assert [r["name"] for r in sps["items"]] == ["ORA-db01"] and sps["by_type"] == {"instance": 1}
+    sps = await call("list_service_profiles", server_dn=BL)
+    assert [r["name"] for r in sps["items"]] == ["esx01"]
+    assert any("[Oo][Rr][Aa]" in f for f in FILTERS) and any("^org-root/org-Prod/" in f for f in FILTERS)
+    srv = await call("list_servers", domain="1008", problems_only=True)
+    assert [r["serial"] for r in srv["items"]] == ["FCH2"], srv
+    assert await call("list_servers", serial="FCH9") and (await call("list_servers", serial="FCH9"))["total"] == 1
+    fl2 = await call("list_faults", severity="critical,major", domain="1008", unacked_only=True)
+    assert [f["code"] for f in fl2["items"]] == ["F0369"], fl2  # F0001 is on a global SP, not in domain 1008
+    ev = await call("get_events", text="sync")  # filter rejected by fake -> fallback still correct
+    assert {e["central"] for e in ev["items"]} == {"ucsc-dc1", "ucsc-dc2"}, ev
+    print("server-side filters sent:", len(FILTERS))
+
     au = await call("get_audit_log")
     assert au["items"][0]["user"] == "ops"
     for t, a in [("list_centrals", {}), ("list_fabric_interconnects", {}), ("list_chassis", {}),
@@ -135,9 +197,25 @@ async def main():
     except Exception as e:
         assert "pass central" in str(e)
 
+    # ---- parallelism: 2 centrals x 0.4 s latency should take ~0.4 s, not 0.8 s ----
+    global LATENCY
+    LATENCY = 0.4
+    t0 = time.time()
+    await call("list_domains")
+    dt = time.time() - t0
+    LATENCY = 0.0
+    print(f"list_domains on 2 centrals with 0.4s latency each: {dt:.2f}s")
+    assert dt < 0.7, dt
+    # no full fault scan for one object: get_server must not issue configResolveClass faultInst
+    n0 = len(SENT)
+    await call("get_server", dn=BL)
+    await call("get_service_profile", sp_dn=SP)
+    assert all(m != "configResolveClass" for _, m in SENT[n0:]), SENT[n0:]
+    print("calls for get_server + get_service_profile:", [m for _, m in SENT[n0:]])
+
     # ---- writes must be blocked before reaching the network ----
     c = server.centrals()["ucsc-dc1"]
-    h = c._h
+    h = c._acquire()
     n = len(SENT)
     mo = LsServer(parent_mo_or_dn="org-root", name="hacked")
     for fn in (lambda: h.add_mo(mo), lambda: h.set_mo(mo), lambda: h.remove_mo(mo), lambda: h.commit(),
