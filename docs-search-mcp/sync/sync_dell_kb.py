@@ -6,21 +6,12 @@ related products into the library, for offline search.
     python3 sync/sync_dell_kb.py [--dest /data/docs] [--products powermax scaleio ...] [--delay 3]
                                  [--ids-file extra-ids.txt] [--list]
 
-<<<<<<< HEAD
-Dell has no sitemap or export for its KB. This script finds the articles two ways and fetches each one:
- 1. the per-product listings on the support site,
-      https://www.dell.com/support/product-details/en-us/product/<product>/resources/articles
-    (every page of the listing; article numbers are taken from the HTML and from any JSON inside it),
- 2. article numbers you add yourself (--ids-file, one 9-digit number or kbdoc URL per line) and the
-    seed list below (collected from web searches).
-=======
 Dell has no sitemap or export for its KB. This script starts from known article numbers (the seed list
 below, collected from web searches, plus --ids-file: one 9-digit number or kbdoc URL per line) and
 SNOWBALLS: every Dell KB article links to related articles; each linked article that concerns the
 PowerMax / PowerFlex / Solutions Enabler / Unisphere / SRDF / PowerPath / CSM-CSI family is fetched too,
 and its links followed, until nothing new is found. (--listings additionally tries the support site's
 per-product article listings, but those pages are JavaScript shells for most products.)
->>>>>>> 87d4d544b223bd03f4778f98168e5b1c7349c5d3
 Each article is saved as <dest>/dell/kb/<id>_<slug>.html with manifest.json (title + URL) via the same
 code as sync_web.py, so the indexer links hits to the kbdoc URL. Incremental: known articles are skipped.
 Polite: one request at a time, --delay seconds apart. Dell's site refuses cloud / datacenter IPs
@@ -113,13 +104,9 @@ def main():
     ap.add_argument("--ids-file", help="extra article numbers / kbdoc URLs, one per line")
     ap.add_argument("--delay", type=float, default=float(os.getenv("DOCS_SYNC_DELAY", "3")))
     ap.add_argument("--list", action="store_true", help="only harvest and print the article URLs")
-<<<<<<< HEAD
-    ap.add_argument("--no-listings", action="store_true", help="skip the product listings (seed + ids-file only)")
-=======
     ap.add_argument("--listings", action="store_true",
                     help="also try the support-site product listings (usually JavaScript shells; off by default)")
     ap.add_argument("--max-articles", type=int, default=0, help="stop after N saved articles (0 = all)")
->>>>>>> 87d4d544b223bd03f4778f98168e5b1c7349c5d3
     a = ap.parse_args()
     work = os.path.join(here, "work")
     os.makedirs(work, exist_ok=True)
@@ -130,22 +117,6 @@ def main():
             m = re.search(r"(\d{9})", line)
             if m:
                 ids.add(m.group(1))
-<<<<<<< HEAD
-    if not a.no_listings:
-        for product in a.products:
-            ids |= harvest(product, a.delay, work)
-            time.sleep(a.delay)
-    urls = [f"https://www.dell.com/support/kbdoc/en-us/{i}" for i in sorted(ids)]
-    list_path = os.path.join(work, "dell-kb-urls.txt")
-    open(list_path, "w").write("\n".join(urls) + "\n")
-    print(f"{len(urls)} Dell KB articles to fetch (list saved to {list_path})")
-    if a.list:
-        return 0
-
-    # fetch through sync_web's machinery (manifest, login/empty detection, incremental)
-    sys.argv = ["sync_web.py", "--dest", a.dest, "--urls", list_path, "--sources", os.devnull, "--delay", str(a.delay)]
-    return sync_web.main()
-=======
     if a.listings:
         for product in a.products:
             ids |= harvest(product, a.delay, work)
@@ -239,7 +210,6 @@ def crawl(seed_ids, dest, delay, max_articles):
         flush()
     print("dell kb:", json.dumps(stats), f"-> {d}")
     return 0
->>>>>>> 87d4d544b223bd03f4778f98168e5b1c7349c5d3
 
 
 if __name__ == "__main__":

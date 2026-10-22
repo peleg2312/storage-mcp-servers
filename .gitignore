@@ -6,3 +6,4 @@ __pycache__/
 build-ca.crt
 images/*.tar.gz
 docs-search-mcp/work/
+library/work/
