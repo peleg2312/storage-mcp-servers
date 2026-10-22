@@ -1,0 +1,34 @@
+# NetApp documentation repos (github.com/NetAppDocs/<name>) - text only is pulled.
+# These are NetApp's own docs-as-code sources for docs.netapp.com. Content stays NetApp's
+# copyright; it is cloned for internal reference/search, not redistributed.
+# --- ONTAP core / SAN ---
+ontap                          # ONTAP 9 documentation (SAN admin, NVMe, networking, data protection...)
+ontap-sanhost                  # SAN host configuration: ESXi, Linux, Windows, AIX... (multipath, settings)
+ontap-automation               # ONTAP REST API / automation docs
+ontap-ems                      # EMS (event) reference
+ontap-ems-9171
+ontap-ems-9161
+ontap-ems-9131
+ontap-metrocluster             # MetroCluster
+ontap-systems                  # AFF/FAS/ASA hardware: install, maintain, replace parts
+ontap-systems-switches         # cluster / storage switches
+asa-r2                         # ASA r2 systems (SAN-optimised)
+ontap-afx
+ontap-fli                      # Foreign LUN Import (migrating LUNs from other arrays)
+ontap-technical-reports        # technical reports (TRs) / best practices
+ontap-apps-dbs                 # ONTAP with VMware, databases, apps (TR-4597-style content)
+ontap-select
+ontap-system-manager-classic
+ontap-7mode-transition
+# --- VMware integration / management ---
+ontap-tools-vmware-vsphere-10  # ONTAP tools for VMware vSphere 10.x
+ontap-tools-vmware-vsphere-103
+ontap-tools-vmware-vsphere     # ONTAP tools 9.x
+sc-plugin-vmware-vsphere       # SnapCenter plug-in for VMware vSphere
+snapcenter
+active-iq-unified-manager
+# --- other NetApp storage ---
+e-series
+e-series-santricity
+storagegrid
+console-setup-admin

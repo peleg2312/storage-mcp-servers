@@ -1,12 +1,13 @@
 # Storage MCP servers (read-only)
 
-Three read-only MCP servers for the SAN/storage stack, all with bearer-token auth, multi-instance
+Four read-only MCP servers for the SAN/storage stack, all with bearer-token auth, multi-instance
 config from one Secret, and built-in guidance so a connecting Claude knows how to use them.
 
 | Server | Talks to | Tools | Image |
 |---|---|---|---|
 | [`powermax-mcp`](powermax-mcp/) | Dell PowerMax / VMAX via one or many Unisphere servers | 28 | `images/powermax-mcp-2.0.tar.gz` |
 | [`ucsc-mcp`](ucsc-mcp/) | Cisco UCS Central (one or many): inventory, faults, service profiles, FI FC uplinks/port-channels/errors, vHBA pinning, per-host SAN trace | 26 | `images/ucsc-mcp-2.2.tar.gz` |
+| [`docs-search-mcp`](docs-search-mcp/) | Searchable documentation library: NetApp (28 doc repos, ~20,500 pages), Dell PowerMax + PowerFlex official documents, KB pointers, your runbooks; nightly sync job | 4 | `images/docs-search-mcp-1.0.tar.gz` |
 | [`mds-mcp`](mds-mcp/) | Cisco MDS switches via NX-API (wraps [alecharn/mds-mcp](https://github.com/alecharn/mds-mcp)): all show commands incl. text-only ones, parsed syslog, OBFL, WWPN trace, zone check, port-channel health, error scan | 72 | `images/mds-mcp-2.2.tar.gz` |
 
 The three share one WWPN-based workflow, so Claude can trace a host's SAN paths end to end:
@@ -24,7 +25,7 @@ Each image is split into 45 MB parts (GitHub refuses files over 100 MB). Join an
 ```bash
 git clone https://github.com/peleg2312/storage-mcp-servers.git && cd storage-mcp-servers
 ./images/join.sh                                  # rebuilds the .tar.gz files and checks SHA256
-docker load -i images/powermax-mcp-2.0.tar.gz     # same for ucsc-mcp-2.2 and mds-mcp-2.2
+docker load -i images/powermax-mcp-2.0.tar.gz     # same for ucsc-mcp-2.2, mds-mcp-2.2, docs-search-mcp-1.0
 docker tag powermax-mcp:2.0 <registry>/powermax-mcp:2.0 && docker push <registry>/powermax-mcp:2.0
 ```
 Images are linux/amd64, run as a non-root random UID (OpenShift restricted SCC) with a read-only

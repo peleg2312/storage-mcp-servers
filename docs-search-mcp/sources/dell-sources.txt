@@ -1,0 +1,29 @@
+# Dell PowerMax / PowerFlex public documentation for the docs-search index.
+# Format:  <kind> <product-folder> <url>
+#   hub   = an official Dell page that links to many documents; every PDF it links is downloaded
+#   pdf   = one document
+#   page  = one HTML page saved as-is (e.g. a specific KB article you want searchable offline)
+# Files land in $DOCS_DIR/dell/<product-folder>/ with a manifest.json (title + source URL).
+# Add your own lines; re-running only downloads what is new.
+
+# ---- PowerMax / VMAX: official documentation hubs ----
+hub  powermax  https://www.dell.com/en-sg/dt/documentation/vmax-all-flash-family.htm
+hub  powermax  https://www.dell.com/support/article/us/en/04/sln314818/powermax-and-vmax-technical-documents-and-videos?lang=en
+
+# ---- PowerMax: key VMware / replication papers (also referenced by the skills) ----
+pdf  powermax  https://www.delltechnologies.com/asset/en-us/solutions/infrastructure-solutions/technical-support/h8115-powermax-vmware-vaai-wp.pdf
+pdf  powermax  https://www.delltechnologies.com/asset/en-us/products/storage/industry-market/h17532-bp-srdf-metro-vmsc-wp.pdf
+pdf  powermax  https://www.delltechnologies.com/asset/en-us/products/storage/technical-support/docu5265.pdf
+pdf  powermax  https://www.delltechnologies.com/asset/en-us/solutions/infrastructure-solutions/industry-market/h19812-vmware-vvol-vasa-powermax-whitepaper.pdf
+pdf  powermax  https://www.delltechnologies.com/asset/en-us/products/storage/industry-market/h13697-dell-emc-powermax-vmax-all-flash-timefinder-snapvx-local-replication.pdf
+
+# ---- PowerFlex: official documentation hubs (3.6, 4.x, 5.x) ----
+hub  powerflex  https://www.dell.com/support/kbdoc/en-us/000314729/powerflex-software-documentation
+hub  powerflex  https://www.dell.com/support/kbdoc/en-us/000210475/powerflex-teknik-belgeler?lang=en
+
+# ---- Specific public KB articles worth keeping offline (see also kb/kb-pointers.md) ----
+page powermax   https://www.dell.com/support/kbdoc/en-us/000204833/how-to-know-what-storage-lun-is-presented-at-a-particular-naa-id
+page powermax   https://www.dell.com/support/kbdoc/en-us/000228219/list-of-symdev-commands-with-examples-a-simplified-guide-to-symdev-related-operations
+page powermax   https://www.dell.com/support/kbdoc/en-us/000204697/how-to-view-and-modify-powermax-vmax-host-lun-id-hlu
+page powerflex  https://www.dell.com/support/kbdoc/en-us/000264404/how-to-locate-the-device-identifier-eui-in-a-volume-powerflex-3-6-x
+page powerflex  https://www.dell.com/support/kbdoc/en-sg/000437810/powerflex-esxi-sdc-stop-responding-in-vcenter-apd
