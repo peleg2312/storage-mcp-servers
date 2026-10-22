@@ -5,3 +5,4 @@ __pycache__/
 *.pyc
 build-ca.crt
 images/*.tar.gz
+docs-search-mcp/work/

@@ -61,7 +61,7 @@ async def main():
         return (await server.mcp.call_tool(n, a)).structured_content
 
     src = await call("list_sources")
-    assert src["totals"]["documents"] == 5, src
+    assert src["libraries"][0]["documents"] == 5 and src["libraries"][0]["library"] == "main", src
     s = await call("search_docs", query="lun mapping create igroup")
     top = s["results"][0]
     assert top["url"] == "https://docs.netapp.com/us-en/ontap/san-admin/map-lun.html" and top["vendor"] == "netapp", top
@@ -97,6 +97,22 @@ async def main():
     assert s["results"] and s["results"][0]["title"] == "Datastore decommission v2"
     s = await call("search_docs", query="callhome", limit=5)
     assert not s["results"], s
+    # second (local) index: the team's own saved KB / runbooks, searched together with the main library
+    local_docs, local_db = os.path.join(root, "local"), os.path.join(root, "local.db")
+    os.makedirs(os.path.join(local_docs, "saved-kb", "netapp"))
+    open(os.path.join(local_docs, "saved-kb", "netapp", "kb-1234.md"), "w").write(
+        "# KB 1234: LUN offline after snapshot restore\n\nWorkaround: lun online -vserver svm1 -path /vol/v1/lun1\n")
+    docs_index.build(local_docs, local_db, log=lambda *_: None)
+    server.DBS.append(local_db)
+    s = await call("search_docs", query="lun online snapshot restore")
+    hit = s["results"][0]
+    assert hit["library"] == "local" and hit["chunk_id"] >= server.ID_BASE, hit
+    rc = await call("read_chunk", chunk_id=hit["chunk_id"])
+    assert "Workaround" in rc["sections"][0]["text"]
+    s = await call("search_docs", query="lun mapping create igroup")
+    assert s["results"][0]["library"] == "main"
+    libs = (await call("list_sources"))["libraries"]
+    assert [x["library"] for x in libs] == ["main", "local"]
     print("ALL TESTS PASSED", r, r2)
 
 

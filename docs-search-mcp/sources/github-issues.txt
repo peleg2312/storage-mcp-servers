@@ -1,0 +1,5 @@
+# Public GitHub issue trackers exported for offline search (bug reports, fixes, workarounds).
+# Format: <vendor> <product-folder> <owner/repo>
+netapp  trident-issues   NetApp/trident
+netapp  harvest-issues   NetApp/harvest
+dell    csm-issues       dell/csm

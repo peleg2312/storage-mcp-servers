@@ -5,3 +5,5 @@
 test_*.py
 tests/
 openshift.yaml
+work/
+extra/

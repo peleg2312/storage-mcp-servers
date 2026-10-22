@@ -24,7 +24,7 @@ import sys
 import time
 from html.parser import HTMLParser
 
-TEXT_EXT = (".adoc", ".md", ".txt")
+TEXT_EXT = (".adoc", ".md", ".rst", ".txt")
 MAX_CHUNK = 2400
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS docs(id INTEGER PRIMARY KEY, path TEXT UNIQUE, vendor TEXT, product TEXT,
@@ -124,7 +124,12 @@ def parse_md(text, fallback):
     meta, text = _front_matter(text)
     if "redirect" in meta:
         raise SkipDocument("redirect stub")
+    text = re.sub(r"\{\{[<%].*?[%>]\}\}", "", text)          # Hugo shortcodes
     title, sections, heading, buf = None, [], None, []
+    if meta.get("title"):
+        title = heading = meta["title"].strip("'\"")
+        if meta.get("description"):
+            buf.append(meta["description"].strip("'\""))
     for line in text.splitlines():
         m = re.match(r"^(#+)\s+(.+)$", line)
         if m:
@@ -221,9 +226,29 @@ def load_manifests(root):
     return out
 
 
+SOURCE_URLS = {}
+
+
+def load_source_urls(root):
+    """<vendor>/<product>/.source_url written by sync-git.sh -> link to the file on GitHub."""
+    for vendor in os.listdir(root):
+        vd = os.path.join(root, vendor)
+        if not os.path.isdir(vd):
+            continue
+        for product in os.listdir(vd):
+            f = os.path.join(vd, product, ".source_url")
+            if os.path.isfile(f):
+                SOURCE_URLS[(vendor.lower(), product)] = open(f).read().strip()
+
+
 def url_for(vendor, product, rel_in_product, manifest_meta):
     if manifest_meta and manifest_meta.get("url"):
         return manifest_meta["url"]
+    src = SOURCE_URLS.get((vendor, product), "")
+    if rel_in_product.endswith(".adoc") and "github.com/NetAppDocs/" in src:
+        return f"https://docs.netapp.com/us-en/{product}/{rel_in_product[:-5]}.html"
+    if src.startswith("https://github.com/"):
+        return f"{src}/blob/HEAD/{rel_in_product}"
     if vendor == "netapp" and rel_in_product.endswith(".adoc"):
         return f"https://docs.netapp.com/us-en/{product}/{rel_in_product[:-5]}.html"
     return None
@@ -249,7 +274,7 @@ def parse_file(path):
         return parse_adoc(text, fallback)
     if low.endswith((".html", ".htm")):
         return parse_html(text, fallback)
-    if low.endswith(".md"):
+    if low.endswith((".md", ".rst")):
         return parse_md(text, fallback)
     return fallback, _split([(fallback, text)], fallback)
 
@@ -269,6 +294,7 @@ def build(docs_root, db_path, full=False, log=print):
     con.executescript(SCHEMA)
     known = {p: (i, m, s) for i, p, m, s in con.execute("SELECT id, path, mtime, size FROM docs")}
     manifests = load_manifests(docs_root)
+    load_source_urls(docs_root)
     seen, added, updated, errors = set(), 0, 0, 0
     t0 = time.time()
     for path in iter_files(docs_root):
@@ -317,6 +343,8 @@ def build(docs_root, db_path, full=False, log=print):
             _delete_doc(con, doc_id)
             removed += 1
     con.execute("INSERT OR REPLACE INTO meta VALUES ('indexed_at', ?)", (time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),))
+    if os.getenv("BUNDLE_LABEL"):
+        con.execute("INSERT OR REPLACE INTO meta VALUES ('bundle', ?)", (os.getenv("BUNDLE_LABEL"),))
     con.commit()
     if added or updated or removed:
         con.execute("INSERT INTO chunks_fts(chunks_fts) VALUES ('optimize')")

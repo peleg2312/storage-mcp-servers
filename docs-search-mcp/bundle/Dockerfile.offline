@@ -1,0 +1,6 @@
+# docs-search server with the whole documentation library baked in (no internet needed at runtime).
+ARG BASE=docs-search-mcp:1.1
+FROM ${BASE}
+COPY index/docs.db /bundle/docs.db
+# main library (read-only, in the image) + optional local library of the team's own documents (PVC)
+ENV INDEX_DB=/bundle/docs.db,/data/local/local.db

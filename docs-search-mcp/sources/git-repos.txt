@@ -1,0 +1,45 @@
+# Git documentation sources, pulled TEXT ONLY (.adoc .md .rst; no images/binaries).
+# Format: <vendor> <product> <git-url> [subdir ...]
+# Content remains the owners' copyright; fetched for internal reference/search.
+#
+# ---- NetApp documentation (docs.netapp.com sources) ----
+netapp  ontap                            https://github.com/NetAppDocs/ontap
+netapp  ontap-sanhost                    https://github.com/NetAppDocs/ontap-sanhost
+netapp  ontap-automation                 https://github.com/NetAppDocs/ontap-automation
+netapp  ontap-ems                        https://github.com/NetAppDocs/ontap-ems
+netapp  ontap-ems-9171                   https://github.com/NetAppDocs/ontap-ems-9171
+netapp  ontap-ems-9161                   https://github.com/NetAppDocs/ontap-ems-9161
+netapp  ontap-ems-9131                   https://github.com/NetAppDocs/ontap-ems-9131
+netapp  ontap-metrocluster               https://github.com/NetAppDocs/ontap-metrocluster
+netapp  ontap-systems                    https://github.com/NetAppDocs/ontap-systems
+netapp  ontap-systems-switches           https://github.com/NetAppDocs/ontap-systems-switches
+netapp  asa-r2                           https://github.com/NetAppDocs/asa-r2
+netapp  ontap-afx                        https://github.com/NetAppDocs/ontap-afx
+netapp  ontap-fli                        https://github.com/NetAppDocs/ontap-fli
+netapp  ontap-technical-reports          https://github.com/NetAppDocs/ontap-technical-reports
+netapp  ontap-apps-dbs                   https://github.com/NetAppDocs/ontap-apps-dbs
+netapp  ontap-select                     https://github.com/NetAppDocs/ontap-select
+netapp  ontap-system-manager-classic     https://github.com/NetAppDocs/ontap-system-manager-classic
+netapp  ontap-7mode-transition           https://github.com/NetAppDocs/ontap-7mode-transition
+netapp  ontap-tools-vmware-vsphere-10    https://github.com/NetAppDocs/ontap-tools-vmware-vsphere-10
+netapp  ontap-tools-vmware-vsphere-103   https://github.com/NetAppDocs/ontap-tools-vmware-vsphere-103
+netapp  ontap-tools-vmware-vsphere       https://github.com/NetAppDocs/ontap-tools-vmware-vsphere
+netapp  sc-plugin-vmware-vsphere         https://github.com/NetAppDocs/sc-plugin-vmware-vsphere
+netapp  snapcenter                       https://github.com/NetAppDocs/snapcenter
+netapp  active-iq-unified-manager        https://github.com/NetAppDocs/active-iq-unified-manager
+netapp  e-series                         https://github.com/NetAppDocs/e-series
+netapp  e-series-santricity              https://github.com/NetAppDocs/e-series-santricity
+netapp  storagegrid                      https://github.com/NetAppDocs/storagegrid
+netapp  console-setup-admin              https://github.com/NetAppDocs/console-setup-admin
+
+# ---- NetApp Trident (Kubernetes CSI) and Harvest ----
+netapp  trident                          https://github.com/NetAppDocs/trident
+netapp  harvest                          https://github.com/NetApp/harvest              docs
+# changelogs: every release's fixes with the bug numbers (works offline even without the issue export)
+netapp  trident-changelog                https://github.com/NetApp/trident              CHANGELOG.md
+netapp  harvest-changelog                https://github.com/NetApp/harvest              CHANGELOG.md
+
+# ---- Dell Container Storage Modules (CSI PowerMax / PowerFlex / PowerScale / PowerStore / Unity, replication, observability, authorization...) ----
+dell    csm                              https://github.com/dell/csm-docs               content
+# ---- Dell PyU4V (PowerMax REST Python library) ----
+dell    pyu4v                            https://github.com/dell/PyU4V                  docs
