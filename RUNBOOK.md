@@ -28,6 +28,8 @@ sh ../library/join.sh work && mv work/docs-library/docs work/docs && mkdir -p wo
 # b) Dell PowerMax / PowerFlex product PDFs + the Dell KB articles listed in sources/web-pages.txt
 python3 sync/sync_dell.py --dest work/docs/dell          # hubs in sources/dell-sources.txt -> 200+ PDFs
 python3 sync/sync_web.py  --dest work/docs               # KB pages (Dell, VMware, NetApp) one URL per line
+python3 sync/sync_dell_kb.py --dest work/docs            # EVERY Dell KB article of PowerMax / PowerFlex / CSM-CSI
+                                                         #   (per-product listings on the support site + seed list)
 
 # c) Trident / CSM / Harvest bug trackers (every issue with workaround + fixed version)
 GITHUB_TOKEN=<read-only token> python3 sync/sync_github_issues.py --dest work/docs

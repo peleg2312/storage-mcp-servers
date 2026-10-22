@@ -38,6 +38,7 @@ main library (results say `library: main|local`).
 | **Bug trackers**: every GitHub issue (open + closed, with all comments/workarounds) of NetApp/trident, NetApp/harvest, dell/csm → products `trident-issues`, `harvest-issues`, `csm-issues` | `sync/sync_github_issues.py` (needs `GITHUB_TOKEN`) | thousands of issues |
 | **Dell PowerMax/VMAX** (Unisphere, Solutions Enabler, REST, SRDF, SnapVX, VMware papers) and **PowerFlex** 3.6–5.x (guides, release notes with fixed/known issues) PDFs from Dell's documentation hubs | `sync/sync_dell.py` (`sources/dell-sources.txt`) | 200+ PDFs |
 | **KB articles / pages you choose** (NetApp KB, Dell KB, Broadcom KB, any vendor page): one URL per line in `sources/web-pages.txt` or a plain URL list (`URLS=file`) | `sync/sync_web.py` (one page per URL, robots.txt respected; login-only pages are reported, save those from the browser into `extra/`) | as many as you add |
+| **Dell Knowledge Base** for PowerMax, PowerMaxOS, Unisphere, Solutions Enabler, SRDF, PowerPath, PowerFlex (software, appliance, rack, manager), CSM / CSI: every article of the per-product listings on the support site + a seed list → product `dell/kb` | `sync/sync_dell_kb.py` (office/home PC only: dell.com refuses cloud IPs) | hundreds |
 | **KB pointers** (`sources/kb/kb-pointers.md`): verified public KBs with one-line answers | copied | grow it |
 | Anything else: `extra/<vendor>/<product>/...` at build time, or the local library at run time | | |
 
