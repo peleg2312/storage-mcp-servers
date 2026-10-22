@@ -21,7 +21,8 @@ description: Resolve any LUN identifier (naa., eui., PowerMax device ID, ONTAP s
   replication (SRDF / SnapVX) state.
 - **ONTAP**: LUN by serial → SVM, path, size, space reservation, igroup maps (LUN ID), igroup initiators
   (WWPNs), OS type, FC LIFs of the SVM.
-- **PowerFlex**: no live MCP: report what VMware shows and say the array side was not checked.
+- **PowerFlex**: no live MCP: report what VMware shows and say the array side was not checked (EUI ↔
+  volume ID format: docs MCP `dell/powerflex`, "device identifier eui").
 
 ## 4. Consistency checks (report each as OK / finding)
 - every ESX host that sees the LUN is in the array's host group / igroup and vice versa

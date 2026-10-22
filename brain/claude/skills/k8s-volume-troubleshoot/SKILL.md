@@ -10,9 +10,13 @@ Trident: `tridentctl -n trident get backend`, `tridentctl -n trident logs` (or t
 node pod logs); CSM: the driver controller + node pod logs; the node: `oc debug node/<node>` then
 `chroot /host multipath -ll` and `chroot /host lsblk`.
 
-1. Take the **exact error string** and search docs-search: product `trident-issues` / `csm-issues` (bug
-   reports with workarounds and fixed versions), then `trident` / `trident-changelog` / `csm` docs.
-   Note the driver version the user runs and whether a fix exists in a later version.
+1. Take the **exact error string** and search the docs MCP: Trident → `trident-issues` (bug reports with
+   workarounds and fixed versions), `trident-changelog`, then the `trident-<release>` docs of the installed
+   version (`trident-2307` … `trident-2510`; `trident` = latest) and `kb-ontap`; CSM → `dell/kb` (CSM /
+   CSI articles), `dell/csm` (use the page whose url version matches the installed CSM: `content/docs/` =
+   current, `content/v1..v3/` = older), `csi-powermax` / `csi-powerflex`, `csm-replication`, `csm-operator`
+   (there is no CSM issue tracker in the library). Note the driver version the user runs and whether a
+   fix exists in a later version.
 2. Find the backing volume on the array: PV volumeHandle / internal name → ONTAP volume / LUN (Trident
    prefix) or PowerMax / PowerFlex volume (CSM prefix). Check it exists, its size, its mapping to the
    node's igroup / host, replication state.

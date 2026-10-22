@@ -18,5 +18,6 @@ by capacity and standards).
    `lun mapping create`; MDS zoning if needed), each labelled "to be run by you", in order, with
    pre-checks.
 7. **Post-checks** after he runs it: rescan, the new NAA visible on every host, path count equal on both
-   fabrics, multipathing policy per the vendor's ESXi host configuration guide (search docs-search:
-   ontap-sanhost / PowerMax host connectivity guide), datastore created on the right NAA.
+   fabrics, multipathing policy per the vendor's ESXi host configuration guide (docs MCP: netapp
+   `ontap-sanhost`; `dell/powermax` "Host Connectivity Guide for VMware ESXi" and `dell/kb` "native
+   multipathing round robin"), datastore created on the right NAA.

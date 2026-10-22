@@ -43,19 +43,15 @@ sh bundle/pack-library.sh                            # rewrites library/ ; commi
 Everything is incremental: re-running only fetches what changed. Sources are one line each in
 `docs-search-mcp/sources/*.txt`.
 
-## What is NOT in it yet (and why)
+## Coverage notes
 
-Built from a cloud session whose egress IP Dell's site (Akamai) refuses, so these need one run of the
-refresh above from an office / home PC:
-
-- **Dell PowerMax / PowerFlex product PDFs** (product guides, Unisphere, Solutions Enabler, SRDF, SnapVX,
-  PowerFlex 3.6-5.x guides and release notes) and **Dell KB articles**: `sync/sync_dell.py` + `sync_web.py`,
-  sources in `sources/dell-sources.txt` / `sources/web-pages.txt` (www.dell.com, dl.dell.com).
-- **GitHub bug trackers** (NetApp/trident, NetApp/harvest, dell/csm issues): `sync/sync_github_issues.py`
-  with a `GITHUB_TOKEN`.
-- **NetApp KB**: the export runs at the rate the site asks for (one article per 5 s); the part done so far
-  is listed in `MANIFEST.md` (`kb-*` products). Re-running `sync_netapp_kb.py` continues it.
-- NetApp KB articles whose Cause / Solution needs a NetApp Support login are kept with their public part
-  and flagged "Partial article"; open the URL with your support account for the rest.
+- **Dell PowerMax / PowerFlex PDFs, Dell KB, Trident / Harvest bug trackers** are in (synced from a PC;
+  Dell's site refuses cloud IPs). Re-run `sync_dell.py`, `sync_dell_kb.py`, `sync_github_issues.py` from a
+  PC to refresh them; the CSM issue tracker needs a `GITHUB_TOKEN` run.
+- **NetApp KB**: exported at the rate the site asks for (one article per 5 s); the part done so far is in
+  `MANIFEST.md` (`kb-*` products). Re-running `sync_netapp_kb.py` continues it. Articles whose Cause /
+  Solution needs a NetApp Support login are kept with their public part and flagged "Partial article"
+  unless the export ran with `NETAPP_KB_COOKIE`.
+- **Not in the library**: Cisco MDS / UCS documentation, PowerMaxOS release notes (not published as PDFs).
 
 Content stays the vendors' copyright, fetched for internal reference. Keep this repo private.

@@ -323,8 +323,10 @@ def build(docs_root, db_path, full=False, log=print):
             continue
         rel_in_product = "/".join(parts[2:]) if len(parts) > 2 else parts[-1]
         meta = manifests.get(os.path.normpath(path))
-        if meta and meta.get("title"):
+        if meta and meta.get("title") and len(meta["title"].strip()) > 3 and meta["title"].strip().lower() not in ("pdf", "download"):
             title = meta["title"]
+        if title.strip().lower() in ("pdf", "download", "") or len(title.strip()) < 4:
+            title = os.path.splitext(os.path.basename(path))[0].replace("-", " ").replace("_", " ")
         url = url_for(vendor, product, rel_in_product, meta)
         if old:
             _delete_doc(con, old[0])

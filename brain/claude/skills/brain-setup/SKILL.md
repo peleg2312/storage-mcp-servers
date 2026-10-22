@@ -8,8 +8,8 @@ Goal: Claude knows the exact tool names of every storage MCP and the shape of th
 Read-only: only list/get/show tools.
 
 ## 1. Tool map
-For every connected MCP server (kuparashit, Aria/vROps, ontap, harvest, mds, ucsc, powermax, docs-search
-and any other), list its tools from your own tool list. For each server write:
+For every connected MCP server (kuparashit, Aria/vROps, ontap, harvest, mds, ucsc, powermax, the docs MCP
+(docs-search or docs-local, whichever is connected) and any other), list its tools from your own tool list. For each server write:
 - server name as used in tool names (`mcp__<server>__...`)
 - every tool: name, one line on what it returns, key parameters
 - which questions from the "Sources" table in CLAUDE.md it answers
@@ -30,10 +30,13 @@ Using only list tools, collect:
   datastores, and describe the pattern you see
 - Trident / CSM: look for volume / LUN names starting with `trident` or other CSI-looking prefixes and
   hosts/igroups named like OpenShift workers
+- versions: ONTAP version per cluster, PowerMaxOS / Unisphere version (from the tools); ask for Trident,
+  CSM / CSI driver, NX-OS and ESXi versions (no tool shows them) - they select the versioned doc products
 
 Show the draft to the user, ask him to confirm or correct the uncertain items (fabric A/B, thresholds,
 prefixes, ownership), then write `~/.claude/brain/environment.md`, keeping anything he already filled in.
 
 ## 3. Smoke test
 Run one cheap call per server (e.g. list arrays, list switches, docs list_sources) and report a table:
-server | reachable | tools | notes. Flag any server whose tools failed.
+server | reachable | tools | notes. Flag any server whose tools failed. For the docs MCP, note which server
+answered (docs-search or docs-local) and that list_sources matches `~/.claude/brain/library/MANIFEST.md`.

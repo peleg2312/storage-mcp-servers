@@ -19,13 +19,14 @@ when it matters. What is inside (vendor/product): netapp/ontap (docs), ontap-san
 ontap-restapi, ontap-tools-vmware-vsphere*, ontap-ems-9111 … ontap-ems-9181 (EMS reference per ONTAP
 version), kb-ontap + kb-san (NetApp KB articles, full text; some "Partial article"), trident +
 trident-2307 … trident-2510 (per release), trident-changelog, trident-issues, harvest, harvest-issues;
-dell/powermax + dell/powerflex (product guides, Solutions Enabler / Unisphere / SRDF / SnapVX guides,
-events-and-alerts references, PowerFlex release notes), dell/kb (Dell KB: PowerMax, PowerFlex, CSM/CSI,
-SRDF, Unisphere, PowerPath), dell/csm (every CSM doc version: url `content/docs/` = current,
+dell/powermax (Product Guide, Solutions Enabler / Unisphere / SRDF / SnapVX guides, Events and Alerts
+guide, Host Connectivity Guide for VMware ESXi; many PDF titles are just "pdf": cite the file name / url)
++ dell/powerflex (guides, alerts-and-events references, release notes 3.6.x-5.1.x), dell/kb (Dell KB:
+PowerMax, PowerFlex, CSM/CSI, SRDF, Unisphere, PowerPath), dell/csm (every CSM doc version: url `content/docs/` = current,
 `content/v1..v3/` = older), dell/csi-powermax, csi-powerflex, csm-replication, csm-operator,
 csm-authorization, csm-observability, csm-resiliency, pyu4v, pypowerflex, ansible-*, terraform-*;
 vmware/kb (a few ESXi storage KBs); kb/kb (pointers). **Not in the library**: Cisco MDS / UCS docs, a Dell
-CSM issue tracker, PowerMax host connectivity guides - say so instead of citing them.
+CSM issue tracker, PowerMaxOS release notes - say so instead of citing them.
 Live state comes from the other MCP servers.
 
 ## Golden rules
@@ -48,8 +49,9 @@ Live state comes from the other MCP servers.
    then sources (MCP tool + object; doc title + url + version), then the next checks worth doing.
 8. Use the vendor docs (docs MCP) for anything about how a product behaves, error/event meaning,
    best practices and known bugs; cite the version. Don't answer such questions from memory alone.
-   Pick the product that matches the installed version (ONTAP `x.y` → `ontap-ems-9xy1`, Trident
-   `yy.mm` → `trident-yymm`, CSM → the matching `content/v<n>/` or `content/docs/` url in `dell/csm`);
+   Pick the product that matches the installed version (ONTAP 9.15.1 → `ontap-ems-9151`, unknown →
+   `ontap-ems`; Trident 25.02 → `trident-2502`, unknown → `trident`; CSM → the matching `content/v<n>/`
+   or `content/docs/` url in `dell/csm`);
    versions are in the environment file or come from a tool result. For a symptom, search the KB
    products (`kb-ontap`, `kb-san`, `dell/kb`, `vmware/kb`) as well as the manuals. Where the library has
    nothing (Cisco MDS / UCS), say the explanation is from general knowledge, not a cited document.

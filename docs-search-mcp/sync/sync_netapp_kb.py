@@ -167,7 +167,12 @@ def main():
     ap.add_argument("--refresh-partial", action="store_true",
                     help="re-fetch articles saved as partial (use with NETAPP_KB_COOKIE)")
     a = ap.parse_args()
-    areas = [(p if p.endswith("/") else p + "/", "kb-" + re.sub(r"[^\w]+", "-", p.split("/")[-1] or p).lower())
+    def folder_for(prefix):
+        """--include prefixes use the same product folders as DEFAULT_AREAS (longest matching prefix)."""
+        best = max((d for d in DEFAULT_AREAS if prefix.startswith(d[0]) or d[0].startswith(prefix)),
+                   key=lambda d: len(d[0]), default=None)
+        return best[1] if best else "kb-" + re.sub(r"[^\w]+", "-", prefix.rstrip("/").split("/")[-1]).lower()
+    areas = [(p if p.endswith("/") else p + "/", folder_for(p if p.endswith("/") else p + "/"))
              for p in a.include] if a.include else DEFAULT_AREAS
 
     os.makedirs(a.dest, exist_ok=True)

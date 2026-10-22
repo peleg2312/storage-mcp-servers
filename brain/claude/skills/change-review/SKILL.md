@@ -5,8 +5,9 @@ description: What changed recently across the storage stack - PowerMax audit log
 # Change review
 
 1. Window: from the user, or 24-72 h before the problem started.
-2. Collect: PowerMax `what_changed` / `get_audit_log`; ONTAP audit / EMS events; MDS `show_accounting_log`
-   and log events (zoning commits, interface shut / no shut); UCS `get_audit_log` + `get_events`;
+2. Collect: PowerMax `what_changed` / `get_audit_log`; ONTAP audit / EMS events (ontap MCP; explain unknown
+   EMS names with the docs product `ontap-ems-<cluster version>`); MDS `show_accounting_log` and
+   `get_log_events` (zoning commits, interface shut / no shut); UCS `get_audit_log` + `get_events`;
    Aria alerts for the involved objects.
 3. Merge into one timeline (UTC and local time), filter to objects related to the problem (the LUN, SG,
    hosts, WWPNs, ports from `identify-lun` / `trace-path`).

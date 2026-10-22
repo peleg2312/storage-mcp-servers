@@ -169,6 +169,11 @@ def main():
                 print(f"not a PDF ({page_title(body) or 'no title'}): {url}", file=sys.stderr)
                 time.sleep(a.delay)
                 continue
+        if name.endswith(".pdf") and b"modern slavery" in body[:400000].lower():
+            failed += 1
+            print(f"not the document (download redirected to Dell's legal statement): {url}", file=sys.stderr)
+            time.sleep(a.delay)
+            continue
         with open(target + ".part", "wb") as f:
             f.write(body)
         os.replace(target + ".part", target)

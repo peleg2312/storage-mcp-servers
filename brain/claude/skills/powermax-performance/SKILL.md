@@ -17,8 +17,9 @@ description: Analyse PowerMax performance for an array, storage group, host, FA 
 4. Report **avg and max** with the time of the max; for "who is causing it" rank storage groups by
    IOPS and MB/s at the peak time.
 5. Correlate: alerts (`get_alerts`) and changes (`what_changed`) in the same window; SRDF health.
-6. For unexplained behaviour, search docs-search (vendor dell, product powermax) with the exact metric /
-   alert text and the PowerMaxOS version.
+6. For unexplained behaviour, search the docs MCP (vendor `dell`, product `powermax` for the guides and
+   the Events and Alerts guide, product `kb` for Dell KB articles) with the exact metric / alert text and
+   the PowerMaxOS version.
 
 Output: answer first, then a table (object | metric | avg | max | time of max | assessment), top
 talkers, related alerts/changes, sources.
