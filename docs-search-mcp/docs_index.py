@@ -14,6 +14,7 @@ atomically, so the running search server never sees a half-written index.
 """
 
 import argparse
+import hashlib
 import html
 import json
 import os
@@ -28,7 +29,9 @@ TEXT_EXT = (".adoc", ".md", ".rst", ".txt")
 MAX_CHUNK = 2400
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS docs(id INTEGER PRIMARY KEY, path TEXT UNIQUE, vendor TEXT, product TEXT,
-  title TEXT, url TEXT, mtime REAL, size INTEGER, chunks INTEGER);
+  title TEXT, url TEXT, mtime REAL, size INTEGER, chunks INTEGER, hash TEXT, dup_of INTEGER);
+CREATE INDEX IF NOT EXISTS docs_hash ON docs(hash);
+CREATE INDEX IF NOT EXISTS docs_dup ON docs(dup_of);
 CREATE TABLE IF NOT EXISTS chunks(id INTEGER PRIMARY KEY, doc_id INTEGER, seq INTEGER);
 CREATE INDEX IF NOT EXISTS chunks_doc ON chunks(doc_id, seq);
 CREATE VIRTUAL TABLE IF NOT EXISTS chunks_fts USING fts5(title, heading, text,
@@ -323,9 +326,9 @@ def build(docs_root, db_path, full=False, log=print):
             continue
         rel_in_product = "/".join(parts[2:]) if len(parts) > 2 else parts[-1]
         meta = manifests.get(os.path.normpath(path))
-        if meta and meta.get("title") and len(meta["title"].strip()) > 3 and meta["title"].strip().lower() not in ("pdf", "download"):
+        if meta and meta.get("title") and _real_title(meta["title"]):
             title = meta["title"]
-        if title.strip().lower() in ("pdf", "download", "") or len(title.strip()) < 4:
+        if not _real_title(title):
             title = os.path.splitext(os.path.basename(path))[0].replace("-", " ").replace("_", " ")
         url = url_for(vendor, product, rel_in_product, meta)
         if old:
@@ -333,14 +336,7 @@ def build(docs_root, db_path, full=False, log=print):
             updated += 1
         else:
             added += 1
-        cur = con.execute("INSERT INTO docs(path, vendor, product, title, url, mtime, size, chunks) "
-                          "VALUES (?,?,?,?,?,?,?,?)", (rel, vendor, product, title, url, st.st_mtime,
-                                                       st.st_size, len(chunks)))
-        doc_id = cur.lastrowid
-        for seq, (heading, text) in enumerate(chunks):
-            cid = con.execute("INSERT INTO chunks(doc_id, seq) VALUES (?,?)", (doc_id, seq)).lastrowid
-            con.execute("INSERT INTO chunks_fts(rowid, title, heading, text) VALUES (?,?,?,?)",
-                        (cid, title, heading, text))
+        doc_id = _insert_doc(con, rel, vendor, product, title, url, st, chunks)
         if (added + updated) % 2000 == 0:
             con.commit()
             log(f"... {added + updated} documents parsed ({time.time() - t0:.0f}s)")
@@ -349,6 +345,7 @@ def build(docs_root, db_path, full=False, log=print):
         if rel not in seen:
             _delete_doc(con, doc_id)
             removed += 1
+    deduped = _dedupe(con, docs_root, log)
     con.execute("INSERT OR REPLACE INTO meta VALUES ('indexed_at', ?)", (time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),))
     if os.getenv("BUNDLE_LABEL"):
         con.execute("INSERT OR REPLACE INTO meta VALUES ('bundle', ?)", (os.getenv("BUNDLE_LABEL"),))
@@ -360,10 +357,91 @@ def build(docs_root, db_path, full=False, log=print):
     os.replace(tmp, db_path)
     docs, chunks = sqlite3.connect(db_path).execute(
         "SELECT (SELECT count(*) FROM docs), (SELECT count(*) FROM chunks)").fetchone()
-    log(f"index {db_path}: {docs} documents, {chunks} chunks (+{added} new, {updated} updated, "
-        f"-{removed} removed, {errors} errors) in {time.time() - t0:.0f}s")
+    log(f"index {db_path}: {docs} documents ({deduped} identical copies folded), {chunks} chunks (+{added} new, "
+        f"{updated} updated, -{removed} removed, {errors} errors) in {time.time() - t0:.0f}s")
     return {"documents": docs, "chunks": chunks, "added": added, "updated": updated,
-            "removed": removed, "errors": errors}
+            "removed": removed, "errors": errors, "deduped": deduped}
+
+
+GENERIC_TITLES = {"pdf", "download", "view", "link", "here", "click here", "document", "english", "en-us", "untitled"}
+
+
+def _real_title(t):
+    t = (t or "").strip()
+    return len(t) >= 4 and t.lower() not in GENERIC_TITLES
+
+
+def _text_hash(chunks):
+    m = hashlib.sha1()
+    for heading, text in chunks:
+        m.update((heading or "").encode()); m.update(b"\x1f"); m.update((text or "").encode()); m.update(b"\x1e")
+    return m.hexdigest()
+
+
+def _insert_doc(con, rel, vendor, product, title, url, st, chunks):
+    cur = con.execute("INSERT INTO docs(path, vendor, product, title, url, mtime, size, chunks, hash) "
+                      "VALUES (?,?,?,?,?,?,?,?,?)", (rel, vendor, product, title, url, st.st_mtime,
+                                                      st.st_size, len(chunks), _text_hash(chunks)))
+    doc_id = cur.lastrowid
+    for seq, (heading, text) in enumerate(chunks):
+        cid = con.execute("INSERT INTO chunks(doc_id, seq) VALUES (?,?)", (doc_id, seq)).lastrowid
+        con.execute("INSERT INTO chunks_fts(rowid, title, heading, text) VALUES (?,?,?,?)",
+                    (cid, title, heading, text))
+    return doc_id
+
+
+def _canonical_rank(product, path):
+    """Which copy of identical text to keep: the unversioned product (ontap-ems, trident, content/docs)
+    first, then the newest version (highest number), then the shortest path."""
+    m = re.search(r"(\d+)$", product)
+    versioned = 1 if m else 0
+    ver = -int(m.group(1)) if m else 0
+    cur = 0 if "/content/docs/" in path or "/content/docs" in path else (1 if re.search(r"/content/v\d+/", path) else 0)
+    return (versioned, ver, cur, len(path))
+
+
+def _dedupe(con, docs_root, log):
+    """Documents with identical text keep ONE copy of their chunks (the canonical one); the others become
+    aliases (dup_of -> canonical, chunks = 0) so a search shows the page once, filtering by any of the
+    products still finds it, and read_document on an alias path reads the canonical copy."""
+    # aliases whose canonical disappeared or changed hash: re-parse them
+    orphans = con.execute("SELECT a.id, a.path FROM docs a LEFT JOIN docs c ON c.id = a.dup_of "
+                          "WHERE a.dup_of IS NOT NULL AND (c.id IS NULL OR c.hash != a.hash OR c.dup_of IS NOT NULL)").fetchall()
+    for doc_id, rel in orphans:
+        path = os.path.join(docs_root, rel)
+        row = con.execute("SELECT vendor, product, url FROM docs WHERE id = ?", (doc_id,)).fetchone()
+        _delete_doc(con, doc_id)
+        if os.path.exists(path):
+            try:
+                title, chunks = parse_file(path)
+            except Exception:
+                continue
+            _insert_doc(con, rel, row[0], row[1], title, row[2], os.stat(path), chunks)
+    folded = 0
+    groups = con.execute("SELECT hash FROM docs WHERE hash IS NOT NULL GROUP BY hash HAVING count(*) > 1").fetchall()
+    for (h,) in groups:
+        rows = con.execute("SELECT id, product, path, dup_of, chunks FROM docs WHERE hash = ?", (h,)).fetchall()
+        rows.sort(key=lambda r: _canonical_rank(r[1], r[2]))
+        canon = rows[0]
+        if canon[3] is not None:                      # canonical must own chunks: promote it
+            con.execute("UPDATE docs SET dup_of = NULL WHERE id = ?", (canon[0],))
+            if canon[4] == 0:                         # has no chunks: take them from a sibling that has
+                donor = next((r for r in rows[1:] if r[3] is None and r[4] > 0), None)
+                if donor:
+                    con.execute("UPDATE chunks SET doc_id = ? WHERE doc_id = ?", (canon[0], donor[0]))
+                    con.execute("UPDATE docs SET chunks = ? WHERE id = ?", (donor[4], canon[0]))
+                    con.execute("UPDATE docs SET chunks = 0, dup_of = ? WHERE id = ?", (canon[0], donor[0]))
+        for r in rows[1:]:
+            if r[0] == canon[0]:
+                continue
+            if r[3] != canon[0]:
+                if r[4] > 0 and r[3] is None:
+                    con.execute("DELETE FROM chunks_fts WHERE rowid IN (SELECT id FROM chunks WHERE doc_id=?)", (r[0],))
+                    con.execute("DELETE FROM chunks WHERE doc_id=?", (r[0],))
+                con.execute("UPDATE docs SET dup_of = ?, chunks = 0 WHERE id = ?", (canon[0], r[0]))
+            folded += 1
+    con.commit()
+    return folded
 
 
 def _delete_doc(con, doc_id):

@@ -55,6 +55,13 @@ Live state comes from the other MCP servers.
    versions are in the environment file or come from a tool result. For a symptom, search the KB
    products (`kb-ontap`, `kb-san`, `dell/kb`, `vmware/kb`) as well as the manuals. Where the library has
    nothing (Cisco MDS / UCS), say the explanation is from general knowledge, not a cited document.
+9. **Library playbook**: the `docs-lookup` skill is how every documentation answer is built (product
+   choice, exact-term search, read before answering, cite title + url + version, "Partial article",
+   known-bug / fixed-in checks, what to do when nothing is found). Follow it even for a one-line question.
+10. **Memory**: a fact about this environment learned from a tool result or from him (a name or prefix,
+   a threshold, who owns what, a recurring issue and its cause, a tool quirk) is appended as one dated
+   line to `~/.claude/brain/notes.md` under the matching section - the only file you write besides
+   reports. Never store guesses, passwords or tokens; when a note contradicts `environment.md`, ask.
 
 ## Sources: which MCP answers what
 Exact tool names per server: see the tool map imported at the bottom (run `/brain-setup` to refresh it).
@@ -105,17 +112,20 @@ A healthy host: every vmhba logged in, zoned on its fabric to the array ports in
 igroup, same number of paths on both fabrics, all paths active (ALUA: optimized + non-optimized).
 
 ## Skills (procedures; use the matching one, or run `/<name>`)
-`brain-setup` · `identify-lun` · `unused-luns` · `decommission-check` · `trace-path` · `zoning-audit` ·
-`fabric-health` · `datastore-latency` · `powermax-performance` · `ontap-performance` ·
-`capacity-report` · `rdm-inventory` · `k8s-volume-troubleshoot` · `new-lun-checklist` ·
+`brain-setup` · `brain-health` · `docs-lookup` · `identify-lun` · `unused-luns` · `decommission-check` ·
+`trace-path` · `zoning-audit` · `fabric-health` · `datastore-latency` · `powermax-performance` ·
+`ontap-performance` · `capacity-report` · `rdm-inventory` · `k8s-volume-troubleshoot` · `csm-health` ·
+`powerflex-troubleshoot` · `replication-check` · `code-version-check` · `new-lun-checklist` ·
 `morning-check` · `explain-error` · `change-review`
 
 ## Agents (delegate focused work, run in parallel when independent)
 `fabric-investigator` (MDS + UCS) · `powermax-analyst` · `ontap-analyst` (ONTAP + Harvest) ·
+`powerflex-analyst` (docs + vCenter side; no live PowerFlex MCP) · `k8s-storage-analyst` (Trident + CSM) ·
 `vmware-mapper` (kuparashit + Aria) · `capacity-planner` · `docs-researcher` (docs MCP only).
 For a cross-layer problem, give each agent its layer and the identifiers, then join their findings
 yourself by NAA / WWPN.
 
-## My environment and tool map
+## My environment, learned notes and tool map
 @~/.claude/brain/environment.md
+@~/.claude/brain/notes.md
 @~/.claude/brain/tool-map.md

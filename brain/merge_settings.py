@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Merge the brain's hook + MCP permissions into ~/.claude/settings.json (keeps everything else).
+"""Merge the brain's hooks (PreToolUse read-only guard, SessionStart status) + MCP permissions into ~/.claude/settings.json (keeps everything else).
 usage: merge_settings.py <settings.json> [mcp-server-name ...]"""
 import json
 import os
@@ -17,6 +17,10 @@ cmd = "python3 ~/.claude/hooks/block-write-tools.py"
 pre = s.setdefault("hooks", {}).setdefault("PreToolUse", [])
 if not any(h.get("command") == cmd for e in pre for h in e.get("hooks", [])):
     pre.append({"matcher": "mcp__.*", "hooks": [{"type": "command", "command": cmd}]})
+start_cmd = "python3 ~/.claude/hooks/session-start.py"
+start = s["hooks"].setdefault("SessionStart", [])
+if not any(h.get("command") == start_cmd for e in start for h in e.get("hooks", [])):
+    start.append({"hooks": [{"type": "command", "command": start_cmd}]})
 allow = s.setdefault("permissions", {}).setdefault("allow", [])
 for srv in servers:
     rule = f"mcp__{srv}"
@@ -27,4 +31,4 @@ if "statusLine" not in s:
     s["statusLine"] = {"type": "command", "command": "python3 ~/.claude/banner/paas-statusline.py", "padding": 0}
 with open(path, "w") as f:
     json.dump(s, f, indent=2)
-print(f"settings: hook installed, status line set, MCP servers allowed without prompts: {', '.join(servers) or '(none found)'}")
+print(f"settings: read-only + session-start hooks installed, status line set, MCP servers allowed without prompts: {', '.join(servers) or '(none found)'}")

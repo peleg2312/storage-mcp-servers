@@ -50,9 +50,19 @@ shutil.copy(os.path.join(here, "tests", "sample.pdf"), os.path.join(docs, "dell"
 json.dump({"h8115.pdf": {"url": "https://example.dell/h8115.pdf", "title": "VAAI with PowerMax"}},
           open(os.path.join(docs, "dell", "powermax", "manifest.json"), "w"))
 
+# identical EMS page in two more ONTAP versions -> folded into one canonical copy (unversioned product wins)
+w("netapp/ontap-ems-9161/callhome-hm-events.adoc", "= callhome.hm events\n\n== callhome.hm.alert.critical\n*Severity*:: ALERT\nSystem health monitor alert.\n")
+w("netapp/ontap-ems-9181/callhome-hm-events.adoc", "= callhome.hm events\n\n== callhome.hm.alert.critical\n*Severity*:: ALERT\nSystem health monitor alert.\n")
+
 import docs_index  # noqa: E402
 r = docs_index.build(docs, db, log=lambda *_: None)
-assert r["documents"] == 5 and r["errors"] == 0, r   # redirect stub skipped
+assert r["documents"] == 7 and r["errors"] == 0 and r["deduped"] == 2, r   # redirect stub skipped, 2 copies folded
+import sqlite3  # noqa: E402
+_c = sqlite3.connect(db)
+assert _c.execute("SELECT count(*) FROM docs WHERE dup_of IS NOT NULL").fetchone()[0] == 2
+assert _c.execute("SELECT product FROM docs WHERE path LIKE 'netapp/ontap-ems%' AND dup_of IS NULL").fetchone()[0] == "ontap-ems-9181"  # newest version kept
+assert _c.execute("SELECT count(*) FROM chunks c JOIN docs d ON d.id=c.doc_id WHERE d.product='ontap-ems-9161'").fetchone()[0] == 0
+_c.close()
 import server  # noqa: E402
 
 
@@ -61,7 +71,7 @@ async def main():
         return (await server.mcp.call_tool(n, a)).structured_content
 
     src = await call("list_sources")
-    assert src["libraries"][0]["documents"] == 5 and src["libraries"][0]["library"] == "main", src
+    assert src["libraries"][0]["documents"] == 7 and src["libraries"][0]["library"] == "main", src
     s = await call("search_docs", query="lun mapping create igroup")
     top = s["results"][0]
     assert top["url"] == "https://docs.netapp.com/us-en/ontap/san-admin/map-lun.html" and top["vendor"] == "netapp", top
@@ -71,6 +81,12 @@ async def main():
     assert s["results"][0]["title"] == "VAAI with PowerMax" and s["results"][0]["url"] == "https://example.dell/h8115.pdf"
     s = await call("search_docs", query="query_all_volumes eui", product="powerflex")
     assert s["results"] and "var a" not in s["results"][0]["snippet"] and "menu" not in s["results"][0]["snippet"]
+    s = await call("search_docs", query="callhome.hm.alert.critical", product="ontap-ems-9161")  # alias product filter
+    assert s["results"] and s["results"][0]["product"] == "ontap-ems-9181" and \
+        sorted(s["results"][0]["also_in"]) == ["netapp/ontap-ems-9161", "netapp/ontap-ems-9171"], s["results"][:1]
+    assert len([r for r in s["results"] if "callhome" in r["path"]]) == 1, "folded copies must not appear twice"
+    rd = await call("read_document", path="netapp/ontap-ems-9161/callhome-hm-events.adoc")  # alias path -> canonical
+    assert rd["path"] == "netapp/ontap-ems-9181/callhome-hm-events.adoc" and rd["sections"], rd
     s = await call("search_docs", query="callhome.hm.alarm")  # near miss -> any-word fallback
     assert s["match_mode"].startswith("any word") and s["results"]
     s = await call("search_docs", query="detach unzone", vendor="runbooks")
@@ -89,14 +105,15 @@ async def main():
     # incremental update: change one file, delete one, add one; server picks up the new index
     time.sleep(1.1)
     w("runbooks/team/decom.md", "# Datastore decommission v2\n\nAlways check RDM backings with vmkfstools queryrdm first.\n")
-    os.remove(os.path.join(docs, "netapp/ontap-ems-9171/callhome-hm-events.adoc"))
+    os.remove(os.path.join(docs, "netapp/ontap-ems-9181/callhome-hm-events.adoc"))   # the canonical copy goes away
     w("runbooks/team/zoning.md", "# Zoning standard\n\nSingle initiator single target, device-alias naming site_host_hbaN.\n")
     r2 = docs_index.build(docs, db, log=lambda *_: None)
     assert (r2["added"], r2["updated"], r2["removed"]) == (1, 1, 1), r2
     s = await call("search_docs", query="vmkfstools queryrdm")
     assert s["results"] and s["results"][0]["title"] == "Datastore decommission v2"
-    s = await call("search_docs", query="callhome", limit=5)
-    assert not s["results"], s
+    s = await call("search_docs", query="callhome", limit=5)   # the orphaned aliases were re-parsed: newest left is canonical
+    assert len(s["results"]) == 1 and s["results"][0]["product"] == "ontap-ems-9171" \
+        and s["results"][0]["also_in"] == ["netapp/ontap-ems-9161"], s
     # second (local) index: the team's own saved KB / runbooks, searched together with the main library
     local_docs, local_db = os.path.join(root, "local"), os.path.join(root, "local.db")
     os.makedirs(os.path.join(local_docs, "saved-kb", "netapp"))

@@ -1,6 +1,6 @@
 #!/bin/sh
 # Install the storage brain into ~/.claude on the VM that runs Claude Code.
-#   sh install.sh                 (re-run after every git pull; your environment.md and tool-map.md are kept)
+#   sh install.sh                 (re-run after every git pull; your environment.md, tool-map.md and notes.md are kept)
 #   sh install.sh --no-library    skip the documentation library (when docs-search runs on the cluster)
 set -eu
 HERE=$(cd "$(dirname "$0")" && pwd)
@@ -15,9 +15,9 @@ fi
 cp "$SRC/CLAUDE.md" "$DST/CLAUDE.md"
 cp -R "$SRC/skills/." "$DST/skills/"
 cp -R "$SRC/agents/." "$DST/agents/"
-cp "$SRC/hooks/block-write-tools.py" "$DST/hooks/"
+cp "$SRC/hooks/block-write-tools.py" "$SRC/hooks/session-start.py" "$DST/hooks/"
 [ -f "$DST/hooks/allowed-tools.txt" ] || printf '# exact MCP tool names or globs the read-only hook should allow, e.g. mcp__kuparashit__execute_query\n' > "$DST/hooks/allowed-tools.txt"
-for f in environment.md tool-map.md; do
+for f in environment.md tool-map.md notes.md; do
   [ -f "$DST/brain/$f" ] || cp "$SRC/brain/$f" "$DST/brain/$f"
 done
 
@@ -73,5 +73,5 @@ python3 "$HERE/merge_settings.py" "$DST/settings.json" $SERVERS
 
 echo
 python3 "$DST/banner/paas-banner.py"
-echo "Installed into $DST: CLAUDE.md, $(ls "$SRC/skills" | wc -l | tr -d ' ') skills, $(ls "$SRC/agents" | wc -l | tr -d ' ') agents, read-only hook, banner + status line."
+echo "Installed into $DST: CLAUDE.md, $(ls "$SRC/skills" | wc -l | tr -d ' ') skills, $(ls "$SRC/agents" | wc -l | tr -d ' ') agents, read-only + session-start hooks, banner + status line."
 echo "Next: start claude and run   /brain-setup"

@@ -80,6 +80,18 @@ def fts_query(q: str, mode: str = "and") -> str:
     return " ".join(parts)
 
 
+def also_in(c, path):
+    """Products / versions that hold an identical copy of this document (folded by the indexer)."""
+    try:
+        row = c.execute("SELECT id FROM docs WHERE path = ?", (path,)).fetchone()
+        if not row:
+            return []
+        return [f"{r[0]}/{r[1]}" for r in c.execute(
+            "SELECT vendor, product FROM docs WHERE dup_of = ? ORDER BY product", (row[0],))]
+    except sqlite3.OperationalError:       # index built before de-duplication existed
+        return []
+
+
 def _search(q, vendor, product, limit, mode):
     lim = max(1, min(int(limit), 50))
     sql = ("SELECT c.id AS chunk_id, d.vendor, d.product, d.title, chunks_fts.heading AS section, d.url, d.path, "
@@ -90,9 +102,9 @@ def _search(q, vendor, product, limit, mode):
     if vendor:
         sql += " AND d.vendor = ?"
         args.append(vendor.lower())
-    if product:
-        sql += " AND d.product LIKE ?"
-        args.append(f"%{product}%")
+    if product:   # the document itself or any identical copy (alias) in a matching product
+        sql += (" AND (d.product LIKE ? OR EXISTS (SELECT 1 FROM docs a WHERE a.dup_of = d.id AND a.product LIKE ?))")
+        args += [f"%{product}%", f"%{product}%"]
     sql += " ORDER BY score LIMIT ?"
     args.append(lim)
     rows = []
@@ -101,6 +113,7 @@ def _search(q, vendor, product, limit, mode):
             d = dict(r)
             d["chunk_id"] = i * ID_BASE + d["chunk_id"]
             d["library"] = "local" if i > 0 else "main"
+            d["also_in"] = also_in(c, d["path"])
             rows.append(d)
     rows.sort(key=lambda r: r["score"])
     return rows[:lim]
@@ -133,6 +146,8 @@ HOW TO USE
 - Answer from what you read and cite title + url for every claim (urls are for the humans; you cannot
   open them - there is no internet). If nothing relevant is found, say so; never invent commands,
   settings or bug numbers.
+- Identical pages that exist in several versions (e.g. an EMS event unchanged from ONTAP 9.11 to 9.18) are
+  stored once: the hit's "also_in" lists the other products/versions it applies to verbatim.
 - Mind versions: say which ONTAP / PowerMaxOS / PowerFlex / Trident / CSM version a statement is from.
   For bugs, report the affected and fixed versions from the issue or release notes.
 - Live state comes from the PowerMax / ONTAP / Harvest / MDS / UCS / vCenter MCP servers; this server
@@ -189,10 +204,15 @@ def read_document(path: str = "", url: str = "", start: int = 0, max_sections: i
             break
     if not d:
         raise LookupError("document not found in the index")
+    try:
+        if d["dup_of"] is not None:            # alias: identical text lives in the canonical copy
+            d = c.execute("SELECT * FROM docs WHERE id = ?", (d["dup_of"],)).fetchone()
+    except (IndexError, KeyError):
+        pass
     n = max(1, min(int(max_sections), 40))
     parts = c.execute("SELECT c.id, c.seq, f.heading, f.text FROM chunks c JOIN chunks_fts f ON f.rowid = c.id "
                       "WHERE c.doc_id = ? AND c.seq >= ? ORDER BY c.seq LIMIT ?", (d["id"], int(start), n)).fetchall()
-    return {"title": d["title"], "url": d["url"], "path": d["path"], "total_sections": d["chunks"],
+    return {"title": d["title"], "url": d["url"], "path": d["path"], "also_in": also_in(c, d["path"]), "total_sections": d["chunks"],
             "start": int(start), "next_start": int(start) + len(parts) if int(start) + len(parts) < d["chunks"] else None,
             "sections": [{"chunk_id": i * ID_BASE + p["id"], "seq": p["seq"], "section": p["heading"], "text": p["text"]}
                          for p in parts]}

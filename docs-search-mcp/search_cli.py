@@ -64,12 +64,26 @@ def search(c, q, vendor="", product="", limit=10, mode="and"):
     if vendor:
         sql += " AND d.vendor = ?"
         args.append(vendor.lower())
-    if product:
-        sql += " AND d.product LIKE ?"
-        args.append(f"%{product}%")
+    if product:   # the document itself or any identical copy (alias) in a matching product
+        sql += (" AND (d.product LIKE ? OR EXISTS (SELECT 1 FROM docs a WHERE a.dup_of = d.id AND a.product LIKE ?))")
+        args += [f"%{product}%", f"%{product}%"]
     sql += " ORDER BY score LIMIT ?"
     args.append(max(1, min(int(limit), 50)))
-    return [dict(r) for r in c.execute(sql, args)]
+    rows = [dict(r) for r in c.execute(sql, args)]
+    for r in rows:
+        r["also_in"] = also_in(c, r["path"])
+    return rows
+
+
+def also_in(c, path):
+    """Products / versions holding an identical copy of this document (folded by the indexer)."""
+    try:
+        row = c.execute("SELECT id FROM docs WHERE path = ?", (path,)).fetchone()
+        if not row:
+            return []
+        return [f"{r[0]}/{r[1]}" for r in c.execute("SELECT vendor, product FROM docs WHERE dup_of = ? ORDER BY product", (row[0],))]
+    except sqlite3.OperationalError:
+        return []
 
 
 def read_chunk(c, chunk_id, context=1):
@@ -92,12 +106,17 @@ def read_doc(c, path="", url="", start=0, max_sections=15):
         c.execute("SELECT * FROM docs WHERE url = ?", (url,)).fetchone()
     if not d:
         sys.exit("document not found in the index")
+    try:
+        if d["dup_of"] is not None:
+            d = c.execute("SELECT * FROM docs WHERE id = ?", (d["dup_of"],)).fetchone()
+    except (IndexError, KeyError):
+        pass
     n = max(1, min(int(max_sections), 40))
     parts = c.execute("SELECT c.id, c.seq, f.heading, f.text FROM chunks c JOIN chunks_fts f ON f.rowid = c.id "
                       "WHERE c.doc_id = ? AND c.seq >= ? ORDER BY c.seq LIMIT ?", (d["id"], int(start), n)).fetchall()
     nxt = int(start) + len(parts)
-    return {"title": d["title"], "url": d["url"], "path": d["path"], "total_sections": d["chunks"],
-            "start": int(start), "next_start": nxt if nxt < d["chunks"] else None,
+    return {"title": d["title"], "url": d["url"], "path": d["path"], "also_in": also_in(c, d["path"]),
+            "total_sections": d["chunks"], "start": int(start), "next_start": nxt if nxt < d["chunks"] else None,
             "sections": [{"chunk_id": p["id"], "seq": p["seq"], "section": p["heading"], "text": p["text"]}
                          for p in parts]}
 
@@ -151,6 +170,8 @@ def main():
             print(f"\n[{i}] chunk {h['chunk_id']}  {h['vendor']}/{h['product']}  score {h['score']:.1f}")
             print(f"    {h['title']}  ::  {h['section']}")
             print(f"    {h['url'] or h['path']}")
+            if h.get("also_in"):
+                print(f"    also in: {', '.join(h['also_in'])}")
             print("    " + re.sub(r"\s+", " ", h["snippet"]).strip())
     elif a.cmd == "read-chunk":
         out = read_chunk(c, a.chunk_id, a.context)

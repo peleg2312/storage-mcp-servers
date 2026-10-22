@@ -53,6 +53,11 @@ commit). Then `python3 sync/sync_netapp_kb.py --dest work/docs --refresh-partial
 hours; just copy a fresh one and re-run (incremental). Keep the resulting library internal: the articles
 are licensed to your support contract.
 
+**Identical pages in several versions** (an EMS event unchanged from ONTAP 9.11 to 9.18, a CSM page present in
+every doc version) are stored once: the indexer folds copies with identical text into one canonical document
+(the unversioned or newest product), keeps the others as aliases, and every hit lists them as `also_in`.
+Filtering by any of those products still finds the page; `read_document` on an alias path reads the canonical copy.
+
 **Where the content comes from:** docs.netapp.com is generated from the NetAppDocs GitHub repos, so the
 git sync *is* the NetApp documentation site; the Dell part is downloaded from dell.com /
 delltechnologies.com. **Not downloadable in bulk:** the NetApp KB, NetApp Bugs Online, Dell KB and Dell
