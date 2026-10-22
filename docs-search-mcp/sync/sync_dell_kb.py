@@ -14,6 +14,8 @@ and its links followed, until nothing new is found. (--listings additionally tri
 per-product article listings, but those pages are JavaScript shells for most products.)
 Each article is saved as <dest>/dell/kb/<id>_<slug>.html with manifest.json (title + URL) via the same
 code as sync_web.py, so the indexer links hits to the kbdoc URL. Incremental: known articles are skipped.
+With DELL_KB_COOKIE set to your logged-in dell.com/support browser session (the request's Cookie header),
+login-only articles are saved too (re-run: previously skipped articles are retried).
 Polite: one request at a time, --delay seconds apart. Dell's site refuses cloud / datacenter IPs
 (Akamai "Access Denied"): run this from an office or home PC.
 Standard library only.

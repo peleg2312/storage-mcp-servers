@@ -32,8 +32,14 @@ ALLOWED = re.compile(r"^https://(dl\.dell\.com/content/|www\.dell\.com/[^\s]*?(c
                      r"(www\.)?delltechnologies\.com/asset/)", re.I)
 
 
+DELL_COOKIE = os.getenv("DELL_KB_COOKIE", "")    # optional: your logged-in dell.com/support browser session
+
+
 def fetch(url, timeout=120):
-    req = urllib.request.Request(url, headers={"User-Agent": UA, "Accept": "*/*"})
+    hdrs = {"User-Agent": UA, "Accept": "*/*"}
+    if DELL_COOKIE and urllib.parse.urlparse(url).netloc.endswith("dell.com"):
+        hdrs["Cookie"] = DELL_COOKIE
+    req = urllib.request.Request(url, headers=hdrs)
     with urllib.request.urlopen(req, timeout=timeout) as r:
         return r.read(), r.headers.get("Content-Type", "")
 
