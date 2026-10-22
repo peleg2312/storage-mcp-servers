@@ -49,4 +49,4 @@ items:
       contextDir: mds-mcp
       sourceSecret: {name: github-source}
     strategy: {type: Docker, dockerStrategy: {dockerfilePath: Dockerfile}}
-    output: {to: {kind: ImageStreamTag, name: "mds-mcp:2.0"}}
+    output: {to: {kind: ImageStreamTag, name: "mds-mcp:2.1"}}

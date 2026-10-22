@@ -1,4 +1,5 @@
-"""Offline test of the wrapped mds-mcp: fake NX-API, tools work, guard blocks non-show/chained commands."""
+"""Offline test of the wrapped mds-mcp: fake NX-API (JSON + text modes, errors), upstream tools,
+extra tools (run_show, OBFL, parsed logs, slow drain), and the read-only command guard."""
 import asyncio
 import os
 
@@ -6,32 +7,76 @@ os.environ.update(MDS_1_NAME="mds-fab-a", MDS_1_HOST="10.0.0.1", MDS_1_USERNAME=
                   MDS_2_NAME="mds-fab-b", MDS_2_HOST="10.0.0.2", MDS_2_USERNAME="ro", MDS_2_PASSWORD="y")
 
 import requests  # noqa: E402
-import entry  # noqa: E402
+import entry  # noqa: E402,F401
 import main  # noqa: E402
 
 SENT = []
+LOG_A = """\
+2026 Oct 22 08:01:02 mds-fab-a %PORT-5-IF_DOWN_LINK_FAILURE: %$VSAN 100%$ Interface fc1/5 is down (Link failure)
+2026 Oct 22 08:01:09 mds-fab-a %PORT-5-IF_UP: %$VSAN 100%$ Interface fc1/5 is up in mode F
+2026 Oct 22 09:15:44.512 mds-fab-a %PMON-SLOT1-3-RISING_THRESHOLD_REACHED: TX Credit Not Available has reached the rising threshold (port=fc1/7 [0x1006000], value=12)
+2026 Oct 22 09:30:00 mds-fab-a %AUTHPRIV-6-SYSTEM_MSG: pam_unix(dcos_sshd:session): session opened for user mcp-ro - dcos_sshd[1234]
+2026 Oct 22 09:40:01 mds-fab-a _f worker %AUTHPRIV-3-SYSTEM_MSG: authentication failure; user=bob - dcos_sshd[99]
+2026 Oct 20 01:00:00 mds-fab-a %ZONE-2-ZS_MERGE_FAILED: %$VSAN 200%$ Zone merge failure, isolating interface port-channel10
+"""
+LOG_B = "2026 Oct 22 09:50:00 mds-fab-b %PORT-5-IF_DOWN_LINK_FAILURE: %$VSAN 101%$ Interface fc2/3 is down (Link failure)\n"
+OBFL_TXWAIT = """\
+----------------------------------------------------------------------------------------------------
+| Interface | Delta TxWait Time     | Congestion | Timestamp                    |
+|           | 2.5us ticks | seconds |            |                              |
+----------------------------------------------------------------------------------------------------
+| fc1/7     |    6815744  |  17     |   85%      | Thu Oct 22 09:15:40 2026     |
+| fc1/7     |    4194304  |  10     |   52%      | Thu Oct 22 09:15:20 2026     |
+"""
 
 
 class R:
-    status_code = 200
-
-    def __init__(self, cmd):
-        self.cmd = cmd
+    def __init__(self, status, data):
+        self.status_code, self._d, self.text = status, data, str(data)
 
     def raise_for_status(self):
-        pass
+        if self.status_code >= 400:
+            raise requests.HTTPError(self.status_code)
 
     def json(self):
-        if "flogi" in self.cmd:
-            return {"result": {"body": {"TABLE_flogi_entry": {"ROW_flogi_entry": [
-                {"interface": "fc1/5", "vsan": 100, "fcid": "0x010203", "port_name": "20:00:00:25:b5:0a:00:01"}]}}}}
-        return {"result": {"body": {"sys_ver_str": "9.4(2)"}}}
+        return self._d
+
+
+def ok(result):
+    return R(200, {"jsonrpc": "2.0", "result": result, "id": 1})
+
+
+def err(msg, data_msg, code=-32602, status=500):
+    return R(status, {"jsonrpc": "2.0", "error": {"code": code, "message": msg, "data": {"msg": data_msg}}, "id": 1})
 
 
 def fake_post(url, json=None, **kw):
-    cmd = json[0]["params"]["cmd"]
-    SENT.append((url, cmd, json[0]["method"]))
-    return R(cmd)
+    req = json[0]
+    cmd, method = req["params"]["cmd"], req["method"]
+    sw = "a" if "10.0.0.1" in url else "b"
+    SENT.append((sw, method, cmd))
+    if cmd.startswith("show logging last"):
+        return ok({"msg": LOG_A if sw == "a" else LOG_B})
+    if cmd == "show clock":
+        return ok({"msg": "10:00:00.123 IST Thu Oct 22 2026\nTime source is NTP\n"})
+    if cmd.startswith("show logging onboard"):
+        if method == "cli":
+            return err("Input CLI command error", "Structured output unsupported")
+        if "txwait" in cmd:
+            return ok({"msg": OBFL_TXWAIT})
+        if "bogus" in cmd:
+            return err("Input CLI command error", "% Invalid command at '^' marker.")
+        return ok({"msg": ""})
+    if cmd == "show port-monitor":
+        if method == "cli":
+            return ok({"body": {}})  # empty JSON body -> auto falls back to text
+        return ok({"msg": "Policy Name  : fabricmon_edge_policy\nAdmin status : Active\n"})
+    if cmd == "show running-config":
+        return err("Input CLI command error", "% Permission denied for the role")
+    if cmd == "show flogi database":
+        return ok({"body": {"TABLE_flogi_entry": {"ROW_flogi_entry": [
+            {"interface": "fc1/5", "vsan": 100, "fcid": "0x010203", "port_name": "20:00:00:25:b5:0a:00:01"}]}}})
+    return ok({"body": {"sys_ver_str": "9.4(2)"}})
 
 
 main.requests.post = fake_post
@@ -40,33 +85,80 @@ requests.post = fake_post
 
 async def m():
     tools = await main.mcp.list_tools()
-    prompts = await main.mcp.list_prompts()
-    print(len(tools), "tools,", [p.name for p in prompts])
-    assert "READ-ONLY gateway to Cisco MDS" in main.mcp.instructions
+    names = {t.name for t in tools}
+    prompts = [p.name for p in await main.mcp.list_prompts()]
+    print(len(tools), "tools,", prompts)
+    for t in ("run_show", "show_logging_onboard", "get_log_events", "slow_drain_check"):
+        assert t in names, t
+    assert "get_log_events" in main.mcp.instructions
 
     async def call(n, **a):
         return (await main.mcp.call_tool(n, a)).structured_content
 
-    print((await call("list_switches")))
+    async def call_err(n, **a):
+        try:
+            await main.mcp.call_tool(n, a)
+        except Exception as e:
+            return str(e)
+        raise SystemExit(f"{n}{a} should have failed")
+
+    # upstream tools still work
     r = await call("show_flogi_database", switch="mds-fab-a")
-    print("flogi:", str(r)[:160])
-    await call("show_version", switch="mds-fab-b")
-    await call("show_interface_counters_detailed_for", switch="mds-fab-a", interface="fc1/5")
+    assert r["response"]["result"]["body"]["TABLE_flogi_entry"]
+
+    # parsed syslog across both switches
+    ev = await call("get_log_events", max_severity=5)
+    codes = [e["event"] for e in ev["events"]]
+    print("log events:", codes)
+    assert ev["events"][0]["switch"] == "mds-fab-b"  # newest first across switches
+    assert "PMON-3-RISING_THRESHOLD_REACHED" in codes and "ZONE-2-ZS_MERGE_FAILED" in codes
+    assert "AUTHPRIV-3-SYSTEM_MSG" in codes  # line with extra process token parsed
+    pm = next(e for e in ev["events"] if e["mnemonic"] == "RISING_THRESHOLD_REACHED")
+    assert pm["interfaces"] == ["fc1/7"]
+    zm = next(e for e in ev["events"] if e["facility"] == "ZONE")
+    assert zm["vsan"] == "200" and zm["interfaces"] == ["port-channel10"]
+    print("summary:", ev["summary"]["by_severity"], ev["summary"]["top_interfaces"][:3])
+    e24 = await call("get_log_events", switch="mds-fab-a", since_hours=24, max_severity=7)
+    assert all("Oct 20" not in e["time"] for e in e24["events"]) and e24["total_matching"] == 5
+    one = await call("get_log_events", interface="fc1/5", max_severity=7)
+    assert {e["mnemonic"] for e in one["events"]} == {"IF_DOWN_LINK_FAILURE", "IF_UP"}
+
+    # OBFL (text only) and errors
+    ob = await call("show_logging_onboard", section="txwait", switch="mds-fab-a")
+    assert "fc1/7" in ob["text"] and ob["command"] == "show logging onboard txwait"
+    ob2 = await call("show_logging_onboard", section="error-stats", switch="mds-fab-a", module=1)
+    assert ob2["command"] == "show logging onboard module 1 error-stats" and "note" in ob2
+    e1 = await call_err("show_logging_onboard", section="bogus", switch="mds-fab-a")
+    print("invalid section ->", e1[:110])
+    assert "not valid on this switch" in e1
+    e2 = await call_err("run_show", command="show running-config", switch="mds-fab-a")
+    print("permission ->", e2[:110])
+    assert "role is not allowed" in e2
+
+    # run_show: JSON, auto fallback to text, grep
+    rs = await call("run_show", command="show version", switch="mds-fab-a")
+    assert rs["format"] == "json"
+    rs2 = await call("run_show", command="show port-monitor", switch="mds-fab-a", grep="policy")
+    assert rs2["format"] == "text" and rs2["returned_lines"] == 1, rs2
+    rs3 = await call("run_show", command="show logging onboard txwait", switch="mds-fab-a", grep="52%")
+    assert rs3["format"] == "text" and rs3["returned_lines"] == 1
+
+    # slow drain bundle
+    sd = await call("slow_drain_check", switch="mds-fab-a")
+    a = sd["switches"]["mds-fab-a"]
+    assert "fc1/7" in a["txwait"]["text"] and a["log_warnings_by_interface"][0]["interface"] == "fc1/7"
+    print("slow drain:", a["log_warnings_by_interface"], list(a))
+
+    # guard: never send anything but one plain show
+    n = len(SENT)
     for bad in ("show version ; configure terminal", "show run | include x", "show version\nreload",
-                "configure terminal", "clear counters", "show logging > bootflash:x"):
-        try:
-            main._run_cli("mds-fab-a", bad)
-            raise SystemExit(f"NOT BLOCKED: {bad!r}")
-        except ValueError as e:
-            print("blocked:", str(e)[:80])
-    for bad_if in ("fc1/1 ; conf t", "fc1/1 | x"):
-        try:
-            await call("show_interface_for", switch="mds-fab-a", interface=bad_if)
-            raise SystemExit("bad interface accepted")
-        except Exception:
-            pass
-    assert all(c.startswith("show ") and not any(x in c for x in ";|>\n") for _, c, _ in SENT), SENT
-    print("commands sent:", [c for _, c, _ in SENT])
+                "configure terminal", "clear counters", "show logging > bootflash:x", "show tech-support"):
+        await call_err("run_show", command=bad, switch="mds-fab-a")
+    await call_err("show_logging_onboard", section="txwait ; reload", switch="mds-fab-a")
+    await call_err("show_logging_onboard", section="txwait | x", switch="mds-fab-a")
+    assert len(SENT) == n, SENT[n:]
+    assert all(c.startswith("show ") and not any(x in c for x in ";|>\n`") for _, _, c in SENT), SENT
+    print("methods:", sorted({m for _, m, _ in SENT}), "commands:", sorted({c for _, _, c in SENT}))
     print("ALL TESTS PASSED")
 
 

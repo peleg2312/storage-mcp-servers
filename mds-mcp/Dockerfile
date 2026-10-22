@@ -8,7 +8,7 @@ WORKDIR /app
 COPY pyproject.toml uv.lock ./
 RUN uv sync --locked --no-install-project --no-dev
 
-COPY main.py entry.py mcp_auth.py ./
+COPY main.py entry.py mds_extra.py mcp_auth.py ./
 
 RUN chgrp -R 0 /app && chmod -R g=u /app
 USER 1001

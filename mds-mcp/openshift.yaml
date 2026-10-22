@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
       - name: mds-mcp
-        image: <registry>/mds-mcp:2.0
+        image: <registry>/mds-mcp:2.1
         ports:
         - containerPort: 8000
           name: http
