@@ -1,0 +1,30 @@
+---
+name: fabric-health
+description: Health check of the MDS fabrics and the UCS FC uplinks - interfaces down, error counters, CRC, link flaps, slow drain / TxWait / credit loss, port-channel members, optics power, onboard logs, recent zoning changes. Use for "is the fabric OK", slow drain suspicion, flapping ports, or after maintenance.
+---
+# Fabric health
+
+Run per switch, both fabrics. Prefer the summary tools (`fabric_health_check`, `scan_port_errors`,
+`slow_drain_check` / `investigate_slow_drain`, `port_channel_health`, `show_logging_onboard`,
+`get_log_events`) and drill down with the `show_*` tools.
+
+## Checks
+1. **Interfaces**: down / err-disabled / initializing ports that have a description (expected up);
+   speed mismatches on ISLs and port-channel members.
+2. **Errors** (counters; compare two samples a few minutes apart to get the *rate* - totals since the
+   last clear say little): CRC / invalid CRC, invalid transmission words, link failures, sync / signal
+   losses, discards. Rising CRC on one port = optics / cable / SFP: check transceiver Rx/Tx power.
+3. **Slow drain**: TxWait, B2B credit transitions to zero, credit loss recovery, timeout discards.
+   Find the *slow device* (an edge F-port whose TxWait is high) vs the victims (ISLs / port-channels
+   carrying its traffic). Map the port to its WWPN → host (flogi + device-alias + kuparashit/ucsc).
+4. **Port-channels**: all members up, balanced, same speed; FI uplink port-channels from both sides
+   (ucsc list_fc_port_channels / get_fc_port_errors).
+5. **Onboard logs**: link flaps and error events with timestamps (`show_logging_onboard`); correlate
+   with the time of the user's problem.
+6. **Changes**: zoning / config changes in the logs and accounting log in the last days.
+7. UCS: FI FC faults (critical / major) via `domain_san_health` / `list_faults`.
+
+## Output
+Per fabric: status line (OK / degraded / critical), then a severity-ordered table:
+switch | interface | connected to (WWPN / alias / host / FI) | finding | evidence (counter, rate, time) |
+suggested action and owner. Mention any check that failed to run.
