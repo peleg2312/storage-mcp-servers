@@ -5,12 +5,22 @@ PowerFlex and CSM, plus your own runbooks and saved KB articles. BM25 full-text 
 command names, EMS/event names, error text and KB numbers find the right page. **Nothing needs internet at
 query time**: the index holds all the text. Same bearer-token auth as the other servers.
 
-## Two ways to run it
+## Fastest: the prebuilt library in this repo
+
+`../library/` holds the whole library (documents + index) as 45 MB git parts, so the air-gapped side needs
+only the git clone. On the VM that runs Claude Code: `sh ../install-vm.sh` (brain + library + the MCP
+server `docs-local`, standard library only). For a cluster: `sh bundle/build-offline.sh --from-library`
+builds the dated image with no internet at all. `../library/MANIFEST.md` lists what is inside; to add the
+parts that need an office/home IP (Dell PDFs and KB, bug trackers) or to continue the NetApp KB export
+see [`../library/README.md`](../library/README.md).
+
+## Three ways to run it
 
 | Your cluster | Use | How the content gets in |
 |---|---|---|
-| **Air-gapped** (no internet) | `openshift-offline.yaml` | build the image `docs-search-offline:<date>` on any machine **with** internet (`bundle/build-offline.sh`), import it like any other image. The library is inside the image. |
+| **Air-gapped** (no internet) | `openshift-offline.yaml` | build the image `docs-search-offline:<date>` from the prebuilt library (`bundle/build-offline.sh --from-library`, no internet) or fresh from the vendor sites on a machine **with** internet (`bundle/build-offline.sh`), import it like any other image. The library is inside the image. |
 | Has internet | `openshift.yaml` | a nightly CronJob syncs and re-indexes on a PVC |
+| **A VM with Claude Code, no cluster** | `mcp_stdio.py` | `sh ../install-vm.sh`: the library goes to `~/.claude/brain/library`, `docs-local` is registered with `claude mcp add` (stdio, no pip, no container). Same four tools. `search_cli.py` = the same search from the shell. |
 
 Both also support a **local library**: your own files (runbooks, KB articles saved from the vendor portals,
 PDFs) dropped into `/data/local/docs/<folder>/<product>/`, indexed every 30 min, searched together with the
@@ -20,18 +30,27 @@ main library (results say `library: main|local`).
 
 | Source | Sync script | Approx. |
 |---|---|---|
-| **NetApp docs**: 28 NetAppDocs repos (ONTAP 9 incl. release notes, SAN host config, ONTAP tools for VMware, SnapCenter, MetroCluster, EMS reference 9.13/9.16/9.17, REST, FLI, hardware, ASA r2, TRs, E-Series, StorageGRID, AIQUM) | `sync/sync-git.sh` | 20,500 pages |
-| **Trident** docs (incl. "What's new" = fixes per release) + `trident-changelog` (every fix with its issue number) | `sync/sync-git.sh` | 400 pages |
+| **NetApp docs**: 36 NetAppDocs repos (ONTAP 9 incl. release notes, SAN host config, ONTAP tools for VMware, SnapCenter, MetroCluster, **EMS event reference for ONTAP 9.11 to 9.18** (meaning + corrective action of every event), REST API reference, FLI, hardware + upgrades, ASA r2, TRs, E-Series, StorageGRID, AIQUM) | `sync/sync-git.sh` | 33,000 pages |
+| **Trident** docs for **every release 23.07 to 25.10** (`trident` = latest, `trident-2510` ...; incl. "What's new" = fixes per release) + `trident-changelog` (every fix with its issue number) | `sync/sync-git.sh` | 830 pages |
+| **NetApp Knowledge Base** (kb.netapp.com, public articles from the site's sitemap: ONTAP SAN / performance / data protection / hardware / MetroCluster / OS, Trident, ONTAP tools for VMware, switches, SnapCenter, AIQUM...) → products `kb-ontap`, `kb-trident`, `kb-ontap-tools-vmware`, `kb-switches`... Articles whose Cause/Solution needs a NetApp Support login keep their public part, flagged "Partial article"; with `NETAPP_KB_COOKIE` (your own logged-in browser session) the full articles are saved. | `sync/sync_netapp_kb.py` (one article per 5 s, as the site's robots.txt asks) | up to 35,000 articles |
 | **Harvest** docs + `harvest-changelog` | `sync/sync-git.sh` | 150 pages |
-| **Dell CSM** docs (CSI PowerMax/PowerFlex/PowerScale/PowerStore/Unity, replication, Metro, observability, authorization, release notes, troubleshooting) + **PyU4V** guide | `sync/sync-git.sh` | 800 pages |
+| **Dell CSM** docs, all versions (CSI PowerMax/PowerFlex/PowerScale/PowerStore/Unity, replication, Metro, observability, authorization, resiliency, operator, release notes, troubleshooting) + the CSI / CSM GitHub repos (READMEs, release notes, changelogs) + **PyU4V**, **PyPowerFlex**, **Ansible** and **Terraform** PowerMax / PowerFlex docs | `sync/sync-git.sh` | 1,000 pages |
 | **Bug trackers**: every GitHub issue (open + closed, with all comments/workarounds) of NetApp/trident, NetApp/harvest, dell/csm → products `trident-issues`, `harvest-issues`, `csm-issues` | `sync/sync_github_issues.py` (needs `GITHUB_TOKEN`) | thousands of issues |
 | **Dell PowerMax/VMAX** (Unisphere, Solutions Enabler, REST, SRDF, SnapVX, VMware papers) and **PowerFlex** 3.6–5.x (guides, release notes with fixed/known issues) PDFs from Dell's documentation hubs | `sync/sync_dell.py` (`sources/dell-sources.txt`) | 200+ PDFs |
 | **KB articles / pages you choose** (NetApp KB, Dell KB, Broadcom KB, any vendor page): one URL per line in `sources/web-pages.txt` or a plain URL list (`URLS=file`) | `sync/sync_web.py` (one page per URL, robots.txt respected; login-only pages are reported, save those from the browser into `extra/`) | as many as you add |
 | **KB pointers** (`sources/kb/kb-pointers.md`): verified public KBs with one-line answers | copied | grow it |
 | Anything else: `extra/<vendor>/<product>/...` at build time, or the local library at run time | | |
 
-Sources to add are one line each in `sources/git-repos.txt`, `sources/github-issues.txt`, `sources/dell-sources.txt`.
-`sync-git.sh --netapp-all` adds every public NetAppDocs repo (~2,000).
+Sources to add are one line each in `sources/git-repos.txt`, `sources/github-issues.txt`, `sources/dell-sources.txt`,
+`sources/web-pages.txt`. `sync-git.sh --netapp-all` adds every public NetAppDocs repo (~2,000).
+`sync_netapp_kb.py --include <sitemap prefix>` chooses other KB areas (`--list` shows them).
+
+**NetApp KB with your support login** (full articles instead of the public part): sign in to kb.netapp.com in
+your browser, open the developer tools → Network → any request to kb.netapp.com → copy the request `cookie`
+header value, and give it to the sync as the environment variable `NETAPP_KB_COOKIE` (never in a file you
+commit). Then `python3 sync/sync_netapp_kb.py --dest work/docs --refresh-partial`. The session lasts a few
+hours; just copy a fresh one and re-run (incremental). Keep the resulting library internal: the articles
+are licensed to your support contract.
 
 **Where the content comes from:** docs.netapp.com is generated from the NetAppDocs GitHub repos, so the
 git sync *is* the NetApp documentation site; the Dell part is downloaded from dell.com /
@@ -107,7 +126,8 @@ MCP_AUTH_TOKENS=$(openssl rand -hex 32) INDEX_DB=./data/index/docs.db python3 se
 
 ## Tests
 
-`test_search.py` (indexer, all tools, incremental update, two libraries), `test_sync_dell.py` (hub parsing,
-allowed hosts, login pages rejected, incremental), `test_sync_issues.py` (pagination, comments, PRs skipped,
-incremental). Verified: offline image with `--network none` answers searches; 21,540 documents / 74,055
+`test_search.py` (indexer, all tools, incremental update, two libraries), `test_stdio.py` (the stdio MCP
+server handshake + all tools, the CLI, NetApp KB extraction incl. login-gated articles), `test_sync_dell.py`
+(hub parsing, allowed hosts, login pages rejected, incremental), `test_sync_issues.py` (pagination, comments,
+PRs skipped, incremental). Verified: offline image with `--network none` answers searches; 21,540 documents / 74,055
 sections index in seconds.

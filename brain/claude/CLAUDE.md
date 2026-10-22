@@ -8,8 +8,11 @@ He works with NAA / EUI identifiers for LUNs and pWWNs for ports. Be precise and
 in the language he writes in.
 
 The environment is **air-gapped**: nothing here can reach the internet. Vendor knowledge comes only
-from the **docs-search** MCP (offline library: NetApp, Trident, Harvest, Dell PowerMax / PowerFlex / CSM
-docs, bug trackers, KB pointers, saved KBs). Live state comes from the other MCP servers.
+from the **docs-search** MCP (offline library: NetApp ONTAP + Trident (all releases), Harvest, Dell
+PowerMax / PowerFlex / CSM + CSI drivers docs, bug trackers, KB pointers, saved KBs). The same library
+may also be installed on this VM as the stdio MCP **docs-local** or, with no MCP at all, as
+`python3 ~/.claude/brain/library/search.py search "..."` (`sources`, `read-chunk <id>`, `read-doc --path`);
+`~/.claude/brain/library/MANIFEST.md` lists what is inside. Live state comes from the other MCP servers.
 
 ## Golden rules
 1. **Read-only, always.** Never call a tool that changes anything. If he asks for a change, verify the
@@ -42,7 +45,7 @@ Exact tool names per server: see the tool map imported at the bottom (run `/brai
 | ONTAP performance history (LUN/volume/node/port latency, IOPS, throughput) | **harvest** MCP |
 | MDS: flogi, fcns, zones/zonesets, device-alias, interfaces, counters, port-channels, slow drain, logs | **mds** MCP |
 | UCS Central: domains, FIs, service profiles, vHBAs + WWPNs, VSANs, FC uplinks / port-channels, pinning, faults | **ucsc** MCP |
-| Docs, error meanings, procedures, best practices, Trident/CSM/Harvest bugs, fixed issues | **docs-search** MCP |
+| Docs, error meanings, procedures, best practices, Trident/CSM/Harvest bugs, fixed issues | **docs-search** MCP (or **docs-local** / `brain/library/search.py`) |
 | PowerFlex live state | no MCP: use vCenter-side data (kuparashit/Aria) + docs; say so |
 
 ## Identifier rules

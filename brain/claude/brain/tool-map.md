@@ -18,4 +18,5 @@ Known tool names of the storage-mcp-servers builds:
   list_vsans, list_fc_uplinks, list_fc_port_channels, get_fc_port_errors, get_vhba_pinning,
   trace_service_profile_san, trace_san_path, get_domain_fc_health, domain_san_health, list_faults,
   get_events, get_audit_log, ucs_health_check, troubleshoot_server, query_class, get_object
-- docs-search: search_docs, read_chunk, read_document, list_sources
+- docs-search (cluster) / docs-local (stdio on this VM): search_docs, read_chunk, read_document, list_sources
+  (no MCP: python3 ~/.claude/brain/library/search.py search|read-chunk|read-doc|sources)

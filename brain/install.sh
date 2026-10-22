@@ -1,6 +1,7 @@
 #!/bin/sh
 # Install the storage brain into ~/.claude on the VM that runs Claude Code.
-#   sh install.sh            (re-run after every git pull; your environment.md and tool-map.md are kept)
+#   sh install.sh                 (re-run after every git pull; your environment.md and tool-map.md are kept)
+#   sh install.sh --no-library    skip the documentation library (when docs-search runs on the cluster)
 set -eu
 HERE=$(cd "$(dirname "$0")" && pwd)
 SRC=$HERE/claude
@@ -19,6 +20,26 @@ cp "$SRC/hooks/block-write-tools.py" "$DST/hooks/"
 for f in environment.md tool-map.md; do
   [ -f "$DST/brain/$f" ] || cp "$SRC/brain/$f" "$DST/brain/$f"
 done
+
+# Documentation library (library/*.part-* in this repo): extracted into ~/.claude/brain/library so the
+# docs can be searched on this VM with no server at all (python3 library/search.py ...) and registered
+# as the stdio MCP server "docs-local" for Claude Code (mcp_stdio.py, standard library only).
+LIB=$HERE/../library
+if [ "${1:-}" != "--no-library" ] && [ -f "$LIB/VERSION" ] && ls "$LIB"/docs-library-*.part-* >/dev/null 2>&1; then
+  if [ "$(cat "$LIB/VERSION")" != "$(cat "$DST/brain/library/VERSION" 2>/dev/null || true)" ]; then
+    echo "installing documentation library $(cat "$LIB/VERSION") into $DST/brain/library (a minute)..."
+    TMP=$(mktemp -d)
+    sh "$LIB/join.sh" "$TMP" >/dev/null
+    rm -rf "$DST/brain/library"; mv "$TMP/docs-library" "$DST/brain/library"; rmdir "$TMP"
+    cp "$LIB/VERSION" "$DST/brain/library/VERSION"
+  fi
+  echo "library $(cat "$DST/brain/library/VERSION"): python3 $DST/brain/library/search.py sources"
+  if command -v claude >/dev/null 2>&1; then
+    claude mcp get docs-local >/dev/null 2>&1 || claude mcp add docs-local -s user \
+      -- python3 "$DST/brain/library/mcp_stdio.py" --db "$DST/brain/library/docs.db" \
+      && echo "registered MCP server docs-local (stdio, no dependencies; same tools as docs-search)"
+  fi
+fi
 
 SERVERS=""
 if command -v claude >/dev/null 2>&1; then
