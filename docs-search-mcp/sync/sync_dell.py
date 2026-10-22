@@ -32,12 +32,16 @@ ALLOWED = re.compile(r"^https://(dl\.dell\.com/content/|www\.dell\.com/[^\s]*?(c
                      r"(www\.)?delltechnologies\.com/asset/)", re.I)
 
 
-DELL_COOKIE = os.getenv("DELL_KB_COOKIE", "")    # optional: your logged-in dell.com/support browser session
+DELL_COOKIE = os.getenv("DELL_KB_COOKIE", "")    # optional: your logged-in www.dell.com/support browser session
+DL_COOKIE = os.getenv("DELL_DL_COOKIE", DELL_COOKIE)   # optional: the session for dl.dell.com downloads (login-only manuals)
 
 
 def fetch(url, timeout=120):
     hdrs = {"User-Agent": UA, "Accept": "*/*"}
-    if DELL_COOKIE and urllib.parse.urlparse(url).netloc.endswith("dell.com"):
+    host = urllib.parse.urlparse(url).netloc
+    if host == "dl.dell.com" and DL_COOKIE:
+        hdrs["Cookie"] = DL_COOKIE
+    elif DELL_COOKIE and host.endswith("dell.com"):
         hdrs["Cookie"] = DELL_COOKIE
     req = urllib.request.Request(url, headers=hdrs)
     with urllib.request.urlopen(req, timeout=timeout) as r:
