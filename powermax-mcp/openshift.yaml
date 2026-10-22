@@ -1,0 +1,52 @@
+# 1) Secret with tokens + every Unisphere (keeps passwords out of Git):
+#      oc create secret generic powermax-mcp-env --from-env-file=.env
+# 2) Set the image below, then: oc apply -f openshift.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: powermax-mcp
+  labels: {app: powermax-mcp}
+spec:
+  replicas: 1
+  selector:
+    matchLabels: {app: powermax-mcp}
+  template:
+    metadata:
+      labels: {app: powermax-mcp}
+    spec:
+      containers:
+      - name: powermax-mcp
+        image: <registry>/powermax-mcp:2.0
+        ports:
+        - containerPort: 8000
+          name: http
+        envFrom:
+        - secretRef:
+            name: powermax-mcp-env
+        readinessProbe:
+          httpGet: {path: /healthz, port: 8000}
+          initialDelaySeconds: 3
+          periodSeconds: 10
+        livenessProbe:
+          httpGet: {path: /healthz, port: 8000}
+          initialDelaySeconds: 15
+          periodSeconds: 20
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          runAsNonRoot: true
+          capabilities: {drop: ["ALL"]}
+        resources:
+          requests: {cpu: 50m, memory: 128Mi}
+          limits: {memory: 512Mi}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: powermax-mcp
+spec:
+  selector: {app: powermax-mcp}
+  ports:
+  - name: http
+    port: 8000
+    targetPort: 8000
