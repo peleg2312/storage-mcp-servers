@@ -25,6 +25,7 @@ import urllib.error
 import urllib.parse
 import urllib.request
 
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 UA = os.getenv("DOCS_SYNC_USER_AGENT", "docs-search-mcp/1.0 (internal documentation index)")
 PDF_LINK = re.compile(
     r'href="([^"]+?\.pdf(?:\?[^"]*)?)"[^>]*>(.*?)</a>', re.I | re.S)
@@ -103,7 +104,16 @@ def main():
     ap.add_argument("--delay", type=float, default=float(os.getenv("DOCS_SYNC_DELAY", "2")))
     ap.add_argument("--max-per-hub", type=int, default=400)
     ap.add_argument("--dry-run", action="store_true")
+    ap.add_argument("--browser-cookies", action="store_true",
+                    help="send your browser's dell.com login cookies (pip install browser-cookie3): login-only manuals")
+    ap.add_argument("--retry", action="store_true", help="re-download documents whose saved copy is Dell's redirect page")
     a = ap.parse_args()
+    global DELL_COOKIE, DL_COOKIE
+    if a.browser_cookies:
+        import sync_web
+        c = sync_web.browser_cookie_header("dell.com")
+        if c:
+            DELL_COOKIE = DL_COOKIE = c
 
     jobs = []  # (product, url, title, hub)
     for kind, product, url in load_sources(a.sources):
@@ -143,7 +153,8 @@ def main():
             manifests[d] = json.load(open(mpath)) if os.path.exists(mpath) else {}
         name = safe_name(url)
         target = os.path.join(d, name)
-        if os.path.exists(target) and os.path.getsize(target) > 0:
+        if os.path.exists(target) and os.path.getsize(target) > 0 and not (
+                a.retry and name.endswith(".pdf") and b"modern slavery" in open(target, "rb").read(400000).lower()):
             skipped += 1
             manifests[d].setdefault(name, {"url": url, "title": title, "hub": hub})
             continue

@@ -26,10 +26,13 @@ sh ../library/join.sh work && mv work/docs-library/docs work/docs && mkdir -p wo
   && mv work/docs-library/docs.db work/index/docs.db && rm -rf work/docs-library
 
 # b) Dell PowerMax / PowerFlex product PDFs + the Dell KB articles listed in sources/web-pages.txt
-python3 sync/sync_dell.py --dest work/docs/dell          # hubs in sources/dell-sources.txt -> 200+ PDFs
+#    Many manuals need a Dell login: sign in to dell.com/support in your browser first and add
+#    --browser-cookies (pip install browser-cookie3 in the venv); --retry replaces copies that came
+#    back as Dell's redirect page instead of the document.
+python3 sync/sync_dell.py --dest work/docs/dell --browser-cookies --retry
 python3 sync/sync_web.py  --dest work/docs               # KB pages (Dell, VMware, NetApp) one URL per line
-python3 sync/sync_dell_kb.py --dest work/docs            # EVERY Dell KB article of PowerMax / PowerFlex / CSM-CSI
-                                                         #   (per-product listings on the support site + seed list)
+python3 sync/sync_dell_kb.py --dest work/docs --browser-cookies   # Dell KB articles of PowerMax / PowerFlex / CSM-CSI
+                                                         #   (seed list + related-article links; login-only ones with your session)
 
 # c) Trident / CSM / Harvest bug trackers (every issue with workaround + fixed version)
 GITHUB_TOKEN=<read-only token> python3 sync/sync_github_issues.py --dest work/docs

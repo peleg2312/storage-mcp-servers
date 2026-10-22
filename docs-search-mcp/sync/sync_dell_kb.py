@@ -140,7 +140,11 @@ def main():
     ap.add_argument("--listings", action="store_true",
                     help="also try the support-site product listings (usually JavaScript shells; off by default)")
     ap.add_argument("--max-articles", type=int, default=0, help="stop after N saved articles (0 = all)")
+    ap.add_argument("--browser-cookies", action="store_true",
+                    help="send your browser's dell.com login cookies (pip install browser-cookie3): login-only articles")
     a = ap.parse_args()
+    if a.browser_cookies:
+        sync_web.DELL_COOKIE = sync_web.browser_cookie_header("dell.com") or sync_web.DELL_COOKIE
     work = os.path.join(here, "work")
     os.makedirs(work, exist_ok=True)
 

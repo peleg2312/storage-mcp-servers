@@ -58,6 +58,29 @@ def robots_ok(url):
 DELL_COOKIE = os.getenv("DELL_KB_COOKIE", "")    # optional: your logged-in dell.com/support browser session
 
 
+def browser_cookie_header(domain):
+    """Cookie header for `domain` taken from the browser you are logged in with (Chrome, Edge, Firefox,
+    Safari...), via the browser-cookie3 package:  pip install browser-cookie3 . Returns "" if unavailable."""
+    try:
+        import browser_cookie3
+    except ImportError:
+        print("browser-cookie3 is not installed: pip install browser-cookie3", file=sys.stderr)
+        return ""
+    for loader in (browser_cookie3.load, browser_cookie3.chrome, browser_cookie3.safari, browser_cookie3.firefox,
+                   browser_cookie3.edge):
+        try:
+            jar = loader(domain_name=domain)
+            pairs = [f"{c.name}={c.value}" for c in jar]
+            if pairs:
+                print(f"using {len(pairs)} browser cookies for {domain}", file=sys.stderr)
+                return "; ".join(pairs)
+        except Exception as e:  # noqa: BLE001  (locked profile, keychain refused, browser absent...)
+            last = e
+    print(f"no browser cookies found for {domain} ({last if 'last' in dir() else 'no browser'}); "
+          "sign in to dell.com/support in Chrome, Edge, Firefox or Safari first", file=sys.stderr)
+    return ""
+
+
 def fetch(url):
     hdrs = {"User-Agent": UA, "Accept": "text/html,application/pdf,*/*"}
     if DELL_COOKIE and urllib.parse.urlparse(url).netloc.endswith("dell.com"):
@@ -116,7 +139,12 @@ def main():
     ap.add_argument("--urls", help="file with one URL per line (vendor/product guessed from the host)")
     ap.add_argument("--delay", type=float, default=float(os.getenv("DOCS_SYNC_DELAY", "3")))
     ap.add_argument("--refresh", action="store_true")
+    ap.add_argument("--browser-cookies", action="store_true",
+                    help="send your browser's dell.com login cookies (pip install browser-cookie3)")
     a = ap.parse_args()
+    if a.browser_cookies:
+        global DELL_COOKIE
+        DELL_COOKIE = browser_cookie_header("dell.com") or DELL_COOKIE
     rows = load(a)
     stats = {"saved": 0, "skipped": 0, "login_or_empty": 0, "robots": 0, "failed": 0}
     manifests = {}
