@@ -3,8 +3,9 @@
 #   sh library/join.sh                 -> library/docs-library/   (docs/, docs.db, search.py, MANIFEST.md)
 #   sh library/join.sh /some/dir       -> /some/dir/docs-library/
 set -e
-cd "$(dirname "$0")"
 DEST=${1:-$(pwd)}
+case "$DEST" in /*) ;; *) DEST=$(pwd)/$DEST ;; esac     # relative to where you run it, not to library/
+cd "$(dirname "$0")"
 LABEL=$(cat VERSION)
 TAR="docs-library-$LABEL.tar.gz"
 cat "$TAR.part-"* > "$TAR"
