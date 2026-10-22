@@ -41,6 +41,28 @@ if [ "${1:-}" != "--no-library" ] && [ -f "$LIB/VERSION" ] && ls "$LIB"/docs-lib
   fi
 fi
 
+# "Peleg As A Service": a big styled banner every time Claude Code is started (shell wrapper around the
+# `claude` command, added to ~/.bashrc / ~/.zshrc once), and a matching styled status line inside the UI.
+mkdir -p "$DST/banner"
+cp "$SRC/banner/paas-banner.py" "$SRC/banner/paas-statusline.py" "$DST/banner/"
+for rc in "$HOME/.bashrc" "$HOME/.zshrc"; do
+  [ -f "$rc" ] || [ "$rc" = "$HOME/.bashrc" ] || continue
+  grep -q "storage brain: Peleg As A Service" "$rc" 2>/dev/null && continue
+  cat >> "$rc" <<'EOS'
+
+# >>> storage brain: Peleg As A Service banner (sh brain/install.sh) >>>
+claude() {
+  case "${1:-}" in ""|-*)
+    case " $* " in *" -p "*|*" --print "*|*" -v "*|*" --version "*|*" -h "*|*" --help "*) ;;
+      *) python3 "$HOME/.claude/banner/paas-banner.py" ;; esac ;;
+  esac
+  command claude "$@"
+}
+# <<< storage brain <<<
+EOS
+  echo "banner: added the claude wrapper to $rc (open a new shell, or: . $rc)"
+done
+
 SERVERS=""
 if command -v claude >/dev/null 2>&1; then
   echo "reading MCP servers (claude mcp list)..."
@@ -50,5 +72,6 @@ fi
 python3 "$HERE/merge_settings.py" "$DST/settings.json" $SERVERS
 
 echo
-echo "Installed into $DST: CLAUDE.md, $(ls "$SRC/skills" | wc -l | tr -d ' ') skills, $(ls "$SRC/agents" | wc -l | tr -d ' ') agents, read-only hook."
+python3 "$DST/banner/paas-banner.py"
+echo "Installed into $DST: CLAUDE.md, $(ls "$SRC/skills" | wc -l | tr -d ' ') skills, $(ls "$SRC/agents" | wc -l | tr -d ' ') agents, read-only hook, banner + status line."
 echo "Next: start claude and run   /brain-setup"

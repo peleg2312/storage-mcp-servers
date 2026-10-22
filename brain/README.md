@@ -11,6 +11,7 @@ environment, how to use each MCP server, and your procedures. Read-only by desig
 | 17 skills | `claude/skills/*/SKILL.md` | the procedures (below); Claude uses them automatically or you call `/<name>` |
 | 6 agents | `claude/agents/*.md` | fabric-investigator, powermax-analyst, ontap-analyst, vmware-mapper, capacity-planner, docs-researcher |
 | Documentation library | `../library/` → `~/.claude/brain/library/` | NetApp ONTAP + Trident docs and KB, EMS references, Dell CSM / CSI / PowerMax / PowerFlex docs, VMware KB; searched through the MCP server `docs-local` or `python3 ~/.claude/brain/library/search.py search "..."` |
+| Banner + status line | `claude/banner/paas-banner.py`, `paas-statusline.py` | "Peleg As A Service" in big coloured block letters every time `claude` is started (a shell wrapper added to `~/.bashrc` / `~/.zshrc`), and a styled status line (name · model · folder · context left) inside the UI |
 | Safety hook | `claude/hooks/block-write-tools.py` | blocks any MCP call that looks like a change (create/delete/modify..., HTTP POST/PUT/PATCH/DELETE, non-show CLI, SQL writes) - protects you even if a third-party MCP has write tools |
 
 Skills: `brain-setup`, `identify-lun`, `unused-luns`, `decommission-check`, `trace-path`, `zoning-audit`,

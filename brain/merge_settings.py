@@ -22,6 +22,9 @@ for srv in servers:
     rule = f"mcp__{srv}"
     if rule not in allow:
         allow.append(rule)
+# styled status line inside the Claude Code UI (only if none is configured yet)
+if "statusLine" not in s:
+    s["statusLine"] = {"type": "command", "command": "python3 ~/.claude/banner/paas-statusline.py", "padding": 0}
 with open(path, "w") as f:
     json.dump(s, f, indent=2)
-print(f"settings: hook installed, MCP servers allowed without prompts: {', '.join(servers) or '(none found)'}")
+print(f"settings: hook installed, status line set, MCP servers allowed without prompts: {', '.join(servers) or '(none found)'}")
