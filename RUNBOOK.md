@@ -15,7 +15,7 @@ then push. A later "incremental" bundle applies the same way, on top of the prev
 
 ## 2. PC: complete the library (Dell PDFs, Dell KB, bug trackers, the rest of the NetApp KB)
 
-Needs: `git`, `python3` (3.10+), `pip install pypdf`, and for the bug trackers any read-only GitHub token.
+Needs: `git`, `python3` (3.10+), a venv with `pip install pypdf cryptography fonttools` (macOS: `python3 -m venv work/venv && source work/venv/bin/activate` first), and for the bug trackers any read-only GitHub token.
 Dell's site blocks cloud IPs, so this step has to run from a normal office/home PC.
 
 ```bash
