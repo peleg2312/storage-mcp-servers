@@ -9,6 +9,12 @@
 | | ONTAP | | | |
 | | PowerFlex | | | |
 
+## Versions (they select the matching docs: ontap-ems-<ver>, trident-<release>, CSM doc version)
+- ONTAP version per cluster (e.g. 9.15.1 → docs product `ontap-ems-9151`):
+- Trident version (e.g. 25.02 → `trident-2502`) and CSM / CSI driver versions (PowerMax, PowerFlex):
+- PowerMaxOS / Unisphere / Solutions Enabler versions; PowerFlex version:
+- NX-OS (MDS), UCS Manager / Central, vSphere / ESXi versions:
+
 ## Fabrics
 | Fabric | Switches | VSAN(s) | Notes |
 |---|---|---|---|

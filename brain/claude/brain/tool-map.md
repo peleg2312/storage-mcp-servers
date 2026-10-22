@@ -12,11 +12,15 @@ Known tool names of the storage-mcp-servers builds:
 - mds: list_switches, run_show, flogi_summary, trace_wwpn, zone_check, port_channel_health,
   scan_port_errors, slow_drain_check, show_logging_onboard, get_log_events, fabric_health_check,
   check_host_connectivity, investigate_slow_drain, port_history, show_flogi_database*, show_fcns_database*,
-  show_zoneset_active*, show_device_alias_*, show_interface_*, show_port_channel_summary, show_logging
+  show_zoneset_active*, show_device_alias_*, show_interface_*, show_port_channel_summary, show_logging,
+  show_accounting_log
 - ucsc: list_centrals, list_domains, list_fabric_interconnects, list_servers, get_server,
   list_service_profiles, get_service_profile, get_service_profile_vhbas, find_wwpn, list_wwn_pools,
   list_vsans, list_fc_uplinks, list_fc_port_channels, get_fc_port_errors, get_vhba_pinning,
   trace_service_profile_san, trace_san_path, get_domain_fc_health, domain_san_health, list_faults,
   get_events, get_audit_log, ucs_health_check, troubleshoot_server, query_class, get_object
-- docs-search (cluster) / docs-local (stdio on this VM): search_docs, read_chunk, read_document, list_sources
-  (no MCP: python3 ~/.claude/brain/library/search.py search|read-chunk|read-doc|sources)
+- docs-search (cluster) / docs-local (stdio on this VM), only one of them is usually connected, same tools:
+  search_docs(query, vendor, product, limit), read_chunk(chunk_id, context), read_document(path|url, start,
+  max_sections), list_sources (no MCP: python3 ~/.claude/brain/library/search.py search|read-chunk|read-doc|sources).
+  vendor = netapp | dell | vmware | kb; product = substring of the names in ~/.claude/brain/library/MANIFEST.md
+  (e.g. ontap-ems-9151, kb-san, trident-2410, csm, powermax, powerflex, kb).

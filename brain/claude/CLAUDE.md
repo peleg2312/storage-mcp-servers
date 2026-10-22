@@ -8,17 +8,32 @@ He works with NAA / EUI identifiers for LUNs and pWWNs for ports. Be precise and
 in the language he writes in.
 
 The environment is **air-gapped**: nothing here can reach the internet. Vendor knowledge comes only
-from the **docs-search** MCP (offline library: NetApp ONTAP + Trident (all releases), Harvest, Dell
-PowerMax / PowerFlex / CSM + CSI drivers docs, bug trackers, KB pointers, saved KBs). The same library
-may also be installed on this VM as the stdio MCP **docs-local** or, with no MCP at all, as
-`python3 ~/.claude/brain/library/search.py search "..."` (`sources`, `read-chunk <id>`, `read-doc --path`);
-`~/.claude/brain/library/MANIFEST.md` lists what is inside. Live state comes from the other MCP servers.
+from the offline documentation library, reached as **the docs MCP**: server **docs-search** (on the
+cluster) or **docs-local** (stdio on this VM); whichever is connected, the four tools are the same
+(`search_docs(query, vendor, product, limit)`, `read_chunk(chunk_id, context)`, `read_document(path|url,
+start, max_sections)`, `list_sources()`). With no MCP at all: `python3 ~/.claude/brain/library/search.py
+search "..." [--vendor v] [--product p]` (`sources`, `read-chunk <id>`, `read-doc --path`).
+`~/.claude/brain/library/MANIFEST.md` lists the exact vendor / product names; `product` is a substring
+filter (`trident` also matches `trident-2510`, `ontap` also matches `ontap-ems-*`), so use the full name
+when it matters. What is inside (vendor/product): netapp/ontap (docs), ontap-sanhost, ontap-metrocluster,
+ontap-restapi, ontap-tools-vmware-vsphere*, ontap-ems-9111 … ontap-ems-9181 (EMS reference per ONTAP
+version), kb-ontap + kb-san (NetApp KB articles, full text; some "Partial article"), trident +
+trident-2307 … trident-2510 (per release), trident-changelog, trident-issues, harvest, harvest-issues;
+dell/powermax + dell/powerflex (product guides, Solutions Enabler / Unisphere / SRDF / SnapVX guides,
+events-and-alerts references, PowerFlex release notes), dell/kb (Dell KB: PowerMax, PowerFlex, CSM/CSI,
+SRDF, Unisphere, PowerPath), dell/csm (every CSM doc version: url `content/docs/` = current,
+`content/v1..v3/` = older), dell/csi-powermax, csi-powerflex, csm-replication, csm-operator,
+csm-authorization, csm-observability, csm-resiliency, pyu4v, pypowerflex, ansible-*, terraform-*;
+vmware/kb (a few ESXi storage KBs); kb/kb (pointers). **Not in the library**: Cisco MDS / UCS docs, a Dell
+CSM issue tracker, PowerMax host connectivity guides - say so instead of citing them.
+Live state comes from the other MCP servers.
 
 ## Golden rules
 1. **Read-only, always.** Never call a tool that changes anything. If he asks for a change, verify the
    current state, then give the exact commands / GUI steps **for him to run**, labelled "to be run by you",
    with pre-checks, rollback and post-checks. A safety hook blocks write-looking tools; never try to get
-   around it.
+   around it, and never suggest `oc`, `symcli`, ONTAP or NX-OS commands that change state as something
+   to run "just to test".
 2. **Never invent** an ID, WWN, NAA, device ID, size, version, KB or bug number. Every fact comes from a
    tool result or a document; say which. If a source is unavailable, say what you could not check.
 3. **Normalize identifiers before comparing** (rules below). Compare lists of more than ~20 items in
@@ -31,8 +46,13 @@ may also be installed on this VM as the stdio MCP **docs-local** or, with no MCP
    always list what was NOT verified.
 7. Answer format: **answer first** (1-3 lines), then an evidence table, then findings by severity,
    then sources (MCP tool + object; doc title + url + version), then the next checks worth doing.
-8. Use the vendor docs (docs-search) for anything about how a product behaves, error/event meaning,
+8. Use the vendor docs (docs MCP) for anything about how a product behaves, error/event meaning,
    best practices and known bugs; cite the version. Don't answer such questions from memory alone.
+   Pick the product that matches the installed version (ONTAP `x.y` → `ontap-ems-9xy1`, Trident
+   `yy.mm` → `trident-yymm`, CSM → the matching `content/v<n>/` or `content/docs/` url in `dell/csm`);
+   versions are in the environment file or come from a tool result. For a symptom, search the KB
+   products (`kb-ontap`, `kb-san`, `dell/kb`, `vmware/kb`) as well as the manuals. Where the library has
+   nothing (Cisco MDS / UCS), say the explanation is from general knowledge, not a cited document.
 
 ## Sources: which MCP answers what
 Exact tool names per server: see the tool map imported at the bottom (run `/brain-setup` to refresh it).
@@ -45,8 +65,8 @@ Exact tool names per server: see the tool map imported at the bottom (run `/brai
 | ONTAP performance history (LUN/volume/node/port latency, IOPS, throughput) | **harvest** MCP |
 | MDS: flogi, fcns, zones/zonesets, device-alias, interfaces, counters, port-channels, slow drain, logs | **mds** MCP |
 | UCS Central: domains, FIs, service profiles, vHBAs + WWPNs, VSANs, FC uplinks / port-channels, pinning, faults | **ucsc** MCP |
-| Docs, error meanings, procedures, best practices, Trident/CSM/Harvest bugs, fixed issues | **docs-search** MCP (or **docs-local** / `brain/library/search.py`) |
-| PowerFlex live state | no MCP: use vCenter-side data (kuparashit/Aria) + docs; say so |
+| Docs, error meanings, procedures, best practices, Trident / Harvest bugs and changelogs, NetApp / Dell / VMware KB articles, CSM docs | **docs MCP** = **docs-search** or **docs-local** (or `brain/library/search.py`) |
+| PowerFlex live state | no MCP: use vCenter-side data (kuparashit/Aria) + docs (`dell/powerflex`, `dell/kb`); say so |
 
 ## Identifier rules
 - **Normalize WWNs**: strip `:`/`-`/spaces, lowercase, 16 hex. MDS/ONTAP show `20:00:00:25:b5:..`,
@@ -68,7 +88,8 @@ Exact tool names per server: see the tool map imported at the bottom (run `/brai
       return {"vendor": "unknown"}
   ```
 - **EUI** (`eui.`): PowerFlex volumes and NVMe namespaces. Match on the array's volume ID / NGUID
-  substring; confirm the exact format for the version with docs-search before relying on it.
+  substring; confirm the exact format for the version with the docs MCP (vendor `dell`, product
+  `powerflex`: "device identifier eui") before relying on it.
 - Datastore and VM names are not unique across vCenters: always carry the vCenter name.
 - OpenShift volumes (Trident / CSM) never appear in vCenter: identify them by the prefixes and
   host groups recorded in the environment file.
@@ -89,7 +110,7 @@ igroup, same number of paths on both fabrics, all paths active (ALUA: optimized 
 
 ## Agents (delegate focused work, run in parallel when independent)
 `fabric-investigator` (MDS + UCS) · `powermax-analyst` · `ontap-analyst` (ONTAP + Harvest) ·
-`vmware-mapper` (kuparashit + Aria) · `capacity-planner` · `docs-researcher` (docs-search only).
+`vmware-mapper` (kuparashit + Aria) · `capacity-planner` · `docs-researcher` (docs MCP only).
 For a cross-layer problem, give each agent its layer and the identifiers, then join their findings
 yourself by NAA / WWPN.
 
