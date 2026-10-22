@@ -14,6 +14,7 @@ from mcp.types import ToolAnnotations
 import main  # upstream server: reads MDS_<N>_* at import and builds `main.mcp`
 import mcp_auth
 import mds_extra
+import mds_san
 
 # --- defence in depth: one plain `show` command, no chaining/pipes/redirection ---
 _upstream_validate = main._validate_command
@@ -29,8 +30,9 @@ def _strict_validate(cmd: str) -> str:
 
 main._validate_command = _strict_validate
 
-mds_extra.register(main.mcp, ToolAnnotations(readOnlyHint=True, destructiveHint=False,
-                                             idempotentHint=True, openWorldHint=True))
+_RO = ToolAnnotations(readOnlyHint=True, destructiveHint=False, idempotentHint=True, openWorldHint=True)
+mds_extra.register(main.mcp, _RO)
+mds_san.register(main.mcp, _RO)
 
 INSTRUCTIONS = """\
 You are connected to a READ-ONLY gateway to Cisco MDS Fibre Channel switches (NX-OS via NX-API).
@@ -45,6 +47,21 @@ cleared or fixed anything.
 - Output is the switch's NX-API JSON: tables are nested as TABLE_x / ROW_x; a single row may be
   an object instead of a list. Text-only commands come back as plain text.
 - Switch log timestamps are in the switch's own clock/time zone.
+
+== SAN TROUBLESHOOTING COMPOSITES (start here) ==
+- trace_wwpn(pwwn): one call, all switches: FLOGI (switch/interface/VSAN/FCID), FCNS, aliases, every
+  ACTIVE zone containing it with the other members and their login state, the login port's health
+  (and port-channel members if it logs in through an F-port-channel from a UCS FI), and warnings
+  (not logged in, logged in but not zoned, zone partner offline, VSAN mismatch, port errors).
+- zone_check(a, b): are two WWPNs/aliases zoned together in the active zoneset, per VSAN, and are both
+  logged in. Use for "can host X reach array port Y".
+- port_channel_health: per port-channel state, speed, trunk VSANs and per-member state, speed, B2B
+  credits and error counters; flags down members, speed mismatch and erroring members.
+- scan_port_errors: ranks every interface by non-zero error/discard/CRC/link-failure/credit counters
+  and lists ports that are down or errDisabled.
+- flogi_summary: logins per interface/VSAN; interfaces with many logins are NPV uplinks such as UCS
+  FI port-channels - shows where each UCS fabric attaches.
+Parsed results include the raw lines; if something looks odd, confirm with run_show.
 
 == TOOLS BEYOND THE FIXED show_* SET ==
 - run_show(command): ANY single `show` command, JSON when available, otherwise text. Use it whenever a
@@ -65,19 +82,21 @@ cleared or fixed anything.
 == WORKFLOWS ==
 Fabric health: list_switches -> show_version / show_module / show_environment on each switch ->
   show_interface_brief (ports down or errDisabled) -> get_log_events max_severity=4 since_hours=24.
-Where is a WWPN / host logged in: show_flogi_database (or _vsan) on each switch -> interface + VSAN
-  + FCID; show_fcns_database_detail for the device type/features; show_device_alias_pwwn for its
-  alias.
+Where is a WWPN / host logged in, and is it zoned: trace_wwpn (one call). zone_check for a pair.
 Zoning: show_zoneset_active_vsan (what is enforced) vs show_zoneset_vsan (configured);
   show_zone_name_vsan for one zone. A device can talk only if both WWPNs (or their aliases) are in
   the same zone of the ACTIVE zoneset in the same VSAN. Check both fabrics.
+Which ports have problems: scan_port_errors, then port_channel_health for port-channels.
 Port problems / slow drain: show_interface_for (state, speed, errors) ->
   show_interface_counters_detailed_for and show_interface_bbcredit_for (B2B credits, TxWait,
   timeouts/discards) -> show_interface_transceiver_detail_for (Rx/Tx power, temperature)
   -> show_logging_onboard error-stats / txwait for history -> get_log_events interface=... .
   Compare across the ports of the same path and both fabrics.
 Congestion / slow drain: slow_drain_check first, then drill into the ports it names.
-ISLs / port-channels: show_port_channel_summary, show_interface_for port-channelN.
+ISLs / port-channels / UCS FI uplinks: port_channel_health (and flogi_summary to see which
+  port-channel carries which FI's logins).
+UCS hosts: a UCS FI runs in NPV mode, so every server vHBA WWPN logs in on the MDS F-port-channel
+  (or F-port) that connects that FI. Fabric A FI -> fabric A MDS, fabric B FI -> fabric B MDS.
 
 == READING THE NUMBERS (rules of thumb) ==
 - CRC / invalid CRC / link failures / sync loss growing -> physical layer: SFP, cable, patch panel.
@@ -95,8 +114,9 @@ ISLs / port-channels: show_port_channel_summary, show_interface_for port-channel
   failures), FCNS/FLOGI rejects, PLATFORM/ENVMON (hardware). Repeated IF_DOWN/IF_UP on one port = flap.
 
 == CROSS-SYSTEM TRACING (if other MCP servers are connected) ==
-UCS Central get_service_profile_vhbas / find_wwpn -> host WWPN, fabric, VSAN
--> here: FLOGI interface, zones in the active zoneset, port errors
+UCS Central trace_service_profile_san / get_service_profile_vhbas -> host WWPN, fabric, VSAN, FI uplinks
+-> here: trace_wwpn for each WWPN (FLOGI port-channel from the FI, zones, port errors), then
+   port_channel_health for that FI port-channel
 -> PowerMax find_wwpn -> masking view, storage group, array ports (their WWPNs must log in to the
    same fabric and be in the same zone).
 Use the same WWPN at every hop; present one row per path (fabric A and B).
@@ -115,7 +135,8 @@ def fabric_health_check() -> str:
     return ("Produce a SAN fabric health report. For every switch from list_switches: show_version, "
             "show_module and show_environment (failed modules, fans, PSUs), show_interface_brief (ports "
             "down/errDisabled), show_interface_counters_brief (ports with errors or discards), "
-            "show_zone_status, get_log_events max_severity=4 since_hours=24 (summarise by event and "
+            "show_zone_status, scan_port_errors, port_channel_health, "
+            "get_log_events max_severity=4 since_hours=24 (summarise by event and "
             "interface), and show_logging_onboard error-stats for ports that look bad. Present a table per switch and a "
             "ranked list of issues with the next action for each.")
 
@@ -124,10 +145,11 @@ def fabric_health_check() -> str:
 def check_host_connectivity(pwwn: str, vsan: int = 0) -> str:
     """Is this WWPN logged in and zoned correctly on both fabrics?"""
     v = f" in VSAN {vsan}" if vsan else ""
-    return (f"Check the SAN connectivity of WWPN {pwwn}{v} on every switch: FLOGI (interface, VSAN, FCID), "
-            "FCNS entry, device alias, and every zone of the ACTIVE zoneset that contains it (by pwwn or "
-            "alias) together with the other members. Then check the interface it logs in on for errors, "
-            "B2B credit problems and optical power. Report per fabric and flag anything missing.")
+    return (f"Check the SAN connectivity of WWPN {pwwn}{v}: run trace_wwpn. For each zone partner (array ports), "
+            "check they are logged in. If it logs in through a port-channel, run port_channel_health for it; "
+            "otherwise check the port with show_interface_counters_detailed_for and "
+            "show_interface_transceiver_detail_for. Report per fabric (switch), one row per path, and flag "
+            "anything missing or erroring.")
 
 
 @main.mcp.prompt()

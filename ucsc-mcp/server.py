@@ -391,6 +391,12 @@ Server / SP troubleshooting: get_server(dn) for a blade/rack (hardware, adapters
   interfaces with WWPN and fabric, associated SP, faults on it) or get_service_profile(dn)
   (association, policies, vHBAs with WWPN/fabric/VSAN, vNICs, faults).
 SAN / storage questions:
+  trace_service_profile_san(name or dn) -> START HERE for "why can't host X see storage" or slow SAN:
+    every vHBA (WWPN, fabric, VSAN, pinning), the blade/rack adapter FC interface (link, bad frames),
+    the FI side of each fabric (FC uplinks, port-channels, current errors) and a problems list.
+  get_domain_fc_health(domain) -> SAN health of a whole UCS domain (FI FC ports, port-channels,
+    error counters, vHBA link states, FC faults).
+  list_fc_port_channels / get_fc_port_errors / get_vhba_pinning -> the individual views.
   find_wwpn(wwpn) -> owning SP + vHBA + fabric + pool entry.
   get_service_profile_vhbas(sp_dn) -> all WWPNs, fabric A/B, VSAN per vHBA (feed these to MDS zoning).
   list_fc_uplinks(domain) -> FI FC uplink ports to the SAN (state, speed, peer) for SAN-side issues.
@@ -406,11 +412,16 @@ Inventory: list_servers, list_chassis, list_fabric_interconnects, list_service_p
 - Faults with ack="no" are not acknowledged yet; "cleared" faults are history.
 - A vHBA/host FC interface oper_state other than "up" while the server is powered on points to
   the FI uplink, VSAN or SAN side; check list_fc_uplinks and the MDS fabric.
+- FC error counters: 'last_interval' values are errors in the latest collection interval (happening
+  now); 'totals' are cumulative. CRC / sync / signal losses -> optics, cable or patch panel between FI
+  and MDS. Discards -> congestion or slow drain (check the MDS side). Link failures -> flapping link.
+- A port-channel with members down still works but with less bandwidth; uneven load and
+  congestion are common symptoms. Fabric A and B should both have healthy uplinks for redundancy.
 
 == CROSS-SYSTEM TRACING (if other MCP servers are connected) ==
-UCS: get_service_profile_vhbas -> WWPN + fabric + VSAN
--> MDS: show_flogi_database / show_fcns_database / show_zoneset_active_vsan (zone membership,
-   switch port, CRC/txwait on that port)
+UCS: trace_service_profile_san -> WWPN + fabric + VSAN + FI uplinks/port-channel health
+-> MDS: trace_wwpn per WWPN (the FI is in NPV mode, so host WWPNs log in on the MDS port or
+   port-channel that connects that FI; zones; port errors) and port_channel_health for it
 -> PowerMax: find_wwpn -> masking view, storage group, array ports.
 Use the same WWPN at every hop and present the end-to-end path as a table.
 
@@ -841,6 +852,294 @@ def query_class(class_id: str, prop: str = "", value: str = "", match: str = "eq
 
 
 # --------------------------------------------------------------------------
+# SAN troubleshooting: FI FC ports, port-channels, error counters, pinning, end-to-end SP trace
+# --------------------------------------------------------------------------
+
+_ERR_KEYS = ("crc_rx", "discard_rx", "discard_tx", "link_failures", "sync_losses", "signal_losses",
+             "too_long_rx", "too_short_rx")
+
+
+def _num(v):
+    try:
+        return float(v)
+    except (TypeError, ValueError):
+        return 0.0
+
+
+def _fi_port(dn):
+    """compute/sys-1008/switch-A/slot-1/switch-fc/port-3[/...] -> ('1008', 'A', '1/3')"""
+    m = re.match(r"compute/sys-(\d+)/switch-([AB])/slot-(\d+)/.*?port-(\d+)", dn or "")
+    return (m.group(1), m.group(2), f"{m.group(3)}/{m.group(4)}") if m else (None, None, None)
+
+
+def _fabric_filter(domain, fabric):
+    if fabric and fabric.upper() not in ("A", "B"):
+        raise ValueError("fabric must be A or B")
+    if domain and fabric:
+        return _under(f"compute/sys-{domain}/switch-{fabric.upper()}")
+    return _domain_filter(domain)
+
+
+def _err_rows(c, domain="", fabric=""):
+    rows = []
+    for m in query(c, "fcErrStats", _fabric_filter(domain, fabric)):
+        port_dn = m.dn.rsplit("/", 1)[0]
+        dom, fi, port = _fi_port(port_dn)
+        if (domain and dom != str(domain)) or (fabric and fi != fabric.upper()):
+            continue
+        tot = {k: int(_num(getattr(m, k, 0))) for k in _ERR_KEYS}
+        delta = {k: int(_num(getattr(m, k + "_delta", 0))) for k in _ERR_KEYS}
+        rows.append({"central": c.name, "domain": dom, "fabric": fi, "port": port, "port_dn": port_dn,
+                     "totals": {k: v for k, v in tot.items() if v},
+                     "last_interval": {k: v for k, v in delta.items() if v},
+                     "collected": getattr(m, "time_collected", None),
+                     "_score": sum(delta.values()) * 1000 + sum(tot.values())})
+    return rows
+
+
+def _port_channels(c, domain="", fabric=""):
+    """FI SAN port-channels (fabricFcSanPc + members) and physical FC ports flagged as PC members."""
+    flt = _domain_filter(domain)
+    pcs = {}
+    for pc in query(c, "fabricFcSanPc", flt):
+        if fabric and (pc.switch_id or "").upper() != fabric.upper():
+            continue
+        pcs[pc.dn] = {"central": c.name, "dn": pc.dn, "domain": _domain_of(pc.dn), "fabric": pc.switch_id,
+                      "port_channel": pc.port_id, "name": pc.name, "admin_state": pc.admin_state,
+                      "oper_state": pc.oper_state, "oper_speed": pc.oper_speed, "state_qual": pc.state_qual,
+                      "peer": pc.peer_dn, "members": []}
+    for ep in query(c, "fabricFcSanPcEp", flt):
+        parent = ep.dn.rsplit("/", 1)[0]
+        if parent in pcs:
+            pcs[parent]["members"].append({"slot_port": f"{ep.slot_id}/{ep.port_id}", "admin_state": ep.admin_state,
+                                           "oper_state": ep.oper_state, "reason": ep.oper_state_reason,
+                                           "membership": ep.membership, "peer": ep.peer_dn})
+    for p in pcs.values():
+        p["members_up"] = sum(1 for m in p["members"] if (m["oper_state"] or "").lower() == "up")
+    phys = []
+    for fp in query(c, "fcPIo", _fabric_filter(domain, fabric)):
+        if (fp.is_port_channel_member or "").lower() not in ("yes", "true"):
+            continue
+        dom, fi, port = _fi_port(fp.dn)
+        if (domain and dom != str(domain)) or (fabric and fi != fabric.upper()):
+            continue
+        phys.append({"domain": dom, "fabric": fi, "port": port, "oper_state": fp.oper_state,
+                     "oper_speed": fp.oper_speed, "admin_state": fp.admin_state, "wwn": fp.wwn, "peer": fp.peer_dn})
+    return list(pcs.values()), phys
+
+
+@mcp.tool(annotations=RO)
+def list_fc_port_channels(domain: str = "", fabric: str = "", central: str = "") -> dict:
+    """Fabric Interconnect SAN (FC) port-channels to the MDS: per port-channel its fabric (A/B),
+    admin/oper state, speed and member ports with their state and down-reason; plus the physical FI FC
+    ports that are port-channel members (state, speed, WWN). domain: numeric id; fabric: A or B.
+    A port-channel with members down halves bandwidth for every vHBA pinned to it."""
+    def one(c):
+        pcs, phys = _port_channels(c, domain, fabric)
+        return [{"central": c.name, "port_channels": pcs, "member_ports_physical": phys}]
+    rows, err = fan_out(central, one)
+    out = {"results": rows}
+    problems = [f"{r['central']} dom {p['domain']} FI-{p['fabric']} pc-{p['port_channel']}: "
+                f"{p['members_up']}/{len(p['members'])} members up, oper {p['oper_state']}"
+                for r in rows for p in r["port_channels"]
+                if p["members"] and (p["members_up"] < len(p["members"]) or (p["oper_state"] or "") != "up")]
+    out["problems"] = problems
+    if not any(r["port_channels"] or r["member_ports_physical"] for r in rows):
+        out["note"] = ("No FC port-channels found for this scope (none configured, or this UCS Central does "
+                       "not inventory them). Check list_fc_uplinks for individual FI FC ports.")
+    if err:
+        out["unreachable_centrals"] = err
+    return out
+
+
+@mcp.tool(annotations=RO)
+def get_fc_port_errors(domain: str = "", fabric: str = "", top: int = 50, include_clean: bool = False,
+                       central: str = "") -> dict:
+    """FC error counters of Fabric Interconnect FC ports (uplinks to the MDS and FC storage ports):
+    CRC, discards rx/tx, link failures, sync/signal losses, too long/short frames - both totals and
+    the last collection interval ('last_interval': errors that are happening NOW). Ranked worst first.
+    domain: numeric id; fabric: A or B."""
+    rows, err = fan_out(central, lambda c: _err_rows(c, domain, fabric))
+    if not include_clean:
+        rows = [r for r in rows if r["totals"] or r["last_interval"]]
+    rows.sort(key=lambda r: r["_score"], reverse=True)
+    for r in rows:
+        r.pop("_score", None)
+    out = _cap(rows, top, err)
+    out["ports_with_current_errors"] = sum(1 for r in rows if r["last_interval"])
+    return out
+
+
+def _resolve_sp(service_profile, central):
+    """Accept a service-profile DN or an exact name; return (central, sp_mo)."""
+    if "/" in service_profile:
+        return find_dn(service_profile, central)
+    hits = []
+    for c in pick(central):
+        hits += [(c, m) for m in query(c, "lsServer", _filter("name", service_profile)) if m.name == service_profile]
+    inst = [h for h in hits if h[1].type == "instance"] or hits
+    if not inst:
+        raise LookupError(f"No service profile named {service_profile!r}; try list_service_profiles name_contains=")
+    if len(inst) > 1:
+        raise ValueError(f"Several service profiles named {service_profile!r}: "
+                         f"{[(c.name, m.dn) for c, m in inst]}; pass the DN instead")
+    return inst[0]
+
+
+def _pinning(c, sp_dn, vhba_mos):
+    out = {}
+    for v in vhba_mos:
+        grp = (v.pin_to_group_name or "").strip()
+        entry = {"pin_group": grp or None, "targets": []}
+        if grp:
+            for g in query(c, "fabricSanPinGroup", _filter("name", grp)):
+                if g.name != grp:
+                    continue
+                for t in c.call(lambda h, dn=g.dn: h.query_children(in_dn=dn, class_id="fabricSanPinTarget")):
+                    entry["targets"].append({"pin_group_dn": g.dn, "fabric": t.fabric_id, "target": t.ep_dn,
+                                             "slot_port": f"{t.slot_id}/{t.port_id}" if t.port_id else None,
+                                             "status": t.target_status})
+            entry["mode"] = "static (SAN pin group)"
+        else:
+            entry["mode"] = ("dynamic: the FI picks an FC uplink or port-channel in the vHBA's VSAN; the "
+                             "port actually used shows on the MDS as the FLOGI interface (trace_wwpn)")
+        out[v.dn] = entry
+    return out
+
+
+@mcp.tool(annotations=RO)
+def get_vhba_pinning(service_profile: str, central: str = "") -> dict:
+    """How each vHBA of a service profile reaches the SAN: static SAN pin group and its targets (FI
+    uplink port or port-channel per fabric) or dynamic pinning. service_profile: DN or exact name."""
+    c, sp = _resolve_sp(service_profile, central)
+    vh = c.call(lambda h: h.query_children(in_dn=sp.dn, class_id="vnicFc"))
+    pins = _pinning(c, sp.dn, vh)
+    return {"central": c.name, "service_profile": sp.name, "dn": sp.dn,
+            "vhbas": [{"name": v.name, "wwpn": v.addr, "fabric": v.switch_id, **pins[v.dn]} for v in vh]}
+
+
+@mcp.tool(annotations=RO)
+def trace_service_profile_san(service_profile: str, central: str = "") -> dict:
+    """End-to-end UCS side of a host's SAN paths in ONE call (service_profile = DN or exact name):
+    per vHBA -> WWPN, fabric A/B, VSAN, pinning, the physical adapter FC interface on the blade/rack
+    (state, link, bad frames), and the Fabric Interconnect side of that fabric: FC uplink ports and
+    port-channels (state, members up) with current error counters. Ends with the WWPNs to feed to the
+    MDS (trace_wwpn) and PowerMax (find_wwpn) servers, and a list of problems found."""
+    c, sp = _resolve_sp(service_profile, central)
+    vhbas, _, sp_faults = _sp_subtree(c, sp.dn)
+    vh_mos = c.call(lambda h: h.query_children(in_dn=sp.dn, class_id="vnicFc"))
+    pins = _pinning(c, sp.dn, vh_mos)
+    server_dn = sp.pn_dn or ""
+    domain = _domain_of(server_dn)
+    phys, stats = {}, {}
+    if server_dn:
+        for m in c.call(lambda h: h.query_dn(server_dn, hierarchy=True)) or []:
+            cid = m.get_class_id()
+            if cid == "AdaptorHostFcIf":
+                phys[(m.wwn or "").upper()] = m
+            elif cid == "AdaptorFcPortStats":
+                stats[m.dn.rsplit("/", 1)[0]] = m
+    fabrics = {}
+    if domain:
+        errs = {r["port_dn"]: r for r in _err_rows(c, domain)}
+        pcs, pc_phys = _port_channels(c, domain)
+        for fab in sorted({(v["fabric"] or "").upper() for v in vhbas if v["fabric"]}):
+            ups = []
+            for fp in query(c, "fcPIo", _fabric_filter(domain, fab)):
+                dom, fi, port = _fi_port(fp.dn)
+                if dom != domain or fi != fab or (fp.if_role or "") not in ("network", "nas", ""):
+                    continue
+                e = errs.get(fp.dn, {})
+                ups.append({"port": port, "admin_state": fp.admin_state, "oper_state": fp.oper_state,
+                            "speed": fp.oper_speed, "port_channel_member": fp.is_port_channel_member,
+                            "errors_last_interval": e.get("last_interval"), "errors_total": e.get("totals")})
+            fabrics[fab] = {"fc_uplinks": ups,
+                            "port_channels": [p for p in pcs if (p["fabric"] or "").upper() == fab]}
+    paths, problems = [], []
+    if not server_dn:
+        problems.append("service profile is not associated with a physical server")
+    for v in vhbas:
+        p = phys.get((v["wwpn"] or "").upper())
+        st = stats.get(p.dn) if p is not None else None
+        fab = (v["fabric"] or "").upper()
+        row = {"vhba": v["name"], "wwpn": v["wwpn"], "fabric": fab, "vsan": v["vsan"],
+               "pinning": pins.get(v["dn"]),
+               "adapter_interface": None if p is None else {
+                   "dn": p.dn, "oper_state": p.oper_state, "link_state": p.link_state,
+                   "operability": p.operability, "peer": p.peer_dn,
+                   "rx_bad_frames": int(_num(getattr(st, "rx_bad_frames", 0))) if st else None,
+                   "tx_bad_frames": int(_num(getattr(st, "tx_bad_frames", 0))) if st else None},
+               "next_hops": {"mds": f"trace_wwpn pwwn={v['wwpn']}", "powermax": f"find_wwpn wwpn={v['wwpn']}"}}
+        paths.append(row)
+        if p is None and server_dn:
+            problems.append(f"{v['name']}: no adapter FC interface currently carries {v['wwpn']}")
+        elif p is not None:
+            if (p.link_state or "up").lower() not in ("up",):
+                problems.append(f"{v['name']}: adapter link_state {p.link_state}")
+            if st and (_num(st.rx_bad_frames) or _num(st.tx_bad_frames)):
+                problems.append(f"{v['name']}: bad frames rx={st.rx_bad_frames} tx={st.tx_bad_frames}")
+        f = fabrics.get(fab, {})
+        if f and not any((u["oper_state"] or "") == "up" for u in f.get("fc_uplinks", [])) and f.get("fc_uplinks"):
+            problems.append(f"fabric {fab}: no FC uplink is up on the FI")
+        for u in f.get("fc_uplinks", []):
+            if u["admin_state"] == "enabled" and u["oper_state"] != "up":
+                problems.append(f"fabric {fab}: FI FC uplink {u['port']} is {u['oper_state']}")
+            if u.get("errors_last_interval"):
+                problems.append(f"fabric {fab}: FI FC port {u['port']} errors now {u['errors_last_interval']}")
+        for pc in f.get("port_channels", []):
+            if pc["members"] and pc["members_up"] < len(pc["members"]):
+                problems.append(f"fabric {fab}: FC port-channel {pc['port_channel']} has "
+                                f"{pc['members_up']}/{len(pc['members'])} members up")
+    fabs = {r["fabric"] for r in paths}
+    if len(fabs) < 2 and paths:
+        problems.append(f"only fabric(s) {sorted(fabs)} have a vHBA - no SAN redundancy")
+    for f in sp_faults:
+        problems.append(f"fault {f['code']} ({f['severity']}): {f['descr']}")
+    return {"central": c.name, "service_profile": sp.name, "dn": sp.dn, "assoc_state": sp.assoc_state,
+            "server": server_dn or None, "domain": domain, "paths": paths, "fabric_interconnect": fabrics,
+            "problems": list(dict.fromkeys(problems)),
+            "next_step": "Run trace_wwpn on the MDS server for each WWPN, then find_wwpn on PowerMax."}
+
+
+@mcp.tool(annotations=RO)
+def get_domain_fc_health(domain: str, central: str = "") -> dict:
+    """SAN health of one UCS domain in one call: FI FC ports by role and state (uplinks down),
+    FC port-channels and members up, ports with FC errors in the last interval and in total, VSANs,
+    server vHBA adapter interfaces by link state, and FC-related active faults."""
+    cs = pick(central)
+    if len(cs) > 1:
+        raise ValueError("Several centrals are configured; pass central=<name> with a domain id")
+    c = cs[0]
+    dfl = _domain_filter(domain)
+    ports = [m for m in query(c, "fcPIo", dfl) if _in_domain(m.dn, domain)]
+    by_role = Counter((p.if_role or "unknown", p.oper_state) for p in ports)
+    down = []
+    for p in ports:
+        if p.admin_state == "enabled" and p.oper_state != "up":
+            _, fi, port = _fi_port(p.dn)
+            down.append({"fabric": fi, "port": port, "role": p.if_role, "oper_state": p.oper_state})
+    pcs, _ = _port_channels(c, domain)
+    errs = sorted(_err_rows(c, domain), key=lambda r: r["_score"], reverse=True)
+    for r in errs:
+        r.pop("_score", None)
+    host_fc = [m for m in query(c, "adaptorHostFcIf", dfl) if _in_domain(m.dn, domain)]
+    faults = [m for m in query(c, "faultInst", _and(dfl, 'not (severity, "cleared", type="eq")'))
+              if _in_domain(m.dn, domain)]
+    fc_faults = [_to_dict(f, ("severity", "code", "descr", "created", "ack")) for f in faults
+                 if re.search(r"/switch-fc/|/host-fc-|/fc-|vsan|vhba|\bfc\b|fibre|san", f"{f.dn} {f.descr}", re.I)]
+    vsans = [_to_dict(v, ("id", "name", "switch_id", "zoning_state"))
+             for v in query(c, "fabricVsan", dfl) if _in_domain(v.dn, domain)]
+    return {"central": c.name, "domain": domain,
+            "fi_fc_ports": [{"role": k[0], "oper_state": k[1], "count": n} for k, n in sorted(by_role.items())],
+            "enabled_ports_not_up": down,
+            "port_channels": pcs,
+            "ports_with_errors": [r for r in errs if r["totals"] or r["last_interval"]][:30],
+            "ports_with_errors_now": sum(1 for r in errs if r["last_interval"]),
+            "vhba_adapter_interfaces_by_link_state": dict(Counter(m.link_state for m in host_fc)),
+            "vsans": vsans, "fc_faults": fc_faults[:50]}
+
+
+# --------------------------------------------------------------------------
 # Prompts
 # --------------------------------------------------------------------------
 
@@ -868,13 +1167,23 @@ def troubleshoot_server(server_or_service_profile: str) -> str:
 @mcp.prompt()
 def trace_san_path(service_profile_or_wwpn: str) -> str:
     """End-to-end SAN path for a host across UCS, MDS and PowerMax."""
-    return (f"Trace the SAN paths of '{service_profile_or_wwpn}'. 1) UCS: get_service_profile_vhbas (or "
-            "find_wwpn) for every WWPN with fabric and VSAN; list_fc_uplinks for that domain. 2) If MDS tools "
-            "are available: for each WWPN find the FLOGI (switch, interface, VSAN), the active zones containing "
-            "it, and errors on that interface. 3) If PowerMax tools are available: find_wwpn on the array for "
-            "masking view, storage group and array ports, and check those ports are logged in. Present one row "
-            "per WWPN: fabric, VSAN, switch port, zone(s), array port(s), storage group, status - and flag any "
-            "WWPN that is missing at any hop.")
+    return (f"Trace the SAN paths of '{service_profile_or_wwpn}'. 1) UCS: trace_service_profile_san (or find_wwpn "
+            "first if you only have a WWPN) - WWPNs, fabric, VSAN, adapter link, FI uplinks/port-channel and errors. "
+            "2) MDS (if connected): trace_wwpn for every WWPN (FLOGI switch/port-channel, zones, zone partners logged "
+            "in, port errors) and port_channel_health for the FI port-channel. 3) PowerMax (if connected): find_wwpn "
+            "for each WWPN (masking view, storage group, array ports logged in) and get_port for those array ports. "
+            "Present one row per path (fabric A and B): vHBA, WWPN, VSAN, FI uplink/port-channel, MDS switch+port, "
+            "zone, array port, storage group, status - then the problems found at each hop and the most likely cause.")
+
+
+@mcp.prompt()
+def domain_san_health(domain: str, central: str = "") -> str:
+    """SAN health of one UCS domain, extended to the MDS if connected."""
+    return (f"Check the SAN health of UCS domain {domain}{(' on ' + central) if central else ''}: get_domain_fc_health, "
+            "then list_fc_port_channels and get_fc_port_errors for both fabrics. If MDS tools are connected, run "
+            "flogi_summary to find the FI port-channels on each MDS and port_channel_health for them, and "
+            "scan_port_errors. Report per fabric (A/B): uplinks, port-channel members up, errors now vs historic, "
+            "and the action for each problem.")
 
 
 if __name__ == "__main__":

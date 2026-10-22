@@ -12,16 +12,16 @@ instances** from one pod; nothing it does can change configuration.
 3. **Query-only tools**, all marked `readOnlyHint`.
 4. Also use a UCS Central user with only the **read-only** role.
 
-`python3 test_readonly.py` runs every tool against two fake UCS Centrals and proves writes are blocked.
+`python3 test_readonly.py` and `python3 test_san.py` run every tool against fake UCS Centrals (with server-side filter evaluation) and prove writes are blocked.
 
 ## Built-in guidance for the connecting Claude
 
 - **Server instructions** (sent on connect): DN formats, domains and centrals, which tool to use for
   which question, how to read operability / association / fault states, and the cross-system SAN
   trace with the MDS and PowerMax MCP servers.
-- **Prompts**: `ucs_health_check`, `troubleshoot_server`, `trace_san_path`.
+- **Prompts**: `ucs_health_check`, `troubleshoot_server`, `trace_san_path`, `domain_san_health`.
 
-## Tools (21)
+## Tools (26)
 
 | Area | Tools |
 |---|---|
@@ -29,6 +29,7 @@ instances** from one pod; nothing it does can change configuration.
 | Inventory | `list_domains`, `list_fabric_interconnects`, `list_chassis`, `list_servers`, `get_server`, `list_firmware` |
 | Health / events / logs | `get_domain_health`, `list_faults`, `get_events`, `get_audit_log` |
 | Service profiles | `list_service_profiles`, `get_service_profile`, `get_service_profile_vhbas` |
+| SAN troubleshooting | `trace_service_profile_san` (one call: every vHBA's WWPN/fabric/VSAN/pinning, adapter FC link and bad frames, FI FC uplinks and port-channels with current errors, problems list, next hops for MDS/PowerMax), `get_domain_fc_health`, `list_fc_port_channels`, `get_fc_port_errors`, `get_vhba_pinning` |
 | SAN | `find_wwpn`, `list_wwn_pools`, `list_vsans`, `list_fc_uplinks` |
 | Generic | `get_object` (any DN), `query_class` (any class) |
 
@@ -67,8 +68,8 @@ Note: `ucscsdk` does not verify the UCS Central TLS certificate.
 ## Run
 
 ```bash
-docker load -i ucsc-mcp-2.1.tar.gz     # or: docker build -t ucsc-mcp:2.1 .
-docker run -d -p 8000:8000 --env-file .env ucsc-mcp:2.1
+docker load -i ucsc-mcp-2.2.tar.gz     # or: docker build -t ucsc-mcp:2.2 .
+docker run -d -p 8000:8000 --env-file .env ucsc-mcp:2.2
 ```
 
 OpenShift:

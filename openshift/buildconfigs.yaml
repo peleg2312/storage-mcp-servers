@@ -39,7 +39,7 @@ items:
       contextDir: ucsc-mcp
       sourceSecret: {name: github-source}
     strategy: {type: Docker, dockerStrategy: {dockerfilePath: Dockerfile}}
-    output: {to: {kind: ImageStreamTag, name: "ucsc-mcp:2.1"}}
+    output: {to: {kind: ImageStreamTag, name: "ucsc-mcp:2.2"}}
 - apiVersion: build.openshift.io/v1
   kind: BuildConfig
   metadata: {name: mds-mcp}
@@ -49,4 +49,4 @@ items:
       contextDir: mds-mcp
       sourceSecret: {name: github-source}
     strategy: {type: Docker, dockerStrategy: {dockerfilePath: Dockerfile}}
-    output: {to: {kind: ImageStreamTag, name: "mds-mcp:2.1"}}
+    output: {to: {kind: ImageStreamTag, name: "mds-mcp:2.2"}}
