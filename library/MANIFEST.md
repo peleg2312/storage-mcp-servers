@@ -1,6 +1,6 @@
 # Documentation library 2026.10.22
 
-Indexed 2026-10-22T15:13:54Z: **37162 documents, 147552 sections**. Search it with `python3 search.py search "..."` (no dependencies) or the docs-search MCP server.
+Indexed 2026-10-22T16:07:13Z: **37371 documents, 148862 sections**. Search it with `python3 search.py search "..."` (no dependencies) or the docs-search MCP server.
 
 | Vendor | Product | Documents | Sections | Source |
 |---|---|---:|---:|---|
@@ -19,8 +19,9 @@ Indexed 2026-10-22T15:13:54Z: **37162 documents, 147552 sections**. Search it wi
 | dell | csm-replication | 1 | 17 | https://github.com/dell/csm-replication |
 | dell | csm-repo | 22 | 200 | https://github.com/dell/csm |
 | dell | csm-resiliency | 1 | 8 | https://github.com/dell/karavi-resiliency |
-| dell | kb | 5 | 50 | individual URLs (manifest.json) |
-| dell | powermax | 16 | 3599 |  |
+| dell | kb | 29 | 289 | individual URLs (manifest.json) |
+| dell | powerflex | 1 | 7 | https://www.dell.com/support/kbdoc/en-us/000314729/powerflex-software-documentation |
+| dell | powermax | 18 | 3618 | https://www.dell.com/en-sg/dt/documentation/vmax-all-flash-family.htm |
 | dell | pypowerflex | 2 | 47 | https://github.com/dell/python-powerflex |
 | dell | pyu4v | 22 | 41 | https://github.com/dell/PyU4V |
 | dell | terraform-powerflex | 72 | 891 | https://github.com/dell/terraform-provider-powerflex |
@@ -33,7 +34,8 @@ Indexed 2026-10-22T15:13:54Z: **37162 documents, 147552 sections**. Search it wi
 | netapp | e-series-santricity | 466 | 1210 | https://github.com/NetAppDocs/e-series-santricity |
 | netapp | harvest | 69 | 2821 | https://github.com/NetApp/harvest |
 | netapp | harvest-changelog | 1 | 289 | https://github.com/NetApp/harvest |
-| netapp | kb-ontap | 124 | 367 | individual URLs (manifest.json) |
+| netapp | harvest-issues | 82 | 497 | individual URLs (manifest.json) |
+| netapp | kb-ontap | 137 | 406 | individual URLs (manifest.json) |
 | netapp | kb-san | 43 | 206 | individual URLs (manifest.json) |
 | netapp | ontap | 2226 | 5099 | https://github.com/NetAppDocs/ontap |
 | netapp | ontap-7mode-transition | 377 | 742 | https://github.com/NetAppDocs/ontap-7mode-transition |
@@ -74,6 +76,7 @@ Indexed 2026-10-22T15:13:54Z: **37162 documents, 147552 sections**. Search it wi
 | netapp | trident-2506 | 116 | 968 | https://github.com/NetAppDocs/trident-2506 |
 | netapp | trident-2510 | 118 | 987 | https://github.com/NetAppDocs/trident-2510 |
 | netapp | trident-changelog | 1 | 58 | https://github.com/NetApp/trident |
+| netapp | trident-issues | 87 | 509 | individual URLs (manifest.json) |
 | vmware | kb | 5 | 43 | individual URLs (manifest.json) |
 
 - **netapp**: docs.netapp.com is generated from these NetAppDocs repositories: the git sync IS the NetApp documentation site.
