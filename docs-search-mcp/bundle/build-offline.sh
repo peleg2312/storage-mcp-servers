@@ -3,6 +3,7 @@
 # the air-gapped environment like any other image (registry mirror, file transfer, oc-mirror...).
 #
 #   GITHUB_TOKEN=<read-only token> sh bundle/build-offline.sh
+#   URLS=my-kb-urls.txt GITHUB_TOKEN=... sh bundle/build-offline.sh   (+ a plain list of KB URLs to include)
 #
 # Needs: sh, git, python3 (3.10+, with pypdf installed for the Dell PDFs: pip install pypdf),
 #        docker or podman. Re-runs are incremental (only new/changed documents are fetched/indexed).
@@ -22,6 +23,8 @@ echo "== 2/5 Dell PowerMax / PowerFlex documents"
 python3 "$HERE/sync/sync_dell.py" --dest "$DOCS/dell" || echo "WARNING: Dell sync had errors (continuing)"
 echo "== 3/5 Public bug trackers (Trident, Harvest, CSM)"
 python3 "$HERE/sync/sync_github_issues.py" --dest "$DOCS" || echo "WARNING: issue export had errors (continuing)"
+echo "== 3b/5 Your chosen web pages (NetApp / Dell / VMware KB articles in sources/web-pages.txt)"
+python3 "$HERE/sync/sync_web.py" --dest "$DOCS" ${URLS:+--urls "$URLS"} || echo "WARNING: some web pages failed (continuing)"
 echo "== 4/5 KB pointers, extra files, index"
 mkdir -p "$DOCS/kb" && cp "$HERE"/sources/kb/*.md "$DOCS/kb/"
 [ -d "$HERE/extra" ] && cp -r "$HERE/extra/." "$DOCS/"      # optional: extra/<vendor>/<product>/files

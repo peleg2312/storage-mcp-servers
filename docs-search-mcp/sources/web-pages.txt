@@ -1,0 +1,9 @@
+# Individual pages to keep offline: NetApp KB, Dell KB, Broadcom/VMware KB, any vendor page.
+# Format:  <vendor> <product> <url>          (one page per line, no crawling)
+# Tip: when you open a useful KB at work, paste its URL here; the next monthly build includes it.
+# Pages that need a login are reported by the script - save those from the browser into
+# extra/<vendor>/<product>/ instead (Ctrl+S or Print -> Save as PDF).
+#
+# netapp  kb      https://kb.netapp.com/...
+# dell    kb      https://www.dell.com/support/kbdoc/en-us/000xxxxxx/...
+# vmware  kb      https://knowledge.broadcom.com/external/article/xxxxxx

@@ -26,14 +26,18 @@ main library (results say `library: main|local`).
 | **Dell CSM** docs (CSI PowerMax/PowerFlex/PowerScale/PowerStore/Unity, replication, Metro, observability, authorization, release notes, troubleshooting) + **PyU4V** guide | `sync/sync-git.sh` | 800 pages |
 | **Bug trackers**: every GitHub issue (open + closed, with all comments/workarounds) of NetApp/trident, NetApp/harvest, dell/csm → products `trident-issues`, `harvest-issues`, `csm-issues` | `sync/sync_github_issues.py` (needs `GITHUB_TOKEN`) | thousands of issues |
 | **Dell PowerMax/VMAX** (Unisphere, Solutions Enabler, REST, SRDF, SnapVX, VMware papers) and **PowerFlex** 3.6–5.x (guides, release notes with fixed/known issues) PDFs from Dell's documentation hubs | `sync/sync_dell.py` (`sources/dell-sources.txt`) | 200+ PDFs |
+| **KB articles / pages you choose** (NetApp KB, Dell KB, Broadcom KB, any vendor page): one URL per line in `sources/web-pages.txt` or a plain URL list (`URLS=file`) | `sync/sync_web.py` (one page per URL, robots.txt respected; login-only pages are reported, save those from the browser into `extra/`) | as many as you add |
 | **KB pointers** (`sources/kb/kb-pointers.md`): verified public KBs with one-line answers | copied | grow it |
 | Anything else: `extra/<vendor>/<product>/...` at build time, or the local library at run time | | |
 
 Sources to add are one line each in `sources/git-repos.txt`, `sources/github-issues.txt`, `sources/dell-sources.txt`.
 `sync-git.sh --netapp-all` adds every public NetAppDocs repo (~2,000).
 
-**What is NOT downloadable:** NetApp KB (kb.netapp.com), NetApp Bugs Online, Dell KB articles and Dell
-SolVe procedures are behind a login and have no export. Their content reaches the library through the
+**Where the content comes from:** docs.netapp.com is generated from the NetAppDocs GitHub repos, so the
+git sync *is* the NetApp documentation site; the Dell part is downloaded from dell.com /
+delltechnologies.com. **Not downloadable in bulk:** the NetApp KB, NetApp Bugs Online, Dell KB and Dell
+SolVe have no export and many articles need a login - add the articles you need by URL (`web-pages.txt`)
+or save them from the browser into `extra/<vendor>/<product>/`. Their content reaches the library through the
 release notes / fixed-issue lists (included), the KB pointers, and articles you save into the local library.
 
 **Licensing:** the content stays the vendors' copyright, fetched for internal reference into your own

@@ -113,7 +113,7 @@ spec:
           # 2) Dell PowerMax / PowerFlex docs, bug trackers, KB pointers, then (re)index everything
           - name: dell-docs-and-index
             image: <registry>/docs-search-mcp:1.1
-            command: ["sh", "-c", "python3 sync/sync_dell.py; python3 sync/sync_github_issues.py --dest /data/docs; mkdir -p /data/docs/kb && cp sources/kb/*.md /data/docs/kb/ && python3 docs_index.py"]
+            command: ["sh", "-c", "python3 sync/sync_dell.py; python3 sync/sync_github_issues.py --dest /data/docs; python3 sync/sync_web.py --dest /data/docs; mkdir -p /data/docs/kb && cp sources/kb/*.md /data/docs/kb/ && python3 docs_index.py"]
             envFrom:
             - secretRef: {name: docs-search-env}
             volumeMounts:
