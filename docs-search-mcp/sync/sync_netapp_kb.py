@@ -261,7 +261,7 @@ def main():
                 stats["updated" if old else "saved"] += 1
                 stats["partial"] += partial
             done = stats["saved"] + stats["updated"]
-            if done % 10 == 0:
+            if done and done % 10 == 0:
                 flush()
                 rate = done / max(1, time.time() - t0) * 3600
                 print(f"... {done} articles saved ({n}/{len(todo)} checked, {rate:.0f}/h) {folder}", flush=True)

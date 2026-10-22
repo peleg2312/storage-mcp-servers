@@ -6,12 +6,12 @@ related products into the library, for offline search.
     python3 sync/sync_dell_kb.py [--dest /data/docs] [--products powermax scaleio ...] [--delay 3]
                                  [--ids-file extra-ids.txt] [--list]
 
-Dell has no sitemap or export for its KB. This script finds the articles two ways and fetches each one:
- 1. the per-product listings on the support site,
-      https://www.dell.com/support/product-details/en-us/product/<product>/resources/articles
-    (every page of the listing; article numbers are taken from the HTML and from any JSON inside it),
- 2. article numbers you add yourself (--ids-file, one 9-digit number or kbdoc URL per line) and the
-    seed list below (collected from web searches).
+Dell has no sitemap or export for its KB. This script starts from known article numbers (the seed list
+below, collected from web searches, plus --ids-file: one 9-digit number or kbdoc URL per line) and
+SNOWBALLS: every Dell KB article links to related articles; each linked article that concerns the
+PowerMax / PowerFlex / Solutions Enabler / Unisphere / SRDF / PowerPath / CSM-CSI family is fetched too,
+and its links followed, until nothing new is found. (--listings additionally tries the support site's
+per-product article listings, but those pages are JavaScript shells for most products.)
 Each article is saved as <dest>/dell/kb/<id>_<slug>.html with manifest.json (title + URL) via the same
 code as sync_web.py, so the indexer links hits to the kbdoc URL. Incremental: known articles are skipped.
 Polite: one request at a time, --delay seconds apart. Dell's site refuses cloud / datacenter IPs
@@ -104,7 +104,9 @@ def main():
     ap.add_argument("--ids-file", help="extra article numbers / kbdoc URLs, one per line")
     ap.add_argument("--delay", type=float, default=float(os.getenv("DOCS_SYNC_DELAY", "3")))
     ap.add_argument("--list", action="store_true", help="only harvest and print the article URLs")
-    ap.add_argument("--no-listings", action="store_true", help="skip the product listings (seed + ids-file only)")
+    ap.add_argument("--listings", action="store_true",
+                    help="also try the support-site product listings (usually JavaScript shells; off by default)")
+    ap.add_argument("--max-articles", type=int, default=0, help="stop after N saved articles (0 = all)")
     a = ap.parse_args()
     work = os.path.join(here, "work")
     os.makedirs(work, exist_ok=True)
@@ -115,20 +117,99 @@ def main():
             m = re.search(r"(\d{9})", line)
             if m:
                 ids.add(m.group(1))
-    if not a.no_listings:
+    if a.listings:
         for product in a.products:
             ids |= harvest(product, a.delay, work)
             time.sleep(a.delay)
-    urls = [f"https://www.dell.com/support/kbdoc/en-us/{i}" for i in sorted(ids)]
     list_path = os.path.join(work, "dell-kb-urls.txt")
-    open(list_path, "w").write("\n".join(urls) + "\n")
-    print(f"{len(urls)} Dell KB articles to fetch (list saved to {list_path})")
+    print(f"{len(ids)} Dell KB articles to start from; related articles found inside them are followed "
+          f"(snowball) while they concern {', '.join(FAMILY[:6])}...")
     if a.list:
+        open(list_path, "w").write("\n".join(f"https://www.dell.com/support/kbdoc/en-us/{i}" for i in sorted(ids)) + "\n")
+        print(f"list saved to {list_path}")
         return 0
+    return crawl(ids, a.dest, a.delay, a.max_articles)
 
-    # fetch through sync_web's machinery (manifest, login/empty detection, incremental)
-    sys.argv = ["sync_web.py", "--dest", a.dest, "--urls", list_path, "--sources", os.devnull, "--delay", str(a.delay)]
-    return sync_web.main()
+
+FAMILY = ["PowerMax", "VMAX", "PowerFlex", "VxFlex", "ScaleIO", "Solutions Enabler", "Unisphere", "SRDF",
+          "SnapVX", "TimeFinder", "PowerPath", "Container Storage Modules", "CSI", "CSM", "PowerMaxOS", "SYMCLI"]
+FAMILY_RE = re.compile("|".join(re.escape(f) for f in FAMILY), re.I)
+
+
+def crawl(seed_ids, dest, delay, max_articles):
+    """Fetch every article; queue the kbdoc numbers linked inside an article that belongs to the family."""
+    d = os.path.join(dest, "dell", "kb")
+    os.makedirs(d, exist_ok=True)
+    mf = os.path.join(d, "manifest.json")
+    man = json.load(open(mf)) if os.path.exists(mf) else {}
+    known_ids = {re.search(r"(\d{9})", v.get("url", "")).group(1) for v in man.values() if re.search(r"(\d{9})", v.get("url", ""))}
+    queue, seen = list(sorted(seed_ids)), set(seed_ids)
+    stats = {"saved": 0, "skipped": 0, "off_family": 0, "login_or_empty": 0, "failed": 0, "queued_from_links": 0}
+    t0 = time.time()
+
+    def flush():
+        tmp = mf + ".tmp"
+        json.dump(man, open(tmp, "w"), indent=1)
+        os.replace(tmp, mf)
+
+    try:
+        while queue:
+            kb = queue.pop(0)
+            url = f"https://www.dell.com/support/kbdoc/en-us/{kb}"
+            if kb in known_ids:
+                stats["skipped"] += 1
+                continue
+            try:
+                body, ctype, final = sync_web.fetch(url)
+            except urllib.error.HTTPError as e:
+                stats["failed"] += 1
+                print(f"failed {e.code}: {url}" + (" (Dell refuses this client; try DOCS_SYNC_USER_AGENT=<your browser's UA>)" if e.code == 403 else ""))
+                if e.code in (429, 503):
+                    time.sleep(60)
+                time.sleep(delay)
+                continue
+            except (urllib.error.URLError, OSError) as e:
+                stats["failed"] += 1
+                print(f"failed: {url}: {e}")
+                time.sleep(delay)
+                continue
+            text = body.decode("utf-8", "replace")
+            if sync_web.LOGIN_HINTS.search(text[:200000]) or sync_web.text_len(body) < 500:
+                stats["login_or_empty"] += 1
+                print(f"empty / login page: {url}")
+                time.sleep(delay)
+                continue
+            title = sync_web.title_of(body)
+            head = text[:300000]
+            in_family = bool(FAMILY_RE.search(title)) or bool(FAMILY_RE.search(head))
+            if not in_family and kb not in seed_ids:
+                stats["off_family"] += 1
+                time.sleep(delay)
+                continue
+            name = sync_web.file_name(final, False)
+            with open(os.path.join(d, name), "wb") as f:
+                f.write(body)
+            man[name] = {"url": url, "title": title}
+            known_ids.add(kb)
+            stats["saved"] += 1
+            # related / linked articles -> queue (only from family articles)
+            linked = {i for i in ids_in(body) if i not in seen}
+            for i in sorted(linked):
+                seen.add(i)
+                queue.append(i)
+            stats["queued_from_links"] += len(linked)
+            if stats["saved"] % 10 == 0:
+                flush()
+                print(f"... {stats['saved']} saved, {len(queue)} queued ({stats['saved'] / max(1, time.time() - t0) * 3600:.0f}/h)", flush=True)
+            if max_articles and stats["saved"] >= max_articles:
+                break
+            time.sleep(delay)
+    except KeyboardInterrupt:
+        print("stopped; progress is saved, re-run to continue")
+    finally:
+        flush()
+    print("dell kb:", json.dumps(stats), f"-> {d}")
+    return 0
 
 
 if __name__ == "__main__":
