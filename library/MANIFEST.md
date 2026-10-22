@@ -1,6 +1,6 @@
-# Documentation library 2026.10.22
+# Documentation library 2026.10.23
 
-Indexed 2026-10-22T22:20:38Z: **38958 documents, 108884 sections**. Search it with `python3 search.py search "..."` (no dependencies) or the docs-search MCP server.
+Indexed 2026-10-22T22:36:07Z: **39111 documents, 109678 sections**. Search it with `python3 search.py search "..."` (no dependencies) or the docs-search MCP server.
 
 | Vendor | Product | Documents | Sections | Source |
 |---|---|---:|---:|---|
@@ -19,7 +19,7 @@ Indexed 2026-10-22T22:20:38Z: **38958 documents, 108884 sections**. Search it wi
 | dell | csm-replication | 1 | 17 | https://github.com/dell/csm-replication |
 | dell | csm-repo | 22 | 200 | https://github.com/dell/csm |
 | dell | csm-resiliency | 1 | 8 | https://github.com/dell/karavi-resiliency |
-| dell | kb | 485 | 4776 | individual URLs (manifest.json) |
+| dell | kb | 486 | 4776 | individual URLs (manifest.json) |
 | dell | powerflex | 49 | 9152 | https://www.dell.com/support/kbdoc/en-us/000314729/powerflex-software-documentation |
 | dell | powermax | 30 | 5098 | https://www.dell.com/en-sg/dt/documentation/vmax-all-flash-family.htm |
 | dell | pypowerflex | 2 | 47 | https://github.com/dell/python-powerflex |
@@ -35,7 +35,7 @@ Indexed 2026-10-22T22:20:38Z: **38958 documents, 108884 sections**. Search it wi
 | netapp | harvest | 69 | 2821 | https://github.com/NetApp/harvest |
 | netapp | harvest-changelog | 1 | 289 | https://github.com/NetApp/harvest |
 | netapp | harvest-issues | 82 | 497 | individual URLs (manifest.json) |
-| netapp | kb-ontap | 1251 | 6226 | individual URLs (manifest.json) |
+| netapp | kb-ontap | 1403 | 7020 | individual URLs (manifest.json) |
 | netapp | ontap | 2226 | 5096 | https://github.com/NetAppDocs/ontap |
 | netapp | ontap-7mode-transition | 377 | 713 | https://github.com/NetAppDocs/ontap-7mode-transition |
 | netapp | ontap-afx | 82 | 365 | https://github.com/NetAppDocs/ontap-afx |
