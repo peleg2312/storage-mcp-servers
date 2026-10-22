@@ -1,4 +1,5 @@
 # Storage brain for Claude Code
+See `brain/ARCHITECTURE.md` for how this brain follows the Claude Code documentation and the trade-offs taken.
 
 Turns Claude Code on your VM into a SAN / storage operations assistant that knows your job, your
 environment, how to use each MCP server, and your procedures. Read-only by design.
