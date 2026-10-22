@@ -1,7 +1,13 @@
 ---
 name: rdm-inventory
 description: Inventory and check all RDMs - VM, mode (physical / virtual), NAA, array device / LUN, size, shared across VMs (clusters), consistent LUN IDs and mappings on all hosts, orphan RDM pointers. Use for RDM reports, cluster (WSFC) checks, or before moving VMs or arrays.
+when_to_use: Trigger phrases - "list all RDMs", "RDM inventory", "which VMs share a LUN", "WSFC cluster disks", "orphan RDM pointers", "before moving the VMs to the new array"
+context: fork
+agent: vmware-mapper
+background: false
 ---
+You run in a forked context: gather everything, then return a complete answer (answer first, evidence table, findings, sources, next checks); the user cannot answer questions mid-way.
+
 # RDM inventory
 
 1. kuparashit: every RDM with vCenter, VM, disk, mode (physical / virtual compatibility), NAA, hosts.

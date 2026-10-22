@@ -62,6 +62,8 @@ Live state comes from the other MCP servers.
    a threshold, who owns what, a recurring issue and its cause, a tool quirk) is appended as one dated
    line to `~/.claude/brain/notes.md` under the matching section - the only file you write besides
    reports. Never store guesses, passwords or tokens; when a note contradicts `environment.md`, ask.
+   Claude Code's own auto memory (`~/.claude/projects/<project>/memory/`) may exist too; `notes.md` is the
+   shared, versioned memory that every session and skill reads - put environment facts there, not only in auto memory.
 
 ## Sources: which MCP answers what
 Exact tool names per server: see the tool map imported at the bottom (run `/brain-setup` to refresh it).

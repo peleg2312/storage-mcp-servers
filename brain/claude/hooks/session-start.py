@@ -6,7 +6,10 @@ import os
 import re
 import sys
 
-HOME = os.path.expanduser("~/.claude")
+# the .claude directory this hook was installed into: ~/.claude (user install) or <project>/.claude
+# (install-vm.sh --project <dir>); the documentation library is always shared in ~/.claude/brain/library
+HOME = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+USER_HOME = os.path.expanduser("~/.claude")
 
 
 def read(path, limit=None):
@@ -18,7 +21,7 @@ def read(path, limit=None):
 
 
 def library_line():
-    lib = os.path.join(HOME, "brain", "library")
+    lib = os.path.join(USER_HOME, "brain", "library")
     version = read(os.path.join(lib, "VERSION")).strip()
     head = read(os.path.join(lib, "MANIFEST.md"), 2000)
     m = re.search(r"(\d[\d,]*)\s+documents,\s+(\d[\d,]*)\s+sections", head)
@@ -60,7 +63,7 @@ def hook_line():
     cmds = " ".join(h.get("command", "") for e in hooks.get("PreToolUse", []) for h in e.get("hooks", []))
     if "block-write-tools.py" in cmds and os.path.exists(os.path.join(HOME, "hooks", "block-write-tools.py")):
         return "Read-only guard: active (PreToolUse hook blocks write-looking MCP calls)."
-    return "Read-only guard: NOT configured in ~/.claude/settings.json (re-run sh brain/install.sh)."
+    return f"Read-only guard: NOT configured in {HOME}/settings.json (re-run sh brain/install.sh)."
 
 
 def main():
@@ -75,7 +78,7 @@ def main():
         except Exception:
             pass
     lines.append("Mode: READ-ONLY. Never change anything; give the user the exact commands to run himself. "
-                 "Append newly learned environment facts to ~/.claude/brain/notes.md.")
+                 f"Append newly learned environment facts to {HOME}/brain/notes.md.")
     print("Storage brain: " + "\n".join(lines))
     return 0
 

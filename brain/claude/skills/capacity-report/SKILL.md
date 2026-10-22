@@ -1,6 +1,8 @@
 ---
 name: capacity-report
 description: Capacity report across datastores and arrays - datastore free space and overprovisioning, PowerMax SRP used / subscribed, ONTAP aggregates and volumes, data reduction, growth trend and days-to-full, reclaim candidates. Use for capacity reviews, "where is space running out", monthly reports.
+when_to_use: Trigger phrases - "/capacity-report", "where is space running out", "monthly capacity report", "days to full", "SRP subscribed percent", "datastore overcommit"
+disable-model-invocation: true
 ---
 # Capacity report
 

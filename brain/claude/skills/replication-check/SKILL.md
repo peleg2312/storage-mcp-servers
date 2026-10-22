@@ -1,6 +1,7 @@
 ---
 name: replication-check
 description: Replication health across the arrays - PowerMax SRDF (pair states, invalid tracks, SRDF/Metro witness and bias, link status) from the powermax MCP / Unisphere / symrdf, ONTAP SnapMirror (state, status, lag, healthy, errors), PowerFlex replication consistency groups (RCG state, RPO compliance, journal) - with the library references that define each state. Use for "is replication healthy", "what does state X mean", DR readiness, SnapMirror lag, after a link or site event, or before a failover review.
+when_to_use: Trigger phrases - "is replication healthy", "SRDF pair state", "SnapMirror lag", "what does state Partitioned mean", "DR readiness", "after the link outage"
 ---
 # Replication check
 

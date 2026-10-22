@@ -1,6 +1,8 @@
 ---
 name: change-review
 description: What changed recently across the storage stack - PowerMax audit log, ONTAP events/audit, MDS accounting log and zoning, UCS audit log, Aria alerts - on one timeline, correlated with a problem time. Use for "what changed", post-incident timelines, or "did someone touch X".
+when_to_use: Trigger phrases - "/change-review", "what changed since yesterday", "did someone touch storage group X", "post-incident timeline", "who changed the zoning", "changes around 14:00"
+disable-model-invocation: true
 ---
 # Change review
 

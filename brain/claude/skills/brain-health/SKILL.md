@@ -1,6 +1,8 @@
 ---
 name: brain-health
 description: Self-check of the storage brain installation on this VM - which MCP servers answer, docs MCP list_sources versus MANIFEST.md, library version, read-only hook and session-start hook present in settings.json, environment.md and tool-map.md filled, notes.md present, skills and agents installed - as a table with what to fix. Use for "is the brain healthy", after install.sh or git pull, when a tool is missing or an answer looks stale, or when the docs MCP does not respond.
+when_to_use: Trigger phrases - "is the brain healthy", "/brain-health", "the docs MCP does not answer", "check the brain installation", "why does the read-only hook not run"
+disable-model-invocation: true
 ---
 # Brain health
 
@@ -25,8 +27,9 @@ Note which docs server answered (docs-search or docs-local); if neither, test th
   product="ontap-ems")` must return hits with a chunk id you can `read_chunk`.
 
 ## 3. Hooks and settings (`~/.claude/settings.json`)
-- `hooks.PreToolUse` contains `python3 ~/.claude/hooks/block-write-tools.py` with matcher `mcp__.*`
-  (the read-only guard) and `hooks.SessionStart` contains `python3 ~/.claude/hooks/session-start.py`.
+- `hooks.PreToolUse` has a command ending in `hooks/block-write-tools.py` with matcher `mcp__.*` (the read-only
+  guard) and `hooks.SessionStart` one ending in `hooks/session-start.py` (user install: `~/.claude/hooks/`;
+  project install: `"$CLAUDE_PROJECT_DIR"/.claude/hooks/`).
 - Both files exist in `~/.claude/hooks/` and `python3 -m py_compile` them; `allowed-tools.txt` exists
   (list its non-comment entries: each one is a tool the guard skips - are they really read-only?).
 - The session-start lines appeared at the top of this session (library version, document count,
@@ -41,5 +44,20 @@ filled (arrays, versions, fabrics, thresholds - count empty table rows and `__` 
 `skills/*/SKILL.md` and `agents/*.md` counts equal the repo's; the banner / status line files exist.
 
 ## Output
+## 5. Prompt audit (built-in)
+Run `/doctor prompt-audit` (Claude Code >= 2.1.283; audits CLAUDE.md, the imported brain files, skills
+and agents under `~/.claude/`). Report its findings - contradictions between files, references to tools,
+files or commands that do not exist, instructions written for older models - as WARN rows with the
+proposed edit; apply nothing (he decides). If the command is unavailable, say so and compare by hand the
+rules in CLAUDE.md with the skills that cite them (read-only rule, answer format, notes.md as memory).
+
+## 6. Context size
+Imports load at launch and do not save context: `wc -l ~/.claude/CLAUDE.md ~/.claude/brain/environment.md
+~/.claude/brain/notes.md ~/.claude/brain/tool-map.md` must stay around 200 lines in total (the docs
+recommend < 200 lines per file; `tool-map.md` is the usual offender). Over that: WARN with the file to
+trim (summarize old notes.md entries, shorten tool-map.md to the tools actually used).
+Project install (`install-vm.sh --project <dir>`): the same files live in `<dir>/.claude/` and `<dir>/CLAUDE.md`;
+only the library stays in `~/.claude/brain/library`.
+
 Table: component | status (OK / WARN / FAIL) | detail | fix (command or skill for him: `/brain-setup`,
 `sh brain/install.sh`, `claude mcp add …`, edit environment.md). Then the three most useful fixes first.

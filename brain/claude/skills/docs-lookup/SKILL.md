@@ -1,6 +1,7 @@
 ---
 name: docs-lookup
 description: Playbook for answering any product question from the offline documentation library (docs MCP docs-search / docs-local, or search.py) - choosing vendor and product (versioned ontap-ems-<ver>, trident-<yymm>, dell/csm url version), exact-term search first, reading before answering, citing title + url + version, "Partial article", nothing found, and "is this a known bug / fixed in which version" via the bug trackers and release notes. Use whenever a question needs vendor documentation, a KB article, an error meaning, a procedure, a best practice or a known-bug check.
+when_to_use: Trigger phrases - "what does the documentation say about", "find the KB article for", "is this a known bug", "which version fixes", "best practice for", "search the library for"
 ---
 # Library lookup (how every docs answer is built)
 

@@ -1,6 +1,8 @@
 ---
 name: brain-setup
 description: Inventory the connected MCP servers and the environment, then write ~/.claude/brain/tool-map.md and draft ~/.claude/brain/environment.md. Use on first install, after adding or upgrading an MCP server, or when asked to refresh the tool map.
+when_to_use: Trigger phrases - "/brain-setup", "refresh the tool map", "list every tool of every MCP server", "draft environment.md from what you see", "I added a new MCP server"
+disable-model-invocation: true
 ---
 # Brain setup
 

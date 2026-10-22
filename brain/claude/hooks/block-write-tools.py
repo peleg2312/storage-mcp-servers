@@ -3,7 +3,8 @@
 
 The storage MCP servers are read-only on their own; this also protects against third-party MCPs
 (ONTAP, Aria, kuparashit...) that may expose write tools. Exit code 2 = blocked, the reason goes back
-to Claude. False positive? Add the exact tool name (or a glob) to ~/.claude/hooks/allowed-tools.txt.
+to Claude. False positive? Add the exact tool name (or a glob) to allowed-tools.txt next to this hook
+(~/.claude/hooks/ for a user install, <project>/.claude/hooks/ for install-vm.sh --project).
 """
 import fnmatch
 import json
@@ -38,7 +39,7 @@ def tokens(name):
 
 
 def allowed(tool):
-    f = os.path.expanduser("~/.claude/hooks/allowed-tools.txt")
+    f = os.path.join(os.path.dirname(os.path.abspath(__file__)), "allowed-tools.txt")  # next to this hook (~/.claude or <project>/.claude)
     if not os.path.exists(f):
         return False
     pats = [line.strip() for line in open(f) if line.strip() and not line.startswith("#")]
@@ -78,7 +79,7 @@ def main():
     if r:
         print(f"BLOCKED by the read-only policy: {name}: {r}. This environment is read-only; give the user "
               f"the steps to run himself instead. (False positive? the user can add the tool name to "
-              f"~/.claude/hooks/allowed-tools.txt)", file=sys.stderr)
+              f"{os.path.join(os.path.dirname(os.path.abspath(__file__)), 'allowed-tools.txt')})", file=sys.stderr)
         return 2
     return 0
 

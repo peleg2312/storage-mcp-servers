@@ -1,6 +1,8 @@
 ---
 name: morning-check
 description: Daily storage health report across PowerMax, ONTAP, Harvest, MDS, UCS Central and Aria - new alerts, faults, degraded paths and ports, capacity thresholds, replication, recent changes - in one page sorted by severity. Use for "morning check", "daily health", "anything wrong today".
+when_to_use: Trigger phrases - "/morning-check", "morning check", "daily health", "anything wrong today", "what happened overnight"
+disable-model-invocation: true
 ---
 # Morning check
 

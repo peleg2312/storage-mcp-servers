@@ -1,7 +1,13 @@
 ---
 name: zoning-audit
 description: Audit MDS zoning against reality and against array masking - stale members, unzoned initiators, zoned-but-not-masked, missing fabric, alias mismatches, multi-initiator zones, unactivated changes. Use for zoning cleanup, audits, or before/after fabric work.
+when_to_use: Trigger phrases - "/zoning-audit fabric A", "audit the zoning", "stale zone members", "which initiators are not zoned", "zoned but not in a masking view", "pending zoneset changes"
+context: fork
+agent: fabric-investigator
+background: false
 ---
+You run in a forked context: gather everything, then return a complete answer (answer first, evidence table, findings, sources, next checks); the user cannot answer questions mid-way.
+
 # Zoning audit
 
 Scope: all VSANs on both fabrics unless the user narrows it. Save raw outputs to files, compare in python.

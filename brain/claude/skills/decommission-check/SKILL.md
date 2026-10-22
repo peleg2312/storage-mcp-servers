@@ -1,6 +1,7 @@
 ---
 name: decommission-check
 description: Prove whether a specific LUN, datastore or RDM is safe to remove, with a pass/fail checklist across VMware, arrays, replication, OpenShift and fabrics, and the correct removal order for him to execute. Use before any unmap, delete, reclaim or datastore removal.
+when_to_use: Trigger phrases - "is naa.xxx safe to remove", "can I delete datastore X", "before I unmap this LUN", "prove nothing uses this RDM", "decommission checklist"
 ---
 # Decommission check
 

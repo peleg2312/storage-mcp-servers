@@ -36,6 +36,10 @@ documentation library from `../library/` into `~/.claude/brain/library/` and reg
 server **docs-local** (`mcp_stdio.py`, standard library only: no pip, no container). Re-run it after
 every `git pull`; your `environment.md`, `tool-map.md`, `notes.md` and `allowed-tools.txt` are never overwritten.
 `sh install.sh --no-library` skips the library when docs-search runs on the cluster instead.
+`sh install-vm.sh --project <dir>` (or `sh brain/install.sh --project <dir>`) installs the brain **only inside
+that folder**: `<dir>/CLAUDE.md` (imports `@.claude/brain/...`), `<dir>/.claude/{skills,agents,hooks,brain,banner,
+settings.json}` and `<dir>/.mcp.json` with the `docs-local` stdio server; the library stays shared in
+`~/.claude/brain/library`, and the banner prints only when `claude` is started under `<dir>`.
 
 `/brain-setup` makes Claude list every tool of every MCP (kuparashit, Aria, ONTAP, Harvest, MDS, UCSC,
 PowerMax, docs) into `tool-map.md` and draft `environment.md` from what it sees; it asks you to confirm the

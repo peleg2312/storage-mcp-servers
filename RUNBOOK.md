@@ -67,9 +67,14 @@ git clone https://github.com/peleg2312/storage-mcp-servers.git     # or copy the
 cd storage-mcp-servers
 sh install-vm.sh
 ```
-This installs into `~/.claude`: CLAUDE.md, the 17 skills, 6 agents, the read-only safety hook, the
+This installs into `~/.claude`: CLAUDE.md, the 23 skills, 8 agents, the read-only safety hook, the
 documentation library (`~/.claude/brain/library`), the MCP server **docs-local** (stdio, no dependencies),
-the **Peleg As A Service** banner (`claude` wrapper in `~/.bashrc`) and the status line. Then:
+the **Peleg As A Service** banner (`claude` wrapper in `~/.bashrc`) and the status line.
+
+**Brain only inside one folder** (project mode): `sh install-vm.sh --project ~/san` writes `~/san/CLAUDE.md`,
+`~/san/.claude/{skills,agents,hooks,brain,banner,settings.json}` and `~/san/.mcp.json` (docs-local) instead of
+`~/.claude`; the library still goes to `~/.claude/brain/library`. Claude started in any other folder has no brain,
+no hooks and no banner; `claude` need not be installed yet. On the first start inside the folder approve docs-local. Then:
 
 ```bash
 . ~/.bashrc                 # or open a new terminal (the banner wrapper)
