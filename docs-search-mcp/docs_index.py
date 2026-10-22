@@ -350,9 +350,10 @@ def build(docs_root, db_path, full=False, log=print):
     if os.getenv("BUNDLE_LABEL"):
         con.execute("INSERT OR REPLACE INTO meta VALUES ('bundle', ?)", (os.getenv("BUNDLE_LABEL"),))
     con.commit()
-    if added or updated or removed:
+    if added or updated or removed or deduped:
         con.execute("INSERT INTO chunks_fts(chunks_fts) VALUES ('optimize')")
         con.commit()
+        con.execute("VACUUM")                 # give freed pages back: smaller file to ship
     con.close()
     os.replace(tmp, db_path)
     docs, chunks = sqlite3.connect(db_path).execute(
