@@ -43,3 +43,40 @@ netapp  harvest-changelog                https://github.com/NetApp/harvest      
 dell    csm                              https://github.com/dell/csm-docs               content
 # ---- Dell PyU4V (PowerMax REST Python library) ----
 dell    pyu4v                            https://github.com/dell/PyU4V                  docs
+
+# ---- NetApp Trident: docs of every still-supported release (docs.netapp.com/us-en/trident-<ver>) ----
+netapp  trident-2510                     https://github.com/NetAppDocs/trident-2510
+netapp  trident-2506                     https://github.com/NetAppDocs/trident-2506
+netapp  trident-2502                     https://github.com/NetAppDocs/trident-2502
+netapp  trident-2410                     https://github.com/NetAppDocs/trident-2410
+netapp  trident-2402                     https://github.com/NetAppDocs/trident-2402
+netapp  trident-2310                     https://github.com/NetAppDocs/trident-2310
+netapp  trident-2307                     https://github.com/NetAppDocs/trident-2307
+# ---- ONTAP EMS references for the other ONTAP versions, and the REST API reference ----
+netapp  ontap-ems-9181                   https://github.com/NetAppDocs/ontap-ems-9181
+netapp  ontap-ems-9151                   https://github.com/NetAppDocs/ontap-ems-9151
+netapp  ontap-ems-9141                   https://github.com/NetAppDocs/ontap-ems-9141
+netapp  ontap-ems-9121                   https://github.com/NetAppDocs/ontap-ems-9121
+netapp  ontap-ems-9111                   https://github.com/NetAppDocs/ontap-ems-9111
+netapp  ontap-restapi                    https://github.com/NetAppDocs/ontap-restapi
+netapp  ontap-systems-upgrade            https://github.com/NetAppDocs/ontap-systems-upgrade
+
+# ---- Dell CSM / CSI driver repositories: READMEs, release notes, operator docs, changelogs ----
+dell    csm-repo                         https://github.com/dell/csm                    README.md docs CHANGELOG
+dell    csi-powermax                     https://github.com/dell/csi-powermax           README.md
+dell    csi-powerflex                    https://github.com/dell/csi-vxflexos           README.md
+dell    csm-operator                     https://github.com/dell/csm-operator           README.md docs
+dell    csm-replication                  https://github.com/dell/csm-replication        README.md docs
+dell    csm-authorization                https://github.com/dell/karavi-authorization   README.md docs
+dell    csm-observability                https://github.com/dell/karavi-observability   README.md docs
+dell    csm-resiliency                   https://github.com/dell/karavi-resiliency      README.md docs
+dell    csm-metrics-powerflex            https://github.com/dell/karavi-metrics-powerflex README.md docs
+dell    csm-metrics-powermax             https://github.com/dell/csm-metrics-powermax   README.md docs
+dell    cert-csi                         https://github.com/dell/cert-csi               README.md docs
+dell    csm-helm-charts                  https://github.com/dell/helm-charts
+# ---- Dell PowerMax / PowerFlex automation docs (every module/resource documents the array objects and options) ----
+dell    ansible-powermax                 https://github.com/dell/ansible-powermax       README.md KNOWLEDGE.md CHANGELOG.rst docs
+dell    ansible-powerflex                https://github.com/dell/ansible-powerflex      README.md CHANGELOG.rst docs
+dell    terraform-powermax               https://github.com/dell/terraform-provider-powermax  README.md docs
+dell    terraform-powerflex              https://github.com/dell/terraform-provider-powerflex README.md docs
+dell    pypowerflex                      https://github.com/dell/python-powerflex       README.md ChangeLog.md

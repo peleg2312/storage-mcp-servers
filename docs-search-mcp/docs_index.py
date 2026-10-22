@@ -247,6 +247,11 @@ def url_for(vendor, product, rel_in_product, manifest_meta):
     src = SOURCE_URLS.get((vendor, product), "")
     if rel_in_product.endswith(".adoc") and "github.com/NetAppDocs/" in src:
         return f"https://docs.netapp.com/us-en/{product}/{rel_in_product[:-5]}.html"
+    if src == "https://github.com/dell/csm-docs" and rel_in_product.startswith("content/"):
+        # Hugo site dell.github.io/csm-docs: content/docs/a/b.md -> /docs/a/b/, content/v3/... -> /v3/...
+        page = rel_in_product[len("content/"):-3]
+        page = page[:-len("_index")] if page.endswith("_index") else page + "/"
+        return f"https://dell.github.io/csm-docs/{page}"
     if src.startswith("https://github.com/"):
         return f"{src}/blob/HEAD/{rel_in_product}"
     if vendor == "netapp" and rel_in_product.endswith(".adoc"):

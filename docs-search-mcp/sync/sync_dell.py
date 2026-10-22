@@ -49,6 +49,23 @@ def safe_name(url, title=None):
     return base
 
 
+def page_title(body):
+    m = re.search(rb"<title[^>]*>(.*?)</title>", body[:200000], re.I | re.S)
+    return clean_title(m.group(1).decode("utf-8", "replace"))[:80] if m else ""
+
+
+def pdf_link_in_html(body, base):
+    """A PDF link inside an HTML answer: meta refresh, location=..., or the first allowed *.pdf href."""
+    text = body[:400000].decode("utf-8", "replace")
+    for pat in (r'http-equiv="refresh"[^>]*url=([^"\'>\s]+)', r'location(?:\.href)?\s*=\s*["\']([^"\']+\.pdf[^"\']*)',
+                r'href="([^"]+\.pdf(?:\?[^"]*)?)"', r'(https://dl\.dell\.com/content/[^"\'\s<>]+)'):
+        for m in re.finditer(pat, text, re.I):
+            full = urllib.parse.urljoin(base, html.unescape(m.group(1)))
+            if full != base and ALLOWED.match(full):
+                return full
+    return None
+
+
 def clean_title(t):
     t = re.sub(r"<[^>]+>", " ", t or "")
     return re.sub(r"\s+", " ", html.unescape(t)).strip()
@@ -131,10 +148,21 @@ def main():
             time.sleep(a.delay)
             continue
         if name.endswith(".pdf") and not body.startswith(b"%PDF"):
-            failed += 1
-            print(f"not a PDF (login page or error?): {url}", file=sys.stderr)
-            time.sleep(a.delay)
-            continue
+            # dell.com often answers a .pdf link with an HTML page that carries the real file link
+            # (meta refresh / JavaScript redirect / download button): follow it once.
+            inner = pdf_link_in_html(body, url)
+            if inner:
+                try:
+                    time.sleep(a.delay)
+                    body, ctype = fetch(inner)
+                except (urllib.error.URLError, OSError) as e:
+                    body = b""
+                    print(f"follow-up failed {inner}: {e}", file=sys.stderr)
+            if not body.startswith(b"%PDF"):
+                failed += 1
+                print(f"not a PDF ({page_title(body) or 'no title'}): {url}", file=sys.stderr)
+                time.sleep(a.delay)
+                continue
         with open(target + ".part", "wb") as f:
             f.write(body)
         os.replace(target + ".part", target)

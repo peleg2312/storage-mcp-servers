@@ -8,7 +8,8 @@
 
 # ---- PowerMax / VMAX: official documentation hubs ----
 hub  powermax  https://www.dell.com/en-sg/dt/documentation/vmax-all-flash-family.htm
-hub  powermax  https://www.dell.com/support/article/us/en/04/sln314818/powermax-and-vmax-technical-documents-and-videos?lang=en
+# retired address (403 since 2026); replace with the page it redirects to in a browser:
+# hub  powermax  https://www.dell.com/support/article/us/en/04/sln314818/powermax-and-vmax-technical-documents-and-videos?lang=en
 
 # ---- PowerMax: key VMware / replication papers (also referenced by the skills) ----
 pdf  powermax  https://www.delltechnologies.com/asset/en-us/solutions/infrastructure-solutions/technical-support/h8115-powermax-vmware-vaai-wp.pdf
@@ -19,7 +20,6 @@ pdf  powermax  https://www.delltechnologies.com/asset/en-us/products/storage/ind
 
 # ---- PowerFlex: official documentation hubs (3.6, 4.x, 5.x) ----
 hub  powerflex  https://www.dell.com/support/kbdoc/en-us/000314729/powerflex-software-documentation
-hub  powerflex  https://www.dell.com/support/kbdoc/en-us/000210475/powerflex-teknik-belgeler?lang=en
 
 # ---- Specific public KB articles worth keeping offline (see also kb/kb-pointers.md) ----
 page powermax   https://www.dell.com/support/kbdoc/en-us/000204833/how-to-know-what-storage-lun-is-presented-at-a-particular-naa-id
@@ -27,3 +27,8 @@ page powermax   https://www.dell.com/support/kbdoc/en-us/000228219/list-of-symde
 page powermax   https://www.dell.com/support/kbdoc/en-us/000204697/how-to-view-and-modify-powermax-vmax-host-lun-id-hlu
 page powerflex  https://www.dell.com/support/kbdoc/en-us/000264404/how-to-locate-the-device-identifier-eui-in-a-volume-powerflex-3-6-x
 page powerflex  https://www.dell.com/support/kbdoc/en-sg/000437810/powerflex-esxi-sdc-stop-responding-in-vcenter-apd
+
+# ---- PowerMax manuals on dl.dell.com (direct; dl.dell.com/content/manual<id> works without the slug) ----
+pdf  powermax  https://dl.dell.com/content/manual34878027-dell-unisphere-for-powermax-10-0-0-installation-guide.pdf
+pdf  powermax  https://dl.dell.com/content/manual55638050-dell-powermax-file-quick-start-guide.pdf
+pdf  powermax  https://dl.dell.com/content/manual57826791-dell-powermax-file-protocol-guide.pdf

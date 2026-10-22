@@ -9,6 +9,7 @@ config from one Secret, and built-in guidance so a connecting Claude knows how t
 | [`ucsc-mcp`](ucsc-mcp/) | Cisco UCS Central (one or many): inventory, faults, service profiles, FI FC uplinks/port-channels/errors, vHBA pinning, per-host SAN trace | 26 | `images/ucsc-mcp-2.2.tar.gz` |
 | [`docs-search-mcp`](docs-search-mcp/) | Offline documentation + bug library: NetApp docs (ONTAP, SAN hosts, VMware tools, EMS...), Trident, Harvest, Dell CSM, PowerMax, PowerFlex, the Trident/Harvest/CSM bug trackers, KB pointers, your saved KBs and runbooks. Air-gapped mode: library baked into a dated image (`bundle/build-offline.sh`) | 4 | `images/docs-search-mcp-1.1.tar.gz` (base; build the offline image with the script) |
 | [`brain`](brain/) | **Not a server**: the Claude Code "brain" for the VM: CLAUDE.md (role, rules, ID decoding, path model), 17 SAN skills, 6 agents, read-only safety hook, `install.sh` | - | - |
+| [`library`](library/) | **Not a server**: the prebuilt documentation library (NetApp ONTAP + Trident docs and KB, EMS references, Dell CSM / CSI / PowerMax / PowerFlex docs, VMware KB pages) as 45 MB git parts + `MANIFEST.md`. `install-vm.sh` installs it with the brain and a dependency-free MCP server `docs-local`; `build-offline.sh --from-library` bakes it into the docs-search image | - | `library/docs-library-<date>.tar.gz.part-*` |
 | [`mds-mcp`](mds-mcp/) | Cisco MDS switches via NX-API (wraps [alecharn/mds-mcp](https://github.com/alecharn/mds-mcp)): all show commands incl. text-only ones, parsed syslog, OBFL, WWPN trace, zone check, port-channel health, error scan | 72 | `images/mds-mcp-2.2.tar.gz` |
 
 The three share one WWPN-based workflow, so Claude can trace a host's SAN paths end to end:
@@ -19,6 +20,18 @@ UCS  trace_service_profile_san   vHBA WWPN, fabric, VSAN, adapter link, FI uplin
         port_channel_health       FI <-> MDS port-channel members, speed, credits, errors
  -> PowerMax  find_wwpn           initiator -> host -> masking view -> storage group -> array ports
 ```
+
+**Every command for your PC and the VM, in order: [`RUNBOOK.md`](RUNBOOK.md).**
+
+## Offline VM in one command
+
+On the VM that runs Claude Code (python3 + the git clone, nothing else):
+```bash
+git clone https://github.com/peleg2312/storage-mcp-servers.git && cd storage-mcp-servers
+sh install-vm.sh        # brain (CLAUDE.md, skills, agents, hook) + documentation library + MCP server docs-local
+claude                  # then:  /brain-setup
+```
+The MCP servers below (PowerMax, UCS, MDS, docs-search on OpenShift) are added on top with `claude mcp add`.
 
 ## Get the images
 
