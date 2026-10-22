@@ -1,6 +1,8 @@
 # Documentation library 2026.10.23
 
-Indexed 2026-10-22T22:36:07Z: **39111 documents, 109678 sections**. Search it with `python3 search.py search "..."` (no dependencies) or the docs-search MCP server.
+Indexed 2026-10-22T22:36:07Z: **21127 unique documents, 109678 sections** (39111 files: 17984 are identical copies, e.g. the same page in several ONTAP versions, kept as aliases of one indexed copy and shown as `also_in`). Search it with `python3 search.py search "..."` (no dependencies) or the docs-search MCP server.
+
+Document counts below are files per product; an identical copy counts in every product it appears in.
 
 | Vendor | Product | Documents | Sections | Source |
 |---|---|---:|---:|---|

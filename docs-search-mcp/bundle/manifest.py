@@ -26,9 +26,13 @@ def main():
     meta = dict(c.execute("SELECT key, value FROM meta").fetchall())
     tot_d = sum(r[2] for r in rows)
     tot_s = sum(r[3] or 0 for r in rows)
+    folded = c.execute("SELECT count(*) FROM docs WHERE dup_of IS NOT NULL").fetchone()[0]
     print(f"# Documentation library {a.label}\n")
-    print(f"Indexed {meta.get('indexed_at')}: **{tot_d} documents, {tot_s} sections**. "
+    print(f"Indexed {meta.get('indexed_at')}: **{tot_d - folded} unique documents, {tot_s} sections** "
+          f"({tot_d} files: {folded} are identical copies, e.g. the same page in several ONTAP versions, "
+          "kept as aliases of one indexed copy and shown as `also_in`). "
           "Search it with `python3 search.py search \"...\"` (no dependencies) or the docs-search MCP server.\n")
+    print("Document counts below are files per product; an identical copy counts in every product it appears in.\n")
     print("| Vendor | Product | Documents | Sections | Source |")
     print("|---|---|---:|---:|---|")
     for vendor, product, nd, ns, _ in rows:

@@ -24,7 +24,7 @@ def library_line():
     lib = os.path.join(USER_HOME, "brain", "library")
     version = read(os.path.join(lib, "VERSION")).strip()
     head = read(os.path.join(lib, "MANIFEST.md"), 2000)
-    m = re.search(r"(\d[\d,]*)\s+documents,\s+(\d[\d,]*)\s+sections", head)
+    m = re.search(r"(\d[\d,]*)\s+(?:unique\s+)?documents,\s+(\d[\d,]*)\s+sections", head)
     if not version and not head:
         return "Library: not installed on this VM (use the docs-search MCP; sh brain/install.sh installs docs-local)."
     counts = f", {m.group(1)} documents / {m.group(2)} sections" if m else ""
