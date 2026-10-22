@@ -21,6 +21,8 @@ UCS  trace_service_profile_san   vHBA WWPN, fabric, VSAN, adapter link, FI uplin
  -> PowerMax  find_wwpn           initiator -> host -> masking view -> storage group -> array ports
 ```
 
+**Every command for your PC and the VM, in order: [`RUNBOOK.md`](RUNBOOK.md).**
+
 ## Offline VM in one command
 
 On the VM that runs Claude Code (python3 + the git clone, nothing else):
