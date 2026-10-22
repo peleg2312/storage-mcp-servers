@@ -46,8 +46,8 @@ echo "== packing"
 rm -f "$LIB"/docs-library-*.tar.gz.part-* "$LIB"/docs-library-*.tar.gz
 TAR="$WORK/docs-library-$LABEL.tar.gz"
 tar -C "$STAGE" -cf - docs-library | gzip -9 > "$TAR"
-(cd "$LIB" && split -b 45m -d -a 2 "$TAR" "docs-library-$LABEL.tar.gz.part-")
-(cd "$WORK" && sha256sum "docs-library-$LABEL.tar.gz" > "$LIB/SHA256SUMS")
+(cd "$LIB" && split -b 45m -a 2 "$TAR" "docs-library-$LABEL.tar.gz.part-")   # part-aa, part-ab ... (GNU and BSD split)
+(cd "$WORK" && { command -v sha256sum >/dev/null 2>&1 && sha256sum "docs-library-$LABEL.tar.gz" || shasum -a 256 "docs-library-$LABEL.tar.gz"; } > "$LIB/SHA256SUMS")
 echo "$LABEL" > "$LIB/VERSION"
 ls -l "$LIB"
 echo "library $LABEL: $(du -h "$TAR" | cut -f1) in $(ls "$LIB"/docs-library-*.part-* | wc -l) parts -> $LIB"
