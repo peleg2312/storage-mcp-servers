@@ -8,7 +8,8 @@
 
 # ---- PowerMax / VMAX: official documentation hubs ----
 hub  powermax  https://www.dell.com/en-sg/dt/documentation/vmax-all-flash-family.htm
-hub  powermax  https://www.dell.com/support/article/us/en/04/sln314818/powermax-and-vmax-technical-documents-and-videos?lang=en
+# retired address (403 since 2026); replace with the page it redirects to in a browser:
+# hub  powermax  https://www.dell.com/support/article/us/en/04/sln314818/powermax-and-vmax-technical-documents-and-videos?lang=en
 
 # ---- PowerMax: key VMware / replication papers (also referenced by the skills) ----
 pdf  powermax  https://www.delltechnologies.com/asset/en-us/solutions/infrastructure-solutions/technical-support/h8115-powermax-vmware-vaai-wp.pdf
@@ -19,7 +20,6 @@ pdf  powermax  https://www.delltechnologies.com/asset/en-us/products/storage/ind
 
 # ---- PowerFlex: official documentation hubs (3.6, 4.x, 5.x) ----
 hub  powerflex  https://www.dell.com/support/kbdoc/en-us/000314729/powerflex-software-documentation
-hub  powerflex  https://www.dell.com/support/kbdoc/en-us/000210475/powerflex-teknik-belgeler?lang=en
 
 # ---- Specific public KB articles worth keeping offline (see also kb/kb-pointers.md) ----
 page powermax   https://www.dell.com/support/kbdoc/en-us/000204833/how-to-know-what-storage-lun-is-presented-at-a-particular-naa-id
