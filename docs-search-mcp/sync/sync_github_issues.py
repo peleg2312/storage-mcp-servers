@@ -86,7 +86,7 @@ def main():
         manifest = json.load(open(man_f)) if os.path.exists(man_f) else {}
         started = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
         url = f"{API}/repos/{repo}/issues?state=all&per_page=100&sort=updated&direction=asc"
-        if state.get("since"):
+        if state.get("since") and manifest:          # an empty export never narrows the next run
             url += f"&since={state['since']}"
         n = 0
         while url:
@@ -109,7 +109,7 @@ def main():
                     url = None
                     break
         json.dump(manifest, open(man_f, "w"), indent=1)
-        if not a.max_issues:
+        if not a.max_issues and manifest:
             json.dump({"since": started}, open(state_f, "w"))
         print(f"{repo}: {n} issues written/updated -> {d}")
 
