@@ -45,7 +45,7 @@ cd .. && git add -f docs-search-mcp/extra/dell && git commit -m "Dell login-only
 #     and saves every KB article found (login-only ones too), the login-only PDFs of NEEDED.md, every Info Hub
 #     paper on PowerFlex / PowerMax / CSM, and the HTML manuals in sources/dell-manuals.txt topic by topic.
 pip install playwright && python3 -m playwright install chromium
-python3 sync/dell_browser.py login            # window opens: sign in at dell.com/support, close the window
+python3 sync/dell_browser.py login            # window opens: sign in at dell.com/support, then press ENTER in the terminal
 python3 sync/dell_browser.py all              # hours; Ctrl-C any time, re-run continues (add --headless to try without a window)
 python3 sync/import_extra.py --dest work/docs
 
