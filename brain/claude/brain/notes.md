@@ -1,16 +1,10 @@
-# Notes: what Claude has learned about this environment
-<!-- Claude appends one dated line per fact (date · fact · where it came from). Read every session.
-     Only facts confirmed by a tool result or by the user; no guesses, no passwords or tokens.
-     Prune or correct lines by hand; when a section grows past ~30 lines, fold it into environment.md. -->
+# Notes: core facts about this environment (loaded every session: keep under 60 lines)
+<!-- Only what most sessions need. Everything else goes into ~/.claude/brain/notes/<topic>.md, read only when a
+     question touches that topic; the session-start hook lists those files. One dated line per fact
+     (date · fact · source), updated in place, never a second version. No guesses, passwords or tokens. -->
 
 ## Names and prefixes (hosts, SGs, igroups, zones, datastores, Trident / CSM prefixes)
 
 ## Thresholds and schedules (agreed values, replication RPO, maintenance windows)
 
 ## Who owns what (teams, contacts, hand-over rules)
-
-## Recurring issues and their known cause
-
-## Tool quirks (which MCP field means what, slow calls, false positives of the hook)
-
-## Decisions and pending work

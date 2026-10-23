@@ -57,8 +57,9 @@ rules in CLAUDE.md with the skills that cite them (read-only rule, answer format
 ## 6. Context size
 Imports load at launch and do not save context: `wc -l ~/.claude/CLAUDE.md ~/.claude/brain/environment.md
 ~/.claude/brain/notes.md ~/.claude/brain/tool-map.md` must stay around 200 lines in total (the docs
-recommend < 200 lines per file; `tool-map.md` is the usual offender). Over that: WARN with the file to
-trim (summarize old notes.md entries, shorten tool-map.md to the tools actually used).
+recommend < 200 lines per file; `tool-map.md` is the usual offender), notes.md ≤ 60. Over that: WARN with the
+file to trim (move notes.md facts most sessions do not need into `notes/<topic>.md`, which is read on demand;
+shorten tool-map.md to the tools actually used). A topic file over ~150 lines: split it or drop stale facts.
 Project install (`install-vm.sh --project <dir>`): the same files live in `<dir>/.claude/` and `<dir>/CLAUDE.md`;
 only the library stays in `~/.claude/brain/library`.
 

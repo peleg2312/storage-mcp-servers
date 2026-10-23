@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Claude Code SessionStart hook: prints 3-5 lines of brain status into the session context.
 Standard library only; never fails the session (always exit 0, errors are swallowed)."""
+import glob
 import json
 import os
 import re
@@ -45,13 +46,33 @@ def environment_line():
         if cells[0] and any(cells[1:]):  # a label alone (template rows "| A | | | |") is not filled
             filled += 1
     blanks = len(re.findall(r"\b__\b", text))
-    notes = read(os.path.join(HOME, "brain", "notes.md"))
-    facts = sum(1 for l in notes.splitlines() if l.startswith("- "))
     if filled == 0:
         state = "still the template (run /brain-setup or fill it in)"
     else:
         state = f"filled ({filled} table rows{', ' + str(blanks) + ' threshold blanks left' if blanks else ''})"
-    return f"environment.md: {state}; notes.md: {facts} learned facts."
+    return f"environment.md: {state}."
+
+
+NOTES_CAP = 60
+
+
+def memory_line():
+    """The memory catalog: notes.md is always loaded; the topic files are listed here and read on demand."""
+    notes = read(os.path.join(HOME, "brain", "notes.md"))
+    n = len(notes.splitlines())
+    line = f"notes.md: {sum(1 for l in notes.splitlines() if l.startswith('- '))} core facts, {n} lines"
+    if n > NOTES_CAP:
+        line += (f" - OVER the {NOTES_CAP}-line cap: move facts most sessions do not need into notes/<topic>.md "
+                 "(it is loaded every session)")
+    topics = []
+    for path in sorted(glob.glob(os.path.join(HOME, "brain", "notes", "*.md"))):
+        text = read(path)
+        title = text.split("\n", 1)[0].lstrip("# ").strip()[:70]
+        facts = sum(1 for l in text.splitlines() if l.startswith("- "))
+        topics.append(f"  notes/{os.path.basename(path)} ({facts}): {title}")
+    if topics:
+        return line + ".\nMemory topics (read the one a question touches; grep notes/ for an unknown name):\n" + "\n".join(topics)
+    return line + "; no topic files yet (notes/<topic>.md)."
 
 
 def hook_line():
@@ -72,13 +93,13 @@ def main():
     except Exception:
         pass
     lines = []
-    for fn in (library_line, environment_line, hook_line):
+    for fn in (library_line, environment_line, memory_line, hook_line):
         try:
             lines.append(fn())
         except Exception:
             pass
     lines.append("Mode: READ-ONLY. Never change anything; give the user the exact commands to run himself. "
-                 f"Append newly learned environment facts to {HOME}/brain/notes.md.")
+                 "New facts: core ones in notes.md, the rest in notes/<topic>.md.")
     print("Storage brain: " + "\n".join(lines))
     return 0
 

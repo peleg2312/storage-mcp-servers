@@ -13,7 +13,7 @@ best-practices) recommend, and where this brain stands. Re-check with `/brain-he
 | `disable-model-invocation` for user-run workflows | brain-setup, brain-health, morning-check, capacity-report, change-review, code-version-check |
 | `context: fork` for long, self-contained work | unused-luns, zoning-audit, fabric-health, rdm-inventory (foreground, result returns to the chat) |
 | Subagents: short descriptions, `memory`, preload `skills`, least privilege | 8 agents; 7 keep persistent memory (`memory: user`); research agents preload docs-lookup; infra writes are blocked by the hook, not by tool denial (agents still write reports and their memory) |
-| Memory: auto memory + versioned project memory | `notes.md` (imported, versioned, shared) is the system of record; auto memory may exist beside it |
+| Memory: auto memory + versioned project memory; MEMORY.md as an index, topic files read on demand | a catalog: `notes.md` (imported, ≤ 60 lines: names, thresholds, owners) + `notes/<topic>.md` read only when a question touches it; the SessionStart hook lists the topic files with fact counts, so cost per session stays flat as memory grows; auto memory may exist beside it |
 | MCP: project `.mcp.json` for a folder-scoped setup, pre-approved with `enabledMcpjsonServers` | `install-vm.sh --project <dir>` writes `.mcp.json` + `.claude/settings.json`; hooks via `$CLAUDE_PROJECT_DIR`; user install registers `docs-local` with `claude mcp add -s user` |
 | Permissions: allow the MCP servers you trust to avoid prompts | `permissions.allow: mcp__<server>` for every server found by `claude mcp list` |
 | Status line via `statusLine` command | `paas-statusline.py` (model, folder, context %) |

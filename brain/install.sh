@@ -4,7 +4,7 @@
 #   sh install.sh --project <dir>      into <dir> only: <dir>/CLAUDE.md, <dir>/.claude/{skills,agents,hooks,brain,banner,
 #                                      settings.json} and <dir>/.mcp.json - the brain exists only inside that folder
 #   sh install.sh --no-library         skip the documentation library (when docs-search runs on the cluster)
-# Re-run after every git pull; your environment.md, tool-map.md, notes.md and allowed-tools.txt are kept.
+# Re-run after every git pull; your environment.md, tool-map.md, notes.md, notes/ and allowed-tools.txt are kept.
 # The documentation library is always shared in ~/.claude/brain/library (also in project mode).
 set -eu
 HERE=$(cd "$(dirname "$0")" && pwd)
@@ -34,7 +34,7 @@ else
 fi
 LIBDST=$USER_DST/brain/library         # shared by every install on this VM
 TS=$(date +%Y%m%d%H%M%S)
-mkdir -p "$DST/skills" "$DST/agents" "$DST/hooks" "$DST/brain" "$DST/banner" "$USER_DST/brain" "$HOME/storage-reports"
+mkdir -p "$DST/skills" "$DST/agents" "$DST/hooks" "$DST/brain" "$DST/brain/notes" "$DST/banner" "$USER_DST/brain" "$HOME/storage-reports"
 
 # CLAUDE.md (imports rewritten for the project layout), skills, agents, hooks, brain files
 TMP_MD=$(mktemp)

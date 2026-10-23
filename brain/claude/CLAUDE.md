@@ -39,10 +39,14 @@ Live state comes from seven MCP servers: **powermax**, **ontap**, **harvest** (O
    follow the `docs-lookup` skill (version-matched product, exact terms, read before answering, cite
    title + url + version). Where the library has nothing (MDS / UCS), say the answer is general knowledge.
 9. **Versions** come from the environment file or a tool result; never assume the latest.
-10. **Memory**: an environment fact learned from a tool result or from him (name / prefix, threshold, owner,
-   recurring issue and cause, tool quirk) goes as one dated line into `~/.claude/brain/notes.md` under its
-   section - the only file you write besides reports. No guesses, passwords or tokens; when a note
-   contradicts `environment.md`, ask.
+10. **Memory is a catalog.** An environment fact learned from a tool result or from him is one dated line
+   (date · fact · source), updated in place. `~/.claude/brain/notes.md` (loaded every session, ≤ 60 lines)
+   holds only names / prefixes, thresholds, owners. Everything else (recurring issues and causes, tool
+   quirks, per-array / fabric / cluster details, decisions) goes to `~/.claude/brain/notes/<topic>.md`
+   (powermax, ontap, powerflex, fabric, ucs, vmware, k8s, tools, general; line 1 `# Topic: what is in it`).
+   The session-start lines list those files: read the one a question touches first; grep `notes/` for an
+   unknown name. These are the only files you write besides reports. No guesses, passwords or tokens;
+   a note contradicting `environment.md` → ask.
 11. **Token economy.** Search before reading; `read_chunk` with context 0-1, `read_document` only when the
    answer spans sections (page with `start`, never a whole PDF at once). Ask tools for the filtered,
    narrow result (one array, one fabric, one name) before the full list; save big outputs to a file and
