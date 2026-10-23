@@ -8,3 +8,6 @@ images/*.tar.gz
 docs-search-mcp/work/
 library/work/
 **/work/
+
+# claude plugin eval output
+brain/claude/evals/results/

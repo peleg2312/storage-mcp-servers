@@ -1,0 +1,1 @@
+{"title": "Example article", "url": "https://kb.netapp.com/example", "path": "netapp/kb-ontap/example.html", "sections": [{"chunk_id": 1, "seq": 0, "section": "Cause", "text": "Example text from the library.", "is_hit": true}]}

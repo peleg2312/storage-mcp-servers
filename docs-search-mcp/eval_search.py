@@ -13,11 +13,14 @@ import os
 import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-import search_cli as lib  # noqa: E402
+try:
+    import search_cli as lib  # noqa: E402  (in the library folder it is search.py)
+except ImportError:
+    import search as lib  # noqa: E402
 
 
 def ranked_docs(c, q, k=10):
-    """Documents in rank order, the way search_docs answers (all words first, then the fallback)."""
+    """Documents in the order search_docs returns them (one entry per document, aliases included)."""
     rows = lib.search_docs(c, q, limit=k)["results"]
     out = []
     for r in rows:
@@ -30,7 +33,8 @@ def ranked_docs(c, q, k=10):
 def main():
     here = os.path.dirname(os.path.abspath(__file__))
     ap = argparse.ArgumentParser()
-    ap.add_argument("--db", default=os.path.join(here, "work", "index", "docs.db"))
+    lib_db = os.path.join(here, "docs.db")                     # inside the installed library
+    ap.add_argument("--db", default=lib_db if os.path.exists(lib_db) else os.path.join(here, "work", "index", "docs.db"))
     ap.add_argument("--cases", default=os.path.join(here, "tests", "retrieval_eval.json"))
     ap.add_argument("--min-hit5", type=float, default=0.0)
     a = ap.parse_args()

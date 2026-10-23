@@ -25,6 +25,9 @@ Note which docs server answered (docs-search or docs-local); if neither, test th
   vendor/product present on both sides with the same document count; list the differences.
 - One real search as a smoke test, e.g. `search_docs("scsiblade.san.config.active", vendor="netapp",
   product="ontap-ems")` must return hits with a chunk id you can `read_chunk`.
+- Search quality: `python3 ~/.claude/brain/library/eval_search.py` and `... eval_search.py --cases
+  ~/.claude/brain/library/tests/retrieval_heldout.json`: hit@5 should be 0.9 or more on both (the last line
+  prints hit@1 / hit@5 / MRR); lower means a damaged or old library, or an old search.py.
 
 ## 3. Hooks and settings (`~/.claude/settings.json`)
 - `hooks.PreToolUse` has a command ending in `hooks/block-write-tools.py` with matcher `mcp__.*` (the read-only

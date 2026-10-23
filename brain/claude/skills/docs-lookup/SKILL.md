@@ -28,10 +28,16 @@ vendor / product: `~/.claude/brain/library/MANIFEST.md`. There is no internet; n
 | Cisco MDS / UCS, PowerMaxOS release notes, the CSM issue texts (use the `*-prs` fixes) | **not in the library**: say so; explain from general knowledge, clearly labelled |
 
 ## 2. Search: exact first, then wider
-1. The exact string in quotes (EMS name, error text, command, KB / CONTAP / DSA number, SIO code), with
-   vendor + product. 2. The key words without quotes. 3. Drop the product filter, then the vendor filter.
-"all words" results rank above "any word" results; a hit list that says "any word" is weak evidence.
-Use `limit` 10-20 for anything ambiguous and look at the titles before reading.
+1. An error message or log line: its most specific part **in quotes** (quoted text must appear verbatim;
+   drop variable parts such as volume names, IDs, timestamps). 2. The key technical words without quotes
+   (EMS name, command, KB / CONTAP / DSA number, SIO / PFX code), with vendor + product when known.
+   3. Drop the product filter, then the vendor filter. 4. Rephrase with the words the vendor would use
+   (the symptom as a KB title would state it); old / new product names and common acronyms (Isilon /
+   PowerScale, ScaleIO / VxFlex / PowerFlex, VMAX / PowerMax, RDP, SRDF, SDC / scini) already match.
+Each hit has `matched` (query words found / total): prefer full matches; `match_mode: partial` means no
+section holds every word, so treat the hits as leads, not answers. Max 2 hits per document: when one
+document holds the answer, read it with `read_document`. Source-code hits (`.go`, `.yaml` paths) show where
+an error is raised, not what to do about it. Use `limit` 10-20 when ambiguous and scan the titles first.
 
 ## 3. Read before answering
 `read_chunk(chunk_id, context=1)` on the best 2-3 hits, `read_document(url or path)` when the answer is a
@@ -54,7 +60,9 @@ say "documented for 9.2; confirm for your version". Quote short passages verbati
   `dell/csm` `release/` and `csidriver/release/<driver>/` pages ("Fixed Issues" / "Known Issues": one line per
   bug, e.g. "PowerMax - Driver Crashes with Segmentation Fault ..."; older versions link `dell/csm#<n>`) and
   `csm-repo` CHANGELOG-<ver>, then search that title's key words, the `dell/csm#<n>` or the symptom over the `*-prs` products: the
-  PR that fixes it, its merge date and the driver repo (merge date + release notes = first fixed version);
+  PR that fixes it; its "First release:" line is the first tag of that repo (driver, operator or client
+  library) holding the fix - compare it with the installed version (CSM 1.18 ships csi-powermax 2.18 etc.:
+  the `dell/csm` support matrix maps them);
   PowerMax → `dell/kb`
   (fix numbers and the PowerMaxOS level that carries them). Report: affected versions, fixed version,
   workaround, and whether the installed version (environment file / tool result) is inside the range.

@@ -1,0 +1,6 @@
+{
+  "name": "storage-brain",
+  "version": "2026.10.23",
+  "description": "Read-only SAN / storage operations brain: PowerMax, PowerFlex, PowerScale, NetApp ONTAP / Trident, Dell CSM / CSI, Cisco MDS / UCS, VMware - skills, agents and the offline documentation library (docs-local). Installed by install-vm.sh; this manifest lets the same folder load with --plugin-dir for claude plugin validate / eval.",
+  "author": {"name": "storage team"}
+}

@@ -46,12 +46,17 @@ cd .. && git add -f docs-search-mcp/extra/dell && git commit -m "Dell login-only
 #     PDFs of extra/dell/NEEDED.md through the signed-in browser, every Info Hub paper on PowerFlex / PowerMax / CSM,
 #     and the HTML manuals in sources/dell-manuals.txt topic by topic.
 pip install playwright && python3 -m playwright install chromium
-python3 sync/dell_browser.py login            # window opens: sign in at dell.com/support, then press ENTER in the terminal
-python3 sync/dell_browser.py all              # hours; Ctrl-C any time, re-run continues (add --headless to try without a window)
+python3 sync/dell_browser.py all --wait-login # a window opens on Dell sign-in: sign in there, the run continues in that
+                                              # session (Dell's sign-in expires between runs). Hours; Ctrl-C any time,
+                                              # re-run continues (search results are cached a week)
 python3 sync/import_extra.py --dest work/docs
+#     "access level 10 < 30" for the PDFs = your Dell account is not linked to an entitled site: My Account -> link the
+#     company's site ID (or ask the Dell account team), then: python3 sync/dell_browser.py needed --wait-login
 
-# c) Trident / CSM / Harvest bug trackers (every issue with workaround + fixed version)
-GITHUB_TOKEN=<read-only token> python3 sync/sync_github_issues.py --dest work/docs
+# c) Trident / Harvest issue trackers + Dell CSM / CSI pull requests (Dell disabled its issue trackers: the PRs are
+#    the fixes, with the issues they name), then the first release tag of every PR (from git history)
+GITHUB_TOKEN="$(gh auth token)" python3 sync/sync_github_issues.py --dest work/docs
+python3 sync/pr_releases.py --dest work/docs
 
 # d) NetApp KB: continues exactly where the session stopped (1 article / 5 s, resumable, Ctrl-C any time)
 #    with your kb.netapp.com login (DevTools -> Application -> Cookies -> kb.netapp.com -> authtoken):
@@ -61,8 +66,9 @@ NETAPP_KB_COOKIE='authtoken=<value>' python3 sync/sync_netapp_kb.py --dest work/
 # e) refresh the git docs (NetApp docs, Trident, CSM...) - incremental
 sh sync/sync-git.sh work/docs
 
-# f) index + pack -> library/ (45 MB parts), then commit and push
+# f) index, check search quality, pack -> library/ (45 MB parts), then commit and push
 python3 docs_index.py --docs work/docs --db work/index/docs.db
+python3 eval_search.py --min-hit5 0.9 && python3 eval_search.py --cases tests/retrieval_heldout.json --min-hit5 0.9
 sh bundle/pack-library.sh
 cd .. && git add library && git commit -m "Library $(cat library/VERSION)" && git push origin main
 ```

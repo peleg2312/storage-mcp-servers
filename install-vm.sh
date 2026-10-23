@@ -44,6 +44,7 @@ if [ -f "$LIB/docs.db" ]; then
   echo "== smoke test"
   python3 "$LIB/search.py" sources | head -2
   python3 "$LIB/search.py" search "lun mapping show" --limit 1 | sed -n '1,4p'
+  [ -f "$LIB/eval_search.py" ] && python3 "$LIB/eval_search.py" | tail -1    # search quality on this VM
   echo
   echo "Library: $LIB  (MANIFEST.md lists every source)"
   echo "Search from the shell:   python3 $LIB/search.py search \"your error text\""

@@ -38,6 +38,9 @@ done
 cp "$DB" "$STAGE/docs-library/docs.db"
 cp "$HERE/search_cli.py" "$STAGE/docs-library/search.py"
 cp "$HERE/mcp_stdio.py" "$STAGE/docs-library/"                     # stdio MCP server, no dependencies
+mkdir -p "$STAGE/docs-library/tests"                                # search-quality check: python3 eval_search.py
+cp "$HERE/eval_search.py" "$STAGE/docs-library/"
+cp "$HERE/tests/retrieval_eval.json" "$HERE/tests/retrieval_heldout.json" "$STAGE/docs-library/tests/"
 cp "$HERE/server.py" "$HERE/mcp_auth.py" "$STAGE/docs-library/"     # HTTP server (needs fastmcp)
 python3 "$HERE/bundle/manifest.py" --db "$DB" --docs "$DOCS" --label "$LABEL" > "$STAGE/docs-library/MANIFEST.md"
 cp "$STAGE/docs-library/MANIFEST.md" "$LIB/MANIFEST.md"
