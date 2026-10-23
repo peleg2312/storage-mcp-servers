@@ -9,9 +9,9 @@ Runs on a PC with internet. One-time setup (inside the venv):
 
 Then (each is incremental; re-running only adds what is new):
     python3 sync/dell_browser.py needed         # extra/dell/NEEDED.md -> extra/dell/<product>/*.pdf (login-only docs)
-    python3 sync/dell_browser.py kb             # Dell support search for every query in sources/dell-kb-queries.txt
-                                                #   -> every KB article found (login-only ones too) -> work/docs/dell/kb
-    python3 sync/dell_browser.py infohub        # Info Hub topics (PowerFlex, PowerMax, CSM): every paper as PDF or HTML
+    python3 sync/dell_browser.py kb             # web searches (DuckDuckGo, Bing, Dell) for every query in
+                                                #   sources/dell-kb-queries.txt -> every KB article found -> work/docs/dell/kb
+    python3 sync/dell_browser.py infohub        # Info Hub papers on PowerFlex / PowerMax / CSM: PDF or HTML pages
     python3 sync/dell_browser.py manuals        # HTML manuals listed in sources/dell-manuals.txt, topic by topic
     python3 sync/dell_browser.py all            # needed + kb + infohub + manuals
 
@@ -25,6 +25,7 @@ import json
 import os
 import re
 import sys
+import threading
 import time
 import urllib.parse
 
@@ -34,14 +35,23 @@ from sync_dell import is_redirect_pdf  # noqa: E402
 from sync_dell_kb import FAMILY_RE, ID_RE  # noqa: E402
 
 HERE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-SEARCH = "https://www.dell.com/support/search/en-us#q={q}&sort=relevancy&f:langFacet=[en]"
 KB_URL = "https://www.dell.com/support/kbdoc/en-us/{kb}"
+DELL_SEARCH = "https://www.dell.com/support/search/en-us#q={q}&sort=relevancy&f:langFacet=[en]"
+DDG_SEARCH = "https://html.duckduckgo.com/html/?q={q}"
+BING_SEARCH = "https://www.bing.com/search?q={q}&first={first}"
+KB_SITE = "site:dell.com/support/kbdoc"
 INFOHUB = "https://infohub.delltechnologies.com"
 INFOHUB_TOPICS = {"powerflex": "/en-us/t/powerflex-14/", "powermax": "/en-us/t/powermax-9/",
                   "csm": "/en-us/t/container-storage-modules/"}
+INFOHUB_QUERIES = {"powerflex": ["PowerFlex", "PowerFlex Manager", "VxFlex", "ScaleIO"],
+                   "powermax": ["PowerMax", "PowerMaxOS", "Unisphere for PowerMax", "SRDF", "VMAX All Flash"],
+                   "csm": ["Container Storage Modules", "CSI PowerMax", "CSI PowerFlex", "Dell CSM OpenShift"]}
 NEXT_SELECTORS = ['a[aria-label="Next"]', 'button[aria-label="Next"]', '.coveo-pager-next', 'li.coveo-pager-next a',
-                  'a[title="Next"]', 'text=Next']
+                  'a[title="Next"]', 'input[type="submit"][value="Next"]', 'text=Next']
 LOAD_MORE = ['text=Load more', 'text=Show more', 'text=View more', 'button:has-text("More")']
+PRODUCTS = ("powerflex", "powermax")
+DOC_LINK_RE = re.compile(r"(https?://infohub\.delltechnologies\.com/en-us/l/[^\s\"'<>?#]+/)")
+INFOHUB_DOC_RE = re.compile(r"^https://infohub\.delltechnologies\.com/en-us/l/[^/]+/$")     # one document
 
 
 def log(*a):
@@ -68,6 +78,16 @@ def settle(page, ms=1500):
     page.wait_for_timeout(ms)
 
 
+def html_of(page):
+    """page.content() that survives 'the page is navigating' (retried)."""
+    for _ in range(6):
+        try:
+            return page.content()
+        except Exception:
+            page.wait_for_timeout(700)
+    return ""
+
+
 def click_any(page, selectors):
     for sel in selectors:
         try:
@@ -80,7 +100,22 @@ def click_any(page, selectors):
     return False
 
 
+def prepare_profile(profile):
+    """Chrome preferences for the persistent profile: PDFs are downloaded, not shown in the viewer."""
+    d = os.path.join(profile, "Default")
+    os.makedirs(d, exist_ok=True)
+    pf = os.path.join(d, "Preferences")
+    try:
+        prefs = json.load(open(pf)) if os.path.exists(pf) else {}
+    except Exception:
+        prefs = {}
+    prefs.setdefault("plugins", {})["always_open_pdf_externally"] = True
+    prefs.setdefault("download", {})["prompt_for_download"] = False
+    json.dump(prefs, open(pf, "w"))
+
+
 def open_browser(p, profile, headless):
+    prepare_profile(profile)
     kw = dict(headless=headless, accept_downloads=True, viewport={"width": 1400, "height": 1000},
               args=["--disable-blink-features=AutomationControlled"])
     exe = os.getenv("DELL_BROWSER_EXECUTABLE")              # a specific Chrome / Chromium binary
@@ -98,31 +133,71 @@ def get_bytes(ctx, url):
     return r.body(), r.headers.get("content-type", ""), r.url
 
 
+def is_real_pdf(body):
+    return b"%PDF" in body[:1024] and not is_redirect_pdf(body)
+
+
+def fetch_pdf(ctx, page, url):
+    """A PDF that may sit behind Dell's sign-in: plain fetch first; then navigate with the page so the
+    identity-provider redirects complete with the stored session (the file arrives as a download, or the
+    session cookie for dl.dell.com is set and a second plain fetch succeeds). Returns (bytes|None, note)."""
+    body, ctype, final = get_bytes(ctx, url)
+    if is_real_pdf(body):
+        return body, ""
+    if re.match(r"^/[a-z]{2}-[a-z]{2}/?$", urllib.parse.urlparse(final).path):   # landed on the Dell home page
+        return None, "retired link (redirects to the Dell home page)"
+    try:
+        with page.expect_download(timeout=45000) as dl:
+            try:
+                page.goto(url, wait_until="commit")
+            except Exception:
+                pass                                    # "Download is starting" is the normal outcome
+        path = dl.value.path()
+        body = open(path, "rb").read()
+        if is_real_pdf(body):
+            return body, ""
+    except Exception:
+        pass                                            # no download: a sign-in page, or an inline viewer
+    settle(page, 1500)
+    if page.url.lower().endswith(".pdf") or "dl.dell.com" in page.url:
+        try:
+            body, ctype, final = get_bytes(ctx, page.url)
+            if is_real_pdf(body):
+                return body, ""
+        except Exception:
+            pass
+    body, ctype, final = get_bytes(ctx, url)
+    if is_real_pdf(body):
+        return body, ""
+    return None, f"sign-in page ({final[:70]})"
+
+
 # ---------------------------------------------------------------- needed (login-only PDFs)
 def cmd_needed(ctx, a):
     table = os.path.join(HERE, "extra", "dell", "NEEDED.md")
     if not os.path.isfile(table):
         log("no extra/dell/NEEDED.md"); return
+    page = ctx.new_page()
     product = None
     n = bad = 0
     for line in open(table, encoding="utf-8"):
         m = re.match(r"## (\w+)", line)
         if m:
-            product = m.group(1)
+            product = m.group(1).lower() if m.group(1).lower() in PRODUCTS else None
         m = re.match(r"\| `([^`]+)` \| (\S+) \|", line)
         if not m or not product:
             continue
         name, url = m.group(1), m.group(2)
         target = os.path.join(HERE, "extra", "dell", product, name)
-        if os.path.exists(target) and not is_redirect_pdf(open(target, "rb").read()):
+        if os.path.exists(target) and is_real_pdf(open(target, "rb").read()):
             continue
         try:
-            body, ctype, final = get_bytes(ctx, url)
+            body, note = fetch_pdf(ctx, page, url)
         except Exception as e:
             log(f"failed {name}: {e}"); bad += 1
             continue
-        if b"%PDF" not in body[:1024] or is_redirect_pdf(body):
-            log(f"still the sign-in / redirect page: {name}  ({final[:80]}) - are you signed in? run: dell_browser.py login")
+        if body is None:
+            log(f"not downloadable: {name}: {note}" + ("" if "retired" in note else " - signed in? run: dell_browser.py login"))
             bad += 1
             continue
         os.makedirs(os.path.dirname(target), exist_ok=True)
@@ -133,17 +208,46 @@ def cmd_needed(ctx, a):
     log(f"needed: {n} downloaded, {bad} still missing -> extra/dell/  (then: python3 sync/import_extra.py --dest work/docs)")
 
 
-# ---------------------------------------------------------------- kb (search -> ids -> articles)
-def ids_on(page):
-    return {x or y for x, y in ID_RE.findall(page.content())}
+# ---------------------------------------------------------------- kb (searches -> ids -> articles)
+def ids_in_text(text):
+    text = urllib.parse.unquote(text)                   # search engines wrap links url-encoded
+    return {x or y for x, y in ID_RE.findall(text)}
 
 
-def search_ids(page, query, max_pages):
+def search_ddg(page, query, max_pages):
     found = set()
-    page.goto(SEARCH.format(q=urllib.parse.quote(query)), wait_until="domcontentloaded")
+    page.goto(DDG_SEARCH.format(q=urllib.parse.quote_plus(f"{KB_SITE} {query}")), wait_until="domcontentloaded")
+    settle(page, 800)
+    for n in range(max_pages):
+        new = ids_in_text(html_of(page)) - found
+        found |= new
+        if n and not new:
+            break
+        if not click_any(page, ['input[type="submit"][value="Next"]', 'a.result--more__btn', 'text=Next']):
+            break
+        settle(page, 800)
+    return found
+
+
+def search_bing(page, query, max_pages):
+    found = set()
+    for n in range(max_pages):
+        page.goto(BING_SEARCH.format(q=urllib.parse.quote_plus(f"{KB_SITE} {query}"), first=1 + 10 * n),
+                  wait_until="domcontentloaded")
+        settle(page, 600)
+        new = ids_in_text(html_of(page)) - found
+        found |= new
+        if not new:
+            break
+    return found
+
+
+def search_dell(page, query, max_pages, baseline):
+    found = set()
+    page.goto(DELL_SEARCH.format(q=urllib.parse.quote(query)), wait_until="domcontentloaded")
     settle(page, 2500)
     for n in range(max_pages):
-        new = ids_on(page) - found
+        new = ids_in_text(html_of(page)) - found - baseline
         found |= new
         if n and not new:
             break
@@ -158,7 +262,7 @@ def save_kb(page, kb, d, man, known, stats, delay, snowball):
     try:
         page.goto(url, wait_until="domcontentloaded")
         settle(page, 800)
-        body = page.content().encode("utf-8")
+        body = html_of(page).encode("utf-8")
         final = page.url
     except Exception as e:
         stats["failed"] += 1
@@ -180,7 +284,7 @@ def save_kb(page, kb, d, man, known, stats, delay, snowball):
     stats["saved"] += 1
     if stats["saved"] % 10 == 0:
         log(f"... {stats['saved']} saved, {len(snowball)} queued")
-    for linked in ({x or y for x, y in ID_RE.findall(text)} - known):
+    for linked in (ids_in_text(text) - known):
         snowball.add(linked)
     time.sleep(delay)
 
@@ -192,20 +296,33 @@ def cmd_kb(ctx, a):
     known = {re.search(r"(\d{9})", v.get("url", "")).group(1) for v in man.values() if re.search(r"(\d{9})", v.get("url", ""))}
     queries = [q.split("#", 1)[0].strip() for q in open(a.queries, encoding="utf-8")] if os.path.isfile(a.queries) else []
     queries = [q for q in queries if q]
+    engines = [e.strip() for e in a.engines.split(",") if e.strip()]
     ids = set()
-    for q in queries:
+    baseline = set()
+    if "dell" in engines:
         try:
-            got = search_ids(page, q, a.max_pages)
-        except Exception as e:
-            log(f"search failed {q!r}: {e}")
-            continue
-        log(f"search {q!r}: {len(got)} articles ({len(got - known)} new)")
+            baseline = search_dell(page, "zzqqxxnothing", 1, set())      # links every search page carries
+        except Exception:
+            pass
+    for q in queries:
+        got = set()
+        for eng in engines:
+            try:
+                if eng == "ddg":
+                    got |= search_ddg(page, q, a.max_pages)
+                elif eng == "bing":
+                    got |= search_bing(page, q, a.max_pages)
+                elif eng == "dell":
+                    got |= search_dell(page, q, a.max_pages, baseline)
+            except Exception as e:
+                log(f"{eng} search failed {q!r}: {e}")
+            time.sleep(a.delay)
+        log(f"search {q!r}: {len(got)} articles ({len(got - known - ids)} new)")
         ids |= got
-        time.sleep(a.delay)
     if a.ids_file and os.path.isfile(a.ids_file):
         ids |= set(re.findall(r"\b(\d{9})\b", open(a.ids_file).read()))
     todo = sorted(ids - known)
-    log(f"{len(ids)} article numbers from {len(queries)} searches, {len(todo)} to fetch")
+    log(f"{len(ids)} article numbers from {len(queries)} queries x {len(engines)} engines, {len(todo)} to fetch")
     stats = {"saved": 0, "off_family": 0, "login_or_empty": 0, "failed": 0}
     snowball = set()
     try:
@@ -228,21 +345,59 @@ def cmd_kb(ctx, a):
 
 
 # ---------------------------------------------------------------- infohub
+def infohub_doc_links(text):
+    return set(DOC_LINK_RE.findall(urllib.parse.unquote(text)))
+
+
 def cmd_infohub(ctx, a):
     page = ctx.new_page()
+    engines = [e.strip() for e in a.engines.split(",") if e.strip()]
     for topic, path in INFOHUB_TOPICS.items():
         d = os.path.join(a.dest, "dell", f"infohub-{topic}")
         man, mf = load_manifest(d)
-        page.goto(INFOHUB + path, wait_until="domcontentloaded")
-        settle(page, 2500)
-        if "recaptcha" in page.content().lower() and "checking your browser" in page.content().lower():
-            log(f"infohub {topic}: bot check page - solve it in the browser window, then re-run"); continue
-        for _ in range(60):                       # expand the listing as far as it goes
-            if not click_any(page, LOAD_MORE):
-                break
-            settle(page, 1200)
-        links = sorted({urllib.parse.urljoin(INFOHUB, h) for h in re.findall(r'href="(/en-us/l/[^"#?]+/)"', page.content())})
-        log(f"infohub {topic}: {len(links)} documents listed")
+        links = set()
+        # 1. the topic page itself (expand as far as it goes)
+        try:
+            page.goto(INFOHUB + path, wait_until="domcontentloaded")
+            settle(page, 2500)
+            t = html_of(page)
+            if "recaptcha" in t.lower() and "checking your browser" in t.lower():
+                log(f"infohub {topic}: bot check page - solve it in the browser window, then re-run")
+            for _ in range(60):
+                if not click_any(page, LOAD_MORE):
+                    break
+                settle(page, 1200)
+            links |= infohub_doc_links(html_of(page))
+        except Exception as e:
+            log(f"infohub {topic}: listing failed: {e}")
+        # 2. web searches (the listing is JavaScript and may hide most of it)
+        for q in INFOHUB_QUERIES.get(topic, []):
+            for eng in engines:
+                try:
+                    if eng == "ddg":
+                        page.goto(DDG_SEARCH.format(q=urllib.parse.quote_plus(f"site:infohub.delltechnologies.com {q}")),
+                                  wait_until="domcontentloaded")
+                        settle(page, 800)
+                        for _ in range(a.max_pages):
+                            before = len(links)
+                            links |= infohub_doc_links(html_of(page))
+                            if len(links) == before and _ or not click_any(page, ['input[type="submit"][value="Next"]']):
+                                break
+                            settle(page, 800)
+                    elif eng == "bing":
+                        for n in range(a.max_pages):
+                            page.goto(BING_SEARCH.format(q=urllib.parse.quote_plus(f"site:infohub.delltechnologies.com {q}"),
+                                                         first=1 + 10 * n), wait_until="domcontentloaded")
+                            settle(page, 600)
+                            before = len(links)
+                            links |= infohub_doc_links(html_of(page))
+                            if len(links) == before:
+                                break
+                except Exception as e:
+                    log(f"{eng} search failed {q!r}: {e}")
+                time.sleep(a.delay)
+        links = sorted(l for l in links if INFOHUB_DOC_RE.match(l))
+        log(f"infohub {topic}: {len(links)} documents found")
         for doc in links:
             key = hashlib.sha1(doc.encode()).hexdigest()[:8]
             if any(v.get("url") == doc for v in man.values()):
@@ -250,7 +405,7 @@ def cmd_infohub(ctx, a):
             try:
                 page.goto(doc, wait_until="domcontentloaded")
                 settle(page, 1000)
-                html_ = page.content()
+                html_ = html_of(page)
                 title = sync_web.title_of(html_.encode()) or doc
                 pdf = None
                 for href in re.findall(r'href="([^"]+)"', html_):
@@ -260,22 +415,25 @@ def cmd_infohub(ctx, a):
                         break
                 stem = re.sub(r"[^\w\-]+", "-", doc.rstrip("/").rsplit("/", 1)[-1])[:90]
                 if pdf:
-                    body, ctype, final = get_bytes(ctx, pdf)
-                    if b"%PDF" in body[:1024] and not is_redirect_pdf(body):
+                    body, note = fetch_pdf(ctx, page, pdf)
+                    if body:
                         name = f"{stem}_{key}.pdf"
                         open(os.path.join(d, name), "wb").write(body)
                         man[name] = {"url": doc, "title": title}
                         log(f"ok pdf  {title[:70]}")
                         time.sleep(a.delay)
                         continue
+                    page.goto(doc, wait_until="domcontentloaded")
+                    settle(page, 800)
+                    html_ = html_of(page)
                 # no PDF: save every HTML page of the document
                 pages = [doc] + sorted({urllib.parse.urljoin(doc, h) for h in re.findall(r'href="([^"#?]+)"', html_)
                                         if urllib.parse.urljoin(doc, h).startswith(doc) and urllib.parse.urljoin(doc, h) != doc})
                 parts = [html_]
-                for sub in pages[1:60]:
+                for sub in pages[1:80]:
                     page.goto(sub, wait_until="domcontentloaded")
                     settle(page, 500)
-                    parts.append(page.content())
+                    parts.append(html_of(page))
                 name = f"{stem}_{key}.html"
                 open(os.path.join(d, name), "w", encoding="utf-8").write("\n<!-- page break -->\n".join(parts))
                 man[name] = {"url": doc, "title": title}
@@ -309,10 +467,11 @@ def cmd_manuals(ctx, a):
         man, mf = load_manifest(d)
         page.goto(url, wait_until="domcontentloaded")
         settle(page, 2000)
-        if "Sign In" in sync_web.title_of(page.content().encode()):
+        first = html_of(page)
+        if "Sign In" in sync_web.title_of(first.encode()):
             log(f"{guide}: needs sign-in (run: dell_browser.py login) - skipped"); continue
         topics, seen = [url], {url.split("&lang")[0]}
-        for href in re.findall(r'href="([^"]+)"', page.content()):
+        for href in re.findall(r'href="([^"]+)"', first):
             full = urllib.parse.urljoin(url, href.replace("&amp;", "&"))
             if full.startswith(prefix) and full.split("&lang")[0] not in seen:
                 seen.add(full.split("&lang")[0]); topics.append(full)
@@ -324,7 +483,7 @@ def cmd_manuals(ctx, a):
             try:
                 page.goto(t, wait_until="domcontentloaded")
                 settle(page, 600)
-                body = page.content()
+                body = html_of(page)
                 title = sync_web.title_of(body.encode())
                 stem = re.sub(r"[^\w\-]+", "-", t.split("?")[0].rstrip("/").rsplit("/", 1)[-1])[:80]
                 name = f"{stem}_{key}.html"
@@ -337,6 +496,25 @@ def cmd_manuals(ctx, a):
         log(f"{guide}: {len(man)} topics -> {d}")
 
 
+def cmd_login(ctx, a):
+    page = ctx.new_page()
+    page.goto("https://www.dell.com/support/home/en-us")
+    done = threading.Event()
+    threading.Thread(target=lambda: (sys.stdin.readline(), done.set()), daemon=True).start()
+    ctx.on("close", lambda *_: done.set())
+    log("\n1. Sign in to Dell Support in the browser window (Sign In / My Account).\n"
+        "2. Come back to this terminal and press ENTER (or just close the browser window).\n"
+        f"The session is kept in {a.profile} for the other commands.")
+    while not done.is_set():
+        try:
+            if not ctx.pages:
+                break
+            ctx.pages[0].wait_for_timeout(500)
+        except Exception:
+            break
+    log("login saved.")
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("command", choices=["login", "needed", "kb", "infohub", "manuals", "all"])
@@ -344,7 +522,8 @@ def main():
     ap.add_argument("--profile", default=os.path.join(HERE, "work", "browser-profile"))
     ap.add_argument("--queries", default=os.path.join(HERE, "sources", "dell-kb-queries.txt"))
     ap.add_argument("--ids-file", default="", help="extra KB numbers, one per line (kb command)")
-    ap.add_argument("--max-pages", type=int, default=15, help="search result pages per query")
+    ap.add_argument("--engines", default="ddg,bing,dell", help="search engines for kb / infohub discovery")
+    ap.add_argument("--max-pages", type=int, default=8, help="search result pages per query and engine")
     ap.add_argument("--max-articles", type=int, default=0)
     ap.add_argument("--delay", type=float, default=1.5)
     ap.add_argument("--headless", action="store_true")
@@ -358,23 +537,7 @@ def main():
         ctx = open_browser(p, a.profile, a.headless and a.command != "login")
         try:
             if a.command == "login":
-                import threading
-                page = ctx.new_page()
-                page.goto("https://www.dell.com/support/home/en-us")
-                done = threading.Event()
-                threading.Thread(target=lambda: (sys.stdin.readline(), done.set()), daemon=True).start()
-                ctx.on("close", lambda *_: done.set())
-                log("\n1. Sign in to Dell Support in the browser window (Sign In / My Account).\n"
-                    "2. Come back to this terminal and press ENTER (or just close the browser window).\n"
-                    f"The session is kept in {a.profile} for the other commands.")
-                while not done.is_set():
-                    try:
-                        if not ctx.pages:
-                            break
-                        ctx.pages[0].wait_for_timeout(500)
-                    except Exception:
-                        break
-                log("login saved." if done.is_set() or not ctx.pages else "window closed; login saved.")
+                cmd_login(ctx, a)
                 return
             if a.command in ("needed", "all"):
                 cmd_needed(ctx, a)
