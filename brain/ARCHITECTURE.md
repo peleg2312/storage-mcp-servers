@@ -76,7 +76,10 @@ Code; few high-signal tools) and measured with `docs-search-mcp/eval_search.py`:
   the CSM / CSI repos with the issues it names and its **first release tag** (`sync/pr_releases.py`, from
   git history), so "fixed in which version / am I affected" has an exact answer.
 - **Source code** of the CSI drivers, array clients and Kubernetes CSI sidecars, one section per function:
-  a quoted error message lands on the function that raises it.
+  a quoted error message lands on the function that raises it. Each repository also has a generated
+  `CODEMAP.md` (host tools each function runs - drv_cfg, mount, mkfs, nvme, iscsiadm, multipath -, host paths,
+  every file's functions) so "how does the driver do X" starts from the architecture; questions saying
+  code / function / implementation rank source files first.
 
 ## Packaging and plugins
 

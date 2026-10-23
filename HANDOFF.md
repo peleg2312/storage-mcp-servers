@@ -25,7 +25,11 @@ search quality: `python3 eval_search.py` and `--cases tests/retrieval_heldout.js
 
 ## Where things stand (2026-10-23, night)
 
-- Library 2026.10.23e: 33,272 unique documents (51,332 files). Retrieval rebuilt and measured on blind test
+- Library 2026.10.23f: 53,111 files indexed. Recovered 786 pages the indexer used to skip (`_index.md` = the CSM
+  install guides; KBs named after a quoted title). CODEMAP.md per code repository (`sync/codemap.py`, run by
+  sync-git.sh: host tools / commands per function, host paths, functions). Added Kubernetes storage concepts,
+  OpenShift storage docs, newer CSI sidecars, goiscsi / gonvme / csmlog / csm-metrics-common / csm-dr, and the
+  Unisphere 10.3 HTML manual. Retrieval rebuilt and measured on blind test
   sets (brain/ARCHITECTURE.md): Dell KB sections fixed (Symptoms / Cause / Resolution), page chrome removed,
   PDF outline headings, version matching, `unmatched` hint. Six eval sets in `docs-search-mcp/tests/`
   (`retrieval_fresh_heldout` and `retrieval_general_heldout` are the blind ones); gate: hit@5 >= 0.9 on the
@@ -41,7 +45,10 @@ search quality: `python3 eval_search.py` and `--cases tests/retrieval_heldout.js
   work/backup-2026-10-23/sorry-pages). Unisphere 10.3 HTML manual: overview only (the PDF is in the library).
 - **Dell PDFs of NEEDED.md**: refused for entitlement (account level 10 < 30) until the user's Dell account is
   linked to the company's PowerFlex site (the user asked for it); then `dell_browser.py needed --wait-login`.
-  The PowerMax alerts guide link of sources/dell-manuals.txt is retired: find its new url.
+  The PowerFlex HTML manuals are gated the same way (signed in, the page holds no content): their links
+  (5.x release notes, Alerts and Events, security, 5.0 CLI) are in sources/dell-manuals.txt, from KB 000314729;
+  after linking run `dell_browser.py manuals --wait-login` too. PowerMax alerts guide link: retired (commented out).
+  PowerFlex 5.2 is not released (newest 5.1.0.2, Aug 2026; KB 000461757 in the library).
 - **NetApp KB export is unfinished** (5,809 of 14,751 checked at 20:42, ~535 / hour, terminal tab; about
   17 hours left). Resumable; full articles need the kb.netapp.com cookie (NETAPP_KB_COOKIE, never in files).
   When it ends: re-index, eval gates, `LABEL=2026.10.24 sh bundle/pack-library.sh`, commit, push.
