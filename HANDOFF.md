@@ -23,19 +23,25 @@ public by the user's decision (2026-10-23), although it carries vendor content. 
 python3 test_search.py && python3 test_stdio.py && python3 test_sync_dell.py && python3 test_sync_issues.py && python3 ../brain/test_hook.py`;
 search quality: `python3 eval_search.py` and `--cases tests/retrieval_heldout.json` (hit@5 >= 0.9).
 
-## Where things stand (2026-10-23, evening)
+## Where things stand (2026-10-23, night)
 
-- Retrieval rebuilt and measured (brain/ARCHITECTURE.md): contextual index, synonyms, coverage ranking;
-  held-out hit@5 0.65 -> 1.00. Brain trimmed (~1/3 fewer tokens per turn), skill evals 9/9
-  (`claude plugin eval` in brain/claude; the shell `claude` must be logged in: `claude auth login`).
-- New sources: Dell CSM / CSI pull requests (4,109, with "First release" tags; Dell disabled the issue
-  trackers), source code of the CSI drivers / array clients / Kubernetes CSI sidecars, PowerScale, Dell KB
-  1,654 articles (was 528), Info Hub papers, the PowerFlex Rack and Unisphere 10.3 HTML manuals.
+- Library 2026.10.23d: 32,930 unique documents (50,987 files). Retrieval rebuilt and measured on blind test
+  sets (brain/ARCHITECTURE.md): Dell KB sections fixed (Symptoms / Cause / Resolution), page chrome removed,
+  PDF outline headings, version matching, `unmatched` hint. Six eval sets in `docs-search-mcp/tests/`
+  (`retrieval_fresh_heldout` and `retrieval_general_heldout` are the blind ones); gate: hit@5 >= 0.9 on the
+  first two. Bake-off against QMD (local BM25 + vectors + LLM rerank): this search wins on every set;
+  no embeddings for now (`docs-search-mcp/bakeoff/` to re-run).
+- Brain: memory catalog (notes.md + notes/<topic>.md), kuparashit documented as the snapshot inventory /
+  join hub, installer always applies the look and feel, read-only hook catches SQL writes anywhere.
+- Dell (done this evening): 1,654 KB articles, 234 Info Hub papers (PowerScale 90, CSM 58, PowerFlex 51,
+  PowerMax 39), PowerFlex Rack HTML manual (64 pages; 17 retired "Sorry" pages removed, backup in
+  work/backup-2026-10-23/sorry-pages). Unisphere 10.3 HTML manual: overview only (the PDF is in the library).
 - **Dell PDFs of NEEDED.md**: refused for entitlement (account level 10 < 30) until the user's Dell account is
   linked to the company's PowerFlex site (the user asked for it); then `dell_browser.py needed --wait-login`.
-  The PowerMax alerts guide link of sources/dell-manuals.txt is retired ("Sorry"): find its new url.
-- **NetApp KB export is unfinished** (runs in a terminal at NetApp's 5 s per article, ~520 / hour; started at
-  ~1,700 of 14,751). Resumable; full articles need the kb.netapp.com cookie (NETAPP_KB_COOKIE, never in files).
+  The PowerMax alerts guide link of sources/dell-manuals.txt is retired: find its new url.
+- **NetApp KB export is unfinished** (5,809 of 14,751 checked at 20:42, ~535 / hour, terminal tab; about
+  17 hours left). Resumable; full articles need the kb.netapp.com cookie (NETAPP_KB_COOKIE, never in files).
+  When it ends: re-index, eval gates, `LABEL=2026.10.24 sh bundle/pack-library.sh`, commit, push.
 
 ## Rules the user set
 

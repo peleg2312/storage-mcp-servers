@@ -34,18 +34,42 @@ Code; few high-signal tools) and measured with `docs-search-mcp/eval_search.py`:
   chunks per document; storage synonyms (Isilon / PowerScale / OneFS, ScaleIO / VxFlex / PowerFlex, VMAX /
   Symmetrix / PowerMax, RDP, SRDF, air-gapped / offline ...); "quoted" text is required; `matched` tells
   Claude how many query words a hit holds.
-- **Measured** (45 tuned cases `tests/retrieval_eval.json`, 20 untuned `tests/retrieval_heldout.json`):
+- **Clean input first.** Most misses traced to ingestion, not ranking: Dell KB pages draw Symptoms / Cause /
+  Resolution as styled text (now split into real sections), page chrome (language and country menus, cookie
+  banner, feedback forms, PR checklist template, license headers) is dropped, saved "page not found" pages are
+  removed, and PDF pages carry their outline headings ("Chapter > Section (page N)").
+- **Ranking details that measurably mattered:** versions match with and without `v` (`2.16.2` = `v2.16.2`)
+  and lift documents of that exact version; rarity-weighted word coverage (IDF^0.25: "very" or "find" no
+  longer weigh like "cpu"); document-type priors (REST API reference, 7-Mode / classic guides, pull requests
+  and source code only when the question points there); short plurals (`logs` = `log`). The reply lists
+  `unmatched` words so Claude rephrases exactly those.
+- **Measured** (`eval_search.py`; hit@1 / hit@5). Sets written blind from random library sections are the
+  honest ones (fresh, general); the older sets were written knowing the index:
 
-  | | hit@1 | hit@5 | MRR |
+  | Set | cases | before (Oct 23 morning) | now |
   |---|---|---|---|
-  | before, tuned set | 0.71 | 0.78 | 0.746 |
-  | after, tuned set | 0.91 | 0.98 | 0.941 |
-  | before, held-out | 0.60 | 0.65 | 0.618 |
-  | after, held-out | 0.90 | 1.00 | 0.950 |
+  | `retrieval_eval` (tuned) | 45 | 0.71 / 0.78 | 0.89 / 1.00 |
+  | `retrieval_heldout` | 20 | 0.60 / 0.65 | 0.90 / 1.00 |
+  | `retrieval_hard` (paraphrased, dev) | 50 | 0.68 / 0.82 | 0.72 / 0.86-0.90 |
+  | `retrieval_fresh_heldout` (blind, troubleshooting) | 36 | 0.72 / 0.89 (code before the tweaks) | 0.75 / 0.89 |
+  | `retrieval_general_heldout` (blind, concepts / best practice) | 34 | - | 0.65 / 0.88 |
 
-- **No embeddings (decided on the numbers).** With hit@5 at 0.98-1.00 the headroom a local embedding model
-  could add is small, while it would add a model file, numpy (not on the VM) and a second index. Revisit
-  only if the eval sets, grown from real questions that failed, show semantic misses.
+- **Bake-off against an off-the-shelf hybrid engine (QMD 2.8.3: BM25 + EmbeddingGemma vectors + LLM query
+  expansion + Qwen3 reranker, all local), same cleaned documents, 2,919-document library with every gold
+  document, every near miss of both engines and 1,500 random documents:**
+
+  | hit@1 / hit@5 | fresh (blind) | general (blind) | hard | time / query |
+  |---|---|---|---|---|
+  | this search | **0.72 / 0.92** | **0.62 / 0.88** | **0.72 / 0.86** | 0.2-0.4 s |
+  | QMD vectors only | 0.53 / 0.78 | 0.47 / 0.74 | 0.52 / 0.72 | 0.1 s |
+  | QMD hybrid (expansion, no rerank) | 0.56 / 0.83 | 0.32 / 0.76 | 0.42 / 0.74 | ~5 s |
+  | QMD hybrid + LLM rerank | (0.49 / 0.69 on the tuned set) | - | - | ~28 s (Mac GPU) |
+  | this search + QMD vectors fused (RRF 1:1) | 0.72 / 0.94 | 0.62 / 0.91 | 0.72 / 0.90 | +vectors |
+
+- **No embeddings (decided on these numbers).** Fusing vectors adds 2-4 points of hit@5 and nothing at
+  hit@1, for ~5 h of embedding per library build on the PC, ~0.5 GB more to ship and a model runtime on the
+  VM; Claude's own rephrasing (docs-lookup step 4, `unmatched`) recovers the same cases. Re-run the bake-off
+  (`docs-search-mcp/bakeoff/`, steps in `bench.mjs`) if the blind sets start failing on wording rather than on content.
 - **Bug knowledge.** Trident / Harvest issue trackers; for Dell (issues disabled) every merged / open PR of
   the CSM / CSI repos with the issues it names and its **first release tag** (`sync/pr_releases.py`, from
   git history), so "fixed in which version / am I affected" has an exact answer.

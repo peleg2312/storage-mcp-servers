@@ -45,7 +45,7 @@ TOOLS = [
                     "trident-2510, csm, csi-powermax, csm-prs, powerflex, external-attacher...). Returns up to "
                     "`limit` hits (max 2 per document) with chunk_id for read_chunk, title, section, snippet "
                     "(matches in «»), url, matched (query words found / total) and also_in (identical copies in "
-                    "other versions).",
+                    "other versions); unmatched = query words no hit holds (rephrase those).",
      "inputSchema": {"type": "object", "properties": {
          "query": {"type": "string"}, "vendor": {"type": "string", "default": ""},
          "product": {"type": "string", "default": ""}, "limit": {"type": "integer", "default": 8}},

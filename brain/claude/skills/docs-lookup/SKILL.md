@@ -35,7 +35,8 @@ vendor / product: `~/.claude/brain/library/MANIFEST.md`. There is no internet; n
    (the symptom as a KB title would state it); old / new product names and common acronyms (Isilon /
    PowerScale, ScaleIO / VxFlex / PowerFlex, VMAX / PowerMax, RDP, SRDF, SDC / scini) already match.
 Each hit has `matched` (query words found / total); `match_mode: partial` = no section holds every word:
-leads, not answers. Max 2 hits per document; code hits (`.go`, `.yaml`) show where an error is raised, not
+leads, not answers. `unmatched` = words no hit holds: replace exactly those with the vendor's term and
+search again. A version in the query (`9.15.1`, `2.16.2`, `25.10`) ranks that version's documents first. Max 2 hits per document; code hits (`.go`, `.yaml`) show where an error is raised, not
 what to do. Default 8 hits; raise `limit` only when the titles are all off-target.
 
 ## 3. Read, cite, version

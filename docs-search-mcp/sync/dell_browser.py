@@ -53,8 +53,8 @@ NEXT_SELECTORS = ['a[aria-label="Next"]', 'button[aria-label="Next"]', '.coveo-p
                   'a[title="Next"]', 'input[type="submit"][value="Next"]', 'text=Next']
 LOAD_MORE = ['text=Load more', 'text=Show more', 'text=View more', 'button:has-text("More")']
 PRODUCTS = ("powerflex", "powermax", "powerscale")
-DOC_LINK_RE = re.compile(r"(https?://infohub\.delltechnologies\.com/en-us/l/[^\s\"'<>?#]+/)")
-INFOHUB_DOC_RE = re.compile(r"^https://infohub\.delltechnologies\.com/en-us/l/[^/]+/$")     # one document
+# a document (/l/<doc>/<section>/, with or without /en-us) or a blog post (/p/<post>/) -> its root url
+DOC_LINK_RE = re.compile(r"https?://infohub\.delltechnologies\.com(?:/en-us)?/([lp])/([a-z0-9][a-z0-9-]*)", re.I)
 
 
 def log(*a):
@@ -432,7 +432,9 @@ def cmd_kb(ctx, a):
 
 # ---------------------------------------------------------------- infohub
 def infohub_doc_links(text):
-    return set(DOC_LINK_RE.findall(urllib.parse.unquote(text)))
+    text = re.sub(r'href="(/[^"]*)"', lambda m: 'href="' + INFOHUB + m.group(1) + '"', urllib.parse.unquote(text))
+    # a document's landing page is /t/<doc>/ (its /l/<doc>/ root redirects to the home page); posts are /p/<post>/
+    return {f"{INFOHUB}/en-us/{'t' if kind.lower() == 'l' else 'p'}/{slug.lower()}/" for kind, slug in DOC_LINK_RE.findall(text)}
 
 
 def cmd_infohub(ctx, a):
@@ -482,7 +484,7 @@ def cmd_infohub(ctx, a):
                 except Exception as e:
                     log(f"{eng} search failed {q!r}: {e}")
                 time.sleep(a.delay)
-        links = sorted(l for l in links if INFOHUB_DOC_RE.match(l))
+        links = sorted(links)
         log(f"infohub {topic}: {len(links)} documents found")
         for doc in links:
             key = hashlib.sha1(doc.encode()).hexdigest()[:8]
@@ -512,9 +514,10 @@ def cmd_infohub(ctx, a):
                     page.goto(doc, wait_until="domcontentloaded")
                     settle(page, 800)
                     html_ = html_of(page)
-                # no PDF: save every HTML page of the document
-                pages = [doc] + sorted({urllib.parse.urljoin(doc, h) for h in re.findall(r'href="([^"#?]+)"', html_)
-                                        if urllib.parse.urljoin(doc, h).startswith(doc) and urllib.parse.urljoin(doc, h) != doc})
+                # no PDF: save the landing page and every section of the document (/l/<doc>/<section>/)
+                sec = "/l/" + doc.rstrip("/").rsplit("/", 1)[-1] + "/"
+                pages = [doc] + sorted({u for u in (urllib.parse.urljoin(doc, h) for h in re.findall(r'href="([^"#?]+)"', html_))
+                                        if "/t/" in doc and sec in u and u.startswith(INFOHUB)})
                 parts = [html_]
                 for sub in pages[1:80]:
                     page.goto(sub, wait_until="domcontentloaded")
@@ -554,8 +557,16 @@ def cmd_manuals(ctx, a):
         page.goto(url, wait_until="domcontentloaded")
         settle(page, 2000)
         first = html_of(page)
-        if "Sign In" in sync_web.title_of(first.encode()):
-            log(f"{guide}: needs sign-in (run: dell_browser.py login) - skipped"); continue
+        for _ in range(30):                             # the table of contents is drawn by JavaScript, late
+            if first.count(guide + "/") > 3:
+                break
+            page.wait_for_timeout(500)
+            first = html_of(page)
+        title = sync_web.title_of(first.encode())
+        if "Sign In" in title or title.strip() in ("", "Back Button"):
+            log(f"{guide}: needs sign-in (run with --wait-login) - skipped"); continue
+        if title.startswith("Sorry"):
+            log(f"{guide}: retired link (Dell answers 'Sorry') - find the guide's new url for sources/dell-manuals.txt"); continue
         topics, seen = [url], {url.split("&lang")[0]}
         for href in re.findall(r'href="([^"]+)"', first):
             full = urllib.parse.urljoin(url, href.replace("&amp;", "&"))

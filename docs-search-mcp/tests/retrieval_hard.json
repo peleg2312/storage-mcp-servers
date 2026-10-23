@@ -1,0 +1,306 @@
+[
+{
+"q": "storage controller cpu very high, how do I find which domain is causing it",
+"expect": [
+"High_CPU_utilization_-_Resolution_Path"
+]
+},
+{
+"q": "lun latency shows in the network layer of qos statistics, is that expected",
+"expect": [
+"ONTAP_single_LUN_latency_at_network_layer"
+]
+},
+{
+"q": "spin_msid_vol_lookup errors and very slow volume, vldb timeouts",
+"expect": [
+"Extremely_latency_on_volume_from_CPU_N-blade"
+]
+},
+{
+"q": "cannot grow a lun used by a solaris host, resize not supported",
+"expect": [
+"LUN_resize_function_not_implemented_for_Solaris"
+]
+},
+{
+"q": "other datastores get slow while a vmotion runs from another cluster",
+"expect": [
+"Performance_Impact_on_different_datastore_during_vMotion"
+]
+},
+{
+"q": "find which linux process is hammering the storage",
+"expect": [
+"How_to_identify_bully_workloads_from_Linux"
+]
+},
+{
+"q": "scale-out volume spread across aggregates, how to manage it from the cli",
+"expect": [
+"flexgroup/index"
+]
+},
+{
+"q": "how do quota policies get applied to the volumes of an svm",
+"expect": [
+"quota-rules-policies-enforced-quotas-concept"
+]
+},
+{
+"q": "what security style does a new qtree get if I do not set one",
+"expect": [
+"security-styles-their-effects-concept"
+]
+},
+{
+"q": "back up a lun to a backup server using a clone from a snapshot",
+"expect": [
+"backup-lun-host-backup-system-task"
+]
+},
+{
+"q": "apply an ntfs acl security policy to a vserver",
+"expect": [
+"apply-security-policies-file-task"
+]
+},
+{
+"q": "dbs.valence.test.bad meaning",
+"expect": [
+"dbs-valence-events"
+]
+},
+{
+"q": "distributed block store unable to process a cluster fault",
+"expect": [
+"dbs-exception-events"
+]
+},
+{
+"q": "disk shelf not multipathed error, how should it be cabled",
+"expect": [
+"config-notmultipath-events"
+]
+},
+{
+"q": "rocky linux 10 nvme over tcp discovery with ontap",
+"expect": [
+"nvme-rockylinux-10x"
+]
+},
+{
+"q": "aix powervm vios host utilities for netapp",
+"expect": [
+"hu_aix_"
+]
+},
+{
+"q": "trident node pod crashing on one worker only, trident_orchestrator no such file or directory",
+"expect": [
+"Trident_Node_Pod_Fails_to_Start"
+]
+},
+{
+"q": "import an existing ontap volume into trident keeps looping",
+"expect": [
+"How_to_import_an_ONTAP_volume_into_a_trident_backend"
+]
+},
+{
+"q": "update_trident.sh unable to resolve image on openshift",
+"expect": [
+"trident-issues/issue-41."
+]
+},
+{
+"q": "trident command line flag to use the pod service account for the kubernetes api",
+"expect": [
+"trident-reference/trident-cl"
+]
+},
+{
+"q": "harvest poller in a container ignores its command line arguments",
+"expect": [
+"harvest-issues/issue-163."
+]
+},
+{
+"q": "run harvest with podman and systemd quadlets",
+"expect": [
+"install/quadlet"
+]
+},
+{
+"q": "what hardware is in a fabric metrocluster, fc to sas bridges",
+"expect": [
+"concept_parts_of_a_fabric_mcc_configuration"
+]
+},
+{
+"q": "adding nodes to metrocluster, need to rezone the fc switches with rcf files",
+"expect": [
+"task_apply_the_rcf_files_and_recable_the_switches"
+]
+},
+{
+"q": "rest api deleting cifs server fails asking for active directory account, error 655525",
+"expect": [
+"delete-protocols-cifs-services-"
+]
+},
+{
+"q": "ontap tools set the recommended esxi hba timeout and multipath settings",
+"expect": [
+"configure_esx_server_multipathing",
+"configure-esx-server-multipath"
+]
+},
+{
+"q": "collect logs from the powerflex 3 gateway",
+"expect": [
+"000213024"
+]
+},
+{
+"q": "powerflex manager resource group out of date after changes made outside pfmp",
+"expect": [
+"000381948"
+]
+},
+{
+"q": "vvols vmotion error storage backing virtual disk, protocol endpoint shared between esxi hosts",
+"expect": [
+"000222640"
+]
+},
+{
+"q": "powermax 8500 embedded management, set up solutions enabler client server",
+"expect": [
+"000395840"
+]
+},
+{
+"q": "migrate an ibm i host to a new powermax without downtime",
+"expect": [
+"000193832"
+]
+},
+{
+"q": "where is the cloudlink documentation",
+"expect": [
+"000312027"
+]
+},
+{
+"q": "csm powermax node pods will not start",
+"expect": [
+"000291125"
+]
+},
+{
+"q": "what does alert SYMAPI_AEVENT2_UID_ALERT_SNAP_CLONE_CONFIG mean",
+"expect": [
+"Events_and_Alerts",
+"events-and-alerts"
+]
+},
+{
+"q": "enas cifs continuous availability with srdf/s file auto recovery",
+"expect": [
+"docu102831"
+]
+},
+{
+"q": "snapvx list output flags meaning failed copied destaged",
+"expect": [
+"TimeFinder_SnapVX",
+"snapvx"
+]
+},
+{
+"q": "powerflex install csv parameter forceDeviceTakeover",
+"expect": [
+"install-and-upgrade-guide"
+]
+},
+{
+"q": "what is the powerflex presentation server",
+"expect": [
+"getting-to-know",
+"technical-overview"
+]
+},
+{
+"q": "install the powerflex vsphere plugin with the powercli script",
+"expect": [
+"deploy-dell-powerflex"
+]
+},
+{
+"q": "does powerflex manager support esxi 8 and upgrading from esxi 7",
+"expect": [
+"technical-overview"
+]
+},
+{
+"q": "csi powerstore volume snapshot yaml example",
+"expect": [
+"csidriver/features/powerstore"
+]
+},
+{
+"q": "install the observability module with helm for powermax, configmap credentials deprecated",
+"expect": [
+"observability/deployment"
+]
+},
+{
+"q": "csi powerscale deleting a volume should break the protection group association",
+"expect": [
+"csi-powerscale-prs/pr-80."
+]
+},
+{
+"q": "csm operator support for multiple vault configurations",
+"expect": [
+"csm-operator-prs/pr-666."
+]
+},
+{
+"q": "csi powermax prometheus metrics observer per array",
+"expect": [
+"multiplexing_observer"
+]
+},
+{
+"q": "csm operator powermax driver 2.16.2 controller deployment",
+"expect": [
+"driverconfig/powermax/v2.16.2/controller"
+]
+},
+{
+"q": "csi DeleteVolumeRequest fields and secrets",
+"expect": [
+"csi-spec/csi.proto"
+]
+},
+{
+"q": "external attacher 3.0 release notes",
+"expect": [
+"external-attacher/CHANGELOG/CHANGELOG-3.0"
+]
+},
+{
+"q": "2022-10-24T02:34:02Z 113535092315613186 [12:0] SPINVFS_COMMON_RPC: spin_msid_vol_lookup: tid=(101000:mgwd) attempt=24, ttl=4971 ms error=35",
+"expect": [
+"Extremely_latency_on_volume_from_CPU_N-blade"
+]
+},
+{
+"q": "Error: UPGRADE FAILED: chart requires kubeVersion: >= 1.22.0 < 1.25.0 which is incompatible with Kubernetes v1.22.11-mirantis-1",
+"expect": [
+"csidriver/troubleshooting/powerstore"
+]
+}
+]

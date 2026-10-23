@@ -1,0 +1,218 @@
+[
+{
+"q": "fc ports admin up but operational down on all ports, emulex adapter parity errors",
+"expect": [
+"CONTAP-79893"
+]
+},
+{
+"q": "STIO Adapter:9c IO WQE failure, Handle 0xa, Type 8 Status 0x3 Ext_Status 0x16",
+"expect": [
+"CONTAP-79893"
+]
+},
+{
+"q": "how to lower data processing latency on a busy node",
+"expect": [
+"How_to_reduce_Data_Processing_latency"
+]
+},
+{
+"q": "change iops and throughput of gp3 disks after the aggregate exists in cloud volumes ontap",
+"expect": [
+"GP3_disks_after_the_aggregate"
+]
+},
+{
+"q": "swap sfp optics on a uta2 card when changing the personality to fc",
+"expect": [
+"change-cna-uta2-optical-modules-task"
+]
+},
+{
+"q": "which volume types can't be managed from system manager",
+"expect": [
+"volumes/manage-volumes-task"
+]
+},
+{
+"q": "do I need cluster peering and svm peering before snapmirror",
+"expect": [
+"peering/index"
+]
+},
+{
+"q": "show ntfs acls to smb clients on unix security style volumes",
+"expect": [
+"enable-disable-ntfs-acls-unix-security-task"
+]
+},
+{
+"q": "ontap image install fails because the node is taken over",
+"expect": [
+"image-install-events"
+]
+},
+{
+"q": "disk.partner.encrRevertStart",
+"expect": [
+"disk-partner-events"
+]
+},
+{
+"q": "sles 15 nvme fc verify initiator ports nvme_info",
+"expect": [
+"nvme-sles15-spx"
+]
+},
+{
+"q": "rhel 8 known issues with qlogic hba kernel disruption during failover",
+"expect": [
+"hu-rhel-8x"
+]
+},
+{
+"q": "trident does not delete empty ontap-nas-economy flexvols",
+"expect": [
+"Trident_leaves_empty_economy_pool_volumes"
+]
+},
+{
+"q": "trident operator needs pods exec rbac, can we reduce it for security audit",
+"expect": [
+"Minimizing_exec_RBAC_Permissions"
+]
+},
+{
+"q": "trident protect create appvault for s3 bucket",
+"expect": [
+"trident-protect-appvault-custom-resources"
+]
+},
+{
+"q": "expand a trident pvc, allowVolumeExpansion in storageclass",
+"expect": [
+"integrate-trident"
+]
+},
+{
+"q": "harvest create certificate authority for ontap certificate authentication",
+"expect": [
+"prepare-cdot-clusters"
+]
+},
+{
+"q": "replace cisco fc switches with brocade in metrocluster",
+"expect": [
+"task_change_an_fc_switch"
+]
+},
+{
+"q": "rest api validate an ntp server before adding it",
+"expect": [
+"post-cluster-ntp-servers"
+]
+},
+{
+"q": "ontap tools 10 vcenter roles and privileges for users",
+"expect": [
+"rbac-vcenter-environment"
+]
+},
+{
+"q": "where do I find the powerflex swid and elm number for supportassist registration",
+"expect": [
+"000227529"
+]
+},
+{
+"q": "csm operator status failed although the driver deployed fine without modules",
+"expect": [
+"000221974"
+]
+},
+{
+"q": "powerscale nfsv4 locks lost when a node reboots, activemq failover",
+"expect": [
+"000215804"
+]
+},
+{
+"q": "networker meditech backups fail after solutions enabler 10.0.1 upgrade, unable to get installed solutions enabler version",
+"expect": [
+"000218930"
+]
+},
+{
+"q": "symdev command examples",
+"expect": [
+"000228219"
+]
+},
+{
+"q": "silent upgrade of unisphere for powermax 10",
+"expect": [
+"manual34878027"
+]
+},
+{
+"q": "vvols end of life vcf 9 powermax vasa",
+"expect": [
+"h19812"
+]
+},
+{
+"q": "configure snmp communication in powerflex manager on powerflex rack",
+"expect": [
+"snmp-communication"
+]
+},
+{
+"q": "what does non-compliant firmware status mean in powerflex manager",
+"expect": [
+"resource-compliance-status"
+]
+},
+{
+"q": "csm replication powerscale failback discard target changes synciq",
+"expect": [
+"replication/architecture/powerscale"
+]
+},
+{
+"q": "install csm authorization v2 with helm",
+"expect": [
+"authorizationv2-0"
+]
+},
+{
+"q": "upgrade csi unity xt driver with helm",
+"expect": [
+"upgrade/helm/driver/unity"
+]
+},
+{
+"q": "csi powermax volume identifier format csivol uuid symid",
+"expect": [
+"collectors/adapters.go"
+]
+},
+{
+"q": "csm resiliency prometheus alert rules",
+"expect": [
+"prometheusrule.yaml"
+]
+},
+{
+"q": "amazon eks hybrid nodes with powermax",
+"expect": [
+"amazon-eks-hybrid-nodes-with-dell-powermax"
+]
+},
+{
+"q": "powermax 8500 dynamic fabric clustered architecture",
+"expect": [
+"powermax-2500-and-8500-dynamic-fabric"
+]
+}
+]

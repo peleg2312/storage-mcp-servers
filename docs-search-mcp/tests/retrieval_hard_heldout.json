@@ -1,0 +1,153 @@
+[
+{
+"q": "xcp sync of a cifs share keeps running and never completes",
+"expect": [
+"SMB_xcp_copy_never_finishes"
+]
+},
+{
+"q": "new esxi install with iscsi to netapp getting scsi errors, qfull sample size",
+"expect": [
+"ONTAP_SAN_SCSI_errors_in_new_ESXi_setup"
+]
+},
+{
+"q": "why does system manager show a different used space than the cli, logical vs physical",
+"expect": [
+"concepts/capacity-measurements"
+]
+},
+{
+"q": "set up ndmp backup per node instead of per svm",
+"expect": [
+"enable-node-scoped-ndmp-cluster-task"
+]
+},
+{
+"q": "create the target volume before setting up snapmirror, how big must it be",
+"expect": [
+"create-destination-volume-task"
+]
+},
+{
+"q": "ems says the last disk in a carrier failed",
+"expect": [
+"raid-carrier-events"
+]
+},
+{
+"q": "install host utilities on windows 2016 for fc luns",
+"expect": [
+"hu_windows_2016"
+]
+},
+{
+"q": "windows server 2022 iscsi to netapp luns setup",
+"expect": [
+"hu_windows_2022"
+]
+},
+{
+"q": "trident fails to get lun details on cloned volumes, ontap 9.16",
+"expect": [
+"Astra_Trident_LUN_info_retrieval_errors_on_ONTAP_FlexClone"
+]
+},
+{
+"q": "encrypt nfs traffic between trident and ontap with kerberos",
+"expect": [
+"kerberos-inflight-encryption"
+]
+},
+{
+"q": "harvest missing metrics because ontap reports partial aggregation",
+"expect": [
+"partial-aggregation"
+]
+},
+{
+"q": "rest api relocate an aggregate to another node or take it offline",
+"expect": [
+"storage_aggregates_uuid_endpoint_overview"
+]
+},
+{
+"q": "upgrade the ontap tools appliance and register it to vcenter over ipv6",
+"expect": [
+"task_upgrade_to_the_9_8_ontap_tools"
+]
+},
+{
+"q": "srdf create pair wizard does not show my device in unisphere after expanding it",
+"expect": [
+"000183022"
+]
+},
+{
+"q": "snmp settings disappeared after upgrading unisphere for powermax",
+"expect": [
+"000228793"
+]
+},
+{
+"q": "replace the ssl certificate on powerflex manager using a csr",
+"expect": [
+"000204726"
+]
+},
+{
+"q": "unisphere performance health score thresholds for director busy",
+"expect": [
+"manual33115301"
+]
+},
+{
+"q": "srdf/a drop pending alert",
+"expect": [
+"Events_and_Alerts",
+"events-and-alerts"
+]
+},
+{
+"q": "scli error wrong reconfiguration mode",
+"expect": [
+"cli-reference"
+]
+},
+{
+"q": "esxi sdc not responding all paths down powerflex",
+"expect": [
+"powerflex-esxi-sdc-stop-responding"
+]
+},
+{
+"q": "helm upgrade failed chart requires kubeVersion for powerstore driver",
+"expect": [
+"csidriver/troubleshooting/powerstore"
+]
+},
+{
+"q": "sample configmap for powermax array config in the csi driver",
+"expect": [
+"samples/configmap/powermax-array-config"
+]
+},
+{
+"q": "resiliency module cluster roles in the csm operator",
+"expect": [
+"moduleconfig/resiliency"
+]
+},
+{
+"q": "esxi naa eui t10 device identifiers explained",
+"expect": [
+"esxi-storage-device-names-and-identifiers"
+]
+},
+{
+"q": "Disk 0b.12 and other disks on this loop/domain are not multipathed and should be for improved availability",
+"expect": [
+"config-notmultipath-events"
+]
+}
+]

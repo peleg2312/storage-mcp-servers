@@ -17,6 +17,7 @@ Index file: --db, else $INDEX_DB, else docs.db next to this script, else ~/.clau
 import argparse
 import json
 import os
+import math
 import re
 import sqlite3
 import sys
@@ -90,6 +91,12 @@ SYNONYMS = [
 ]
 _SYN = {w: g for g in SYNONYMS for w in g}
 CODE_EXT = (".go", ".py", ".proto", ".yaml", ".yml", ".sh")
+SOURCE_EXT = (".go", ".py", ".proto", ".sh")
+LEGACY = {"ontap-7mode-transition", "ontap-system-manager-classic"}      # old releases: only when asked for
+FIX_WORDS = {"pr", "fix", "fixed", "fixes", "bug", "bugs", "issue", "merged", "release", "released", "regression",
+             "broken", "known", "workaround", "changelog", "version", "first"}
+API_WORDS = {"rest", "api", "endpoint", "curl", "json", "uuid", "http", "https", "swagger", "patch", "post"}
+VERSION = re.compile(r"\bv?(\d+(?:\.\d+)+)\b")
 STOP = set("a an the of for to in on with and or is are was were how what why when where which does do did "
            "my i it its from by at after be can could will this that there into vs via about please".split())
 
@@ -110,6 +117,9 @@ def _terms(q):
             continue
         key = raw if raw in _SYN else " ".join(words)
         alts = _SYN.get(key, [key])
+        if re.fullmatch(r"v?\d+(\.\d+)+", raw):          # 2.16.2 is also written v2.16.2 (folders, image tags)
+            v = raw.lstrip("v")
+            alts = [" ".join(v.split(".")), "v" + " ".join(v.split("."))]
         groups.append([" ".join(re.findall(r"\w+", a)) for a in alts])
     # two words that together form a synonym ("snap mirror", "air gapped") become one group
     i = 0
@@ -122,11 +132,31 @@ def _terms(q):
 
 
 def _stem(w):
-    return w[:max(4, len(w) - 3)] if len(w) > 5 else w
+    if len(w) > 5:
+        return w[:max(4, len(w) - 3)]
+    return w[:-1] if len(w) == 4 and w.endswith("s") and not w.endswith("ss") else w   # logs -> log, LUNs -> lun
 
 
 def _has(text, alt):
     return all(re.search(r"\b" + re.escape(_stem(w)), text) for w in alt.split())
+
+
+_DF = {}
+
+
+def _idf(c, group):
+    """BM25-style inverse document frequency of a word group over all chunks (cached per process)."""
+    key = tuple(group)
+    if key not in _DF:
+        if "N" not in _DF:
+            _DF["N"] = c.execute("SELECT count(*) FROM chunks").fetchone()[0] or 1
+        match = " OR ".join('"' + a + '"' for a in group)
+        try:
+            _DF[key] = c.execute("SELECT count(*) FROM chunks_fts WHERE chunks_fts MATCH ?", (match,)).fetchone()[0]
+        except sqlite3.OperationalError:
+            _DF[key] = 0
+    n, df = _DF["N"], _DF[key]
+    return math.log((n - df + 0.5) / (df + 0.5) + 1)
 
 
 def search_docs(c, q, vendor="", product="", limit=8):
@@ -163,28 +193,49 @@ def search_docs(c, q, vendor="", product="", limit=8):
                 found.setdefault(r["chunk_id"], dict(r))
         return found
 
+    qwords = set(re.findall(r"\w+", q.lower()))
+    versions = VERSION.findall(q.lower())
+    # a version in the question ("3.0", "2.16.2", "9.15.1") must win over its neighbours ("3.3"), which FTS
+    # cannot tell apart (it splits on dots); docs folders write it with dots, dashes or none (ontap-ems-9151)
+    vforms = [{v, v.replace(".", "-"), v.replace(".", "")} for v in versions]
     cands = candidates(groups)
     if not cands and any(" " in a for g in groups for a in g):   # near miss on a dotted / multi-word term:
         groups = [[w] for g in groups for w in g[0].split()]     # try its words one by one
         cands = candidates(groups)
     lim = max(1, min(int(limit), 50))
+    idf = [_idf(c, g) ** 0.25 for g in groups]   # rare words weigh more than filler ("very", "find"); 0.25 measured best
+    total = sum(idf) or 1.0
     scored = []
     for r in cands.values():
         title = f"{r.pop('ctx')}\n{r['section'] or ''}".lower()
         text = f"{title}\n{r.pop('body')}".lower()
-        hit = sum(1 for g in groups if any(_has(text, a) for a in g))
-        cover = hit / len(groups) if groups else 1.0
-        in_title = sum(1 for g in groups if any(_has(title, a) for a in g)) / len(groups) if groups else 0.0
+        found = [any(_has(text, a) for a in g) for g in groups]
+        hit = sum(found)
+        cover = sum(w for w, f in zip(idf, found) if f) / total if groups else 1.0
+        in_title = sum(w for w, g in zip(idf, groups) if any(_has(title, a) for a in g)) / total if groups else 0.0
         r["matched"] = f"{hit}/{len(groups)}" if groups else "phrases"
-        weight = 0.5 if r["path"].endswith(CODE_EXT) else 1.0     # docs first; code wins on exact error text
+        r["_found"] = found
+        # document-type priors: docs first; code wins on exact error text, config samples (yaml) a little less
+        weight = 0.5 if r["path"].endswith(SOURCE_EXT) else 0.8 if r["path"].endswith(CODE_EXT) else 1.0
+        if r["product"] == "ontap-restapi":
+            weight *= 1.5 if qwords & API_WORDS else 0.6          # API reference when asked for the API
+        if r["product"] in LEGACY and not qwords & {"7", "mode", "7mode", "transition", "classic"}:
+            weight *= 0.6
+        if r["product"].endswith("-prs") and not qwords & FIX_WORDS:
+            weight *= 0.7                                         # pull requests answer "fixed in / known bug"
+        if vforms:
+            where = f"{r['path']} {title}".lower()
+            weight *= 1 + sum(any(re.search(r"(?<![\d.])" + re.escape(f) + r"(?![\d])", where) for f in fs)
+                              for fs in vforms) / len(vforms)
         scored.append((-r["score"] * cover * cover * weight * (1 + in_title), cover, r))
     scored.sort(key=lambda t: -t[0])
-    rows, per_doc = [], {}
+    rows, per_doc, found_in = [], {}, []
     for final, cover, r in scored:
         if per_doc.get(r["doc_id"], 0) >= 2:
             continue
         per_doc[r["doc_id"]] = per_doc.get(r["doc_id"], 0) + 1
         r.pop("doc_id")
+        found_in.append(r.pop("_found"))
         r["score"] = round(final, 2)                    # relevance, for merging libraries (callers drop it)
         if r["section"] == r["title"]:
             r.pop("section")                            # token economy: no repeated text, no empty fields
@@ -196,7 +247,12 @@ def search_docs(c, q, vendor="", product="", limit=8):
             break
     full = bool(scored) and scored[0][1] == 1.0
     mode = "all words" if full else "partial: no chunk contains every word; best coverage first (see matched)"
-    return {"query": q, "match_mode": mode, "results": rows}
+    out = {"query": q, "match_mode": mode, "results": rows}
+    # words no returned hit holds: the agent's cue to rephrase exactly those with the vendor's term
+    missing = [g[0] for i, g in enumerate(groups) if rows and not any(f[i] for f in found_in)]
+    if missing:
+        out["unmatched"] = missing
+    return out
 
 
 def also_in(c, path):

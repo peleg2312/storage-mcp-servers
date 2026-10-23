@@ -46,10 +46,47 @@ CREATE TABLE IF NOT EXISTS meta(key TEXT PRIMARY KEY, value TEXT);
 # Parsers -> list of (heading, text)
 # ---------------------------------------------------------------------------
 
+# page chrome and templates that carry no knowledge but dilute every chunk they sit in
+_NOISE = re.compile(
+    r"^(provide feedback|please select a product to check article relevancy|this article (applies|does not apply) to"
+    r"|this article is not tied to any specific product\.?|not all product versions are identified in this article\.?"
+    r"|check out other resources|identify your product|find answers to your questions from other dell users"
+    r"|visit community|support services|check if your device is covered by support services\.?|check support status"
+    r"|table of contents|detailed article|search articles|print|email|sign in|back to top"
+    r"|some article numbers may have changed.*|(print\s+)?(email\s+)?english\s+česky.*"
+    r"|[-*] \[[ x]\] i have .*|thank you for your feedback!?|download pdf|dell\.com|contact us|share|home|>"
+    r"|rate this content|was this (article|page|content) helpful\??|send us feedback.*|yes|no"
+    r"|[a-z][a-z .]+/(english|português|简体中文|français|deutsch|italiano|日本語|spanish|nederlands|español|svenska"
+    r"|한국어|polski|русский|türkçe|繁體中文|dansk|suomi|norsk|česky))$", re.I)
+# whole sections that are site chrome (cookie banner, feedback form), dropped by their heading
+_NOISE_HEAD = re.compile(r"^(your cookie preferences|manage consent preferences|cookie list|.*\bcookies"
+                         r"|we value your feedback|rate this content|was this (article|page|content) helpful.*)$", re.I)
+_LICENSE = re.compile(r"^\s*(#|//|/?\*|--)\s*.*(copyright ©|copyright \(c\)|all rights reserved|licensed under the apache"
+                      r"|you may not use this file|obtain a copy of the license|apache\.org/licenses|unless required by"
+                      r"|distributed under the license|without warranties or conditions|see the license for"
+                      r"|limitations under the license)", re.I)
+
+
+_BLOCKS = re.compile(r"English\s+Česky\s+Dansk.*?简体中文"                                # Dell language menu
+                     r"|/\*(?:(?!\*/).)*?(?:Copyright|Licensed under)(?:(?!\*/).)*\*/", re.S)   # license block
+
+
+def _clean(body):
+    body = _BLOCKS.sub("", body)
+    lines = [l for l in body.split("\n") if not _NOISE.match(l.strip()) and not _LICENSE.match(l)]
+    return "\n".join(lines)
+
+
 def _split(sections, title):
-    """Split long sections into <= MAX_CHUNK pieces on paragraph boundaries."""
-    out = []
+    """Split long sections into <= MAX_CHUNK pieces on paragraph boundaries (noise lines dropped)."""
+    out, seen = [], set()
     for heading, body in sections:
+        if _NOISE_HEAD.match((heading or "").strip()):
+            continue
+        body = re.sub(r"\n[ \t]*(?=\n)", "\n", _clean(body))
+        if (heading, body.strip()) in seen:          # the same block twice on a page (KB article properties)
+            continue
+        seen.add((heading, body.strip()))
         body = re.sub(r"\n{3,}", "\n\n", body).strip()
         if not body:
             continue
@@ -190,8 +227,24 @@ def parse_html(text, fallback):
     p.feed(text)
     p.sections.append((p.heading, "".join(p.parts)))
     title = re.sub(r"\s+", " ", html.unescape(p.title)).strip() or fallback
-    secs = [((h or title).strip() or title, re.sub(r"[ \t]+", " ", b)) for h, b in p.sections]
+    secs = []
+    for h, b in p.sections:
+        h = (h or title).strip() or title
+        # KB pages (Dell, NetApp) draw Symptoms / Cause / Resolution as styled text, not <h*>: a line holding
+        # only such a label starts a new section, so the content is filed under its real heading
+        for part in re.split(r"\n[ \t]*(" + _LABELS + r")[ \t]*:?[ \t]*\n", "\n" + b + "\n", flags=re.I):
+            if re.fullmatch(_LABELS, part.strip(), re.I):
+                h = part.strip()
+            else:
+                part = _clean(part).strip()
+                if part and part != h:                     # a table-of-contents entry is only its own label
+                    secs.append((h, re.sub(r"[ \t]+", " ", part)))
     return title, _split(secs, title)
+
+
+_LABELS = (r"(?:Summary|Symptoms?|Cause|Resolution|Workaround|Issue|Solution|Procedure|Environment|Applies to"
+           r"|Additional Information|Permanent Solution|Steps to reproduce|Root cause|Answer|Question|Affected Products"
+           r"|Article Properties)")
 
 
 def parse_pdf(path, fallback):
@@ -203,14 +256,48 @@ def parse_pdf(path, fallback):
             title = r.metadata.title.strip()
     except Exception:
         pass
+    heads = _pdf_headings(r)
     secs = []
     for i, page in enumerate(r.pages, 1):
         try:
             t = page.extract_text() or ""
         except Exception:
             t = ""
-        secs.append((f"page {i}", t))
+        secs.append((f"{heads[i]} (page {i})" if heads.get(i) else f"page {i}", t))
     return title, _split(secs, title)
+
+
+def _pdf_headings(r):
+    """{page number: 'Chapter > Section; next section'} from the PDF outline (bookmarks), so a page is found
+    by the section it belongs to, not only by its words; pages without an outline keep 'page N'."""
+    entries = []
+
+    def walk(items, parents):
+        for x in items:
+            if isinstance(x, list):
+                walk(x, parents + [entries[-1][1]] if entries else parents)
+                continue
+            try:
+                entries.append((r.get_destination_page_number(x) + 1, x.title.strip(), list(parents)))
+            except Exception:
+                pass
+    try:
+        walk(r.outline, [])
+    except Exception:
+        return {}
+    heads, last = {}, None
+    by_page = {}
+    for pg, t, parents in entries:
+        by_page.setdefault(pg, []).append((t, parents))
+    for i in range(1, len(r.pages) + 1):
+        here = by_page.get(i)
+        if here:
+            t, parents = here[0]
+            last = " > ".join(parents[-1:] + [t])           # parent chapter + section: enough context
+            heads[i] = "; ".join([last] + [x for x, _ in here[1:]])[:200]
+        elif last:
+            heads[i] = last[:200]
+    return heads
 
 
 # ---------------------------------------------------------------------------

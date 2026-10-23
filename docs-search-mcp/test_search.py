@@ -145,3 +145,25 @@ assert title == "scsi/scsi.go", title
 assert [h for h, _ in chunks] == ["scsi/scsi.go", "func (s *Scsi) Rescan(dev string) error", "type Dev struct{}"], chunks
 assert "rescan failed: device busy" in chunks[1][1]
 print("code parser OK")
+
+# page chrome dropped; KB labels drawn as plain text become sections; license headers dropped
+kb = ("<html><title>KB 1</title><body><h1>KB 1</h1><div>Print</div><div>Email</div><div>English</div><div>Česky</div>"
+      "<div>Dansk</div><div>简体中文</div><div>Affected Products</div><div>Provide Feedback</div>"
+      "<div>Symptoms</div><div>LUN offline after upgrade</div><div>Cause</div><div>Bug 123</div>"
+      "<div>Resolution</div><div>Upgrade to 10.1</div></body></html>")
+_, ch = docs_index.parse_html(kb, "kb")
+assert [h for h, _ in ch] == ["Symptoms", "Cause", "Resolution"], ch
+assert ch[0][1] == "LUN offline after upgrade" and "Feedback" not in str(ch), ch
+_, ch = docs_index.parse_code("# Copyright © 2025 Dell Inc. All Rights Reserved.\n# Licensed under the Apache License\n"
+                              "apiVersion: v1\nkind: ConfigMap\n", "/x/powermax-array-config.yaml")
+assert "Copyright" not in ch[0][1] and "ConfigMap" in ch[0][1], ch
+print("cleanup OK")
+
+# Dell site chrome: cookie banner sections, country menu and feedback lines are dropped
+page = ("<html><title>PowerFlex VCF</title><body><h2>Overview</h2><div>PowerFlex supports VCF workload domains.</div>"
+        "<div>Thank you for your feedback!</div><div>United States/English</div><div>Canada/English</div>"
+        "<h2>Your Cookie Preferences</h2><div>Dell uses different types of cookies</div></body></html>")
+_, ch = docs_index.parse_html(page, "x")
+assert [h for h, _ in ch] == ["Overview"] and ch[0][1].endswith("PowerFlex supports VCF workload domains."), ch
+assert not any(w in ch[0][1] for w in ("feedback", "English", "cookies")), ch
+print("site chrome OK")

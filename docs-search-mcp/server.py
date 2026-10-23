@@ -101,10 +101,13 @@ def also_in(c, path):
 
 def _search(q, vendor, product, limit):
     """lib.search_docs over every index, merged by relevance; chunk ids made unique per index."""
-    rows, full = [], False
+    rows, full, unmatched = [], False, None
     for i, c in all_cons():
         out = lib.search_docs(c, q, vendor, product, limit)
         full = full or out["match_mode"] == "all words"
+        miss = out.get("unmatched", []) if out["results"] else None     # a library with no hits says nothing
+        if miss is not None:
+            unmatched = miss if unmatched is None else [w for w in unmatched if w in miss]
         for d in out["results"]:
             d["chunk_id"] = i * ID_BASE + d["chunk_id"]
             d["library"] = "local" if i > 0 else "main"
@@ -115,7 +118,7 @@ def _search(q, vendor, product, limit):
     rows.sort(key=lambda r: (-cover(r), -r["score"]))
     for r in rows:
         r.pop("score")
-    return rows[:max(1, min(int(limit), 50))], full
+    return rows[:max(1, min(int(limit), 50))], full, unmatched or []
 
 
 INSTRUCTIONS = """\
@@ -172,10 +175,13 @@ def search_docs(query: str, vendor: str = "", product: str = "", limit: int = 8)
     product: substring of the product (ontap-ems-9151, kb-ontap, trident-2510, csm, csi-powermax, csm-prs,
     powerflex, external-attacher...). Returns up to `limit` hits (max 2 per document) with chunk_id for
     read_chunk, title, section, snippet (matches in «»), url, matched (query words found / total) and
-    also_in (identical copies in other versions)."""
-    rows, full = _search(query, vendor, product, limit)
+    also_in (identical copies in other versions); unmatched = query words no hit holds (rephrase those)."""
+    rows, full, unmatched = _search(query, vendor, product, limit)
     mode = "all words" if full else "partial: no chunk contains every word; best coverage first (see matched)"
-    return {"query": query, "match_mode": mode, "results": rows}
+    out = {"query": query, "match_mode": mode, "results": rows}
+    if unmatched:
+        out["unmatched"] = unmatched
+    return out
 
 
 @mcp.tool(annotations=RO)
