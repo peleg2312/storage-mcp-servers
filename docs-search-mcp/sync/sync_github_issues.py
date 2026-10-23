@@ -89,8 +89,16 @@ def main():
         if state.get("since") and manifest:          # an empty export never narrows the next run
             url += f"&since={state['since']}"
         n = 0
+        first = True
         while url:
             items, url = gh(url, token)
+            if first:
+                first = False
+                if not items and not (state.get("since") and manifest):
+                    print(f"{repo}: the API returned no issues at all - issues disabled on that repository (Dell's CSI driver "
+                          f"repositories track issues in dell/csm) or the token cannot see it", file=sys.stderr)
+                elif not items:
+                    print(f"{repo}: nothing updated since {state.get('since')}", file=sys.stderr)
             for it in items or []:
                 if "pull_request" in it:
                     continue
