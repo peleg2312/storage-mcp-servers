@@ -10,7 +10,9 @@ CREATE VIRTUAL TABLE chunks_fts USING fts5(title, heading, text, tokenize='porte
 rows = [(1, "netapp/ontap-ems/wafl-vol-events.adoc", "netapp", "ontap-ems", "wafl.vol events", "wafl.vol.full",
          "*Severity*:: ALERT *Description*:: This message occurs when the volume is full. *Corrective Action*:: Grow it."),
         (2, "dell/kb/000185226_sio.html", "dell", "kb", "PowerFlex: Dial home alert SIO02.04.0000005 - CAPACITY | Dell US",
-         "Symptoms", "Spare capacity is below the threshold.")]
+         "Symptoms", "Spare capacity is below the threshold."),
+        (3, "dell/csi-powermax/service/csi_extension_server.go", "dell", "csi-powermax", "service/csi_extension_server.go",
+         "func (s *service) ValidateVolumeHostConnectivity(ctx context.Context)", 'return nil, status.Error(codes.InvalidArgument, "the NodeID is a required field")')]
 for i, path, v, p, title, head, text in rows:
     c.execute("INSERT INTO docs VALUES (?,?,?,?,?,NULL)", (i, path, v, p, title))
     c.execute("INSERT INTO chunks VALUES (?,?,0)", (i * 10, i))
@@ -35,6 +37,8 @@ assert "vol1.prod" not in ctx and "esx01" not in ctx, ctx                       
 assert run("mcp__ontap__ems", "wafl.vol.full again", sid) == ""                # once per session
 assert run("mcp__docs-local__search_docs", "wafl.vol.full", sid + "b") == ""   # not on the docs MCP itself
 assert run("mcp__ontap__ems", "all good, nothing to report", sid + "c") == ""
+ctx = run("mcp__k8s__events", "AttachVolume failed: rpc error: code = Unavailable desc = the NodeID is a required field", sid + "d")
+assert '"the NodeID is a required field" [dell/csi-powermax, chunk 30]' in ctx and "ValidateVolumeHostConnectivity" in ctx, ctx
 for f in os.listdir(tempfile.gettempdir()):
     if f.startswith("claude-docs-hints-t"):
         os.remove(os.path.join(tempfile.gettempdir(), f))

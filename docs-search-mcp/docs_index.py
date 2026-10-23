@@ -68,7 +68,9 @@ _LICENSE = re.compile(r"^\s*(#|//|/?\*|--)\s*.*(copyright ©|copyright \(c\)|all
 
 
 _BLOCKS = re.compile(r"English\s+Česky\s+Dansk.*?简体中文"                                # Dell language menu
-                     r"|/\*(?:(?!\*/).)*?(?:Copyright|Licensed under)(?:(?!\*/).)*\*/", re.S)   # license block
+                     r"|/\*(?:(?!\*/).)*?(?:Copyright|Licensed under)(?:(?!\*/).)*\*/"       # license block (code)
+                     r"|<!--(?:(?!-->).)*?(?:Copyright|Licensed under)(?:(?!-->).)*-->"          # license block (markdown)
+                     r"|Your Browser is Out of Date.{0,200}?browsers below", re.S)              # Info Hub banner
 
 
 def _clean(body):

@@ -1,7 +1,7 @@
 ---
 name: docs-lookup
-description: How to answer from the offline documentation library - product names and versions, search method, reading, citing, known bug / fixed in which version. Use for any question that needs vendor docs, a KB article, an error meaning, a procedure or a best practice.
-when_to_use: Trigger phrases - "what do the docs say", "find the KB for", "is this a known bug", "which version fixes"
+description: How to answer from the offline documentation library - product names and versions, search method, reading, citing, known bug / fixed in which version. Use for any request that depends on how a vendor product works: errors, procedures, concepts, design, best practices, APIs and SDKs, known bugs.
+when_to_use: Trigger phrases - "what do the docs say", "is this a known bug", "best practice for", "how does X work", "build / script something with ONTAP / PowerMax"
 ---
 # Library lookup (how every docs answer is built)
 
@@ -25,6 +25,8 @@ vendor / product: `~/.claude/brain/library/MANIFEST.md`. There is no internet; n
 | A CSI / CSM error text, a sidecar (attacher, provisioner, resizer, snapshotter, registrar) | the error string in quotes over `dell` code (`csi-powermax`, `csi-powerflex`, `csi-powerscale`, `goscaleio`, `gopowermax`, `gobrick`, `csm-operator`, `csm-replication`) and `kubernetes` (sidecars, `csi-spec`, `csi-docs`) |
 | Dell security advisories (DSA-*), PowerPath, Unisphere how-tos | `dell` / `kb` |
 | ESXi storage | `vmware` / `kb`, `netapp` / `kb-ontap` |
+| Concepts, architecture, design, best practices (incl. "build something like X") | `netapp`: `ontap` (concept pages), `ontap-technical-reports` (TRs), `ontap-apps-dbs` (VMware / databases), `ontap-sanhost`, `trident-<yymm>` (`trident-reco`); `dell`: `infohub-powermax` / `-powerflex` / `-powerscale` / `-csm` (white papers), `powermax` / `powerflex` product guides and technical overviews, `csm` (`concepts/`); `kubernetes`: `csi-spec`, `csi-docs` |
+| Automation, APIs, SDKs, code that talks to the arrays | `netapp`: `ontap-restapi` (every endpoint), `ontap-automation`, `harvest` (metrics); `dell`: `pyu4v` (PowerMax Python), `gopowermax`, `goscaleio`, `gopowerscale`, `pypowerflex`, `ansible-*`, `terraform-*`, `csi-*` code; `kubernetes`: sidecars |
 | Cisco MDS / UCS, PowerMaxOS release notes, the CSM issue texts (use the `*-prs` fixes) | **not in the library**: say so; explain from general knowledge, clearly labelled |
 
 ## 2. Search: exact first, then wider
@@ -32,8 +34,9 @@ vendor / product: `~/.claude/brain/library/MANIFEST.md`. There is no internet; n
    drop variable parts such as volume names, IDs, timestamps). 2. The key technical words without quotes
    (EMS name, command, KB / CONTAP / DSA number, SIO / PFX code), with vendor + product when known.
    3. Drop the product filter, then the vendor filter. 4. Rephrase with the words the vendor would use
-   (the symptom as a KB title would state it); old / new product names and common acronyms (Isilon /
-   PowerScale, ScaleIO / VxFlex / PowerFlex, VMAX / PowerMax, RDP, SRDF, SDC / scini) already match.
+   (the symptom as a KB title would state it; a general question: the topic in vendor terms, then with
+   "best practices" / "considerations" / "overview", per vendor); old / new product names and acronyms
+   (Isilon / PowerScale, ScaleIO / VxFlex / PowerFlex, VMAX / PowerMax, RDP, SRDF, SDC / scini) already match.
 Each hit has `matched` (query words found / total); `match_mode: partial` = no section holds every word:
 leads, not answers. `unmatched` = words no hit holds: replace exactly those with the vendor's term and
 search again. A version in the query (`9.15.1`, `2.16.2`, `25.10`) ranks that version's documents first. Max 2 hits per document; code hits (`.go`, `.yaml`) show where an error is raised, not

@@ -95,6 +95,9 @@ SOURCE_EXT = (".go", ".py", ".proto", ".sh")
 LEGACY = {"ontap-7mode-transition", "ontap-system-manager-classic"}      # old releases: only when asked for
 FIX_WORDS = {"pr", "fix", "fixed", "fixes", "bug", "bugs", "issue", "merged", "release", "released", "regression",
              "broken", "known", "workaround", "changelog", "version", "first"}
+INTENT = {"best", "practice", "practices", "recommend", "recommended", "recommendation", "recommendations",
+          "guideline", "guidelines", "tips", "advice", "should", "work", "works", "explain", "overview", "difference"}
+INTENT_W = 0.3   # measured: neutral on every eval set, fixes "<topic> design best practices" picking any BP title
 API_WORDS = {"rest", "api", "endpoint", "curl", "json", "uuid", "http", "https", "swagger", "patch", "post"}
 VERSION = re.compile(r"\bv?(\d+(?:\.\d+)+)\b")
 STOP = set("a an the of for to in on with and or is are was were how what why when where which does do did "
@@ -203,7 +206,9 @@ def search_docs(c, q, vendor="", product="", limit=8):
         groups = [[w] for g in groups for w in g[0].split()]     # try its words one by one
         cands = candidates(groups)
     lim = max(1, min(int(limit), 50))
-    idf = [_idf(c, g) ** 0.25 for g in groups]   # rare words weigh more than filler ("very", "find"); 0.25 measured best
+    idf = [_idf(c, g) ** 0.25 * (INTENT_W if g[0] in INTENT else 1.0) for g in groups]   # rare words weigh more
+    # than filler ("very", "find"; 0.25 measured best); phrasing words ("best practices", "recommended") weigh
+    # little, so a question about VMFS datastore size is not answered by any document titled "Best Practices"
     total = sum(idf) or 1.0
     scored = []
     for r in cands.values():

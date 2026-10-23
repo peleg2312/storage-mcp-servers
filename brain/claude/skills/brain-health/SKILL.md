@@ -31,10 +31,10 @@ Note which docs server answered (docs-search or docs-local); if neither, test th
 
 ## 3. Hooks and settings (`~/.claude/settings.json`)
 - `hooks.PreToolUse` has a command ending in `hooks/block-write-tools.py` with matcher `mcp__.*` (the read-only
-  guard), `hooks.PostToolUse` one ending in `hooks/docs-hints.py` (docs meaning of EMS / alerts in live
-  results) and `hooks.SessionStart` one ending in `hooks/session-start.py` (user install: `~/.claude/hooks/`;
+  guard), `hooks.PostToolUse` one ending in `hooks/docs-hints.py` (docs meaning of EMS / alerts / errors in
+  live results), `hooks.UserPromptSubmit` one ending in `hooks/docs-leads.py` (library leads per request) and `hooks.SessionStart` one ending in `hooks/session-start.py` (user install: `~/.claude/hooks/`;
   project install: `"$CLAUDE_PROJECT_DIR"/.claude/hooks/`).
-- The three files exist in `~/.claude/hooks/` and `python3 -m py_compile` them; docs-hints check:
+- The four files exist in `~/.claude/hooks/` and `python3 -m py_compile` them; docs-hints check:
   `echo '{"session_id":"bh","tool_name":"mcp__x__y","tool_response":"wafl.vol.full"}' | python3 ~/.claude/hooks/docs-hints.py`
   prints the wafl.vol.full meaning (nothing = library missing on this VM); `allowed-tools.txt` exists
   (list its non-comment entries: each one is a tool the guard skips - are they really read-only?).

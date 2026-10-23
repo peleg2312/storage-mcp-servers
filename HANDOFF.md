@@ -20,17 +20,20 @@ Dell PowerFlex, NetApp ONTAP, NetApp Trident, Dell CSM / CSI, Cisco MDS / UCS, V
 
 `RUNBOOK.md` has every command for the PC and the VM. `README.md` is the overview. The GitHub repository is
 public by the user's decision (2026-10-23), although it carries vendor content. Tests: `cd docs-search-mcp &&
-python3 test_search.py && python3 test_stdio.py && python3 test_sync_dell.py && python3 test_sync_issues.py && python3 ../brain/test_hook.py && python3 ../brain/test_docs_hints.py`;
+python3 test_search.py && python3 test_stdio.py && python3 test_sync_dell.py && python3 test_sync_issues.py && python3 ../brain/test_hook.py && python3 ../brain/test_docs_hints.py && python3 ../brain/test_docs_leads.py`;
 search quality: `python3 eval_search.py` and `--cases tests/retrieval_heldout.json` (hit@5 >= 0.9).
 
 ## Where things stand (2026-10-23, night)
 
-- Library 2026.10.23d: 32,930 unique documents (50,987 files). Retrieval rebuilt and measured on blind test
+- Library 2026.10.23e: 33,272 unique documents (51,332 files). Retrieval rebuilt and measured on blind test
   sets (brain/ARCHITECTURE.md): Dell KB sections fixed (Symptoms / Cause / Resolution), page chrome removed,
   PDF outline headings, version matching, `unmatched` hint. Six eval sets in `docs-search-mcp/tests/`
   (`retrieval_fresh_heldout` and `retrieval_general_heldout` are the blind ones); gate: hit@5 >= 0.9 on the
   first two. Bake-off against QMD (local BM25 + vectors + LLM rerank): this search wins on every set;
   no embeddings for now (`docs-search-mcp/bakeoff/` to re-run).
+- Docs found unasked: `docs-leads.py` (library leads for every request that names the storage world, incl.
+  design / best practice / automation questions) and `docs-hints.py` (meaning of EMS, alerts, codes and free-text
+  errors in live MCP results); CLAUDE.md rule 8 says when to search. Seven eval sets incl. a blind best-practice set.
 - Brain: memory catalog (notes.md + notes/<topic>.md), kuparashit documented as the snapshot inventory /
   join hub, installer always applies the look and feel, read-only hook catches SQL writes anywhere.
 - Dell (done this evening): 1,654 KB articles, 234 Info Hub papers (PowerScale 90, CSM 58, PowerFlex 51,

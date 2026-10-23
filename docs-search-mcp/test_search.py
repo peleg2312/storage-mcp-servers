@@ -167,3 +167,10 @@ _, ch = docs_index.parse_html(page, "x")
 assert [h for h, _ in ch] == ["Overview"] and ch[0][1].endswith("PowerFlex supports VCF workload domains."), ch
 assert not any(w in ch[0][1] for w in ("feedback", "English", "cookies")), ch
 print("site chrome OK")
+
+# markdown license comments and the Info Hub browser banner are dropped
+_, ch = docs_index.parse_md("<!-- Copyright (c) 2021 Dell Inc. Licensed under the Apache License -->\n# Guide\n\nUse helm.\n", "g")
+assert "Copyright" not in str(ch) and "Use helm." in str(ch), ch
+assert "Nytro" not in docs_index._clean("Best practices Your Browser is Out of Date Nytro.ai uses technology that works "
+                                         "best in other browsers. For a full experience use one of the browsers below Keep RAID")
+print("banner + md license OK")

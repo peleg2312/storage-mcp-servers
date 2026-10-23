@@ -1,6 +1,6 @@
-# Documentation library 2026.10.23d
+# Documentation library 2026.10.23e
 
-Indexed 2026-10-23T17:32:55Z: **32930 unique documents, 197396 sections** (50987 files: 18057 are identical copies, e.g. the same page in several ONTAP versions, kept as aliases of one indexed copy and shown as `also_in`). Search it with `python3 search.py search "..."` (no dependencies) or the docs-search MCP server.
+Indexed 2026-10-23T18:11:36Z: **33272 unique documents, 198666 sections** (51332 files: 18060 are identical copies, e.g. the same page in several ONTAP versions, kept as aliases of one indexed copy and shown as `also_in`). Search it with `python3 search.py search "..."` (no dependencies) or the docs-search MCP server.
 
 Document counts below are files per product; an identical copy counts in every product it appears in.
 
@@ -17,24 +17,24 @@ Document counts below are files per product; an identical copy counts in every p
 | dell | csi-powermax-prs | 510 | 2596 | individual URLs (manifest.json) |
 | dell | csi-powerscale | 72 | 755 | https://github.com/dell/csi-powerscale |
 | dell | csi-powerscale-prs | 415 | 2220 | individual URLs (manifest.json) |
-| dell | csm | 780 | 2989 | https://github.com/dell/csm-docs |
+| dell | csm | 780 | 2987 | https://github.com/dell/csm-docs |
 | dell | csm-authorization | 2 | 21 | https://github.com/dell/karavi-authorization |
 | dell | csm-helm-charts | 134 | 506 | https://github.com/dell/helm-charts |
 | dell | csm-metrics-powerflex | 19 | 192 | https://github.com/dell/karavi-metrics-powerflex |
-| dell | csm-metrics-powerflex-prs | 195 | 1243 | individual URLs (manifest.json) |
+| dell | csm-metrics-powerflex-prs | 195 | 1242 | individual URLs (manifest.json) |
 | dell | csm-metrics-powermax | 22 | 199 | https://github.com/dell/csm-metrics-powermax |
 | dell | csm-metrics-powermax-prs | 114 | 755 | individual URLs (manifest.json) |
 | dell | csm-metrics-powerscale | 17 | 152 | https://github.com/dell/csm-metrics-powerscale |
 | dell | csm-observability | 5 | 39 | https://github.com/dell/karavi-observability |
 | dell | csm-observability-prs | 111 | 473 | individual URLs (manifest.json) |
-| dell | csm-operator | 480 | 2738 | https://github.com/dell/csm-operator |
-| dell | csm-operator-prs | 978 | 4996 | individual URLs (manifest.json) |
-| dell | csm-prs | 334 | 1383 | individual URLs (manifest.json) |
+| dell | csm-operator | 480 | 2728 | https://github.com/dell/csm-operator |
+| dell | csm-operator-prs | 978 | 4994 | individual URLs (manifest.json) |
+| dell | csm-prs | 334 | 1258 | individual URLs (manifest.json) |
 | dell | csm-replication | 108 | 700 | https://github.com/dell/csm-replication |
 | dell | csm-replication-prs | 260 | 1204 | individual URLs (manifest.json) |
-| dell | csm-repo | 26 | 199 | https://github.com/dell/csm |
+| dell | csm-repo | 26 | 198 | https://github.com/dell/csm |
 | dell | csm-resiliency | 43 | 291 | https://github.com/dell/karavi-resiliency |
-| dell | csm-resiliency-prs | 252 | 1451 | individual URLs (manifest.json) |
+| dell | csm-resiliency-prs | 252 | 1367 | individual URLs (manifest.json) |
 | dell | dell-csi-extensions | 6 | 49 | https://github.com/dell/dell-csi-extensions |
 | dell | gobrick | 23 | 253 | https://github.com/dell/gobrick |
 | dell | gobrick-prs | 109 | 548 | individual URLs (manifest.json) |
@@ -46,18 +46,18 @@ Document counts below are files per product; an identical copy counts in every p
 | dell | gopowerscale-prs | 93 | 470 | individual URLs (manifest.json) |
 | dell | goscaleio | 46 | 965 | https://github.com/dell/goscaleio |
 | dell | goscaleio-prs | 181 | 1002 | individual URLs (manifest.json) |
-| dell | infohub-csm | 57 | 4476 | individual URLs (manifest.json) |
-| dell | infohub-powerflex | 50 | 3049 | individual URLs (manifest.json) |
-| dell | infohub-powermax | 38 | 4555 | individual URLs (manifest.json) |
-| dell | infohub-powerscale | 89 | 5767 | individual URLs (manifest.json) |
+| dell | infohub-csm | 57 | 4439 | individual URLs (manifest.json) |
+| dell | infohub-powerflex | 50 | 3033 | individual URLs (manifest.json) |
+| dell | infohub-powermax | 38 | 4506 | individual URLs (manifest.json) |
+| dell | infohub-powerscale | 89 | 5722 | individual URLs (manifest.json) |
 | dell | kb | 1654 | 13592 | individual URLs (manifest.json) |
 | dell | powerflex | 114 | 9478 | https://www.dell.com/support/kbdoc/en-us/000314729/powerflex-software-documentation, https://www.dell.com/support/manuals/en-us/powerflex-rack-hw/flex-rack-flexmgr-ug/alert-messages-and-recommended-actions?guid=guid-19f77807-a5c8-4b25-8f9b-9a36a14b6305&lang=en-us |
 | dell | powermax | 36 | 5820 | https://www.dell.com/en-sg/dt/documentation/vmax-all-flash-family.htm, https://www.dell.com/support/manuals/en-us/solutions-enabler/esd_p_array_mgmnt_alerts_guide_10_1_laurel/unisphere-policy-name-alert-id-mapping?guid=guid-ce5f01f7-6753-4ee8-a1e3-56202aab89fd&lang=en-us, https://www.dell.com/support/manuals/en-us/solutions-enabler/esd_p_array_mgmnt_alerts_guide_10_2_magnolia/preface?guid=guid-8600a2c8-6f7e-41fd-ad5a-d61c4075ded5&lang=en-us, https://www.dell.com/support/manuals/en-us/solutions-enabler/esd_p_se_array_mgmt_alerts_guide_10/unisphere-policy-name-alert-id-mapping?guid=guid-ce5f01f7-6753-4ee8-a1e3-56202aab89fd&lang=en-us, https://www.dell.com/support/manuals/en-us/unisphere-powermax/esd_p_mt_unisph_u4p_product_guide_10_3_0/overview-of-unisphere-for-powermax?guid=guid-daff12bb-453f-4ce5-a2f1-5f40f84d1bfe&lang=en-us |
 | dell | pypowerflex | 2 | 47 | https://github.com/dell/python-powerflex |
 | dell | pyu4v | 22 | 41 | https://github.com/dell/PyU4V |
-| dell | terraform-powerflex | 72 | 890 | https://github.com/dell/terraform-provider-powerflex |
+| dell | terraform-powerflex | 72 | 876 | https://github.com/dell/terraform-provider-powerflex |
 | dell | terraform-powermax | 22 | 261 | https://github.com/dell/terraform-provider-powermax |
-| dell | terraform-powerscale | 95 | 1264 | https://github.com/dell/terraform-provider-powerscale |
+| dell | terraform-powerscale | 95 | 1263 | https://github.com/dell/terraform-provider-powerscale |
 | kb | kb | 1 | 5 |  |
 | kubernetes | csi-docs | 60 | 372 | https://github.com/kubernetes-csi/docs |
 | kubernetes | csi-lib-iscsi | 5 | 66 | https://github.com/kubernetes-csi/csi-lib-iscsi |
@@ -78,7 +78,7 @@ Document counts below are files per product; an identical copy counts in every p
 | netapp | harvest | 69 | 2820 | https://github.com/NetApp/harvest |
 | netapp | harvest-changelog | 1 | 285 | https://github.com/NetApp/harvest |
 | netapp | harvest-issues | 85 | 525 | individual URLs (manifest.json) |
-| netapp | kb-ontap | 2476 | 11883 | individual URLs (manifest.json) |
+| netapp | kb-ontap | 2821 | 13540 | individual URLs (manifest.json) |
 | netapp | kb-ontap-tools-vmware | 1104 | 5868 | individual URLs (manifest.json) |
 | netapp | kb-switches | 1285 | 6286 | individual URLs (manifest.json) |
 | netapp | kb-trident | 820 | 4148 | individual URLs (manifest.json) |

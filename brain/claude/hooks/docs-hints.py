@@ -17,6 +17,8 @@ import tempfile
 import zlib
 
 MAX_HINTS = 4
+MAX_ERR_HINTS = 2      # free-text error messages (CSI / Kubernetes / driver logs) looked up by their fixed words
+ERR = re.compile(r"(?:desc = |\b(?:error|Error|ERROR|failed|Failed|FAILED)(?: to [a-z]+)?: )([^\n\"]{12,240})")
 MAX_CANDIDATES = 60
 DB = os.environ.get("DOCS_HINTS_DB") or os.path.expanduser("~/.claude/brain/library/docs.db")
 
@@ -109,6 +111,42 @@ def code_hint(c, code):
     return f"{code} [{vendor}/{product}, chunk {rowid}]: {title[:110]}" + (f" :: {near}" if near else "")
 
 
+def err_phrase(msg):
+    """Longest run of 4-10 fixed words in an error message (ids, names, numbers and paths dropped)."""
+    best, cur = [], []
+    for w in re.findall(r"[^\s,;:()\[\]{}'\"]+", msg):
+        if re.fullmatch(r"[A-Za-z]+", w):                   # words; ids, numbers, paths and names with digits break the run
+            cur.append(w)
+            if len(cur) > len(best):
+                best = cur[:]
+        else:
+            cur = []
+    return " ".join(best[:10]) if len(best) >= 4 else None
+
+
+def err_hint(c, phrase):
+    """Where the library has this message: source code (the function raising it) or a doc / KB. Messages end
+    in a variable (Go "...due to %s"), so the phrase is shortened word by word until it is found (4 words min)."""
+    words, rows = phrase.split(), []
+    while len(words) >= 4 and not rows:
+        try:
+            rows = c.execute("SELECT f.rowid, d.vendor, d.product, d.title, f.heading, d.path, bm25(chunks_fts, 6.0, 3.0, 1.0) "
+                             "FROM chunks_fts f JOIN chunks ch ON ch.id = f.rowid JOIN docs d ON d.id = ch.doc_id "
+                             "WHERE chunks_fts MATCH ? ORDER BY 7 LIMIT 6", ('"' + " ".join(words) + '"',)).fetchall()
+        except sqlite3.OperationalError:
+            return None
+        if not rows:
+            words = words[:-1]
+    if not rows:
+        return None
+    phrase = " ".join(words)
+    rows.sort(key=lambda r: r[5].endswith((".go", ".py", ".yaml", ".yml")))      # an explanation before the code
+    rowid, vendor, product, title, heading, path, _ = rows[0]
+    where = f"{title}" + (f" :: {heading[:90]}" if heading and heading != title else "")
+    more = f" (+{len(rows) - 1} more places)" if len(rows) > 1 else ""
+    return f'"{phrase}" [{vendor}/{product}, chunk {rowid}]: {re.sub(r"\s*\|\s*Dell.*$", "", where)[:160]}{more}'
+
+
 def main():
     try:
         data = json.load(sys.stdin)
@@ -129,7 +167,7 @@ def main():
     found += [(m.start(1), m.group(1)) for m in EMS.finditer(text) if m.group(1).lower() in known]
     cands = [x for _, x in sorted(found)]                      # in the order the result shows them
     cands = [x for x in dict.fromkeys(cands) if x not in seen][:MAX_CANDIDATES]
-    if not cands:
+    if not cands and not ERR.search(text):
         return 0
     hints, more = [], []
     for x in cands:
@@ -143,6 +181,18 @@ def main():
             more.append(x)                                     # named only: search_docs gives the detail
     if more:
         hints.append("also documented: " + ", ".join(more[:12]))
+    errs = 0
+    for m in ERR.finditer(text):
+        phrase = err_phrase(m.group(1))
+        if not phrase or phrase in seen:
+            continue
+        seen.add(phrase)
+        h = err_hint(c, phrase)
+        if h:
+            hints.append(h)
+            errs += 1
+        if errs >= MAX_ERR_HINTS:
+            break
     if not hints:
         return 0
     try:
