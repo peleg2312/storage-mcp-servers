@@ -258,7 +258,8 @@ def main():
         text = text.translate({0x00b7: "-", 0x25c6: "*", 0x2501: "-", 0x2726: "*"}).encode("ascii", "replace").decode()
     if announce:
         with open(announce, "w", encoding="utf-8") as f:
-            json.dump({"companyAnnouncements": [text.strip("\n")]}, f)
+            # two spacer lines under Claude Code's "Message from ..." label (no-break spaces: blank lines are trimmed)
+            json.dump({"companyAnnouncements": ["\u00a0\n\u00a0\n" + text.strip("\n")]}, f)
     else:
         print(text)
 
