@@ -19,4 +19,8 @@ Known tool names of the storage-mcp-servers builds:
   list_vsans, list_fc_uplinks, list_fc_port_channels, get_fc_port_errors, get_vhba_pinning,
   trace_service_profile_san, trace_san_path, get_domain_fc_health, domain_san_health, list_faults,
   get_events, get_audit_log, ucs_health_check, troubleshoot_server, query_class, get_object
+- kuparashit: SQL over SQLite (SELECT / WITH / PRAGMA table_info only; the hook blocks writes). First call
+  of a session: `SELECT name, sql FROM sqlite_master WHERE type IN ('table','view')`, then query; join on
+  lowercase NAA / normalized pWWN; always select the vCenter column.
+- ontap, harvest, Aria: tools discovered by their descriptions until `/brain-setup` records them here.
 - docs-search / docs-local: see the docs-lookup skill.

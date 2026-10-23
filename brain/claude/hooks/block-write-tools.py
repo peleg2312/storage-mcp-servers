@@ -28,9 +28,11 @@ CLI_KEYS = {"command", "cmd", "cli", "cli_command", "commands"}
 CLI_READ = {"show", "get", "list", "display", "dir", "ls", "cat", "describe", "terminal"}
 METHOD_KEYS = {"method", "http_method", "verb"}
 SQL_KEYS = {"sql", "query", "statement"}
-SQL_WRITE = re.compile(r"^\s*(insert\s+into|update\s+\S+\s+set|delete\s+from|drop\s+(table|database|view|index)|"
-                       r"alter\s+table|truncate\s+table?|create\s+(table|index|database|view)|grant\s|revoke\s|merge\s+into)",
-                       re.I)
+# anywhere in the text, not only at the start: "SELECT 1; DELETE FROM x" and "WITH t AS (...) DELETE ..." are writes too
+SQL_WRITE = re.compile(r"\b(insert\s+(or\s+\w+\s+)?into|replace\s+into|update\s+\S+\s+set|delete\s+from|"
+                       r"drop\s+(table|database|view|index|trigger)|alter\s+table|truncate\s+table?|"
+                       r"create\s+(temp\w*\s+)?(table|index|database|view|trigger)|grant\s|revoke\s|merge\s+into|"
+                       r"attach\s+database|vacuum\b|pragma\s+\w+\s*=)", re.I)
 
 
 def tokens(name):

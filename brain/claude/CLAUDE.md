@@ -14,7 +14,8 @@ tools: `search_docs`, `read_chunk`, `read_document`, `list_sources`; without MCP
 docs and KB, Dell PowerMax / PowerFlex / PowerScale / CSM docs and KB, Trident / Harvest bugs, Dell CSM / CSI
 fixes (pull requests with their first release), CSI driver and sidecar source code. Not in it: Cisco MDS /
 UCS docs, PowerMaxOS release notes. The `docs-lookup` skill has the product names and the search method.
-Live state comes from the other MCP servers.
+Live state comes from seven MCP servers: **powermax**, **ontap**, **harvest** (ONTAP performance), **mds**,
+**ucsc** (UCS Central), **VMware Aria Operations**, and **kuparashit**, the map that joins them end to end.
 
 ## Golden rules
 1. **Read-only, always.** Never call a tool that changes anything. If he asks for a change, verify the
@@ -52,7 +53,7 @@ Live state comes from the other MCP servers.
 Exact tool names per server: see the tool map imported at the bottom (run `/brain-setup` to refresh it).
 | Question | Source |
 |---|---|
-| Which datastore / RDM / VM / ESX host uses NAA x? Which NAAs does host/VM y use? | **kuparashit** (the DS-NAA-RDM-VM-ESX link; primary for VMware-side mapping) |
+| Which datastore / RDM / VM / ESX host uses NAA x? Which NAAs does host/VM y use? Which ESX owns pWWN z, which NAAs and array targets (ONTAP LIF / PowerMax FA port) does it see? | **kuparashit**: SQL (SELECT only) over a SQLite map of ESX hosts, datastores, VMs, RDMs, NAAs, host pWWNs and paths, with a few fields each. **The join hub**: holds the links the other MCPs lack (Aria shows an ESX but not its NAAs or pWWNs; MDS shows a pWWN but not its host). Read the schema first (tool map) |
 | VM / datastore / host latency, IOPS, capacity trends, alerts, forecasts | **VMware Aria Operations** |
 | PowerMax: volumes (wwn), storage groups, masking views, hosts/initiators, port groups, FA ports, SRDF, alerts, audit log, performance | **powermax** MCP |
 | ONTAP: SVMs, volumes, LUNs (serial), igroups, LUN maps, LIFs/FC targets, aggregates, EMS events | **ontap** MCP |
@@ -93,6 +94,9 @@ VM → datastore (VMFS) or RDM → NAA → ESXi host → vmhba (WWPN, from kupar
 profile vHBA (fabric A/B, VSAN, WWPN) → Fabric Interconnect (NPV; FC uplink / SAN port-channel) →
 MDS (FLOGI on the port-channel/interface, VSAN, FCNS, zone + device-alias) → array target port
 (PowerMax FA dir:port / ONTAP FC LIF WWPN) → masking view or igroup/LUN map → device/LUN.
+**End to end from any identifier** (pWWN, NAA, ESX, VM, datastore, LIF): look it up in kuparashit to get
+the identifiers of the other layers in one query, then confirm each layer live in its own MCP (mds,
+ucsc, powermax / ontap, Aria / harvest for performance). A kuparashit link no live MCP confirms is stale.
 A healthy host: every vmhba logged in, zoned on its fabric to the array ports in its masking view /
 igroup, same number of paths on both fabrics, all paths active (ALUA: optimized + non-optimized).
 

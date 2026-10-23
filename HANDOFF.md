@@ -13,31 +13,29 @@ Dell PowerFlex, NetApp ONTAP, NetApp Trident, Dell CSM / CSI, Cisco MDS / UCS, V
    by `docs-search-mcp/docs_index.py`, packed by `docs-search-mcp/bundle/pack-library.sh`. Served offline by
    `mcp_stdio.py` (stdio MCP server, standard library only) or `server.py` (HTTP, fastmcp) with four tools:
    search_docs, read_chunk, read_document, list_sources. Also `search.py` from the shell.
-2. **The brain** (`brain/claude/`): CLAUDE.md (131 lines, imports environment.md / notes.md / tool-map.md),
-   23 skills, 8 agents, a PreToolUse hook that blocks write-looking MCP calls (read-only policy), a SessionStart
+2. **The brain** (`brain/claude/`): CLAUDE.md (107 lines, imports environment.md / notes.md / tool-map.md),
+   24 skills (incl. Anthropic's skill-creator), 8 agents (sonnet), a PreToolUse hook that blocks write-looking MCP calls (read-only policy), a SessionStart
    hook, the "Peleg As A Service" banner and status line. Installed by `install-vm.sh` (user scope) or
    `install-vm.sh --project <dir>` (one folder only). Reviewed against the Claude Code docs: `brain/ARCHITECTURE.md`.
 
-`RUNBOOK.md` has every command for the PC and the VM. `README.md` is the overview. Keep the repo private
-(vendor content). Tests: `cd docs-search-mcp && python3 test_search.py && python3 test_stdio.py && python3 test_sync_dell.py`.
+`RUNBOOK.md` has every command for the PC and the VM. `README.md` is the overview. The GitHub repository is
+public by the user's decision (2026-10-23), although it carries vendor content. Tests: `cd docs-search-mcp &&
+python3 test_search.py && python3 test_stdio.py && python3 test_sync_dell.py && python3 test_sync_issues.py && python3 ../brain/test_hook.py`;
+search quality: `python3 eval_search.py` and `--cases tests/retrieval_heldout.json` (hit@5 >= 0.9).
 
-## Where things stand (2026-10-23)
+## Where things stand (2026-10-23, evening)
 
-- Library 2026.10.23c: 39,681 files, 21,686 unique documents (identical copies across ONTAP versions are
-  folded into aliases, shown as `also_in`). NetApp docs complete (ONTAP, EMS 9.11-9.18, REST, Trident, Harvest),
-  Dell CSM docs site complete, Dell PowerMax/PowerFlex public PDFs, PowerMaxOS 10.x Events and Alerts guides,
-  ~530 Dell KB articles, ~1,900 NetApp KB articles, Trident/Harvest issue trackers, VMware KB pages.
-- **NetApp KB export is unfinished**: about 1,950 of 14,751 articles checked in the chosen areas (SAN, host utilities,
-  performance, Trident, MetroCluster, DP, hardware, switches, ASA r2). It is resumable: manifests inside
-  `work/docs/netapp/kb-*/` record what is done. Full articles need the kb.netapp.com login cookie.
-- **Dell is the gap**: Dell's site blocks cloud addresses and needs sign-in for the best documents, so Dell
-  collection runs from this PC with a real browser (`sync/dell_browser.py`, Playwright + a Chrome profile the
-  user signs in to once). Not yet obtained: the PowerFlex Alerts and Events Reference Guides (4.5, 4.6, 4.8,
-  5.0, 5.1), PowerFlex release notes / support matrices / security guides (26 PDFs listed in
-  `docs-search-mcp/extra/dell/NEEDED.md`), the bulk of Dell KB (searches), Info Hub papers, dell/csm issues.
-- The user's last run of the collector (before the lib7 fixes) got 14 KB articles and no PDFs; the fixed
-  version has only been tested against a local fake of Dell's pages, never against the real site. Expect to
-  adapt selectors / waits in `dell_browser.py` after watching one real run.
+- Retrieval rebuilt and measured (brain/ARCHITECTURE.md): contextual index, synonyms, coverage ranking;
+  held-out hit@5 0.65 -> 1.00. Brain trimmed (~1/3 fewer tokens per turn), skill evals 9/9
+  (`claude plugin eval` in brain/claude; the shell `claude` must be logged in: `claude auth login`).
+- New sources: Dell CSM / CSI pull requests (4,109, with "First release" tags; Dell disabled the issue
+  trackers), source code of the CSI drivers / array clients / Kubernetes CSI sidecars, PowerScale, Dell KB
+  1,654 articles (was 528), Info Hub papers, the PowerFlex Rack and Unisphere 10.3 HTML manuals.
+- **Dell PDFs of NEEDED.md**: refused for entitlement (account level 10 < 30) until the user's Dell account is
+  linked to the company's PowerFlex site (the user asked for it); then `dell_browser.py needed --wait-login`.
+  The PowerMax alerts guide link of sources/dell-manuals.txt is retired ("Sorry"): find its new url.
+- **NetApp KB export is unfinished** (runs in a terminal at NetApp's 5 s per article, ~520 / hour; started at
+  ~1,700 of 14,751). Resumable; full articles need the kb.netapp.com cookie (NETAPP_KB_COOKIE, never in files).
 
 ## Rules the user set
 
@@ -56,19 +54,20 @@ Dell PowerFlex, NetApp ONTAP, NetApp Trident, Dell CSM / CSI, Cisco MDS / UCS, V
 1. `cd docs-search-mcp && source work/venv/bin/activate` (venv has pypdf, cryptography, fonttools,
    browser-cookie3, playwright). If `work/docs` is missing, restore it from the library:
    `sh ../library/join.sh work && mv work/docs-library/docs work/docs && mkdir -p work/index && mv work/docs-library/docs.db work/index/docs.db && rm -rf work/docs-library`.
-2. Dell, with the browser collector (watch the first run; fix what Dell's real pages need):
-   `python3 sync/dell_browser.py login` (sign in, ENTER), then `python3 sync/dell_browser.py needed`,
-   `python3 sync/dell_browser.py kb`, `python3 sync/dell_browser.py infohub`, `python3 sync/dell_browser.py manuals`,
-   then `python3 sync/import_extra.py --dest work/docs`. Add queries to `sources/dell-kb-queries.txt` freely.
-3. `rm -f work/docs/dell/csm-issues/.issues-state.json; GITHUB_TOKEN=<token> python3 sync/sync_github_issues.py --dest work/docs`
-   (dell/csm has ~2,000 issues; the CSI driver repos have issues disabled, that is expected).
+2. Dell: `python3 sync/dell_browser.py all --wait-login` (sign in inside the window it opens; the run goes on
+   in that session; searches are cached a week), then `python3 sync/import_extra.py --dest work/docs`.
+3. `GITHUB_TOKEN="$(gh auth token)" python3 sync/sync_github_issues.py --dest work/docs && python3 sync/pr_releases.py
+   --dest work/docs` (Trident / Harvest issues; Dell CSM / CSI pull requests and their first release tags).
 4. NetApp KB, continuing where the library stopped (one article per 5 s, resumable, Ctrl-C any time):
    `NETAPP_KB_COOKIE='authtoken=<value from the browser, kb.netapp.com cookie>' python3 sync/sync_netapp_kb.py --dest work/docs --refresh-partial --include on-prem/ontap/da/SAN on-prem/ontap/da/Host-Utilities on-prem/ontap/Perf Cloud/Astra/NetApp_Trident data-mgmt/OTV on-prem/Switches on-prem/ontap/mc on-prem/ontap/DP on-prem/ontap/OHW on-prem/ASAr2`
    (drop `--include` to export every area; it is a multi-day run at NetApp's rate).
-5. Checkpoint whenever useful: `python3 docs_index.py --docs work/docs --db work/index/docs.db && sh bundle/pack-library.sh`,
-   then from the repo root `git add -A library && git add -f docs-search-mcp/work/docs/dell docs-search-mcp/extra/dell && git commit && git push`.
-   `library/MANIFEST.md` lists what is inside; the first line gives unique documents and folded copies.
-6. On the VM: `git pull && sh install-vm.sh` (or `--project <dir>`), then `/brain-setup` inside Claude.
+5. Checkpoint: `sh sync/sync-git.sh work/docs && python3 docs_index.py --docs work/docs --db work/index/docs.db`,
+   both eval_search checks, `sh bundle/pack-library.sh`, then from the repo root
+   `git add -A library && git add -u docs-search-mcp/work/docs/dell && git add -f docs-search-mcp/work/docs/dell/kb
+   docs-search-mcp/work/docs/dell/infohub-* docs-search-mcp/work/docs/dell/*/manual-* docs-search-mcp/extra/dell`
+   (never `git add -f` the whole dell folder: the code clones carry their own .git), commit, push.
+6. On the VM: `git pull && sh install-vm.sh` (or `--project <dir>`; add `--login-banner` for the banner at
+   every login), then `/brain-setup` inside Claude.
 
 ## Pitfalls already met
 
@@ -77,6 +76,18 @@ Dell PowerFlex, NetApp ONTAP, NetApp Trident, Dell CSM / CSI, Cisco MDS / UCS, V
 - Dell's HTML manuals (`dell.com/support/manuals/...`) are sign-in gated for the PowerFlex alerts guide; the PDF link
   on those pages points to `dl.dell.com/content/manual<id>...pdf` and needs the browser session (identity-provider
   redirects), not a plain request.
+- dell_browser outside the US: en-us pages set the `lwp=c=us` cookie, the IP sends en-us to the country site
+  (he-il), and Chrome caches both 301s -> ERR_TOO_MANY_REDIRECTS on the support home. `unloop()` clears the
+  cookie and the cache at every start.
+- Dell's sign-in cookies (DellCEMSession, di_dwa, dci_jwt) are session cookies: Chrome drops them when the
+  window closes. `login` copies them to `work/browser-profile/session-cookies.json` (0600, git-ignored) and every
+  run restores them. Run `login` from a terminal and press ENTER, or close the window; then run the other commands.
+- `dl.dell.com` answering "Denied: Invalid Access Level U:10 =a:30" = signed in, but the Dell account is not
+  entitled (level 30 = linked to the company's site / products). Only the account owner can fix that (My Account
+  -> link site ID); then re-run `needed`. All 26 PDFs of NEEDED.md need level 30.
+- Check `work/docs` against the library before indexing: a stale `work/docs` (older than `library/VERSION`)
+  silently drops what the library has. Merge with `rsync -a work/docs-library/docs/ work/docs/` after join.sh.
+- `!cmd` in Claude Code has no keyboard: `read -s` for a cookie fails there; use a real terminal tab.
 - NetApp KB: Cause / Solution sections need the login cookie; articles saved without it are flagged "Partial article"
   and refreshed by `--refresh-partial`. Sign out of kb.netapp.com when the export is done.
 - Same KB saved twice under different names (sync_web vs sync_dell_kb naming): the indexer folds identical text;
