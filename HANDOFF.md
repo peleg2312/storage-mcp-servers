@@ -25,15 +25,14 @@ search quality: `python3 eval_search.py` and `--cases tests/retrieval_heldout.js
 
 ## Where things stand (2026-10-24, night)
 
-- Library 2026.10.24b: 58,749 files indexed (18,535 identical copies folded). New since 23f: PowerFlex REST API
-  docs from developer.dell.com (`sync/sync_dell_devportal.py`: 5.1.0 complete, 1,506 pages; 4.5.5 / Manager 4.8
-  486 of 908; 3.6 / 4.5.x guides), 59 PowerFlex KBs (SIO alerts, 5.x), public PowerFlex 5.x PDFs (appliance
+- Library 2026.10.24c: 58856 files indexed (18,535 identical copies folded). New since 23f: PowerFlex REST API
+  docs from developer.dell.com (`sync/sync_dell_devportal.py`: 5.1.0 complete, 1,508 pages; 4.5.5 / Manager 4.8
+  813 of 908, the rest 404 at Dell; guides 3.6 - 5.0), 59 PowerFlex KBs (SIO alerts, 5.x), public PowerFlex 5.x PDFs (appliance
   Architecture Overview + Admin Guide, Manager 5.x compatibility matrix, 5.0 spec sheet, solution brief), and the
   backend stack (vendor `python`: fastapi, pydantic, pydantic-settings, starlette, uvicorn, httpx, pytest,
   pytest-asyncio, sqlalchemy, fastmcp; vendor `mcp`: python-sdk, specification). `.mdx` is indexed.
-- developer.dell.com stopped serving pages at ~00:40 on Oct 24 (its own site shows no content: their outage);
-  a background loop resumes `sync_dell_devportal.py --delay 1.0` when it answers. Missing: rest of 4.5.5, the
-  5.0 / 4.6 / 4.5.0-4.5.1 / 4.0 guides. Re-run it any time: it only fetches what is missing.
+- developer.dell.com had an outage 00:40-01:00 on Oct 24; the pull resumed and finished. Re-run
+  `sync_dell_devportal.py` any time: it only fetches what is missing.
 - Search ranking: question type -> page type (concept / task), title weight 1.5, word proximity (all sets mean
   hit@1 0.72 -> 0.75, MRR 0.80 -> 0.83; brain/ARCHITECTURE.md).
 - Brain: read-only hook now also guards shell commands (infrastructure changes blocked; oc / kubectl / helm /
@@ -43,7 +42,7 @@ search quality: `python3 eval_search.py` and `--cases tests/retrieval_heldout.js
   repos). The start banner shows inside Claude Code (companyAnnouncements, sized per start).
 - The user runs NetApp's official ONTAP and Harvest MCP servers (the ONTAP one has write tools: the hook blocks them).
 - NetApp KB export still running (terminal tab; 7,934 of 14,751 checked at 00:41 on Oct 24, ~534 / hour, ends
-  ~13:30): then re-index, eval gates, `LABEL=2026.10.24c sh bundle/pack-library.sh`, commit, push.
+  ~13:30): then re-index, eval gates, `LABEL=2026.10.24d sh bundle/pack-library.sh`, commit, push.
 
 ## Earlier (2026-10-23, night)
 

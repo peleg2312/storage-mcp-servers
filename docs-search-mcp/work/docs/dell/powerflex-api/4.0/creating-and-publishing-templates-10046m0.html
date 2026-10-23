@@ -1,0 +1,231 @@
+<html><head><title>PowerFlex API 4.0: Creating and publishing templates</title></head><body><p>Tasks > PowerFlex Manager API tasks</p><div><div class="api-docs-main-div dds__pl-2">
+    <div class="markdown-wrapper dds__py-3">
+      <div class="markdown-body dds__px-3"><h1 id="creating-and-publishing-templates" class="anchor-scroll-top-offset">Creating and publishing templates</h1>
+<h2 id="template-structure-overview" class="anchor-scroll-top-offset">Template structure overview</h2>
+<p>Creating and publishing templates requires an understanding of the format of template data. At a<br>
+high level, templates consist of:</p>
+<ul>
+<li>A list of components (type <code>ServiceTemplateComponent</code>) representing the desired configuration for<br>
+that component. Example components are node components, VMware cluster components, and<br>
+PowerFlex cluster components.</li>
+<li>Each component has a list of resources (type <code>ServiceTemplateCategory</code>) which can be thought of<br>
+as categories of configuration data for that component. Example resources for node components are<br>
+<code>OS Settings</code>, <code>Hardware Settings</code>, <code>BIOS Settings</code> and <code>Network Settings</code>.</li>
+<li>Each resource has a list of parameters which are the individual settings inside the resource. Each<br>
+parameter has an id, a value and a variety of metadata around allowed values for that parameter.</li>
+</ul>
+<h3 id="component-servicetemplatecomponent-structure" class="anchor-scroll-top-offset">Component (<code>ServiceTemplateComponent</code>) structure</h3>
+<p>A sample <code>ServiceTemplateComponent</code> component with some less-important fields omitted is shown here:</p>
+<pre><code class="language-json">{
+  "id": "6fe60444-8dd6-40b6-9f84-5cbb097cd513",
+  "componentID": "component-server-1",
+  "name": "Hyperconverged",
+  "type": "SERVER",
+  "associatedComponents": {
+    "entry": [
+      {
+        "key": "583d54ea-01cd-4a9a-b68a-92151d0100d7",
+        "value": {
+          "entry": [
+            {
+              "key": "name",
+              "value": "PowerFlex Cluster"
+            }
+          ]
+        }
+      },
+      {
+        "key": "fa9c6d01-9942-4041-8690-c66727250f34",
+        "value": {
+          "entry": [
+            {
+              "key": "name",
+              "value": "VMWare Cluster"
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "resources": [ ... omitted ... ]
+  "instances": 3
+}
+</code></pre>
+<p>The meaning of these fields is:</p>
+<ul>
+<li><code>id</code> is a unique value for the component within the template. The client must generate this value.<br>
+It only has to be unique within this particular template, not globally.</li>
+<li><code>componentID</code> is the id of the default template component that this component was created from.<br>
+The default template is a special template with id <code>1000</code> that defines the menu of components that<br>
+new templates can be created from and defines the possible resources and parameters available to<br>
+that component. This will be described in more detail in the section on creating templates.</li>
+<li><code>name</code> is a name for the component which is displayed in the UI.</li>
+<li><code>type</code> is the compoennt type which can be one of:
+<ul>
+<li><code>SERVER</code> for node (server) components.</li>
+<li><code>CLUSTER</code> for VMware cluster components.</li>
+<li><code>SCALEIO</code> for PowerFlex cluster components.</li>
+</ul>
+</li>
+<li><code>associatedComponents</code> is a map used to describe relations between the different template<br>
+components. It should contain an <code>entry</code> key which has a list of <code>key</code> / <code>value</code> pairs. The <code>key</code><br>
+is the component <code>id</code> of the component it should be related to and the <code>value</code> is another <code>entry</code><br>
+map containing the name of that component. In the above example the <code>Hyperconverged</code> component is<br>
+associated to a PowerFlex cluster and a VMware cluster component.</li>
+<li><code>resources</code> are the list of resources (described below).</li>
+<li><code>instances</code> is the number of hardware instances that this component describes. This is only<br>
+relevant for node components and describes the number of servers to be used when the template<br>
+is deployed as a service.</li>
+</ul>
+<h3 id="resource-servicetemplatecategory-structure" class="anchor-scroll-top-offset">Resource (<code>ServiceTemplateCategory</code>) structure</h3>
+<p>A sample resource is:</p>
+<pre><code class="language-json">{
+  "id": "asm::cluster",
+  "displayName": "Cluster Settings",
+  "parameters": [ ... omitted .. ]
+}
+</code></pre>
+<p>The fields are:</p>
+<ul>
+<li><code>id</code> is a unique id for this resource.</li>
+<li><code>displayName</code> is the name to display in the UI for this resource.</li>
+<li><code>parameters</code> is a list of parameters.</li>
+</ul>
+<h3 id="parameter-servicetemplatesetting-structure" class="anchor-scroll-top-offset">Parameter (<code>ServiceTemplateSetting</code>) structure</h3>
+<p>A sample parameter from a VMware cluster component (with some less-important fields omitted) is seen<br>
+below. The display of template data in the PowerFlex Manager UI is highly data-driven – meaning<br>
+that many of the parameters in the API are used to drive the UI display of the template and may<br>
+not be directly relevant from the perspective of an API client.</p>
+<pre><code class="language-json">{
+  "id": "$new$datacenter",
+  "value": "PowerFlex",
+  "type": "STRING",
+  "displayName": "New datacenter name",
+  "required": true,
+  "requiredAtDeployment": true,
+  "hideFromTemplate": false,
+  "dependencies": [
+    {
+      "dependencyTarget": "datacenter",
+      "dependencyValue": "$new$"
+    }
+  ],
+  "toolTip": null,
+  "readOnly": false,
+  "generated": false,
+  "maxLength": 256,
+}
+</code></pre>
+<p>The meaning of these fields is:</p>
+<ul>
+<li><code>id</code> is a unique key for the parameter.</li>
+<li><code>value</code> specifies the value for this parameter. From the perspective of creating, updating and publishing<br>
+templates via the REST API, this is the only parameter field that needs to be programatically<br>
+updated with the desired value. All other fields are retrieved from existing templates, as described below.</li>
+<li><code>type</code> describes the type of data. Primarily this is used by the UI to determine how to render<br>
+this parameter. For example <code>STRING</code> parameters are rendered as text boxes and <code>ENUMERATED</code><br>
+parameters are rendered as select boxes.</li>
+<li><code>displayName</code> is the name of the parameter that is displayed in the UI.</li>
+<li><code>required</code> indicates whether a value is required in order to publish the template.</li>
+<li><code>requiredAtDeployment</code> indicates whether a value is required to be filled out in order to create a service<br>
+from the template. In other words, the value does not have to be specified to publish the template<br>
+but it must be provided when deploying the template as a service.</li>
+<li><code>hideFromTemplate</code> is true if it is a hidden parameter that is not displayed in the UI.</li>
+<li><code>dependencies</code> is a list of dependencies that must be sastisfied in order for this parameter to<br>
+be displayed in the UI. If the dependencies are not met then the value is not required even if<br>
+the <code>required</code> value is <code>true</code>. In the above example this parameter is only applicable if the<br>
+<code>datacenter</code> parameter is set to <code>$new$</code>.</li>
+<li><code>toolTip</code> is an optional tooltip string to display in the UI.</li>
+<li><code>readOnly</code> is <code>true</code> if the value cannot be changed.</li>
+<li><code>generated</code> is <code>true</code> if the value is generated by PowerFlex Manager and does not need to be<br>
+specified by the client.</li>
+<li><code>maxLength</code> is the maximum length of the <code>value</code>.</li>
+</ul>
+<p>Note that in some cases the <code>value</code> parameter field is a JSON-encoded string of a more complex data<br>
+type. Important examples of this are the <code>NETWORKCONFIGURATION</code> type, which is used for definining<br>
+node network interfaces and the networks that should reside on them, as well as<br>
+<code>VDSSETTINGSCONFIGURATION</code>, which is used to define the desired VMware VDS switch and portgroup<br>
+configuration.</p>
+<h2 id="creating-a-template" class="anchor-scroll-top-offset">Creating a template</h2>
+<p>The general procedure for creating a template is as follows.</p>
+<h3 id="create-the-initial-template-payload" class="anchor-scroll-top-offset">Create the initial template payload</h3>
+<p>This can be done in a number of different ways:</p>
+<ol>
+<li>Retrieve the default template with <code>GET /Api/V1/ServiceTemplate/1000</code>. This is a special template<br>
+that defines the menu of components that can be used on new templates. The desired components can<br>
+be copied into the new template payload. For example, if you want to create a hyperconverged<br>
+template (which consists of a node component, a VMware cluster component, and a PowerFlex cluster<br>
+component), those components could be retrieved from the default template and used to build the<br>
+new template payload. The following fields need to be modified before adding the default template<br>
+components to the new template payload:
+<ul>
+<li><code>id</code> should be set to a unique id.</li>
+<li><code>componentID</code> should be set to the default component <code>id</code> if it is <code>null</code> or left as is otherwise.</li>
+<li><code>associatedComponents</code> should be filled out as described in the component structure section.</li>
+<li><code>instances</code> should be set to the desired number of nodes for a node component.</li>
+<li>Individual resource <code>parameter</code> values should be updated as desired.</li>
+</ul>
+</li>
+<li>Retrieve an existing sample template or template with<br>
+<code>GET /Api/V1/ServiceTemplate?filter=eq,name,{template_name}</code>. The components should then be<br>
+modified as described in 1.</li>
+</ol>
+<h3 id="create-the-template" class="anchor-scroll-top-offset">Create the template</h3>
+<p>The payload built in the previous step should be used to create the template with<br>
+<code>POST /Api/V1/ServiceTemplate</code>.</p>
+<h3 id="refine-the-template" class="anchor-scroll-top-offset">Refine the template</h3>
+<p>As a result of creating the template new parameter and parameter options may be added that did not<br>
+exist in the default template that are specific to the parameter values used to create the template.<br>
+As a result the API client must retrieve the newly created template, update any parameters that<br>
+are missing values or reporting errors and update the template with the modified payload with<br>
+<code>PUT /Api/V1/ServiceTemplate/{id}</code>.</p>
+<p>If there are still missing parameters or invalid parameter values the <code>PUT</code> will fail and provide<br>
+a list of <code>messages</code> indicating the reasonse. This is a sample error response:</p>
+<pre><code class="language-json">{
+  "status": 400,
+  "timestamp": "2021-06-06T16:52:09.484+00:00",
+  "error": "HTTP 400 Bad Request",
+  "path": "/AsmManager/ServiceTemplate/ff80808179df8c6b0179e23d22ba389a",
+  "messages": [
+    {
+      "messageBundle": "AsmManagerMessages",
+      "messageCode": "VXFM00215",
+      "severity": "ERROR",
+      "category": "USER_FACING",
+      "displayMessage": "The component VMWare Cluster is missing data for required field: Target Virtual Machine Manager.",
+      "responseAction": "Enter a valid value for the required field.",
+      "detailedMessage": "The template cannot be published with data missing for the required fields.",
+      "agentId": "ASM Manager",
+      "correlationId": null,
+      "timeStamp": "2021-06-06T16:52:09.474+00:00",
+      "sequenceNumber": 0
+    },
+    {
+      "messageBundle": "AsmManagerMessages",
+      "messageCode": "VXFM00666",
+      "severity": "ERROR",
+      "category": "USER_FACING",
+      "displayMessage": "Update the Configure VDS Settings on the VMWare Cluster component due to the VCenter or Datacenter selection has changed. ",
+      "responseAction": "Edit the VMWare Cluster Configure VDS Settings and save the update component.",
+      "detailedMessage": "The selected VCenter or Datacenter in the VMWare Cluster changed,please reconfigure the Configure VDS Settings.",
+      "agentId": "ASM Manager",
+      "correlationId": null,
+      "timeStamp": "2021-06-06T16:52:09.476+00:00",
+      "sequenceNumber": 0
+    }
+  ]
+}
+</code></pre>
+<h3 id="publish-the-template" class="anchor-scroll-top-offset">Publish the template</h3>
+<p>To publish a template that is in draft state simply set the template <code>draft</code> parameter to <code>true</code> and<br>
+update it with <code>PUT /Api/V1/ServiceTemplate/{id}</code>.</p>
+</div>
+      <div class="markdown-sidebar">
+        <div class="markdown-toc-title">
+          <i class="icon dds__icon dds__icon--bookmark"></i>
+          On this page
+        </div>
+          <ul><li class="level-1"><a href="#creating-and-publishing-templates" data-toc-link="">Creating and publishing templates</a></li><li class="level-2"><a href="#template-structure-overview" data-toc-link="">Template structure overview</a></li><li class="level-2"><a href="#creating-a-template" data-toc-link="">Creating a template</a></li></ul>
+      </div>
+    </div>
+  </div></div></body></html>
