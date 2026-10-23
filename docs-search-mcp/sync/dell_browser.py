@@ -5,7 +5,7 @@ search are JavaScript, and many manuals need a signed-in session.
 
 Runs on a PC with internet. One-time setup (inside the venv):
     pip install playwright && python3 -m playwright install chromium
-    python3 sync/dell_browser.py login          # a window opens: sign in to dell.com/support, then close it
+    python3 sync/dell_browser.py login          # a window opens: sign in to dell.com/support, then press ENTER here
 
 Then (each is incremental; re-running only adds what is new):
     python3 sync/dell_browser.py needed         # extra/dell/NEEDED.md -> extra/dell/<product>/*.pdf (login-only docs)
@@ -358,14 +358,23 @@ def main():
         ctx = open_browser(p, a.profile, a.headless and a.command != "login")
         try:
             if a.command == "login":
+                import threading
                 page = ctx.new_page()
                 page.goto("https://www.dell.com/support/home/en-us")
-                log("Sign in to Dell Support in the window (My Account), open one login-only manual to confirm, "
-                    "then close the window. The session is kept in", a.profile)
-                try:
-                    page.wait_for_event("close", timeout=0)
-                except Exception:
-                    pass
+                done = threading.Event()
+                threading.Thread(target=lambda: (sys.stdin.readline(), done.set()), daemon=True).start()
+                ctx.on("close", lambda *_: done.set())
+                log("\n1. Sign in to Dell Support in the browser window (Sign In / My Account).\n"
+                    "2. Come back to this terminal and press ENTER (or just close the browser window).\n"
+                    f"The session is kept in {a.profile} for the other commands.")
+                while not done.is_set():
+                    try:
+                        if not ctx.pages:
+                            break
+                        ctx.pages[0].wait_for_timeout(500)
+                    except Exception:
+                        break
+                log("login saved." if done.is_set() or not ctx.pages else "window closed; login saved.")
                 return
             if a.command in ("needed", "all"):
                 cmd_needed(ctx, a)
