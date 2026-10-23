@@ -1,0 +1,44 @@
+<html><head><title>PowerFlex API 4.0: Generic query parameter</title></head><body><p>Getting Started > PowerFlex Manager API</p><div><div class="api-docs-main-div dds__pl-2">
+    <div class="markdown-wrapper dds__py-3">
+      <div class="markdown-body dds__px-3"><h1 id="generic-query-parameter" class="anchor-scroll-top-offset">Generic query parameter</h1>
+<p>Many GET methods which return a list of objects support generic query parameters for filtering, sorting, and paging.</p>
+<p>These methods are indicated in the API reference, but detailed syntax is also described here.</p>
+<ul>
+<li>filter=<em>operator</em>,<em>valid filter column</em>,<em>value</em>,<em>value2</em>…
+<ul>
+<li>operator is one of ( eq, co )</li>
+<li>Valid filter columns are listed for each supporting method in the API reference</li>
+<li>Examples:
+<ul>
+<li>
+<p>“eq,columnName,columnValue”</p>
+<p>To include resources where columnName is columnValue.</p>
+</li>
+<li>
+<p>“eq,columnName,”</p>
+<p>To include resources where columnName is empty.</p>
+</li>
+<li>
+<p>“co,columnName,columnValue”</p>
+<p>To include resources where columnName contains columnValue</p>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>sort = <em>valid sort column</em>, where valid sort columns are listed for each supporting method in the API reference. A minus sign preceding the column name indicates descending order.</li>
+<li>offset = <em>integer</em> default is 0</li>
+<li>limit = <em>integer</em> default is 50</li>
+</ul>
+<p>Some of the columns that are sortable or filterable are dates such as <strong>createdDate</strong>. When using the filter parameter with date strings, only the eq operator is valid. The format for these date strings is: <em>dd-mm-yyyy</em></p>
+<p>For example: <code>30-07-2015</code></p>
+</div>
+      <div class="markdown-sidebar">
+        <div class="markdown-toc-title">
+          <i class="icon dds__icon dds__icon--bookmark"></i>
+          On this page
+        </div>
+          <ul><li class="level-1"><a href="#generic-query-parameter" data-toc-link="">Generic query parameter</a></li></ul>
+      </div>
+    </div>
+  </div></div></body></html>

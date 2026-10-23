@@ -1,0 +1,71 @@
+<html><head><title>PowerFlex API 4.5.0: Making-your-first-call</title></head><body><p>Getting Started > PowerAPI</p><div><div class="api-docs-main-div dds__pl-2">
+    <div class="markdown-wrapper dds__py-3">
+      <div class="markdown-body dds__px-3"><h1 id="making-your-first-api-call" class="anchor-scroll-top-offset">Making your first API call</h1>
+<p>This article describes how to make first PowerFlex API call.</p>
+<h2 id="log-in-to-powerflex" class="anchor-scroll-top-offset">Log in to PowerFlex</h2>
+<p>Log in using the following REST command: POST https://&lt;host&gt;/rest/auth/login<br><br>
+The request should contain the username and password in the payload.</p>
+<p><strong>RESPONSE</strong><br><br>
+The response includes the following parameters:</p>
+<table>
+<thead>
+<tr>
+<th>Response attribute</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>access_token</td>
+<td>Use this access token for consequent calls to the system.</td>
+</tr>
+<tr>
+<td>expires_in</td>
+<td>An access token has an expiration date. The access token is valid only for 5 minutes. To continue accessing the system after the token expires, you can either update the token using standard OIDC refresh operation, or log in again to get a new access token.</td>
+</tr>
+<tr>
+<td>refresh_token</td>
+<td>OIDC allows you to refresh a token and fetch a new access token without logging in again (with username and password). This refresh token can only be used once to refresh the current session. Once you refresh or log in again, you will get a new refresh token, and the old refresh token becomes invalid.</td>
+</tr>
+<tr>
+<td>refresh_expires_in</td>
+<td>A refresh token has an expiration date. The refresh token is valid only for 30 minutes.</td>
+</tr>
+<tr>
+<td><strong>Example:</strong></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<pre><code class="language-bash">curl --location --request POST 'https://powerflex-12.example.com/rest/auth/login' \
+--header 'Accept: application/json' \
+--header 'Content-Type: application/json' \
+--data-raw '{
+    "username": "davidr",
+    "password": "hf443!!e"
+}'
+
+RESPONSE:
+{
+    "access_token": "eyJhbG...Mudw",
+    "expires_in": 300,
+    "refresh_expires_in": 1800,
+    "refresh_token": "eyJhbG...0fKrcMEE",
+    "token_type": "bearer",
+    "id_token": "eyJhbGciO...FKNw",
+    "not-before-policy": 0,
+    "session_state": "cc2c3f61-6cc7-4c9d-b75f-0c9889eb938e",
+    "scope": "openid profile email"
+}
+</code></pre>
+<p>Once you are logged in, run any of the API commands based on your requirements.</p>
+</div>
+      <div class="markdown-sidebar">
+        <div class="markdown-toc-title">
+          <i class="icon dds__icon dds__icon--bookmark"></i>
+          On this page
+        </div>
+          <ul><li class="level-1"><a href="#making-your-first-api-call" data-toc-link="">Making your first API call</a></li><li class="level-2"><a href="#log-in-to-powerflex" data-toc-link="">Log in to PowerFlex</a></li></ul>
+      </div>
+    </div>
+  </div></div></body></html>

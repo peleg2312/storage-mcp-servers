@@ -1,0 +1,34 @@
+<html><head><title>PowerFlex API 4.5.1: Query the PowerFlex Gateway configuration (GET)</title></head><body><p>Tasks > PowerFlex Block API tasks</p><div><div class="api-docs-main-div dds__pl-2">
+    <div class="markdown-wrapper dds__py-3">
+      <div class="markdown-body dds__px-3"><h1 id="query-the-powerflex-gateway-configuration-get" class="anchor-scroll-top-offset">Query the PowerFlex Gateway configuration (GET)</h1>
+<p>You can query the Gateway configuration at any time to verify whether the MDM IP addresses are configured:</p>
+<pre><code>https://&lt;server_ip&gt;:443/api/Configuration
+GET
+</code></pre>
+<p>The response includes the following:</p>
+<ul>
+<li><code>cipherSuites</code>: List of names of cipher suites (as recognized by Java) that the SSL will use instead of the default list</li>
+<li><code>featuresEnableCollectAutoLogs</code>: Enable the Auto Collect Logs feature</li>
+<li><code>featuresEnableIM</code>: Indicates whether the PowerFlex Installer is enabled</li>
+<li><code>featuresEnableSnmp</code>: Indicates whether SNMP is enabled</li>
+<li><code>keycloakHostUrl</code>: Indicates internal keyloak service address</li>
+<li><code>keycloakPublicClient</code>: Indicates external keycloak service address</li>
+<li><code>keycloakRealm</code>: Indicates the security realm</li>
+<li><code>mdmAddresses</code>: List of MDM primary IP addresses that the PowerFlex Gateway will use to connect to the MDM</li>
+<li><code>mdmUsername</code>: MDM username</li>
+<li><code>mdmPort</code>: MDM port</li>
+<li><code>snmpSamplingFrequency</code>: MDM sampling frequency in seconds</li>
+<li><code>systemId</code>: ID of the system, configured by mdmAddresses.</li>
+<li><code>upgradeSdrInMM</code>: Indicates SDRs that were in maintenance mode during upgrade</li>
+<li><code>upgradeSdtInMM</code>: Indicates SDTs that were in maintenance mode during upgrade</li>
+</ul>
+</div>
+      <div class="markdown-sidebar">
+        <div class="markdown-toc-title">
+          <i class="icon dds__icon dds__icon--bookmark"></i>
+          On this page
+        </div>
+          <ul><li class="level-1"><a href="#query-the-powerflex-gateway-configuration-get" data-toc-link="">Query the PowerFlex Gateway configuration (GET)</a></li></ul>
+      </div>
+    </div>
+  </div></div></body></html>

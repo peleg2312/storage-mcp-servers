@@ -7,28 +7,6 @@
   },
   "plugins": [
     {
-      "name": "code-review",
-      "description": "Automated code review for pull requests using multiple specialized agents with confidence-based scoring to filter false positives",
-      "author": {
-        "name": "Anthropic",
-        "email": "support@anthropic.com"
-      },
-      "source": "./code-review",
-      "category": "productivity",
-      "homepage": "https://github.com/anthropics/claude-plugins-public/tree/main/plugins/code-review"
-    },
-    {
-      "name": "code-simplifier",
-      "description": "Agent that simplifies and refines code for clarity, consistency, and maintainability while preserving functionality. Focuses on recently modified code.",
-      "author": {
-        "name": "Anthropic",
-        "email": "support@anthropic.com"
-      },
-      "source": "./code-simplifier",
-      "category": "productivity",
-      "homepage": "https://github.com/anthropics/claude-plugins-official/tree/main/plugins/code-simplifier"
-    },
-    {
       "name": "commit-commands",
       "description": "Commands for git commit workflows including commit, push, and PR creation",
       "author": {

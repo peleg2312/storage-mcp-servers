@@ -87,8 +87,8 @@ different major version (Pydantic v1 vs v2, SQLAlchemy 1.x vs 2.0, fastmcp 2 vs 
 - After each edit the `py-lint` hook reports ruff errors: fix them before moving on. The pyright-lsp plugin
   (basedpyright) gives type diagnostics: resolve them, do not silence them with `# type: ignore`.
 - Bigger features: `/feature-dev` (explore -> architecture -> implement -> review). Before a commit: run the
-  tests, then `/code-review` on the diff (pr-review-toolkit's silent-failure-hunter and pr-test-analyzer for
-  error handling and test gaps). `/commit` writes the commit (no PR on the VM unless `gh` is there).
+  tests, then `/review-pr` on the local diff (pr-review-toolkit: code-reviewer, silent-failure-hunter for
+  error handling, pr-test-analyzer for test gaps, code-simplifier). `/commit` writes the commit (no PR on the VM unless `gh` is there).
 - security-guidance warns on risky patterns as you write (yaml.load, pickle, shell=True, hardcoded secrets).
 
 ## Output

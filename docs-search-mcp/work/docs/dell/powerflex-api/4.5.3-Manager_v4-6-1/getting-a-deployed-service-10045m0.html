@@ -1,0 +1,101 @@
+<html><head><title>PowerFlex API 4.5.3-Manager_v4-6-1: Getting a deployed service</title></head><body><p>Tasks > PowerFlex Manager API tasks</p><div><div class="api-docs-main-div dds__pl-2">
+    <div class="markdown-wrapper dds__py-3">
+      <div class="markdown-body dds__px-3"><h1 id="getting-a-deployed-service" class="anchor-scroll-top-offset">Getting a deployed service</h1>
+<p>You can get a deployed service by calling this API with a specific ID:</p>
+<p><code>GET /Deployment/ff808081797bca5f01797c13042e30ab</code></p>
+<p>The response can be quite large, so the sample presented below shows an abbreviated response.</p>
+<p>Sample response:</p>
+<pre><code class="language-json">{
+    "allUsersAllowed": false,
+    "assignedUsers": [],
+    "brownfield": false,
+    "canMigratevCLSVMs": false,
+    "compliant": false,
+    "configurationChange": false,
+    "createdBy": "admin",
+    "createdDate": "2021-05-17T20:44:51.630+00:00",
+    "currentStepCount": "0",
+    "currentStepMessage": "",
+    "customImage": null,
+    "deploymentDescription": null,
+    "deploymentDevice": [
+        {
+            "brownfield": false,
+            "brownfieldStatus": "NOT_APPLICABLE",
+            "cloudLink": false,
+            "compliantState": "NONCOMPLIANT",
+            "componentId": "16a52a4f-0298-4e0b-bf9c-7ae2d53ce639",
+            "currentIpAddress": "100.68.97.65",
+            "dasCache": false,
+            "deviceGroupName": null,
+            "deviceHealth": "UNKNOWN",
+            "deviceState": "READY",
+            "deviceType": "vcenter",
+            "healthMessage": "",
+            "ipAddress": "100.68.97.65",
+            "logDump": null,
+            "model": "vCenter",
+            "puppetCertName": "vcenter-aer1-vcsa-mgmt.asm.delllabs.net",
+            "refId": "vcenter-100.68.97.65",
+            "refType": "CLUSTER",
+            "serviceTag": "aer1-vcsa-mgmt.asm.delllabs.net",
+            "status": "pending",
+            "statusEndTime": null,
+            "statusMessage": null,
+            "statusStartTime": "2021-05-17 20:44:53 UTC"
+        },
+        {
+            "brownfield": false,
+            "brownfieldStatus": "NOT_APPLICABLE",
+            "cloudLink": false,
+            "compliantState": null,
+            "componentId": "9178f7dd-3f3f-455e-bb75-84d85aa18d84",
+            "currentIpAddress": null,
+            "dasCache": false,
+            "deviceGroupName": null,
+            "deviceHealth": "UNKNOWN",
+            "deviceState": null,
+            "deviceType": null,
+            "healthMessage": null,
+            "ipAddress": null,
+            "logDump": null,
+            "model": null,
+            "puppetCertName": null,
+            "refId": null,
+            "refType": "VIRTUALMACHINE",
+            "serviceTag": null,
+            "status": "pending",
+            "statusEndTime": null,
+            "statusMessage": null,
+            "statusStartTime": "2021-05-17 20:44:53 UTC"
+        }
+    ],
+    "deploymentFinishedDate": null,
+    "deploymentHealthStatusType": "yellow",
+    "deploymentName": "AER1 PowerFlex Gateway",
+    "deploymentScheduledDate": null,
+    "deploymentStartedDate": "2021-05-17T20:44:53.759+00:00",
+    "deploymentValid": null,
+    "deploymentValidationResponse": null,
+    "disruptiveFirmware": false,
+    "firmwareInit": false,
+    "firmwareRepository": {
+        "bundleCount": 0,
+        "componentCount": 0,
+        "createdBy": null,
+        "createdDate": null,
+        "defaultCatalog": false,
+
+...
+
+</code></pre>
+</div>
+      <div class="markdown-sidebar">
+        <div class="markdown-toc-title">
+          <i class="icon dds__icon dds__icon--bookmark"></i>
+          On this page
+        </div>
+          <ul><li class="level-1"><a href="#getting-a-deployed-service" data-toc-link="">Getting a deployed service</a></li></ul>
+      </div>
+    </div>
+  </div></div></body></html>

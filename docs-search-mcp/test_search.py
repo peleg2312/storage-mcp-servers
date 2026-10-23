@@ -185,3 +185,9 @@ print("underscore files OK")
 t, secs = docs_index.parse_md("# Features { #features }\n\nx\n\n## Sub part { #sub-part }\n\ny\n", "f")
 assert t == "Features" and [h for h, _ in secs] == ["Features", "Sub part"], (t, secs)                  # mkdocs anchors dropped
 print("mkdocs anchors OK")
+for h in ("Affected Products", "Article Properties", "Table of Contents", "Contents"):      # boilerplate sections
+    assert docs_index._NOISE_HEAD.match(h), h
+assert not docs_index._NOISE_HEAD.match("Additional Information") and not docs_index._NOISE_HEAD.match("Resolution")
+import search_cli
+assert search_cli._norm_title("PowerFlex API 5.1.0: Map a volume") == search_cli._norm_title("PowerFlex API 4.5.5-Manager_v4-8-0: Map a volume")
+print("boilerplate + version folding OK")

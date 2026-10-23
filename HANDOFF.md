@@ -25,7 +25,7 @@ search quality: `python3 eval_search.py` and `--cases tests/retrieval_heldout.js
 
 ## Where things stand (2026-10-24, night)
 
-- Library 2026.10.24: 58,239 files indexed (18,535 identical copies folded). New since 23f: PowerFlex REST API
+- Library 2026.10.24b: 58,749 files indexed (18,535 identical copies folded). New since 23f: PowerFlex REST API
   docs from developer.dell.com (`sync/sync_dell_devportal.py`: 5.1.0 complete, 1,506 pages; 4.5.5 / Manager 4.8
   486 of 908; 3.6 / 4.5.x guides), 59 PowerFlex KBs (SIO alerts, 5.x), public PowerFlex 5.x PDFs (appliance
   Architecture Overview + Admin Guide, Manager 5.x compatibility matrix, 5.0 spec sheet, solution brief), and the
@@ -43,7 +43,7 @@ search quality: `python3 eval_search.py` and `--cases tests/retrieval_heldout.js
   repos). The start banner shows inside Claude Code (companyAnnouncements, sized per start).
 - The user runs NetApp's official ONTAP and Harvest MCP servers (the ONTAP one has write tools: the hook blocks them).
 - NetApp KB export still running (terminal tab; 7,934 of 14,751 checked at 00:41 on Oct 24, ~534 / hour, ends
-  ~13:30): then re-index, eval gates, `LABEL=2026.10.24b sh bundle/pack-library.sh`, commit, push.
+  ~13:30): then re-index, eval gates, `LABEL=2026.10.24c sh bundle/pack-library.sh`, commit, push.
 
 ## Earlier (2026-10-23, night)
 

@@ -1,0 +1,40 @@
+<html><head><title>PowerFlex API 5.0.0: Set the legacy gateway cookie</title></head><body><p>Tasks > PowerFlex Block API tasks</p><div><div class="api-docs-main-div dds__pl-2">
+    <div class="markdown-wrapper dds__py-3">
+      <div class="markdown-body dds__px-3"><h1 id="how-to-use-the-legacy-gateway-cookie" class="anchor-scroll-top-offset">How to use the legacy gateway cookie</h1>
+<p>The PowerFlex management platform (PFMP) contains two block legacy gateway pods. Each pod is its own independent instance of the gateway. Whenever you send an API to the gateway, it reaches one of the pods randomly.</p>
+<p>This is fine for APIs under the <code>/api</code> prefix because they are stateless, but causes an issue for the APIs under the <code>/im</code> prefix.</p>
+<p>This is because the <code>/im</code> realm contains orchestrations which hold state. Two orchestrations running in parallel (each on a separate node) and tracking the state of a running orchestration might cause issues because each pod is oblivious to the state of an orchestration running on the other pod.</p>
+<p>Here is an example:</p>
+<p>When running a <code>CSV install using the /im/types/Configuration/actions/</code>install, the request reaches gateway pod #1.</p>
+<p>If you want to see the progress of the install using <code>/im/types/ProcessPhase/actions/queryPhaseState</code>, the request reaches gateway pod #2 and returns an idle state, even though the install is still running on pod #1.</p>
+<p>To prevent such scenarios, we need to use the <code>LEGACYGWCOOKIE</code>. Also, use this cookie when using the following:</p>
+<ul>
+<li><code>/im/types/Command/instances/actions/clear</code></li>
+<li><code>/im/types/Command/instances/actions/abort</code></li>
+<li><code>/im/types/ProcessPhase/actions/moveToIdlePhase APIs</code></li>
+</ul>
+<p>To get the cookie, run the <code>GET```` request, for example, </code>/im/types/Command/instances```.</p>
+<p>The response contains the cookie, for example:</p>
+<pre><code class="language-json">set-cookie: LEGACYGWCOOKIE=1680712209.587.12470.670589|44462cccff00556f36e19b74466d15cc; Path=/im/(.*); Secure; HttpOnly
+</code></pre>
+<p>Use this cookie in all subsequent <code>/im</code> requests. Here is an example how to include it in a curl request:</p>
+<pre><code class="language-bash">curl -X \
+ GET -s -k --location \
+\
+--header \
+ "Authorization: Bearer ${ACCESS_TOKEN}" 
+--header \
+ "Content-Type: application/json" -b "LEGACYGWCOOKIE=832ac040587651c1dc5b8e0581f2d3eb|44462cccff00556f36e19b74466d15cc; 
+ Path=/im/(.*); Secure; HttpOnly" "https://${INGRESS_IP}/im/types/Command/instances"
+
+</code></pre>
+</div>
+      <div class="markdown-sidebar">
+        <div class="markdown-toc-title">
+          <i class="icon dds__icon dds__icon--bookmark"></i>
+          On this page
+        </div>
+          <ul><li class="level-1"><a href="#how-to-use-the-legacy-gateway-cookie" data-toc-link="">How to use the legacy gateway cookie</a></li></ul>
+      </div>
+    </div>
+  </div></div></body></html>

@@ -285,12 +285,20 @@ def search_docs(c, q, vendor="", product="", limit=8):
             weight *= 1 + PROX_W * _proximity(text, groups, found)
         scored.append((-r["score"] * cover * cover * weight * (1 + TITLE_W * in_title), cover, r))
     scored.sort(key=lambda t: -t[0])
-    rows, per_doc, found_in = [], {}, []
+    rows, per_doc, found_in, by_key = [], {}, [], {}
     for final, cover, r in scored:
         if per_doc.get(r["doc_id"], 0) >= 2:
             continue
+        # the same page in another version / copy (same title and section, different file): one result, the
+        # others listed in also_in by path, so they cost no result slot (measured: 10% of slots were such repeats)
+        key = (r["vendor"], _norm_title(r["title"]), _norm_title(r["section"] or ""))
+        if key in by_key and by_key[key]["doc_id"] != r["doc_id"]:
+            keep = by_key[key]
+            if r["path"] not in keep.setdefault("also_in", []) and len(keep["also_in"]) < 6:
+                keep["also_in"].append(r["path"])
+            continue
         per_doc[r["doc_id"]] = per_doc.get(r["doc_id"], 0) + 1
-        r.pop("doc_id")
+        by_key.setdefault(key, r)
         found_in.append(r.pop("_found"))
         r["score"] = round(final, 2)                    # relevance, for merging libraries (callers drop it)
         if r["section"] == r["title"]:
@@ -301,6 +309,8 @@ def search_docs(c, q, vendor="", product="", limit=8):
         rows.append(r)
         if len(rows) >= lim:
             break
+    for r in rows:
+        r.pop("doc_id", None)
     full = bool(scored) and scored[0][1] == 1.0
     mode = "all words" if full else "partial: no chunk contains every word; best coverage first (see matched)"
     out = {"query": q, "match_mode": mode, "results": rows}
@@ -309,6 +319,13 @@ def search_docs(c, q, vendor="", product="", limit=8):
     if missing:
         out["unmatched"] = missing
     return out
+
+
+def _norm_title(t):
+    """Title without version / product decoration: "PowerFlex API 5.1.0: Map a volume" = "... 4.5.5-...: Map a volume"."""
+    t = re.sub(r"\s*\|\s*dell.*$", "", (t or "").lower())
+    t = re.sub(r"\bv?\d+(\.\d+)+[\w.-]*", " ", t)
+    return re.sub(r"\W+", " ", t).strip()
 
 
 def also_in(c, path):

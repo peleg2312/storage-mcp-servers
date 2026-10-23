@@ -1,0 +1,129 @@
+<html><head><title>PowerFlex API 4.0: What's new</title></head><body><p>Getting Started > PowerFlex Block API</p><div><div class="api-docs-main-div dds__pl-2">
+    <div class="markdown-wrapper dds__py-3">
+      <div class="markdown-body dds__px-3"><h1 id="whats-new" class="anchor-scroll-top-offset">What’s new</h1>
+<p>The following updates are included in the PowerFlex 4.0 release:</p>
+<ul>
+<li>
+<p>Added new APIs for the following:</p>
+<ul>
+<li>
+<p>RunLiaOsPatching</p>
+<p>POST /im/types/Configuration/actions/liaRunOsPatching</p>
+</li>
+<li>
+<p>CollectLogs</p>
+<p>POST /im/types/NodeInfo/instances/actions/collectLogs</p>
+</li>
+<li>
+<p>addMappedHost</p>
+<p>POST /api/instances/Volume::{id}/action/addMappedHost</p>
+</li>
+<li>
+<p>removeMappedHost</p>
+<p>POST /api/instances/Volume::{id}/action/removeMappedHost</p>
+</li>
+<li>
+<p>SDT</p>
+<ul>
+<li>GET /api/types/Sdt/instances</li>
+<li>GET /api/types/Sdt/instances?systemId={system id}&amp;sessionTag={session tag}&amp;lastVersion={last version}</li>
+<li>GET /api/instances/Sdt::{id}</li>
+<li>GET /api/instances/Sdt::{id}/relationships/Statistics</li>
+<li>POST /api/types/Sdt/instances/action/querySelectedStatistics</li>
+<li>POST /api/types/Sdt/instances/action/queryIdByKey</li>
+<li>POST /api/types/Sdt/instances/action/queryBySelectedIds</li>
+<li>POST /api/instances/Sdt::{id}/action/removeSdt</li>
+<li>POST /api/types/Sdt/instances</li>
+<li>POST /api/instances/Sdt::{id}/action/renameSdt</li>
+<li>POST /api/instances/Sdt::{id}/action/modifyIpRole</li>
+<li>POST /api/instances/Sdt::{id}/action/modifyStoragePort</li>
+<li>POST /api/instances/Sdt::{id}/action/modifyNvmePort</li>
+<li>POST /api/instances/Sdt::{id}/action/modifyDiscoveryRole</li>
+<li>POST /api/instances/Sdt::{id}/action/addSdtIp</li>
+<li>POST /api/instances/Sdt::{id}/action/removeIp</li>
+<li>POST /api/instances/Sdt::{id}/action/enterMaintenanceMode</li>
+<li>POST /api/instances/Sdt::{id}/action/exitMaintenanceMode</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>
+<p>The following new properties are added to the SDC model:</p>
+<ul>
+<li>hostType</li>
+<li>nqn</li>
+<li>maxNumPaths</li>
+<li>hostOsFullType</li>
+<li>sdtId</li>
+<li>cantConnectToSomeSdss</li>
+<li>maxNumSysPorts</li>
+</ul>
+<p><strong>Note</strong>: SDCs now represent NVMe host also.</p>
+</li>
+<li>
+<p>The new property value NvmeIni is added for property sdcType in SDC model.</p>
+</li>
+<li>
+<p>Volume managedBy and replicationJournalVol properties are replaced by volumeClass.</p>
+</li>
+<li>
+<p>addMappedSdc is replaced by addMappedHost.</p>
+</li>
+<li>
+<p>The new property spClass is added to the StoragePool.</p>
+</li>
+<li>
+<p>The following new properties are added to the Snapshot Policy model:</p>
+<ul>
+<li>rcgId</li>
+<li>rcgName</li>
+<li>lastAutoSnapshotDataTime</li>
+<li>isLastAutoSnapshotDataTimeAccurate</li>
+</ul>
+</li>
+<li>
+<p>The following new properties are added to Replication Pair model:</p>
+<ul>
+<li>(destinationStoragePoolId)</li>
+<li>(destinationSdcId)</li>
+<li>(destinationSdcGuid)</li>
+<li>(volumeAccessMode)</li>
+<li>(allowMultiMap)</li>
+<li>(compressionMethod)</li>
+<li>(volumeType)</li>
+<li>(useRmcache)</li>
+<li>(directBufferMapping)</li>
+<li>(informSdc)</li>
+<li>(forceAsync)</li>
+<li>(allowMultipleMappings)</li>
+</ul>
+</li>
+</ul>
+<p><strong>Note</strong>: The properties in brackets are only available when creating ReplicationPair and do not appear when retrieving it.</p>
+<ul>
+<li>Replaced allowOnExtManagedVol with volumeClass in the following operations:
+<ul>
+<li>/api/instances/System::{id}/action/snapshotVolumes</li>
+<li>/api/instances/System::{id}/action/removeConsistencyGroupSnapshots /api/instances/Volume::{id}/action/setVolumeSize</li>
+<li>/api/instances/Volume::{id}/action/removeVolume</li>
+<li>/api/instances/Volume::{id}/action/setVolumeName</li>
+<li>/api/instances/Volume::{id}/action/addMappedHost</li>
+<li>/api/instances/Volume::{id}/action/addMappedSdc</li>
+<li>/api/instances/Volume::{id}/action/addMapForReplicationOfflineCopy</li>
+<li>/api/instances/Volume::{id}/action/removeMappedSdc</li>
+<li>/api/instances/Volume::{id}/action/overwriteVolumeContent</li>
+<li>/api/instances/Volume::{id}/action/removeMappedHost</li>
+<li>/api/instances/Volume::{id}/action/migrateVTree</li>
+</ul>
+</li>
+</ul>
+</div>
+      <div class="markdown-sidebar">
+        <div class="markdown-toc-title">
+          <i class="icon dds__icon dds__icon--bookmark"></i>
+          On this page
+        </div>
+          <ul><li class="level-1"><a href="#whats-new" data-toc-link="">What's new</a></li></ul>
+      </div>
+    </div>
+  </div></div></body></html>

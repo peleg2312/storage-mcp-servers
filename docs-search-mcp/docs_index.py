@@ -61,7 +61,9 @@ _NOISE = re.compile(
 # whole sections that are site chrome (cookie banner, feedback form), dropped by their heading
 _NOISE_HEAD = re.compile(r"^(your cookie preferences|manage consent preferences|cookie list|.*\bcookies"
                          r"|we value your feedback|rate this content|was this (article|page|content) helpful.*"
-                         r"|how has this been tested\??|type of change|checklist:?)$", re.I)   # pull request template
+                         r"|how has this been tested\??|type of change|checklist:?"           # pull request template
+                         r"|affected products|article properties|table of contents|contents)$", re.I)   # Dell KB: product-name lists and metadata
+                         # (keyword bait that outranked the real sections; the title already names the products)
 _LICENSE = re.compile(r"^\s*(#|//|/?\*|--)\s*.*(copyright ©|copyright \(c\)|all rights reserved|licensed under the apache"
                       r"|you may not use this file|obtain a copy of the license|apache\.org/licenses|unless required by"
                       r"|distributed under the license|without warranties or conditions|see the license for"

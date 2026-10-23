@@ -1,0 +1,100 @@
+<html><head><title>PowerFlex API 4.6.0: Error messages</title></head><body><p>Getting Started > PowerFlex Block API (4.5.2.1)</p><div><div class="api-docs-main-div dds__pl-2">
+    <div class="markdown-wrapper dds__py-3">
+      <div class="markdown-body dds__px-3"><h1 id="error-messages" class="anchor-scroll-top-offset">Error messages</h1>
+<p>Two possible error messages can be returned when the REST API command contains an error:</p>
+<h3 id="simple-error-message" class="anchor-scroll-top-offset">Simple error message</h3>
+<p>A simple error messages contain the following fields:</p>
+<ul>
+<li>errorCode</li>
+<li>httpStatusCode</li>
+<li>message</li>
+</ul>
+<p>Example:</p>
+<pre><code class="language-json">{
+    "errorCode": 0,
+    "httpStatusCode": 400,
+    "message": "Request validation Error. Got illegal parameter: accessMode"
+}
+</code></pre>
+<h3 id="detailed-error-message" class="anchor-scroll-top-offset">Detailed error message</h3>
+<p>A detailed error messages contain the following fields:</p>
+<ul>
+<li>errorCode</li>
+<li>httpStatusCode</li>
+<li>message</li>
+<li>details</li>
+<li>info</li>
+</ul>
+<p>Example:</p>
+<pre><code class="language-json">{
+	"message": "Error with details",
+	"httpStatusCode": 500,
+	"errorCode": 0,
+	"details": [{
+		"errorMessage": "Add SDS device IO error",
+		"error": "TGT_ADD_DEV_IO_ERROR",
+		"rc": 73,
+		"info": [{
+			"type": "EET_DEV_KEY",
+			"objId": null,
+			"str": null,
+			"num": null,
+			"mdmKey": null,
+			"protectionDomainKey": null,
+			"storagePoolKey": null,
+			"accelerationPoolKey": null,
+			"sdsKey": null,
+			"deviceKey": {
+				"id": "fef4903e00010000",
+				"sdsKey": {
+					"id": "01baf28400000001",
+					"name": null,
+					"hostname": null,
+					"port": null
+				},
+				"path": "/dev/sdg",
+				"name": "sdg"
+			},
+			"volumeKey": null
+		}]
+	},
+	{
+		"errorMessage": "Add SDS device IO error",
+		"error": "TGT_ADD_DEV_IO_ERROR",
+		"rc": 73,
+		"info": [{
+			"type": "EET_DEV_KEY",
+			"objId": null,
+			"str": null,
+			"num": null,
+			"mdmKey": null,
+			"protectionDomainKey": null,
+			"storagePoolKey": null,
+			"accelerationPoolKey": null,
+			"sdsKey": null,
+			"deviceKey": {
+				"id": "fef4903f00010001",
+				"sdsKey": {
+					"id": "01baf28400000001",
+					"name": null,
+					"hostname": null,
+					"port": null
+				},
+				"path": "/dev/sdh",
+				"name": "sdh"
+			},
+			"volumeKey": null
+		}]
+	}]
+}
+</code></pre>
+</div>
+      <div class="markdown-sidebar">
+        <div class="markdown-toc-title">
+          <i class="icon dds__icon dds__icon--bookmark"></i>
+          On this page
+        </div>
+          <ul><li class="level-1"><a href="#error-messages" data-toc-link="">Error messages</a></li></ul>
+      </div>
+    </div>
+  </div></div></body></html>

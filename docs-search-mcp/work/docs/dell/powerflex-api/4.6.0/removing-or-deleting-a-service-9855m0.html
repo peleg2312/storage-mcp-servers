@@ -1,0 +1,29 @@
+<html><head><title>PowerFlex API 4.6.0: Removing or deleting a service</title></head><body><p>Tasks > PowerFlex Manager API tasks</p><div><div class="api-docs-main-div dds__pl-2">
+    <div class="markdown-wrapper dds__py-3">
+      <div class="markdown-body dds__px-3"><h1 id="removing-or-deleting-a-service" class="anchor-scroll-top-offset">Removing or deleting a service</h1>
+<p>You can remove a service (called a resource group in the UI) that is no longer required. PowerFlex Manager supports two types of removal:</p>
+<ul>
+<li>Delete the entire service, which deletes the deployment information and also makes any required configuration<br>
+changes for components that are associated with the service.</li>
+<li>Remove just the deployment information for the service without making any configuration changes to the deployed<br>
+components.</li>
+</ul>
+<p>To remove a service, simply call the following API:</p>
+<p><code>DELETE /Api/V1/Deployment/{id}</code></p>
+<p>To delete a service, perform these steps:</p>
+<ol>
+<li>Retrieve the Deployment object.</li>
+<li>Set teardown = true on the Deployment object.</li>
+<li>For each component (deployment.serviceTemplate.components[]) that you want to have delete / teardown options run on, set teardown = true, and within each of those components’ resources, set the ensure parameter to absent.</li>
+</ol>
+<p>Setting the component teardown options is equivalent to selecting the checkboxes shown in the Delete Service wizard. Note that the UI forces you to “teardown” the node components, whereas in the API this is optional. You must specify the teardown options for the components, as described above.</p>
+</div>
+      <div class="markdown-sidebar">
+        <div class="markdown-toc-title">
+          <i class="icon dds__icon dds__icon--bookmark"></i>
+          On this page
+        </div>
+          <ul><li class="level-1"><a href="#removing-or-deleting-a-service" data-toc-link="">Removing or deleting a service</a></li></ul>
+      </div>
+    </div>
+  </div></div></body></html>

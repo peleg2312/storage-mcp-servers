@@ -46,17 +46,24 @@ active""".split())     # words in product names that are everyday English: they 
 
 
 def in_domain(words):
-    vocab = set(DOMAIN)
+    """(request is about the library's world, vendors of the products it names). A named product limits the
+    leads to its vendor: "a FastAPI endpoint returning the users list" must not get ONTAP REST pages on users."""
+    vocab, vendors_of = set(DOMAIN), {}
     try:
         import sqlite3
         c = sqlite3.connect(f"file:{DB}?mode=ro", uri=True)
-        for (p,) in c.execute("SELECT DISTINCT product FROM docs"):
-            vocab.update(w for w in re.split(r"[-_]", p.lower()) if len(w) >= 4 and not w.isdigit() and w not in GENERIC)
+        for v, p in c.execute("SELECT DISTINCT vendor, product FROM docs"):
+            vendors_of.setdefault(v.lower(), set()).add(v.lower())
+            for w in re.split(r"[-_]", p.lower()):
+                if len(w) >= 4 and not w.isdigit() and w not in GENERIC:
+                    vocab.add(w)
+                    vendors_of.setdefault(w, set()).add(v.lower())
     except Exception:
         pass
     words = [x for x in words if not re.search(r"[/~\\]|^https?:", x)]      # folder paths and urls do not count
     toks = {w.lower() for x in words for w in re.findall(r"[A-Za-z][A-Za-z0-9]+", x)}
-    return bool(toks & vocab)
+    named = set().union(*(vendors_of.get(t, set()) for t in toks)) if toks else set()
+    return bool(toks & vocab), named
 
 
 def main():
@@ -88,17 +95,21 @@ def main():
         pass
     # 2. the best documents for the request itself, when it is about the library's world at all
     words = re.findall(r"\S+", prompt)[:MAX_QUERY_WORDS]
-    if not lines and not in_domain(words):
+    about, vendors = in_domain(words)
+    if not lines and not about:
         return 0
     try:
         mod = os.path.join(LIB, "search.py")
         lib = load("search", mod if os.path.exists(mod) else os.path.join(LIB, "search_cli.py"))
         c = lib.connect(DB)
-        res = lib.search_docs(c, " ".join(words).replace('"', " "), limit=8)["results"]
+        q = " ".join(words).replace('"', " ")
+        res = lib.search_docs(c, q, vendor=next(iter(vendors)) if len(vendors) == 1 else "", limit=8)["results"]
     except Exception:
         res = []
     leads, seen_docs, seen_titles = [], set(), set()
     for r in res:
+        if vendors and r["vendor"].lower() not in vendors:
+            continue
         hit, _, n = r.get("matched", "0/1").partition("/")
         if not n or int(hit) < MIN_WORDS or int(hit) / int(n) < MIN_COVER:
             continue

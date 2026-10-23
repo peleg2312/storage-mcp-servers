@@ -34,5 +34,97 @@
 "removing-or-deleting-a-service-10296m0.html": {
 "url": "https://developer.dell.com/apis/4008/versions/4.5.2-Manager_v4-5-2/removing-or-deleting-a-service-10296m0",
 "title": "PowerFlex API 4.5.2-Manager_v4-5-2: Removing or deleting a service"
+},
+"powerapi-4-5-2-10273m0.html": {
+"url": "https://developer.dell.com/apis/4008/versions/4.5.2-Manager_v4-5-2/powerapi-4-5-2-10273m0",
+"title": "PowerFlex API 4.5.2-Manager_v4-5-2: PowerAPI (4.5.2)"
+},
+"powerflex-4-5-2-10271m0.html": {
+"url": "https://developer.dell.com/apis/4008/versions/4.5.2-Manager_v4-5-2/powerflex-4-5-2-10271m0",
+"title": "PowerFlex API 4.5.2-Manager_v4-5-2: PowerFlex (4.5.2)"
+},
+"powerflex-manager-4-5-2-10272m0.html": {
+"url": "https://developer.dell.com/apis/4008/versions/4.5.2-Manager_v4-5-2/powerflex-manager-4-5-2-10272m0",
+"title": "PowerFlex API 4.5.2-Manager_v4-5-2: PowerFlex Manager (4.5.2)"
+},
+"authentication-10259m0.html": {
+"url": "https://developer.dell.com/apis/4008/versions/4.5.2-Manager_v4-5-2/authentication-10259m0",
+"title": "PowerFlex API 4.5.2-Manager_v4-5-2: Authentication"
+},
+"making-your-first-call-10260m0.html": {
+"url": "https://developer.dell.com/apis/4008/versions/4.5.2-Manager_v4-5-2/making-your-first-call-10260m0",
+"title": "PowerFlex API 4.5.2-Manager_v4-5-2: Making-your-first-call"
+},
+"responses-10261m0.html": {
+"url": "https://developer.dell.com/apis/4008/versions/4.5.2-Manager_v4-5-2/responses-10261m0",
+"title": "PowerFlex API 4.5.2-Manager_v4-5-2: Responses"
+},
+"error-messages-10262m0.html": {
+"url": "https://developer.dell.com/apis/4008/versions/4.5.2-Manager_v4-5-2/error-messages-10262m0",
+"title": "PowerFlex API 4.5.2-Manager_v4-5-2: Error messages"
+},
+"whats-new-10263m0.html": {
+"url": "https://developer.dell.com/apis/4008/versions/4.5.2-Manager_v4-5-2/whats-new-10263m0",
+"title": "PowerFlex API 4.5.2-Manager_v4-5-2: What's new"
+},
+"generic-query-parameter-10265m0.html": {
+"url": "https://developer.dell.com/apis/4008/versions/4.5.2-Manager_v4-5-2/generic-query-parameter-10265m0",
+"title": "PowerFlex API 4.5.2-Manager_v4-5-2: Generic query parameter"
+},
+"http-message-body-10266m0.html": {
+"url": "https://developer.dell.com/apis/4008/versions/4.5.2-Manager_v4-5-2/http-message-body-10266m0",
+"title": "PowerFlex API 4.5.2-Manager_v4-5-2: HTTP message body"
+},
+"making-your-first-call-10267m0.html": {
+"url": "https://developer.dell.com/apis/4008/versions/4.5.2-Manager_v4-5-2/making-your-first-call-10267m0",
+"title": "PowerFlex API 4.5.2-Manager_v4-5-2: Making your first call"
+},
+"resource-endpoint-url-10268m0.html": {
+"url": "https://developer.dell.com/apis/4008/versions/4.5.2-Manager_v4-5-2/resource-endpoint-url-10268m0",
+"title": "PowerFlex API 4.5.2-Manager_v4-5-2: Resource endpoint URL"
+},
+"whats-new-10270m0.html": {
+"url": "https://developer.dell.com/apis/4008/versions/4.5.2-Manager_v4-5-2/whats-new-10270m0",
+"title": "PowerFlex API 4.5.2-Manager_v4-5-2: What's new"
+},
+"configuring-the-login-banner-10274m0.html": {
+"url": "https://developer.dell.com/apis/4008/versions/4.5.2-Manager_v4-5-2/configuring-the-login-banner-10274m0",
+"title": "PowerFlex API 4.5.2-Manager_v4-5-2: Configuring the login banner"
+},
+"receiving-responses-from-the-notification-api-10276m0.html": {
+"url": "https://developer.dell.com/apis/4008/versions/4.5.2-Manager_v4-5-2/receiving-responses-from-the-notification-api-10276m0",
+"title": "PowerFlex API 4.5.2-Manager_v4-5-2: Receiving responses from the notification API"
+},
+"tasks-10277m0.html": {
+"url": "https://developer.dell.com/apis/4008/versions/4.5.2-Manager_v4-5-2/tasks-10277m0",
+"title": "PowerFlex API 4.5.2-Manager_v4-5-2: Tasks"
+},
+"query-the-powerflex-gateway-configuration-get-10278m0.html": {
+"url": "https://developer.dell.com/apis/4008/versions/4.5.2-Manager_v4-5-2/query-the-powerflex-gateway-configuration-get-10278m0",
+"title": "PowerFlex API 4.5.2-Manager_v4-5-2: Query the PowerFlex Gateway configuration (GET)"
+},
+"query-selected-statistics-post-10279m0.html": {
+"url": "https://developer.dell.com/apis/4008/versions/4.5.2-Manager_v4-5-2/query-selected-statistics-post-10279m0",
+"title": "PowerFlex API 4.5.2-Manager_v4-5-2: Query selected statistics (POST)"
+},
+"volume-management-10280m0.html": {
+"url": "https://developer.dell.com/apis/4008/versions/4.5.2-Manager_v4-5-2/volume-management-10280m0",
+"title": "PowerFlex API 4.5.2-Manager_v4-5-2: Volume Management"
+},
+"return-messages-overview-10282m0.html": {
+"url": "https://developer.dell.com/apis/4008/versions/4.5.2-Manager_v4-5-2/return-messages-overview-10282m0",
+"title": "PowerFlex API 4.5.2-Manager_v4-5-2: Return messages overview"
+},
+"adding-a-network-10283m0.html": {
+"url": "https://developer.dell.com/apis/4008/versions/4.5.2-Manager_v4-5-2/adding-a-network-10283m0",
+"title": "PowerFlex API 4.5.2-Manager_v4-5-2: Adding a network"
+},
+"adding-a-new-credential-10284m0.html": {
+"url": "https://developer.dell.com/apis/4008/versions/4.5.2-Manager_v4-5-2/adding-a-new-credential-10284m0",
+"title": "PowerFlex API 4.5.2-Manager_v4-5-2: Adding a new credential"
+},
+"adding-a-node-10285m0.html": {
+"url": "https://developer.dell.com/apis/4008/versions/4.5.2-Manager_v4-5-2/adding-a-node-10285m0",
+"title": "PowerFlex API 4.5.2-Manager_v4-5-2: Adding a node"
 }
 }

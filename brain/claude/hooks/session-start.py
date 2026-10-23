@@ -103,7 +103,8 @@ def main():
             lines.append(fn())
         except Exception:
             pass
-    lines.append("Mode: READ-ONLY. Never change anything; give the user the exact commands to run himself. "
+    lines.append("Mode: read-only toward infrastructure (arrays, fabrics, UCS, vCenter, host storage): give the user "
+                 "the exact commands to run; the user's own code and app deployments are normal work. "
                  "New facts: core ones in notes.md, the rest in notes/<topic>.md.")
     print("Storage brain: " + "\n".join(lines))
     return 0

@@ -51,6 +51,12 @@ Code; few high-signal tools) and measured with `docs-search-mcp/eval_search.py`:
   all 7 sets mean hit@1 0.72 -> 0.75, MRR 0.80 -> 0.83; held-out MRR 0.792 -> 0.816). Tried and dropped:
   concept pages by title, everyday-verb synonyms (neutral), document-level score aggregation (worse).
   Remaining misses are paraphrases far from the docs' words (in the candidates, ranked 11-47).
+- **No wasted result slots** (Oct 24): the same page in another version or copy (same title and section,
+  version numbers ignored) is one result, the others listed in `also_in` by path (10% of slots were such
+  repeats: Trident 23.07-25.10, CSM v1-v3, PowerFlex API versions); Dell KB "Affected Products" / "Article
+  Properties" and manual "Table of Contents" sections are dropped at indexing (keyword bait, no answers).
+  Docs leads are limited to the vendor of a product the request names (a FastAPI question no longer gets
+  ONTAP REST pages).
 - **Measured** (`eval_search.py`; hit@1 / hit@5). Sets written blind from random library sections are the
   honest ones (fresh, general); the older sets were written knowing the index:
 

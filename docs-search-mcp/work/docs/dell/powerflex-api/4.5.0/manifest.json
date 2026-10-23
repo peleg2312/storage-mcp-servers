@@ -1,0 +1,130 @@
+{
+"powerapi-9839m0.html": {
+"url": "https://developer.dell.com/apis/4008/versions/4.5.0/powerapi-9839m0",
+"title": "PowerFlex API 4.5.0: PowerAPI"
+},
+"powerflex-9830m0.html": {
+"url": "https://developer.dell.com/apis/4008/versions/4.5.0/powerflex-9830m0",
+"title": "PowerFlex API 4.5.0: PowerFlex"
+},
+"powerflex-manager-9835m0.html": {
+"url": "https://developer.dell.com/apis/4008/versions/4.5.0/powerflex-manager-9835m0",
+"title": "PowerFlex API 4.5.0: PowerFlex Manager"
+},
+"authentication-9790m0.html": {
+"url": "https://developer.dell.com/apis/4008/versions/4.5.0/authentication-9790m0",
+"title": "PowerFlex API 4.5.0: Authentication"
+},
+"making-your-first-call-9792m0.html": {
+"url": "https://developer.dell.com/apis/4008/versions/4.5.0/making-your-first-call-9792m0",
+"title": "PowerFlex API 4.5.0: Making-your-first-call"
+},
+"responses-9795m0.html": {
+"url": "https://developer.dell.com/apis/4008/versions/4.5.0/responses-9795m0",
+"title": "PowerFlex API 4.5.0: Responses"
+},
+"error-messages-9801m0.html": {
+"url": "https://developer.dell.com/apis/4008/versions/4.5.0/error-messages-9801m0",
+"title": "PowerFlex API 4.5.0: Error messages"
+},
+"whats-new-9805m0.html": {
+"url": "https://developer.dell.com/apis/4008/versions/4.5.0/whats-new-9805m0",
+"title": "PowerFlex API 4.5.0: What's new"
+},
+"generic-query-parameter-9811m0.html": {
+"url": "https://developer.dell.com/apis/4008/versions/4.5.0/generic-query-parameter-9811m0",
+"title": "PowerFlex API 4.5.0: Generic query parameter"
+},
+"http-message-body-9815m0.html": {
+"url": "https://developer.dell.com/apis/4008/versions/4.5.0/http-message-body-9815m0",
+"title": "PowerFlex API 4.5.0: HTTP message body"
+},
+"making-your-first-call-9818m0.html": {
+"url": "https://developer.dell.com/apis/4008/versions/4.5.0/making-your-first-call-9818m0",
+"title": "PowerFlex API 4.5.0: Making your first call"
+},
+"resource-endpoint-url-9822m0.html": {
+"url": "https://developer.dell.com/apis/4008/versions/4.5.0/resource-endpoint-url-9822m0",
+"title": "PowerFlex API 4.5.0: Resource endpoint URL"
+},
+"whats-new-9826m0.html": {
+"url": "https://developer.dell.com/apis/4008/versions/4.5.0/whats-new-9826m0",
+"title": "PowerFlex API 4.5.0: What's new"
+},
+"configuring-the-login-banner-9843m0.html": {
+"url": "https://developer.dell.com/apis/4008/versions/4.5.0/configuring-the-login-banner-9843m0",
+"title": "PowerFlex API 4.5.0: Configuring the login banner"
+},
+"receiving-responses-from-the-notification-api-9848m0.html": {
+"url": "https://developer.dell.com/apis/4008/versions/4.5.0/receiving-responses-from-the-notification-api-9848m0",
+"title": "PowerFlex API 4.5.0: Receiving responses from the notification API"
+},
+"tasks-9851m0.html": {
+"url": "https://developer.dell.com/apis/4008/versions/4.5.0/tasks-9851m0",
+"title": "PowerFlex API 4.5.0: Tasks"
+},
+"query-the-powerflex-gateway-configuration-get-9856m0.html": {
+"url": "https://developer.dell.com/apis/4008/versions/4.5.0/query-the-powerflex-gateway-configuration-get-9856m0",
+"title": "PowerFlex API 4.5.0: Query the PowerFlex Gateway configuration (GET)"
+},
+"query-selected-statistics-post-9858m0.html": {
+"url": "https://developer.dell.com/apis/4008/versions/4.5.0/query-selected-statistics-post-9858m0",
+"title": "PowerFlex API 4.5.0: Query selected statistics (POST)"
+},
+"volume-management-9860m0.html": {
+"url": "https://developer.dell.com/apis/4008/versions/4.5.0/volume-management-9860m0",
+"title": "PowerFlex API 4.5.0: Volume Management"
+},
+"return-messages-overview-9863m0.html": {
+"url": "https://developer.dell.com/apis/4008/versions/4.5.0/return-messages-overview-9863m0",
+"title": "PowerFlex API 4.5.0: Return messages overview"
+},
+"adding-a-network-9864m0.html": {
+"url": "https://developer.dell.com/apis/4008/versions/4.5.0/adding-a-network-9864m0",
+"title": "PowerFlex API 4.5.0: Adding a network"
+},
+"adding-a-new-credential-9865m0.html": {
+"url": "https://developer.dell.com/apis/4008/versions/4.5.0/adding-a-new-credential-9865m0",
+"title": "PowerFlex API 4.5.0: Adding a new credential"
+},
+"adding-a-node-9866m0.html": {
+"url": "https://developer.dell.com/apis/4008/versions/4.5.0/adding-a-node-9866m0",
+"title": "PowerFlex API 4.5.0: Adding a node"
+},
+"deploying-a-new-service-9868m0.html": {
+"url": "https://developer.dell.com/apis/4008/versions/4.5.0/deploying-a-new-service-9868m0",
+"title": "PowerFlex API 4.5.0: Deploying a new service"
+},
+"discovering-devices-and-updating-the-inventory-9872m0.html": {
+"url": "https://developer.dell.com/apis/4008/versions/4.5.0/discovering-devices-and-updating-the-inventory-9872m0",
+"title": "PowerFlex API 4.5.0: Discovering devices and updating the inventory"
+},
+"getting-a-credential-9879m0.html": {
+"url": "https://developer.dell.com/apis/4008/versions/4.5.0/getting-a-credential-9879m0",
+"title": "PowerFlex API 4.5.0: Getting a credential"
+},
+"getting-a-deployed-service-9883m0.html": {
+"url": "https://developer.dell.com/apis/4008/versions/4.5.0/getting-a-deployed-service-9883m0",
+"title": "PowerFlex API 4.5.0: Getting a deployed service"
+},
+"getting-a-managed-device-9886m0.html": {
+"url": "https://developer.dell.com/apis/4008/versions/4.5.0/getting-a-managed-device-9886m0",
+"title": "PowerFlex API 4.5.0: Getting a managed device"
+},
+"getting-a-network-9890m0.html": {
+"url": "https://developer.dell.com/apis/4008/versions/4.5.0/getting-a-network-9890m0",
+"title": "PowerFlex API 4.5.0: Getting a network"
+},
+"getting-a-service-template-9896m0.html": {
+"url": "https://developer.dell.com/apis/4008/versions/4.5.0/getting-a-service-template-9896m0",
+"title": "PowerFlex API 4.5.0: Getting a service template"
+},
+"creating-and-publishing-templates-9898m0.html": {
+"url": "https://developer.dell.com/apis/4008/versions/4.5.0/creating-and-publishing-templates-9898m0",
+"title": "PowerFlex API 4.5.0: Creating and publishing templates"
+},
+"removing-or-deleting-a-service-9902m0.html": {
+"url": "https://developer.dell.com/apis/4008/versions/4.5.0/removing-or-deleting-a-service-9902m0",
+"title": "PowerFlex API 4.5.0: Removing or deleting a service"
+}
+}

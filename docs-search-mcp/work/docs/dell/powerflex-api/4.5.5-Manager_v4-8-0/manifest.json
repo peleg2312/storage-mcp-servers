@@ -2742,5 +2742,513 @@
 "returns-a-list-of-datastores-345980e0.html": {
 "url": "https://developer.dell.com/apis/4008/versions/4.5.5-Manager_v4-8-0/returns-a-list-of-datastores-345980e0",
 "title": "PowerFlex API 4.5.5-Manager_v4-8-0: Returns a list of datastores"
+},
+"resize-volumes-on-the-service-345981e0.html": {
+"url": "https://developer.dell.com/apis/4008/versions/4.5.5-Manager_v4-8-0/resize-volumes-on-the-service-345981e0",
+"title": "PowerFlex API 4.5.5-Manager_v4-8-0: Resize volumes on the service"
+},
+"get-device-groups-345982e0.html": {
+"url": "https://developer.dell.com/apis/4008/versions/4.5.5-Manager_v4-8-0/get-device-groups-345982e0",
+"title": "PowerFlex API 4.5.5-Manager_v4-8-0: Get device groups"
+},
+"create-device-group-345983e0.html": {
+"url": "https://developer.dell.com/apis/4008/versions/4.5.5-Manager_v4-8-0/create-device-group-345983e0",
+"title": "PowerFlex API 4.5.5-Manager_v4-8-0: Create device group"
+},
+"get-device-group-by-refid-345984e0.html": {
+"url": "https://developer.dell.com/apis/4008/versions/4.5.5-Manager_v4-8-0/get-device-group-by-refid-345984e0",
+"title": "PowerFlex API 4.5.5-Manager_v4-8-0: Get device group by refId"
+},
+"update-a-device-group-345985e0.html": {
+"url": "https://developer.dell.com/apis/4008/versions/4.5.5-Manager_v4-8-0/update-a-device-group-345985e0",
+"title": "PowerFlex API 4.5.5-Manager_v4-8-0: Update a device group"
+},
+"delete-devicegroup-refid-345986e0.html": {
+"url": "https://developer.dell.com/apis/4008/versions/4.5.5-Manager_v4-8-0/delete-devicegroup-refid-345986e0",
+"title": "PowerFlex API 4.5.5-Manager_v4-8-0: delete-DeviceGroup-refId"
+},
+"discover-devices-345987e0.html": {
+"url": "https://developer.dell.com/apis/4008/versions/4.5.5-Manager_v4-8-0/discover-devices-345987e0",
+"title": "PowerFlex API 4.5.5-Manager_v4-8-0: Discover devices"
+},
+"get-discovery-requests-345988e0.html": {
+"url": "https://developer.dell.com/apis/4008/versions/4.5.5-Manager_v4-8-0/get-discovery-requests-345988e0",
+"title": "PowerFlex API 4.5.5-Manager_v4-8-0: Get discovery requests"
+},
+"get-a-device-from-the-inventory-345989e0.html": {
+"url": "https://developer.dell.com/apis/4008/versions/4.5.5-Manager_v4-8-0/get-a-device-from-the-inventory-345989e0",
+"title": "PowerFlex API 4.5.5-Manager_v4-8-0: Get a device from the inventory"
+},
+"delete-device-from-discovery-result-345990e0.html": {
+"url": "https://developer.dell.com/apis/4008/versions/4.5.5-Manager_v4-8-0/delete-device-from-discovery-result-345990e0",
+"title": "PowerFlex API 4.5.5-Manager_v4-8-0: Delete device from discovery result"
+},
+"get-an-array-of-discovery-results-345991e0.html": {
+"url": "https://developer.dell.com/apis/4008/versions/4.5.5-Manager_v4-8-0/get-an-array-of-discovery-results-345991e0",
+"title": "PowerFlex API 4.5.5-Manager_v4-8-0: Get an array of discovery results"
+},
+"post-discoveryrequest-listdevices-345992e0.html": {
+"url": "https://developer.dell.com/apis/4008/versions/4.5.5-Manager_v4-8-0/post-discoveryrequest-listdevices-345992e0",
+"title": "PowerFlex API 4.5.5-Manager_v4-8-0: post-DiscoveryRequest-listdevices"
+},
+"get-a-discovery-result-345993e0.html": {
+"url": "https://developer.dell.com/apis/4008/versions/4.5.5-Manager_v4-8-0/get-a-discovery-result-345993e0",
+"title": "PowerFlex API 4.5.5-Manager_v4-8-0: Get a discovery result"
+},
+"get-all-firmware-repositories-345994e0.html": {
+"url": "https://developer.dell.com/apis/4008/versions/4.5.5-Manager_v4-8-0/get-all-firmware-repositories-345994e0",
+"title": "PowerFlex API 4.5.5-Manager_v4-8-0: Get all firmware repositories"
+},
+"add-firmware-repository-345995e0.html": {
+"url": "https://developer.dell.com/apis/4008/versions/4.5.5-Manager_v4-8-0/add-firmware-repository-345995e0",
+"title": "PowerFlex API 4.5.5-Manager_v4-8-0: Add firmware repository"
+},
+"get-a-firmware-repository-345996e0.html": {
+"url": "https://developer.dell.com/apis/4008/versions/4.5.5-Manager_v4-8-0/get-a-firmware-repository-345996e0",
+"title": "PowerFlex API 4.5.5-Manager_v4-8-0: Get a firmware repository"
+},
+"update-a-firmware-repository-345997e0.html": {
+"url": "https://developer.dell.com/apis/4008/versions/4.5.5-Manager_v4-8-0/update-a-firmware-repository-345997e0",
+"title": "PowerFlex API 4.5.5-Manager_v4-8-0: Update a firmware repository"
+},
+"delete-firmware-repository-345998e0.html": {
+"url": "https://developer.dell.com/apis/4008/versions/4.5.5-Manager_v4-8-0/delete-firmware-repository-345998e0",
+"title": "PowerFlex API 4.5.5-Manager_v4-8-0: Delete firmware repository"
+},
+"test-connection-to-firmware-repository-remote-path-345999e0.html": {
+"url": "https://developer.dell.com/apis/4008/versions/4.5.5-Manager_v4-8-0/test-connection-to-firmware-repository-remote-path-345999e0",
+"title": "PowerFlex API 4.5.5-Manager_v4-8-0: Test connection to firmware repository remote path"
+},
+"get-firmware-repositories-on-secure-remote-services-346000e0.html": {
+"url": "https://developer.dell.com/apis/4008/versions/4.5.5-Manager_v4-8-0/get-firmware-repositories-on-secure-remote-services-346000e0",
+"title": "PowerFlex API 4.5.5-Manager_v4-8-0: Get firmware repositories on Secure Remote Services"
+},
+"get-all-firmware-repository-software-bundles-346001e0.html": {
+"url": "https://developer.dell.com/apis/4008/versions/4.5.5-Manager_v4-8-0/get-all-firmware-repository-software-bundles-346001e0",
+"title": "PowerFlex API 4.5.5-Manager_v4-8-0: Get all firmware repository software bundles"
+},
+"get-all-firmware-repository-software-components-346002e0.html": {
+"url": "https://developer.dell.com/apis/4008/versions/4.5.5-Manager_v4-8-0/get-all-firmware-repository-software-components-346002e0",
+"title": "PowerFlex API 4.5.5-Manager_v4-8-0: Get all firmware repository software components"
+},
+"allow-an-unsigned-rcm-file-346003e0.html": {
+"url": "https://developer.dell.com/apis/4008/versions/4.5.5-Manager_v4-8-0/allow-an-unsigned-rcm-file-346003e0",
+"title": "PowerFlex API 4.5.5-Manager_v4-8-0: Allow an unsigned RCM file"
+},
+"get-managed-devices-346004e0.html": {
+"url": "https://developer.dell.com/apis/4008/versions/4.5.5-Manager_v4-8-0/get-managed-devices-346004e0",
+"title": "PowerFlex API 4.5.5-Manager_v4-8-0: Get managed devices"
+},
+"create-a-managed-device-346005e0.html": {
+"url": "https://developer.dell.com/apis/4008/versions/4.5.5-Manager_v4-8-0/create-a-managed-device-346005e0",
+"title": "PowerFlex API 4.5.5-Manager_v4-8-0: Create a managed device"
+},
+"get-managed-device-based-on-reference-id-346006e0.html": {
+"url": "https://developer.dell.com/apis/4008/versions/4.5.5-Manager_v4-8-0/get-managed-device-based-on-reference-id-346006e0",
+"title": "PowerFlex API 4.5.5-Manager_v4-8-0: Get managed device based on reference ID"
+},
+"delete-an-operating-system-repository-346067e0.html": {
+"url": "https://developer.dell.com/apis/4008/versions/4.5.5-Manager_v4-8-0/delete-an-operating-system-repository-346067e0",
+"title": "PowerFlex API 4.5.5-Manager_v4-8-0: Delete an operating system repository"
+},
+"test-operating-system-repository-connection-to-remote-path-346068e0.html": {
+"url": "https://developer.dell.com/apis/4008/versions/4.5.5-Manager_v4-8-0/test-operating-system-repository-connection-to-remote-path-346068e0",
+"title": "PowerFlex API 4.5.5-Manager_v4-8-0: Test operating system repository connection to remote path"
+},
+"synchronize-an-operating-system-repository-346069e0.html": {
+"url": "https://developer.dell.com/apis/4008/versions/4.5.5-Manager_v4-8-0/synchronize-an-operating-system-repository-346069e0",
+"title": "PowerFlex API 4.5.5-Manager_v4-8-0: Synchronize an operating system repository"
+},
+"get-proxy-settings-346070e0.html": {
+"url": "https://developer.dell.com/apis/4008/versions/4.5.5-Manager_v4-8-0/get-proxy-settings-346070e0",
+"title": "PowerFlex API 4.5.5-Manager_v4-8-0: Get proxy settings"
+},
+"update-proxy-settings-346071e0.html": {
+"url": "https://developer.dell.com/apis/4008/versions/4.5.5-Manager_v4-8-0/update-proxy-settings-346071e0",
+"title": "PowerFlex API 4.5.5-Manager_v4-8-0: Update proxy settings"
+},
+"test-proxy-settings-346072e0.html": {
+"url": "https://developer.dell.com/apis/4008/versions/4.5.5-Manager_v4-8-0/test-proxy-settings-346072e0",
+"title": "PowerFlex API 4.5.5-Manager_v4-8-0: Test proxy settings"
+},
+"get-servers-346073e0.html": {
+"url": "https://developer.dell.com/apis/4008/versions/4.5.5-Manager_v4-8-0/get-servers-346073e0",
+"title": "PowerFlex API 4.5.5-Manager_v4-8-0: Get servers"
+},
+"get-server-by-id-346074e0.html": {
+"url": "https://developer.dell.com/apis/4008/versions/4.5.5-Manager_v4-8-0/get-server-by-id-346074e0",
+"title": "PowerFlex API 4.5.5-Manager_v4-8-0: Get server by ID"
+},
+"delete-server-346075e0.html": {
+"url": "https://developer.dell.com/apis/4008/versions/4.5.5-Manager_v4-8-0/delete-server-346075e0",
+"title": "PowerFlex API 4.5.5-Manager_v4-8-0: Delete server"
+},
+"get-server-count-346076e0.html": {
+"url": "https://developer.dell.com/apis/4008/versions/4.5.5-Manager_v4-8-0/get-server-count-346076e0",
+"title": "PowerFlex API 4.5.5-Manager_v4-8-0: Get server count"
+},
+"upload-license-346111e0.html": {
+"url": "https://developer.dell.com/apis/4008/versions/4.5.5-Manager_v4-8-0/upload-license-346111e0",
+"title": "PowerFlex API 4.5.5-Manager_v4-8-0: Upload license"
+},
+"retrieve-appliance-license-details-346112e0.html": {
+"url": "https://developer.dell.com/apis/4008/versions/4.5.5-Manager_v4-8-0/retrieve-appliance-license-details-346112e0",
+"title": "PowerFlex API 4.5.5-Manager_v4-8-0: Retrieve Appliance License details"
+},
+"retrieve-the-execution-history-for-the-specific-job-execution-346113e0.html": {
+"url": "https://developer.dell.com/apis/4008/versions/4.5.5-Manager_v4-8-0/retrieve-the-execution-history-for-the-specific-job-execution-346113e0",
+"title": "PowerFlex API 4.5.5-Manager_v4-8-0: Retrieve the execution history for the specific job execution"
+},
+"retrieve-the-execution-histories-for-jobs-that-meet-specified-criteria-346114e0.html": {
+"url": "https://developer.dell.com/apis/4008/versions/4.5.5-Manager_v4-8-0/retrieve-the-execution-histories-for-jobs-that-meet-specified-criteria-346114e0",
+"title": "PowerFlex API 4.5.5-Manager_v4-8-0: Retrieve the execution histories for jobs that meet specified criteria"
+},
+"retrieve-job-status-346115e0.html": {
+"url": "https://developer.dell.com/apis/4008/versions/4.5.5-Manager_v4-8-0/retrieve-job-status-346115e0",
+"title": "PowerFlex API 4.5.5-Manager_v4-8-0: Retrieve Job Status"
+},
+"retrieve-the-execution-trees-for-jobs-that-meet-specified-criteria-346116e0.html": {
+"url": "https://developer.dell.com/apis/4008/versions/4.5.5-Manager_v4-8-0/retrieve-the-execution-trees-for-jobs-that-meet-specified-criteria-346116e0",
+"title": "PowerFlex API 4.5.5-Manager_v4-8-0: Retrieve the execution trees for jobs that meet specified criteria"
+},
+"retrieve-the-execution-trees-for-the-specific-job-execution-346117e0.html": {
+"url": "https://developer.dell.com/apis/4008/versions/4.5.5-Manager_v4-8-0/retrieve-the-execution-trees-for-the-specific-job-execution-346117e0",
+"title": "PowerFlex API 4.5.5-Manager_v4-8-0: Retrieve the execution trees for the specific job execution"
+},
+"retrieve-the-job-history-for-a-specific-quartz-job-key-346118e0.html": {
+"url": "https://developer.dell.com/apis/4008/versions/4.5.5-Manager_v4-8-0/retrieve-the-job-history-for-a-specific-quartz-job-key-346118e0",
+"title": "PowerFlex API 4.5.5-Manager_v4-8-0: Retrieve the job history for a specific Quartz job key"
+},
+"retrieve-a-list-of-jobs-that-are-scheduled-346119e0.html": {
+"url": "https://developer.dell.com/apis/4008/versions/4.5.5-Manager_v4-8-0/retrieve-a-list-of-jobs-that-are-scheduled-346119e0",
+"title": "PowerFlex API 4.5.5-Manager_v4-8-0: Retrieve a list of jobs that are scheduled"
+},
+"deletes-the-given-job-346120e0.html": {
+"url": "https://developer.dell.com/apis/4008/versions/4.5.5-Manager_v4-8-0/deletes-the-given-job-346120e0",
+"title": "PowerFlex API 4.5.5-Manager_v4-8-0: Deletes the given job"
+},
+"retrieve-a-list-of-currently-executing-jobs-346121e0.html": {
+"url": "https://developer.dell.com/apis/4008/versions/4.5.5-Manager_v4-8-0/retrieve-a-list-of-currently-executing-jobs-346121e0",
+"title": "PowerFlex API 4.5.5-Manager_v4-8-0: Retrieve a list of currently executing jobs"
+},
+"get-the-group-names-of-all-scheduled-and-executing-jobs-346122e0.html": {
+"url": "https://developer.dell.com/apis/4008/versions/4.5.5-Manager_v4-8-0/get-the-group-names-of-all-scheduled-and-executing-jobs-346122e0",
+"title": "PowerFlex API 4.5.5-Manager_v4-8-0: Get the group names of all scheduled and executing jobs"
+},
+"get-the-compatibility-management-settings-for-the-appliance-346123e0.html": {
+"url": "https://developer.dell.com/apis/4008/versions/4.5.5-Manager_v4-8-0/get-the-compatibility-management-settings-for-the-appliance-346123e0",
+"title": "PowerFlex API 4.5.5-Manager_v4-8-0: Get the compatibility management settings for the appliance"
+},
+"sets-compatibility-management-settings-346124e0.html": {
+"url": "https://developer.dell.com/apis/4008/versions/4.5.5-Manager_v4-8-0/sets-compatibility-management-settings-346124e0",
+"title": "PowerFlex API 4.5.5-Manager_v4-8-0: Sets compatibility management settings"
+},
+"get-powerflex-versions-compatible-with-passed-in-version-346125e0.html": {
+"url": "https://developer.dell.com/apis/4008/versions/4.5.5-Manager_v4-8-0/get-powerflex-versions-compatible-with-passed-in-version-346125e0",
+"title": "PowerFlex API 4.5.5-Manager_v4-8-0: Get PowerFlex versions compatible with passed in version"
+},
+"change-compliance-file-346126e0.html": {
+"url": "https://developer.dell.com/apis/4008/versions/4.5.5-Manager_v4-8-0/change-compliance-file-346126e0",
+"title": "PowerFlex API 4.5.5-Manager_v4-8-0: Change compliance file"
+},
+"check-if-passed-in-rcmversion-is-compatible-with-current-powerflex-manager-346127e0.html": {
+"url": "https://developer.dell.com/apis/4008/versions/4.5.5-Manager_v4-8-0/check-if-passed-in-rcmversion-is-compatible-with-current-powerflex-manager-346127e0",
+"title": "PowerFlex API 4.5.5-Manager_v4-8-0: Check if passed in rcmVersion is compatible with current PowerFlex Manager"
+},
+"check-if-current-service-rcms-are-compatible-with-powerflex-manager-version-346128e0.html": {
+"url": "https://developer.dell.com/apis/4008/versions/4.5.5-Manager_v4-8-0/check-if-current-service-rcms-are-compatible-with-powerflex-manager-version-346128e0",
+"title": "PowerFlex API 4.5.5-Manager_v4-8-0: Check if current service RCMs are compatible with PowerFlex Manager version"
+},
+"downloads-and-sets-compatibility-management-settings-346129e0.html": {
+"url": "https://developer.dell.com/apis/4008/versions/4.5.5-Manager_v4-8-0/downloads-and-sets-compatibility-management-settings-346129e0",
+"title": "PowerFlex API 4.5.5-Manager_v4-8-0: Downloads and sets compatibility management settings"
+},
+"get-a-service-template-component-by-id-346130e0.html": {
+"url": "https://developer.dell.com/apis/4008/versions/4.5.5-Manager_v4-8-0/get-a-service-template-component-by-id-346130e0",
+"title": "PowerFlex API 4.5.5-Manager_v4-8-0: Get a service template component by Id"
+},
+"update-service-template-component-346131e0.html": {
+"url": "https://developer.dell.com/apis/4008/versions/4.5.5-Manager_v4-8-0/update-service-template-component-346131e0",
+"title": "PowerFlex API 4.5.5-Manager_v4-8-0: Update service template component"
+},
+"list-service-template-components-for-the-specified-filter-346132e0.html": {
+"url": "https://developer.dell.com/apis/4008/versions/4.5.5-Manager_v4-8-0/list-service-template-components-for-the-specified-filter-346132e0",
+"title": "PowerFlex API 4.5.5-Manager_v4-8-0: List service template components for the specified filter"
+},
+"get-a-volume-by-id-346133e0.html": {
+"url": "https://developer.dell.com/apis/4008/versions/4.5.5-Manager_v4-8-0/get-a-volume-by-id-346133e0",
+"title": "PowerFlex API 4.5.5-Manager_v4-8-0: Get a Volume by Id"
+},
+"list-volumes-for-the-specified-filter-346134e0.html": {
+"url": "https://developer.dell.com/apis/4008/versions/4.5.5-Manager_v4-8-0/list-volumes-for-the-specified-filter-346134e0",
+"title": "PowerFlex API 4.5.5-Manager_v4-8-0: List volumes for the specified filter"
+},
+"retrieve-a-list-of-numbers-based-on-filter-and-count-346135e0.html": {
+"url": "https://developer.dell.com/apis/4008/versions/4.5.5-Manager_v4-8-0/retrieve-a-list-of-numbers-based-on-filter-and-count-346135e0",
+"title": "PowerFlex API 4.5.5-Manager_v4-8-0: Retrieve a List of numbers based on filter and count"
+},
+"get-a-volume-by-id-346136e0.html": {
+"url": "https://developer.dell.com/apis/4008/versions/4.5.5-Manager_v4-8-0/get-a-volume-by-id-346136e0",
+"title": "PowerFlex API 4.5.5-Manager_v4-8-0: Get a Volume by Id"
+},
+"list-volumes-for-the-specified-filter-346137e0.html": {
+"url": "https://developer.dell.com/apis/4008/versions/4.5.5-Manager_v4-8-0/list-volumes-for-the-specified-filter-346137e0",
+"title": "PowerFlex API 4.5.5-Manager_v4-8-0: List volumes for the specified filter"
+},
+"retrieves-a-list-of-numbers-based-on-filter-and-count-346138e0.html": {
+"url": "https://developer.dell.com/apis/4008/versions/4.5.5-Manager_v4-8-0/retrieves-a-list-of-numbers-based-on-filter-and-count-346138e0",
+"title": "PowerFlex API 4.5.5-Manager_v4-8-0: Retrieves a List of numbers based on filter and count"
+},
+"get-a-deployment-by-id-346139e0.html": {
+"url": "https://developer.dell.com/apis/4008/versions/4.5.5-Manager_v4-8-0/get-a-deployment-by-id-346139e0",
+"title": "PowerFlex API 4.5.5-Manager_v4-8-0: Get a Deployment by Id"
+},
+"gets-available-manageddevices-for-creating-a-new-deployment-from-a-published-service-template-346140e0.html": {
+"url": "https://developer.dell.com/apis/4008/versions/4.5.5-Manager_v4-8-0/gets-available-manageddevices-for-creating-a-new-deployment-from-a-published-service-template-346140e0",
+"title": "PowerFlex API 4.5.5-Manager_v4-8-0: Gets available ManagedDevices for creating a new Deployment from a published service template"
+},
+"list-deployments-for-the-specified-filter-346141e0.html": {
+"url": "https://developer.dell.com/apis/4008/versions/4.5.5-Manager_v4-8-0/list-deployments-for-the-specified-filter-346141e0",
+"title": "PowerFlex API 4.5.5-Manager_v4-8-0: List Deployments for the specified filter"
+},
+"gets-a-managed-device-by-refid-346142e0.html": {
+"url": "https://developer.dell.com/apis/4008/versions/4.5.5-Manager_v4-8-0/gets-a-managed-device-by-refid-346142e0",
+"title": "PowerFlex API 4.5.5-Manager_v4-8-0: Gets a Managed Device by refId"
+},
+"list-manageddevices-for-the-specified-filter-346143e0.html": {
+"url": "https://developer.dell.com/apis/4008/versions/4.5.5-Manager_v4-8-0/list-manageddevices-for-the-specified-filter-346143e0",
+"title": "PowerFlex API 4.5.5-Manager_v4-8-0: List ManagedDevices for the specified filter"
+},
+"get-pfmp-version-and-status-346144e0.html": {
+"url": "https://developer.dell.com/apis/4008/versions/4.5.5-Manager_v4-8-0/get-pfmp-version-and-status-346144e0",
+"title": "PowerFlex API 4.5.5-Manager_v4-8-0: Get PFMP Version and Status"
+},
+"check-if-we-can-start-upgrade-346145e0.html": {
+"url": "https://developer.dell.com/apis/4008/versions/4.5.5-Manager_v4-8-0/check-if-we-can-start-upgrade-346145e0",
+"title": "PowerFlex API 4.5.5-Manager_v4-8-0: Check if we can start upgrade"
+},
+"validate-powerflex-for-import-346146e0.html": {
+"url": "https://developer.dell.com/apis/4008/versions/4.5.5-Manager_v4-8-0/validate-powerflex-for-import-346146e0",
+"title": "PowerFlex API 4.5.5-Manager_v4-8-0: Validate PowerFlex for import"
+},
+"validate-appliance-for-import-346147e0.html": {
+"url": "https://developer.dell.com/apis/4008/versions/4.5.5-Manager_v4-8-0/validate-appliance-for-import-346147e0",
+"title": "PowerFlex API 4.5.5-Manager_v4-8-0: Validate appliance for import"
+},
+"k8-cluster-restore-346148e0.html": {
+"url": "https://developer.dell.com/apis/4008/versions/4.5.5-Manager_v4-8-0/k8-cluster-restore-346148e0",
+"title": "PowerFlex API 4.5.5-Manager_v4-8-0: K8 cluster Restore"
+},
+"import-pfxm-appliance-data-and-services-346149e0.html": {
+"url": "https://developer.dell.com/apis/4008/versions/4.5.5-Manager_v4-8-0/import-pfxm-appliance-data-and-services-346149e0",
+"title": "PowerFlex API 4.5.5-Manager_v4-8-0: Import PFXM appliance data and services"
+},
+"disconnect-mdm-from-the-gateway-returns-job-id-346150e0.html": {
+"url": "https://developer.dell.com/apis/4008/versions/4.5.5-Manager_v4-8-0/disconnect-mdm-from-the-gateway-returns-job-id-346150e0",
+"title": "PowerFlex API 4.5.5-Manager_v4-8-0: Disconnect MDM from the gateway, returns Job ID."
+},
+"connect-mdm-to-cluster-gateway-returns-job-id-346151e0.html": {
+"url": "https://developer.dell.com/apis/4008/versions/4.5.5-Manager_v4-8-0/connect-mdm-to-cluster-gateway-returns-job-id-346151e0",
+"title": "PowerFlex API 4.5.5-Manager_v4-8-0: Connect MDM to cluster gateway, returns Job ID"
+},
+"perform-bootstrap-operation-using-lia-ips-346152e0.html": {
+"url": "https://developer.dell.com/apis/4008/versions/4.5.5-Manager_v4-8-0/perform-bootstrap-operation-using-lia-ips-346152e0",
+"title": "PowerFlex API 4.5.5-Manager_v4-8-0: Perform bootstrap operation using LIA IPs"
+},
+"k8-cluster-backup-with-database-346153e0.html": {
+"url": "https://developer.dell.com/apis/4008/versions/4.5.5-Manager_v4-8-0/k8-cluster-backup-with-database-346153e0",
+"title": "PowerFlex API 4.5.5-Manager_v4-8-0: K8 Cluster Backup with database"
+},
+"k8-cluster-backup-with-database-346154e0.html": {
+"url": "https://developer.dell.com/apis/4008/versions/4.5.5-Manager_v4-8-0/k8-cluster-backup-with-database-346154e0",
+"title": "PowerFlex API 4.5.5-Manager_v4-8-0: K8 Cluster Backup with database"
+},
+"asmmanager-liveness-probe-346155e0.html": {
+"url": "https://developer.dell.com/apis/4008/versions/4.5.5-Manager_v4-8-0/asmmanager-liveness-probe-346155e0",
+"title": "PowerFlex API 4.5.5-Manager_v4-8-0: AsmManager Liveness probe"
+},
+"get-k8-cluster-scheduled-backup-settings-346156e0.html": {
+"url": "https://developer.dell.com/apis/4008/versions/4.5.5-Manager_v4-8-0/get-k8-cluster-scheduled-backup-settings-346156e0",
+"title": "PowerFlex API 4.5.5-Manager_v4-8-0: Get K8 Cluster scheduled backup settings"
+},
+"list-device-groups-for-the-specified-filter-346157e0.html": {
+"url": "https://developer.dell.com/apis/4008/versions/4.5.5-Manager_v4-8-0/list-device-groups-for-the-specified-filter-346157e0",
+"title": "PowerFlex API 4.5.5-Manager_v4-8-0: List Device Groups for the specified filter"
+},
+"gets-a-device-group-by-sequence-id-346158e0.html": {
+"url": "https://developer.dell.com/apis/4008/versions/4.5.5-Manager_v4-8-0/gets-a-device-group-by-sequence-id-346158e0",
+"title": "PowerFlex API 4.5.5-Manager_v4-8-0: Gets a Device Group by Sequence Id"
+},
+"list-servicetemplates-for-the-specified-filter-346159e0.html": {
+"url": "https://developer.dell.com/apis/4008/versions/4.5.5-Manager_v4-8-0/list-servicetemplates-for-the-specified-filter-346159e0",
+"title": "PowerFlex API 4.5.5-Manager_v4-8-0: List ServiceTemplates for the specified filter"
+},
+"get-servicetemplate-by-id-346160e0.html": {
+"url": "https://developer.dell.com/apis/4008/versions/4.5.5-Manager_v4-8-0/get-servicetemplate-by-id-346160e0",
+"title": "PowerFlex API 4.5.5-Manager_v4-8-0: Get ServiceTemplate by Id"
+},
+"upload-trusted-certificate-346161e0.html": {
+"url": "https://developer.dell.com/apis/4008/versions/4.5.5-Manager_v4-8-0/upload-trusted-certificate-346161e0",
+"title": "PowerFlex API 4.5.5-Manager_v4-8-0: Upload trusted certificate"
+},
+"delete-ssl-trusted-ca-346162e0.html": {
+"url": "https://developer.dell.com/apis/4008/versions/4.5.5-Manager_v4-8-0/delete-ssl-trusted-ca-346162e0",
+"title": "PowerFlex API 4.5.5-Manager_v4-8-0: Delete SSL Trusted CA"
+},
+"get-trusted-ca-346163e0.html": {
+"url": "https://developer.dell.com/apis/4008/versions/4.5.5-Manager_v4-8-0/get-trusted-ca-346163e0",
+"title": "PowerFlex API 4.5.5-Manager_v4-8-0: Get Trusted CA"
+},
+"get-appliance-ssl-trusted-ca-list-346164e0.html": {
+"url": "https://developer.dell.com/apis/4008/versions/4.5.5-Manager_v4-8-0/get-appliance-ssl-trusted-ca-list-346164e0",
+"title": "PowerFlex API 4.5.5-Manager_v4-8-0: Get Appliance SSL Trusted CA list"
+},
+"get-appliance-ssl-certificate-346165e0.html": {
+"url": "https://developer.dell.com/apis/4008/versions/4.5.5-Manager_v4-8-0/get-appliance-ssl-certificate-346165e0",
+"title": "PowerFlex API 4.5.5-Manager_v4-8-0: Get Appliance SSL Certificate"
+},
+"creates-a-compliance-component-for-vmware-esxi-345945e0.html": {
+"url": "https://developer.dell.com/apis/4008/versions/4.5.5-Manager_v4-8-0/creates-a-compliance-component-for-vmware-esxi-345945e0",
+"title": "PowerFlex API 4.5.5-Manager_v4-8-0: Creates a compliance component for VMware ESXi"
+},
+"retrieve-job-execution-and-job-details-345946e0.html": {
+"url": "https://developer.dell.com/apis/4008/versions/4.5.5-Manager_v4-8-0/retrieve-job-execution-and-job-details-345946e0",
+"title": "PowerFlex API 4.5.5-Manager_v4-8-0: Retrieve job execution and job details"
+},
+"find-network-usage-with-ip-address-details-345947e0.html": {
+"url": "https://developer.dell.com/apis/4008/versions/4.5.5-Manager_v4-8-0/find-network-usage-with-ip-address-details-345947e0",
+"title": "PowerFlex API 4.5.5-Manager_v4-8-0: Find network usage with IP address details"
+},
+"login-345707e0.html": {
+"url": "https://developer.dell.com/apis/4008/versions/4.5.5-Manager_v4-8-0/login-345707e0",
+"title": "PowerFlex API 4.5.5-Manager_v4-8-0: login"
+},
+"logout-from-application-345708e0.html": {
+"url": "https://developer.dell.com/apis/4008/versions/4.5.5-Manager_v4-8-0/logout-from-application-345708e0",
+"title": "PowerFlex API 4.5.5-Manager_v4-8-0: logout from application"
+},
+"update-token-345709e0.html": {
+"url": "https://developer.dell.com/apis/4008/versions/4.5.5-Manager_v4-8-0/update-token-345709e0",
+"title": "PowerFlex API 4.5.5-Manager_v4-8-0: update token"
+},
+"create-345666e0.html": {
+"url": "https://developer.dell.com/apis/4008/versions/4.5.5-Manager_v4-8-0/create-345666e0",
+"title": "PowerFlex API 4.5.5-Manager_v4-8-0: Create"
+},
+"collection-query-345667e0.html": {
+"url": "https://developer.dell.com/apis/4008/versions/4.5.5-Manager_v4-8-0/collection-query-345667e0",
+"title": "PowerFlex API 4.5.5-Manager_v4-8-0: Collection Query"
+},
+"instance-query-345668e0.html": {
+"url": "https://developer.dell.com/apis/4008/versions/4.5.5-Manager_v4-8-0/instance-query-345668e0",
+"title": "PowerFlex API 4.5.5-Manager_v4-8-0: Instance Query"
+},
+"delete-345669e0.html": {
+"url": "https://developer.dell.com/apis/4008/versions/4.5.5-Manager_v4-8-0/delete-345669e0",
+"title": "PowerFlex API 4.5.5-Manager_v4-8-0: Delete"
+},
+"modify-345670e0.html": {
+"url": "https://developer.dell.com/apis/4008/versions/4.5.5-Manager_v4-8-0/modify-345670e0",
+"title": "PowerFlex API 4.5.5-Manager_v4-8-0: Modify"
+},
+"create-345671e0.html": {
+"url": "https://developer.dell.com/apis/4008/versions/4.5.5-Manager_v4-8-0/create-345671e0",
+"title": "PowerFlex API 4.5.5-Manager_v4-8-0: Create"
+},
+"collection-query-345672e0.html": {
+"url": "https://developer.dell.com/apis/4008/versions/4.5.5-Manager_v4-8-0/collection-query-345672e0",
+"title": "PowerFlex API 4.5.5-Manager_v4-8-0: Collection Query"
+},
+"instance-query-345673e0.html": {
+"url": "https://developer.dell.com/apis/4008/versions/4.5.5-Manager_v4-8-0/instance-query-345673e0",
+"title": "PowerFlex API 4.5.5-Manager_v4-8-0: Instance Query"
+},
+"delete-345674e0.html": {
+"url": "https://developer.dell.com/apis/4008/versions/4.5.5-Manager_v4-8-0/delete-345674e0",
+"title": "PowerFlex API 4.5.5-Manager_v4-8-0: Delete"
+},
+"modify-345675e0.html": {
+"url": "https://developer.dell.com/apis/4008/versions/4.5.5-Manager_v4-8-0/modify-345675e0",
+"title": "PowerFlex API 4.5.5-Manager_v4-8-0: Modify"
+},
+"create-345676e0.html": {
+"url": "https://developer.dell.com/apis/4008/versions/4.5.5-Manager_v4-8-0/create-345676e0",
+"title": "PowerFlex API 4.5.5-Manager_v4-8-0: Create"
+},
+"collection-query-345677e0.html": {
+"url": "https://developer.dell.com/apis/4008/versions/4.5.5-Manager_v4-8-0/collection-query-345677e0",
+"title": "PowerFlex API 4.5.5-Manager_v4-8-0: Collection Query"
+},
+"instance-query-345678e0.html": {
+"url": "https://developer.dell.com/apis/4008/versions/4.5.5-Manager_v4-8-0/instance-query-345678e0",
+"title": "PowerFlex API 4.5.5-Manager_v4-8-0: Instance Query"
+},
+"delete-345679e0.html": {
+"url": "https://developer.dell.com/apis/4008/versions/4.5.5-Manager_v4-8-0/delete-345679e0",
+"title": "PowerFlex API 4.5.5-Manager_v4-8-0: Delete"
+},
+"modify-345680e0.html": {
+"url": "https://developer.dell.com/apis/4008/versions/4.5.5-Manager_v4-8-0/modify-345680e0",
+"title": "PowerFlex API 4.5.5-Manager_v4-8-0: Modify"
+},
+"create-345681e0.html": {
+"url": "https://developer.dell.com/apis/4008/versions/4.5.5-Manager_v4-8-0/create-345681e0",
+"title": "PowerFlex API 4.5.5-Manager_v4-8-0: Create"
+},
+"collection-query-345682e0.html": {
+"url": "https://developer.dell.com/apis/4008/versions/4.5.5-Manager_v4-8-0/collection-query-345682e0",
+"title": "PowerFlex API 4.5.5-Manager_v4-8-0: Collection Query"
+},
+"instance-query-345683e0.html": {
+"url": "https://developer.dell.com/apis/4008/versions/4.5.5-Manager_v4-8-0/instance-query-345683e0",
+"title": "PowerFlex API 4.5.5-Manager_v4-8-0: Instance Query"
+},
+"delete-345684e0.html": {
+"url": "https://developer.dell.com/apis/4008/versions/4.5.5-Manager_v4-8-0/delete-345684e0",
+"title": "PowerFlex API 4.5.5-Manager_v4-8-0: Delete"
+},
+"modify-345685e0.html": {
+"url": "https://developer.dell.com/apis/4008/versions/4.5.5-Manager_v4-8-0/modify-345685e0",
+"title": "PowerFlex API 4.5.5-Manager_v4-8-0: Modify"
+},
+"test-email-345686e0.html": {
+"url": "https://developer.dell.com/apis/4008/versions/4.5.5-Manager_v4-8-0/test-email-345686e0",
+"title": "PowerFlex API 4.5.5-Manager_v4-8-0: Test Email"
+},
+"test-connection-345687e0.html": {
+"url": "https://developer.dell.com/apis/4008/versions/4.5.5-Manager_v4-8-0/test-connection-345687e0",
+"title": "PowerFlex API 4.5.5-Manager_v4-8-0: Test Connection"
+},
+"test-connection-345688e0.html": {
+"url": "https://developer.dell.com/apis/4008/versions/4.5.5-Manager_v4-8-0/test-connection-345688e0",
+"title": "PowerFlex API 4.5.5-Manager_v4-8-0: Test Connection"
+},
+"test-alert-345689e0.html": {
+"url": "https://developer.dell.com/apis/4008/versions/4.5.5-Manager_v4-8-0/test-alert-345689e0",
+"title": "PowerFlex API 4.5.5-Manager_v4-8-0: Test Alert"
+},
+"instance-query-345690e0.html": {
+"url": "https://developer.dell.com/apis/4008/versions/4.5.5-Manager_v4-8-0/instance-query-345690e0",
+"title": "PowerFlex API 4.5.5-Manager_v4-8-0: Instance Query"
+},
+"modify-345691e0.html": {
+"url": "https://developer.dell.com/apis/4008/versions/4.5.5-Manager_v4-8-0/modify-345691e0",
+"title": "PowerFlex API 4.5.5-Manager_v4-8-0: Modify"
+},
+"instance-query-345692e0.html": {
+"url": "https://developer.dell.com/apis/4008/versions/4.5.5-Manager_v4-8-0/instance-query-345692e0",
+"title": "PowerFlex API 4.5.5-Manager_v4-8-0: Instance Query"
+},
+"connectionstate-query-345693e0.html": {
+"url": "https://developer.dell.com/apis/4008/versions/4.5.5-Manager_v4-8-0/connectionstate-query-345693e0",
+"title": "PowerFlex API 4.5.5-Manager_v4-8-0: ConnectionState Query"
+},
+"status-query-345694e0.html": {
+"url": "https://developer.dell.com/apis/4008/versions/4.5.5-Manager_v4-8-0/status-query-345694e0",
+"title": "PowerFlex API 4.5.5-Manager_v4-8-0: Status Query"
+},
+"sync-345712e0.html": {
+"url": "https://developer.dell.com/apis/4008/versions/4.5.5-Manager_v4-8-0/sync-345712e0",
+"title": "PowerFlex API 4.5.5-Manager_v4-8-0: sync"
 }
 }

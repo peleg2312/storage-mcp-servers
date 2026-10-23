@@ -160,15 +160,17 @@ else
 fi
 
 # Development: ruff + basedpyright (offline wheels) and Anthropic's official dev plugins (offline copy in
-# brain/plugins: code-review, pr-review-toolkit, feature-dev, code-simplifier, commit-commands,
-# security-guidance, pyright-lsp, mcp-server-dev). Plugins are read from this repo, so git pull updates them.
+# brain/plugins: pr-review-toolkit, feature-dev, commit-commands, security-guidance, pyright-lsp, mcp-server-dev). Plugins are read from this repo, so git pull updates them.
 sh "$HERE/devtools/install-devtools.sh" || echo "devtools: skipped (see the message above)"
 if command -v claude >/dev/null 2>&1; then
   claude plugin marketplace add "$HERE/plugins" >/dev/null 2>&1 || claude plugin marketplace update brain-dev >/dev/null 2>&1 || true
-  for p in code-review pr-review-toolkit feature-dev code-simplifier commit-commands security-guidance pyright-lsp mcp-server-dev; do
+  for p in pr-review-toolkit feature-dev commit-commands security-guidance pyright-lsp mcp-server-dev; do
     claude plugin install "$p@brain-dev" >/dev/null 2>&1 || echo "plugin $p: not installed (claude plugin install $p@brain-dev)"
   done
-  echo "dev plugins: $(claude plugin list 2>/dev/null | grep -c '@brain-dev') of 8 from brain/plugins"
+  for p in code-review code-simplifier; do      # dropped: code-review needs GitHub (gh); code-simplifier is in pr-review-toolkit
+    claude plugin uninstall "$p@brain-dev" >/dev/null 2>&1 || true
+  done
+  echo "dev plugins: $(claude plugin list 2>/dev/null | grep -c '@brain-dev') of 6 from brain/plugins"
 fi
 
 echo
