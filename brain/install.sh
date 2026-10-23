@@ -106,15 +106,14 @@ elif [ "$HAVE_LIB" = 1 ] && command -v claude >/dev/null 2>&1; then
 fi
 
 # "Peleg As A Service": a big styled banner every time Claude Code is started (shell wrapper around the
-# `claude` command, added to ~/.bashrc / ~/.zshrc once), and a matching styled status line inside the UI.
+# `claude` command, in ~/.bashrc / ~/.zshrc, replaced on every install), and a matching styled status line inside the UI.
 # The wrapper looks for a banner under the current folder's .claude/ (project install: prints only inside
 # <dir>) and falls back to ~/.claude/banner (user install).
 for rc in "$HOME/.bashrc" "$HOME/.zshrc"; do
   [ -f "$rc" ] || [ "$rc" = "$HOME/.bashrc" ] || continue
   if grep -q "storage brain: Peleg As A Service" "$rc" 2>/dev/null; then
-    grep -q "__paas_banner" "$rc" && continue
     TMP_RC=$(mktemp); sed '/# >>> storage brain: Peleg As A Service/,/# <<< storage brain <<</d' "$rc" > "$TMP_RC"
-    cat "$TMP_RC" > "$rc"; rm -f "$TMP_RC"      # replace the old wrapper (no project support)
+    cat "$TMP_RC" > "$rc"; rm -f "$TMP_RC"      # replace the earlier wrapper with this version
   fi
   cat >> "$rc" <<'EOS'
 

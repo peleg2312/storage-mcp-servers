@@ -46,22 +46,20 @@ for name in mcpjson:
     lst = s.setdefault("enabledMcpjsonServers", [])
     if name not in lst:
         lst.append(name)
-# styled status line inside the Claude Code UI (only if none is configured yet)
-if "statusLine" not in s:
-    s["statusLine"] = {"type": "command", "command": f"python3 {banner_dir}/paas-statusline.py", "padding": 0}
-# look and feel (UI only, no tokens): set only what the user has not set
-s.setdefault("theme", "custom:paas")                        # ~/.claude/themes/paas.json, banner colours; /theme to change
-s.setdefault("preferredNotifChannel", "terminal_bell")      # bell when Claude finishes while you look away
-s.setdefault("spinnerVerbs", {"mode": "append", "verbs": [
+# look and feel (UI only, no tokens): always the brain's, replacing earlier values (settings.json is backed up above)
+s["statusLine"] = {"type": "command", "command": f"python3 {banner_dir}/paas-statusline.py", "padding": 0}
+s["theme"] = "custom:paas"                                   # ~/.claude/themes/paas.json, banner colours; /theme to change
+s["preferredNotifChannel"] = "terminal_bell"                 # bell when Claude finishes while you look away
+s["spinnerVerbs"] = {"mode": "append", "verbs": [
     "Zoning", "Decoding NAAs", "Counting paths", "Checking both fabrics", "Reading the masking view",
-    "Following the WWPN", "Rescanning HBAs", "Asking the array", "Consulting the KB", "Measuring latency"]})
-s.setdefault("spinnerTipsOverride", {"label": "Brain tip", "tips": [
+    "Following the WWPN", "Rescanning HBAs", "Asking the array", "Consulting the KB", "Measuring latency"]}
+s["spinnerTipsOverride"] = {"label": "Brain tip", "tips": [
     "Paste any error, alert or EMS name: the brain explains it from the offline docs",
     "/zoning-audit fabric A checks zoning against logins and masking",
     "/brain-health checks the MCP servers, the library and the read-only guard",
     "Ask \"is naa.xxx safe to remove\" before any unmap: decommission-check proves it",
     "Quote an error message in your question: quoted text is matched exactly in the library",
-    "Teach it a fact once (\"our SGs start with SG_\"): it is kept in notes.md for every session"]})
+    "Teach it a fact once (\"our SGs start with SG_\"): it is kept in notes.md for every session"]}
 os.makedirs(os.path.dirname(os.path.abspath(path)), exist_ok=True)
 with open(path, "w") as f:
     json.dump(s, f, indent=2)
