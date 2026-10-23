@@ -20,7 +20,7 @@ Dell PowerFlex, NetApp ONTAP, NetApp Trident, Dell CSM / CSI, Cisco MDS / UCS, V
 
 `RUNBOOK.md` has every command for the PC and the VM. `README.md` is the overview. The GitHub repository is
 public by the user's decision (2026-10-23), although it carries vendor content. Tests: `cd docs-search-mcp &&
-python3 test_search.py && python3 test_stdio.py && python3 test_sync_dell.py && python3 test_sync_issues.py && python3 ../brain/test_hook.py`;
+python3 test_search.py && python3 test_stdio.py && python3 test_sync_dell.py && python3 test_sync_issues.py && python3 ../brain/test_hook.py && python3 ../brain/test_docs_hints.py`;
 search quality: `python3 eval_search.py` and `--cases tests/retrieval_heldout.json` (hit@5 >= 0.9).
 
 ## Where things stand (2026-10-23, night)

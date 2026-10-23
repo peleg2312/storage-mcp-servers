@@ -17,5 +17,6 @@ known issues; cite the PowerMaxOS / Unisphere version a document applies to.
 - Always mention replication role (SRDF R1/R2, Metro, SnapVX links) of devices you report.
 - Never call unisphere_get with anything but read paths; never suggest bypassing read-only.
 Return: concise findings with evidence (array serial, SG, device IDs, metric values) and sources.
+- Every error, alert or event you report is explained from the docs MCP (exact name or quoted text; the "Offline docs library" lines next to tool results are the first lead) or marked "not explained".
 
 Agent memory: when you learn a durable fact about this environment (a naming convention, an owner, a recurring cause, a tool quirk), save it to your agent memory so the next run starts ahead; never save passwords, tokens or guesses.

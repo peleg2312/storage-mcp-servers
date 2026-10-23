@@ -17,6 +17,7 @@ environment, how to use each MCP server, and your procedures. Read-only by desig
 | Login banner (optional) | `login-banner.sh` (`install-vm.sh --login-banner`, sudo) | the same "Peleg As A Service" logo at every login on the VM for every user (SSH, console, terminal windows) with a system card: host, user, OS, uptime, load, memory, disk, and "type claude". Once per session, interactive terminals only; `sudo sh brain/login-banner.sh --remove` undoes it |
 | Look and feel | `claude/themes/paas.json`, `merge_settings.py` | "Peleg As A Service" colour theme (`/theme` to switch), storage spinner verbs, brain tips in the spinner, a terminal bell when Claude finishes, one colour per agent. UI only, no tokens; set only where you have not chosen your own |
 | Safety hook | `claude/hooks/block-write-tools.py` | blocks any MCP call that looks like a change (create/delete/modify..., HTTP POST/PUT/PATCH/DELETE, non-show CLI, SQL writes) - protects you even if a third-party MCP has write tools |
+| Docs-hints hook | `claude/hooks/docs-hints.py` | after every live MCP call: EMS events, PowerMax alerts, PowerFlex dial-home codes, CONTAP bugs and DSA advisories in the result get their meaning from the offline library beside it (needs the library installed on this VM) |
 | Session-start hook | `claude/hooks/session-start.py` | prints the library version and document count, whether `environment.md` is filled, the notes count, whether the guard is active and a read-only reminder into every session |
 
 Skills: `brain-setup`, `brain-health`, `docs-lookup`, `identify-lun`, `unused-luns`, `decommission-check`,
@@ -34,7 +35,7 @@ sh install-vm.sh                    # = brain/install.sh + the documentation lib
 claude                              # then type:  /brain-setup
 ```
 `install.sh` copies everything into `~/.claude/`, backs up an existing `CLAUDE.md` / `settings.json`,
-adds the safety and session-start hooks, allows your MCP servers' tools without a prompt each time, extracts the
+adds the safety, docs-hints and session-start hooks, allows your MCP servers' tools without a prompt each time, extracts the
 documentation library from `../library/` into `~/.claude/brain/library/` and registers it as the MCP
 server **docs-local** (`mcp_stdio.py`, standard library only: no pip, no container). Re-run it after
 every `git pull`; your `environment.md`, `tool-map.md`, `notes.md`, `notes/` and `allowed-tools.txt` are never overwritten; theme, status line, spinner, tips and bell are always reset to the brain's (settings.json is backed up first).

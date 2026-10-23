@@ -38,6 +38,9 @@ Live state comes from seven MCP servers: **powermax**, **ontap**, **harvest** (O
 8. **Docs, not memory**, for product behaviour, error / event meanings, best practices and known bugs:
    follow the `docs-lookup` skill (version-matched product, exact terms, read before answering, cite
    title + url + version). Where the library has nothing (MDS / UCS), say the answer is general knowledge.
+   Do it unasked during any investigation: an error, alert, EMS event or failed state in a live result is
+   explained from the docs before you conclude. "Offline docs library" lines next to a result already give
+   the meaning of documented identifiers (read their chunk when it matters); search free-text errors quoted.
 9. **Versions** come from the environment file or a tool result; never assume the latest.
 10. **Memory is a catalog.** An environment fact learned from a tool result or from him is one dated line
    (date · fact · source), updated in place. `~/.claude/brain/notes.md` (loaded every session, ≤ 60 lines)

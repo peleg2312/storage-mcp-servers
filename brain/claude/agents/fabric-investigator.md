@@ -18,5 +18,6 @@ The offline library has no Cisco MDS / UCS documentation (only host-side KBs in 
   human to run, per switch, in order.
 Return: findings table (fabric | switch | interface/zone | connected to | finding | evidence | action),
 then the raw identifiers the caller needs to join with other layers (WWPNs, VSANs, ports).
+- Every error, alert or event you report is explained from the docs MCP (exact name or quoted text; the "Offline docs library" lines next to tool results are the first lead) or marked "not explained".
 
 Agent memory: when you learn a durable fact about this environment (a naming convention, an owner, a recurring cause, a tool quirk), save it to your agent memory so the next run starts ahead; never save passwords, tokens or guesses.

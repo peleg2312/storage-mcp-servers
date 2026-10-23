@@ -56,7 +56,7 @@ if [ -n "$PROJECT" ]; then
     -e "s#~/\.claude/projects/#__PROJECTS__#g" -e "s#~/\.claude/#$DST/#g" -e "s#__LIB__#$LIBDST#g" -e "s#__PROJECTS__#~/.claude/projects/#g" "$CLAUDE_MD"
   find "$DST/skills" "$DST/agents" "$PROJECT" -maxdepth 3 -name '*.paas-tmp' -delete 2>/dev/null || true
 fi
-cp "$SRC/hooks/block-write-tools.py" "$SRC/hooks/session-start.py" "$DST/hooks/"
+cp "$SRC/hooks/block-write-tools.py" "$SRC/hooks/session-start.py" "$SRC/hooks/docs-hints.py" "$DST/hooks/"
 [ -f "$DST/hooks/allowed-tools.txt" ] || printf '# exact MCP tool names or globs the read-only hook should allow, e.g. mcp__kuparashit__execute_query\n' > "$DST/hooks/allowed-tools.txt"
 for f in environment.md tool-map.md notes.md; do
   [ -f "$DST/brain/$f" ] || cp "$SRC/brain/$f" "$DST/brain/$f"

@@ -17,5 +17,6 @@ and the harvest MCP (performance history), with the docs MCP (vendor `netapp`: p
 - For Trident volumes, also search `trident-<release>` of the installed version, `trident-issues` and
   `trident-changelog`.
 Return: findings with evidence (cluster, SVM, volume, LUN path, serial, metric values) and sources.
+- Every error, alert or event you report is explained from the docs MCP (exact name or quoted text; the "Offline docs library" lines next to tool results are the first lead) or marked "not explained".
 
 Agent memory: when you learn a durable fact about this environment (a naming convention, an owner, a recurring cause, a tool quirk), save it to your agent memory so the next run starts ahead; never save passwords, tokens or guesses.

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Merge the brain's hooks (PreToolUse read-only guard, SessionStart status), MCP permissions and the status line
+"""Merge the brain's hooks (PreToolUse read-only guard, PostToolUse docs hints, SessionStart status), MCP permissions and the status line
 into a Claude Code settings.json (keeps everything else).
 usage: merge_settings.py <settings.json> [--hooks-dir DIR] [--banner-dir DIR] [--mcpjson NAME] [mcp-server-name ...]
   --hooks-dir / --banner-dir  where the hook and banner scripts live (default ~/.claude/hooks, ~/.claude/banner;
@@ -33,6 +33,10 @@ cmd = f"python3 {hooks_dir}/block-write-tools.py"
 pre = s.setdefault("hooks", {}).setdefault("PreToolUse", [])
 if not any(h.get("command") == cmd for e in pre for h in e.get("hooks", [])):
     pre.append({"matcher": "mcp__.*", "hooks": [{"type": "command", "command": cmd}]})
+hint_cmd = f"python3 {hooks_dir}/docs-hints.py"         # meaning of EMS / alerts / codes seen in live results
+post = s["hooks"].setdefault("PostToolUse", [])
+if not any(h.get("command") == hint_cmd for e in post for h in e.get("hooks", [])):
+    post.append({"matcher": "mcp__.*", "hooks": [{"type": "command", "command": hint_cmd, "timeout": 10}]})
 start_cmd = f"python3 {hooks_dir}/session-start.py"
 start = s["hooks"].setdefault("SessionStart", [])
 if not any(h.get("command") == start_cmd for e in start for h in e.get("hooks", [])):
@@ -63,6 +67,6 @@ s["spinnerTipsOverride"] = {"label": "Brain tip", "tips": [
 os.makedirs(os.path.dirname(os.path.abspath(path)), exist_ok=True)
 with open(path, "w") as f:
     json.dump(s, f, indent=2)
-print(f"settings ({path}): read-only + session-start hooks installed, status line set, MCP servers allowed without prompts: "
+print(f"settings ({path}): read-only, docs-hints and session-start hooks installed, status line set, MCP servers allowed without prompts: "
       f"{', '.join(servers) or '(none found)'}{'; .mcp.json servers pre-approved: ' + ', '.join(mcpjson) if mcpjson else ''}; "
       f"theme {s['theme']}, notifications {s['preferredNotifChannel']}")

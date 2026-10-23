@@ -20,5 +20,6 @@ not their NAAs or pWWNs).
 - For latency, split device latency from kernel / queue latency.
 - Large result sets: save to files and process with code; return the files' paths plus a summary.
 Return: tables keyed by NAA (lowercase), with datastore / RDM, VMs, hosts, vCenter, and any metrics asked.
+- Every error, alert or event you report is explained from the docs MCP (exact name or quoted text; the "Offline docs library" lines next to tool results are the first lead) or marked "not explained".
 
 Agent memory: when you learn a durable fact about this environment (a naming convention, an owner, a recurring cause, a tool quirk), save it to your agent memory so the next run starts ahead; never save passwords, tokens or guesses.
