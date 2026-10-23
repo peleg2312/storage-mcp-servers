@@ -94,9 +94,10 @@ def main():
             items, url = gh(url, token)
             if first:
                 first = False
-                if not items and not (state.get("since") and manifest):
-                    print(f"{repo}: the API returned no issues at all - issues disabled on that repository (Dell's CSI driver "
-                          f"repositories track issues in dell/csm) or the token cannot see it", file=sys.stderr)
+                if not any("pull_request" not in it for it in items or []) and not (state.get("since") and manifest):
+                    print(f"{repo}: the API returned no issues (only pull requests, or nothing) - issues are disabled on "
+                          f"that repository (Dell disabled them on dell/csm and the CSI repos in 2026) or the token "
+                          f"cannot see it", file=sys.stderr)
                 elif not items:
                     print(f"{repo}: nothing updated since {state.get('since')}", file=sys.stderr)
             for it in items or []:

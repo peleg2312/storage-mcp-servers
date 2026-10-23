@@ -114,17 +114,47 @@ def prepare_profile(profile):
     json.dump(prefs, open(pf, "w"))
 
 
+def unloop(ctx):
+    """Outside the US, en-us pages set lwp=c=us and Chrome caches both 301s (en-us -> <country> by IP,
+    <country> -> en-us by cookie): the support home then fails with ERR_TOO_MANY_REDIRECTS."""
+    ctx.clear_cookies(name="lwp")
+    page = ctx.pages[0] if ctx.pages else ctx.new_page()
+    ctx.new_cdp_session(page).send("Network.clearBrowserCache")
+
+
 def open_browser(p, profile, headless):
     prepare_profile(profile)
     kw = dict(headless=headless, accept_downloads=True, viewport={"width": 1400, "height": 1000},
               args=["--disable-blink-features=AutomationControlled"])
     exe = os.getenv("DELL_BROWSER_EXECUTABLE")              # a specific Chrome / Chromium binary
     if exe:
-        return p.chromium.launch_persistent_context(profile, executable_path=exe, **kw)
+        ctx = p.chromium.launch_persistent_context(profile, executable_path=exe, **kw)
+    else:
+        try:
+            ctx = p.chromium.launch_persistent_context(profile, channel="chrome", **kw)   # the installed Chrome
+        except Exception:
+            ctx = p.chromium.launch_persistent_context(profile, **kw)                    # Playwright's chromium
+    unloop(ctx)
     try:
-        return p.chromium.launch_persistent_context(profile, channel="chrome", **kw)   # the installed Chrome
-    except Exception:
-        return p.chromium.launch_persistent_context(profile, **kw)                    # Playwright's chromium
+        ctx.add_cookies(json.load(open(session_file(profile))))
+    except (OSError, ValueError):
+        pass
+    return ctx
+
+
+def session_file(profile):
+    """Dell's sign-in cookies (DellCEMSession, the identity provider's) are session cookies: Chrome drops them
+    when the window closes, so login keeps a copy here (inside the git-ignored profile, owner-only)."""
+    return os.path.join(profile, "session-cookies.json")
+
+
+def save_session(ctx, profile):
+    keep = [c for c in ctx.cookies() if "dell" in c["domain"] and c.get("expires", -1) == -1]
+    f = session_file(profile)
+    fd = os.open(f + ".tmp", os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
+    with os.fdopen(fd, "w") as out:
+        json.dump(keep, out)
+    os.replace(f + ".tmp", f)
 
 
 def get_bytes(ctx, url):
@@ -144,6 +174,10 @@ def fetch_pdf(ctx, page, url):
     body, ctype, final = get_bytes(ctx, url)
     if is_real_pdf(body):
         return body, ""
+    m = re.search(rb"Invalid Access Level U:(\d+) =a:(\d+)", body[:500])
+    if m:                                               # signed in, but the account lacks the entitlement
+        return None, (f"access level {m.group(1).decode()} < {m.group(2).decode()} needed "
+                      f"(link the Dell account to an entitled site / product)")
     if re.match(r"^/[a-z]{2}-[a-z]{2}/?$", urllib.parse.urlparse(final).path):   # landed on the Dell home page
         return None, "retired link (redirects to the Dell home page)"
     try:
@@ -197,7 +231,8 @@ def cmd_needed(ctx, a):
             log(f"failed {name}: {e}"); bad += 1
             continue
         if body is None:
-            log(f"not downloadable: {name}: {note}" + ("" if "retired" in note else " - signed in? run: dell_browser.py login"))
+            log(f"not downloadable: {name}: {note}" + ("" if "retired" in note or "access level" in note
+                                                         else " - signed in? run: dell_browser.py login"))
             bad += 1
             continue
         os.makedirs(os.path.dirname(target), exist_ok=True)
@@ -500,7 +535,8 @@ def cmd_login(ctx, a):
     page = ctx.new_page()
     page.goto("https://www.dell.com/support/home/en-us")
     done = threading.Event()
-    threading.Thread(target=lambda: (sys.stdin.readline(), done.set()), daemon=True).start()
+    if sys.stdin.isatty():                              # without a terminal only closing the window ends it
+        threading.Thread(target=lambda: (sys.stdin.readline(), done.set()), daemon=True).start()
     ctx.on("close", lambda *_: done.set())
     log("\n1. Sign in to Dell Support in the browser window (Sign In / My Account).\n"
         "2. Come back to this terminal and press ENTER (or just close the browser window).\n"
@@ -509,9 +545,14 @@ def cmd_login(ctx, a):
         try:
             if not ctx.pages:
                 break
-            ctx.pages[0].wait_for_timeout(500)
+            save_session(ctx, a.profile)                # closing the window is too late to read them
+            ctx.pages[0].wait_for_timeout(1000)
         except Exception:
             break
+    try:
+        save_session(ctx, a.profile)
+    except Exception:
+        pass
     log("login saved.")
 
 
