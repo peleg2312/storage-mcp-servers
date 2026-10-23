@@ -56,7 +56,7 @@ if [ -n "$PROJECT" ]; then
     -e "s#~/\.claude/projects/#__PROJECTS__#g" -e "s#~/\.claude/#$DST/#g" -e "s#__LIB__#$LIBDST#g" -e "s#__PROJECTS__#~/.claude/projects/#g" "$CLAUDE_MD"
   find "$DST/skills" "$DST/agents" "$PROJECT" -maxdepth 3 -name '*.paas-tmp' -delete 2>/dev/null || true
 fi
-cp "$SRC/hooks/block-write-tools.py" "$SRC/hooks/session-start.py" "$SRC/hooks/docs-hints.py" "$SRC/hooks/docs-leads.py" "$DST/hooks/"
+cp "$SRC/hooks/block-write-tools.py" "$SRC/hooks/session-start.py" "$SRC/hooks/docs-hints.py" "$SRC/hooks/docs-leads.py" "$SRC/hooks/py-lint.py" "$DST/hooks/"
 [ -f "$DST/hooks/allowed-tools.txt" ] || printf '# exact MCP tool names or globs the read-only hook should allow, e.g. mcp__kuparashit__execute_query\n' > "$DST/hooks/allowed-tools.txt"
 for f in environment.md tool-map.md notes.md; do
   [ -f "$DST/brain/$f" ] || cp "$SRC/brain/$f" "$DST/brain/$f"
@@ -157,6 +157,18 @@ if [ -n "$PROJECT" ]; then
 else
   # shellcheck disable=SC2086
   python3 "$HERE/merge_settings.py" "$DST/settings.json" $SERVERS
+fi
+
+# Development: ruff + basedpyright (offline wheels) and Anthropic's official dev plugins (offline copy in
+# brain/plugins: code-review, pr-review-toolkit, feature-dev, code-simplifier, commit-commands,
+# security-guidance, pyright-lsp, mcp-server-dev). Plugins are read from this repo, so git pull updates them.
+sh "$HERE/devtools/install-devtools.sh" || echo "devtools: skipped (see the message above)"
+if command -v claude >/dev/null 2>&1; then
+  claude plugin marketplace add "$HERE/plugins" >/dev/null 2>&1 || claude plugin marketplace update brain-dev >/dev/null 2>&1 || true
+  for p in code-review pr-review-toolkit feature-dev code-simplifier commit-commands security-guidance pyright-lsp mcp-server-dev; do
+    claude plugin install "$p@brain-dev" >/dev/null 2>&1 || echo "plugin $p: not installed (claude plugin install $p@brain-dev)"
+  done
+  echo "dev plugins: $(claude plugin list 2>/dev/null | grep -c '@brain-dev') of 8 from brain/plugins"
 fi
 
 echo

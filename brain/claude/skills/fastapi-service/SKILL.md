@@ -83,6 +83,14 @@ different major version (Pydantic v1 vs v2, SQLAlchemy 1.x vs 2.0, fastmcp 2 vs 
   repo (`openshift/buildconfigs.yaml`). Python dependencies on the VM come from bundled wheels, never pip.
 - Version the image tag in the Deployment, the BuildConfig and the tarball name together.
 
+## Quality loop (tools installed on the VM)
+- After each edit the `py-lint` hook reports ruff errors: fix them before moving on. The pyright-lsp plugin
+  (basedpyright) gives type diagnostics: resolve them, do not silence them with `# type: ignore`.
+- Bigger features: `/feature-dev` (explore -> architecture -> implement -> review). Before a commit: run the
+  tests, then `/code-review` on the diff (pr-review-toolkit's silent-failure-hunter and pr-test-analyzer for
+  error handling and test gaps). `/commit` writes the commit (no PR on the VM unless `gh` is there).
+- security-guidance warns on risky patterns as you write (yaml.load, pickle, shell=True, hardcoded secrets).
+
 ## Output
 The code, the test run output, and for the user to run: the build / deploy commands (labelled "to be run
 by you", rule 1), the Secret keys to create, and how to check it (`/healthz`, then `test_connection`).

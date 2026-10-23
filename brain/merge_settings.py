@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Merge the brain's hooks (PreToolUse read-only guard for MCP tools and shell commands, PostToolUse docs hints, UserPromptSubmit docs leads, SessionStart status), MCP permissions and the status line
+"""Merge the brain's hooks (PreToolUse read-only guard for MCP tools and shell commands, PostToolUse docs hints, UserPromptSubmit docs leads, SessionStart status, PostToolUse ruff on edited .py files), MCP permissions and the status line
 into a Claude Code settings.json (keeps everything else).
 usage: merge_settings.py <settings.json> [--hooks-dir DIR] [--banner-dir DIR] [--mcpjson NAME] [mcp-server-name ...]
   --hooks-dir / --banner-dir  where the hook and banner scripts live (default ~/.claude/hooks, ~/.claude/banner;
@@ -40,6 +40,12 @@ hint_cmd = f"python3 {hooks_dir}/docs-hints.py"         # meaning of EMS / alert
 post = s["hooks"].setdefault("PostToolUse", [])
 if not any(h.get("command") == hint_cmd for e in post for h in e.get("hooks", [])):
     post.append({"matcher": "mcp__.*", "hooks": [{"type": "command", "command": hint_cmd, "timeout": 10}]})
+lint_cmd = f"python3 {hooks_dir}/py-lint.py"           # ruff findings on every .py file Claude edits
+if not any(h.get("command") == lint_cmd for e in post for h in e.get("hooks", [])):
+    post.append({"matcher": "Edit|Write|MultiEdit", "hooks": [{"type": "command", "command": lint_cmd, "timeout": 10}]})
+# security-guidance plugin: pattern warnings only (its LLM reviews would send every diff to Opus and pip-install
+# an SDK the air-gapped VM cannot fetch); set it to 1 in settings.json "env" to turn the reviews on
+s.setdefault("env", {}).setdefault("ENABLE_CODE_SECURITY_REVIEW", "0")
 lead_cmd = f"python3 {hooks_dir}/docs-leads.py"         # library leads for each request (silent when unrelated)
 ups = s["hooks"].setdefault("UserPromptSubmit", [])
 if not any(h.get("command") == lead_cmd for e in ups for h in e.get("hooks", [])):
