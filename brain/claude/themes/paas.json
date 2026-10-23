@@ -1,0 +1,15 @@
+{
+  "name": "Peleg As A Service",
+  "base": "dark",
+  "overrides": {
+    "claude": "#af87ff",
+    "claudeShimmer": "#d7afff",
+    "promptBorder": "#5fd7d7",
+    "promptBorderShimmer": "#87ffff",
+    "success": "#5fd787",
+    "planMode": "#87afff",
+    "remember": "#d7af5f",
+    "permission": "#af87ff",
+    "suggestion": "#5fd7d7"
+  }
+}

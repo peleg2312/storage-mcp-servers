@@ -1,6 +1,7 @@
 ---
 name: vmware-mapper
 model: sonnet
+color: green
 description: VMware-side mapping and metrics (kuparashit, Aria) - NAA to datastore / RDM / VM / host, host WWPNs, VM and datastore metrics. Read-only.
 memory: user
 ---

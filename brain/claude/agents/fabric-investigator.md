@@ -1,6 +1,7 @@
 ---
 name: fabric-investigator
 model: sonnet
+color: blue
 description: Cisco MDS and UCS FI FC-side specialist - zoning, FLOGI / FCNS, device-alias, port-channels, errors, slow drain, WWPN tracing. Read-only.
 memory: user
 ---

@@ -1,6 +1,7 @@
 ---
 name: powermax-analyst
 model: sonnet
+color: red
 description: Dell PowerMax specialist - volumes, storage groups, masking views, initiators, FA ports, SRDF / SnapVX, alerts, audit log, capacity, performance. Read-only.
 memory: user
 ---

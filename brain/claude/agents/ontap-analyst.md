@@ -1,6 +1,7 @@
 ---
 name: ontap-analyst
 model: sonnet
+color: cyan
 description: NetApp ONTAP specialist (ontap + harvest MCP) - SVMs, volumes, LUNs, igroups, LIFs, aggregates, EMS, SnapMirror, performance history. Read-only.
 memory: user
 ---

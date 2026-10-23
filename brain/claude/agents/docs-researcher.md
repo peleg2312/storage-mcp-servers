@@ -1,6 +1,7 @@
 ---
 name: docs-researcher
 model: sonnet
+color: pink
 description: Offline documentation and bug researcher (docs MCP only) for error meanings, EMS events, procedures, best practices, known bugs and fixed versions. Read-only.
 memory: user
 skills: [docs-lookup]

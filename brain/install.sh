@@ -62,6 +62,7 @@ for f in environment.md tool-map.md notes.md; do
   [ -f "$DST/brain/$f" ] || cp "$SRC/brain/$f" "$DST/brain/$f"
 done
 cp "$SRC/banner/paas-banner.py" "$SRC/banner/paas-statusline.py" "$DST/banner/"
+mkdir -p "$USER_DST/themes" && cp "$SRC/themes/paas.json" "$USER_DST/themes/"   # custom themes are read from ~/.claude/themes only
 
 # Documentation library (library/*.part-* in this repo): extracted into ~/.claude/brain/library so the
 # docs can be searched on this VM with no server at all (python3 library/search.py ...) and registered

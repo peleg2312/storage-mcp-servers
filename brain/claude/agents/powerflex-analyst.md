@@ -1,6 +1,7 @@
 ---
 name: powerflex-analyst
 model: sonnet
+color: orange
 description: Dell PowerFlex specialist from the offline docs and vCenter-side data (no live PowerFlex MCP) - SDC / SDS / MDM, rebuild, capacity, replication, alerts and dial-home codes. Read-only.
 memory: user
 skills: [docs-lookup]
