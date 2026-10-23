@@ -1906,5 +1906,61 @@
  "000021768_how-to-register-for-access-to-dell-emc-online-support_a164bef7.html": {
   "url": "https://www.dell.com/support/kbdoc/en-us/000021768",
   "title": "How to Register for Access to Dell Technologies Online Support or Upgrade an Existing Account | Dell US"
+ },
+ "000207017_powerflex-manager-platform-how-to-clear-acknowledged-alerts_48f6f770.html": {
+  "url": "https://www.dell.com/support/kbdoc/en-us/000207017",
+  "title": "PowerFlex 4.X: How to Clear Acknowledged Alerts | Dell US"
+ },
+ "000225513_powerflex-pfmp-4-6-0-0-1232-alerts-change-quite-frequently_3f97cb28.html": {
+  "url": "https://www.dell.com/support/kbdoc/en-us/000225513",
+  "title": "PowerFlex: PFMP Alerts change frequently | Dell US"
+ },
+ "000270642_powerflex-alerts-and-events-reference-guide-pfx000xx-xxxxxxx_5eb0e801.html": {
+  "url": "https://www.dell.com/support/kbdoc/en-us/000270642",
+  "title": "PowerFlex: How to Troubleshoot and Resolve Alerts and Events for Block PFX000XX.XXXXXXX | Dell US"
+ },
+ "000382550_powerflex-powerflex-management-platform-pfmp-diagnostics-events-and-alerts_e4974ae8.html": {
+  "url": "https://www.dell.com/support/kbdoc/en-us/000382550",
+  "title": "PowerFlex: Diagnostics Events and Alerts - PFX00102.XXXXXX - PFX00056.0000001 | Dell US"
+ },
+ "000446689_powerflex-pfx00056-0000001-the-events-and-alerts-service-is-unavailable-nats-is-down_ebcf0d0e.html": {
+  "url": "https://www.dell.com/support/kbdoc/en-us/000446689",
+  "title": "PowerFlex: PFX00056.0000001: The Events and Alerts Service is Unavailable - NATS is Down | Dell US"
+ },
+ "000446625_powerflex-pfx00102-0000200-pod-status-diagnostic-failure_c8f770e3.html": {
+  "url": "https://www.dell.com/support/kbdoc/en-us/000446625",
+  "title": "PowerFlex: Pods Are Not in a Ready Status - PFX00102.0000200 | Dell US"
+ },
+ "000446630_powerflex-node-status-diagnostic-failure_1fe21f13.html": {
+  "url": "https://www.dell.com/support/kbdoc/en-us/000446630",
+  "title": "PowerFlex: PFX00102.0000201 - NODE_STATUS_DIAGNOSTIC_FAILURE - The following nodes are not in a ready status or unreachable | Dell US"
+ },
+ "000446642_powerflex-pfx00102-0000203-the-etcd-performance-diagnostic-failed_48f3b5f4.html": {
+  "url": "https://www.dell.com/support/kbdoc/en-us/000446642",
+  "title": "PowerFlex: PFX00102.0000203 - The ETCD Performance Diagnostic Fails | Dell US"
+ },
+ "000446653_powerflex-pfx00102-0000202-database-health-diagnostic-failed_3bc99694.html": {
+  "url": "https://www.dell.com/support/kbdoc/en-us/000446653",
+  "title": "PowerFlex: PFX00102.0000202 - Database Health Diagnostic Fails | Dell US"
+ },
+ "000446658_powerflex-pfx00102-0000204-the-internal-dns-lookup-diagnostic-failed_1630bf1b.html": {
+  "url": "https://www.dell.com/support/kbdoc/en-us/000446658",
+  "title": "PowerFlex: PFX00102.0000204 - The Internal DNS Lookup Diagnostic Failed | Dell US"
+ },
+ "000446660_powerflex-pfx00102-0000205-the-powerflex-management-platform-nodes-internal-connectivity-diagnostic-_45027e14.html": {
+  "url": "https://www.dell.com/support/kbdoc/en-us/000446660",
+  "title": "PowerFlex: PFX00102.0000205-Management Platform Node Internal Connectivity Diagnostic Fail | Dell US"
+ },
+ "000446673_powerflex-pfx00102-0000206-the-disk-space-diagnostic-failed_63de8cc0.html": {
+  "url": "https://www.dell.com/support/kbdoc/en-us/000446673",
+  "title": "PowerFlex: PFX00102.0000206 - The Disk Space Diagnostic Failed | Dell US"
+ },
+ "000446686_powerflex-pfx00102-0000209-the-etcd-certificate-is-about-to-expire_9bceb60d.html": {
+  "url": "https://www.dell.com/support/kbdoc/en-us/000446686",
+  "title": "PowerFlex: PFX00102.0000209 - The ETCD Certificate is About to Expire | Dell US"
+ },
+ "000446694_powerflex-pfx00102-0000210-etcd-quota-exceeded-diagnostic-failure_78a6ea80.html": {
+  "url": "https://www.dell.com/support/kbdoc/en-us/000446694",
+  "title": "PowerFlex: PFX00102.0000210 - etcd quota exceeded diagnostic failure | Dell US"
  }
 }
