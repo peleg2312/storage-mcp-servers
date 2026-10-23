@@ -87,7 +87,7 @@ Needs: `python3` (any 3.8+ from the OS), `git`, Claude Code installed (`claude` 
 ```bash
 git clone https://github.com/peleg2312/storage-mcp-servers.git     # or copy the folder in
 cd storage-mcp-servers
-sh install-vm.sh
+sh install-vm.sh                    # add --login-banner for the Peleg As A Service banner at every VM login (sudo)
 ```
 This installs into `~/.claude`: CLAUDE.md, the 24 skills, 8 agents, the read-only safety hook, the
 documentation library (`~/.claude/brain/library`), the MCP server **docs-local** (stdio, no dependencies),

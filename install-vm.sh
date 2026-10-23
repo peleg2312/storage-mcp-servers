@@ -6,6 +6,8 @@
 #   sh install-vm.sh --project <dir>      brain only inside <dir>: <dir>/CLAUDE.md, <dir>/.claude/{skills,agents,
 #                                         hooks,brain,banner,settings.json}, <dir>/.mcp.json (docs-local)
 #   sh install-vm.sh --no-library         skip the documentation library (docs-search runs on the cluster)
+#   sh install-vm.sh --login-banner       also the "Peleg As A Service" banner at every login on this VM, for every
+#                                         user (SSH, console, terminal windows); asks for sudo (brain/login-banner.sh)
 #
 # It installs:
 #   - the storage brain: CLAUDE.md, 24 skills, 8 agents, the read-only safety hook, the banner (brain/install.sh)
@@ -24,6 +26,11 @@ set -eu
 HERE=$(cd "$(dirname "$0")" && pwd)
 DST=${CLAUDE_HOME:-$HOME/.claude}
 PROJECT=""
+LOGIN_BANNER=0
+for a in "$@"; do                       # take --login-banner out; the rest goes to brain/install.sh
+  shift
+  case "$a" in --login-banner) LOGIN_BANNER=1 ;; *) set -- "$@" "$a" ;; esac
+done
 prev=""
 for a in "$@"; do
   [ "$prev" = "--project" ] && PROJECT=$a
@@ -55,4 +62,10 @@ if [ -f "$LIB/docs.db" ]; then
   fi
 else
   echo "no library installed (library/*.part-* missing in this clone, or --no-library)"
+fi
+
+if [ "$LOGIN_BANNER" = 1 ]; then
+  echo
+  echo "== login banner (every user, every login on this VM)"
+  if [ "$(id -u)" = 0 ]; then sh "$HERE/brain/login-banner.sh"; else sudo sh "$HERE/brain/login-banner.sh"; fi
 fi
