@@ -16,6 +16,6 @@ when_to_use: Trigger phrases - "ONTAP latency on volume X", "node CPU on the Net
    policy; low ONTAP latency but high VMware device latency = fabric / host.
 4. Report avg and max with the time of max, top volumes / LUNs by ops and latency at the peak.
 5. Check EMS events in the window (ONTAP MCP) and explain any with the docs MCP (product
-   `ontap-ems-<cluster version>`, e.g. `ontap-ems-9151`); for the symptom search `kb-ontap` / `kb-san`.
+   `ontap-ems-<cluster version>`, e.g. `ontap-ems-9151`); for the symptom search `kb-ontap`.
 
 Output: answer first, table per object, top talkers, events, sources (with ONTAP version).

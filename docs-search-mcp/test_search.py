@@ -134,3 +134,12 @@ async def main():
 
 
 asyncio.run(main())
+
+# source code: one section per top-level func, headed by its signature, titled <dir>/<file>
+title, chunks = docs_index.parse_code('package scsi\n\nimport "errors"\n\nfunc (s *Scsi) Rescan(dev string) error {\n'
+                                      '\treturn errors.New("rescan failed: device busy")\n}\n\ntype Dev struct{}\n',
+                                      "/x/gobrick/internal/scsi/scsi.go")
+assert title == "scsi/scsi.go", title
+assert [h for h, _ in chunks] == ["scsi/scsi.go", "func (s *Scsi) Rescan(dev string) error", "type Dev struct{}"], chunks
+assert "rescan failed: device busy" in chunks[1][1]
+print("code parser OK")

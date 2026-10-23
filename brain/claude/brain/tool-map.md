@@ -23,4 +23,4 @@ Known tool names of the storage-mcp-servers builds:
   search_docs(query, vendor, product, limit), read_chunk(chunk_id, context), read_document(path|url, start,
   max_sections), list_sources (no MCP: python3 ~/.claude/brain/library/search.py search|read-chunk|read-doc|sources).
   vendor = netapp | dell | vmware | kb; product = substring of the names in ~/.claude/brain/library/MANIFEST.md
-  (e.g. ontap-ems-9151, kb-san, trident-2410, csm, powermax, powerflex, kb).
+  (e.g. ontap-ems-9151, kb-ontap, trident-2410, csm, powermax, powerflex, kb).

@@ -17,7 +17,7 @@ search "..." [--vendor v] [--product p]` (`sources`, `read-chunk <id>`, `read-do
 filter (`trident` also matches `trident-2510`, `ontap` also matches `ontap-ems-*`), so use the full name
 when it matters. What is inside (vendor/product): netapp/ontap (docs), ontap-sanhost, ontap-metrocluster,
 ontap-restapi, ontap-tools-vmware-vsphere*, ontap-ems-9111 … ontap-ems-9181 (EMS reference per ONTAP
-version), kb-ontap + kb-san (NetApp KB articles, full text; some "Partial article"), trident +
+version), kb-ontap + kb-trident (NetApp KB articles, full text; some "Partial article"), trident +
 trident-2307 … trident-2510 (per release), trident-changelog, trident-issues, harvest, harvest-issues;
 dell/powermax (Product Guide, Solutions Enabler / Unisphere / SRDF / SnapVX guides, Events and Alerts
 guide, Host Connectivity Guide for VMware ESXi; many PDF titles are just "pdf": cite the file name / url)
@@ -25,7 +25,13 @@ guide, Host Connectivity Guide for VMware ESXi; many PDF titles are just "pdf": 
 PowerMax, PowerFlex, CSM/CSI, SRDF, Unisphere, PowerPath), dell/csm (every CSM doc version: url `content/docs/` = current,
 `content/v1..v3/` = older), dell/csi-powermax, csi-powerflex, csm-replication, csm-operator,
 csm-authorization, csm-observability, csm-resiliency, pyu4v, pypowerflex, ansible-*, terraform-*;
-vmware/kb (a few ESXi storage KBs); kb/kb (pointers). **Not in the library**: Cisco MDS / UCS docs, a Dell
+dell/csi-powerscale, gopowerscale, csm-metrics-powerscale + infohub-powerscale (PowerScale / Isilon / OneFS);
+**source code** (one section per function, error strings searchable) of the CSI drivers (csi-powermax,
+csi-powerflex, csi-powerscale), csm-operator, csm-replication, csm-helm-charts, the array clients goscaleio /
+gopowermax / goisilon, gobrick (host FC / iSCSI / NVMe), gofsutil, gocsi; kubernetes/csi-spec, csi-docs and the
+sidecars external-attacher, external-provisioner, external-resizer, external-snapshotter,
+external-health-monitor, node-driver-registrar, livenessprobe, csi-lib-utils, csi-lib-iscsi (code + CHANGELOG);
+dell/infohub-* (Info Hub papers); vmware/kb (a few ESXi storage KBs); kb/kb (pointers). **Not in the library**: Cisco MDS / UCS docs, a Dell
 CSM issue tracker, PowerMaxOS release notes - say so instead of citing them.
 Live state comes from the other MCP servers.
 
@@ -53,7 +59,7 @@ Live state comes from the other MCP servers.
    `ontap-ems`; Trident 25.02 → `trident-2502`, unknown → `trident`; CSM → the matching `content/v<n>/`
    or `content/docs/` url in `dell/csm`);
    versions are in the environment file or come from a tool result. For a symptom, search the KB
-   products (`kb-ontap`, `kb-san`, `dell/kb`, `vmware/kb`) as well as the manuals. Where the library has
+   products (`kb-ontap`, `dell/kb`, `vmware/kb`) as well as the manuals. Where the library has
    nothing (Cisco MDS / UCS), say the explanation is from general knowledge, not a cited document.
 9. **Library playbook**: the `docs-lookup` skill is how every documentation answer is built (product
    choice, exact-term search, read before answering, cite title + url + version, "Partial article",

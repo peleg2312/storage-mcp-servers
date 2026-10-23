@@ -174,7 +174,8 @@ def main():
 
 
 FAMILY = ["PowerMax", "VMAX", "PowerFlex", "VxFlex", "ScaleIO", "Solutions Enabler", "Unisphere", "SRDF",
-          "SnapVX", "TimeFinder", "PowerPath", "Container Storage Modules", "CSI", "CSM", "PowerMaxOS", "SYMCLI"]
+          "SnapVX", "TimeFinder", "PowerPath", "Container Storage Modules", "CSI", "CSM", "PowerMaxOS", "SYMCLI",
+          "PowerScale", "Isilon", "OneFS"]
 FAMILY_RE = re.compile("|".join(re.escape(f) for f in FAMILY), re.I)
 
 

@@ -26,6 +26,6 @@ VMware side first (unmount datastore on all hosts → detach the device on every
 then the array side (remove from masking view / unmap from igroup), then rescan HBAs on the hosts, then
 delete/reclaim on the array after an agreed waiting period. Removing the array mapping before detaching
 on ESXi can cause APD conditions: search the docs MCP for "APD PDL detach" / "unmount datastore" in
-`vmware/kb` (detach a LUN device, unmount datastores), `netapp/kb-san` (APD after LUN unmap),
+`vmware/kb` (detach a LUN device, unmount datastores), `netapp/kb-ontap` (APD after LUN unmap),
 `netapp/ontap-sanhost` and `kb/kb`, and cite them.
 Give exact commands with the real names, plus pre-checks and post-checks (path count, no dead paths).

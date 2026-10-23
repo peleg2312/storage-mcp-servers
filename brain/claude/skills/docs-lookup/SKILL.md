@@ -15,14 +15,16 @@ vendor / product: `~/.claude/brain/library/MANIFEST.md`. There is no internet; n
 |---|---|
 | ONTAP EMS event | `netapp` / `ontap-ems-<ver>` of the cluster (9.15.1 → `ontap-ems-9151`, 9.11.1 … 9.18.1 exist); `ontap-ems` when unknown |
 | ONTAP behaviour, commands, SAN hosts, MetroCluster, REST | `ontap`, `ontap-sanhost`, `ontap-metrocluster`, `ontap-restapi`, `ontap-systems-upgrade`, `ontap-tools-vmware-vsphere*` |
-| ONTAP symptom, known bug (CONTAP-*) | `kb-ontap`, `kb-san` |
-| Trident | `trident-<yymm>` of the installed release (`trident-2307` … `trident-2510`; `trident` = latest), `trident-issues`, `trident-changelog` |
+| ONTAP symptom, known bug (CONTAP-*) | `kb-ontap` |
+| Trident | `trident-<yymm>` of the installed release (`trident-2307` … `trident-2510`; `trident` = latest), `trident-issues`, `trident-changelog`, `kb-trident` |
 | Harvest | `harvest`, `harvest-issues`, `harvest-changelog` |
 | PowerMax, SRDF, SnapVX, Solutions Enabler, Unisphere | `dell` / `powermax` (PDFs: Product Guide, Solutions Enabler CLI Reference, SRDF Introduction, Events and Alerts guide, Host Connectivity for ESXi), `kb` |
 | PowerFlex | `dell` / `powerflex` (Technical Overview, Administration, CLI Reference and Install guides per version, release notes 3.6.x / 4.0.x / 4.5.x-5.1.x), `kb` |
 | CSM / CSI drivers on OpenShift | `dell` / `csm` (url `content/docs/` = current, `content/v1..v3/` = older; pick the one matching the installed CSM), `csm-repo` (CHANGELOG-<ver>), `csi-powermax`, `csi-powerflex`, `csm-replication`, `csm-operator`, `csm-authorization`, `csm-resiliency`, `kb` |
+| PowerScale / Isilon / OneFS | `dell` / `kb`, `infohub-powerscale`, `csi-powerscale` (driver docs + code), `gopowerscale`, `goisilon`, `ansible-powerscale`, `terraform-powerscale` |
+| A CSI / CSM error text, a sidecar (attacher, provisioner, resizer, snapshotter, registrar) | the error string in quotes over `dell` code (`csi-powermax`, `csi-powerflex`, `csi-powerscale`, `goscaleio`, `gopowermax`, `goisilon`, `gobrick`, `csm-operator`, `csm-replication`) and `kubernetes` (sidecars, `csi-spec`, `csi-docs`) |
 | Dell security advisories (DSA-*), PowerPath, Unisphere how-tos | `dell` / `kb` |
-| ESXi storage | `vmware` / `kb`, `netapp` / `kb-san` |
+| ESXi storage | `vmware` / `kb`, `netapp` / `kb-ontap` |
 | Cisco MDS / UCS, PowerMaxOS release notes, a CSM issue tracker | **not in the library**: say so; explain from general knowledge, clearly labelled |
 
 ## 2. Search: exact first, then wider
@@ -46,12 +48,18 @@ say "documented for 9.2; confirm for your version". Quote short passages verbati
 ## Special cases
 - **Known bug / fixed in which version**: Trident → `trident-issues` (issue number, status, affected and
   fixed versions, workaround), `trident-changelog`, the `trident-<ver>` pages `trident-rn.html` and
-  `known-issues.html`; Harvest → `harvest-issues`, `harvest-changelog`; ONTAP → `kb-ontap` / `kb-san`
+  `known-issues.html`; Harvest → `harvest-issues`, `harvest-changelog`; ONTAP → `kb-ontap`
   CONTAP-* articles ("Fixed In Version" section; ranges like `9.15.1P3 to 9.15.1P20` mean affected);
   PowerFlex → the release notes PDFs in `dell/powerflex` ("fixed issues", "known issues"); CSM → the
   `dell/csm` `csidriver/release/<driver>/` pages and `csm-repo` CHANGELOG-<ver>; PowerMax → `dell/kb`
   (fix numbers and the PowerMaxOS level that carries them). Report: affected versions, fixed version,
   workaround, and whether the installed version (environment file / tool result) is inside the range.
+- **Error text from a CSI driver, the operator or a sidecar**: search the exact text over the source code
+  (table above). A code hit is a `.go` file whose section heading is the function that returns the error:
+  read it (`read_chunk` with context 1) to explain **when** the error is raised (which array call, which
+  check), then find the user-facing explanation in `dell/csm`, `dell/kb` or the sidecar CHANGELOG. The code is
+  the current `main` branch, not necessarily the installed release: say so, and compare with the driver's
+  release notes for the installed version.
 - **"Partial article"** (NetApp KB): the symptom and cause are present but the solution needs a support
   login. Use what is there, say the solution is not in the library, and look for a sibling article or
   the CONTAP-* bug it refers to.

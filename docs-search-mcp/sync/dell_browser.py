@@ -42,14 +42,17 @@ BING_SEARCH = "https://www.bing.com/search?q={q}&first={first}"
 KB_SITE = "site:dell.com/support/kbdoc"
 INFOHUB = "https://infohub.delltechnologies.com"
 INFOHUB_TOPICS = {"powerflex": "/en-us/t/powerflex-14/", "powermax": "/en-us/t/powermax-9/",
-                  "csm": "/en-us/t/container-storage-modules/"}
+                  "csm": "/en-us/t/container-storage-modules/", "powerscale": "/en-us/t/powerscale/"}
 INFOHUB_QUERIES = {"powerflex": ["PowerFlex", "PowerFlex Manager", "VxFlex", "ScaleIO"],
                    "powermax": ["PowerMax", "PowerMaxOS", "Unisphere for PowerMax", "SRDF", "VMAX All Flash"],
-                   "csm": ["Container Storage Modules", "CSI PowerMax", "CSI PowerFlex", "Dell CSM OpenShift"]}
+                   "csm": ["Container Storage Modules", "CSI PowerMax", "CSI PowerFlex", "CSI PowerScale",
+                           "Dell CSM OpenShift", "Dell CSM Kubernetes"],
+                   "powerscale": ["PowerScale", "OneFS", "Isilon", "PowerScale SmartConnect", "PowerScale SyncIQ",
+                                  "PowerScale NFS", "PowerScale SMB", "PowerScale Kubernetes"]}
 NEXT_SELECTORS = ['a[aria-label="Next"]', 'button[aria-label="Next"]', '.coveo-pager-next', 'li.coveo-pager-next a',
                   'a[title="Next"]', 'input[type="submit"][value="Next"]', 'text=Next']
 LOAD_MORE = ['text=Load more', 'text=Show more', 'text=View more', 'button:has-text("More")']
-PRODUCTS = ("powerflex", "powermax")
+PRODUCTS = ("powerflex", "powermax", "powerscale")
 DOC_LINK_RE = re.compile(r"(https?://infohub\.delltechnologies\.com/en-us/l/[^\s\"'<>?#]+/)")
 INFOHUB_DOC_RE = re.compile(r"^https://infohub\.delltechnologies\.com/en-us/l/[^/]+/$")     # one document
 
@@ -71,8 +74,8 @@ def save_manifest(man, mf):
 
 
 def settle(page, ms=1500):
-    try:
-        page.wait_for_load_state("networkidle", timeout=20000)
+    try:                                                # Dell pages rarely go idle (trackers): don't wait long
+        page.wait_for_load_state("networkidle", timeout=6000)
     except Exception:
         pass
     page.wait_for_timeout(ms)
@@ -292,25 +295,53 @@ def search_dell(page, query, max_pages, baseline):
     return found
 
 
-def save_kb(page, kb, d, man, known, stats, delay, snowball):
+def kb_ok(body, final):
+    text = body.decode("utf-8", "replace")
+    title = sync_web.title_of(body)
+    return ("/support/kbdoc/" in final and title and "Access Denied" not in title and "Sign In" not in title
+            and not sync_web.LOGIN_HINTS.search(text[:200000]) and sync_web.text_len(body) >= 500)
+
+
+def fetch_kb(ctx, page, url):
+    """The article through the browser's HTTP client (~1 s, the article is in the served HTML); when Dell
+    answers that with Access Denied / sign-in, render it in the page and poll until it is there (a full
+    load waits ~25 s for trackers that never go idle). Returns (bytes, final url)."""
+    try:
+        body, _, final = get_bytes(ctx, url)
+        if kb_ok(body, final) or "/di/idp/" in final:     # an article, or sign-in only (the page gets the same)
+            return body, final
+    except Exception:
+        pass
+    page.goto(url, wait_until="domcontentloaded")
+    body = b""
+    for _ in range(60):
+        body = html_of(page).encode("utf-8")
+        if kb_ok(body, page.url) or "/di/idp/" in page.url:
+            break
+        page.wait_for_timeout(250)
+    return body, page.url
+
+
+def save_kb(ctx, page, kb, d, man, known, stats, delay, snowball, off):
     url = KB_URL.format(kb=kb)
     try:
-        page.goto(url, wait_until="domcontentloaded")
-        settle(page, 800)
-        body = html_of(page).encode("utf-8")
-        final = page.url
+        body, final = fetch_kb(ctx, page, url)
     except Exception as e:
         stats["failed"] += 1
         log(f"failed {url}: {e}")
         return
     text = body.decode("utf-8", "replace")
-    if "/support/kbdoc/" not in final or sync_web.LOGIN_HINTS.search(text[:200000]) or sync_web.text_len(body) < 500:
+    if "/di/idp/" in final:
+        stats["sign_in_only"] += 1                      # retried by the next run (run with --wait-login)
+        return
+    if not kb_ok(body, final):
         stats["login_or_empty"] += 1
-        log(f"empty / sign-in page: {url}")
+        log(f"empty page: {url}")
         return
     title = sync_web.title_of(body)
     if not FAMILY_RE.search(title) and not FAMILY_RE.search(text[:300000]):
         stats["off_family"] += 1
+        off.add(kb)
         return
     name = sync_web.file_name(final, False)
     open(os.path.join(d, name), "wb").write(body)
@@ -339,16 +370,29 @@ def cmd_kb(ctx, a):
             baseline = search_dell(page, "zzqqxxnothing", 1, set())      # links every search page carries
         except Exception:
             pass
+    # search results are kept a week, so a stopped run restarts straight into the article fetches
+    cache_f = os.path.join(os.path.dirname(a.profile), "cache", "dell-kb-search.json")
+    os.makedirs(os.path.dirname(cache_f), exist_ok=True)
+    cache = json.load(open(cache_f)) if os.path.exists(cache_f) else {}
     for q in queries:
         got = set()
         for eng in engines:
+            hit = cache.get(f"{eng}\t{q}")
+            if hit and time.time() - hit["t"] < 7 * 86400:
+                got |= set(hit["ids"])
+                continue
             try:
                 if eng == "ddg":
-                    got |= search_ddg(page, q, a.max_pages)
+                    found = search_ddg(page, q, a.max_pages)
                 elif eng == "bing":
-                    got |= search_bing(page, q, a.max_pages)
+                    found = search_bing(page, q, a.max_pages)
                 elif eng == "dell":
-                    got |= search_dell(page, q, a.max_pages, baseline)
+                    found = search_dell(page, q, a.max_pages, baseline)
+                else:
+                    continue
+                got |= found
+                cache[f"{eng}\t{q}"] = {"t": time.time(), "ids": sorted(found)}
+                save_manifest(cache, cache_f)
             except Exception as e:
                 log(f"{eng} search failed {q!r}: {e}")
             time.sleep(a.delay)
@@ -356,26 +400,33 @@ def cmd_kb(ctx, a):
         ids |= got
     if a.ids_file and os.path.isfile(a.ids_file):
         ids |= set(re.findall(r"\b(\d{9})\b", open(a.ids_file).read()))
+    off = set(cache.get("_off_family", []))             # other products: not fetched again
+    known |= off
     todo = sorted(ids - known)
     log(f"{len(ids)} article numbers from {len(queries)} queries x {len(engines)} engines, {len(todo)} to fetch")
-    stats = {"saved": 0, "off_family": 0, "login_or_empty": 0, "failed": 0}
+    stats = {"saved": 0, "off_family": 0, "sign_in_only": 0, "login_or_empty": 0, "failed": 0}
     snowball = set()
     try:
         for kb in todo:
-            save_kb(page, kb, d, man, known, stats, a.delay, snowball)
+            save_kb(ctx, page, kb, d, man, known, stats, a.delay, snowball, off)
             if stats["saved"] % 10 == 0:
                 save_manifest(man, mf)
+            if (stats["off_family"] + 1) % 25 == 0:
+                cache["_off_family"] = sorted(off)
+                save_manifest(cache, cache_f)
             if a.max_articles and stats["saved"] >= a.max_articles:
                 break
         # one round of related-article links from the articles just saved
         for kb in sorted(snowball - known - set(todo)):
             if a.max_articles and stats["saved"] >= a.max_articles:
                 break
-            save_kb(page, kb, d, man, known, stats, a.delay, set())
+            save_kb(ctx, page, kb, d, man, known, stats, a.delay, set(), off)
             if stats["saved"] % 10 == 0:
                 save_manifest(man, mf)
     finally:
         save_manifest(man, mf)
+        cache["_off_family"] = sorted(off)
+        save_manifest(cache, cache_f)
     log(f"dell kb (browser): {json.dumps(stats)} -> {d}")
 
 
@@ -531,6 +582,26 @@ def cmd_manuals(ctx, a):
         log(f"{guide}: {len(man)} topics -> {d}")
 
 
+SIGNIN_PROBE = KB_URL.format(kb="000017598")              # an article Dell shows only when signed in
+
+
+def wait_login(ctx, profile):
+    """Sign in inside this run's window and keep going in the same live session (Dell's identity-provider
+    session expires, so a session saved by an earlier login no longer opens sign-in-only articles)."""
+    page = ctx.new_page()
+    page.goto(SIGNIN_PROBE, wait_until="domcontentloaded")
+    if "/di/idp/" in page.url:
+        log("Sign in to Dell in the browser window; the run continues by itself once you are signed in.")
+    for _ in range(1200):                               # up to 10 minutes
+        if "/support/kbdoc/" in page.url:
+            break
+        page.wait_for_timeout(500)
+    else:
+        log("not signed in after 10 minutes - continuing anonymously")
+    save_session(ctx, profile)
+    page.close()
+
+
 def cmd_login(ctx, a):
     page = ctx.new_page()
     page.goto("https://www.dell.com/support/home/en-us")
@@ -563,11 +634,14 @@ def main():
     ap.add_argument("--profile", default=os.path.join(HERE, "work", "browser-profile"))
     ap.add_argument("--queries", default=os.path.join(HERE, "sources", "dell-kb-queries.txt"))
     ap.add_argument("--ids-file", default="", help="extra KB numbers, one per line (kb command)")
-    ap.add_argument("--engines", default="ddg,bing,dell", help="search engines for kb / infohub discovery")
+    ap.add_argument("--engines", default="ddg,dell",
+                    help="search engines for kb / infohub discovery (bing: challenges automated browsers, finds nothing)")
     ap.add_argument("--max-pages", type=int, default=8, help="search result pages per query and engine")
     ap.add_argument("--max-articles", type=int, default=0)
-    ap.add_argument("--delay", type=float, default=1.5)
+    ap.add_argument("--delay", type=float, default=1.0)
     ap.add_argument("--headless", action="store_true")
+    ap.add_argument("--wait-login", action="store_true",
+                    help="open Dell sign-in first and continue in that session once you are signed in")
     a = ap.parse_args()
     try:
         from playwright.sync_api import sync_playwright
@@ -580,6 +654,8 @@ def main():
             if a.command == "login":
                 cmd_login(ctx, a)
                 return
+            if a.wait_login:
+                wait_login(ctx, a.profile)
             if a.command in ("needed", "all"):
                 cmd_needed(ctx, a)
             if a.command in ("kb", "all"):

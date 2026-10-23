@@ -22,11 +22,11 @@ shows: Solutions Enabler (`symcli -def`), Trident (`tridentctl -n trident versio
 |---|---|---|
 | PowerMaxOS, Unisphere, Solutions Enabler | `dell/kb`: DSA-* for "PowerMaxOS", "Unisphere for PowerMax", "Solutions Enabler" (affected and fixed versions), fix / "available in PowerMaxOS level" articles, "Solutions Enabler and Unisphere for PowerMax important documentation and downloads links"; `dell/powermax` guides name the version they document | PowerMaxOS release notes, Dell target-code / E-Lab matrix |
 | PowerFlex | `dell/powerflex` release notes PDFs (3.6.x, 4.0.x, 4.5.x / 5.1.x: fixed and known issues, upgrade paths), upgrade guides; `dell/kb` DSA-* "PowerFlex" | newer releases than the PDFs |
-| ONTAP | `netapp/ontap` "Choose a NetApp-recommended target ONTAP version for an upgrade" and the upgrade section; `ontap-systems-upgrade`; `kb-ontap` / `kb-san` CONTAP-* "Fixed In Version" (your version inside an affected range = finding) | the live "minimum recommended release" table, NetApp security advisories (NTAP-*) |
+| ONTAP | `netapp/ontap` "Choose a NetApp-recommended target ONTAP version for an upgrade" and the upgrade section; `ontap-systems-upgrade`; `kb-ontap` CONTAP-* "Fixed In Version" (your version inside an affected range = finding) | the live "minimum recommended release" table, NetApp security advisories (NTAP-*) |
 | Trident | `trident-<yymm>` pages `trident-rn.html` (what's new, fixed, known issues) and `known-issues.html`; `trident-changelog`; `trident-issues` (open bugs by version) | - |
 | CSM / CSI drivers | `dell/csm` `csidriver/release/powermax/` and `.../powerflex/` + `replication/release/` of the matching url version; `csm-repo` CHANGELOG-<ver>; `dell/kb` DSA-* "Container Storage Modules" | CSM issue tracker |
 | Harvest | `harvest-changelog`, `harvest-issues` | - |
-| NX-OS (MDS), UCS, ESXi | nothing (ESXi: a few `vmware/kb`, `netapp/kb-san`, `ontap-sanhost` host-support pages) | everything: general knowledge only, labelled |
+| NX-OS (MDS), UCS, ESXi | nothing (ESXi: a few `vmware/kb`, `netapp/kb-ontap`, `ontap-sanhost` host-support pages) | everything: general knowledge only, labelled |
 
 Search pattern: `"<product> <running version>"`, then `DSA <product>`, then "fixed in" / "known issues"
 with the product filter; read the hits (`docs-lookup`). For each DSA: affected range, fixed version,

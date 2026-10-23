@@ -26,6 +26,8 @@ import time
 from html.parser import HTMLParser
 
 TEXT_EXT = (".adoc", ".md", ".rst", ".txt")
+CODE_EXT = (".go", ".py", ".proto", ".yaml", ".yml", ".sh")       # source code (sync-git.sh "code" lines)
+CODE_START = re.compile(r"^(func |type |def |class |async def |message |service |rpc |enum |[\w-]+\(\) ?\{)")
 MAX_CHUNK = 2400
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS docs(id INTEGER PRIMARY KEY, path TEXT UNIQUE, vendor TEXT, product TEXT,
@@ -268,8 +270,25 @@ def iter_files(root):
         for f in files:
             if f.startswith(("_", ".")) or f == "manifest.json":
                 continue
-            if f.lower().endswith(TEXT_EXT + (".pdf", ".html", ".htm")):
+            if f.lower().endswith(TEXT_EXT + CODE_EXT + (".pdf", ".html", ".htm")):
                 yield os.path.join(dirpath, f)
+
+
+def parse_code(text, path):
+    """Source file -> one section per top-level func / type / class (heading = its first line), so a
+    search for an error string lands on the function that raises it. Title: <dir>/<file>."""
+    title = "/".join(path.replace(os.sep, "/").split("/")[-2:])
+    sections, head, cur = [], title, []
+    for line in text.splitlines():
+        if CODE_START.match(line) and cur:
+            sections.append((head, "\n".join(cur)))
+            head, cur = line.strip().rstrip("{").strip()[:160], []
+        elif CODE_START.match(line):
+            head = line.strip().rstrip("{").strip()[:160]
+        cur.append(line)
+    if cur:
+        sections.append((head, "\n".join(cur)))
+    return title, _split(sections, title)
 
 
 def parse_file(path):
@@ -284,6 +303,8 @@ def parse_file(path):
         return parse_html(text, fallback)
     if low.endswith((".md", ".rst")):
         return parse_md(text, fallback)
+    if low.endswith(CODE_EXT):
+        return parse_code(text, path)
     return fallback, _split([(fallback, text)], fallback)
 
 

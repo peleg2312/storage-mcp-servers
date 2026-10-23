@@ -95,3 +95,50 @@ CSI driver error
 CSI driver OpenShift
 CSI driver Kubernetes mount
 Dell CSI PVC pending
+# ---- PowerScale (Isilon / OneFS) ----
+PowerScale alert
+PowerScale error
+PowerScale event
+OneFS error
+OneFS event
+OneFS upgrade
+OneFS node
+OneFS SmartConnect
+OneFS SyncIQ
+OneFS SnapshotIQ
+OneFS SmartQuotas
+OneFS NFS
+OneFS SMB
+OneFS S3
+OneFS performance
+OneFS isi command
+OneFS cluster
+OneFS drive
+OneFS DSA
+Isilon error
+Isilon NFS
+PowerScale InsightIQ
+PowerScale CSI
+CSI PowerScale
+# ---- more CSI / CSM ----
+CSI PowerFlex SDC
+CSI PowerFlex volume
+CSI PowerMax iSCSI
+CSI PowerMax FC
+CSI PowerMax NVMe
+CSI PowerMax Reverse Proxy
+CSI driver snapshot
+CSI driver volume expansion
+CSI driver attach
+CSI driver mount failed
+CSI driver multipath
+CSM Observability metrics
+CSM Resiliency podmon
+CSM Authorization proxy
+CSM Replication SRDF
+CSM Replication PowerFlex
+CSM installation wizard
+CSM module upgrade
+Container Storage Modules DSA
+Dell CSI Red Hat OpenShift
+Dell CSI vSphere

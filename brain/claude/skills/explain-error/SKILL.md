@@ -10,14 +10,18 @@ when_to_use: Trigger phrases - "what does this error mean", "explain EMS scsibla
 2. Docs MCP (docs-search or docs-local): first the exact name / quoted string, filtered by vendor/product
    when known (names in `~/.claude/brain/library/MANIFEST.md`):
    - ONTAP EMS: product `ontap-ems-<version>` matching the cluster version (9.15.1 → `ontap-ems-9151`,
-     `ontap-ems-9111` … `ontap-ems-9181`; `ontap-ems` when unknown); the symptom: `kb-ontap`, `kb-san`
+     `ontap-ems-9111` … `ontap-ems-9181`; `ontap-ems` when unknown); the symptom: `kb-ontap`
      (NetApp KB incl. CONTAP-* bugs; "Partial article" = solution needs a support login).
    - Trident: `trident-issues`, `trident-changelog`, `trident-<release>` of the installed version.
    - CSM / CSI: `dell/kb`, `dell/csm` (the url version matching the installed CSM), `csi-powermax`,
-     `csi-powerflex`, `csm-replication`, `csm-operator` (no CSM issue tracker in the library).
+     `csi-powerflex`, `csi-powerscale`, `csm-replication`, `csm-operator` (no CSM issue tracker in the library).
+     Not explained there: the same quoted string over the driver / client / sidecar **source code**
+     (`csi-*`, `goscaleio`, `gopowermax`, `goisilon`, `gobrick`, vendor `kubernetes`) shows the function that
+     raises it and the condition behind it (code = current main, not the installed release; say so).
+   - PowerScale / OneFS: `dell/kb`, `infohub-powerscale`, `csi-powerscale`.
    - PowerMax: `dell/powermax` (Events and Alerts guide, product / SRDF / SnapVX guides), `dell/kb`.
      PowerFlex: `dell/powerflex` (alerts-and-events reference, release notes per version), `dell/kb`.
-   - ESXi: `vmware/kb`, `kb-san`. Harvest: `harvest`, `harvest-issues`. Pointers: `kb/kb`.
+   - ESXi: `vmware/kb`, `kb-ontap`. Harvest: `harvest`, `harvest-issues`. Pointers: `kb/kb`.
    - MDS / UCS: not in the library; explain from general knowledge and say so.
    Read the best 2-3 hits fully (read_chunk) before answering.
 3. Live check with the matching MCP: is it still happening, since when, on which objects, how often.

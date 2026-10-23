@@ -14,7 +14,7 @@ MCP is available, use the local copy from the shell: `python3 ~/.claude/brain/li
   filter by vendor / product when known (names in ~/.claude/brain/library/MANIFEST.md; `product` is a
   substring). Version-specific products: EMS → `ontap-ems-<ver>` of the cluster (9.15.1 → `ontap-ems-9151`),
   Trident → `trident-<yymm>` of the installed release, CSM → the `dell/csm` page whose url version matches.
-  Symptoms and known issues: `kb-ontap` / `kb-san` (NetApp KB incl. CONTAP-* bugs; "Partial article" =
+  Symptoms and known issues: `kb-ontap` (NetApp KB incl. CONTAP-* bugs; "Partial article" =
   solution needs a support login), `dell/kb`, `vmware/kb`, PowerFlex release notes and alerts-and-events
   guides in `dell/powerflex`, the Events and Alerts guide in `dell/powermax`. Bug trackers exist only
   for `trident-issues` / `harvest-issues` (+ `trident-changelog`, `harvest-changelog`); there is no CSM

@@ -34,5 +34,5 @@ checks, only for the involved ports).
 Answer first: "latency is in <layer> because <evidence>". Then a table per layer (metric, avg, max, time
 of max, normal/abnormal), the top contributing VMs, and next steps. Search the docs MCP for any array
 event or bug matching the symptoms and versions: ONTAP → `ontap-ems-<cluster version>`, `kb-ontap`,
-`kb-san`; PowerMax → `dell/powermax` (Events and Alerts guide), `dell/kb`; ESXi path / APD symptoms →
-`vmware/kb`, `kb-san`.
+`kb-ontap`; PowerMax → `dell/powermax` (Events and Alerts guide), `dell/kb`; ESXi path / APD symptoms →
+`vmware/kb`, `kb-ontap`.

@@ -1,9 +1,9 @@
 #!/bin/sh
-# Pull text-only documentation from the Git sources in sources/git-repos.txt.
+# Pull text-only documentation (and, for lines marked "code", source code) from sources/git-repos.txt.
 #   sync-git.sh [DOCS_DIR]                 sources/git-repos.txt -> DOCS_DIR/<vendor>/<product>
 #   sync-git.sh --netapp-all [DOCS_DIR]    additionally every public NetAppDocs repo (~2000; GitHub API)
 # Needs: sh, git (curl or wget only for --netapp-all). Re-running updates existing clones.
-set -eu
+set -euf          # -f: the sparse-checkout patterns below must reach git unexpanded
 HERE=$(cd "$(dirname "$0")/.." && pwd)
 ALL=0
 [ "${1:-}" = "--netapp-all" ] && { ALL=1; shift; }
@@ -24,11 +24,33 @@ if [ "$ALL" = 1 ]; then
     page=$((page+1))
   done
 fi
+# sparse-checkout patterns for one source line: the listed subdirs / files (or every doc), and with the
+# word "code" also the source code (Go, Python, proto, YAML, shell) minus vendored, test, mock and
+# generated files - error strings and their context become searchable.
+patterns() {
+  docs=""; code=0
+  for s in "$@"; do
+    case "$s" in
+      code) code=1 ;;
+      *.md|*.adoc|*.rst|*.txt|*.proto) docs="$docs /$s" ;;     # a single file (e.g. CHANGELOG.md)
+      *) docs="$docs /$s/**/*.adoc /$s/**/*.md /$s/**/*.rst /$s/*.md /$s/*.rst /$s/*.adoc" ;;
+    esac
+  done
+  [ -z "$docs" ] && docs="/*.adoc /**/*.adoc /*.md /**/*.md /*.rst /**/*.rst"
+  [ "$code" = 1 ] && docs="$docs /**/*.go /**/*.py /**/*.proto /**/*.yaml /**/*.yml /**/*.sh
+    !**/vendor/** !**/third_party/** !*_test.go !**/mocks/** !**/mock/** !**/testdata/** !**/test/** !**/tests/**
+    !**/zz_generated* !*.pb.go !*_mock.go !**/mockhelper/** !**/inttests/** !**/release-tools/** !**/hack/**
+    !**/crds/** !**/config/crd/** !**/.github/**"
+  echo "$docs"
+}
 ok=0; fail=0
 while read -r vendor product url subdirs; do
   d="$DOCS/$vendor/$product"
+  # shellcheck disable=SC2086
+  pats=$(patterns $subdirs)
   if [ -d "$d/.git" ]; then
-    if git -C "$d" fetch -q --depth 1 origin && git -C "$d" reset -q --hard FETCH_HEAD; then
+    # shellcheck disable=SC2086
+    if git -C "$d" sparse-checkout set --no-cone $pats >/dev/null && git -C "$d" fetch -q --depth 1 origin && git -C "$d" reset -q --hard FETCH_HEAD; then
       ok=$((ok+1)); echo "${url%.git}" > "$d/.source_url"; echo "updated $vendor/$product"
     else fail=$((fail+1)); echo "update failed: $url"; fi
     continue
@@ -36,17 +58,6 @@ while read -r vendor product url subdirs; do
   rm -rf "$d"; mkdir -p "$(dirname "$d")"
   if ! git clone -q --depth 1 --filter=blob:none --no-checkout "$url" "$d"; then
     fail=$((fail+1)); echo "clone failed: $url"; continue
-  fi
-  pats=""
-  if [ -n "$subdirs" ]; then
-    for s in $subdirs; do
-      case "$s" in
-        *.md|*.adoc|*.rst|*.txt) pats="$pats /$s" ;;      # a single file (e.g. CHANGELOG.md)
-        *) pats="$pats /$s/**/*.adoc /$s/**/*.md /$s/**/*.rst /$s/*.md /$s/*.rst /$s/*.adoc" ;;
-      esac
-    done
-  else
-    pats="/*.adoc /**/*.adoc /*.md /**/*.md /*.rst /**/*.rst"
   fi
   # shellcheck disable=SC2086
   git -C "$d" sparse-checkout set --no-cone $pats >/dev/null
