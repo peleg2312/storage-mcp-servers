@@ -1,0 +1,184 @@
+<html><head><title>PowerFlex API 4.5.5-Manager_v4-8-0: Working with the PowerFlex Installation Manager (IM) REST API</title></head><body><p>Tasks > Tasks for the PowerFlex Block API</p><div><div class="api-docs-main-div dds__pl-2">
+    <div class="markdown-wrapper dds__py-3">
+      <div class="markdown-body dds__px-3"><h1 id="working-with-the-powerflex-installation-manager-im-rest-api" class="anchor-scroll-top-offset">Working with the PowerFlex Installation Manager (IM) REST API</h1>
+<p>PowerFlex Installer is an orchestration engine that runs commands from different queues (nodes and MDM) at different phases, and labels them as a process such as an upgrade.</p>
+<p>The PowerFlex gateway REST API begins with the /im/ prefix.</p>
+<h2 id="asynchronous-operation-model" class="anchor-scroll-top-offset">Asynchronous operation model</h2>
+<p>All /im/ operations act on the entire cluster and may take significant time to complete, especially on large clusters. These operations follow an asynchronous pattern:</p>
+<p>Operation flow:</p>
+<ol>
+<li>Initiate Operation - Call the operation endpoint (e.g., /install, /upgrade)<br>
+Returns immediately with HTTP 202 Accepted</li>
+<li>Monitor Progress - Use polling APIs to check operation status</li>
+</ol>
+<ul>
+<li>Poll the status endpoint at regular intervals</li>
+<li>The operation status provides information such as the number of completed commands, currently running commands, and failed commands.</li>
+</ul>
+<ol>
+<li>Completion or Abort - When finished or to cancel the operation</li>
+</ol>
+<ul>
+<li>Use cleanup APIs to finalize or abort the operation</li>
+<li>Retrieve final results or error information</li>
+</ul>
+<p>The following are the list of polling and control APIs:</p>
+<ul>
+<li>GET /im/types/ProcessPhase/actions/queryPhaseState: Check the current state of the operation phase</li>
+<li>POST /im/types/ProcessPhase/actions/moveToNextPhase: Advance to the next phase (when current phase is complete)</li>
+<li>POST /im/types/ProcessPhase/actions/moveToIdlePhase: End the operation (move to idle state)</li>
+<li>GET /im/types/Command/instances: List all commands and their states</li>
+<li>GET  /im/types/Command/instances/actions/queryRunningOperation: Check if any operation is running (if not idle, another operation cannot start)</li>
+<li>POST /im/types/Command/instances/actions/abort: Abort running/pending commands</li>
+<li>POST /im/types/Command/instances/actions/clear: Archive completed/failed commands</li>
+<li>POST /im/types/Command/instances/actions/retry: Retry failed commands</li>
+</ul>
+<h2 id="pod-affinity" class="anchor-scroll-top-offset">Pod Affinity</h2>
+<p>/im/ requests that relate to a running operation must be served by the same pod that started the operation.<br>
+PFMP deploys 2 <code>block-legacy-gateway</code> pods, without pod affinity a request could land on the wrong pod.<br>
+For example,querying progress of an install on pod 2 returns “idle” even though the install is running on pod 1.<br>
+Version 4.x (4.5 and later): Use the LEGACYGWCOOKIE cookie to pin all /im/ requests to the same pod. For more information, see the <a href="how-to-use-the-legacygwcookie-cookie-15304m0">How to use the LEGACYGWCOOKIE cookie</a> article.<br>
+Version 5.x: All /im/ requests are routed to the same pod by default; no cookie is needed.</p>
+<h2 id="powerflex-installation-manager-operations-configuration-phases-and-management" class="anchor-scroll-top-offset">PowerFlex Installation Manager operations: Configuration, Phases, and Management</h2>
+<h2 id="configuration-json" class="anchor-scroll-top-offset">Configuration JSON</h2>
+<p>All /im/ operations that act on the cluster require a configuration JSON as the request body.<br>
+This JSON describes the full cluster topology: MDM nodes, SDS or SDC or SDT or SDR components, protection domains, storage pools, node credentials, and security settings.</p>
+<p>The configuration JSON is obtained by calling:<br>
+<code>POST /im/types/Configuration/instances Content-Type: application/json {   "mdmIps": ["10.1.0.1", "10.1.0.2"],   "mdmUser": "admin",   "mdmPassword": "&lt;any_string&gt;",   "securityConfiguration": {     "allowNonSecureCommunicationWithMdm": true,     "allowNonSecureCommunicationWithLia": true,     "disableNonMgmtComponentsAuth": false   } }</code></p>
+<p>Alternatively, for install operations, the configuration can be generated from a CSV file:</p>
+<p><code>POST /im/types/Configuration/instances/actions/parseFromCSV Content-Type: multipart/form-data file=@config.csv</code></p>
+<p>This queries the MDM and returns the full cluster Configuration JSON. The returned JSON is then used as the body of operation requests (for example, install, upgrade, liaRunOsPatching), with minor modifications depending on the operation<code>.</code></p>
+<p><strong>Note</strong>:</p>
+<ul>
+<li>The mdmUser and mdmPassword fields must be present in the request body (non-null), but their values are ignored. The gateway connects to MDM using mTLS (mutual TLS) and does not use these credentials. Any non-empty string value is acceptable.</li>
+<li>Passwords (for example, liaPassword, mdmPassword) are returned as null for security. They must be filled in before sending to an operation.<br>
+The mdmUser field must not be null.<br>
+For install operations, liaPassword is mandatory (used until mTLS connection is established).</li>
+</ul>
+<h3 id="operation-phases" class="anchor-scroll-top-offset">Operation phases</h3>
+<p>Each operation is divided into an ordered sequence of phases. Within each phase, individual commands execute on target nodes (in parallel where possible).</p>
+<table>
+<thead>
+<tr>
+<th>Operation</th>
+<th>Phases</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>install</td>
+<td>query -&gt; upload -&gt; install -&gt; configure</td>
+</tr>
+<tr>
+<td>upgrade</td>
+<td>query -&gt; upload -&gt; install</td>
+</tr>
+<tr>
+<td>osPatching</td>
+<td>validate -&gt; execute</td>
+</tr>
+<tr>
+<td>securityBootstrap</td>
+<td>configureSecurity</td>
+</tr>
+<tr>
+<td>resetManagementTrust</td>
+<td>configureSecurity</td>
+</tr>
+<tr>
+<td>collectLogs</td>
+<td>query</td>
+</tr>
+</tbody>
+</table>
+<h2 id="command-states" class="anchor-scroll-top-offset">Command states</h2>
+<p>Within each phase, individual commands execute on specific nodes. Each command has a state:</p>
+<table>
+<thead>
+<tr>
+<th>State</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>pending</td>
+<td>Queued, waiting to execute</td>
+</tr>
+<tr>
+<td>running</td>
+<td>Currently executing on a target node</td>
+</tr>
+<tr>
+<td>completed</td>
+<td>Finished successfully</td>
+</tr>
+<tr>
+<td>failed</td>
+<td>Finished with error</td>
+</tr>
+<tr>
+<td>aborted</td>
+<td>Was aborted by user</td>
+</tr>
+</tbody>
+</table>
+<h3 id="command-management-apis" class="anchor-scroll-top-offset">Command management APIs</h3>
+<table>
+<thead>
+<tr>
+<th>Action</th>
+<th>API</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>List</td>
+<td>GET /im/types/Command/instances</td>
+<td>Returns all commands grouped by node, with their states and messages</td>
+</tr>
+<tr>
+<td>Abort</td>
+<td>POST /im/…/actions/abort</td>
+<td>Aborts pending and running commands. Optional commandID to abort a specific command.</td>
+</tr>
+<tr>
+<td>Clear</td>
+<td>POST /im/…/actions/clear</td>
+<td>Archives all finished commands (removes them from the active list). Must be called after an operation ends to allow new operations.</td>
+</tr>
+<tr>
+<td>Retry</td>
+<td>POST /im/…/actions/retry</td>
+<td>Re-queues failed/aborted commands in the current phase. Optional commandID parameter to retry a specific command. Optional force parameter to retry even completed commands.</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Note</strong></p>
+<ul>
+<li>
+<p>Retry works for all operations (install, upgrade, uninstall, osPatching, etc.) - it re-queues failed/aborted commands in the current phase.</p>
+</li>
+<li>
+<p><strong>For upgrade</strong>: The operation stores a configurationBeforeUpgradeRetries snapshot so that retry can correctly re-evaluate the state.</p>
+</li>
+<li>
+<p><strong>For install</strong>: Retry has special handling for the query phase – if the query phase fails, retry marks all commands as failed first, then re-queues them.</p>
+</li>
+</ul>
+<p>For later phases (upload, install, configure), retry re-queues failed commands as usual, but in practice retrying the install phase may fail if components are already partially installed on some nodes.</p>
+<ul>
+<li>For other operations (osPatching, securityBootstrap, etc.): retry re-queues failed commands as usual.</li>
+<li>Before retrying, the operation state should typically be cleared first (abort + clear pending commands), then retry the failed ones.</li>
+</ul>
+</div>
+      <div class="markdown-sidebar">
+        <div class="markdown-toc-title">
+          <i class="icon dds__icon dds__icon--bookmark"></i>
+          On this page
+        </div>
+          <ul><li class="level-1"><a href="#working-with-the-powerflex-installation-manager-im-rest-api" data-toc-link="">Working with the PowerFlex Installation Manager (IM) REST API</a></li><li class="level-2"><a href="#asynchronous-operation-model" data-toc-link="">Asynchronous operation model</a></li><li class="level-2"><a href="#pod-affinity" data-toc-link="">Pod Affinity</a></li><li class="level-2"><a href="#powerflex-installation-manager-operations-configuration-phases-and-management" data-toc-link="">PowerFlex Installation Manager operations: Configuration, Phases, and Management</a></li><li class="level-2"><a href="#configuration-json" data-toc-link="">Configuration JSON</a></li><li class="level-2"><a href="#command-states" data-toc-link="">Command states</a></li></ul>
+      </div>
+    </div>
+  </div></div></body></html>

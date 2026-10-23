@@ -36,3 +36,4 @@ of max, normal/abnormal), the top contributing VMs, and next steps. Search the d
 event or bug matching the symptoms and versions: ONTAP → `ontap-ems-<cluster version>`, `kb-ontap`,
 `kb-ontap`; PowerMax → `dell/powermax` (Events and Alerts guide), `dell/kb`; ESXi path / APD symptoms →
 `vmware/kb`, `kb-ontap`.
+Charts: latency over the window per datastore with `report-export` (one file per measure).

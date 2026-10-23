@@ -1,0 +1,306 @@
+<html><head><title>PowerFlex API 3.6.0: Storage Pool Management</title></head><body><p></p><div><div class="api-docs-main-div dds__pl-2">
+    <div class="markdown-wrapper dds__py-3">
+      <div class="markdown-body dds__px-3"><h1 id="storage-pool-management" class="anchor-scroll-top-offset">Storage Pool Management</h1>
+<h2 id="list-volumes-in-a-storage-pool" class="anchor-scroll-top-offset">List volumes in a Storage Pool</h2>
+<p>To list the volumes in a Storage Pool, first retrieve the Storage Pool ID. In the following example, the Protection Domain name is  “pd1” and the Storage Pool name is “sp1”:</p>
+<pre><code class="language-json">curl -k -r POST -H "Content-type: application/json" -u &lt;user&gt;:&lt;token&gt; 'https://&lt;PowerFlex-GW-IP&gt;/api/types/StoragePool/instances/action/queryIdByKey' -d '
+{
+  "name":"sp1",
+  "protectionDomainName":"pd1"
+}'
+</code></pre>
+<p>The 200 response returns the Storage Pool ID:</p>
+<pre><code class="language-json">{
+  "id":“17a4946800000000”
+}
+</code></pre>
+<h2 id="list-the-volumes-in-a-storage-pool" class="anchor-scroll-top-offset">List the volumes in a Storage Pool</h2>
+<p>Use the Storage Pool ID as the URI path parameter to retrieve the list of volumes in the Storage Pool:</p>
+<pre><code class="language-json">curl -k -r GET -u &lt;user&gt;:&lt;token&gt; 'https://&lt;PowerFlex-GW-IP&gt;/api/instances/StoragePool::17a4946800000000/relationships/Volume'
+</code></pre>
+<p>The 200 response contains all of the volumes related to this Storage Pool:</p>
+<pre><code class="language-json">[
+    {
+        "mappedSdcInfo": [
+            {
+                "isDirectBufferMapping": false,
+                "limitIops": 0,
+                "limitBwInMbps": 0,
+                "sdcId": "98df228a00000005",
+                "sdcName": "sdcesx61",
+                "sdcIp": "172.18.161.161",
+                "accessMode": "ReadWrite"},
+
+            {
+                "isDirectBufferMapping": false,
+                "limitIops": 0,
+                "limitBwInMbps": 0,
+                "sdcId": "98df228900000004",
+                "sdcName": "sdcesx60",
+                "sdcIp": "172.18.161.160",
+                "accessMode": "ReadWrite"
+            }
+        ],
+        "originalExpiryTime": 0,
+        "retentionLevels": [],
+        "snplIdOfSourceVolume": null,
+        "volumeReplicationState": "UnmarkedForReplication",
+        "replicationJournalVolume": false,
+        "replicationTimeStamp": 0,
+        "storagePoolId": "17a4946800000000",
+        "dataLayout": "MediumGranularity",
+        "vtreeId": "8e441acd00000008",
+        "sizeInKb": 1610612736,
+        "volumeType": "ThinProvisioned",
+        "consistencyGroupId": null,
+        "ancestorVolumeId": null,
+        "notGenuineSnapshot": false,
+        "accessModeLimit": "ReadWrite",
+        "secureSnapshotExpTime": 0,
+        "useRmcache": false,
+        "managedBy": "ScaleIO",
+        "lockedAutoSnapshot": false,
+        "lockedAutoSnapshotMarkedForRemoval": false,
+        "autoSnapshotGroupId": null,
+        "compressionMethod": "Invalid",
+        "pairIds": null,
+        "timeStampIsAccurate": false,
+        "snplIdOfAutoSnapshot": null,
+        "creationTime": 1618951377,
+        "name": "SiteB-Shared-PowerFlex",
+        "id": "efbe67b700000008",
+        "links": [
+{
+                "rel": "self",
+                "href": "/api/instances/Volume::efbe67b700000008"
+            },
+            {
+                "rel": "/api/Volume/relationship/Statistics",
+                "href": "/api/instances/Volume::efbe67b700000008/relationships/Statistics"
+            },
+{
+                "rel": "/api/parent/relationship/vtreeId",
+                "href": "/api/instances/VTree::8e441acd00000008"
+},
+            {
+                "rel": "/api/parent/relationship/storagePoolId",
+                "href": "/api/instances/StoragePool::17a4946800000000"
+            }
+        ]
+    },
+{
+        "mappedSdcInfo": null,
+        "originalExpiryTime": 0,
+        "retentionLevels": [],
+
+
+        "snplIdOfSourceVolume": null,
+        "volumeReplicationState": "UnmarkedForReplication",
+        "replicationJournalVolume": false,
+        "replicationTimeStamp": 0,
+        "storagePoolId": "17a4946800000000",
+        "dataLayout": "MediumGranularity",
+        "vtreeId": "8e441acf0000000a",
+        "sizeInKb": 8388608,
+        "volumeType": "ThinProvisioned",
+        "consistencyGroupId": null,
+        "ancestorVolumeId": null,
+        "notGenuineSnapshot": false,
+        "accessModeLimit": "ReadWrite",
+        "secureSnapshotExpTime": 0,
+        "useRmcache": false,
+        "managedBy": "ScaleIO",
+        "lockedAutoSnapshot": false,
+        "lockedAutoSnapshotMarkedForRemoval": false,
+        "autoSnapshotGroupId": null,
+        "compressionMethod": "Invalid",
+        "pairIds": null,
+        "timeStampIsAccurate": false,
+        "snplIdOfAutoSnapshot": null,
+        "creationTime": 1619008729,
+        "name": "siteb_vmio",
+        "id": "efbe67b90000000a",
+        "links": [
+{
+                "rel": "self",
+                "href": "/api/instances/Volume::efbe67b90000000a"
+            },
+        {
+                "rel": "/api/Volume/relationship/Statistics",
+                "href": "/api/instances/Volume::efbe67b90000000a/relationships/Statistics"
+            },
+            {
+                "rel": "/api/parent/relationship/vtreeId",
+                "href": "/api/instances/VTree::8e441acf0000000a"
+            },
+            {
+                "rel": "/api/parent/relationship/storagePoolId",
+                "href": "/api/instances/StoragePool::17a4946800000000"
+            }
+          ]
+         }
+       ]
+</code></pre>
+<h2 id="list-the-sdss-connected-to-the-storage-pool" class="anchor-scroll-top-offset">List the SDSs connected to the Storage Pool</h2>
+<p>To list the SDSs connected to the Storage Pool, use the Storage Pool ID retrieved earlier as the URI path parameter:</p>
+<pre><code class="language-json">curl -k -r GET -u &lt;user&gt;:&lt;token&gt; 'https://&lt;PowerFlex-GW-IP&gt; /api/instances/StoragePool::17a4946800000000/relationships/SpSds'
+</code></pre>
+<p>The 200 response contains all of the SDSs related to this Storage Pool:</p>
+<pre><code class="language-json">[
+    {
+        "fglNvdimmMetadataAmortizationX100": null,
+        "fglNvdimmWriteCacheSize": null,
+        "sdsId": "8fc33c1900000000",
+        "storagePoolId": "17a4946800000000",
+        "id": "7c9db2c400000000",
+        "links": [
+            {
+                "rel": "self",
+                "href": "/api/instances/SpSds::7c9db2c400000000"
+            },
+            {
+                "rel": "/api/SpSds/relationship/Statistics",
+                "href": "/api/instances/SpSds::7c9db2c400000000/relationships/Statistics"
+            },
+            {
+                "rel": "/api/SpSds/relationship/Device",
+                "href": "/api/instances/SpSds::7c9db2c400000000/relationships/Device"
+            },
+            {
+                "rel": "/api/parent/relationship/sdsId",
+                "href": "/api/instances/Sds::8fc33c1900000000"
+            },
+            {
+                "rel": "/api/parent/relationship/storagePoolId",
+                "href": "/api/instances/StoragePool::17a4946800000000"
+            }
+        ]
+    },
+{
+        "fglNvdimmMetadataAmortizationX100": null,
+        "fglNvdimmWriteCacheSize": null,
+       "sdsId": "8fc33c1c00000003",
+      "storagePoolId": "17a4946800000000",
+        "id": "7c9cb2c900030000",
+        "links": [
+            {
+                "rel": "self",
+                "href": "/api/instances/SpSds::7c9cb2c900030000"
+            },
+            {
+                "rel": "/api/SpSds/relationship/Statistics",
+                "href": "/api/instances/SpSds::7c9cb2c900030000/relationships/Statistics"
+            },
+            {
+                "rel": "/api/SpSds/relationship/Device",
+                "href": "/api/instances/SpSds::7c9cb2c900030000/relationships/Device"
+            },
+            {
+                "rel": "/api/parent/relationship/sdsId",
+                "href": "/api/instances/Sds::8fc33c1c00000003"
+            },
+            {
+                "rel": "/api/parent/relationship/storagePoolId",
+                "href": "/api/instances/StoragePool::17a4946800000000"
+            }
+        ]
+    }
+]
+</code></pre>
+<h2 id="expand-a-storage-pool-by-adding-a-device" class="anchor-scroll-top-offset">Expand a Storage Pool by adding a device</h2>
+<p>Before expanding a Storage Pool by adding a device, first obtain the Storage Pool ID and the SDS ID. The Storage Pool ID and SDS ID are then passed as json strings when adding the device. In this example, device “/dev/sda” is added to SDS “sds3”, Storage Pool “mg-pool’ in Protection Domain “pd1”.</p>
+<h2 id="retrieve-the-storage-pool-id" class="anchor-scroll-top-offset">Retrieve the Storage Pool ID</h2>
+<p>Use the name of the storage Pool (mg-pool) and Protection Domain (pd1) to retrieve the Storage Pool ID:</p>
+<pre><code class="language-json">curl -k -r POST -H "Content-type: application/json" -u &lt;user&gt;:&lt;token&gt; 'https:// ://&lt;PowerFlex-GW-IP&gt;/api/types/StoragePool/instances/action/queryIdByKey' -d '
+{
+  "name":"mg-pool",
+  "protectionDomainName":"pd1"
+}'
+</code></pre>
+<p>The 200 response contains the Storage Pool ID:</p>
+<pre><code class="language-json">{
+  "id":"1d22fd3a00000000"
+}
+</code></pre>
+<h2 id="retrieve-the-sds-id" class="anchor-scroll-top-offset">Retrieve the SDS ID</h2>
+<p>Use the name of the SDS (sds3) to query the ID of the SDS:</p>
+<pre><code class="language-json">curl -k -r POST -H "Content-type: application/json" -u &lt;user&gt;:&lt;token&gt; 'https:// ://&lt;PowerFlex-GW-IP&gt;/api/types/Sds/instances/action/queryIdByKey' -d '
+{
+  "name":"sds3"
+}'
+</code></pre>
+<p>The 200 response contains the SDS ID:</p>
+<pre><code class="language-json">{
+  "id":"271739dc00000000"
+}
+</code></pre>
+<h2 id="add-a-device-to-the-storage-pool" class="anchor-scroll-top-offset">Add a device to the Storage Pool</h2>
+<p>Add the new device in sds3 to Storage Pool mg-pool in Protection Domain pd1:</p>
+<pre><code class="language-json">curl -k -r POST -H "Content-type: application/json" -u &lt;user&gt;:&lt;token&gt; 'https:// ://&lt;PowerFlex-GW-IP&gt;/api/types/Device/instances' -d '
+{
+  "sdsId":"271739dc00000000",
+  "storagePoolId":"1d22fd3a00000000",
+  "deviceCurrentPathname":"/dev/sda",
+  "mediaType":"SSD"
+}'
+</code></pre>
+<p>The 200 response returns the ID of the newly added device:</p>
+<pre><code class="language-json">{
+  "id":"7bfd3da400000000"
+}
+</code></pre>
+<h2 id="monitor-rebalance" class="anchor-scroll-top-offset">Monitor Rebalance</h2>
+<p>Once the device has been added, PowerFlex automatically rebalances data in the Storage Pool across all devices. The rebalance can be monitored using the following endpoint, focusing on rebalancing statistics:</p>
+<pre><code class="language-json">curl -k -r POST -H "Content-type: application/json" -u &lt;user&gt;:&lt;token&gt; 'https:// ://&lt;PowerFlex-GW-IP&gt;/api/types/StoragePool/instances/action/querySelectedStatistics' -d '
+{
+  "ids":
+    [
+      "1d22fd3a00000000"
+    ], 
+  "properties": 
+    [
+      "pendingMovingInRebalanceJobs",
+      "rebalanceCapacityInKb",
+      "activeRebalanceCapacityInKb",
+      "rebalanceWriteBwc",
+      "pendingRebalanceCapacityInKb",
+      "activeMovingRebalanceJobs",
+      "pendingMovingRebalanceJobs",
+      "rebalanceReadBwc",
+      "activeMovingInRebalanceJobs"
+    ]
+}'
+</code></pre>
+<p>The 200 response contains the specified rebalance statistics for the specified Storage Pool:</p>
+<pre><code class="language-json">{
+    "1d22fd3a00000000": {
+        "pendingMovingInRebalanceJobs": 23,
+        "pendingRebalanceCapacityInKb": 8689204,
+        "activeMovingRebalanceJobs": 2,
+        "rebalanceCapacityInKb": 9444787,
+        "pendingMovingRebalanceJobs": 23,
+        "activeMovingInRebalanceJobs": 2,
+        "activeRebalanceCapacityInKb": 755583,
+        "rebalanceReadBwc": {
+            "numSeconds": 5,
+            "totalWeightInKb": 51200,
+            "numOccured": 50
+        },
+        "rebalanceWriteBwc": {
+            "numSeconds": 5,
+            "totalWeightInKb": 51200,
+            "numOccured": 50
+        }
+    }
+}
+</code></pre>
+</div>
+      <div class="markdown-sidebar">
+        <div class="markdown-toc-title">
+          <i class="icon dds__icon dds__icon--bookmark"></i>
+          On this page
+        </div>
+          <ul><li class="level-1"><a href="#storage-pool-management" data-toc-link="">Storage Pool Management</a></li><li class="level-2"><a href="#list-volumes-in-a-storage-pool" data-toc-link="">List volumes in a Storage Pool</a></li><li class="level-2"><a href="#list-the-volumes-in-a-storage-pool" data-toc-link="">List the volumes in a Storage Pool</a></li><li class="level-2"><a href="#list-the-sdss-connected-to-the-storage-pool" data-toc-link="">List the SDSs connected to the Storage Pool</a></li><li class="level-2"><a href="#expand-a-storage-pool-by-adding-a-device" data-toc-link="">Expand a Storage Pool by adding a device</a></li><li class="level-2"><a href="#retrieve-the-storage-pool-id" data-toc-link="">Retrieve the Storage Pool ID</a></li><li class="level-2"><a href="#retrieve-the-sds-id" data-toc-link="">Retrieve the SDS ID</a></li><li class="level-2"><a href="#add-a-device-to-the-storage-pool" data-toc-link="">Add a device to the Storage Pool</a></li><li class="level-2"><a href="#monitor-rebalance" data-toc-link="">Monitor Rebalance</a></li></ul>
+      </div>
+    </div>
+  </div></div></body></html>

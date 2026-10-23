@@ -1,0 +1,38 @@
+{
+"deploying-a-new-resource-group-10286m0.html": {
+"url": "https://developer.dell.com/apis/4008/versions/4.5.2-Manager_v4-5-2/deploying-a-new-resource-group-10286m0",
+"title": "PowerFlex API 4.5.2-Manager_v4-5-2: Deploying a new resource group"
+},
+"discovering-devices-and-updating-the-inventory-10287m0.html": {
+"url": "https://developer.dell.com/apis/4008/versions/4.5.2-Manager_v4-5-2/discovering-devices-and-updating-the-inventory-10287m0",
+"title": "PowerFlex API 4.5.2-Manager_v4-5-2: Discovering devices and updating the inventory"
+},
+"getting-a-credential-10289m0.html": {
+"url": "https://developer.dell.com/apis/4008/versions/4.5.2-Manager_v4-5-2/getting-a-credential-10289m0",
+"title": "PowerFlex API 4.5.2-Manager_v4-5-2: Getting a credential"
+},
+"getting-a-deployed-service-10290m0.html": {
+"url": "https://developer.dell.com/apis/4008/versions/4.5.2-Manager_v4-5-2/getting-a-deployed-service-10290m0",
+"title": "PowerFlex API 4.5.2-Manager_v4-5-2: Getting a deployed service"
+},
+"getting-a-managed-device-10291m0.html": {
+"url": "https://developer.dell.com/apis/4008/versions/4.5.2-Manager_v4-5-2/getting-a-managed-device-10291m0",
+"title": "PowerFlex API 4.5.2-Manager_v4-5-2: Getting a managed device"
+},
+"getting-a-network-10293m0.html": {
+"url": "https://developer.dell.com/apis/4008/versions/4.5.2-Manager_v4-5-2/getting-a-network-10293m0",
+"title": "PowerFlex API 4.5.2-Manager_v4-5-2: Getting a network"
+},
+"getting-a-service-template-10294m0.html": {
+"url": "https://developer.dell.com/apis/4008/versions/4.5.2-Manager_v4-5-2/getting-a-service-template-10294m0",
+"title": "PowerFlex API 4.5.2-Manager_v4-5-2: Getting a service template"
+},
+"creating-and-publishing-templates-10295m0.html": {
+"url": "https://developer.dell.com/apis/4008/versions/4.5.2-Manager_v4-5-2/creating-and-publishing-templates-10295m0",
+"title": "PowerFlex API 4.5.2-Manager_v4-5-2: Creating and publishing templates"
+},
+"removing-or-deleting-a-service-10296m0.html": {
+"url": "https://developer.dell.com/apis/4008/versions/4.5.2-Manager_v4-5-2/removing-or-deleting-a-service-10296m0",
+"title": "PowerFlex API 4.5.2-Manager_v4-5-2: Removing or deleting a service"
+}
+}

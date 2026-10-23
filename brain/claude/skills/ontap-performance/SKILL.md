@@ -19,3 +19,4 @@ when_to_use: Trigger phrases - "ONTAP latency on volume X", "node CPU on the Net
    `ontap-ems-<cluster version>`, e.g. `ontap-ems-9151`); for the symptom search `kb-ontap`.
 
 Output: answer first, table per object, top talkers, events, sources (with ONTAP version).
+Charts: the history as a graph + Excel with `report-export` (one file per measure: throughput, IOPS, latency).

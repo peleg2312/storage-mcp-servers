@@ -1,0 +1,70 @@
+<html><head><title>PowerFlex API 4.5.5-Manager_v4-8-0: Getting started with deploying PowerFlex nodes</title></head><body><p>Tasks > Tasks for the PowerFlex Manager Deployment API</p><div><div class="api-docs-main-div dds__pl-2">
+    <div class="markdown-wrapper dds__py-3">
+      <div class="markdown-body dds__px-3"><h2 id="getting-started-deploying-powerflex-nodes" class="anchor-scroll-top-offset">Getting started deploying PowerFlex nodes</h2>
+<p>Authentication is required to access any API endpoint.<br>
+You must include a bearer token in the request header to prove your identity and permissions.</p>
+<p>The PowerFlex Manager Deployment REST API is applicable only to deployments using KVM.</p>
+<p>There are three major steps to get started with the deployment.</p>
+<h4 id="1-create-the-configuration-file" class="anchor-scroll-top-offset">1. Create the configuration file</h4>
+<p>The endpoint accepts either an empty payload or an initial configuration file.</p>
+<p>To create either an empty payload or an initial configuration file, use the following endpoint:<br>
+<code>/rest/v1/bootstrapper/workflow-configuration</code></p>
+<p>Depending on the input, a blank workflow or a workflow with predefined data is created.</p>
+<h4 id="2-set-up-the-workflow" class="anchor-scroll-top-offset">2. Set up the workflow</h4>
+<p>To set up the workflow, the following steps must be completed:</p>
+<ol>
+<li>Enable Dell Technologies connectivity services: <code>/rest/v1/bootstrapper/secure-connect</code> Note: This step can be skipped and completed later.</li>
+<li>Ensure compliance: <code>/rest/v1/bootstrapper/compliance</code> Note: This step can be skipped and completed later.</li>
+<li>Define the network requirements: <code>/rest/v1/bootstrapper/network-configuration</code>, <code>/rest/v1/bootstrapper/networks</code>, <code>/rest/v1/bootstrapper/network-environment/{id}</code></li>
+<li>Connect the installer node:
+<ul>
+<li>Set up installer node: <code>/rest/v1/bootstrapper/installer-node/</code></li>
+<li>Deployment: <code>/rest/v1/bootstrapper/installer-node/{id}/deploy</code></li>
+</ul>
+</li>
+<li>Build the deployment: <code>/rest/v1/bootstrapper/build-deployment</code>
+<ul>
+<li>Set up nodes: <code>/rest/v1/bootstrapper/nodes</code></li>
+<li>Switches: <code>/rest/v1/bootstrapper/switches</code></li>
+</ul>
+</li>
+<li>Add IP addresses: <code>/rest/v1/bootstrapper/nodes</code></li>
+</ol>
+<h4 id="3-start-the-deployment" class="anchor-scroll-top-offset">3. Start the deployment</h4>
+<p>Once the deployment is started, the workflow configuration cannot be changed.</p>
+<p>To start the deployment, use the following endpoint:<br>
+<code>/rest/v1/bootstrapper/workflow-configuration/{id}/deploy</code></p>
+<p>To track the deployment, use the following endpoints:<br>
+<code>/rest/v1/bootstrapper/workflow-configuration/{id}/deploy-status</code><br>
+<code>/rest/v1/bootstrapper/workflow-configuration/{id}/deploy-logs</code></p>
+<p>To download the logs file, use the following endpoint:<br>
+<code>/rest/v1/bootstrapper/workflow-configuration/{id}/download-logs</code></p>
+<h3 id="complete-the-deployment" class="anchor-scroll-top-offset">Complete the deployment</h3>
+<p>Once the deployment is successfully completed, the following endpoint should be called to finalize the deployment and enable the PowerFlex Manager user interface:<br>
+<code>/rest/v1/bootstrapper/workflow-configuration/{id}/complete</code></p>
+<h4 id="notes" class="anchor-scroll-top-offset">Notes:</h4>
+<ul>
+<li>
+<p>It is mandatory to keep the order of steps 2.3 to 2.6<br>
+(e.g., the Connect installer node step cannot be completed before the Define networks requirements step).</p>
+</li>
+<li>
+<p>The Enable Dell Technologies connectivity services (p. 2.1.) and Ensure Ccompliance (p.2.2) steps can be completed at any time before the deployment is started.</p>
+</li>
+<li>
+<p>At any point, the GET <code>/rest/v1/bootstrapper/workflow-configuration</code> request returns the current state of the workflow configuration, including the metadata of each step.</p>
+</li>
+<li>
+<p>GET endpoints without <code>{id}</code> will return a collection. If the configuration workflow is not created, the collection will be empty. Once the workflow is created, the endpoints return a collection containing one element.</p>
+</li>
+</ul>
+</div>
+      <div class="markdown-sidebar">
+        <div class="markdown-toc-title">
+          <i class="icon dds__icon dds__icon--bookmark"></i>
+          On this page
+        </div>
+          <ul><li class="level-2"><a href="#getting-started-deploying-powerflex-nodes" data-toc-link="">Getting started deploying PowerFlex nodes</a></li></ul>
+      </div>
+    </div>
+  </div></div></body></html>

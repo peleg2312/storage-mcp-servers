@@ -24,3 +24,4 @@ when_to_use: Trigger phrases - "PowerMax response time last 24h", "top storage g
 
 Output: answer first, then a table (object | metric | avg | max | time of max | assessment), top
 talkers, related alerts/changes, sources.
+Charts: the history as a graph + Excel with `report-export` (one file per measure: throughput, IOPS, latency).

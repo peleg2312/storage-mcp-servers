@@ -1,0 +1,1869 @@
+<html><head><title>PowerFlex API 5.1.0: filterAvailableServers</title></head><body><p>Erasure coding APIS > PowerFlex Manager (AsmManager) REST API > deployment</p><div><div class="api-docs-main-div dds__pl-2">
+      <div class="api-doc-container">
+        <div class="api__doc__left-section dds__p-3">
+   <div class="markdown-renderer">
+          <h4 class="dds__font-weight-bold dds__pb-2">filterAvailableServers</h4>       
+          <div><p>Find available servers for template components</p>
+</div> 
+          
+    </div>
+
+<div class="api_docs_collapsible dds__mb-3 expanded" id="request"><div class="api_docs_collapsible-header dds__p-3" data-action="toggleCollapse" data-target-id="request" role="button" tabindex="0" aria-controls="request-body" aria-expanded="true"><span class="title">Requests</span><span class="icon icon-collapsed dds__icon dds__icon--chevron-right dds__mt-1 dds__ml-auto"></span><span class="icon icon-expanded dds__icon dds__icon--chevron-down dds__mt-1 dds__ml-auto"></span></div><div class="api_docs_collapsible-body" id="request-body"><div class="static-frame-request-section"><div class="headers-section"><h5 class="title">Query Parameters</h5>
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="unique">unique</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">boolean</span>
+      
+    </div>
+    
+    <div class="default">default: <code>true</code></div>
+    
+    
+    <div class="desc"><p>If true (the default), only assign a server to one component per deployment. Otherwise the same server may be assigned to multiple components.</p>
+</div>
+    
+    
+  </div>
+</div></div></div>
+<div class="static-frame-request-section"><div class="headers-section"><h5 class="title">Path Parameters</h5>
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="numOfDeployments">numOfDeployments</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">integer</span>
+      <span class="required">Required</span>
+    </div>
+    
+    
+    
+    
+    <div class="desc"><p>Number of deployments</p>
+</div>
+    
+    
+  </div>
+</div></div></div>
+<div class="static-frame-request-section"><div class="headers-section"><h5 class="title">Request Body</h5><div class="static-frame-request-section"><div class="" id="primitive-ServiceTemplate">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="ServiceTemplate">ServiceTemplate</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">ServiceTemplate</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div></div></div></div></div></div>
+
+       <div class="api_docs_collapsible dds__mb-3" id="response"><div class="api_docs_collapsible-header dds__p-3" data-action="toggleCollapse" data-target-id="response" role="button" tabindex="0" aria-controls="response-body" aria-expanded="false"><span class="title">Responses</span><span class="icon icon-collapsed dds__icon dds__icon--chevron-right dds__mt-1 dds__ml-auto"></span><span class="icon icon-expanded dds__icon dds__icon--chevron-down dds__mt-1 dds__ml-auto"></span></div><div class="api_docs_collapsible-body" id="response-body"><div class="api_docs_collapsible dds__mb-3" id="3056b054cfbbe"><div class="api_docs_collapsible-header dds__p-3" data-action="toggleCollapse" data-target-id="3056b054cfbbe" role="button" tabindex="0" aria-controls="3056b054cfbbe-body" aria-expanded="false"><span class="title"><div class="response-frame"><span class="text-green"><span class="dds__badge dds__badge--dot dds__mr-2"></span>200</span> : OK</div></span><span class="icon icon-collapsed dds__icon dds__icon--chevron-right dds__mt-1 dds__ml-auto"></span><span class="icon icon-expanded dds__icon dds__icon--chevron-down dds__mt-1 dds__ml-auto"></span></div><div class="api_docs_collapsible-body" id="3056b054cfbbe-body"><div class="static-frame-response-section"><div><div class="headers-section"><div><p>OK</p>
+</div><h5 class="title dds__mt-2">Response Body</h5><div class="static-frame-request-section"><div class="expanded" id="Response Body-DeploymentFilterResponse-of96">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name clickable-property" title="DeploymentFilterResponse" style="cursor: pointer;">DeploymentFilterResponse</span>
+    </div>
+    <span class="schema-toggle-icon" data-action="toggleNestedBodyCard" data-target-id="Response Body-DeploymentFilterResponse-of96" role="button" tabindex="0" aria-controls="Response Body-DeploymentFilterResponse-of96-nested-body" aria-expanded="true">
+            <span class="icon dds__icon dds__icon--chevron-right dds__mt-1 dds__ml-auto hidden"></span>
+            <span class="icon dds__icon dds__icon--chevron-down dds__mt-1 dds__ml-auto"></span>
+        </span>
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">object</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div><div class="nested-body schema-child-row" id="Response Body-DeploymentFilterResponse-of96-nested-body" style="">
+            <div colspan="2" class="nested">
+            <div class="" id="primitive-failedPoolId">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="failedPoolId">failedPoolId</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-numberRequestedServers">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="numberRequestedServers">numberRequestedServers</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">integer&lt;int32&gt;</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-failedPoolName">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="failedPoolName">failedPoolName</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="Response Body-DeploymentFilterResponse-of96-selectedServers-2ecq">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name clickable-property" title="selectedServers" style="cursor: pointer;">selectedServers</span>
+    </div>
+    <span class="schema-toggle-icon" data-action="toggleNestedBodyCard" data-target-id="Response Body-DeploymentFilterResponse-of96-selectedServers-2ecq" role="button" tabindex="0" aria-controls="Response Body-DeploymentFilterResponse-of96-selectedServers-2ecq-nested-body" aria-expanded="false">
+            <span class="icon dds__icon dds__icon--chevron-right dds__mt-1 dds__ml-auto"></span>
+            <span class="icon dds__icon dds__icon--chevron-down dds__mt-1 dds__ml-auto hidden"></span>
+        </span>
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">array[object]</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div><div class="nested-body schema-child-row" id="Response Body-DeploymentFilterResponse-of96-selectedServers-2ecq-nested-body" style="display:none">
+            <div colspan="2" class="nested">
+            <div class="" id="primitive-refId">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="refId">refId</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-serviceTag">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="serviceTag">serviceTag</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-componentId">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="componentId">componentId</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-storageType">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="storageType">storageType</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    <div class="enums">allowed values: <span class="dds__badge dds__badge--sm dds__badge--brand dds__badge--light">NVME</span> <span class="dds__badge dds__badge--sm dds__badge--brand dds__badge--light">ALL_FLASH</span> <span class="dds__badge dds__badge--sm dds__badge--brand dds__badge--light">HYBRID</span> <span class="dds__badge dds__badge--sm dds__badge--brand dds__badge--light">HDD</span> <span class="dds__badge dds__badge--sm dds__badge--brand dds__badge--light">SW_SSD</span> <span class="dds__badge dds__badge--sm dds__badge--brand dds__badge--light">SW_NVME</span> <span class="dds__badge dds__badge--sm dds__badge--brand dds__badge--light">SW_HDD</span> <span class="dds__badge dds__badge--sm dds__badge--brand dds__badge--light">NONE</span></div>
+  </div>
+</div></div>
+<div class="" id="primitive-ipAddress">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="ipAddress">ipAddress</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="Response Body-DeploymentFilterResponse-of96-selectedServers-2ecq-nics-oasn">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name clickable-property" title="nics" style="cursor: pointer;">nics</span>
+    </div>
+    <span class="schema-toggle-icon" data-action="toggleNestedBodyCard" data-target-id="Response Body-DeploymentFilterResponse-of96-selectedServers-2ecq-nics-oasn" role="button" tabindex="0" aria-controls="Response Body-DeploymentFilterResponse-of96-selectedServers-2ecq-nics-oasn-nested-body" aria-expanded="false">
+            <span class="icon dds__icon dds__icon--chevron-right dds__mt-1 dds__ml-auto"></span>
+            <span class="icon dds__icon dds__icon--chevron-down dds__mt-1 dds__ml-auto hidden"></span>
+        </span>
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">array[object]</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div><div class="nested-body schema-child-row" id="Response Body-DeploymentFilterResponse-of96-selectedServers-2ecq-nics-oasn-nested-body" style="display:none">
+            <div colspan="2" class="nested">
+            <div class="" id="primitive-cardNumber">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="cardNumber">cardNumber</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">integer&lt;int32&gt;</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-id">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="id">id</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-portNumber">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="portNumber">portNumber</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">integer&lt;int32&gt;</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-fqdd">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="fqdd">fqdd</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+            </div>
+          </div></div>
+<div class="" id="primitive-exactMatch">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="exactMatch">exactMatch</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">boolean</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-matchUnordered">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="matchUnordered">matchUnordered</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">boolean</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="expanded" id="Response Body-DeploymentFilterResponse-of96-selectedServers-2ecq-raidConfiguration-4t2p">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name clickable-property" title="raidConfiguration" style="cursor: pointer;">raidConfiguration</span>
+    </div>
+    <span class="schema-toggle-icon" data-action="toggleNestedBodyCard" data-target-id="Response Body-DeploymentFilterResponse-of96-selectedServers-2ecq-raidConfiguration-4t2p" role="button" tabindex="0" aria-controls="Response Body-DeploymentFilterResponse-of96-selectedServers-2ecq-raidConfiguration-4t2p-nested-body" aria-expanded="true">
+            <span class="icon dds__icon dds__icon--chevron-right dds__mt-1 dds__ml-auto hidden"></span>
+            <span class="icon dds__icon dds__icon--chevron-down dds__mt-1 dds__ml-auto"></span>
+        </span>
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">object</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div><div class="nested-body schema-child-row" id="Response Body-DeploymentFilterResponse-of96-selectedServers-2ecq-raidConfiguration-4t2p-nested-body" style="">
+            <div colspan="2" class="nested">
+            <div class="" id="Response Body-DeploymentFilterResponse-of96-selectedServers-2ecq-raidConfiguration-4t2p-virtualDisks-2g16">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name clickable-property" title="virtualDisks" style="cursor: pointer;">virtualDisks</span>
+    </div>
+    <span class="schema-toggle-icon" data-action="toggleNestedBodyCard" data-target-id="Response Body-DeploymentFilterResponse-of96-selectedServers-2ecq-raidConfiguration-4t2p-virtualDisks-2g16" role="button" tabindex="0" aria-controls="Response Body-DeploymentFilterResponse-of96-selectedServers-2ecq-raidConfiguration-4t2p-virtualDisks-2g16-nested-body" aria-expanded="false">
+            <span class="icon dds__icon dds__icon--chevron-right dds__mt-1 dds__ml-auto"></span>
+            <span class="icon dds__icon dds__icon--chevron-down dds__mt-1 dds__ml-auto hidden"></span>
+        </span>
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">array[object]</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div><div class="nested-body schema-child-row" id="Response Body-DeploymentFilterResponse-of96-selectedServers-2ecq-raidConfiguration-4t2p-virtualDisks-2g16-nested-body" style="display:none">
+            <div colspan="2" class="nested">
+            <div class="" id="Response Body-DeploymentFilterResponse-of96-selectedServers-2ecq-raidConfiguration-4t2p-virtualDisks-2g16-physicalDisks-pigy">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="physicalDisks">physicalDisks</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">array[string]</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-virtualDiskFqdd">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="virtualDiskFqdd">virtualDiskFqdd</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-raidLevel">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="raidLevel">raidLevel</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    <div class="enums">allowed values: <span class="dds__badge dds__badge--sm dds__badge--brand dds__badge--light">raid0</span> <span class="dds__badge dds__badge--sm dds__badge--brand dds__badge--light">raid1</span> <span class="dds__badge dds__badge--sm dds__badge--brand dds__badge--light">raid5</span> <span class="dds__badge dds__badge--sm dds__badge--brand dds__badge--light">raid6</span> <span class="dds__badge dds__badge--sm dds__badge--brand dds__badge--light">raid10</span> <span class="dds__badge dds__badge--sm dds__badge--brand dds__badge--light">raid50</span> <span class="dds__badge dds__badge--sm dds__badge--brand dds__badge--light">raid60</span> <span class="dds__badge dds__badge--sm dds__badge--brand dds__badge--light">nonraid</span></div>
+  </div>
+</div></div>
+<div class="" id="primitive-rollUpStatus">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="rollUpStatus">rollUpStatus</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-controller">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="controller">controller</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-controllerProductName">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="controllerProductName">controllerProductName</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="expanded" id="Response Body-DeploymentFilterResponse-of96-selectedServers-2ecq-raidConfiguration-4t2p-virtualDisks-2g16-configuration-1zjn">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name clickable-property" title="configuration" style="cursor: pointer;">configuration</span>
+    </div>
+    <span class="schema-toggle-icon" data-action="toggleNestedBodyCard" data-target-id="Response Body-DeploymentFilterResponse-of96-selectedServers-2ecq-raidConfiguration-4t2p-virtualDisks-2g16-configuration-1zjn" role="button" tabindex="0" aria-controls="Response Body-DeploymentFilterResponse-of96-selectedServers-2ecq-raidConfiguration-4t2p-virtualDisks-2g16-configuration-1zjn-nested-body" aria-expanded="true">
+            <span class="icon dds__icon dds__icon--chevron-right dds__mt-1 dds__ml-auto hidden"></span>
+            <span class="icon dds__icon dds__icon--chevron-down dds__mt-1 dds__ml-auto"></span>
+        </span>
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">object</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div><div class="nested-body schema-child-row" id="Response Body-DeploymentFilterResponse-of96-selectedServers-2ecq-raidConfiguration-4t2p-virtualDisks-2g16-configuration-1zjn-nested-body" style="">
+            <div colspan="2" class="nested">
+            <div class="" id="primitive-id">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="id">id</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-disktype">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="disktype">disktype</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    <div class="enums">allowed values: <span class="dds__badge dds__badge--sm dds__badge--brand dds__badge--light">requiressd</span> <span class="dds__badge dds__badge--sm dds__badge--brand dds__badge--light">requirehdd</span> <span class="dds__badge dds__badge--sm dds__badge--brand dds__badge--light">requirenvme</span> <span class="dds__badge dds__badge--sm dds__badge--brand dds__badge--light">first</span> <span class="dds__badge dds__badge--sm dds__badge--brand dds__badge--light">last</span> <span class="dds__badge dds__badge--sm dds__badge--brand dds__badge--light">any</span></div>
+  </div>
+</div></div>
+<div class="" id="primitive-comparator">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="comparator">comparator</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    <div class="enums">allowed values: <span class="dds__badge dds__badge--sm dds__badge--brand dds__badge--light">minimum</span> <span class="dds__badge dds__badge--sm dds__badge--brand dds__badge--light">maximum</span> <span class="dds__badge dds__badge--sm dds__badge--brand dds__badge--light">exact</span></div>
+  </div>
+</div></div>
+<div class="" id="primitive-numberofdisks">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="numberofdisks">numberofdisks</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">integer&lt;int32&gt;</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-raidlevel">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="raidlevel">raidlevel</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    <div class="enums">allowed values: <span class="dds__badge dds__badge--sm dds__badge--brand dds__badge--light">raid0</span> <span class="dds__badge dds__badge--sm dds__badge--brand dds__badge--light">raid1</span> <span class="dds__badge dds__badge--sm dds__badge--brand dds__badge--light">raid5</span> <span class="dds__badge dds__badge--sm dds__badge--brand dds__badge--light">raid6</span> <span class="dds__badge dds__badge--sm dds__badge--brand dds__badge--light">raid10</span> <span class="dds__badge dds__badge--sm dds__badge--brand dds__badge--light">raid50</span> <span class="dds__badge dds__badge--sm dds__badge--brand dds__badge--light">raid60</span> <span class="dds__badge dds__badge--sm dds__badge--brand dds__badge--light">nonraid</span></div>
+  </div>
+</div></div>
+<div class="" id="primitive-virtualDiskFqdd">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="virtualDiskFqdd">virtualDiskFqdd</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-controllerFqdd">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="controllerFqdd">controllerFqdd</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+            </div>
+          </div></div>
+<div class="" id="primitive-mediaType">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="mediaType">mediaType</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-encryptionType">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="encryptionType">encryptionType</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+            </div>
+          </div></div>
+<div class="" id="Response Body-DeploymentFilterResponse-of96-selectedServers-2ecq-raidConfiguration-4t2p-externalVirtualDisks-q8b4">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name clickable-property" title="externalVirtualDisks" style="cursor: pointer;">externalVirtualDisks</span>
+    </div>
+    <span class="schema-toggle-icon" data-action="toggleNestedBodyCard" data-target-id="Response Body-DeploymentFilterResponse-of96-selectedServers-2ecq-raidConfiguration-4t2p-externalVirtualDisks-q8b4" role="button" tabindex="0" aria-controls="Response Body-DeploymentFilterResponse-of96-selectedServers-2ecq-raidConfiguration-4t2p-externalVirtualDisks-q8b4-nested-body" aria-expanded="false">
+            <span class="icon dds__icon dds__icon--chevron-right dds__mt-1 dds__ml-auto"></span>
+            <span class="icon dds__icon dds__icon--chevron-down dds__mt-1 dds__ml-auto hidden"></span>
+        </span>
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">array[object]</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div><div class="nested-body schema-child-row" id="Response Body-DeploymentFilterResponse-of96-selectedServers-2ecq-raidConfiguration-4t2p-externalVirtualDisks-q8b4-nested-body" style="display:none">
+            <div colspan="2" class="nested">
+            <div class="" id="Response Body-DeploymentFilterResponse-of96-selectedServers-2ecq-raidConfiguration-4t2p-externalVirtualDisks-q8b4-physicalDisks-l15h">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="physicalDisks">physicalDisks</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">array[string]</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-virtualDiskFqdd">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="virtualDiskFqdd">virtualDiskFqdd</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-raidLevel">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="raidLevel">raidLevel</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    <div class="enums">allowed values: <span class="dds__badge dds__badge--sm dds__badge--brand dds__badge--light">raid0</span> <span class="dds__badge dds__badge--sm dds__badge--brand dds__badge--light">raid1</span> <span class="dds__badge dds__badge--sm dds__badge--brand dds__badge--light">raid5</span> <span class="dds__badge dds__badge--sm dds__badge--brand dds__badge--light">raid6</span> <span class="dds__badge dds__badge--sm dds__badge--brand dds__badge--light">raid10</span> <span class="dds__badge dds__badge--sm dds__badge--brand dds__badge--light">raid50</span> <span class="dds__badge dds__badge--sm dds__badge--brand dds__badge--light">raid60</span> <span class="dds__badge dds__badge--sm dds__badge--brand dds__badge--light">nonraid</span></div>
+  </div>
+</div></div>
+<div class="" id="primitive-rollUpStatus">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="rollUpStatus">rollUpStatus</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-controller">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="controller">controller</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-controllerProductName">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="controllerProductName">controllerProductName</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="expanded" id="Response Body-DeploymentFilterResponse-of96-selectedServers-2ecq-raidConfiguration-4t2p-externalVirtualDisks-q8b4-configuration-a2hr">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name clickable-property" title="configuration" style="cursor: pointer;">configuration</span>
+    </div>
+    <span class="schema-toggle-icon" data-action="toggleNestedBodyCard" data-target-id="Response Body-DeploymentFilterResponse-of96-selectedServers-2ecq-raidConfiguration-4t2p-externalVirtualDisks-q8b4-configuration-a2hr" role="button" tabindex="0" aria-controls="Response Body-DeploymentFilterResponse-of96-selectedServers-2ecq-raidConfiguration-4t2p-externalVirtualDisks-q8b4-configuration-a2hr-nested-body" aria-expanded="true">
+            <span class="icon dds__icon dds__icon--chevron-right dds__mt-1 dds__ml-auto hidden"></span>
+            <span class="icon dds__icon dds__icon--chevron-down dds__mt-1 dds__ml-auto"></span>
+        </span>
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">object</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div><div class="nested-body schema-child-row" id="Response Body-DeploymentFilterResponse-of96-selectedServers-2ecq-raidConfiguration-4t2p-externalVirtualDisks-q8b4-configuration-a2hr-nested-body" style="">
+            <div colspan="2" class="nested">
+            <div class="" id="primitive-id">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="id">id</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-disktype">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="disktype">disktype</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    <div class="enums">allowed values: <span class="dds__badge dds__badge--sm dds__badge--brand dds__badge--light">requiressd</span> <span class="dds__badge dds__badge--sm dds__badge--brand dds__badge--light">requirehdd</span> <span class="dds__badge dds__badge--sm dds__badge--brand dds__badge--light">requirenvme</span> <span class="dds__badge dds__badge--sm dds__badge--brand dds__badge--light">first</span> <span class="dds__badge dds__badge--sm dds__badge--brand dds__badge--light">last</span> <span class="dds__badge dds__badge--sm dds__badge--brand dds__badge--light">any</span></div>
+  </div>
+</div></div>
+<div class="" id="primitive-comparator">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="comparator">comparator</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    <div class="enums">allowed values: <span class="dds__badge dds__badge--sm dds__badge--brand dds__badge--light">minimum</span> <span class="dds__badge dds__badge--sm dds__badge--brand dds__badge--light">maximum</span> <span class="dds__badge dds__badge--sm dds__badge--brand dds__badge--light">exact</span></div>
+  </div>
+</div></div>
+<div class="" id="primitive-numberofdisks">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="numberofdisks">numberofdisks</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">integer&lt;int32&gt;</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-raidlevel">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="raidlevel">raidlevel</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    <div class="enums">allowed values: <span class="dds__badge dds__badge--sm dds__badge--brand dds__badge--light">raid0</span> <span class="dds__badge dds__badge--sm dds__badge--brand dds__badge--light">raid1</span> <span class="dds__badge dds__badge--sm dds__badge--brand dds__badge--light">raid5</span> <span class="dds__badge dds__badge--sm dds__badge--brand dds__badge--light">raid6</span> <span class="dds__badge dds__badge--sm dds__badge--brand dds__badge--light">raid10</span> <span class="dds__badge dds__badge--sm dds__badge--brand dds__badge--light">raid50</span> <span class="dds__badge dds__badge--sm dds__badge--brand dds__badge--light">raid60</span> <span class="dds__badge dds__badge--sm dds__badge--brand dds__badge--light">nonraid</span></div>
+  </div>
+</div></div>
+<div class="" id="primitive-virtualDiskFqdd">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="virtualDiskFqdd">virtualDiskFqdd</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-controllerFqdd">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="controllerFqdd">controllerFqdd</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+            </div>
+          </div></div>
+<div class="" id="primitive-mediaType">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="mediaType">mediaType</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-encryptionType">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="encryptionType">encryptionType</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+            </div>
+          </div></div>
+<div class="" id="Response Body-DeploymentFilterResponse-of96-selectedServers-2ecq-raidConfiguration-4t2p-hddHotSpares-bnnm">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="hddHotSpares">hddHotSpares</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">array[string]</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="Response Body-DeploymentFilterResponse-of96-selectedServers-2ecq-raidConfiguration-4t2p-ssdHotSpares-2idl">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="ssdHotSpares">ssdHotSpares</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">array[string]</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="Response Body-DeploymentFilterResponse-of96-selectedServers-2ecq-raidConfiguration-4t2p-externalHddHotSpares-qvdh">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="externalHddHotSpares">externalHddHotSpares</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">array[string]</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="Response Body-DeploymentFilterResponse-of96-selectedServers-2ecq-raidConfiguration-4t2p-externalSsdHotSpares-8p1i">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="externalSsdHotSpares">externalSsdHotSpares</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">array[string]</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-sizeToDiskMap">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="sizeToDiskMap">sizeToDiskMap</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">object</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+            </div>
+          </div></div>
+<div class="" id="primitive-ansibleDisks">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="ansibleDisks">ansibleDisks</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">object</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="Response Body-DeploymentFilterResponse-of96-selectedServers-2ecq-diskRotationList-f2xb">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name clickable-property" title="diskRotationList" style="cursor: pointer;">diskRotationList</span>
+    </div>
+    <span class="schema-toggle-icon" data-action="toggleNestedBodyCard" data-target-id="Response Body-DeploymentFilterResponse-of96-selectedServers-2ecq-diskRotationList-f2xb" role="button" tabindex="0" aria-controls="Response Body-DeploymentFilterResponse-of96-selectedServers-2ecq-diskRotationList-f2xb-nested-body" aria-expanded="false">
+            <span class="icon dds__icon dds__icon--chevron-right dds__mt-1 dds__ml-auto"></span>
+            <span class="icon dds__icon dds__icon--chevron-down dds__mt-1 dds__ml-auto hidden"></span>
+        </span>
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">array[object]</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-inventoryCredntialId">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="inventoryCredntialId">inventoryCredntialId</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="Response Body-DeploymentFilterResponse-of96-selectedServers-2ecq-warningMessages-jykq">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="warningMessages">warningMessages</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">array[string]</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+            </div>
+          </div></div>
+<div class="" id="Response Body-DeploymentFilterResponse-of96-rejectedServers-mhq2">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name clickable-property" title="rejectedServers" style="cursor: pointer;">rejectedServers</span>
+    </div>
+    <span class="schema-toggle-icon" data-action="toggleNestedBodyCard" data-target-id="Response Body-DeploymentFilterResponse-of96-rejectedServers-mhq2" role="button" tabindex="0" aria-controls="Response Body-DeploymentFilterResponse-of96-rejectedServers-mhq2-nested-body" aria-expanded="false">
+            <span class="icon dds__icon dds__icon--chevron-right dds__mt-1 dds__ml-auto"></span>
+            <span class="icon dds__icon dds__icon--chevron-down dds__mt-1 dds__ml-auto hidden"></span>
+        </span>
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">array[object]</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div><div class="nested-body schema-child-row" id="Response Body-DeploymentFilterResponse-of96-rejectedServers-mhq2-nested-body" style="display:none">
+            <div colspan="2" class="nested">
+            <div class="" id="primitive-refId">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="refId">refId</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-reason">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="reason">reason</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    <div class="enums">allowed values: <span class="dds__badge dds__badge--sm dds__badge--brand dds__badge--light">RAID</span> <span class="dds__badge dds__badge--sm dds__badge--brand dds__badge--light">BAD_STATE</span> <span class="dds__badge dds__badge--sm dds__badge--brand dds__badge--light">UNMANAGED_STATE</span> <span class="dds__badge dds__badge--sm dds__badge--brand dds__badge--light">UPDATING_STATE</span> <span class="dds__badge dds__badge--sm dds__badge--brand dds__badge--light">PENDING_STATE</span> <span class="dds__badge dds__badge--sm dds__badge--brand dds__badge--light">NIC_CAPS</span> <span class="dds__badge dds__badge--sm dds__badge--brand dds__badge--light">SD_NOT_PRESENT</span> <span class="dds__badge dds__badge--sm dds__badge--brand dds__badge--light">LOCAL_FLASH_STORAGE_NOT_PRESENT</span> <span class="dds__badge dds__badge--sm dds__badge--brand dds__badge--light">BAD_MODEL</span> <span class="dds__badge dds__badge--sm dds__badge--brand dds__badge--light">ALREADY_DEPLOYED</span> <span class="dds__badge dds__badge--sm dds__badge--brand dds__badge--light">RESERVED_STATE</span> <span class="dds__badge dds__badge--sm dds__badge--brand dds__badge--light">CLONED_MODEL_MISMATCH</span> <span class="dds__badge dds__badge--sm dds__badge--brand dds__badge--light">FIRMWARE_NOT_COMPLIANT</span> <span class="dds__badge dds__badge--sm dds__badge--brand dds__badge--light">OTHER</span> <span class="dds__badge dds__badge--sm dds__badge--brand dds__badge--light">VSAN_NOT_SUPPORTED</span> <span class="dds__badge dds__badge--sm dds__badge--brand dds__badge--light">SCALEIO_NOT_SUPPORTED</span> <span class="dds__badge dds__badge--sm dds__badge--brand dds__badge--light">SERVICE_MODE</span> <span class="dds__badge dds__badge--sm dds__badge--brand dds__badge--light">NODE_INTERLEAVING_MISMATCH</span> <span class="dds__badge dds__badge--sm dds__badge--brand dds__badge--light">COMPRESSION</span> <span class="dds__badge dds__badge--sm dds__badge--brand dds__badge--light">INVALID_INVENTORY</span> <span class="dds__badge dds__badge--sm dds__badge--brand dds__badge--light">CLOUDLINK</span> <span class="dds__badge dds__badge--sm dds__badge--brand dds__badge--light">SED</span> <span class="dds__badge dds__badge--sm dds__badge--brand dds__badge--light">INSUFFICIENT_CPU_FOR_POWERFLEX</span> <span class="dds__badge dds__badge--sm dds__badge--brand dds__badge--light">INSUFFICIENT_MEMORY</span> <span class="dds__badge dds__badge--sm dds__badge--brand dds__badge--light">INSUFFICIENT_LOCAL_STORAGE</span> <span class="dds__badge dds__badge--sm dds__badge--brand dds__badge--light">SOFTWARE_ONLY_SERVER_REQUIRED</span> <span class="dds__badge dds__badge--sm dds__badge--brand dds__badge--light">SOFTWARE_ONLY_NO_MATCHING_OS</span> <span class="dds__badge dds__badge--sm dds__badge--brand dds__badge--light">SOFTWARE_ONLY_NO_MATCHING_VLANS</span> <span class="dds__badge dds__badge--sm dds__badge--brand dds__badge--light">SOFTWARE_ONLY_VLAN_COUNT_MISMATCH</span> <span class="dds__badge dds__badge--sm dds__badge--brand dds__badge--light">SOFTWARE_ONLY_NETWORK_MISSING_IP</span> <span class="dds__badge dds__badge--sm dds__badge--brand dds__badge--light">SOFTWARE_ONLY_NO_DRIVE_MODELS</span> <span class="dds__badge dds__badge--sm dds__badge--brand dds__badge--light">SOFTWARE_ONLY_NO_DRIVE_PARTITIONS</span> <span class="dds__badge dds__badge--sm dds__badge--brand dds__badge--light">SOFTWARE_ONLY_NO_DRIVE_SIZES</span> <span class="dds__badge dds__badge--sm dds__badge--brand dds__badge--light">SDNAS_BOND_INTERFACE_WITHOUT_VLANS_REQUIRED</span> <span class="dds__badge dds__badge--sm dds__badge--brand dds__badge--light">SDNAS_SOFTWARE_ONLY_UNSUPPORTED_OS</span> <span class="dds__badge dds__badge--sm dds__badge--brand dds__badge--light">SOFTWARE_ONLY_POWERFLEX_ALREADY_INSTALLED</span> <span class="dds__badge dds__badge--sm dds__badge--brand dds__badge--light">SOFTWARE_ONLY_SLES_15_REQUIRES_PYTHON3_RPM</span> <span class="dds__badge dds__badge--sm dds__badge--brand dds__badge--light">SOFTWARE_ONLY_COUL_NOT_GET_PACKAGE_INFO</span> <span class="dds__badge dds__badge--sm dds__badge--brand dds__badge--light">IDRAC_USER_NOT_ADMINISTRATOR</span> <span class="dds__badge dds__badge--sm dds__badge--brand dds__badge--light">IDRAC_USERROLE_NOT_PRESENT</span> <span class="dds__badge dds__badge--sm dds__badge--brand dds__badge--light">ERASURECODING_PMEM_UNSUPPORTED</span> <span class="dds__badge dds__badge--sm dds__badge--brand dds__badge--light">CENTOS_NOT_SUPPORTED_ON_16G_AND_ABOVE</span> <span class="dds__badge dds__badge--sm dds__badge--brand dds__badge--light">SDPM_BATTERY_NOT_ENOUGH_CHARGED</span></div>
+  </div>
+</div></div>
+<div class="" id="primitive-message">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="message">message</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-serviceTag">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="serviceTag">serviceTag</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-ipaddress">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="ipaddress">ipaddress</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+            </div>
+          </div></div>
+<div class="" id="primitive-numberSelectedServers">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="numberSelectedServers">numberSelectedServers</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">integer&lt;int32&gt;</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+            </div>
+          </div></div></div></div></div></div></div></div></div></div>
+   </div>
+        <div class="api__doc__right-section dds__pl-2"><div class="api_docs_collapsible highlight dds__mb-3 expanded" id="server"><div class="api_docs_collapsible-header dds__p-3" data-action="toggleCollapse" data-target-id="server" role="button" tabindex="0" aria-expanded="true"><div class="dds__w-100"><div class="server-title"><span class="dds__badge dds__badge--md http-method-post"><span class="dds__badge__label badge-font">POST</span></span><button style="float: right; border: 1px solid #9ca3af; display:none" class="dds__ml-auto dds__button dds__button--sm" type="button" id="drawer-trigger" data-action="clickedTryOutButton">Try it</button></div><div class="dds__p-2">/Deployment/filter/{numOfDeployments}</div></div><span class="icon icon-collapsed dds__icon dds__icon--chevron-right dds__ml-auto"></span><span class="icon icon-expanded dds__icon dds__icon--chevron-down dds__ml-auto"></span></div><div class="api_docs_collapsible-body dds__px-3 dds__pt-2 dds__pb-3"><div class="dds__pr-2"></div><div class="dds__d-flex dds__justify-content-end dds__my-2"><button class="dds__button dds__button--sm" data-action="copyCodeById" data-target-id="server-copy-0">Copy</button></div><pre tabindex="0"><code id="server-copy-0">/Deployment/filter/{numOfDeployments}</code></pre></div></div>
+<div class="api_docs_collapsible highlight dds__mb-3 expanded" id="requestsamples"><div class="api_docs_collapsible-header dds__p-3" data-action="toggleCollapse" data-target-id="requestsamples" role="button" tabindex="0" aria-controls="requestsamples-body" aria-expanded="true">Request Samples<span class="icon icon-collapsed dds__icon dds__icon--chevron-right dds__ml-auto"></span><span class="icon icon-expanded dds__icon dds__icon--chevron-down dds__ml-auto"></span></div><div class="api_docs_collapsible-body dds__px-3 dds__pt-2 dds__pb-3" id="requestsamples-body">
+        <div class="dds__pt-2">
+          <label for="requestsamples-media-content-type" class="dds__visually-hidden">Select content type</label>
+          <select id="requestsamples-media-content-type" class="dds__select__field dds__mb-2" data-action="onContentTypeChange" data-example-select-id="requestsamples-media-example" data-code-container-id="requestsamples-media-code" data-examples-data="%7B%22application%2Fjson%22%3A%5B%7B%22description%22%3A%22Example%22%2C%22codeContent%22%3A%22null%22%7D%5D%2C%22application%2Fxml%22%3A%5B%5D%7D" aria-label="Select content type">
+            <option value="application/json" selected="">application/json</option><option value="application/xml">application/xml</option>
+          </select>
+        </div><div class="dds__pt-2"><label for="requestsamples-media-example" class="dds__visually-hidden">Select example</label><select id="requestsamples-media-example" class="dds__select__field" data-action="onExampleSelectChange" data-code-container-id="requestsamples-media-code" aria-label="Select example"><option value="0" data-code="null" data-description="Example">
+        Example
+      </option></select></div>
+        <div class="dds__d-flex dds__justify-content-end dds__my-2">
+              <button class="dds__button dds__button--sm" data-action="copyCodeById" data-target-id="requestsamples-media-code">
+                    Copy
+                  </button>
+        </div>
+        <div id="requestsamples-media-code">
+          <pre tabindex="0"><code>null</code></pre>
+        </div></div></div>
+<div class="api_docs_collapsible highlight dds__mb-3 expanded" id="responsesamples"><div class="api_docs_collapsible-header dds__p-3" data-action="toggleCollapse" data-target-id="responsesamples" role="button" tabindex="0" aria-controls="responsesamples-body" aria-expanded="true">Response Samples<span class="icon icon-collapsed dds__icon dds__icon--chevron-right dds__ml-auto"></span><span class="icon icon-expanded dds__icon dds__icon--chevron-down dds__ml-auto"></span></div><div class="api_docs_collapsible-body dds__px-3 dds__pt-2 dds__pb-3" id="responsesamples-body"><div class="response-tab-wrapper"><div class="tab-header" role="tablist"><h4 class="tab-item active" role="tab" aria-selected="true" aria-controls="responsesamples-tab-200" data-action="switchTab" data-target-id="responsesamples-tab-200">200</h4></div><div class="tab-body"><div class="tab-content active" id="responsesamples-tab-200" role="tabpanel" aria-labelledby="responsesamples-tab-200"><div class="dds__pt-2" role="presentation">
+        <label for="responsesamples-tab-200-content-type" class="dds__visually-hidden">Select content type</label>
+        <select id="responsesamples-tab-200-content-type" class="dds__select__field dds__mb-2" data-action="onContentTypeChange" data-example-select-id="responsesamples-tab-200-example" data-code-container-id="responsesamples-tab-200-code" data-examples-data="%7B%22application%2Fjson%22%3A%5B%7B%22description%22%3A%22Example%22%2C%22codeContent%22%3A%22%7B%5Cn%20%20%5C%22failedPoolId%5C%22%3A%20%5C%22string%5C%22%2C%5Cn%20%20%5C%22numberRequestedServers%5C%22%3A%200%2C%5Cn%20%20%5C%22failedPoolName%5C%22%3A%20%5C%22string%5C%22%2C%5Cn%20%20%5C%22selectedServers%5C%22%3A%20%5B%5Cn%20%20%20%20%7B%5Cn%20%20%20%20%20%20%5C%22refId%5C%22%3A%20%5C%22string%5C%22%2C%5Cn%20%20%20%20%20%20%5C%22serviceTag%5C%22%3A%20%5C%22string%5C%22%2C%5Cn%20%20%20%20%20%20%5C%22componentId%5C%22%3A%20%5C%22string%5C%22%2C%5Cn%20%20%20%20%20%20%5C%22storageType%5C%22%3A%20%5C%22string%5C%22%2C%5Cn%20%20%20%20%20%20%5C%22ipAddress%5C%22%3A%20%5C%22string%5C%22%2C%5Cn%20%20%20%20%20%20%5C%22nics%5C%22%3A%20%5B%5Cn%20%20%20%20%20%20%20%20%7B%5Cn%20%20%20%20%20%20%20%20%20%20%5C%22cardNumber%5C%22%3A%200%2C%5Cn%20%20%20%20%20%20%20%20%20%20%5C%22id%5C%22%3A%20%5C%22string%5C%22%2C%5Cn%20%20%20%20%20%20%20%20%20%20%5C%22portNumber%5C%22%3A%200%2C%5Cn%20%20%20%20%20%20%20%20%20%20%5C%22fqdd%5C%22%3A%20%5C%22string%5C%22%5Cn%20%20%20%20%20%20%20%20%7D%5Cn%20%20%20%20%20%20%5D%2C%5Cn%20%20%20%20%20%20%5C%22exactMatch%5C%22%3A%20false%2C%5Cn%20%20%20%20%20%20%5C%22matchUnordered%5C%22%3A%20false%2C%5Cn%20%20%20%20%20%20%5C%22raidConfiguration%5C%22%3A%20%7B%5Cn%20%20%20%20%20%20%20%20%5C%22virtualDisks%5C%22%3A%20%5B%5Cn%20%20%20%20%20%20%20%20%20%20%7B%5Cn%20%20%20%20%20%20%20%20%20%20%20%20%5C%22physicalDisks%5C%22%3A%20%5B%5Cn%20%20%20%20%20%20%20%20%20%20%20%20%20%20%5C%22string%5C%22%5Cn%20%20%20%20%20%20%20%20%20%20%20%20%5D%2C%5Cn%20%20%20%20%20%20%20%20%20%20%20%20%5C%22virtualDiskFqdd%5C%22%3A%20%5C%22string%5C%22%2C%5Cn%20%20%20%20%20%20%20%20%20%20%20%20%5C%22raidLevel%5C%22%3A%20%5C%22string%5C%22%2C%5Cn%20%20%20%20%20%20%20%20%20%20%20%20%5C%22rollUpStatus%5C%22%3A%20%5C%22string%5C%22%2C%5Cn%20%20%20%20%20%20%20%20%20%20%20%20%5C%22controller%5C%22%3A%20%5C%22string%5C%22%2C%5Cn%20%20%20%20%20%20%20%20%20%20%20%20%5C%22controllerProductName%5C%22%3A%20%5C%22string%5C%22%2C%5Cn%20%20%20%20%20%20%20%20%20%20%20%20%5C%22configuration%5C%22%3A%20%7B%5Cn%20%20%20%20%20%20%20%20%20%20%20%20%20%20%5C%22id%5C%22%3A%20%5C%22string%5C%22%2C%5Cn%20%20%20%20%20%20%20%20%20%20%20%20%20%20%5C%22disktype%5C%22%3A%20%5C%22string%5C%22%2C%5Cn%20%20%20%20%20%20%20%20%20%20%20%20%20%20%5C%22comparator%5C%22%3A%20%5C%22string%5C%22%2C%5Cn%20%20%20%20%20%20%20%20%20%20%20%20%20%20%5C%22numberofdisks%5C%22%3A%200%2C%5Cn%20%20%20%20%20%20%20%20%20%20%20%20%20%20%5C%22raidlevel%5C%22%3A%20%5C%22string%5C%22%2C%5Cn%20%20%20%20%20%20%20%20%20%20%20%20%20%20%5C%22virtualDiskFqdd%5C%22%3A%20%5C%22string%5C%22%2C%5Cn%20%20%20%20%20%20%20%20%20%20%20%20%20%20%5C%22controllerFqdd%5C%22%3A%20%5C%22string%5C%22%5Cn%20%20%20%20%20%20%20%20%20%20%20%20%7D%2C%5Cn%20%20%20%20%20%20%20%20%20%20%20%20%5C%22mediaType%5C%22%3A%20%5C%22string%5C%22%2C%5Cn%20%20%20%20%20%20%20%20%20%20%20%20%5C%22encryptionType%5C%22%3A%20%5C%22string%5C%22%5Cn%20%20%20%20%20%20%20%20%20%20%7D%5Cn%20%20%20%20%20%20%20%20%5D%2C%5Cn%20%20%20%20%20%20%20%20%5C%22externalVirtualDisks%5C%22%3A%20%5B%5Cn%20%20%20%20%20%20%20%20%20%20%7B%5Cn%20%20%20%20%20%20%20%20%20%20%20%20%5C%22physicalDisks%5C%22%3A%20%5B%5Cn%20%20%20%20%20%20%20%20%20%20%20%20%20%20%5C%22string%5C%22%5Cn%20%20%20%20%20%20%20%20%20%20%20%20%5D%2C%5Cn%20%20%20%20%20%20%20%20%20%20%20%20%5C%22virtualDiskFqdd%5C%22%3A%20%5C%22string%5C%22%2C%5Cn%20%20%20%20%20%20%20%20%20%20%20%20%5C%22raidLevel%5C%22%3A%20%5C%22string%5C%22%2C%5Cn%20%20%20%20%20%20%20%20%20%20%20%20%5C%22rollUpStatus%5C%22%3A%20%5C%22string%5C%22%2C%5Cn%20%20%20%20%20%20%20%20%20%20%20%20%5C%22controller%5C%22%3A%20%5C%22string%5C%22%2C%5Cn%20%20%20%20%20%20%20%20%20%20%20%20%5C%22controllerProductName%5C%22%3A%20%5C%22string%5C%22%2C%5Cn%20%20%20%20%20%20%20%20%20%20%20%20%5C%22configuration%5C%22%3A%20%7B%5Cn%20%20%20%20%20%20%20%20%20%20%20%20%20%20%5C%22id%5C%22%3A%20%5C%22string%5C%22%2C%5Cn%20%20%20%20%20%20%20%20%20%20%20%20%20%20%5C%22disktype%5C%22%3A%20%5C%22string%5C%22%2C%5Cn%20%20%20%20%20%20%20%20%20%20%20%20%20%20%5C%22comparator%5C%22%3A%20%5C%22string%5C%22%2C%5Cn%20%20%20%20%20%20%20%20%20%20%20%20%20%20%5C%22numberofdisks%5C%22%3A%200%2C%5Cn%20%20%20%20%20%20%20%20%20%20%20%20%20%20%5C%22raidlevel%5C%22%3A%20%5C%22string%5C%22%2C%5Cn%20%20%20%20%20%20%20%20%20%20%20%20%20%20%5C%22virtualDiskFqdd%5C%22%3A%20%5C%22string%5C%22%2C%5Cn%20%20%20%20%20%20%20%20%20%20%20%20%20%20%5C%22controllerFqdd%5C%22%3A%20%5C%22string%5C%22%5Cn%20%20%20%20%20%20%20%20%20%20%20%20%7D%2C%5Cn%20%20%20%20%20%20%20%20%20%20%20%20%5C%22mediaType%5C%22%3A%20%5C%22string%5C%22%2C%5Cn%20%20%20%20%20%20%20%20%20%20%20%20%5C%22encryptionType%5C%22%3A%20%5C%22string%5C%22%5Cn%20%20%20%20%20%20%20%20%20%20%7D%5Cn%20%20%20%20%20%20%20%20%5D%2C%5Cn%20%20%20%20%20%20%20%20%5C%22hddHotSpares%5C%22%3A%20%5B%5Cn%20%20%20%20%20%20%20%20%20%20%5C%22string%5C%22%5Cn%20%20%20%20%20%20%20%20%5D%2C%5Cn%20%20%20%20%20%20%20%20%5C%22ssdHotSpares%5C%22%3A%20%5B%5Cn%20%20%20%20%20%20%20%20%20%20%5C%22string%5C%22%5Cn%20%20%20%20%20%20%20%20%5D%2C%5Cn%20%20%20%20%20%20%20%20%5C%22externalHddHotSpares%5C%22%3A%20%5B%5Cn%20%20%20%20%20%20%20%20%20%20%5C%22string%5C%22%5Cn%20%20%20%20%20%20%20%20%5D%2C%5Cn%20%20%20%20%20%20%20%20%5C%22externalSsdHotSpares%5C%22%3A%20%5B%5Cn%20%20%20%20%20%20%20%20%20%20%5C%22string%5C%22%5Cn%20%20%20%20%20%20%20%20%5D%2C%5Cn%20%20%20%20%20%20%20%20%5C%22sizeToDiskMap%5C%22%3A%20%7B%7D%5Cn%20%20%20%20%20%20%7D%2C%5Cn%20%20%20%20%20%20%5C%22ansibleDisks%5C%22%3A%20%7B%7D%2C%5Cn%20%20%20%20%20%20%5C%22diskRotationList%5C%22%3A%20%5B%5Cn%20%20%20%20%20%20%20%20%7B%7D%5Cn%20%20%20%20%20%20%5D%2C%5Cn%20%20%20%20%20%20%5C%22inventoryCredntialId%5C%22%3A%20%5C%22string%5C%22%2C%5Cn%20%20%20%20%20%20%5C%22warningMessages%5C%22%3A%20%5B%5Cn%20%20%20%20%20%20%20%20%5C%22string%5C%22%5Cn%20%20%20%20%20%20%5D%5Cn%20%20%20%20%7D%5Cn%20%20%5D%2C%5Cn%20%20%5C%22rejectedServers%5C%22%3A%20%5B%5Cn%20%20%20%20%7B%5Cn%20%20%20%20%20%20%5C%22refId%5C%22%3A%20%5C%22string%5C%22%2C%5Cn%20%20%20%20%20%20%5C%22reason%5C%22%3A%20%5C%22string%5C%22%2C%5Cn%20%20%20%20%20%20%5C%22message%5C%22%3A%20%5C%22string%5C%22%2C%5Cn%20%20%20%20%20%20%5C%22serviceTag%5C%22%3A%20%5C%22string%5C%22%2C%5Cn%20%20%20%20%20%20%5C%22ipaddress%5C%22%3A%20%5C%22string%5C%22%5Cn%20%20%20%20%7D%5Cn%20%20%5D%2C%5Cn%20%20%5C%22numberSelectedServers%5C%22%3A%200%5Cn%7D%22%7D%5D%2C%22application%2Fxml%22%3A%5B%5D%7D" aria-label="Select content type">
+          <option value="application/json" selected="">application/json</option><option value="application/xml">application/xml</option>
+        </select><div class="content-description dds__mb-1"><p>OK</p>
+</div><label for="responsesamples-tab-200-example" class="dds__visually-hidden">Select response example</label>
+       <select id="responsesamples-tab-200-example" class="dds__select__field" data-action="onExampleSelectChange" data-code-container-id="responsesamples-tab-200-code" aria-label="Select response example">
+        <option value="0" data-code="{
+  &quot;failedPoolId&quot;: &quot;string&quot;,
+  &quot;numberRequestedServers&quot;: 0,
+  &quot;failedPoolName&quot;: &quot;string&quot;,
+  &quot;selectedServers&quot;: [
+    {
+      &quot;refId&quot;: &quot;string&quot;,
+      &quot;serviceTag&quot;: &quot;string&quot;,
+      &quot;componentId&quot;: &quot;string&quot;,
+      &quot;storageType&quot;: &quot;string&quot;,
+      &quot;ipAddress&quot;: &quot;string&quot;,
+      &quot;nics&quot;: [
+        {
+          &quot;cardNumber&quot;: 0,
+          &quot;id&quot;: &quot;string&quot;,
+          &quot;portNumber&quot;: 0,
+          &quot;fqdd&quot;: &quot;string&quot;
+        }
+      ],
+      &quot;exactMatch&quot;: false,
+      &quot;matchUnordered&quot;: false,
+      &quot;raidConfiguration&quot;: {
+        &quot;virtualDisks&quot;: [
+          {
+            &quot;physicalDisks&quot;: [
+              &quot;string&quot;
+            ],
+            &quot;virtualDiskFqdd&quot;: &quot;string&quot;,
+            &quot;raidLevel&quot;: &quot;string&quot;,
+            &quot;rollUpStatus&quot;: &quot;string&quot;,
+            &quot;controller&quot;: &quot;string&quot;,
+            &quot;controllerProductName&quot;: &quot;string&quot;,
+            &quot;configuration&quot;: {
+              &quot;id&quot;: &quot;string&quot;,
+              &quot;disktype&quot;: &quot;string&quot;,
+              &quot;comparator&quot;: &quot;string&quot;,
+              &quot;numberofdisks&quot;: 0,
+              &quot;raidlevel&quot;: &quot;string&quot;,
+              &quot;virtualDiskFqdd&quot;: &quot;string&quot;,
+              &quot;controllerFqdd&quot;: &quot;string&quot;
+            },
+            &quot;mediaType&quot;: &quot;string&quot;,
+            &quot;encryptionType&quot;: &quot;string&quot;
+          }
+        ],
+        &quot;externalVirtualDisks&quot;: [
+          {
+            &quot;physicalDisks&quot;: [
+              &quot;string&quot;
+            ],
+            &quot;virtualDiskFqdd&quot;: &quot;string&quot;,
+            &quot;raidLevel&quot;: &quot;string&quot;,
+            &quot;rollUpStatus&quot;: &quot;string&quot;,
+            &quot;controller&quot;: &quot;string&quot;,
+            &quot;controllerProductName&quot;: &quot;string&quot;,
+            &quot;configuration&quot;: {
+              &quot;id&quot;: &quot;string&quot;,
+              &quot;disktype&quot;: &quot;string&quot;,
+              &quot;comparator&quot;: &quot;string&quot;,
+              &quot;numberofdisks&quot;: 0,
+              &quot;raidlevel&quot;: &quot;string&quot;,
+              &quot;virtualDiskFqdd&quot;: &quot;string&quot;,
+              &quot;controllerFqdd&quot;: &quot;string&quot;
+            },
+            &quot;mediaType&quot;: &quot;string&quot;,
+            &quot;encryptionType&quot;: &quot;string&quot;
+          }
+        ],
+        &quot;hddHotSpares&quot;: [
+          &quot;string&quot;
+        ],
+        &quot;ssdHotSpares&quot;: [
+          &quot;string&quot;
+        ],
+        &quot;externalHddHotSpares&quot;: [
+          &quot;string&quot;
+        ],
+        &quot;externalSsdHotSpares&quot;: [
+          &quot;string&quot;
+        ],
+        &quot;sizeToDiskMap&quot;: {}
+      },
+      &quot;ansibleDisks&quot;: {},
+      &quot;diskRotationList&quot;: [
+        {}
+      ],
+      &quot;inventoryCredntialId&quot;: &quot;string&quot;,
+      &quot;warningMessages&quot;: [
+        &quot;string&quot;
+      ]
+    }
+  ],
+  &quot;rejectedServers&quot;: [
+    {
+      &quot;refId&quot;: &quot;string&quot;,
+      &quot;reason&quot;: &quot;string&quot;,
+      &quot;message&quot;: &quot;string&quot;,
+      &quot;serviceTag&quot;: &quot;string&quot;,
+      &quot;ipaddress&quot;: &quot;string&quot;
+    }
+  ],
+  &quot;numberSelectedServers&quot;: 0
+}" data-description="Example">
+        Example
+      </option>
+      </select></div><div class="dds__d-flex dds__justify-content-end dds__my-2" role="presentation"><button class="dds__button dds__button--sm" data-action="copyCodeById" data-target-id="responsesamples-tab-200-code">Copy</button></div><div id="responsesamples-tab-200-code" role="presentation"><pre tabindex="0"><code>{
+  "failedPoolId": "string",
+  "numberRequestedServers": 0,
+  "failedPoolName": "string",
+  "selectedServers": [
+    {
+      "refId": "string",
+      "serviceTag": "string",
+      "componentId": "string",
+      "storageType": "string",
+      "ipAddress": "string",
+      "nics": [
+        {
+          "cardNumber": 0,
+          "id": "string",
+          "portNumber": 0,
+          "fqdd": "string"
+        }
+      ],
+      "exactMatch": false,
+      "matchUnordered": false,
+      "raidConfiguration": {
+        "virtualDisks": [
+          {
+            "physicalDisks": [
+              "string"
+            ],
+            "virtualDiskFqdd": "string",
+            "raidLevel": "string",
+            "rollUpStatus": "string",
+            "controller": "string",
+            "controllerProductName": "string",
+            "configuration": {
+              "id": "string",
+              "disktype": "string",
+              "comparator": "string",
+              "numberofdisks": 0,
+              "raidlevel": "string",
+              "virtualDiskFqdd": "string",
+              "controllerFqdd": "string"
+            },
+            "mediaType": "string",
+            "encryptionType": "string"
+          }
+        ],
+        "externalVirtualDisks": [
+          {
+            "physicalDisks": [
+              "string"
+            ],
+            "virtualDiskFqdd": "string",
+            "raidLevel": "string",
+            "rollUpStatus": "string",
+            "controller": "string",
+            "controllerProductName": "string",
+            "configuration": {
+              "id": "string",
+              "disktype": "string",
+              "comparator": "string",
+              "numberofdisks": 0,
+              "raidlevel": "string",
+              "virtualDiskFqdd": "string",
+              "controllerFqdd": "string"
+            },
+            "mediaType": "string",
+            "encryptionType": "string"
+          }
+        ],
+        "hddHotSpares": [
+          "string"
+        ],
+        "ssdHotSpares": [
+          "string"
+        ],
+        "externalHddHotSpares": [
+          "string"
+        ],
+        "externalSsdHotSpares": [
+          "string"
+        ],
+        "sizeToDiskMap": {}
+      },
+      "ansibleDisks": {},
+      "diskRotationList": [
+        {}
+      ],
+      "inventoryCredntialId": "string",
+      "warningMessages": [
+        "string"
+      ]
+    }
+  ],
+  "rejectedServers": [
+    {
+      "refId": "string",
+      "reason": "string",
+      "message": "string",
+      "serviceTag": "string",
+      "ipaddress": "string"
+    }
+  ],
+  "numberSelectedServers": 0
+}</code></pre></div></div></div></div></div></div></div>
+      </div>
+    </div></div></body></html>

@@ -1,6 +1,7 @@
 ---
 name: capacity-planner
 model: sonnet
+disallowedTools: mcp__mds, mcp__ucsc, Edit, NotebookEdit, WebFetch, WebSearch
 color: yellow
 description: Capacity and growth across datastores, PowerMax SRPs and ONTAP aggregates / volumes - free space, overcommit, trends, days to full, reclaim candidates. Read-only.
 ---

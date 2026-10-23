@@ -89,6 +89,7 @@ SYNONYMS = [
     ["sm-as", "snapmirror active sync", "smbc"], ["snapmirror", "snap mirror"],
     ["air gapped", "airgapped", "airgap", "offline", "disconnected", "dark site"],
 ]
+
 _SYN = {w: g for g in SYNONYMS for w in g}
 CODE_EXT = (".go", ".py", ".proto", ".yaml", ".yml", ".sh")
 SOURCE_EXT = (".go", ".py", ".proto", ".sh")
@@ -102,6 +103,20 @@ CODE_WORDS = {"code", "function", "func", "functions", "implementation", "implem
               "golang", "method", "calls", "codebase", "exec", "runs"}
 API_WORDS = {"rest", "api", "endpoint", "curl", "json", "uuid", "http", "https", "swagger", "patch", "post"}
 VERSION = re.compile(r"\bv?(\d+(?:\.\d+)+)\b")
+# question type -> page type (NetApp / Dell name their pages so): "what is / why / should I" wants the concept
+# page, "how to / configure / install" the task page
+ASK_CONCEPT = re.compile(r"^(what|why|which|should|does|is|are|can|when)\b|\b(what is|what are|what happens|how does|"
+                         r"how do .{0,40} work|difference|vs|versus|explain|overview|architecture|concepts?)\b")
+ASK_TASK = re.compile(r"\b(how to|how do i|steps?|set ?up|configure|install|create|enable|disable|apply|add|remove|"
+                      r"replace|upgrade|collect|deploy|run|migrate|mount|map|expand|resize)\b")
+PAGE_CONCEPT = re.compile(r"(concept|overview|definition|architecture|getting-to-know|introduction|/index\.|_index\.|"
+                          r"what-is|understand)", re.I)
+PAGE_TASK = re.compile(r"(-task\b|\btask_|-task\.|/task-)", re.I)
+# measured on 241 questions (dev sets chose, held-out sets confirmed: MRR 0.792 -> 0.816, hit@1 0.70 -> 0.74);
+# tried and dropped: concept pages by title, everyday verb synonyms (neutral), document-level aggregation (worse)
+TYPE_W = 1.3     # boost of a page whose type matches the question type
+TITLE_W = 1.5    # weight of the share of query words in the title / section heading
+PROX_W = 0.3     # bonus when the matched words sit close together in the section
 STOP = set("a an the of for to in on with and or is are was were how what why when where which does do did "
            "my i it its from by at after be can could will this that there into vs via about please".split())
 
@@ -142,6 +157,29 @@ def _stem(w):
     return w[:-1] if len(w) == 4 and w.endswith("s") and not w.endswith("ss") else w   # logs -> log, LUNs -> lun
 
 
+def _proximity(text, groups, found):
+    """1 when the matched query words sit together (a window of their count), falling to 0 when spread out."""
+    pos = []
+    for g, f in zip(groups, found):
+        if not f:
+            continue
+        p = [m.start() for a in g for m in re.finditer(r"\b" + re.escape(_stem(a.split()[0])), text)]
+        if p:
+            pos.append(sorted(p))
+    if len(pos) < 2:
+        return 0.0
+    best, idx = 10 ** 9, [0] * len(pos)                 # smallest character window holding one of each
+    while True:
+        cur = [pos[i][idx[i]] for i in range(len(pos))]
+        lo = min(cur)
+        best = min(best, max(cur) - lo)
+        i = cur.index(lo)
+        idx[i] += 1
+        if idx[i] >= len(pos[i]):
+            break
+    return min(1.0, 12.0 * len(pos) / (best + 1))
+
+
 def _has(text, alt):
     return all(re.search(r"\b" + re.escape(_stem(w)), text) for w in alt.split())
 
@@ -167,8 +205,9 @@ def _idf(c, group):
 def search_docs(c, q, vendor="", product="", limit=8):
     """The search_docs tool. Candidates: chunks containing the quoted phrases and any query word (or a
     synonym); ranking: BM25 (title incl. folder context x6, section x3, text x1) x the squared share of
-    query words the chunk covers (all-word matches lead, a strong near-miss still shows) x (1 + share of
-    them in the title / section heading) x 0.5 for source code; at most two chunks per document."""
+    query words the chunk covers (all-word matches lead, a strong near-miss still shows) x (1 + 1.5 x share of
+    them in the title / section heading) x proximity of the words x question type = page type (concept /
+    task) x 0.5 for source code; at most two chunks per document."""
     req, groups = _terms(q)
     if not req and not groups:
         raise ValueError("empty query")
@@ -199,6 +238,8 @@ def search_docs(c, q, vendor="", product="", limit=8):
         return found
 
     qwords = set(re.findall(r"\w+", q.lower()))
+    ql = q.lower()
+    want = "concept" if ASK_CONCEPT.search(ql) else "task" if ASK_TASK.search(ql) else ""
     versions = VERSION.findall(q.lower())
     # a version in the question ("3.0", "2.16.2", "9.15.1") must win over its neighbours ("3.3"), which FTS
     # cannot tell apart (it splits on dots); docs folders write it with dots, dashes or none (ontap-ems-9151)
@@ -236,7 +277,13 @@ def search_docs(c, q, vendor="", product="", limit=8):
             where = f"{r['path']} {title}".lower()
             weight *= 1 + sum(any(re.search(r"(?<![\d.])" + re.escape(f) + r"(?![\d])", where) for f in fs)
                               for fs in vforms) / len(vforms)
-        scored.append((-r["score"] * cover * cover * weight * (1 + in_title), cover, r))
+        if want:
+            kind = "concept" if PAGE_CONCEPT.search(r["path"]) else "task" if PAGE_TASK.search(r["path"]) else ""
+            if kind == want:
+                weight *= TYPE_W
+        if hit > 1:
+            weight *= 1 + PROX_W * _proximity(text, groups, found)
+        scored.append((-r["score"] * cover * cover * weight * (1 + TITLE_W * in_title), cover, r))
     scored.sort(key=lambda t: -t[0])
     rows, per_doc, found_in = [], {}, []
     for final, cover, r in scored:

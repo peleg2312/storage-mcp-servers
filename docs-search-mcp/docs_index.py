@@ -25,7 +25,7 @@ import sys
 import time
 from html.parser import HTMLParser
 
-TEXT_EXT = (".adoc", ".md", ".rst", ".txt")
+TEXT_EXT = (".adoc", ".md", ".mdx", ".rst", ".txt")      # .mdx: Markdown with components (MCP specification)
 CODE_EXT = (".go", ".py", ".proto", ".yaml", ".yml", ".sh")       # source code (sync-git.sh "code" lines)
 CODE_START = re.compile(r"^(func |type |def |class |async def |message |service |rpc |enum |[\w-]+\(\) ?\{)")
 MAX_CHUNK = 2400
@@ -176,7 +176,7 @@ def parse_md(text, fallback):
         if meta.get("description"):
             buf.append(meta["description"].strip("'\""))
     for line in text.splitlines():
-        m = re.match(r"^(#+)\s+(.+)$", line)
+        m = re.match(r"^(#+)\s+(.+?)(?:\s*\{\s*#[\w-]+\s*\})?\s*$", line)   # "## Features { #features }" (mkdocs anchors)
         if m:
             if title is None and len(m.group(1)) == 1:
                 title = heading = m.group(2).strip()
@@ -392,7 +392,7 @@ def parse_file(path):
         return parse_adoc(text, fallback)
     if low.endswith((".html", ".htm")):
         return parse_html(text, fallback)
-    if low.endswith((".md", ".rst")):
+    if low.endswith((".md", ".mdx", ".rst")):
         return parse_md(text, fallback)
     if low.endswith(CODE_EXT):
         return parse_code(text, path)

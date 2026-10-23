@@ -32,7 +32,9 @@ Code; few high-signal tools) and measured with `docs-search-mcp/eval_search.py`:
   product, folders and file name: a page titled "Troubleshooting" under csm/.../replication/ or a PDF titled
   "pdf" is found by where it sits (the cheap, LLM-free form of contextual BM25).
 - **Ranking.** Candidates = chunks with every word group + best any-word chunks; score = BM25 (title x6,
-  section x3, text x1) x coverage² x (1 + coverage in title / heading) x 0.5 for source code; at most 2
+  section x3, text x1) x coverage² x (1 + 1.5 x coverage in title / heading) x word proximity x question
+  type = page type (a "what is / why / should I" question prefers concept / overview pages, "how to /
+  configure" task pages; x1.3) x 0.5 for source code; at most 2
   chunks per document; storage synonyms (Isilon / PowerScale / OneFS, ScaleIO / VxFlex / PowerFlex, VMAX /
   Symmetrix / PowerMax, RDP, SRDF, air-gapped / offline ...); "quoted" text is required; `matched` tells
   Claude how many query words a hit holds.
@@ -45,6 +47,10 @@ Code; few high-signal tools) and measured with `docs-search-mcp/eval_search.py`:
   longer weigh like "cpu"); document-type priors (REST API reference, 7-Mode / classic guides, pull requests
   and source code only when the question points there); short plurals (`logs` = `log`). The reply lists
   `unmatched` words so Claude rephrases exactly those.
+- **Oct 24: question type, title weight, proximity** (chosen on the dev sets, confirmed on the held-out ones:
+  all 7 sets mean hit@1 0.72 -> 0.75, MRR 0.80 -> 0.83; held-out MRR 0.792 -> 0.816). Tried and dropped:
+  concept pages by title, everyday-verb synonyms (neutral), document-level score aggregation (worse).
+  Remaining misses are paraphrases far from the docs' words (in the candidates, ranked 11-47).
 - **Measured** (`eval_search.py`; hit@1 / hit@5). Sets written blind from random library sections are the
   honest ones (fresh, general); the older sets were written knowing the index:
 

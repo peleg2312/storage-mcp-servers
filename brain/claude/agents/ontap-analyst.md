@@ -1,6 +1,7 @@
 ---
 name: ontap-analyst
 model: sonnet
+tools: Read, Grep, Glob, Bash, Write, mcp__ontap__*, mcp__harvest__*, mcp__kuparashit__*, mcp__docs-search__*, mcp__docs-local__*
 color: cyan
 description: NetApp ONTAP specialist (ontap + harvest MCP) - SVMs, volumes, LUNs, igroups, LIFs, aggregates, EMS, SnapMirror, performance history. Read-only.
 memory: user

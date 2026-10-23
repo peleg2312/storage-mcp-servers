@@ -120,3 +120,16 @@ kubernetes  lib-volume-populator         https://github.com/kubernetes-csi/lib-v
 kubernetes  csi-test                     https://github.com/kubernetes-csi/csi-test     README.md pkg/sanity/README.md cmd/csi-sanity/README.md
 kubernetes  k8s-storage-docs             https://github.com/kubernetes/website          content/en/docs/concepts/storage content/en/docs/tasks/configure-pod-container/configure-persistent-volume-storage.md content/en/docs/tasks/administer-cluster/change-default-storage-class.md content/en/docs/tasks/administer-cluster/change-pv-reclaim-policy.md
 openshift   storage                      https://github.com/openshift/openshift-docs    storage modules/storage-*.adoc modules/persistent-storage-*.adoc modules/virt-*storage*.adoc
+# ---- added 2026-10-24: the FastAPI / MCP development stack (the brain's fastapi-service skill searches these) ----
+python  fastapi                          https://github.com/fastapi/fastapi             docs/en/docs
+python  pydantic                         https://github.com/pydantic/pydantic           docs
+python  pydantic-settings                https://github.com/pydantic/pydantic-settings  docs README.md
+python  starlette                        https://github.com/encode/starlette            docs
+python  uvicorn                          https://github.com/encode/uvicorn              docs
+python  httpx                            https://github.com/encode/httpx                docs
+python  pytest                           https://github.com/pytest-dev/pytest           doc/en
+python  pytest-asyncio                   https://github.com/pytest-dev/pytest-asyncio   docs README.rst
+python  sqlalchemy                       https://github.com/sqlalchemy/sqlalchemy       doc/build/orm doc/build/core doc/build/tutorial doc/build/faq doc/build/errors.rst doc/build/glossary.rst
+mcp     python-sdk                       https://github.com/modelcontextprotocol/python-sdk README.md docs
+mcp     specification                    https://github.com/modelcontextprotocol/modelcontextprotocol docs/specification/2026-07-28 docs/docs
+python  fastmcp                          https://github.com/PrefectHQ/fastmcp           docs/servers docs/clients docs/deployment docs/patterns docs/getting-started docs/integrations docs/changelog.mdx README.md

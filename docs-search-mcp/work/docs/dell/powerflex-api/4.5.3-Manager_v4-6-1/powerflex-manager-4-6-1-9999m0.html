@@ -1,0 +1,50 @@
+<html><head><title>PowerFlex API 4.5.3-Manager_v4-6-1: PowerFlex Manager (4.6.1)</title></head><body><p>Introduction</p><div><div class="api-docs-main-div dds__pl-2">
+    <div class="markdown-wrapper dds__py-3">
+      <div class="markdown-body dds__px-3"><h1 id="introduction-to-powerflex-manager" class="anchor-scroll-top-offset">Introduction to PowerFlex Manager</h1>
+<p>PowerFlex Manager provides IT operations management for Dell PowerFlex rack and appliance. It<br>
+increases efficiency by reducing time-consuming manual tasks that are required to manage system operations. Use PowerFlex Manager to deploy and manage new and existing environments.</p>
+<p>PowerFlex Manager is distributed as a virtual appliance running a collection of interacting web applications that communicate<br>
+through the REST interfaces. An extra web application, the PowerFlex Manager UI, also resides on the virtual appliance,<br>
+providing full browser-based GUI access to PowerFlex Manager. This PowerFlex Manager UI interacts with PowerFlex<br>
+Manager through the same REST interfaces that are described in this guide.<br>
+If you have a licensed version of PowerFlex Manager, PowerFlex Manager can be integrated with any custom UI or accessed<br>
+through programs for an enhanced automation experience.</p>
+<h2 id="powerflex-manager-api" class="anchor-scroll-top-offset">PowerFlex Manager API</h2>
+<p>PowerFlex Manager is a REST API. This API allows you to integrate PowerFlex Manager with any custom UI<br>
+or access it through programs for an enhanced automation experience. It is assumed that you are<br>
+familiar with REST, and programmatic interaction with REST APIs.</p>
+<p>This guide describes how to use these APIs with examples.<br>
+It is assumed that you are familiar with REST, and programmatic interaction with REST APIs.</p>
+<p>For more information on using the APIs, see the <em>Dell PowerFlex 4.6.x Administration Guide</em>.</p>
+<h2 id="target-audience" class="anchor-scroll-top-offset">Target audience</h2>
+<p>The target audience for the PowerFlex Manager API includes programmers responsible for integrating third-party software with PowerFlex<br>
+Manager.</p>
+<h2 id="basic-concepts" class="anchor-scroll-top-offset">Basic concepts</h2>
+<p>PowerFlex Manager includes the following features:</p>
+<ul>
+<li>A dashboard that provides system configuration details and communicates health status for infrastructure elements and<br>
+services</li>
+<li>Firmware and software compliance monitoring and reporting</li>
+<li>Compliance remediation for nodes, switches, VMware ESXi, PowerFlex, and CloudLink</li>
+<li>Hardware monitoring and alerting through either secure connect gateway, email, or SNMP and syslog to Dell Technologies Support</li>
+<li>Aggregated logging for troubleshooting with the ability to send logs through secure connect gateway to Dell Technologies Support<br>
+Use PowerFlex Manager to define and capture infrastructure requirements to support a specific business outcome. Once<br>
+defined, the process can be repeated through automation.</li>
+</ul>
+<p>Most of the REST methods in the PowerFlex Manager API exchange complex data models within the HTTP requests and responses.<br>
+These data models are represented as either XML or JSON.</p>
+<p>Two essential concepts in PowerFlex Manager are the ServiceTemplate and the Deployment process. A ServiceTemplate<br>
+describes a blueprint for provisioning and configuring a collection of devices as a named unit, also known as a Service. The<br>
+Deployment process uses a ServiceTemplate to physically realize what service the service template describes. While the names<br>
+Deployment and Service are synonymous, PowerFlex Manager uses the term Service, whereas the REST API uses the term<br>
+Deployment.</p>
+</div>
+      <div class="markdown-sidebar">
+        <div class="markdown-toc-title">
+          <i class="icon dds__icon dds__icon--bookmark"></i>
+          On this page
+        </div>
+          <ul><li class="level-1"><a href="#introduction-to-powerflex-manager" data-toc-link="">Introduction to PowerFlex Manager</a></li><li class="level-2"><a href="#powerflex-manager-api" data-toc-link="">PowerFlex Manager API</a></li><li class="level-2"><a href="#target-audience" data-toc-link="">Target audience</a></li><li class="level-2"><a href="#basic-concepts" data-toc-link="">Basic concepts</a></li></ul>
+      </div>
+    </div>
+  </div></div></body></html>

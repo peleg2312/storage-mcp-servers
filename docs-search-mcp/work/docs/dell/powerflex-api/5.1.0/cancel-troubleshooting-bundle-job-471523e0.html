@@ -1,0 +1,672 @@
+<html><head><title>PowerFlex API 5.1.0: Cancel troubleshooting bundle job</title></head><body><p>Erasure coding APIS > PowerFlex Manager (AsmManager) REST API > Troubleshooting Bundle</p><div><div class="api-docs-main-div dds__pl-2">
+      <div class="api-doc-container">
+        <div class="api__doc__left-section dds__p-3">
+   <div class="markdown-renderer">
+          <h4 class="dds__font-weight-bold dds__pb-2">Cancel troubleshooting bundle job</h4>       
+          <div><p>Cancels an in-progress troubleshooting bundle job by specifying the job name along with the required authentication details.</p>
+</div> 
+          
+    </div>
+
+<div class="api_docs_collapsible dds__mb-3 expanded" id="request"><div class="api_docs_collapsible-header dds__p-3" data-action="toggleCollapse" data-target-id="request" role="button" tabindex="0" aria-controls="request-body" aria-expanded="true"><span class="title">Requests</span><span class="icon icon-collapsed dds__icon dds__icon--chevron-right dds__mt-1 dds__ml-auto"></span><span class="icon icon-expanded dds__icon dds__icon--chevron-down dds__mt-1 dds__ml-auto"></span></div><div class="api_docs_collapsible-body" id="request-body"><div class="static-frame-request-section"><div class="headers-section"><h5 class="title">Path Parameters</h5>
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="jobName">jobName</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      <span class="required">Required</span>
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div></div>
+<div class="static-frame-request-section"><div class="headers-section"><h5 class="title">Request Body</h5><div class="static-frame-request-section"><div class="" id="primitive-jobName">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="jobName">jobName</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      <span class="required">Required</span>
+    </div>
+    
+    
+    
+    
+    <div class="desc"><p>The unique identifier of the troubleshooting bundle job to cancel.</p>
+</div>
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-productName">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="productName">productName</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      <span class="required">Required</span>
+    </div>
+    
+    
+    
+    
+    <div class="desc"><p>The name of the product for which the troubleshooting bundle was created.</p>
+</div>
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-serviceId">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="serviceId">serviceId</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      <span class="required">Required</span>
+    </div>
+    
+    
+    
+    
+    <div class="desc"><p>The unique identifier of the service associated with the troubleshooting bundle.</p>
+</div>
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-bundleDest">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="bundleDest">bundleDest</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      <span class="required">Required</span>
+    </div>
+    
+    
+    
+    
+    <div class="desc"><p>Destination path or identifier for the troubleshooting bundle (typically “NETWORK”).</p>
+</div>
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-filepath">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="filepath">filepath</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      <span class="required">Required</span>
+    </div>
+    
+    
+    
+    
+    <div class="desc"><p>The file path where the troubleshooting bundle is being stored.</p>
+</div>
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-username">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="username">username</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      <span class="required">Required</span>
+    </div>
+    
+    
+    
+    
+    <div class="desc"><p>The username for authentication with the destination server.</p>
+</div>
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-password">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="password">password</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      <span class="required">Required</span>
+    </div>
+    
+    
+    
+    
+    <div class="desc"><p>The password for authentication with the destination server.</p>
+</div>
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-logLevel">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="logLevel">logLevel</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      <span class="required">Required</span>
+    </div>
+    
+    
+    
+    
+    <div class="desc"><p>The log level used for the troubleshooting bundle. Values: “defaultNodeLogs”, “defaultLogsAndMdmInfo”, “latestLogs”.</p>
+</div>
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-downloadFileKey">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="downloadFileKey">downloadFileKey</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      <span class="required">Required</span>
+    </div>
+    
+    
+    
+    
+    <div class="desc"><p>The unique identifier key for the download file.</p>
+</div>
+    
+    
+  </div>
+</div></div>
+<div class="" id="Request Body-selectedNodeList-8aau">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name clickable-property" title="selectedNodeList" style="cursor: pointer;">selectedNodeList</span>
+    </div>
+    <span class="schema-toggle-icon" data-action="toggleNestedBodyCard" data-target-id="Request Body-selectedNodeList-8aau" role="button" tabindex="0" aria-controls="Request Body-selectedNodeList-8aau-nested-body" aria-expanded="false">
+            <span class="icon dds__icon dds__icon--chevron-right dds__mt-1 dds__ml-auto"></span>
+            <span class="icon dds__icon dds__icon--chevron-down dds__mt-1 dds__ml-auto hidden"></span>
+        </span>
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">array[object]</span>
+      
+    </div>
+    
+    
+    
+    
+    <div class="desc"><p>The list of nodes included in the bundle when node selection was ‘SELECTED’.</p>
+</div>
+    
+    
+  </div>
+</div><div class="nested-body schema-child-row" id="Request Body-selectedNodeList-8aau-nested-body" style="display:none">
+            <div colspan="2" class="nested">
+            <div class="" id="primitive-id">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="id">id</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      <span class="required">Required</span>
+    </div>
+    
+    
+    
+    
+    <div class="desc"><p>Unique identifier of the node</p>
+</div>
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-name">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="name">name</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      <span class="required">Required</span>
+    </div>
+    
+    
+    
+    
+    <div class="desc"><p>Display name of the node</p>
+</div>
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-ipAddress">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="ipAddress">ipAddress</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      <span class="required">Required</span>
+    </div>
+    
+    
+    
+    
+    <div class="desc"><p>IP address of the node</p>
+</div>
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-checked">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="checked">checked</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      <span class="required">Required</span>
+    </div>
+    
+    
+    
+    
+    <div class="desc"><p>Flag indicating whether the node is selected for inclusion</p>
+</div>
+    
+    
+  </div>
+</div></div>
+            </div>
+          </div></div>
+<div class="" id="primitive-includeEsxiLogs">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="includeEsxiLogs">includeEsxiLogs</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">boolean</span>
+      <span class="required">Required</span>
+    </div>
+    
+    
+    
+    
+    <div class="desc"><p>This flag indicating whether ESXi logs should be included in the bundle.</p>
+</div>
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-cloudLinkLogs">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="cloudLinkLogs">cloudLinkLogs</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">boolean</span>
+      <span class="required">Required</span>
+    </div>
+    
+    
+    
+    
+    <div class="desc"><p>This flag indicating whether Cloud Link logs should be included in the bundle.</p>
+</div>
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-includeOldPodLogs">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="includeOldPodLogs">includeOldPodLogs</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">boolean</span>
+      <span class="required">Required</span>
+    </div>
+    
+    
+    
+    
+    <div class="desc"><p>This flag indicating whether old pod logs should be included in the bundle.</p>
+</div>
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-iDracLogs">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="iDracLogs">iDracLogs</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">boolean</span>
+      <span class="required">Required</span>
+    </div>
+    
+    
+    
+    
+    <div class="desc"><p>This flag indicating whether iDRAC logs should be included in the bundle.</p>
+</div>
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-mgmtPlatformLogs">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="mgmtPlatformLogs">mgmtPlatformLogs</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">boolean</span>
+      <span class="required">Required</span>
+    </div>
+    
+    
+    
+    
+    <div class="desc"><p>This flag indicating whether management platform logs should be included in the bundle.</p>
+</div>
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-powerflexBlockLogs">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="powerflexBlockLogs">powerflexBlockLogs</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">boolean</span>
+      <span class="required">Required</span>
+    </div>
+    
+    
+    
+    
+    <div class="desc"><p>This flag indicating whether PowerFlex block logs should be included in the bundle.</p>
+</div>
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-switchLogs">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="switchLogs">switchLogs</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">boolean</span>
+      <span class="required">Required</span>
+    </div>
+    
+    
+    
+    
+    <div class="desc"><p>This flag indicating whether switch logs should be included in the bundle.</p>
+</div>
+    
+    
+  </div>
+</div></div></div></div></div></div></div>
+
+       <div class="api_docs_collapsible dds__mb-3" id="response"><div class="api_docs_collapsible-header dds__p-3" data-action="toggleCollapse" data-target-id="response" role="button" tabindex="0" aria-controls="response-body" aria-expanded="false"><span class="title">Responses</span><span class="icon icon-collapsed dds__icon dds__icon--chevron-right dds__mt-1 dds__ml-auto"></span><span class="icon icon-expanded dds__icon dds__icon--chevron-down dds__mt-1 dds__ml-auto"></span></div><div class="api_docs_collapsible-body" id="response-body"><div class="api_docs_collapsible dds__mb-3" id="e833a2d1382af"><div class="api_docs_collapsible-header dds__p-3" data-action="toggleCollapse" data-target-id="e833a2d1382af" role="button" tabindex="0" aria-controls="e833a2d1382af-body" aria-expanded="false"><span class="title"><div class="response-frame"><span class="text-green"><span class="dds__badge dds__badge--dot dds__mr-2"></span>204</span> </div></span><span class="icon icon-collapsed dds__icon dds__icon--chevron-right dds__mt-1 dds__ml-auto"></span><span class="icon icon-expanded dds__icon dds__icon--chevron-down dds__mt-1 dds__ml-auto"></span></div><div class="api_docs_collapsible-body" id="e833a2d1382af-body"><div class="static-frame-response-section"><div><div class="headers-section"><div><p>No Content</p>
+</div><h5 class="title dds__mt-2">Response Body</h5>No Schema Available.</div></div></div></div></div>
+<div class="api_docs_collapsible dds__mb-3" id="433edd091aa0f"><div class="api_docs_collapsible-header dds__p-3" data-action="toggleCollapse" data-target-id="433edd091aa0f" role="button" tabindex="0" aria-controls="433edd091aa0f-body" aria-expanded="false"><span class="title"><div class="response-frame"><span class="text-red"><span class="dds__badge dds__badge--dot dds__mr-2"></span>400</span> : Bad Request</div></span><span class="icon icon-collapsed dds__icon dds__icon--chevron-right dds__mt-1 dds__ml-auto"></span><span class="icon icon-expanded dds__icon dds__icon--chevron-down dds__mt-1 dds__ml-auto"></span></div><div class="api_docs_collapsible-body" id="433edd091aa0f-body"><div class="static-frame-response-section"><div><div class="headers-section"><div><p>Bad Request</p>
+</div><h5 class="title dds__mt-2">Response Body</h5>No Schema Available.</div></div></div></div></div>
+<div class="api_docs_collapsible dds__mb-3" id="015f73fd09d72"><div class="api_docs_collapsible-header dds__p-3" data-action="toggleCollapse" data-target-id="015f73fd09d72" role="button" tabindex="0" aria-controls="015f73fd09d72-body" aria-expanded="false"><span class="title"><div class="response-frame"><span class="text-red"><span class="dds__badge dds__badge--dot dds__mr-2"></span>404</span> : Not Found</div></span><span class="icon icon-collapsed dds__icon dds__icon--chevron-right dds__mt-1 dds__ml-auto"></span><span class="icon icon-expanded dds__icon dds__icon--chevron-down dds__mt-1 dds__ml-auto"></span></div><div class="api_docs_collapsible-body" id="015f73fd09d72-body"><div class="static-frame-response-section"><div><div class="headers-section"><div><p>Not Found</p>
+</div><h5 class="title dds__mt-2">Response Body</h5>No Schema Available.</div></div></div></div></div>
+<div class="api_docs_collapsible dds__mb-3" id="1e2169ea522d7"><div class="api_docs_collapsible-header dds__p-3" data-action="toggleCollapse" data-target-id="1e2169ea522d7" role="button" tabindex="0" aria-controls="1e2169ea522d7-body" aria-expanded="false"><span class="title"><div class="response-frame"><span class="text-red"><span class="dds__badge dds__badge--dot dds__mr-2"></span>409</span> </div></span><span class="icon icon-collapsed dds__icon dds__icon--chevron-right dds__mt-1 dds__ml-auto"></span><span class="icon icon-expanded dds__icon dds__icon--chevron-down dds__mt-1 dds__ml-auto"></span></div><div class="api_docs_collapsible-body" id="1e2169ea522d7-body"><div class="static-frame-response-section"><div><div class="headers-section"><div><p>Conflict</p>
+</div><h5 class="title dds__mt-2">Response Body</h5>No Schema Available.</div></div></div></div></div>
+<div class="api_docs_collapsible dds__mb-3" id="191a9e66de7a3"><div class="api_docs_collapsible-header dds__p-3" data-action="toggleCollapse" data-target-id="191a9e66de7a3" role="button" tabindex="0" aria-controls="191a9e66de7a3-body" aria-expanded="false"><span class="title"><div class="response-frame"><span class="text-red"><span class="dds__badge dds__badge--dot dds__mr-2"></span>500</span> : Server Error</div></span><span class="icon icon-collapsed dds__icon dds__icon--chevron-right dds__mt-1 dds__ml-auto"></span><span class="icon icon-expanded dds__icon dds__icon--chevron-down dds__mt-1 dds__ml-auto"></span></div><div class="api_docs_collapsible-body" id="191a9e66de7a3-body"><div class="static-frame-response-section"><div><div class="headers-section"><div><p>Internal Server Error</p>
+</div><h5 class="title dds__mt-2">Response Body</h5>No Schema Available.</div></div></div></div></div></div></div>
+   </div>
+        <div class="api__doc__right-section dds__pl-2"><div class="api_docs_collapsible highlight dds__mb-3 expanded" id="server"><div class="api_docs_collapsible-header dds__p-3" data-action="toggleCollapse" data-target-id="server" role="button" tabindex="0" aria-expanded="true"><div class="dds__w-100"><div class="server-title"><span class="dds__badge dds__badge--md http-method-post"><span class="dds__badge__label badge-font">POST</span></span><button style="float: right; border: 1px solid #9ca3af; display:none" class="dds__ml-auto dds__button dds__button--sm" type="button" id="drawer-trigger" data-action="clickedTryOutButton">Try it</button></div><div class="dds__p-2">/TroubleshootingBundle/{jobName}cancel</div></div><span class="icon icon-collapsed dds__icon dds__icon--chevron-right dds__ml-auto"></span><span class="icon icon-expanded dds__icon dds__icon--chevron-down dds__ml-auto"></span></div><div class="api_docs_collapsible-body dds__px-3 dds__pt-2 dds__pb-3"><div class="dds__pr-2"></div><div class="dds__d-flex dds__justify-content-end dds__my-2"><button class="dds__button dds__button--sm" data-action="copyCodeById" data-target-id="server-copy-0">Copy</button></div><pre tabindex="0"><code id="server-copy-0">/TroubleshootingBundle/{jobName}cancel</code></pre></div></div>
+<div class="api_docs_collapsible highlight dds__mb-3 expanded" id="requestsamples"><div class="api_docs_collapsible-header dds__p-3" data-action="toggleCollapse" data-target-id="requestsamples" role="button" tabindex="0" aria-controls="requestsamples-body" aria-expanded="true">Request Samples<span class="icon icon-collapsed dds__icon dds__icon--chevron-right dds__ml-auto"></span><span class="icon icon-expanded dds__icon dds__icon--chevron-down dds__ml-auto"></span></div><div class="api_docs_collapsible-body dds__px-3 dds__pt-2 dds__pb-3" id="requestsamples-body"><div class="dds__pt-2"><label for="requestsamples-media-example" class="dds__visually-hidden">Select example</label><select id="requestsamples-media-example" class="dds__select__field" data-action="onExampleSelectChange" data-code-container-id="requestsamples-media-code" aria-label="Select example"><option value="0" data-code="{
+  &quot;productName&quot;: &quot;PowerFlexManager&quot;,
+  &quot;serviceId&quot;: &quot;svc-001&quot;,
+  &quot;bundleDest&quot;: &quot;NETWORK&quot;,
+  &quot;filepath&quot;: &quot;\\\\server\\share\\bundles\\&quot;,
+  &quot;username&quot;: &quot;admin&quot;,
+  &quot;password&quot;: &quot;securePassword123&quot;,
+  &quot;logLevel&quot;: &quot;defaultLogsAndMdmInfo&quot;,
+  &quot;downloadFileKey&quot;: &quot;bundle-20240515-001&quot;,
+  &quot;selectedNodeList&quot;: [
+    {
+      &quot;id&quot;: &quot;node-001&quot;,
+      &quot;name&quot;: &quot;PrimaryNode&quot;,
+      &quot;ipAddress&quot;: &quot;192.168.1.100&quot;,
+      &quot;checked&quot;: true
+    },
+    {
+      &quot;id&quot;: &quot;node-002&quot;,
+      &quot;name&quot;: &quot;SecondaryNode&quot;,
+      &quot;ipAddress&quot;: &quot;192.168.1.101&quot;,
+      &quot;checked&quot;: true
+    }
+  ],
+  &quot;includeEsxiLogs&quot;: true,
+  &quot;cloudLinkLogs&quot;: false,
+  &quot;includeOldPodLogs&quot;: true,
+  &quot;iDracLogs&quot;: false,
+  &quot;mgmtPlatformLogs&quot;: true,
+  &quot;powerflexBlockLogs&quot;: true,
+  &quot;switchLogs&quot;: false
+}" data-description="Sample Request">
+        Sample Request
+      </option></select></div>
+        <div class="dds__d-flex dds__justify-content-end dds__my-2">
+              <button class="dds__button dds__button--sm" data-action="copyCodeById" data-target-id="requestsamples-media-code">
+                    Copy
+                  </button>
+        </div>
+        <div id="requestsamples-media-code">
+          <pre tabindex="0"><code>{
+  "productName": "PowerFlexManager",
+  "serviceId": "svc-001",
+  "bundleDest": "NETWORK",
+  "filepath": "\\\\server\\share\\bundles\\",
+  "username": "admin",
+  "password": "securePassword123",
+  "logLevel": "defaultLogsAndMdmInfo",
+  "downloadFileKey": "bundle-20240515-001",
+  "selectedNodeList": [
+    {
+      "id": "node-001",
+      "name": "PrimaryNode",
+      "ipAddress": "192.168.1.100",
+      "checked": true
+    },
+    {
+      "id": "node-002",
+      "name": "SecondaryNode",
+      "ipAddress": "192.168.1.101",
+      "checked": true
+    }
+  ],
+  "includeEsxiLogs": true,
+  "cloudLinkLogs": false,
+  "includeOldPodLogs": true,
+  "iDracLogs": false,
+  "mgmtPlatformLogs": true,
+  "powerflexBlockLogs": true,
+  "switchLogs": false
+}</code></pre>
+        </div></div></div>
+<div class="api_docs_collapsible highlight dds__mb-3 expanded" id="responsesamples"><div class="api_docs_collapsible-header dds__p-3" data-action="toggleCollapse" data-target-id="responsesamples" role="button" tabindex="0" aria-controls="responsesamples-body" aria-expanded="true">Response Samples<span class="icon icon-collapsed dds__icon dds__icon--chevron-right dds__ml-auto"></span><span class="icon icon-expanded dds__icon dds__icon--chevron-down dds__ml-auto"></span></div><div class="api_docs_collapsible-body dds__px-3 dds__pt-2 dds__pb-3" id="responsesamples-body"><div class="response-tab-wrapper"><div class="tab-header" role="tablist"><h4 class="tab-item active" role="tab" aria-selected="true" aria-controls="responsesamples-tab-204" data-action="switchTab" data-target-id="responsesamples-tab-204">204</h4><h4 class="tab-item" role="tab" aria-selected="false" aria-controls="responsesamples-tab-400" data-action="switchTab" data-target-id="responsesamples-tab-400">400</h4><h4 class="tab-item" role="tab" aria-selected="false" aria-controls="responsesamples-tab-404" data-action="switchTab" data-target-id="responsesamples-tab-404">404</h4><h4 class="tab-item" role="tab" aria-selected="false" aria-controls="responsesamples-tab-409" data-action="switchTab" data-target-id="responsesamples-tab-409">409</h4><h4 class="tab-item" role="tab" aria-selected="false" aria-controls="responsesamples-tab-500" data-action="switchTab" data-target-id="responsesamples-tab-500">500</h4></div><div class="tab-body"><div class="tab-content active" id="responsesamples-tab-204" role="tabpanel" aria-labelledby="responsesamples-tab-204"><div class="dds__pt-2" role="presentation"><div class="content-type-box dds__mb-1"><div class="content-type-label">application/json</div></div><div class="content-description dds__mb-1"><p>No Content</p>
+</div><label for="responsesamples-tab-204-example" class="dds__visually-hidden">Select response example</label>
+       <select id="responsesamples-tab-204-example" class="dds__select__field" data-action="onExampleSelectChange" data-code-container-id="responsesamples-tab-204-code" aria-label="Select response example">
+        <option value="0" data-code="{
+  &quot;status&quot;: &quot;CANCELLED&quot;,
+  &quot;message&quot;: &quot;Troubleshooting bundle job successfully cancelled&quot;,
+  &quot;jobName&quot;: &quot;bundle-20240515-001&quot;,
+  &quot;cancelledAt&quot;: &quot;2024-05-15T14:30:45Z&quot;
+}" data-description="Sample Response">
+        Sample Response
+      </option>
+      </select></div><div class="dds__d-flex dds__justify-content-end dds__my-2" role="presentation"><button class="dds__button dds__button--sm" data-action="copyCodeById" data-target-id="responsesamples-tab-204-code">Copy</button></div><div id="responsesamples-tab-204-code" role="presentation"><pre tabindex="0"><code>{
+  "status": "CANCELLED",
+  "message": "Troubleshooting bundle job successfully cancelled",
+  "jobName": "bundle-20240515-001",
+  "cancelledAt": "2024-05-15T14:30:45Z"
+}</code></pre></div></div><div class="tab-content" id="responsesamples-tab-400" role="tabpanel" aria-labelledby="responsesamples-tab-400"><div class="dds__pt-2" role="presentation"><div class="content-type-box dds__mb-1"><div class="content-type-label">application/json</div></div><div class="content-description dds__mb-1"><p>Bad Request</p>
+</div><label for="responsesamples-tab-400-example" class="dds__visually-hidden">Select response example</label>
+       <select id="responsesamples-tab-400-example" class="dds__select__field" data-action="onExampleSelectChange" data-code-container-id="responsesamples-tab-400-code" aria-label="Select response example">
+        <option value="0" data-code="{
+  &quot;error&quot;: &quot;Invalid request parameters&quot;,
+  &quot;message&quot;: &quot;Missing required field: productName&quot;
+}" data-description="Sample Response">
+        Sample Response
+      </option>
+      </select></div><div class="dds__d-flex dds__justify-content-end dds__my-2" role="presentation"><button class="dds__button dds__button--sm" data-action="copyCodeById" data-target-id="responsesamples-tab-400-code">Copy</button></div><div id="responsesamples-tab-400-code" role="presentation"><pre tabindex="0"><code>{
+  "error": "Invalid request parameters",
+  "message": "Missing required field: productName"
+}</code></pre></div></div><div class="tab-content" id="responsesamples-tab-404" role="tabpanel" aria-labelledby="responsesamples-tab-404"><div class="dds__pt-2" role="presentation"><div class="content-type-box dds__mb-1"><div class="content-type-label">application/json</div></div><div class="content-description dds__mb-1"><p>Not Found</p>
+</div><label for="responsesamples-tab-404-example" class="dds__visually-hidden">Select response example</label>
+       <select id="responsesamples-tab-404-example" class="dds__select__field" data-action="onExampleSelectChange" data-code-container-id="responsesamples-tab-404-code" aria-label="Select response example">
+        <option value="0" data-code="{
+  &quot;error&quot;: &quot;Job not found&quot;,
+  &quot;message&quot;: &quot;No troubleshooting bundle job found with the specified jobName&quot;
+}" data-description="Sample Response">
+        Sample Response
+      </option>
+      </select></div><div class="dds__d-flex dds__justify-content-end dds__my-2" role="presentation"><button class="dds__button dds__button--sm" data-action="copyCodeById" data-target-id="responsesamples-tab-404-code">Copy</button></div><div id="responsesamples-tab-404-code" role="presentation"><pre tabindex="0"><code>{
+  "error": "Job not found",
+  "message": "No troubleshooting bundle job found with the specified jobName"
+}</code></pre></div></div><div class="tab-content" id="responsesamples-tab-409" role="tabpanel" aria-labelledby="responsesamples-tab-409"><div class="dds__pt-2" role="presentation"><div class="content-type-box dds__mb-1"><div class="content-type-label">application/json</div></div><div class="content-description dds__mb-1"><p>Conflict</p>
+</div><label for="responsesamples-tab-409-example" class="dds__visually-hidden">Select response example</label>
+       <select id="responsesamples-tab-409-example" class="dds__select__field" data-action="onExampleSelectChange" data-code-container-id="responsesamples-tab-409-code" aria-label="Select response example">
+        <option value="0" data-code="{
+  &quot;error&quot;: &quot;Cannot cancel job&quot;,
+  &quot;message&quot;: &quot;Job is already completed or failed and cannot be cancelled&quot;
+}" data-description="Sample Response">
+        Sample Response
+      </option>
+      </select></div><div class="dds__d-flex dds__justify-content-end dds__my-2" role="presentation"><button class="dds__button dds__button--sm" data-action="copyCodeById" data-target-id="responsesamples-tab-409-code">Copy</button></div><div id="responsesamples-tab-409-code" role="presentation"><pre tabindex="0"><code>{
+  "error": "Cannot cancel job",
+  "message": "Job is already completed or failed and cannot be cancelled"
+}</code></pre></div></div><div class="tab-content" id="responsesamples-tab-500" role="tabpanel" aria-labelledby="responsesamples-tab-500"><div class="dds__pt-2" role="presentation"><div class="content-type-box dds__mb-1"><div class="content-type-label">application/json</div></div><div class="content-description dds__mb-1"><p>Internal Server Error</p>
+</div><label for="responsesamples-tab-500-example" class="dds__visually-hidden">Select response example</label>
+       <select id="responsesamples-tab-500-example" class="dds__select__field" data-action="onExampleSelectChange" data-code-container-id="responsesamples-tab-500-code" aria-label="Select response example">
+        <option value="0" data-code="{
+  &quot;error&quot;: &quot;Internal server error&quot;,
+  &quot;message&quot;: &quot;Failed to cancel troubleshooting bundle job&quot;
+}" data-description="Sample Response">
+        Sample Response
+      </option>
+      </select></div><div class="dds__d-flex dds__justify-content-end dds__my-2" role="presentation"><button class="dds__button dds__button--sm" data-action="copyCodeById" data-target-id="responsesamples-tab-500-code">Copy</button></div><div id="responsesamples-tab-500-code" role="presentation"><pre tabindex="0"><code>{
+  "error": "Internal server error",
+  "message": "Failed to cancel troubleshooting bundle job"
+}</code></pre></div></div></div></div></div></div></div>
+      </div>
+    </div></div></body></html>

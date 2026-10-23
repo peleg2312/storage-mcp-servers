@@ -1,6 +1,7 @@
 ---
 name: k8s-storage-analyst
 model: sonnet
+tools: Read, Grep, Glob, Bash, Write, mcp__powermax__*, mcp__ontap__*, mcp__kuparashit__*, mcp__docs-search__*, mcp__docs-local__*
 color: purple
 description: OpenShift / Kubernetes storage specialist for Trident and Dell CSM - PVC / PV / StorageClass, mapping PVs to array volumes, driver versions and known issues. Read-only.
 memory: user

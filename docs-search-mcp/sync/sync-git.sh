@@ -32,11 +32,11 @@ patterns() {
   for s in "$@"; do
     case "$s" in
       code) code=1 ;;
-      *.md|*.adoc|*.rst|*.txt|*.proto) docs="$docs /$s" ;;     # a single file (e.g. CHANGELOG.md)
-      *) docs="$docs /$s/**/*.adoc /$s/**/*.md /$s/**/*.rst /$s/*.md /$s/*.rst /$s/*.adoc" ;;
+      *.md|*.mdx|*.adoc|*.rst|*.txt|*.proto) docs="$docs /$s" ;;     # a single file (e.g. CHANGELOG.md)
+      *) docs="$docs /$s/**/*.adoc /$s/**/*.md /$s/**/*.mdx /$s/**/*.rst /$s/*.md /$s/*.mdx /$s/*.rst /$s/*.adoc" ;;
     esac
   done
-  [ -z "$docs" ] && docs="/*.adoc /**/*.adoc /*.md /**/*.md /*.rst /**/*.rst"
+  [ -z "$docs" ] && docs="/*.adoc /**/*.adoc /*.md /**/*.md /*.mdx /**/*.mdx /*.rst /**/*.rst"
   [ "$code" = 1 ] && docs="$docs /**/*.go /**/*.py /**/*.proto /**/*.yaml /**/*.yml /**/*.sh
     !**/vendor/** !**/third_party/** !*_test.go !**/mocks/** !**/mock/** !**/testdata/** !**/test/** !**/tests/**
     !**/zz_generated* !*.pb.go !*_mock.go !**/mockhelper/** !**/inttests/** !**/release-tools/** !**/hack/**

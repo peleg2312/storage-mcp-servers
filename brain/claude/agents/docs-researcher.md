@@ -1,6 +1,7 @@
 ---
 name: docs-researcher
 model: sonnet
+tools: Read, Grep, Glob, Bash, mcp__docs-search__*, mcp__docs-local__*
 color: pink
 description: Offline documentation and bug researcher (docs MCP only) for error meanings, EMS events, procedures, best practices, known bugs and fixed versions. Read-only.
 memory: user

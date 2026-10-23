@@ -1,0 +1,85 @@
+<html><head><title>PowerFlex API 3.6.0: Additional Gateway configuration methods</title></head><body><p></p><div><div class="api-docs-main-div dds__pl-2">
+    <div class="markdown-wrapper dds__py-3">
+      <div class="markdown-body dds__px-3"><h1 id="additional-gateway-configuration-methods" class="anchor-scroll-top-offset">Additional Gateway configuration methods</h1>
+<h2 id="configure-the-gateway-using-a-cli-tool-such-as-curl" class="anchor-scroll-top-offset">Configure the Gateway using a CLI tool such as cURL</h2>
+
+<blockquote>
+<h4 id="note" class="anchor-scroll-top-offset">NOTE:</h4>
+<p>This action requires a token (key), that is received in an authentication response. For more information, see <a href="./2a-Getting-started.md#authentication">HTTP authentication</a>.</p>
+</blockquote>
+<h3 id="steps" class="anchor-scroll-top-offset">Steps:</h3>
+<ol>
+<li>Send a login request:</li>
+</ol>
+<pre><code>curl -k -v --basic --user admin:VFLEX_ADMIN_PASSWORD https://HOST_ADDRESS/api/login
+</code></pre>
+<p>where <code>VFLEX_ADMIN_PASSWORD</code> is the password used to login to the PowerFlex CLI (scli). The output of this command should be used in the following step instead of <code>KEY</code>.</p>
+<ol>
+<li>Send the following command:</li>
+</ol>
+<pre><code class="language-json">curl -k -v --basic --user admin:KEY -X POST -H "Content-Type:application/json" -d '
+{
+  "mdmAddresses":[
+    "&lt;address a&gt;", "&lt;address b&gt;"
+    ],
+    "mdmPort":"6611", 
+    "gatewayAdminPassword":"&lt;gateway admin new password&gt;"}' https://HOST_ADDRESS/api/updateConfiguration
+</code></pre>
+<p>Example:</p>
+<pre><code class="language-json">curl -k -v --basic --user admin:YWRtaW46MTQyNzczMTA3MzExNjplNzM2MDY5NjhlNjMyZDdjZDU4MTk3MTZkNWYwNzI4Mg -X POST -H "Content-Type: application/json" -d '
+{
+  "mdmAddresses":[
+    "10.76.60.1", "10.76.60.2"
+    ],
+    "mdmPort":"6611", 
+    "gatewayAdminPassword":"NewPassword"
+}' https://10.228.158.190/api/updateConfiguration
+</code></pre>
+<p>where:</p>
+<ul>
+<li>The –k flag is for skipping the SSL certificate verification.</li>
+<li>The –v is an optional flag for extra output verbosity.</li>
+</ul>
+<h2 id="configure-the-powerflex-gateway-by-editing-the-user-properties-file" class="anchor-scroll-top-offset">Configure the PowerFlex Gateway by editing the user properties file</h2>
+<p>If the PowerFlex Gateway was installed manually after PowerFlex was installed, you can edit the <code>gatewayUser.properties</code> file, located on the PowerFlex Installer/PowerFlex Gateway server, to configure the following PowerFlex Installer properties:</p>
+<ul>
+<li>Enable Gateway (default: true).<br>
+To disable, set <code>features.enable_gateway=false</code>. You can completely disable the use of the default port, 443, by setting both this property and <code>features.enable_IM</code> to false.</li>
+<li>Change MDM port (default=6611).<br>
+To change the port, <code>set mdm.port=MDM_PORT_VALUE</code></li>
+<li>Change MDM IP addresses.<br>
+To change the MDM IP addresses, set <code>mdm.ip.addresses=MDM_MANAGEMENT_IP_ADDRESS1;MDM_MANAGEMENT_IP_ADDRESS2</code></li>
+</ul>
+
+<blockquote>
+<h4 id="note" class="anchor-scroll-top-offset">NOTE:</h4>
+<p>The gateway-admin.password property cannot be set manually, because it is saved in the file in hashed format. You should configure it using a REST API command, as explained in <a href="./2a-Getting-started.md#http-token-invalidation-logout">HTTP token invalidation (logout)</a>.</p>
+</blockquote>
+<h3 id="steps" class="anchor-scroll-top-offset">Steps:</h3>
+<ol>
+<li>Using a text editor, open the <code>gatewayUser.properties</code> file located in the following directory on the PowerFlex Installer/PowerFlex Gateway server:
+<ul>
+<li>Windows: C:\Program Files\EMC\ScaleIO\Gateway\webapps\ROOT\WEB-INF\classes\</li>
+<li>Linux : /opt/emc/scaleio/gateway/webapps/ROOT/WEB-INF/classes</li>
+</ul>
+</li>
+<li>Edit the file with the desired changes.</li>
+<li>Save and close the file.</li>
+<li>Restart the scaleio-gateway service:
+<ul>
+<li>Windows: Restart the EMC ScaleIO Gateway service.</li>
+<li>Linux: Enter the following command: <code>service scaleio-gateway restart</code></li>
+</ul>
+</li>
+</ol>
+<p>Configuration is complete.</p>
+</div>
+      <div class="markdown-sidebar">
+        <div class="markdown-toc-title">
+          <i class="icon dds__icon dds__icon--bookmark"></i>
+          On this page
+        </div>
+          <ul><li class="level-1"><a href="#additional-gateway-configuration-methods" data-toc-link="">Additional Gateway configuration methods</a></li><li class="level-2"><a href="#configure-the-gateway-using-a-cli-tool-such-as-curl" data-toc-link="">Configure the Gateway using a CLI tool such as cURL</a></li><li class="level-2"><a href="#configure-the-powerflex-gateway-by-editing-the-user-properties-file" data-toc-link="">Configure the PowerFlex Gateway by editing the user properties file</a></li></ul>
+      </div>
+    </div>
+  </div></div></body></html>

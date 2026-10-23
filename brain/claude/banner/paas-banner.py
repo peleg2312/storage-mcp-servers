@@ -7,7 +7,11 @@ the terminal is not UTF-8; compact layout below 90 columns.
 
     python3 paas-banner.py            Claude start: logo + brain card (library, skills, agents, mode)
     python3 paas-banner.py --login    VM login: logo + system card (host, OS, uptime, load, memory, disk)
+    python3 paas-banner.py --announce F   the start banner, sized to the terminal now, written to settings file F as
+                                      companyAnnouncements: the `claude` wrapper passes F with --settings, so Claude Code
+                                      shows it under its own header (its full-screen display wipes anything printed before)
 """
+import json
 import getpass
 import glob
 import os
@@ -214,8 +218,16 @@ def main():
     except (ImportError, AttributeError, ValueError):
         pass
     login = "--login" in sys.argv[1:]
+    announce = sys.argv[sys.argv.index("--announce") + 1] if "--announce" in sys.argv[1:-1] else None
     cols = shutil.get_terminal_size((100, 24)).columns
-    p, uni = Paint(colour_mode()), utf8()
+    if announce:
+        try:
+            with open("/dev/tty") as tty:
+                cols = os.get_terminal_size(tty.fileno()).columns
+        except OSError:
+            pass
+        cols -= 4                                        # Claude Code's "▎ " bar and indent
+    p, uni = Paint("plain" if announce and os.getenv("NO_COLOR") else "truecolor" if announce else colour_mode()), utf8()
     out, logo_w = [""], 48
     if uni and cols >= 90:
         blocks = PELEG + [""] + SERVICE                  # one gradient over both words, each word centred
@@ -244,7 +256,11 @@ def main():
     text = "\n".join(out)
     if not uni:                                          # non-UTF-8 terminal: nothing outside ASCII
         text = text.translate({0x00b7: "-", 0x25c6: "*", 0x2501: "-", 0x2726: "*"}).encode("ascii", "replace").decode()
-    print(text)
+    if announce:
+        with open(announce, "w", encoding="utf-8") as f:
+            json.dump({"companyAnnouncements": [text.strip("\n")]}, f)
+    else:
+        print(text)
 
 
 if __name__ == "__main__":

@@ -243,5 +243,30 @@
   "url": "https://dl.dell.com/content/manual22814966-dell-emc-powerflex-rack-using-powerflex-manager.pdf?language=en-us",
   "title": "PDF",
   "hub": "https://www.dell.com/support/manuals/en-us/powerflex-rack-hw/flex-rack-flexmgr-ug/alert-messages-and-recommended-actions?guid=guid-19f77807-a5c8-4b25-8f9b-9a36a14b6305&lang=en-us"
+ },
+ "manual29291371-dell-powerflex-appliance-and-powerflex-rack-with-powerflex-5-x-powerflex-manager-compatibility-matrix.pdf": {
+  "url": "https://dl.dell.com/content/manual29291371-dell-powerflex-appliance-and-powerflex-rack-with-powerflex-5-x-powerflex-manager-compatibility-matrix.pdf",
+  "title": "dell powerflex appliance and powerflex rack with powerflex 5 x powerflex manager compatibility matrix",
+  "hub": "extra"
+ },
+ "manual49095098-dell-powerflex-appliance-with-powerflex-5-x-administration-guide.pdf": {
+  "url": "https://dl.dell.com/content/manual49095098-dell-powerflex-appliance-with-powerflex-5-x-administration-guide.pdf",
+  "title": "dell powerflex appliance with powerflex 5 x administration guide",
+  "hub": "extra"
+ },
+ "manual51257183-dell-powerflex-appliance-with-powerflex-5-x-architecture-overview.pdf": {
+  "url": "https://dl.dell.com/content/manual51257183-dell-powerflex-appliance-with-powerflex-5-x-architecture-overview.pdf",
+  "title": "dell powerflex appliance with powerflex 5 x architecture overview",
+  "hub": "extra"
+ },
+ "powerflex-5-0-specification-sheet.pdf": {
+  "url": "https://www.delltechnologies.com/asset/en-us/products/storage/technical-support/powerflex-5-0-specification-sheet.pdf",
+  "title": "powerflex 5 0 specification sheet",
+  "hub": "extra"
+ },
+ "powerflex-solution-brief.pdf": {
+  "url": "https://www.delltechnologies.com/asset/en-us/products/storage/briefs-summaries/powerflex-solution-brief.pdf",
+  "title": "powerflex solution brief",
+  "hub": "extra"
  }
 }

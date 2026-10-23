@@ -1,0 +1,70 @@
+{
+"introduction-to-powerflex-1218m0.html": {
+"url": "https://developer.dell.com/apis/4008/versions/3.6.0/introduction-to-powerflex-1218m0",
+"title": "PowerFlex API 3.6.0: Introduction to PowerFlex"
+},
+"getting-started-1219m0.html": {
+"url": "https://developer.dell.com/apis/4008/versions/3.6.0/getting-started-1219m0",
+"title": "PowerFlex API 3.6.0: Getting started"
+},
+"responses-1220m0.html": {
+"url": "https://developer.dell.com/apis/4008/versions/3.6.0/responses-1220m0",
+"title": "PowerFlex API 3.6.0: Responses"
+},
+"error-messages-1221m0.html": {
+"url": "https://developer.dell.com/apis/4008/versions/3.6.0/error-messages-1221m0",
+"title": "PowerFlex API 3.6.0: Error messages"
+},
+"powerflex-gateway-1222m0.html": {
+"url": "https://developer.dell.com/apis/4008/versions/3.6.0/powerflex-gateway-1222m0",
+"title": "PowerFlex API 3.6.0: PowerFlex Gateway"
+},
+"additional-gateway-configuration-methods-1223m0.html": {
+"url": "https://developer.dell.com/apis/4008/versions/3.6.0/additional-gateway-configuration-methods-1223m0",
+"title": "PowerFlex API 3.6.0: Additional Gateway configuration methods"
+},
+"tasks-1224m0.html": {
+"url": "https://developer.dell.com/apis/4008/versions/3.6.0/tasks-1224m0",
+"title": "PowerFlex API 3.6.0: Tasks"
+},
+"query-the-powerflex-gateway-configuration-get-1225m0.html": {
+"url": "https://developer.dell.com/apis/4008/versions/3.6.0/query-the-powerflex-gateway-configuration-get-1225m0",
+"title": "PowerFlex API 3.6.0: Query the PowerFlex Gateway configuration (GET)"
+},
+"change-the-configuration-of-the-powerflex-gateway-post-1226m0.html": {
+"url": "https://developer.dell.com/apis/4008/versions/3.6.0/change-the-configuration-of-the-powerflex-gateway-post-1226m0",
+"title": "PowerFlex API 3.6.0: Change the configuration of the PowerFlex Gateway (POST)"
+},
+"add-host-certificates-to-the-truststore-1227m0.html": {
+"url": "https://developer.dell.com/apis/4008/versions/3.6.0/add-host-certificates-to-the-truststore-1227m0",
+"title": "PowerFlex API 3.6.0: Add host certificates to the truststore"
+},
+"query-selected-statistics-post-1228m0.html": {
+"url": "https://developer.dell.com/apis/4008/versions/3.6.0/query-selected-statistics-post-1228m0",
+"title": "PowerFlex API 3.6.0: Query selected statistics (POST)"
+},
+"volume-management-1229m0.html": {
+"url": "https://developer.dell.com/apis/4008/versions/3.6.0/volume-management-1229m0",
+"title": "PowerFlex API 3.6.0: Volume Management"
+},
+"snapshot-and-snapshot-policies-1230m0.html": {
+"url": "https://developer.dell.com/apis/4008/versions/3.6.0/snapshot-and-snapshot-policies-1230m0",
+"title": "PowerFlex API 3.6.0: Snapshot and snapshot policies"
+},
+"storage-pool-management-1231m0.html": {
+"url": "https://developer.dell.com/apis/4008/versions/3.6.0/storage-pool-management-1231m0",
+"title": "PowerFlex API 3.6.0: Storage Pool Management"
+},
+"sdc-management-1232m0.html": {
+"url": "https://developer.dell.com/apis/4008/versions/3.6.0/sdc-management-1232m0",
+"title": "PowerFlex API 3.6.0: SDC management"
+},
+"return-messages-overview-1233m0.html": {
+"url": "https://developer.dell.com/apis/4008/versions/3.6.0/return-messages-overview-1233m0",
+"title": "PowerFlex API 3.6.0: Return messages overview"
+},
+"expand-a-cluster-21096m0.html": {
+"url": "https://developer.dell.com/apis/4008/versions/3.6.0/expand-a-cluster-21096m0",
+"title": "PowerFlex API 3.6.0: Expand a cluster"
+}
+}

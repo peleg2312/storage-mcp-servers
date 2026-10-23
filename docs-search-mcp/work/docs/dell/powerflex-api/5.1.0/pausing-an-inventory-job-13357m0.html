@@ -1,0 +1,121 @@
+<html><head><title>PowerFlex API 5.1.0: Pausing an inventory job</title></head><body><p>Tasks > PowerFlex Manager API tasks</p><div><div class="api-docs-main-div dds__pl-2">
+    <div class="markdown-wrapper dds__py-3">
+      <div class="markdown-body dds__px-3"><h1 id="pausing-an-inventory-job" class="anchor-scroll-top-offset">Pausing an inventory job</h1>
+<p>You can pause inventory jobs before an upgrade to prevent upgrade failure.</p>
+<h2 id="1-get-the-list-of-all-inventory-job-ids-required-for-the-pause-api-call" class="anchor-scroll-top-offset">1. Get the list of all inventory job IDs required for the pause API call</h2>
+<pre><code>curl -X 'GET' \
+  'https://&lt;powerflex_manager_hostname&gt;/Api/V1/JobManager?filter=eq%2Cjobtype%2Cinventory&amp;limit=50&amp;offset=0' \
+  -H 'accept: application/json' \
+  -H 'Authorization: Bearer &lt;token&gt;'
+</code></pre>
+<h4 id="example-response" class="anchor-scroll-top-offset">Example response:</h4>
+<pre><code>[
+  {
+    "id": "Job-2a065db5-a695-4a1c-8553-b114370cd559",
+    "jobKey": {
+      "name": "Job-2a065db5-a695-4a1c-8553-b114370cd559",
+      "group": "ScheduledInventoryJob"
+    },
+    "jobType": "inventory",
+    "name": "Scheduled Inventory Job",
+    "displayName": null,
+    "description": null,
+    "startDate": "2026-01-13T01:18:55.000+00:00",
+    "endDate": null,
+    "timeElapsed": null,
+    "cronExpression": "0 0 0 * * ?",
+    "pausedSince": null,
+    "pausedExpire": null,
+    "status": "scheduled",
+    "statusmessage": null,
+    "createdBy": "admin",
+    "updatedBy": "admin",
+    "deploymentId": null,
+    "deviceId": null,
+    "deviceType": null,
+    "requestsRecovery": false
+  },
+  {
+    "id": "Job-919b0cdd-6a4c-4dcd-a10f-1cad4cba7456",
+    "jobKey": {
+      "name": "Job-919b0cdd-6a4c-4dcd-a10f-1cad4cba7456",
+      "group": "ScheduledInventoryJob"
+    },
+    "jobType": "inventory",
+    "name": "Scheduled Inventory Job",
+    "displayName": null,
+    "description": null,
+    "startDate": "2026-01-13T01:18:56.000+00:00",
+    "endDate": null,
+    "timeElapsed": null,
+    "cronExpression": "0 0 * * * ?",
+    "pausedSince": null,
+    "pausedExpire": null,
+    "status": "scheduled",
+    "statusmessage": null,
+    "createdBy": "admin",
+    "updatedBy": "admin",
+    "deploymentId": null,
+    "deviceId": null,
+    "deviceType": "scaleio",
+    "requestsRecovery": false
+  }
+]
+</code></pre>
+<h2 id="2-pause-the-inventory-job" class="anchor-scroll-top-offset">2. Pause the inventory job</h2>
+<pre><code>curl -X 'POST' \
+  'https://&lt;powerflex_manager_hostname&gt;/Api/V1/JobManager/Job-2a065db5-a695-4a1c-8553-b114370cd559/pause' \
+  -H 'accept: application/xml' \
+  -H 'Authorization: Bearer &lt;token&gt;' \
+  -H 'Content-Type: application/json' \
+  -d '{
+  "paused": true
+}'
+</code></pre>
+<h4 id="example-response" class="anchor-scroll-top-offset">Example response:</h4>
+<pre><code>{
+  "id": "Job-2a065db5-a695-4a1c-8553-b114370cd559",
+  "jobKey": {
+    "name": "Job-2a065db5-a695-4a1c-8553-b114370cd559",
+    "group": "ScheduledInventoryJob"
+  },
+  "jobType": "inventory",
+  "name": "Scheduled Inventory Job",
+  "displayName": null,
+  "description": null,
+  "startDate": "2026-01-13T01:18:55.000+00:00",
+  "endDate": null,
+  "timeElapsed": null,
+  "cronExpression": "0 0 0 * * ?",
+  "pausedSince": "2026-01-13T20:27:32.450+00:00",
+  "pausedExpire": "2026-01-14T20:27:32.450+00:00",
+  "status": "paused",
+  "statusmessage": null,
+  "createdBy": "admin",
+  "updatedBy": "admin",
+  "deploymentId": null,
+  "deviceId": null,
+  "deviceType": null,
+  "requestsRecovery": false
+}
+</code></pre>
+<h2 id="3-resume-the-inventory-job" class="anchor-scroll-top-offset">3. Resume the inventory job</h2>
+<pre><code>curl -X 'POST' \
+  'https://&lt;powerflex_manager_hostname&gt;/Api/V1/JobManager/Job-2a065db5-a695-4a1c-8553-b114370cd559/pause' \
+  -H 'accept: application/xml' \
+  -H 'Authorization: Bearer &lt;token&gt;' \
+  -H 'Content-Type: application/json' \
+  -d '{
+  "paused": false
+}'
+</code></pre>
+</div>
+      <div class="markdown-sidebar">
+        <div class="markdown-toc-title">
+          <i class="icon dds__icon dds__icon--bookmark"></i>
+          On this page
+        </div>
+          <ul><li class="level-1"><a href="#pausing-an-inventory-job" data-toc-link="">Pausing an inventory job</a></li><li class="level-2"><a href="#1-get-the-list-of-all-inventory-job-ids-required-for-the-pause-api-call" data-toc-link="">1. Get the list of all inventory job IDs required for the pause API call</a></li><li class="level-2"><a href="#2-pause-the-inventory-job" data-toc-link="">2. Pause the inventory job</a></li><li class="level-2"><a href="#3-resume-the-inventory-job" data-toc-link="">3. Resume the inventory job</a></li></ul>
+      </div>
+    </div>
+  </div></div></body></html>

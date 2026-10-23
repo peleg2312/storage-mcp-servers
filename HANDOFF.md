@@ -23,7 +23,29 @@ public by the user's decision (2026-10-23), although it carries vendor content. 
 python3 test_search.py && python3 test_stdio.py && python3 test_sync_dell.py && python3 test_sync_issues.py && python3 ../brain/test_hook.py && python3 ../brain/test_docs_hints.py && python3 ../brain/test_docs_leads.py`;
 search quality: `python3 eval_search.py` and `--cases tests/retrieval_heldout.json` (hit@5 >= 0.9).
 
-## Where things stand (2026-10-23, night)
+## Where things stand (2026-10-24, night)
+
+- Library 2026.10.24: 58,239 files indexed (18,535 identical copies folded). New since 23f: PowerFlex REST API
+  docs from developer.dell.com (`sync/sync_dell_devportal.py`: 5.1.0 complete, 1,506 pages; 4.5.5 / Manager 4.8
+  486 of 908; 3.6 / 4.5.x guides), 59 PowerFlex KBs (SIO alerts, 5.x), public PowerFlex 5.x PDFs (appliance
+  Architecture Overview + Admin Guide, Manager 5.x compatibility matrix, 5.0 spec sheet, solution brief), and the
+  backend stack (vendor `python`: fastapi, pydantic, pydantic-settings, starlette, uvicorn, httpx, pytest,
+  pytest-asyncio, sqlalchemy, fastmcp; vendor `mcp`: python-sdk, specification). `.mdx` is indexed.
+- developer.dell.com stopped serving pages at ~00:40 on Oct 24 (its own site shows no content: their outage);
+  a background loop resumes `sync_dell_devportal.py --delay 1.0` when it answers. Missing: rest of 4.5.5, the
+  5.0 / 4.6 / 4.5.0-4.5.1 / 4.0 guides. Re-run it any time: it only fetches what is missing.
+- Search ranking: question type -> page type (concept / task), title weight 1.5, word proximity (all sets mean
+  hit@1 0.72 -> 0.75, MRR 0.80 -> 0.83; brain/ARCHITECTURE.md).
+- Brain: read-only hook now also guards shell commands (infrastructure changes blocked; oc / kubectl / helm /
+  curl to other hosts / systemctl / terraform / ansible ask first; localhost writes pass: the user also
+  develops on the VM). Agents have scoped tools. New skills: `report-export` (charts + Excel; `tools/report.py`,
+  `get-reports.ps1` delivers reports to the Windows PC) and `fastapi-service` (house conventions from the MCP
+  repos). The start banner shows inside Claude Code (companyAnnouncements, sized per start).
+- The user runs NetApp's official ONTAP and Harvest MCP servers (the ONTAP one has write tools: the hook blocks them).
+- NetApp KB export still running (terminal tab; 7,934 of 14,751 checked at 00:41 on Oct 24, ~534 / hour, ends
+  ~13:30): then re-index, eval gates, `LABEL=2026.10.24b sh bundle/pack-library.sh`, commit, push.
+
+## Earlier (2026-10-23, night)
 
 - Library 2026.10.23f: 53,111 files indexed. Recovered 786 pages the indexer used to skip (`_index.md` = the CSM
   install guides; KBs named after a quoted title). CODEMAP.md per code repository (`sync/codemap.py`, run by
@@ -114,6 +136,11 @@ search quality: `python3 eval_search.py` and `--cases tests/retrieval_heldout.js
 - Index counts: "documents" in `docs_index.py` output counts files; MANIFEST.md gives the unique number.
 
 ## Ideas not done yet
+
+- A read-only PowerFlex MCP (the full 5.1 REST API is in the library; build it with the `fastapi-service` skill).
+- Red Hat's kubernetes-mcp-server with `--read-only` and a cluster-reader account (live CSI / CSM data).
+- A read-only vSphere MCP for live per-LUN path state (kuparashit is a snapshot, Aria has metrics only).
+- Claude Code's built-in sandbox for shell commands on the VM (needs bubblewrap; settings `sandbox.enabled`).
 
 - Hybrid retrieval (a local embedding model shipped in the library) behind the same four tools.
 - A `dell-alerts` skill that walks the PowerMaxOS 10.x alert ID tables and the PowerFlex SIO/PFX codes once

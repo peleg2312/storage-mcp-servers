@@ -57,8 +57,12 @@ PRODUCTS = ("powerflex", "powermax", "powerscale")
 DOC_LINK_RE = re.compile(r"https?://infohub\.delltechnologies\.com(?:/en-us)?/([lp])/([a-z0-9][a-z0-9-]*)", re.I)
 
 
+SECRET_LINE = re.compile(r"^.*\b(cookie|authorization|x-[\w-]*token)\s*:.*$", re.I | re.M)
+
+
 def log(*a):
-    print(*a, flush=True)
+    """Playwright errors embed the request headers, i.e. the Dell session cookies: never let them reach a log."""
+    print(SECRET_LINE.sub("    (header removed)", " ".join(str(x) for x in a)), flush=True)
 
 
 def load_manifest(d):

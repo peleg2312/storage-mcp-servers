@@ -1,0 +1,6962 @@
+<html><head><title>PowerFlex API 4.5.5-Manager_v4-8-0: Return messages overview</title></head><body><p>Tasks > Tasks for the PowerFlex Block API</p><div><div class="api-docs-main-div dds__pl-2">
+    <div class="markdown-wrapper dds__py-3">
+      <div class="markdown-body dds__px-3"><h1 id="return-messages-overview" class="anchor-scroll-top-offset">Return messages overview</h1>
+<p>Each return message contains the following: Return code ID, name of the return code, description of the return code message.</p>
+<table>
+<thead>
+<tr>
+<th>RC ID</th>
+<th>Name</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>2</td>
+<td>PENDING</td>
+<td>The operation will continue asynchronously</td>
+</tr>
+<tr>
+<td>37</td>
+<td>TGT_ADD_DEVICE_VALIDATION_FAILED</td>
+<td>Add SDS device validation error</td>
+</tr>
+<tr>
+<td>46</td>
+<td>UNKNOWN_MSG</td>
+<td>Unknown message. Please contact Customer Support</td>
+</tr>
+<tr>
+<td>49</td>
+<td>TOO_MANY_OBJECTS</td>
+<td>There are too many objects of type</td>
+</tr>
+<tr>
+<td>55</td>
+<td>WRONG_SEC_STATE</td>
+<td>The secondary MDM is in the wrong state. Please try again. If the problem persists, restart the secondary MDM.</td>
+</tr>
+<tr>
+<td>62</td>
+<td>WRONG_CMD_PARAMS</td>
+<td>Wrong command parameters. Check the PowerFlex user documentation for this command to see the correct parameters.</td>
+</tr>
+<tr>
+<td>63</td>
+<td>INVALID_PERCENTAGE</td>
+<td>The percentage value that you provided is invalid. Please use a value between 0 - 100.</td>
+</tr>
+<tr>
+<td>65</td>
+<td>SUCCESS</td>
+<td>Success</td>
+</tr>
+<tr>
+<td>66</td>
+<td>PASSWORD_ALREADY_USED</td>
+<td>The password is similar to previous passwords, and can not be used.</td>
+</tr>
+<tr>
+<td>67</td>
+<td>NO_RESOURCES</td>
+<td>Insufficient resources</td>
+</tr>
+<tr>
+<td>68</td>
+<td>TIMEOUT</td>
+<td>A timeout occurred</td>
+</tr>
+<tr>
+<td>69</td>
+<td>COMMUNICATION_ERROR</td>
+<td>Communication error</td>
+</tr>
+<tr>
+<td>70</td>
+<td>WRONG_RECONF_MODE</td>
+<td>SDS is being configured. Please retry the command.</td>
+</tr>
+<tr>
+<td>71</td>
+<td>TGT_ADD_DEV_OPEN_ERROR</td>
+<td>Could not open SDS device</td>
+</tr>
+<tr>
+<td>72</td>
+<td>TGT_ADD_DEV_SIZE_PROBLEM</td>
+<td>The SDS device size is out of the supported range</td>
+</tr>
+<tr>
+<td>73</td>
+<td>TGT_ADD_DEV_IO_ERROR</td>
+<td>Add SDS device IO error</td>
+</tr>
+<tr>
+<td>74</td>
+<td>TGT_ACTIVE_ATTACH_TO_THIS_MDM</td>
+<td>SDS is actively attached to this MDM. Probably the socket address used in the command belongs to other SDS</td>
+</tr>
+<tr>
+<td>75</td>
+<td>TGT_ALREADY_ATTACH_TO_THIS_MDM</td>
+<td>SDS is already attached to this 	MDM</td>
+</tr>
+<tr>
+<td>76</td>
+<td>TGT_ACTIVE_ATTACH_TO_OTHER_MDM</td>
+<td>SDS is actively attached to another MDM</td>
+</tr>
+<tr>
+<td>77</td>
+<td>TGT_ALREADY_ATTACH_TO_OTHER_MDM</td>
+<td>SDS is already attached to another MDM</td>
+</tr>
+<tr>
+<td>78</td>
+<td>TGT_NOT_FOUND</td>
+<td>Could not find SDS</td>
+</tr>
+<tr>
+<td>79</td>
+<td>VOL_NOT_FOUND</td>
+<td>Could not find the volume</td>
+</tr>
+<tr>
+<td>80</td>
+<td>INI_NOT_FOUND</td>
+<td>Could not find the SDC</td>
+</tr>
+<tr>
+<td>81</td>
+<td>VOL_ALREADY_MAPPED_TO_THIS_INI</td>
+<td>The volume is already mapped to this SDC</td>
+</tr>
+<tr>
+<td>82</td>
+<td>VOL_ALREADY_MAPPED_TO_ALL_INIS</td>
+<td>The volume is already mapped to all SDCs</td>
+</tr>
+<tr>
+<td>83</td>
+<td>VOL_ALREADY_MAPPED_TO_SCSI</td>
+<td>The volume is already mapped to SCSI interface</td>
+</tr>
+<tr>
+<td>84</td>
+<td>VOL_NOT_MAPPED_TO_INI</td>
+<td>The volume is not mapped to SDC</td>
+</tr>
+<tr>
+<td>85</td>
+<td>VOL_NOT_MAPPED_TO_SCSI</td>
+<td>The volume has no SCSI reservations.</td>
+</tr>
+<tr>
+<td>86</td>
+<td>VOL_MAPPED_TO_ALL_INIS</td>
+<td>The volume is mapped to all SDCs</td>
+</tr>
+<tr>
+<td>87</td>
+<td>TOO_MANY_MAPPINGS</td>
+<td>There are too many mappings</td>
+</tr>
+<tr>
+<td>88</td>
+<td>INVALID_VOL_ID</td>
+<td>Invalid volume. Please try again with a valid ID or name.</td>
+</tr>
+<tr>
+<td>89</td>
+<td>INVALID_TGT_ID</td>
+<td>Invalid SDS. Please try again with a valid ID, name or IP.</td>
+</tr>
+<tr>
+<td>90</td>
+<td>INVALID_INI_ID</td>
+<td>Invalid SDC. Please try again with a valid ID, name, GUID or IP.</td>
+</tr>
+<tr>
+<td>91</td>
+<td>HOST_NOT_FOUND</td>
+<td>Could not find the host</td>
+</tr>
+<tr>
+<td>92</td>
+<td>DUP_HOST_NAME</td>
+<td>Duplicate host name</td>
+</tr>
+<tr>
+<td>93</td>
+<td>TGT_ADDR_AND_PORT_IN_USE</td>
+<td>The SDS IP address and port already in use. Please try with different ones.</td>
+</tr>
+<tr>
+<td>94</td>
+<td>TOO_MANY_TGTS_IN_FDOM</td>
+<td>There are too many SDSs in Protection Domain</td>
+</tr>
+<tr>
+<td>95</td>
+<td>TOO_MANY_TGTS</td>
+<td>There are too many SDSs</td>
+</tr>
+<tr>
+<td>96</td>
+<td>TOO_MANY_VOLS_IN_SP</td>
+<td>You have exceeded the maximum number of volumes allowed in a Storage Pools</td>
+</tr>
+<tr>
+<td>97</td>
+<td>TOO_MANY_VOLS</td>
+<td>There are too many volumes</td>
+</tr>
+<tr>
+<td>98</td>
+<td>TGT_NAME_IN_USE</td>
+<td>SDS name is already in use. Please use a different name.</td>
+</tr>
+<tr>
+<td>99</td>
+<td>VOL_NAME_IN_USE</td>
+<td>Volume name already in use. Please use a different name.</td>
+</tr>
+<tr>
+<td>100</td>
+<td>DUPLICATE_TGT_DEVICE_NAME</td>
+<td>Duplicate SDS device name</td>
+</tr>
+<tr>
+<td>101</td>
+<td>DUPLICATE_SDC_IP</td>
+<td>More than one SDC exists for the same IP address. Use name or ID instead, or remove the duplicate SDC</td>
+</tr>
+<tr>
+<td>102</td>
+<td>TGT_NOT_UNDER_REMOVAL</td>
+<td>SDS is not being removed</td>
+</tr>
+<tr>
+<td>103</td>
+<td>TGT_BEING_REMOVED</td>
+<td>SDS is being removed</td>
+</tr>
+<tr>
+<td>104</td>
+<td>VOL_MAPPED</td>
+<td>Volume is mapped</td>
+</tr>
+<tr>
+<td>105</td>
+<td>WRONG_CLUSTER_STATE</td>
+<td>The MDM cluster state is incorrect</td>
+</tr>
+<tr>
+<td>106</td>
+<td>TOO_MANY_VOTERS</td>
+<td>There are too many tiebreakers</td>
+</tr>
+<tr>
+<td>107</td>
+<td>VOTER_NOT_CONFIG</td>
+<td>MDM is not configured. Please configure the MDM</td>
+</tr>
+<tr>
+<td>108</td>
+<td>PRIMARY_MDM_ALREADY_CONFIG</td>
+<td>The primary MDM is already configured</td>
+</tr>
+<tr>
+<td>109</td>
+<td>ALREADY_IN_SINGLE_MODE</td>
+<td>The MDM is already in single mode</td>
+</tr>
+<tr>
+<td>110</td>
+<td>ALREADY_IN_CLUSTER_MODE</td>
+<td>The MDM is already in cluster mode</td>
+</tr>
+<tr>
+<td>111</td>
+<td>SECONDARY_MDM_NOT_CONFIG</td>
+<td>The secondary MDM is not configured. Please configure it, and try again.</td>
+</tr>
+<tr>
+<td>112</td>
+<td>SECONDARY_MDM_NOT_CONNECTED</td>
+<td>The secondary MDM is not connected</td>
+</tr>
+<tr>
+<td>113</td>
+<td>ERROR_CONFIG_SEC_MDM</td>
+<td>Could not configure the secondary MDM</td>
+</tr>
+<tr>
+<td>114</td>
+<td>UNABLE_TO_OPEN_VIRTUAL_INTF</td>
+<td>Could not open virtual interface</td>
+</tr>
+<tr>
+<td>115</td>
+<td>MISSING_VIRTUAL_IP</td>
+<td>The virtual IP address is not configured</td>
+</tr>
+<tr>
+<td>116</td>
+<td>VIRTUAL_IP_ALREADY_EXIST</td>
+<td>The virtual IP address is already configured</td>
+</tr>
+<tr>
+<td>117</td>
+<td>UNABLE_TO_REMOVE_VIRTUAL_INTF</td>
+<td>Could not remove the virtual IP address</td>
+</tr>
+<tr>
+<td>118</td>
+<td>UNABLE_TO_REMOVE_VIRTUAL_INTF_SEC_MDM_EXISTS</td>
+<td>The virtual IP address cannot be removed when secondary MDM is configured</td>
+</tr>
+<tr>
+<td>119</td>
+<td>UNABLE_TO_REMOVE_VIRTUAL_INTF_VOTER_EXISTS</td>
+<td>The virtual IP address cannot be removed when tiebreaker is configured</td>
+</tr>
+<tr>
+<td>120</td>
+<td>BAD_HOSTNAME</td>
+<td>An invalid IP or host-name specified</td>
+</tr>
+<tr>
+<td>121</td>
+<td>WRONG_ACTOR_USE_VIRTUAL</td>
+<td>This command is not supported on the secondary MDM. Please use the primary MDM IP to access the cluster</td>
+</tr>
+<tr>
+<td>122</td>
+<td>CMD_ONLY_IN_CLUSTER</td>
+<td>Command can only be used in cluster mode</td>
+</tr>
+<tr>
+<td>123</td>
+<td>CMD_ONLY_IN_SINGLE</td>
+<td>Command can only be used in single mode</td>
+</tr>
+<tr>
+<td>124</td>
+<td>CMD_ERROR_CLUSTER_DEGRADED</td>
+<td>Command cannot be used when a cluster is degraded</td>
+</tr>
+<tr>
+<td>125</td>
+<td>TOO_MANY_DEVICES</td>
+<td>There are too many devices for SDS</td>
+</tr>
+<tr>
+<td>126</td>
+<td>TGT_DEVICE_NOT_FOUND</td>
+<td>Could not find the SDS device</td>
+</tr>
+<tr>
+<td>127</td>
+<td>LICENSE_TOO_LONG</td>
+<td>The license key is too long. Please check your key and enter it again.</td>
+</tr>
+<tr>
+<td>128</td>
+<td>LICENSE_ERROR</td>
+<td>The license key is invalid or does not match this version. Please contact Customer Support.</td>
+</tr>
+<tr>
+<td>129</td>
+<td>LICENSE_UNKNOWN_VER</td>
+<td>Unknown license version</td>
+</tr>
+<tr>
+<td>130</td>
+<td>LICENSE_NOT_SET</td>
+<td>License has not been set</td>
+</tr>
+<tr>
+<td>131</td>
+<td>CONFIG_EXCEEDS_NEW_LICENSE</td>
+<td>The current system configuration exceeds the license entitlements.</td>
+</tr>
+<tr>
+<td>132</td>
+<td>CAPACITY_LICENSE_EXCEEDED</td>
+<td>The operation could not be completed. The license capacity has been exceeded.</td>
+</tr>
+<tr>
+<td>133</td>
+<td>VOL_DECREASE_NOT_SUPPORTED</td>
+<td>Volume capacity can only be increased</td>
+</tr>
+<tr>
+<td>134</td>
+<td>SEC_IP_EQUAL_PRI_IP</td>
+<td>The secondary IP is the same as the primary IP address. Please enter a different secondary IP address.</td>
+</tr>
+<tr>
+<td>135</td>
+<td>TGT_DEV_BEING_REMOVED</td>
+<td>The SDS device is being removed</td>
+</tr>
+<tr>
+<td>136</td>
+<td>NOT_ENOUGH_TGT_DEV</td>
+<td>This device cannot be removed; a SDS must have at least one device.</td>
+</tr>
+<tr>
+<td>137</td>
+<td>DEV_NOT_UNDER_REMOVAL</td>
+<td>The SDS device is not being removed</td>
+</tr>
+<tr>
+<td>138</td>
+<td>TGT_ALREADY_ADDING_DEV</td>
+<td>A device is being added to this SDS</td>
+</tr>
+<tr>
+<td>139</td>
+<td>INVALID_DEV_ID</td>
+<td>Invalid device. Please use a valid device ID, name or path.</td>
+</tr>
+<tr>
+<td>140</td>
+<td>TOO_MANY_FDS</td>
+<td>There are too many Protection Domains</td>
+</tr>
+<tr>
+<td>141</td>
+<td>FD_NAME_IN_USE</td>
+<td>Protection Domain name already in use. Please try a different name.</td>
+</tr>
+<tr>
+<td>142</td>
+<td>FD_NOT_FOUND</td>
+<td>Could not find Protection Domain</td>
+</tr>
+<tr>
+<td>143</td>
+<td>FD_HAS_TGTS</td>
+<td>Protection Domain has SDSs</td>
+</tr>
+<tr>
+<td>144</td>
+<td>NOT_ENOUGH_TGTS_IN_STORAGE_POOL</td>
+<td>Less than three devices from different SDSs are defined in this Storage Pools. Add devices to the Storage Pools from additional SDSs.</td>
+</tr>
+<tr>
+<td>145</td>
+<td>REMOVE_IN_PROGRESS</td>
+<td>Removal of the object is in progress. Please wait.</td>
+</tr>
+<tr>
+<td>146</td>
+<td>ENCRYPTION_AT_REST_ALREADY_ENABLED</td>
+<td>Obfuscation is already enabled</td>
+</tr>
+<tr>
+<td>147</td>
+<td>ENCRYPTION_AT_REST_ALREADY_DISABLED</td>
+<td>Obfuscation is already disabled</td>
+</tr>
+<tr>
+<td>148</td>
+<td>NET_TEST_NOT_FOUND</td>
+<td>Could not find network test results</td>
+</tr>
+<tr>
+<td>149</td>
+<td>NET_TEST_IN_PROGRESS</td>
+<td>Network test in progress</td>
+</tr>
+<tr>
+<td>150</td>
+<td>TOO_MANY_SCSI_INTIATORS</td>
+<td>There are too many SCSI interface</td>
+</tr>
+<tr>
+<td>151</td>
+<td>SCSI_WITH_NAME_ALREADY_EXISTS</td>
+<td>A SCSI interface with the same name already exists. Please try a different name.</td>
+</tr>
+<tr>
+<td>152</td>
+<td>ISCSI_WITH_IQN_ALRADY_EXISTS</td>
+<td>A SCSI interface with the same IQN already exists. Please try a different IQN.</td>
+</tr>
+<tr>
+<td>153</td>
+<td>LUN_NUM_BUSY</td>
+<td>The LUN number is already in use. Please try a different LUN number.</td>
+</tr>
+<tr>
+<td>154</td>
+<td>NO_MORE_LUN_NUM_AVAILABLE</td>
+<td>No more LUN numbers are available</td>
+</tr>
+<tr>
+<td>155</td>
+<td>SCSI_INITIATOR_NOT_FOUND</td>
+<td>Could not find the SCSI interface</td>
+</tr>
+<tr>
+<td>156</td>
+<td>SCSI_INITIATOR_IS_MAPPED</td>
+<td>SCSI interface is mapped</td>
+</tr>
+<tr>
+<td>157</td>
+<td>DRL_ALREADY_HARDENED</td>
+<td>Data-region-logging is already hardened</td>
+</tr>
+<tr>
+<td>158</td>
+<td>DRL_ALREADY_MEM_ONLY</td>
+<td>Data-region-logging is already volatile</td>
+</tr>
+<tr>
+<td>159</td>
+<td>LICENSE_TIME_EXCEEDED</td>
+<td>The license has expired</td>
+</tr>
+<tr>
+<td>160</td>
+<td>TGT_DEV_ALREADY_ACTIVE</td>
+<td>The SDS device is already active</td>
+</tr>
+<tr>
+<td>161</td>
+<td>TGT_DEV_WRONG_TEST_MODE</td>
+<td>The SDS device is in incorrect test mode</td>
+</tr>
+<tr>
+<td>162</td>
+<td>TGT_DEV_WRONG_TEST_STATE</td>
+<td>The SDS device test is not complete</td>
+</tr>
+<tr>
+<td>163</td>
+<td>TGT_DEV_TEST_IN_PROGRESS</td>
+<td>The SDS device test is in progress</td>
+</tr>
+<tr>
+<td>164</td>
+<td>VOL_ALLOC_ERROR_BUSY</td>
+<td>The system is busy. Retry later</td>
+</tr>
+<tr>
+<td>165</td>
+<td>CAPACITY_HIGHLY_UNBALANCED</td>
+<td>System capacity is unbalanced</td>
+</tr>
+<tr>
+<td>166</td>
+<td>VOL_CREATE_FAIL</td>
+<td>Could not create the volume</td>
+</tr>
+<tr>
+<td>167</td>
+<td>INVALID_PASSWORD</td>
+<td>Invalid password. Please try again.</td>
+</tr>
+<tr>
+<td>168</td>
+<td>NO_PERMISSIONS</td>
+<td>You do not have permission to perform this operation. Please contact your system administrator for assistance.</td>
+</tr>
+<tr>
+<td>169</td>
+<td>TOO_MANY_STORAGE_POOLS_IN_PROTECTION_DOMAIN</td>
+<td>There are too many Storage Poolss in the Protection Domain</td>
+</tr>
+<tr>
+<td>170</td>
+<td>STORAGE_POOL_ALREADY_EXISTS</td>
+<td>Storage Pools already exists</td>
+</tr>
+<tr>
+<td>171</td>
+<td>STORAGE_POOL_NOT_FOUND</td>
+<td>Could not find Storage Pools</td>
+</tr>
+<tr>
+<td>172</td>
+<td>STORAGE_POOL_HAS_DEVS</td>
+<td>The Storage Pools has SDS devices</td>
+</tr>
+<tr>
+<td>173</td>
+<td>STORAGE_POOL_NAME_ALREADY_EXISTS</td>
+<td>Storage Pools name already exists</td>
+</tr>
+<tr>
+<td>174</td>
+<td>INVALID_STORAGE_POOL_ID</td>
+<td>Invalid Storage Pools. Please use a valid ID or name</td>
+</tr>
+<tr>
+<td>175</td>
+<td>DEFAULT_STORAGE_POOL_CAN_NOT_BE_REMOVED</td>
+<td>The last remaining Storage Pools in a Protection Domain cannot be removed</td>
+</tr>
+<tr>
+<td>176</td>
+<td>FD_HAS_STORAGE_POOLS</td>
+<td>Protection Domain has Storage Poolss</td>
+</tr>
+<tr>
+<td>177</td>
+<td>INSTALL_ID_MISMATCH</td>
+<td>The license installation ID does not match the ID of this system</td>
+</tr>
+<tr>
+<td>178</td>
+<td>CUSTOMER_ID_MISMATCH</td>
+<td>License customer ID does not match this system</td>
+</tr>
+<tr>
+<td>179</td>
+<td>LICENSE_UNSUPPORTED_VER</td>
+<td>Unsupported license version</td>
+</tr>
+<tr>
+<td>180</td>
+<td>INI_HAS_MAPPINGS</td>
+<td>SDC has mapped volume(s)</td>
+</tr>
+<tr>
+<td>181</td>
+<td>TOO_MANY_VOLS_IN_VTREE</td>
+<td>There are too many volumes in the VTree</td>
+</tr>
+<tr>
+<td>182</td>
+<td>TOO_MANY_SNAPS_IN_VTREE</td>
+<td>There are too many snapshots in the VTree</td>
+</tr>
+<tr>
+<td>183</td>
+<td>NOTHING_TO_DO</td>
+<td>There are no volumes to delete</td>
+</tr>
+<tr>
+<td>184</td>
+<td>TOO_MANY_DEVICES_IN_STORAGE_POOL</td>
+<td>There are too many devices in Storage Pools</td>
+</tr>
+<tr>
+<td>185</td>
+<td>VOL_NOT_FOUND_FOR_SNAP_GROUP</td>
+<td>No volumes were found under the given consistency group or the consistency group ID is not valid</td>
+</tr>
+<tr>
+<td>186</td>
+<td>TOO_MANY_IPS</td>
+<td>There are too many IP addresses for SDS</td>
+</tr>
+<tr>
+<td>187</td>
+<td>LAST_IP</td>
+<td>SDS must have at least one IP address</td>
+</tr>
+<tr>
+<td>188</td>
+<td>NO_DEFAULT_STORAGE_POOL</td>
+<td>There is no default Storage Pools. Storage Pools must be specified</td>
+</tr>
+<tr>
+<td>189</td>
+<td>VTREE_SIZE_UNAVAILABLE</td>
+<td>Cannot calculate Vtree size</td>
+</tr>
+<tr>
+<td>190</td>
+<td>VOL_SIZE_TOO_LARGE</td>
+<td>The volume size too large</td>
+</tr>
+<tr>
+<td>191</td>
+<td>CAPACITY_TOO_LOW_FOR_SNAP</td>
+<td>The capacity of the Storage Pools is too small to create new snapshots</td>
+</tr>
+<tr>
+<td>192</td>
+<td>IP_BELONGS_TO_OTHER_TGT</td>
+<td>The specified IP address belongs to another SDS. Please use the correct IP address.</td>
+</tr>
+<tr>
+<td>193</td>
+<td>TGT_IP_NOT_FOUND</td>
+<td>The SDS IP address cannot be found.</td>
+</tr>
+<tr>
+<td>194</td>
+<td>INVALID_PORT</td>
+<td>The specified SDS port is not in the valid range. Please try again with a valid port number.</td>
+</tr>
+<tr>
+<td>195</td>
+<td>BAD_THRESHOLD_VALUE</td>
+<td>The threshold value is out of range. Please enter a valid percentage value.</td>
+</tr>
+<tr>
+<td>196</td>
+<td>STORAGE_POOL_HAS_VOLS</td>
+<td>The Storage Pools has volumes. Please remove all the volumes before removing the Storage Pools.</td>
+</tr>
+<tr>
+<td>197</td>
+<td>FD_AND_SP_MISMATCH</td>
+<td>The specified Storage Pools is not in the specified Protection Domain</td>
+</tr>
+<tr>
+<td>198</td>
+<td>VTREE_ID_MISMATCH</td>
+<td>To overwrite the content of a volume, the source and target volumes must be from the same V-Tree.</td>
+</tr>
+<tr>
+<td>199</td>
+<td>TGT_MUST_HAVE_TGT_IP_ROLE</td>
+<td>SDS must have at least one IP for SDS communication.</td>
+</tr>
+<tr>
+<td>200</td>
+<td>TGT_IP_ALREADY_EXISTS</td>
+<td>The SDS IP already exists.</td>
+</tr>
+<tr>
+<td>201</td>
+<td>ROLE_ALREADY_SET</td>
+<td>The IP role for this SDS has already been configured.</td>
+</tr>
+<tr>
+<td>202</td>
+<td>CLUSTER_ID_MISMATCH</td>
+<td>The system ID that you provided does not match the actual system ID</td>
+</tr>
+<tr>
+<td>203</td>
+<td>BAD_THROTTLING_VALUE</td>
+<td>The throttling values are not valid. Please try again.</td>
+</tr>
+<tr>
+<td>206</td>
+<td>DEV_NAME_ALREADY_EXISTS</td>
+<td>A device with the given name already exists in the SDS</td>
+</tr>
+<tr>
+<td>207</td>
+<td>DEV_SIZE_TOO_SMALL</td>
+<td>The specified device size is too small.</td>
+</tr>
+<tr>
+<td>208</td>
+<td>DEV_SIZE_TOO_LARGE</td>
+<td>The specified device size is too large. Please specify a size smaller than the capacity of the specified device.</td>
+</tr>
+<tr>
+<td>209</td>
+<td>NO_RESULTS_RETURNED</td>
+<td>No results have been returned</td>
+</tr>
+<tr>
+<td>210</td>
+<td>SECONDARY_MDM_ALREADY_EXISTS</td>
+<td>A secondary MDM already exists.</td>
+</tr>
+<tr>
+<td>211</td>
+<td>SECONDARY_MDM_COMMUNICATION_ERROR</td>
+<td>There is a secondary MDM communication error. Please check the secondary MDM, and fix the problem.</td>
+</tr>
+<tr>
+<td>212</td>
+<td>VOL_REMOVE_IN_PROGRESS</td>
+<td>A volume removal operation is currently in progress.</td>
+</tr>
+<tr>
+<td>213</td>
+<td>FD_NOT_ACTIVE</td>
+<td>The Protection Domain is not active.</td>
+</tr>
+<tr>
+<td>215</td>
+<td>NO_TGTS_IN_FD</td>
+<td>The Protection Domain has no SDSs. Please add SDSs to it.</td>
+</tr>
+<tr>
+<td>216</td>
+<td>FD_CAPACITY_NOT_PROTECTED</td>
+<td>Some of the Protection Domain’s capacity is not fully protected. Please wait until all rebuilds are finished and no SDSs are in Maintenance Mode, or retry using ‘force’ flag.</td>
+</tr>
+<tr>
+<td>217</td>
+<td>FD_NOT_SHUTDOWN</td>
+<td>The Protection Domain is not deactivated. The Protection Domain may be in the process of deactivating, or is already active\activating.</td>
+</tr>
+<tr>
+<td>218</td>
+<td>FD_STATE_CHANGE_IN_PROGRESS</td>
+<td>Protection Domain inactivation or activation is in progress. Please wait.</td>
+</tr>
+<tr>
+<td>219</td>
+<td>TGT_NOT_HEALTHY</td>
+<td>At least one SDS is not in normal operational state. Please check that all SDSs in the Protection Domain are up, and running normally.</td>
+</tr>
+<tr>
+<td>220</td>
+<td>TGT_DEV_NOT_HEALTHY</td>
+<td>At least one SDS device is in error state. Please identify and fix the storage device with the error.</td>
+</tr>
+<tr>
+<td>222</td>
+<td>FD_ALREADY_EXISTS</td>
+<td>This Protection Domain already exists. Please use this Protection Domain, or define a different one.</td>
+</tr>
+<tr>
+<td>223</td>
+<td>INVALID_DRL</td>
+<td>Invalid value in data-region-logging mode.</td>
+</tr>
+<tr>
+<td>224</td>
+<td>VOTER_COMMUNICATION_ERROR</td>
+<td>There is an MDM communication error. Please check the MDM, and fix the problem.</td>
+</tr>
+<tr>
+<td>225</td>
+<td>VOL_SIZE_ILLEGAL</td>
+<td>The specified volume size is illegal. Volume size must be in 8 GB blocks</td>
+</tr>
+<tr>
+<td>226</td>
+<td>LONG_NAME</td>
+<td>The given name exceeds the allowed length of 31 characters.</td>
+</tr>
+<tr>
+<td>227</td>
+<td>INVALID_NAME</td>
+<td>The given name contains invalid characters. Use alphanumeric and punctuation characters only. Spaces are not allowed.</td>
+</tr>
+<tr>
+<td>228</td>
+<td>INVALID_FD_ID</td>
+<td>Invalid Protection Domain. Please try again with the correct ID or name.</td>
+</tr>
+<tr>
+<td>229</td>
+<td>INVALID_SCSI_ID</td>
+<td>Invalid SCSI ID. Please try again with the correct ID.</td>
+</tr>
+<tr>
+<td>230</td>
+<td>INVALID_VTREE_ID</td>
+<td>Invalid VTree ID. Please try again with the correct ID.</td>
+</tr>
+<tr>
+<td>231</td>
+<td>INVALID_SNAP_ID</td>
+<td>Invalid volume. Please try again with a valid ID or name.</td>
+</tr>
+<tr>
+<td>233</td>
+<td>PASSWORD_TOO_SHORT</td>
+<td>The password is too short. Please use a longer password.</td>
+</tr>
+<tr>
+<td>234</td>
+<td>USER_NOT_FOUND</td>
+<td>User not found. Please check that you have the correct user name.</td>
+</tr>
+<tr>
+<td>235</td>
+<td>VOTER_ALREADY_CONFIGURED</td>
+<td>The MDM is already configured to a different cluster</td>
+</tr>
+<tr>
+<td>236</td>
+<td>WRONG_RECEIVE_GROUP</td>
+<td>The command was sent to the wrong receive group due to component software mismatch.</td>
+</tr>
+<tr>
+<td>237</td>
+<td>BAD_PRIMARY_MDM_IP</td>
+<td>primary MDM IP address is incorrect</td>
+</tr>
+<tr>
+<td>238</td>
+<td>SEC_IP_EQUAL_TB_IP</td>
+<td>The secondary IP is the same as the tiebreaker IP</td>
+</tr>
+<tr>
+<td>239</td>
+<td>TB_IP_EQUAL_SEC_IP</td>
+<td>The tiebreaker IP is the same as the secondary IP</td>
+</tr>
+<tr>
+<td>240</td>
+<td>TB_IP_EQUAL_PRIMARY_IP</td>
+<td>The tiebreaker IP is the same as the primary IP</td>
+</tr>
+<tr>
+<td>241</td>
+<td>ILLEGAL_CMD_FOR_TB</td>
+<td>The command used for tiebreaker is not allowed</td>
+</tr>
+<tr>
+<td>242</td>
+<td>BAD_SECONDARY_MDM_IP</td>
+<td>The secondary MDM IP is incorrect. Please enter the correct address.</td>
+</tr>
+<tr>
+<td>243</td>
+<td>TB_IS_MDM</td>
+<td>MDM role is not a tiebreaker but a secondary</td>
+</tr>
+<tr>
+<td>244</td>
+<td>TGT_DEVICE_NAME_CHANGED</td>
+<td>The SDS detected that the device path has changed. Re-run the command using the device ID/Name, or update the device path.</td>
+</tr>
+<tr>
+<td>249</td>
+<td>MISMATCHING_SWID</td>
+<td>The license contains a mismatch of the SWID number. Please contact Customer Support.</td>
+</tr>
+<tr>
+<td>250</td>
+<td>INVALID_LICENSE_ISSUER</td>
+<td>The issuer of the license you are attempting to add does not match that of the product.</td>
+</tr>
+<tr>
+<td>256</td>
+<td>PERMISSION_DENIED</td>
+<td>Permission denied. Please check that you are using the correct user name, password and authentication method, and that you have permission to perform this action.</td>
+</tr>
+<tr>
+<td>257</td>
+<td>INVALID_SESSION</td>
+<td>Invalid session. Please login and try again.</td>
+</tr>
+<tr>
+<td>258</td>
+<td>PASSWORD_CHANGE_REQUIRED</td>
+<td>Password change required. Please change your password.</td>
+</tr>
+<tr>
+<td>259</td>
+<td>USER_ALREADY_EXIST</td>
+<td>This user name already exists. Please use a different name.</td>
+</tr>
+<tr>
+<td>260</td>
+<td>TOO_MANY_USERS</td>
+<td>The maximum number of users is already defined in the system. Use an existing user name, or delete a user before you try to define a new one.</td>
+</tr>
+<tr>
+<td>261</td>
+<td>TOO_MANY_SESSIONS</td>
+<td>The maximum number of sessions is already open. Please close some other sessions, and then try again.</td>
+</tr>
+<tr>
+<td>262</td>
+<td>OLD_PASSWORD_MISMATCH</td>
+<td>The password that you entered does not match the one stored in the system. Please type it again.</td>
+</tr>
+<tr>
+<td>263</td>
+<td>USER_CAN_NOT_MODIFY_HIMSELF</td>
+<td>You do not have permission to modify your own user credentials.</td>
+</tr>
+<tr>
+<td>264</td>
+<td>PASSWORD_LACKS_DIVERSITY</td>
+<td>This password lacks character diversity, and can not be used. Please use characters from at least three of these types: upper case letters, lower case letters, numbers, and punctuation (no spaces allowed).</td>
+</tr>
+<tr>
+<td>265</td>
+<td>NUM_PARALLEL_MSG_TOO_LOW</td>
+<td>The number of parallel messages is too low. Please use a number in the range 1 - 16.</td>
+</tr>
+<tr>
+<td>266</td>
+<td>NUM_PARALLEL_MSG_TOO_HIGH</td>
+<td>The number of parallel messages is too high. Please use a number in the range 1 - 16.</td>
+</tr>
+<tr>
+<td>267</td>
+<td>NETWORK_TEST_SIZE_TOO_HIGH</td>
+<td>The network test size is too high. Please use a test size less than 10.</td>
+</tr>
+<tr>
+<td>268</td>
+<td>NETWORK_TEST_LENGTH_TOO_HIGH</td>
+<td>The network test length is too long. Please use a test length less than 43200 seconds.</td>
+</tr>
+<tr>
+<td>269</td>
+<td>NETWORK_TEST_MUST_LIMIT_EITHER_TIME_OR_SIZE</td>
+<td>The network test must limit either time or size.</td>
+</tr>
+<tr>
+<td>270</td>
+<td>NOT_ENOUGH_TGTS_IN_FD_FOR_TEST</td>
+<td>To start the test, there must be at least 2 SDSs in the Protection Domain.</td>
+</tr>
+<tr>
+<td>271</td>
+<td>NOT_ALLOWED_IN_SP_WITH_DEVS</td>
+<td>This operation is only allowed when there are no devices in the Storage Pools. Please remove all devices from the Storage Pools.</td>
+</tr>
+<tr>
+<td>272</td>
+<td>TOO_MANY_FAULT_SETS</td>
+<td>You have exceeded the maximum number of Fault Sets allowed in the Protection Domain</td>
+</tr>
+<tr>
+<td>273</td>
+<td>FAULT_SET_ALREADY_EXISTS</td>
+<td>This Fault Set already exists.</td>
+</tr>
+<tr>
+<td>274</td>
+<td>FAULT_SET_NOT_FOUND</td>
+<td>Could not find the Fault Set</td>
+</tr>
+<tr>
+<td>275</td>
+<td>FAULT_SET_NAME_ALREADY_EXISTS</td>
+<td>This Fault Set name already exists. Please use a different name.</td>
+</tr>
+<tr>
+<td>277</td>
+<td>FAULT_SET_HAS_TGTS</td>
+<td>This Fault Set is not empty, and cannot be removed. Please remove all SDSs from the Fault Set, and then try again.</td>
+</tr>
+<tr>
+<td>278</td>
+<td>FD_HAS_FAULT_SETS</td>
+<td>The Protection Domain contains Fault Sets, and cannot be removed. Please remove all Fault Sets from the Protection Domain, and then try again.</td>
+</tr>
+<tr>
+<td>279</td>
+<td>TOO_MANY_TGTS_IN_FS</td>
+<td>You have exceeded the maximum number of SDSs allowed in a Fault Set</td>
+</tr>
+<tr>
+<td>280</td>
+<td>INVALID_FS_ID</td>
+<td>Invalid Fault Set. Please try again with the correct ID or name.</td>
+</tr>
+<tr>
+<td>281</td>
+<td>FD_AND_FS_MISMATCH</td>
+<td>The specified Fault Set is not in the specified Protection Domain</td>
+</tr>
+<tr>
+<td>282</td>
+<td>TGT_ALREADY_IN_FS</td>
+<td>The specified SDS is already in the Protection Domain.</td>
+</tr>
+<tr>
+<td>283</td>
+<td>MISSING_PARAM_FOR_POLICY</td>
+<td>Parameters are missing for the selected policy. Check the help output for the required parameters.</td>
+</tr>
+<tr>
+<td>284</td>
+<td>TGT_MUST_HAVE_INI_IP_ROLE</td>
+<td>SDS must have at least one IP for SDC communication.</td>
+</tr>
+<tr>
+<td>285</td>
+<td>INI_NAME_MISMATCH</td>
+<td>SDC name mismatch. This SDC already has a different name.</td>
+</tr>
+<tr>
+<td>286</td>
+<td>LIA_PACKAGE_ALREADY_INSTALLED</td>
+<td>The package is already installed</td>
+</tr>
+<tr>
+<td>287</td>
+<td>LIA_PACKAGE_NOT_INSTALLED</td>
+<td>The package is not installed.</td>
+</tr>
+<tr>
+<td>288</td>
+<td>LICENSE_CAPACITY_MISMATCH</td>
+<td>The license contains a mismatch of the capacity values for basic and advanced features. Please contact Customer Support.</td>
+</tr>
+<tr>
+<td>289</td>
+<td>LIA_MULTIPLE_PACKAGES_INSTALLED</td>
+<td>More than one package is installed</td>
+</tr>
+<tr>
+<td>290</td>
+<td>LIA_COMMAND_FAILED</td>
+<td>The command was not successful</td>
+</tr>
+<tr>
+<td>291</td>
+<td>LIA_INVALID_PASSWORD</td>
+<td>Invalid LIA Password</td>
+</tr>
+<tr>
+<td>292</td>
+<td>INVALID_DEVICE_PATH</td>
+<td>The path to the device is invalid. Please ensure that you are using the correct path.</td>
+</tr>
+<tr>
+<td>293</td>
+<td>INVALID_THROTTLE_INFO</td>
+<td>Invalid throttle parameters</td>
+</tr>
+<tr>
+<td>294</td>
+<td>EXCEED_SYSTEM_CAPACITY_LIMITATIONS</td>
+<td>The request exceeds system limitations</td>
+</tr>
+<tr>
+<td>295</td>
+<td>TOO_MANY_VOLS_IN_FD</td>
+<td>Too many volumes in Protection Domain</td>
+</tr>
+<tr>
+<td>296</td>
+<td>NOT_ENOUGH_FSS_IN_STORAGE_POOL</td>
+<td>Storage Poolss must contain devices from at least three Fault Sets or SDSs (that are not associated with a Fault Set).</td>
+</tr>
+<tr>
+<td>297</td>
+<td>NOT_SUPPORTED</td>
+<td>This command is not supported.</td>
+</tr>
+<tr>
+<td>298</td>
+<td>ILLEGAL_NUM_IPS</td>
+<td>Illegal number of IP addresses. The primary MDM, the secondary MDM, and the tiebreaker must each have the same number of IP addresses.</td>
+</tr>
+<tr>
+<td>299</td>
+<td>OVERFLOW_IPS</td>
+<td>Too many IP addresses for MDM. Do not configure more than four IP addresses.</td>
+</tr>
+<tr>
+<td>300</td>
+<td>RMCACHE_WRONG_STATE</td>
+<td>Wrong RAM Read Cache state</td>
+</tr>
+<tr>
+<td>301</td>
+<td>RMCACHE_IS_FROZEN</td>
+<td>RAM Read Cache is frozen</td>
+</tr>
+<tr>
+<td>302</td>
+<td>RMCACHE_IS_DISABLED</td>
+<td>RAM Read Cache is disabled</td>
+</tr>
+<tr>
+<td>303</td>
+<td>INI_MAPPED_TO_TOO_MANY_VOLS</td>
+<td>The SDC is mapped to too many volumes. Please remove some mapping.</td>
+</tr>
+<tr>
+<td>304</td>
+<td>LIA_OPERATION_NOT_PERMITTED</td>
+<td>The operation is not permitted by current configuration</td>
+</tr>
+<tr>
+<td>305</td>
+<td>LIA_FILE_IS_TOO_LARGE</td>
+<td>The file is too large to send it back to the user</td>
+</tr>
+<tr>
+<td>306</td>
+<td>NOT_ALLOWED_MORE_THAN_ONE_MAPPING</td>
+<td>This volume is already mapped and may not be mapped to additional SDCs.</td>
+</tr>
+<tr>
+<td>307</td>
+<td>INI_MUST_BE_DISCONNECTED</td>
+<td>Cannot remove an SDC which is currently connected to the MDM.</td>
+</tr>
+<tr>
+<td>308</td>
+<td>NUM_IO_BUFFS_ALREADY_SET</td>
+<td>Number of IO buffers is already set to the requested value</td>
+</tr>
+<tr>
+<td>309</td>
+<td>TOO_MUCH_THIN_CAPACITY</td>
+<td>Requested volume size exceeds the volume allocation limit</td>
+</tr>
+<tr>
+<td>310</td>
+<td>ALREADY_IN_START_STATE</td>
+<td>Already started</td>
+</tr>
+<tr>
+<td>311</td>
+<td>ALREADY_IN_STOPPED_STATE</td>
+<td>Already stopped</td>
+</tr>
+<tr>
+<td>312</td>
+<td>REMOTE_SYSLOG_IS_BUSY</td>
+<td>Remote syslog is being configured</td>
+</tr>
+<tr>
+<td>313</td>
+<td>SYSLOG_FACILITY_ILLEGAL_VALUE</td>
+<td>Facility value is out of range</td>
+</tr>
+<tr>
+<td>314</td>
+<td>VOL_MAPPED_TO_SCSI_INITIATOR</td>
+<td>Volume is mapped to a SCSI interface</td>
+</tr>
+<tr>
+<td>315</td>
+<td>NOT_ENOUGH_DEVICES_IN_STORAGE_POOL_FOR_REMOVAL</td>
+<td>Not enough devices in Storage Pools</td>
+</tr>
+<tr>
+<td>316</td>
+<td>INVALID_TGT_NETWORK_LIMITS</td>
+<td>Invalid limits provided. The overall limit must be higher than the rebuild, rebalance, and migration limits. Each limit must be more than 5 MB</td>
+</tr>
+<tr>
+<td>317</td>
+<td>LIA_WRONG_ID</td>
+<td>LIA installation ID verification failed</td>
+</tr>
+<tr>
+<td>318</td>
+<td>AT_LEAST_ONE_TGT_FAILED</td>
+<td>At least one SDS failed</td>
+</tr>
+<tr>
+<td>319</td>
+<td>LIA_GET_FREE_DISK_SPACE_COMMAND_FAILED</td>
+<td>Get Free Disk Space was not successful</td>
+</tr>
+<tr>
+<td>320</td>
+<td>ENTERPRISE_FEATURES_NOT_ENABLED</td>
+<td>Enterprise features are not enabled for this system.</td>
+</tr>
+<tr>
+<td>322</td>
+<td>INVALID_LUN_NUM</td>
+<td>The LUN number is invalid. Please try a number between 0 and 255.</td>
+</tr>
+<tr>
+<td>323</td>
+<td>THICK_VOL_RESERVATION_VIOLATION</td>
+<td>Allocating Thin volume violates Thick volume reservation</td>
+</tr>
+<tr>
+<td>324</td>
+<td>VOL_ALREADY_MAPPED_TO_AN_INI</td>
+<td>The volume is already mapped to a SDC</td>
+</tr>
+<tr>
+<td>325</td>
+<td>INVALID_SPARE_PERCENTAGE</td>
+<td>The spare percentage value that you provided is invalid. Please use a value between 0 - 99.</td>
+</tr>
+<tr>
+<td>326</td>
+<td>TGT_ALREADY_EXISTS_AND_BEING_REMOVED</td>
+<td>The SDS already exists and is being removed. Please wait for the operation to finish</td>
+</tr>
+<tr>
+<td>327</td>
+<td>ONE_TGT_DEV_BEING_REMOVED</td>
+<td>This command cannot be completed; An SDS device is currently being removed</td>
+</tr>
+<tr>
+<td>328</td>
+<td>ONE_TGT_DEV_ALREADY_ACTIVE</td>
+<td>This command cannot be completed; An SDS device is currently active</td>
+</tr>
+<tr>
+<td>329</td>
+<td>ONE_TGT_DEV_WRONG_TEST_STATE</td>
+<td>This command cannot be completed; An SDS device is currently in incorrect test mode</td>
+</tr>
+<tr>
+<td>330</td>
+<td>ONE_TGT_DEV_WRONG_TEST_MODE</td>
+<td>This command cannot be completed; An SDS device test is currently in progress</td>
+</tr>
+<tr>
+<td>331</td>
+<td>INITIATOR_NOT_APPROVED</td>
+<td>The SDC is not approved</td>
+</tr>
+<tr>
+<td>332</td>
+<td>RMCACHE_SIZE_TOO_LARGE</td>
+<td>The specified RAM Read Cache size is too large</td>
+</tr>
+<tr>
+<td>333</td>
+<td>RMCACHE_SIZE_TOO_SMALL</td>
+<td>The specified RAM Read Cache size is too small</td>
+</tr>
+<tr>
+<td>334</td>
+<td>VOTER_ALREADY_EXISTS</td>
+<td>A tiebreaker already exists.</td>
+</tr>
+<tr>
+<td>335</td>
+<td>TOO_MANY_REMOTE_SYSLOG_CLIENTS</td>
+<td>There are too many RSyslog clients configured. please remove some.</td>
+</tr>
+<tr>
+<td>336</td>
+<td>REMOTE_SYSLOG_CLIENT_NOT_FOUND</td>
+<td>The requested remote syslog client was not found.</td>
+</tr>
+<tr>
+<td>337</td>
+<td>IP_ALREADY_EXISTS</td>
+<td>The IP already exists.</td>
+</tr>
+<tr>
+<td>338</td>
+<td>MANAGER_ID_ALREADY_EXISTS</td>
+<td>Manger ID already exists. Use ‘force’ flag to override</td>
+</tr>
+<tr>
+<td>339</td>
+<td>VOLUME_AND_SNAPSHOT_MATCH</td>
+<td>You cannot overwrite a volume with itself. Select a different volume in the V-Tree and try again.</td>
+</tr>
+<tr>
+<td>340</td>
+<td>ZEROPAD_AND_SCANNER</td>
+<td>Zero padding must be enabled in order to set scanner to Data Comparison mode</td>
+</tr>
+<tr>
+<td>341</td>
+<td>INVALID_SCANNER_BW_LIMIT</td>
+<td>The scanner bandwidth limit is invalid. Please use a value between 10KB - 10MB</td>
+</tr>
+<tr>
+<td>342</td>
+<td>ADDRESS_BELONGS_TO_DIFFERENT_TGT</td>
+<td>The given address belongs to a different SDS. Please check the system configuration</td>
+</tr>
+<tr>
+<td>343</td>
+<td>LICENSE_NOT_INITIAL</td>
+<td>The license has already been set</td>
+</tr>
+<tr>
+<td>344</td>
+<td>INITIAL_LICENSE_ALREADY_SET</td>
+<td>The initial license is already of this type.</td>
+</tr>
+<tr>
+<td>345</td>
+<td>CLIENT_TOO_OLD</td>
+<td>This client’s version is too old to send commands.</td>
+</tr>
+<tr>
+<td>346</td>
+<td>CAPACITY_TOO_LOW_FOR_THIN_VOL</td>
+<td>Storage Pools reached critical capacity utilization. Unable to create new thin volumes</td>
+</tr>
+<tr>
+<td>347</td>
+<td>TOO_MANY_STORAGE_POOLS</td>
+<td>There are too many Storage Poolss in the system</td>
+</tr>
+<tr>
+<td>348</td>
+<td>REMOTE_PERMISSION_DENIED</td>
+<td>Permission denied. Remote read only limit state is enabled and blocking this operation from remote. Run this command from the primary MDM host</td>
+</tr>
+<tr>
+<td>349</td>
+<td>TGT_ADD_DEV_IS_PARTITIONED</td>
+<td>Unable to add a device that was already partitioned</td>
+</tr>
+<tr>
+<td>350</td>
+<td>TGT_ADD_DEV_IS_MOUNTED</td>
+<td>Unable to add a device that was already mounted</td>
+</tr>
+<tr>
+<td>351</td>
+<td>INVALID_DEVICE_HEADER_SIGNATURE</td>
+<td>Found an invalid device header signature</td>
+</tr>
+<tr>
+<td>352</td>
+<td>TOO_MANY_VIRTUAL_IPS</td>
+<td>There are too many Virtual IP addresses.</td>
+</tr>
+<tr>
+<td>353</td>
+<td>DUPLICATE_VIRTUAL_IP</td>
+<td>Duplicate Virtual IP addresses.</td>
+</tr>
+<tr>
+<td>354</td>
+<td>DUPLICATE_VIRTUAL_IP_IFC</td>
+<td>Duplicate Virtual IP interface.</td>
+</tr>
+<tr>
+<td>355</td>
+<td>PORT_ALREADY_EXISTS</td>
+<td>Port already in use</td>
+</tr>
+<tr>
+<td>360</td>
+<td>GET_INFO_FAILED</td>
+<td>Get Info script failed</td>
+</tr>
+<tr>
+<td>361</td>
+<td>INVALID_GUID</td>
+<td>The given GUID is invalid. Please specify GUID in the following format: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx</td>
+</tr>
+<tr>
+<td>363</td>
+<td>ADD_SRC_VOL_WILL_CAUSE_TOO_MANY_VOLS_IN_VTREE</td>
+<td>Adding the source volume to the snapshot policy will cause there to be too many volumes in the VTree</td>
+</tr>
+<tr>
+<td>366</td>
+<td>NO_LOGICAL_RESOURCES</td>
+<td>Insufficient SPEF metadata resources</td>
+</tr>
+<tr>
+<td>368</td>
+<td>NO_CAPACITY_CHANGE_ON_INITIAL_COPY</td>
+<td>Capacity modification on replicated volume is unavailable during Initial Copy. Please wait until completion or remove replication pair</td>
+</tr>
+<tr>
+<td>369</td>
+<td>NEW_CAPACITY_BIGGER_THEN_DST_CAPACITY</td>
+<td>The volume is replication source, Cannot increase source volume capacity more then the compatible destination volume capacity</td>
+</tr>
+<tr>
+<td>The following are management codes used by the PowerFlex Installer:</td>
+<td></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<table>
+<thead>
+<tr>
+<th>RC ID</th>
+<th>Name</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1000</td>
+<td>ESRS_CREDENTIALS_INVALID</td>
+<td>Invalid credentials</td>
+</tr>
+<tr>
+<td>1001</td>
+<td>ESRS_CALLBACK_IP_MALFORMED</td>
+<td>Esrs callback IP is malformed</td>
+</tr>
+<tr>
+<td>1002</td>
+<td>PRODUCT_NOT_REGISTERED_IN_ESRS</td>
+<td>Product in no registerred in ESRS</td>
+</tr>
+<tr>
+<td>1100</td>
+<td>INVALID_UPGRADE_ID</td>
+<td>Invalid Upgrade Id. no Such Upgrade process which is running</td>
+</tr>
+<tr>
+<td>1101</td>
+<td>UPGRADE_ALREADY_RUNNING</td>
+<td>Upgrade process is already running</td>
+</tr>
+<tr>
+<td>1102</td>
+<td>INVALID_UPGRADE_ERROR_ID_OR_TYPE</td>
+<td>Upgrade error is or type is invalid for operation</td>
+</tr>
+<tr>
+<td>1200</td>
+<td>AMS_REDISCOVERY_UNSUPPORTED</td>
+<td>Re-discovery is not currently supported</td>
+</tr>
+<tr>
+<td>1201</td>
+<td>AMS_EXTEND_PROCESS_ALREADY_RUNNING</td>
+<td>Active extend process is already running</td>
+</tr>
+<tr>
+<td>1202</td>
+<td>AMS_EXTEND_PROCESS_OUT_OF_SYNC</td>
+<td>Extend process is not synchronized between server and client</td>
+</tr>
+<tr>
+<td>1203</td>
+<td>AMS_AUTO_DISCOVERY_FAILED</td>
+<td>Auto-discovery process failed</td>
+</tr>
+<tr>
+<td>1204</td>
+<td>AMS_SINGLE_IM_PROCESS_IS_ALLOWED</td>
+<td>Only one single deployment or upgrade process is allowed at same time</td>
+</tr>
+<tr>
+<td>1205</td>
+<td>AMS_UNEXPECTED_CONFIGURATION</td>
+<td>Unexpected configuration</td>
+</tr>
+<tr>
+<td>1206</td>
+<td>AMS_ASSIGN_MGMT_IPS_FAILED</td>
+<td>Could not assign management IPs to the nodes</td>
+</tr>
+<tr>
+<td>1207</td>
+<td>AMS_FAILED_TO_CHANGE_CONFIGURATION</td>
+<td>Could not change persistent configuration</td>
+</tr>
+<tr>
+<td>1208</td>
+<td>AMS_ASYNC_PROCESS_RUNNING</td>
+<td>Async process is still running</td>
+</tr>
+<tr>
+<td>1209</td>
+<td>AMS_ASYNC_PROCESS_ALREADY_RUNNING</td>
+<td>Another async process is already running</td>
+</tr>
+<tr>
+<td>1210</td>
+<td>AMS_NODE_DOES_NOT_EXIST</td>
+<td>Node does not exist</td>
+</tr>
+<tr>
+<td>1211</td>
+<td>AMS_MISSING_NODE_CREDS</td>
+<td>Missing node credentials</td>
+</tr>
+<tr>
+<td>1212</td>
+<td>AMS_FAILED_TO_RETRIEVE_MDM_MODEL</td>
+<td>Cannot connect to MDM</td>
+</tr>
+<tr>
+<td>1213</td>
+<td>AMS_IM_ORCHESTRATION_FAILED</td>
+<td>Cannot perform orchestration of async process</td>
+</tr>
+<tr>
+<td>1214</td>
+<td>AMS_SVM_SSH_CONNECTION_FAILED</td>
+<td>Could not create SVM SSH connection</td>
+</tr>
+<tr>
+<td>1215</td>
+<td>AMS_INVALID_PARAMS</td>
+<td>Invalid parameters received from client</td>
+</tr>
+<tr>
+<td>1216</td>
+<td>AMS_MDM_CONNECTION_FAILED</td>
+<td>Could not connect to MDM</td>
+</tr>
+<tr>
+<td>1217</td>
+<td>AMS_COULD_NOT_CREATE_PD</td>
+<td>Could not create Protection Domain</td>
+</tr>
+<tr>
+<td>1218</td>
+<td>AMS_COULD_NOT_CREATE_SP</td>
+<td>Could not create Storage Pools</td>
+</tr>
+<tr>
+<td>1219</td>
+<td>AMS_FAILED_TO_STORE_CONFIG</td>
+<td>Could not store AMS configuration in persistent location</td>
+</tr>
+<tr>
+<td>1220</td>
+<td>AMS_FAILED_TO_LOAD_CONFIG</td>
+<td>Could not load AMS configuration from persistent location</td>
+</tr>
+<tr>
+<td>1221</td>
+<td>AMS_ADC_CONNECTION_TEST_FAILED</td>
+<td>Connection test to ADC failed</td>
+</tr>
+<tr>
+<td>1222</td>
+<td>AMS_ILLEGAL_IP_POOLS_CONFIG</td>
+<td>Illegal configuration - new configuration does not contain IPs already in use</td>
+</tr>
+<tr>
+<td>1223</td>
+<td>AMS_ILLEGAL_VIRTUAL_IP_CONFIG</td>
+<td>Cannot change virtual IPs when PowerFlex exists</td>
+</tr>
+<tr>
+<td>1224</td>
+<td>AMS_FAILED_TO_PERFORM_IPMI_POWER_CMD</td>
+<td>Could not perform node power operation using IPMI</td>
+</tr>
+<tr>
+<td>1225</td>
+<td>AMS_FAILED_TO_REMOVE_NODE</td>
+<td>Could not remove appliance node</td>
+</tr>
+<tr>
+<td>1226</td>
+<td>AMS_FAILED_OPERATE_LED</td>
+<td>Could not turn on/off chassis led using IPMI</td>
+</tr>
+<tr>
+<td>1227</td>
+<td>AMS_NO_BMC_CONFIG</td>
+<td>No BMC configuration found</td>
+</tr>
+<tr>
+<td>1228</td>
+<td>AMS_INVALID_CREDENTIALS</td>
+<td>Invalid credentials</td>
+</tr>
+<tr>
+<td>1229</td>
+<td>AMS_VCENTER_CONNECTION_FAILED</td>
+<td>Could not connect to vCenter</td>
+</tr>
+<tr>
+<td>1230</td>
+<td>AMS_DATASTORE_UNMOUNT_FAILED</td>
+<td>Could not unmount datastore</td>
+</tr>
+<tr>
+<td>1231</td>
+<td>AMS_DETACH_LUN_FAILED</td>
+<td>Could not detach LUN</td>
+</tr>
+<tr>
+<td>1232</td>
+<td>AMS_NOT_ENOUGH_NODES_FOR_CLUSTER</td>
+<td>Not enough nodes to create PowerFlex cluster. At least 3 nodes are needed</td>
+</tr>
+<tr>
+<td>1233</td>
+<td>AMS_CANNOT_TERMINATE_IN_CURRENT_PHASE</td>
+<td>Cannot terminate process in current phase. Please try again later</td>
+</tr>
+<tr>
+<td>1234</td>
+<td>AMS_DEPLOY_RETRY_WITH_CHANGED_PARAMS_NOT_SUPPORTED</td>
+<td>Retrying deployment process with changed parameters is not supported</td>
+</tr>
+<tr>
+<td>1235</td>
+<td>AMS_CANNOT_RUN_SET_MGMT_IP_WITHOUT_DISCOVERY</td>
+<td>Cannot perform management networks configuration without performing discovery. Please close this wizard and rerun discovery process</td>
+</tr>
+<tr>
+<td>1236</td>
+<td>AMS_DISCOVERY_FOUND_NO_NODES</td>
+<td>No PowerFlex Nodes were found in the discovery process</td>
+</tr>
+<tr>
+<td>1237</td>
+<td>AMS_CANNOT_REMOVE_CLUSTER_COMPONENT_NODE</td>
+<td>Cannot remove node that serves as cluster component</td>
+</tr>
+<tr>
+<td>1238</td>
+<td>AMS_REMOVE_SDC_FROM_MDM_FAILED</td>
+<td>Could not remove SDC object from MDM</td>
+</tr>
+<tr>
+<td>1239</td>
+<td>AMS_NODE_IS_FUTURE_CLUSTER_COMPONENT</td>
+<td>Node is already a future cluster component</td>
+</tr>
+<tr>
+<td>1240</td>
+<td>AMS_NODE_HAS_INVALID_SIO_ROLE_FOR_MOVE_CLUSTER_COMPONENT</td>
+<td>Node has invalid PowerFlex role to start Move Cluster Component process</td>
+</tr>
+<tr>
+<td>1241</td>
+<td>AMS_NODE_IS_BEING_REMOVED</td>
+<td>Node is being removed</td>
+</tr>
+<tr>
+<td>1242</td>
+<td>AMS_FAILED_TO_ORCHESTRATE_MOVE_CLUSTER_COMPONENT</td>
+<td>Could not orchestrate Move Cluster Component process</td>
+</tr>
+<tr>
+<td>1243</td>
+<td>AMS_NODES_WITH_UNFINISHED_MOVE_CLUSTER_COMPONENT_PROCESS_EXIST</td>
+<td>Other nodes with unfinished Move Cluster Component process exist</td>
+</tr>
+<tr>
+<td>1244</td>
+<td>AMS_BATCH_DOES_NOT_EXIST</td>
+<td>Process batch does not exist</td>
+</tr>
+<tr>
+<td>1245</td>
+<td>AMS_ASYNC_PROCESS_DOES_NOT_EXIST</td>
+<td>Async process does not exist</td>
+</tr>
+<tr>
+<td>1246</td>
+<td>AMS_VIRTUAL_DISK_ALREADY_EXIST</td>
+<td>The logical disk already exists for the physical drive. Delete it and retry the operation</td>
+</tr>
+<tr>
+<td>1247</td>
+<td>AMS_VIRTUAL_DISK_IN_USE</td>
+<td>The logical disk is in use by PowerFlex</td>
+</tr>
+<tr>
+<td>1248</td>
+<td>AMS_FAILED_DELETING_VIRTUAL_DISK</td>
+<td>Failed deleting logical disk</td>
+</tr>
+<tr>
+<td>1249</td>
+<td>PROTOCOL_MISMATCH</td>
+<td>Message deserialization failed due to protocol mismatch</td>
+</tr>
+<tr>
+<td>1250</td>
+<td>CA_SIGNED_CERT_NOT_TRUSTED</td>
+<td>The CA-signed certificate is not trusted</td>
+</tr>
+<tr>
+<td>1251</td>
+<td>CERTIFICATE_EXPIRED</td>
+<td>The certificate is expired</td>
+</tr>
+<tr>
+<td>1252</td>
+<td>CERTIFICATE_NOT_YET_VALID</td>
+<td>The certificate is not yet valid</td>
+</tr>
+<tr>
+<td>1253</td>
+<td>AMS_INVALID_UPGRADE_TAR</td>
+<td>Upgrade tar is invalid</td>
+</tr>
+<tr>
+<td>1254</td>
+<td>AMS_FAILED_TO_PARSE_UPGRADE_SCENARIO</td>
+<td>Could not parse upgrade scenario file</td>
+</tr>
+<tr>
+<td>1255</td>
+<td>AMS_INVALID_UPGRADE_SCENARIO</td>
+<td>Invalid upgrade scenario file</td>
+</tr>
+<tr>
+<td>1256</td>
+<td>AMS_CACHING_IN_PROCESS</td>
+<td>A caching operation is already in process</td>
+</tr>
+<tr>
+<td>1257</td>
+<td>AMS_CACHED_WITH_CACHE_CADE</td>
+<td>The Storage Pools is already cached by CacheCade</td>
+</tr>
+<tr>
+<td>1258</td>
+<td>AMS_CACHED_WITH_XTREM_CACHE</td>
+<td>The Storage Pools is already cached by XtremCache</td>
+</tr>
+<tr>
+<td>1259</td>
+<td>AMS_FAILED_TGT_DEV_REMOVE</td>
+<td>Failed to remove device from SDS</td>
+</tr>
+<tr>
+<td>1260</td>
+<td>AMS_MOVE_COMPONENT_TARGET_NODE_NOT_COMPLETED_DEPLOYMENT</td>
+<td>Target node for move cluster component process has not successfully completed deployment process</td>
+</tr>
+<tr>
+<td>1261</td>
+<td>AMS_CANNOT_REMOVE_NODE_WITH_MAPPED_VOLUMES</td>
+<td>Selected node has mapped volumes and cannot be removed</td>
+</tr>
+<tr>
+<td>1262</td>
+<td>AMS_DEVICE_ALREADY_IN_USE</td>
+<td>The device is already in use</td>
+</tr>
+<tr>
+<td>1263</td>
+<td>AMS_CACHED_WITH_RF_CACHE</td>
+<td>The Storage Pools is already cached by RFCache</td>
+</tr>
+<tr>
+<td>1264</td>
+<td>AMS_MONITOR_USER_WRONG_PERMISSIONS</td>
+<td>AMS must use a MDM user that has only the monitor permission</td>
+</tr>
+<tr>
+<td>1265</td>
+<td>AMS_MONITOR_USER_CHANGE_VALIDATION_PROBLEM</td>
+<td>Failed checking the given credentials validity</td>
+</tr>
+<tr>
+<td>1266</td>
+<td>AMS_MONITOR_AUTH_CHANGE_VALIDATION_PROBLEM</td>
+<td>Failed changing authenticatin mode - AMS configured user won’t be able to connect to the MDM</td>
+</tr>
+<tr>
+<td>1267</td>
+<td>AMS_MONITOR_USER_WRONG_CREDENTIALS</td>
+<td>Invalid username or password given for the monitoring user</td>
+</tr>
+<tr>
+<td>1268</td>
+<td>AMS_EXPORT_SSH_KEYS_FAILED_FILE_ALREADY_EXISTS</td>
+<td>Cannot export the ssh keys file as a file with the same name already exists</td>
+</tr>
+<tr>
+<td>1269</td>
+<td>AMS_EXPORT_SSH_KEYS_FAILED_CANNOT_WRITE_FILE</td>
+<td>Cannot export the ssh keys file, path may be wrong</td>
+</tr>
+<tr>
+<td>1270</td>
+<td>AMS_VCENTER_INVALID_CERTIFICATE</td>
+<td>vCenter certificate is invalid</td>
+</tr>
+<tr>
+<td>1271</td>
+<td>AMS_FAILED_CREATING_CSR</td>
+<td>Failed creating certificate request for AMS CA certificate</td>
+</tr>
+<tr>
+<td>1272</td>
+<td>AMS_CERTIFICATE_NOT_MATCHING_PRIVATE_KEY</td>
+<td>The given certificate has a public key which doesn’t match the saved private key</td>
+</tr>
+<tr>
+<td>1273</td>
+<td>AMS_CERTIFICATE_BAD_FORMAT</td>
+<td>Provided certificate should be in PEM encoding</td>
+</tr>
+<tr>
+<td>1274</td>
+<td>AMS_SECURE_COMMUNICATION_CANNOT_BE_ENABLED</td>
+<td>Can’t move to secure communication mode as secure connection to at least one of the nodes isn’t initialized</td>
+</tr>
+<tr>
+<td>1275</td>
+<td>AMS_RECOVERY_PASSWORD_MISSING</td>
+<td>AMS recovery password isn’t configured. Configure AMS recovery password and run the command again.</td>
+</tr>
+<tr>
+<td>1276</td>
+<td>AMS_ESX_VOLUME_BUSY</td>
+<td>Volume failed to detach from ESX as it in use.</td>
+</tr>
+<tr>
+<td>1277</td>
+<td>AMS_VOL_ON_EXT_SDC_MAYBE_BUSY</td>
+<td>AMS cannot detect if volume is free to unmount from external SDC. Use Force to unmount.</td>
+</tr>
+<tr>
+<td>1278</td>
+<td>AMS_RENEW_CERTIFICATE_RUNNING</td>
+<td>Cannot replace AMS certificate while renew certificates process is running.</td>
+</tr>
+<tr>
+<td>1279</td>
+<td>AMS_FAILED_CLEARING_PHYSICAL_DISK_ERROR</td>
+<td>The command cannot be performed successfully. Check the AMS logs to identify possible problems in the Storage Controller</td>
+</tr>
+<tr>
+<td>1280</td>
+<td>AMS_FAILED_CLEARING_PHYSICAL_DISK_INVALID_STATE</td>
+<td>This command cannot be executed because the disk state is not ‘unconfigured bad’</td>
+</tr>
+<tr>
+<td>1281</td>
+<td>AMS_SECURE_COMMUNICATION_CANNOT_BE_DISABLED_NO_MDM</td>
+<td>Can’t disable secure communication before the MDM cluster is setup</td>
+</tr>
+<tr>
+<td>1282</td>
+<td>AMS_VIRTUAL_DISK_IN_USE_BY_DASCACHE</td>
+<td>Disk cannot be removed as it’s used by DasCache</td>
+</tr>
+<tr>
+<td>1283</td>
+<td>AMS_DASCACHE_MUST_BE_ALL_AT_ONCE</td>
+<td>DasCache devices can only be added/removed all-at-once.</td>
+</tr>
+<tr>
+<td>1284</td>
+<td>ESRS_CONNECTION_FAILED</td>
+<td>Failed connection to ESRS gateway server</td>
+</tr>
+<tr>
+<td>1285</td>
+<td>AMS_ALL_SSD_CANT_BE_CACHED</td>
+<td>SSD Storage Pools can not be accelerated by cache</td>
+</tr>
+<tr>
+<td>1286</td>
+<td>AMS_CERTIFICATE_EXPIRY_DATE_TOO_SOON</td>
+<td>Certificate expiration date is sooner than allowed</td>
+</tr>
+<tr>
+<td>The following are management codes used by the PowerFlex Installer in v3.0.x and later</td>
+<td></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<table>
+<thead>
+<tr>
+<th>RC ID</th>
+<th>Name</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1287</td>
+<td>AMS_SYSTEM_ALREADY_USES_2_NICS</td>
+<td>System is already configured to use 2 data NICs</td>
+</tr>
+<tr>
+<td>1288</td>
+<td>AMS_SYSTEM_HAS_NODES_IN_DEPLOYMENT_PHASE</td>
+<td>The operation cannot be performed as the system has nodes that are currently in deployment phase</td>
+</tr>
+<tr>
+<td>1289</td>
+<td>AMS_REMOVE_NICS_WILL_CAUSE_SDS_COMM_FAIL</td>
+<td>Removing the NICs may cause some SDS to be disconnected</td>
+</tr>
+<tr>
+<td>1290</td>
+<td>AMS_SYSTEM_ALREADY_USES_4_NICS</td>
+<td>System is already configured to use 4 data NICs</td>
+</tr>
+<tr>
+<td>1291</td>
+<td>AMS_SYSTEM_HYPER_CONVERGED_CANT_USE_FOUR_NICS</td>
+<td>Can’t configure 4 PowerFlex data NICs in an hyper-converged system</td>
+</tr>
+<tr>
+<td>1292</td>
+<td>AMS_NOT_ENOUGH_FREE_IPS_IN_POOL</td>
+<td>IP pools doesn’t have enough free IPs to be distributed to all nodes</td>
+</tr>
+<tr>
+<td>1293</td>
+<td>AMS_CHANGE_DATA_NICS_ALREADY_RUNNING</td>
+<td>Configuring data nics operation is already running</td>
+</tr>
+<tr>
+<td>1294</td>
+<td>AMS_UPGRADE_FAILED_TO_APPROVE_NODE_REBOOT</td>
+<td>The requested node is not waiting for reboot approval</td>
+</tr>
+<tr>
+<td>1295</td>
+<td>AMS_FAILED_TO_RUN_LOG_COLLECTION</td>
+<td>Error while trying to execute log collection process</td>
+</tr>
+<tr>
+<td>1296</td>
+<td>AMS_FAILED_TO_ABORT_LOG_COLLECTION</td>
+<td>Error while trying to abort log collection process</td>
+</tr>
+<tr>
+<td>1297</td>
+<td>AMS_FAILED_TO_GET_LOG_FILE_INFO</td>
+<td>Error getting collected log file info</td>
+</tr>
+<tr>
+<td>1298</td>
+<td>AMS_RECOVERY_INVALID_SSH_KEYS_INPUT_FILE</td>
+<td>Error parsing ssh keys file for recovery process</td>
+</tr>
+<tr>
+<td>1299</td>
+<td>AMS_RECOVERY_INVALID_NODE_CREDENTIALS_INPUT_FILE</td>
+<td>Error parsing credentials file for recovery process</td>
+</tr>
+<tr>
+<td>1300</td>
+<td>AMS_RECOVERY_ALREADY_RUNNING</td>
+<td>AMS recovery process is already running</td>
+</tr>
+<tr>
+<td>1301</td>
+<td>AMS_COMMAND_RUNNING_ON_DEVICE</td>
+<td>Can’t run multiple operations against the same physical device in parallel</td>
+</tr>
+<tr>
+<td>1302</td>
+<td>AMS_ENTITY_DOES_NOT_EXIST</td>
+<td>Entity with the provided ID does not exist</td>
+</tr>
+<tr>
+<td>1303</td>
+<td>AMS_ENTITY_TYPE_DOES_NOT_EXIST</td>
+<td>Entity from the provided type does not exist</td>
+</tr>
+<tr>
+<td>1304</td>
+<td>AMS_REPLACE_SVM_OVA_MISSING</td>
+<td>Replace SVM template OVA file not found</td>
+</tr>
+<tr>
+<td>1305</td>
+<td>MAINT_VOL_UNMAP_BLOCKED</td>
+<td>Maintenance volume is required by replac SVM process, and should not be unmapped.</td>
+</tr>
+<tr>
+<td>1306</td>
+<td>AMS_SYSTEM_TYPE_DATA_NETWORKS_MISMATCH</td>
+<td>There are too many data networks for requested system type</td>
+</tr>
+<tr>
+<td>1307</td>
+<td>AMS_SET_PASSWORD_INVALID_HOST_PASSWORD</td>
+<td>Set password given an invalid host password</td>
+</tr>
+<tr>
+<td>1308</td>
+<td>AMS_TAKE_OWNERSHIP_INVALID_NODE_CREDENTIALS_INPUT_FILE</td>
+<td>Error parsing credentials file for Take Ownership process</td>
+</tr>
+<tr>
+<td>1309</td>
+<td>AMS_TAKE_OWNERSHIP_INVALID_PRIMARY_MDM_IP_CANDIDATES_INPUT</td>
+<td>Error parsing list of possible MDM IPs for take ownership process</td>
+</tr>
+<tr>
+<td>1310</td>
+<td>AMS_TAKE_OWNERSHIP_ALREADY_RUNNING</td>
+<td>AMS take ownership process is already running</td>
+</tr>
+<tr>
+<td>1311</td>
+<td>AMS_TAKE_OWNERSHIP_ALREADY_MANAGING_A_SYSTEM</td>
+<td>AMS is already managing a system</td>
+</tr>
+<tr>
+<td>1312</td>
+<td>AMS_TAKE_OWNERSHIP_MDM_CREDENTIALS_ERROR</td>
+<td>Invalid or missing MDM user name and/or password</td>
+</tr>
+<tr>
+<td>1313</td>
+<td>AMS_TAKE_OWNERSHIP_MISSING_WIZARD_INFO</td>
+<td>Some required info is missing. Please make sure you completed all steps of the initial wizard</td>
+</tr>
+<tr>
+<td>1314</td>
+<td>AMS_TAKE_OWNERSHIP_NOT_IN_PROGRESS</td>
+<td>There is no take ownership process currently in progress</td>
+</tr>
+<tr>
+<td>1315</td>
+<td>AMS_TAKE_OWNERSHIP_NOT_READY_FOR_EXPORT</td>
+<td>The currently running Take Ownership process is not yet ready to export data</td>
+</tr>
+<tr>
+<td>1316</td>
+<td>AMS_TAKE_OWNERSHIP_ALREADY_EXPORTING</td>
+<td>Take Ownership process export phase has already started</td>
+</tr>
+<tr>
+<td>1317</td>
+<td>AMS_FAILED_TO_ADD_NODE</td>
+<td>Could not add appliance node</td>
+</tr>
+<tr>
+<td>1318</td>
+<td>AMS_TAKE_OWNERSHIP_MISSING_MONITOR_CREDENTIALS</td>
+<td>The MDM requires LDAP authentication - please provide valid LDAP monitor user and password</td>
+</tr>
+<tr>
+<td>1319</td>
+<td>AMS_TAKE_OWNERSHIP_NON_LDAP_MONITOR_CREDENTIALS</td>
+<td>The provided Monitor user is not an LDAP user - but the MDM requires LDAP authentication</td>
+</tr>
+<tr>
+<td>1320</td>
+<td>AMS_MISSING_CONFIGURATION</td>
+<td>Could not find the AMS configuration"  Type</td>
+</tr>
+<tr>
+<td>1321</td>
+<td>AMS_INCOMPLETE_CONFIGURATION</td>
+<td>The AMS configuration is incomplete</td>
+</tr>
+<tr>
+<td>1322</td>
+<td>AMS_UNSUPPORTED_COMMAND</td>
+<td>Command not supported by AMS, use the approved AMS command/flow as specified in PowerFlex guidelines.</td>
+</tr>
+<tr>
+<td>1324</td>
+<td>AMS_MGMT_AND_DATA_IPS_ON_SAME_SUBNET</td>
+<td>Invalid network configuration - there is a data IP on the same subnet as a management IP</td>
+</tr>
+<tr>
+<td>1325</td>
+<td>AMS_DATA_NETWORK_ON_MULTIPLE_SUBNETS</td>
+<td>Invalid network configuration - there is a single data network on more than 1 subnet</td>
+</tr>
+<tr>
+<td>1326</td>
+<td>AMS_MULTIPLE_DATA_NETWORKS_ON_SAME_SUBNET</td>
+<td>Invalid network configuration - there are multiple data networks on a single subnet</td>
+</tr>
+<tr>
+<td>1327</td>
+<td>AMS_CANNOT_RESTRICT_SDC_MODE_UNAPPROVED_SDC</td>
+<td>Cannot set restricted SDC mode due to SDC being unapproved by MDM</td>
+</tr>
+<tr>
+<td>1328</td>
+<td>AMS_CANNOT_RESTRICT_SDC_MODE_SDC_HAS_UNAPPROVED_IPS</td>
+<td>Cannot set restricted SDC mode due to SDC having an IP that is not approved by MDM</td>
+</tr>
+<tr>
+<td>1329</td>
+<td>AMS_DOWNLOAD_LOGS_ABORTED_INSUFFICIENT_SPACE</td>
+<td>Download logs to AMS aborted due to insufficient free disk space</td>
+</tr>
+<tr>
+<td>1330</td>
+<td>AMS_CLIENT_TOO_NEW</td>
+<td>The client version too new to work with the AMS"  Type</td>
+</tr>
+<tr>
+<td>1331</td>
+<td>AMS_FAILED_TO_CREATE_FILE_OR_DIR</td>
+<td>AMS failed to create file or directory</td>
+</tr>
+<tr>
+<td>1332</td>
+<td>AMS_CANNOT_PERFORM_ACTION_IN_CURRENT_RESTRICTIVE_STATE</td>
+<td>AMS cannot perform the action in its current restrictive state</td>
+</tr>
+<tr>
+<td>1333</td>
+<td>AMS_NVDIMM_REGION_HAS_NAMESPACE</td>
+<td>The NVDIMM region already has a namespace configured</td>
+</tr>
+<tr>
+<td>1334</td>
+<td>AMS_NVDIMM_REGION_NOT_FOUND</td>
+<td>The NVDIMM region was not found</td>
+</tr>
+<tr>
+<td>1335</td>
+<td>AMS_MISSING_IP_ADDRESS</td>
+<td>No IP address was provided</td>
+</tr>
+<tr>
+<td>1336</td>
+<td>AMS_NOT_VALID_IP_ADDRESS</td>
+<td>The provide value is not a valid IP address</td>
+</tr>
+<tr>
+<td>1337</td>
+<td>AMS_MISSING_CERTIFICATE</td>
+<td>No certificate was provided</td>
+</tr>
+<tr>
+<td>1338</td>
+<td>AMS_NOT_CA_CERTIFICATE</td>
+<td>The provided certificate is not a CA certificate</td>
+</tr>
+<tr>
+<td>1339</td>
+<td>AMS_UNMAP_ALL_SDC_NOT_SUPPORTED_ESX</td>
+<td>Unamp all SDCs from a volume not supported for multiple ESX nodes</td>
+</tr>
+<tr>
+<td>1340</td>
+<td>AMS_MISSING_PACKAGE</td>
+<td>One or more required package is missing</td>
+</tr>
+<tr>
+<td>1342</td>
+<td>AMS_CERTIFICATE_NOT_FOUND</td>
+<td>The certificate was not found in the AMS trust store</td>
+</tr>
+<tr>
+<td>1343</td>
+<td>AMS_CANNOT_REMOVE_NODE_WITH_SDS</td>
+<td>Cannot remove node with a SDS on it</td>
+</tr>
+<tr>
+<td>1344</td>
+<td>AMS_ALERTS_LOG_FILE_IOEXCEPTION</td>
+<td>Error reading alerts.log file</td>
+</tr>
+<tr>
+<td>1345</td>
+<td>AMS_FAILED_TO_FIND_ALERTS_LOG_FILE</td>
+<td>Cannot find alerts.log file</td>
+</tr>
+<tr>
+<td>1346</td>
+<td>AMS_ARCHIVE_ALERT_INVALID_TIME_FILTER</td>
+<td>Invalid time values for the archived alert filter</td>
+</tr>
+<tr>
+<td>1347</td>
+<td>AMS_INVALID_DNS_IP</td>
+<td>Given an invalid DNS IP address</td>
+</tr>
+<tr>
+<td>1348</td>
+<td>AMS_CANNOT_EXTEND_DURING_UPGRADE</td>
+<td>Cannot perform extend process actions when cluster is in the middle of an upgrade</td>
+</tr>
+<tr>
+<td>1349</td>
+<td>AMS_CANNOT_SERVE_REQ_REMOTE_NOT_CONN</td>
+<td>Cannot serve request - no connection to its remote destination</td>
+</tr>
+<tr>
+<td>The following are management codes used by the PowerFlex Installer for v2.6</td>
+<td></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<table>
+<thead>
+<tr>
+<th>RC ID</th>
+<th>Name</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1350</td>
+<td>AMS_INVALID_SECURITY_PATCHES_POLICY</td>
+<td>Invalid policy provided for enablement of Spectre and Meltdown security patches</td>
+</tr>
+<tr>
+<td>The following are management codes used by the PowerFlex Installer for v3.0.x and later:</td>
+<td></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<table>
+<thead>
+<tr>
+<th>RC ID</th>
+<th>Name</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1365</td>
+<td>AMS_MONITOR_USER_PWD_REQUIRES_CHANGE</td>
+<td>User provided for the AMS monitoring user requires password change</td>
+</tr>
+<tr>
+<td>1366</td>
+<td>AMS_REPLACE_SVM_ALREADY_RUNNING</td>
+<td>Another Deploy OVA or Replace SVM process is already running</td>
+</tr>
+<tr>
+<td>1367</td>
+<td>AMS_REPLACE_SVM_CLEAR_NODE_DISABLED</td>
+<td>Cannot clear the specified node in the current replace SVM process state</td>
+</tr>
+<tr>
+<td>1368</td>
+<td>AMS_REPLACE_SVM_ACTION_FORBIDDEN_IN_CURR_STATE</td>
+<td>Action not allowed in the current state of the replace SVM process</td>
+</tr>
+<tr>
+<td>1369</td>
+<td>AMS_REPLACE_SVM_ACTION_FORBIDDEN_SYSTEM_STATE</td>
+<td>Action not allowed in the current state of the cluster or its nodes</td>
+</tr>
+<tr>
+<td>1370</td>
+<td>AMS_NO_VCENTER_CONFIGURED</td>
+<td>No vCenter was provided to the AMS configuration</td>
+</tr>
+<tr>
+<td>1371</td>
+<td>AMS_FAILED_TO_UPDATE_NODE_OS_TYPE</td>
+<td>AMS Failed to update the OS type of node</td>
+</tr>
+<tr>
+<td>1372</td>
+<td>AMS_FAILED_TO_COMMUNICATE_WITH_VMWARE</td>
+<td>Failed to communicate with ESX/vCenter using VMware API</td>
+</tr>
+<tr>
+<td>1373</td>
+<td>AMS_REPLACE_SVM_INVALID_REQUEST</td>
+<td>Received invalid Replace SVM process related request</td>
+</tr>
+<tr>
+<td>RC ID</td>
+<td>Name</td>
+<td>Description</td>
+</tr>
+<tr>
+<td>-----</td>
+<td>----</td>
+<td>-----------</td>
+</tr>
+<tr>
+<td>400</td>
+<td>PYTHON_NOT_INSTALLED</td>
+<td>Python is not installed.</td>
+</tr>
+<tr>
+<td>401</td>
+<td>LIA_VERSION_IS_NEWER_THAN_LIA</td>
+<td>The version of the uploaded file is newer than LIA’s version</td>
+</tr>
+<tr>
+<td>404</td>
+<td>WRONG_UPGRADE_STATE</td>
+<td>The command cannot be executed in the current upgrade state</td>
+</tr>
+<tr>
+<td>405</td>
+<td>NOT_ALL_TGTS_UPGRADED</td>
+<td>Not all the SDSs were upgraded to the new version</td>
+</tr>
+<tr>
+<td>406</td>
+<td>UPGRADE_NOT_FINISHED</td>
+<td>The command is not allowed until the upgrade process is complete</td>
+</tr>
+<tr>
+<td>407</td>
+<td>CLUSTER_NOT_UPGRADED</td>
+<td>The command is not allowed until the MDM cluster upgrade process is complete</td>
+</tr>
+<tr>
+<td>408</td>
+<td>INVALID_PERFORMANCE_PARAMETER</td>
+<td>Performance parameter value is out of range. Please refer to the events log for further details</td>
+</tr>
+<tr>
+<td>409</td>
+<td>DIF_ATTACH_MISSING"  ErrnoVal</td>
+<td>INTERNAL/&gt;</td>
+</tr>
+<tr>
+<td>410</td>
+<td>TGT_TOO_OLD</td>
+<td>The version of the SDS is too old</td>
+</tr>
+<tr>
+<td>411</td>
+<td>LOGICAL_BLOCK_CHECK_GUARD_FAILED</td>
+<td>T10 DIF ‘guard’ failed a verification check</td>
+</tr>
+<tr>
+<td>412</td>
+<td>LOGICAL_BLOCK_CHECK_APP_TAG_FAILED</td>
+<td>T10 DIF ‘AppTag’ failed a verification check</td>
+</tr>
+<tr>
+<td>413</td>
+<td>LOGICAL_BLOCK_CHECK_REF_TAG_FAILED</td>
+<td>T10 DIF ‘RefTag’ failed a verification check</td>
+</tr>
+<tr>
+<td>414</td>
+<td>FALSE</td>
+<td>boolean FALSE when error code can be returned</td>
+</tr>
+<tr>
+<td>415</td>
+<td>TRUE</td>
+<td>boolean TRUE when error code can be returned</td>
+</tr>
+<tr>
+<td>416</td>
+<td>UMT_NUM_UPDATE_IS_STUCK</td>
+<td>Update of UMT num takes too long</td>
+</tr>
+<tr>
+<td>419</td>
+<td>RFCACHE_INVALID_DRIVER_PATH</td>
+<td>RFcache driver not installed</td>
+</tr>
+<tr>
+<td>420</td>
+<td>RFCACHE_API_VERSION_MISMATCH</td>
+<td>The RFcache API version mismatch the supported version</td>
+</tr>
+<tr>
+<td>421</td>
+<td>TOO_MANY_RFCACHE_DEVICES</td>
+<td>There are too many RFcache devices for SDS</td>
+</tr>
+<tr>
+<td>422</td>
+<td>DEPRECATED_MSG</td>
+<td>Deprecated message. Please contact Customer Support.</td>
+</tr>
+<tr>
+<td>423</td>
+<td>INVALID_RFCACHE_PAGESIZE</td>
+<td>Invalid RFcache page size. Valid values are powers of 2 between 4KB and 64KB</td>
+</tr>
+<tr>
+<td>424</td>
+<td>INVALID_RFCACHE_MAXIOSIZE</td>
+<td>Invalid RFcache maximum IO size. Valid values are powers of 2 between 32KB and 256KB</td>
+</tr>
+<tr>
+<td>425</td>
+<td>TGT_ALREADY_IN_MM</td>
+<td>The specified SDS is already in maintenance-mode.</td>
+</tr>
+<tr>
+<td>426</td>
+<td>TGT_NOT_IN_MM</td>
+<td>The specified SDS is not in maintenance-mode.</td>
+</tr>
+<tr>
+<td>427</td>
+<td>TGT_MM_CONFILICT</td>
+<td>The task failed since another SDS that shares a Storage Pools with this SDS and does not belong to the same Fault Set is in maintenance-mode.</td>
+</tr>
+<tr>
+<td>429</td>
+<td>DEGRADED_OR_FAILED_DATA</td>
+<td>The task failed since there is degraded or failed data in one of SDS’s Storage Poolss</td>
+</tr>
+<tr>
+<td>430</td>
+<td>TGT_MM_INSUFFICIENT_FREE_CAP</td>
+<td>The task failed since there is not enough free capacity in one of SDS’s Storage Poolss</td>
+</tr>
+<tr>
+<td>431</td>
+<td>SIG_VERIFY_FAILURE</td>
+<td>The peer’s digital signature failed verification</td>
+</tr>
+<tr>
+<td>432</td>
+<td>NET_SECURITY_DISABLED_ON_SERVER</td>
+<td>Network security is disabled on the server</td>
+</tr>
+<tr>
+<td>433</td>
+<td>NO_MEMORY</td>
+<td>Out of memory</td>
+</tr>
+<tr>
+<td>434</td>
+<td>SDC_IOCTL_ERROR</td>
+<td>SDC command failed</td>
+</tr>
+<tr>
+<td>435</td>
+<td>INVALID_ARG</td>
+<td>Invalid argument</td>
+</tr>
+<tr>
+<td>436</td>
+<td>MDM_IP_ALREADY_EXISTS</td>
+<td>An MDM with the same IP address already exists.</td>
+</tr>
+<tr>
+<td>437</td>
+<td>SDC_GUID_ALREADY_EXISTS</td>
+<td>An SDC with the same GUID already exists.</td>
+</tr>
+<tr>
+<td>439</td>
+<td>TOO_MANY_MDMS</td>
+<td>There are too many MDMs nodes defined</td>
+</tr>
+<tr>
+<td>440</td>
+<td>ACTOR_ALREADY_CONFIGURED</td>
+<td>The MDM is already configured to a different cluster</td>
+</tr>
+<tr>
+<td>441</td>
+<td>MDM_NOT_CONNECTED</td>
+<td>The MDM is not connected</td>
+</tr>
+<tr>
+<td>442</td>
+<td>ERROR_CONFIG_REMOTE_MDM</td>
+<td>Could not configure the remote MDM</td>
+</tr>
+<tr>
+<td>443</td>
+<td>MDM_IN_CLUSTER</td>
+<td>The MDM is part of the current cluster and cannot be removed</td>
+</tr>
+<tr>
+<td>444</td>
+<td>MDM_DOES_NOT_EXIST</td>
+<td>The MDM could not be found</td>
+</tr>
+<tr>
+<td>445</td>
+<td>CMD_ERROR_ID_NOT_IN_CLUSTER</td>
+<td>The MDM ID passed is not a cluster member</td>
+</tr>
+<tr>
+<td>446</td>
+<td>MDM_NAME_ALREADY_EXISTS</td>
+<td>An MDM with the same name already exists.</td>
+</tr>
+<tr>
+<td>447</td>
+<td>ALREADY_IN_THIS_CLUSTER_MODE</td>
+<td>The MDM is already in this cluster mode.</td>
+</tr>
+<tr>
+<td>448</td>
+<td>TOO_MANY_REPLACED_MDMS</td>
+<td>Too many MDMs replaced for this cluster mode.</td>
+</tr>
+<tr>
+<td>449</td>
+<td>WRONG_NUMBER_OF_MDMS</td>
+<td>Wrong number of MDMs for this transition</td>
+</tr>
+<tr>
+<td>450</td>
+<td>WRONG_MDM_ROLE</td>
+<td>Wrong MDM role</td>
+</tr>
+<tr>
+<td>451</td>
+<td>MDM_NOT_IN_CLUSTER</td>
+<td>The MDMs are not in the cluster</td>
+</tr>
+<tr>
+<td>452</td>
+<td>MDM_ALREADY_IN_CLUSTER</td>
+<td>The MDMs are already in the cluster</td>
+</tr>
+<tr>
+<td>453</td>
+<td>MDM_IS_TB</td>
+<td>MDM role is not a secondary but a tiebreaker</td>
+</tr>
+<tr>
+<td>454</td>
+<td>ALREADY_MASTER</td>
+<td>MDM passed is already the primary</td>
+</tr>
+<tr>
+<td>455</td>
+<td>CANNOT_REMOVE_MASTER</td>
+<td>The MDM requested to be removed is the primary, not a secondary MDM</td>
+</tr>
+<tr>
+<td>456</td>
+<td>SDS_PERF_PARAM_CHANGE_FAILED</td>
+<td>Could not configure the performance parameters to the SDS</td>
+</tr>
+<tr>
+<td>458</td>
+<td>CHECKSUM_ERROR</td>
+<td>SDC failed to validate checksum.</td>
+</tr>
+<tr>
+<td>459</td>
+<td>INVALID_CHECKSUM_LENGTH</td>
+<td>SDC failed to validate checksum. Unexpected checksum length</td>
+</tr>
+<tr>
+<td>460</td>
+<td>IO_NET_ERROR</td>
+<td>IO failed due to a network related error</td>
+</tr>
+<tr>
+<td>461</td>
+<td>TOO_MANY_RFCACHE_DEVS</td>
+<td>You have exceeded the maximum number of RFcache devices</td>
+</tr>
+<tr>
+<td>462</td>
+<td>RFCACHE_DEV_ALREADY_EXISTS</td>
+<td>This RFcache device already exists</td>
+</tr>
+<tr>
+<td>463</td>
+<td>RFCACHE_DEV_NOT_FOUND</td>
+<td>Could not find RFcache device</td>
+</tr>
+<tr>
+<td>464</td>
+<td>INVALID_RFCACHE_DEV_ID</td>
+<td>Invalid RFcache device. Please try again with a valid ID, name or path.</td>
+</tr>
+<tr>
+<td>465</td>
+<td>PASSWORD_VIA_SHELL</td>
+<td>The usage of --password to login was disabled</td>
+</tr>
+<tr>
+<td>466</td>
+<td>MDM_TOO_OLD</td>
+<td>The version of the MDM is too old</td>
+</tr>
+<tr>
+<td>467</td>
+<td>DYN_PARAM_DOES_NOT_EXIST</td>
+<td>The dynamic parameter does not exist</td>
+</tr>
+<tr>
+<td>468</td>
+<td>INI_NAME_IN_USE</td>
+<td>SDC name is already in use. Please use a different name.</td>
+</tr>
+<tr>
+<td>469</td>
+<td>MDM_ACTIVE_ATTACH_TO_THIS_CLUSTER</td>
+<td>MDM was previously part of this cluster and was not properly removed</td>
+</tr>
+<tr>
+<td>470</td>
+<td>MDM_ALREADY_ATTACH_TO_THIS_CLUSTER</td>
+<td>MDM was previously part of this cluster and was not properly removed</td>
+</tr>
+<tr>
+<td>471</td>
+<td>MDM_ACTIVE_ATTACH_TO_OTHER_CLUSTER</td>
+<td>MDM is part of another cluster or was not properly removed</td>
+</tr>
+<tr>
+<td>472</td>
+<td>MDM_ALREADY_ATTACH_TO_OTHER_CLUSTER</td>
+<td>MDM is part of another cluster or was not properly removed</td>
+</tr>
+<tr>
+<td>473</td>
+<td>VOTER_ACTIVE_ATTACH_TO_THIS_CLUSTER</td>
+<td>MDM was previously part of this cluster and was not properly removed</td>
+</tr>
+<tr>
+<td>474</td>
+<td>VOTER_ALREADY_ATTACH_TO_THIS_CLUSTER</td>
+<td>MDM was previously part of this cluster and was not properly removed</td>
+</tr>
+<tr>
+<td>475</td>
+<td>VOTER_ACTIVE_ATTACH_TO_OTHER_CLUSTER</td>
+<td>MDM is part of another cluster or was not properly removed</td>
+</tr>
+<tr>
+<td>476</td>
+<td>VOTER_ALREADY_ATTACH_TO_OTHER_CLUSTER</td>
+<td>MDM is part of another cluster or was not properly removed</td>
+</tr>
+<tr>
+<td>477</td>
+<td>RFCACHE_UUID_NOT_FOUND</td>
+<td>UUID of RFcache device was not found</td>
+</tr>
+<tr>
+<td>478</td>
+<td>RFCACHE_MULTIPLE_PATHS_TO_DEVICE</td>
+<td>Multiple paths for the same RFcache device</td>
+</tr>
+<tr>
+<td>479</td>
+<td>ERROR_LOADING_SECURITY</td>
+<td>Failed loading the security module</td>
+</tr>
+<tr>
+<td>480</td>
+<td>MANAGEMENT_CLIENT_SECURE_COMMUNICATION_ALREADY_ENABLED</td>
+<td>Management clients secure communication is already enabled</td>
+</tr>
+<tr>
+<td>481</td>
+<td>MANAGEMENT_CLIENT_SECURE_COMMUNICATION_ALREADY_DISABLED</td>
+<td>Management clients secure communication is already disabled</td>
+</tr>
+<tr>
+<td>482</td>
+<td>ILLEGAL_FOR_MASTER_MDM</td>
+<td>Command is illegal for the primary MDM</td>
+</tr>
+<tr>
+<td>483</td>
+<td>ILLEGAL_COMMAND_FOR_REMOTE_CLIENTS</td>
+<td>This command can only be run from the local machine</td>
+</tr>
+<tr>
+<td>484</td>
+<td>SECURITY_IS_DISABLED</td>
+<td>This command cannot be used when secure communication is disabled</td>
+</tr>
+<tr>
+<td>485</td>
+<td>ERROR_LOADING_OPENSSL</td>
+<td>Failed loading the OpenSSL library</td>
+</tr>
+<tr>
+<td>486</td>
+<td>ERROR_LOADING_SSL_KEY_PAIR</td>
+<td>Failed loading the SSL/TLS key-pair</td>
+</tr>
+<tr>
+<td>487</td>
+<td>ERROR_LOADING_SSL_TRUST</td>
+<td>Failed loading the SSL/TLS trusted certificates</td>
+</tr>
+<tr>
+<td>488</td>
+<td>INVALID_SSL_CIPHERS</td>
+<td>Invalid SSL/TLS ciphers</td>
+</tr>
+<tr>
+<td>489</td>
+<td>ERROR_LOADING_AUTH_KEY_PAIR</td>
+<td>Failed loading the authentication key-pair</td>
+</tr>
+<tr>
+<td>490</td>
+<td>ERROR_LOADING_AUTH_TRUST</td>
+<td>Failed loading the authentication trusted certificates</td>
+</tr>
+<tr>
+<td>491</td>
+<td>UNSECURE_CONNECTION_NOT_ALLOWED</td>
+<td>Commands sent on an unsecure connection are not allowed.</td>
+</tr>
+<tr>
+<td>492</td>
+<td>INVALID_AUTHENTICATION_METHOD</td>
+<td>Invalid authentication method.</td>
+</tr>
+<tr>
+<td>493</td>
+<td>LDAP_UNSUPPORTED_COMMAND</td>
+<td>This command is not supported by system configured with LDAP authentication method.</td>
+</tr>
+<tr>
+<td>494</td>
+<td>LDAP_SESSION_INITIALIZATION_FAIL</td>
+<td>Could not establish the connection with LDAP service.</td>
+</tr>
+<tr>
+<td>495</td>
+<td>LDAP_BIND_FAIL</td>
+<td>Could not connect to LDAP service due to configuration problem. Please contact your system administrator.</td>
+</tr>
+<tr>
+<td>496</td>
+<td>LDAP_USER_NOT_FOUND_IN_GROUP</td>
+<td>The LDAP user was not found in the group.</td>
+</tr>
+<tr>
+<td>497</td>
+<td>LDAP_SEARCH_FAIL</td>
+<td>Failed to find user permissions on the LDAP service. Please contact your system administrator.</td>
+</tr>
+<tr>
+<td>498</td>
+<td>LDAP_UNBIND_FAIL</td>
+<td>Could not unbind from LDAP service.</td>
+</tr>
+<tr>
+<td>499</td>
+<td>LDAP_UNINITIALIZED</td>
+<td>LDAP library could not be loaded properly.</td>
+</tr>
+<tr>
+<td>500</td>
+<td>AUTH_METHOD_ALREADY_SET</td>
+<td>No change in authentication method. Current method equals to the newly set method.</td>
+</tr>
+<tr>
+<td>501</td>
+<td>AUTH_NO_NATIVE_USERS_DEFINED</td>
+<td>There are no users defined in the system.</td>
+</tr>
+<tr>
+<td>502</td>
+<td>LDAP_UNSUPPORTED_DN_FORMAT</td>
+<td>Could not parse DN parameter.</td>
+</tr>
+<tr>
+<td>503</td>
+<td>LDAP_SERVICE_DOMAIN_ALREADY_EXISTS</td>
+<td>LDAP service entry with the same domain already exists.</td>
+</tr>
+<tr>
+<td>504</td>
+<td>TOO_MANY_LDAP_SERVICES</td>
+<td>There are too many LDAP service entries.</td>
+</tr>
+<tr>
+<td>505</td>
+<td>LDAP_SERVICE_NOT_FOUND</td>
+<td>Could not find LDAP service.</td>
+</tr>
+<tr>
+<td>506</td>
+<td>LDAP_GROUP_ALREADY_EXISTS</td>
+<td>LDAP group entry already exists.</td>
+</tr>
+<tr>
+<td>507</td>
+<td>TOO_MANY_LDAP_GROUPS</td>
+<td>There are too many LDAP groups.</td>
+</tr>
+<tr>
+<td>508</td>
+<td>LDAP_UNSUPPORTED_USERNAME_FORMAT</td>
+<td>Could not parse Username parameter.</td>
+</tr>
+<tr>
+<td>509</td>
+<td>LDAP_FROM_LDAP_TO_NATIVE_AUTH_ERROR</td>
+<td>Could not change authentication method from LDAP to Native.</td>
+</tr>
+<tr>
+<td>510</td>
+<td>ERROR_LOADING_LDAP_IN_CLUSTER</td>
+<td>One of the cluster nodes failed loading the LDAP library</td>
+</tr>
+<tr>
+<td>511</td>
+<td>LDAP_AUTHENTICATION_FAIL</td>
+<td>User authentication on LDAP service failed. Please check username and password.</td>
+</tr>
+<tr>
+<td>512</td>
+<td>IRRELEVANT_ADD_MDM_PARAMS</td>
+<td>Parameters for adding nodes should not be specified when decreasing the number of MDMs</td>
+</tr>
+<tr>
+<td>513</td>
+<td>IRRELEVANT_REMOVE_MDM_PARAMS</td>
+<td>Parameters for removing nodes should not be specified when increasing the number of MDMs</td>
+</tr>
+<tr>
+<td>514</td>
+<td>SDC_GUID_DOES_NOT_EXIST</td>
+<td>The SDC does not have a GUID</td>
+</tr>
+<tr>
+<td>515</td>
+<td>DEV_ALREADY_TAKEN_BY_ANOTHER</td>
+<td>Device already added to another SDS. To override, add the specific sds device with force device takeover.</td>
+</tr>
+<tr>
+<td>516</td>
+<td>TGT_EXIT_MAINTENANCE_IN_PROGRESS</td>
+<td>The specified SDS is in a process of exiting maintenance-mode.</td>
+</tr>
+<tr>
+<td>517</td>
+<td>TGT_EXIT_MM</td>
+<td>Exiting maintenance-mode.</td>
+</tr>
+<tr>
+<td>518</td>
+<td>BAD_THRESHOLD_MATCH</td>
+<td>The high threshold value must be lower than the critical threshold value.</td>
+</tr>
+<tr>
+<td>519</td>
+<td>LDAP_USER_NOT_FOUND_IN_ANY_GROUP</td>
+<td>The LDAP user was not found in any configured group.</td>
+</tr>
+<tr>
+<td>520</td>
+<td>LDAP_SERVICE_NOT_CONFIGURED</td>
+<td>LDAP services were not configured sufficiently. There must be at least one LDAP service with administrators group.</td>
+</tr>
+<tr>
+<td>521</td>
+<td>TGT_MM_PD_FAIL</td>
+<td>The task failed since there is an SDS in the Protection Domain currently in maintenance-mode.</td>
+</tr>
+<tr>
+<td>522</td>
+<td>TGT_MM_SDS_FAIL</td>
+<td>The task failed since this SDS is currently in maintenance-mode.</td>
+</tr>
+<tr>
+<td>523</td>
+<td>SELF_SIGNED_CERT_NOT_TRUSTED</td>
+<td>The self-signed certificate is not trusted</td>
+</tr>
+<tr>
+<td>524</td>
+<td>ISSUER_CERT_NOT_TRUSTED</td>
+<td>The issuer’s certificate is not trusted</td>
+</tr>
+<tr>
+<td>525</td>
+<td>LDAP_GROUP_FQDN_DIFFERS_FROM_SERVICE</td>
+<td>Domain path of group differs from the LDAP service domain</td>
+</tr>
+<tr>
+<td>526</td>
+<td>LIA_SECURE_COMMUNICATION_ALREADY_ENABLED</td>
+<td>LIA secure communication is already enabled</td>
+</tr>
+<tr>
+<td>527</td>
+<td>UPGRADE_WAS_NOT_STARTED</td>
+<td>The system is not currently being upgraded</td>
+</tr>
+<tr>
+<td>528</td>
+<td>MEMBERSHIP_CHANGE_LEAVING_FAILED_NODE</td>
+<td>The requested membership change leaves a failed node in the cluster</td>
+</tr>
+<tr>
+<td>529</td>
+<td>MEMBERSHIP_CHANGE_ADDING_FAILED_NODE</td>
+<td>The entered command is trying to add a failed node to the cluster</td>
+</tr>
+<tr>
+<td>530</td>
+<td>MEMBERSHIP_CHANGE_NO_MAJORY_IN_NEW</td>
+<td>The entered command will lead to a failed MDM cluster</td>
+</tr>
+<tr>
+<td>531</td>
+<td>TGT_CACHE_EXCEEDS_LIMIT</td>
+<td>Requested cache size exceeds limit</td>
+</tr>
+<tr>
+<td>532</td>
+<td>TGT_NOT_LISTENING_ON_PORT</td>
+<td>The SDS is not listening on the specified port. Please check the SDS port configuration and try again</td>
+</tr>
+<tr>
+<td>533</td>
+<td>INVALID_POLICY</td>
+<td>Invalid policy</td>
+</tr>
+<tr>
+<td>534</td>
+<td>DYN_PARAM_IS_READ_ONLY</td>
+<td>The dynamic parameter is read only. Can be change only via centralized management (i.e. cli).</td>
+</tr>
+<tr>
+<td>535</td>
+<td>OPENSSL_VERSION_TOO_OLD</td>
+<td>The OpenSSL version is too old</td>
+</tr>
+<tr>
+<td>536</td>
+<td>CERTIFICATE_DOES_NOT_EXIST</td>
+<td>The certificate file could not be found</td>
+</tr>
+<tr>
+<td>537</td>
+<td>MDM_AUTHENTICATION_ALREADY_ENABLED</td>
+<td>MDM authentication is already enabled</td>
+</tr>
+<tr>
+<td>538</td>
+<td>MDM_AUTHENTICATION_ALREADY_DISABLED</td>
+<td>MDM authentication is already disabled</td>
+</tr>
+<tr>
+<td>539</td>
+<td>TGT_AUTHENTICATION_ERROR</td>
+<td>Error authenticating the SDS</td>
+</tr>
+<tr>
+<td>540</td>
+<td>MDM_AUTHENTICATION_DISABLED</td>
+<td>MDM authentication is disabled</td>
+</tr>
+<tr>
+<td>541</td>
+<td>CERTIFICATE_ALREADY_BEING_GENERATED</td>
+<td>A certificate is already being generated</td>
+</tr>
+<tr>
+<td>542</td>
+<td>ERROR_LOADING_AUTHENTICATION_IN_MDM</td>
+<td>Error loading the authentication library in the MDM</td>
+</tr>
+<tr>
+<td>543</td>
+<td>USER_CAN_NOT_DELETE_HIMSELF</td>
+<td>You can not delete your own LDAP service.</td>
+</tr>
+<tr>
+<td>544</td>
+<td>LDAP_ROLE_ALREADY_ASSIGNED</td>
+<td>The role is already assigned to a group, use --allow_overwrite to change the role’s group.</td>
+</tr>
+<tr>
+<td>545</td>
+<td>IPV6_NOT_ALLOWED_UNTIL_UPGRADED</td>
+<td>IPv6 addresses are not allowed until the upgrade process is complete</td>
+</tr>
+<tr>
+<td>547</td>
+<td>TAKEOVER_NOT_ALLOWED_UNTIL_UPGRADED</td>
+<td>Device Takeover is not allowed until the upgrade process is complete</td>
+</tr>
+<tr>
+<td>548</td>
+<td>SECURED_COMMUNICATION_DISABLED</td>
+<td>Secured communication with management clients is disabled.</td>
+</tr>
+<tr>
+<td>549</td>
+<td>LDAP_USER_ALREADY_IN_ROLE</td>
+<td>User already in current role</td>
+</tr>
+<tr>
+<td>550</td>
+<td>SECURITY_NOT_SUPPORTED</td>
+<td>Security features are not supported on this operating system</td>
+</tr>
+<tr>
+<td>551</td>
+<td>ERROR_CREATING_SSL_KEY_PAIR</td>
+<td>Failed creating the SSL/TLS key-pair</td>
+</tr>
+<tr>
+<td>552</td>
+<td>ERROR_CREATING_AUTH_KEY_PAIR</td>
+<td>Failed creating the authentication key-pair</td>
+</tr>
+<tr>
+<td>553</td>
+<td>LDAP_SERVICE_NAME_ALREADY_EXISTS</td>
+<td>LDAP service entry with the same name already exists.</td>
+</tr>
+<tr>
+<td>554</td>
+<td>MDM_WRONG_CLUSTER</td>
+<td>The MDM belongs to a different cluster</td>
+</tr>
+<tr>
+<td>555</td>
+<td>GET_INFO_CANNOT_CREATE_DIRECTORY</td>
+<td>Get_info failed. Cannot create directory</td>
+</tr>
+<tr>
+<td>556</td>
+<td>GET_INFO_MISSING_PARAMETERS</td>
+<td>Get_info failed. Missing password/username/output path</td>
+</tr>
+<tr>
+<td>557</td>
+<td>SECTOR_SIZE_NOT_SUPPORTED</td>
+<td>One of the devices is using a sector size different than 512 bytes per sector. Currently, PowerFlex only supports SDS devices with 512 bytes per sector.</td>
+</tr>
+<tr>
+<td>558</td>
+<td>LIA_SCINI_IN_USE</td>
+<td>LIA can’t remove SDC because scini module is in use</td>
+</tr>
+<tr>
+<td>559</td>
+<td>TGT_ADD_RFCACHE_DEV_OPEN_ERROR</td>
+<td>Could not open RFcache device</td>
+</tr>
+<tr>
+<td>560</td>
+<td>SDC_ALREADY_APPROVED</td>
+<td>The SDC is already approved.</td>
+</tr>
+<tr>
+<td>561</td>
+<td>LIA_LOW_DISK_SPACE</td>
+<td>Disk space is too low for LIA to operate</td>
+</tr>
+<tr>
+<td>562</td>
+<td>DEV_PATH_ALREADY_EXISTS</td>
+<td>A device with the given path already exists in the SDS</td>
+</tr>
+<tr>
+<td>563</td>
+<td>CLUSTER_COMMANDS_BLOCKED_DURING_UPGRADE</td>
+<td>Cluster commands are blocked during the MDM cluster upgrade. Allow commands during the upgrade to perform this operation.</td>
+</tr>
+<tr>
+<td>564</td>
+<td>DEVICE_ERROR_REPORTED</td>
+<td>Device has an unhandled error that cannot yet be cleared</td>
+</tr>
+<tr>
+<td>565</td>
+<td>TOO_MANY_OBJECTS_FOR_CONTAINER</td>
+<td>There are too many objects of type for a single container</td>
+</tr>
+<tr>
+<td>566</td>
+<td>LIA_UNINSTALL_COMMAND_FAILED</td>
+<td>Uninstall command was not successful</td>
+</tr>
+<tr>
+<td>567</td>
+<td>LIA_INSTALL_COMMAND_FAILED</td>
+<td>Installation command was not successful</td>
+</tr>
+<tr>
+<td>568</td>
+<td>LIA_GET_COMPONENTS_COMMAND_FAILED</td>
+<td>Get Installed Components command was not successful</td>
+</tr>
+<tr>
+<td>569</td>
+<td>LIA_GET_FLAVOUR_COMMAND_FAILED</td>
+<td>Get Linux Flavour command was not successful</td>
+</tr>
+<tr>
+<td>570</td>
+<td>REMOVE_COMMAND_FAILED</td>
+<td>Remove command was not successful</td>
+</tr>
+<tr>
+<td>571</td>
+<td>LIA_START_SERVICE_COMMAND_FAILED</td>
+<td>Start service command was not successful</td>
+</tr>
+<tr>
+<td>572</td>
+<td>LIA_STOP_SERVICE_COMMAND_FAILED</td>
+<td>Stop service command was not successful</td>
+</tr>
+<tr>
+<td>573</td>
+<td>LIA_GET_IP_ADDRESS_COMMAND_FAILED</td>
+<td>Get IP address command was not successful</td>
+</tr>
+<tr>
+<td>574</td>
+<td>PREPARE_DISK_COMMAND_FAILED</td>
+<td>Prepare Disk command was not successful</td>
+</tr>
+<tr>
+<td>575</td>
+<td>WHICH_COMMAND_FAILED</td>
+<td>Which command was not successful</td>
+</tr>
+<tr>
+<td>576</td>
+<td>RESTART_COMMAND_FAILED</td>
+<td>Restart command was not successful</td>
+</tr>
+<tr>
+<td>577</td>
+<td>RENAME_COMMAND_FAILED</td>
+<td>Rename command was not successful</td>
+</tr>
+<tr>
+<td>578</td>
+<td>LIA_INSTALLATION_FILE_NOT_EXIST</td>
+<td>The installation file does not exist in the install path</td>
+</tr>
+<tr>
+<td>579</td>
+<td>LDAP_GROUP_DOES_NOT_EXIST</td>
+<td>The role to LDAP group assignment could not be found</td>
+</tr>
+<tr>
+<td>580</td>
+<td>ADD_DEV_TOO_LONG</td>
+<td>Adding a device takes too long. This might indicate a problematic device</td>
+</tr>
+<tr>
+<td>581</td>
+<td>INVALID_OSC_CNT_WIN_SIZE</td>
+<td>The specified oscillating counter window size is not in the valid range. Please try again with a valid window size.</td>
+</tr>
+<tr>
+<td>582</td>
+<td>LIA_DRV_CFG_FAILED</td>
+<td>drv_cfg command failed</td>
+</tr>
+<tr>
+<td>583</td>
+<td>SDC_VERSION_MISMATCH_OLDER_THAN_2_0</td>
+<td>SDC version does not match drv_cfg version. SDC version is older than 2.0.</td>
+</tr>
+<tr>
+<td>584</td>
+<td>TGT_ADD_RFCACHE_DEV_IO_ERROR</td>
+<td>Add RFcache device IO error</td>
+</tr>
+<tr>
+<td>586</td>
+<td>TGT_ADD_DEV_IO_ERROR_DEBUG</td>
+<td>Add SDS device IO error - device appears offline.</td>
+</tr>
+<tr>
+<td>587</td>
+<td>NOT_ENOUGH_HEALTHY_TGTS_FOR_MM</td>
+<td>There are not enough healthy SDSs available to allow this SDS to enter Maintenance Mode. In order to enter Maintenance Mode on an SDS, at least two additional healthy SDSs are required.</td>
+</tr>
+<tr>
+<td>588</td>
+<td>ERROR_UPDATING_SECURITY_CONF</td>
+<td>Failed updating the security configuration</td>
+</tr>
+<tr>
+<td>589</td>
+<td>DEV_ALREADY_TAKEN_BY_US_OR_ANOTHER</td>
+<td>Device already added to another SDS. To override, add the specific sds device with force device takeover.</td>
+</tr>
+<tr>
+<td>590</td>
+<td>MM_FAILED_REBUILD_DISABLED_ON_SP</td>
+<td>Cannot enter Maintenance Mode - rebuild is disabled on one of the Storage Poolss. Please enable rebuild and try again.</td>
+</tr>
+<tr>
+<td>591</td>
+<td>CERT_CHANGED_RECENTLY</td>
+<td>Changing the certificate twice in a short time is not allowed.</td>
+</tr>
+<tr>
+<td>592</td>
+<td>LIA_REBOOT_REQUIRED</td>
+<td>A reboot is required to complete the operation</td>
+</tr>
+<tr>
+<td>593</td>
+<td>RFCACHE_DEV_IS_PARTITIONED</td>
+<td>Unable to add a RFcache device that was partitioned</td>
+</tr>
+<tr>
+<td>594</td>
+<td>AMS_INVALID_VLAN_ID</td>
+<td>Invalid VLAN ID. VLAN ID must be in range of 0 to 4094</td>
+</tr>
+<tr>
+<td>597</td>
+<td>MDM_BUSY</td>
+<td>The system is busy. Retry later</td>
+</tr>
+<tr>
+<td>598</td>
+<td>LDAP_TIMEOUT</td>
+<td>A timeout occurred while running LDAP command</td>
+</tr>
+<tr>
+<td>600</td>
+<td>LIA_LED_CFG_ERROR</td>
+<td>The command was not successful since the device can’t be configured with LED settings</td>
+</tr>
+<tr>
+<td>601</td>
+<td>LIA_COMMAND_IS_PROHIBITED</td>
+<td>The command is prohibited in this mode</td>
+</tr>
+<tr>
+<td>602</td>
+<td>LIA_INVALID_SESSION</td>
+<td>Invalid LIA session. A login is required</td>
+</tr>
+<tr>
+<td>The following are management codes used in PowerFlex v2.0.1 and later:</td>
+<td></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<table>
+<thead>
+<tr>
+<th>RC ID</th>
+<th>Name</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>610</td>
+<td>FIND_FILE_COMMAND_FAILED</td>
+<td>Find file command was not successful</td>
+</tr>
+<tr>
+<td>611</td>
+<td>NUM_VIRT_IPS_NOT_MATCH_NUM_INTFS</td>
+<td>The number of Virtual IPs must be equal or lower than the number of MDM Virtual IP interfaces</td>
+</tr>
+<tr>
+<td>612</td>
+<td>MIX_OF_IPV4_AND_IPV6</td>
+<td>Mix of IPv4 and IPv6 is not allowed</td>
+</tr>
+<tr>
+<td>613</td>
+<td>LOGIN_BANNER_LARGER_THAN_MAX</td>
+<td>The login banner to set is larger than maximum length allowed</td>
+</tr>
+<tr>
+<td>614</td>
+<td>AMS_UPGRADE_ROLLBACK_IS_DISABLED</td>
+<td>Upgrade rollback is disabled at this stage</td>
+</tr>
+<tr>
+<td>615</td>
+<td>LOGIN_BANNER_NOT_READ</td>
+<td>The login banner has not been read as required</td>
+</tr>
+<tr>
+<td>616</td>
+<td>LOGIN_BANNER_CANNOT_PREEMPTIVE_APPROVE</td>
+<td>The login banner cannot be preemptively read</td>
+</tr>
+<tr>
+<td>617</td>
+<td>VIRT_IP_INTF_NAME_NOT_EXIST</td>
+<td>Virtual IP interface name does not exist on target machine</td>
+</tr>
+<tr>
+<td>618</td>
+<td>VIRT_IP_INTF_NOT_ALLOWED_FOR_TB</td>
+<td>Virtual IP interfaces are not allowed for tiebreaker</td>
+</tr>
+<tr>
+<td>619</td>
+<td>MDM_STANDBY</td>
+<td>This command is not supported on the standby MDM. Please use the primary MDM IP to access the cluster</td>
+</tr>
+<tr>
+<td>620</td>
+<td>MDM_NOT_ATTACHED</td>
+<td>This MDM is not attached to a system.</td>
+</tr>
+<tr>
+<td>623</td>
+<td>LIA_REBOOT_INITIATED</td>
+<td>An automatic reboot will start in order to complete the operation</td>
+</tr>
+<tr>
+<td>624</td>
+<td>STORAGE_POOL_USING_DAS_CACHE_CANNOT_SET_RFCACHE</td>
+<td>This Storage Pools already cached using DAS-Cache thus cannot be set to use RFcache</td>
+</tr>
+<tr>
+<td>625</td>
+<td>TOO_MANY_DAS_CACHE_DEVICES</td>
+<td>Too many devices selected. Only up to 2 SSD can be set as DAS Cache devices.</td>
+</tr>
+<tr>
+<td>626</td>
+<td>ALERT_EXT_MANAGED_VOL</td>
+<td>This volume is managed externally. If you still want to run this command, use the ‘allow_on_externally_managed_volumes’ flag.</td>
+</tr>
+<tr>
+<td>629</td>
+<td>VVOL_WRONG_OS</td>
+<td>This is a protected VMWare volume. It can only be mapped to VMWare 6 and above client</td>
+</tr>
+<tr>
+<td>630</td>
+<td>VIRT_IP_INTF_NAME_INVALID</td>
+<td>Virtual IP interface name cannot be used</td>
+</tr>
+<tr>
+<td>631</td>
+<td>VIRT_IP_INTF_NAME_TOO_LONG</td>
+<td>Virtual IP interface name is too long</td>
+</tr>
+<tr>
+<td>632</td>
+<td>LDAP_AUTHORIZER_BIND_FAIL</td>
+<td>Authorizer bind failed</td>
+</tr>
+<tr>
+<td>The following are management codes used in PowerFlex v2.1 and later:</td>
+<td></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<table>
+<thead>
+<tr>
+<th>RC ID</th>
+<th>Name</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>701</td>
+<td>AFS_DEV_IN_USE</td>
+<td>AFS Device in use by another process.</td>
+</tr>
+<tr>
+<td>702</td>
+<td>AFS_DEV_OWNED</td>
+<td>AFS Device marked as owned by another process.</td>
+</tr>
+<tr>
+<td>705</td>
+<td>FD_HAS_ACC_POOLS</td>
+<td>Protection Domain has acceleration pools</td>
+</tr>
+<tr>
+<td>706</td>
+<td>ACC_POOL_NOT_FOUND</td>
+<td>Could not find acceleration pool</td>
+</tr>
+<tr>
+<td>707</td>
+<td>ACC_POOL_HAS_DEVS</td>
+<td>The acceleration pool Has SDS devices</td>
+</tr>
+<tr>
+<td>708</td>
+<td>TOO_MANY_ACC_POOLS_IN_PROTECTION_DOMAIN</td>
+<td>There are too many acceleration pools in the Protection Domain</td>
+</tr>
+<tr>
+<td>709</td>
+<td>FD_AND_ACC_POOL_MISMATCH</td>
+<td>The specified acceleration pool is not in the specified Protection Domain</td>
+</tr>
+<tr>
+<td>710</td>
+<td>TOO_MANY_ACC_POOLS</td>
+<td>There are too many acceleration pools in the system</td>
+</tr>
+<tr>
+<td>711</td>
+<td>ACC_POOL_ALREADY_EXISTS</td>
+<td>acceleration pool already exists</td>
+</tr>
+<tr>
+<td>712</td>
+<td>INVALID_ACC_POOL_ID</td>
+<td>Invalid acceleration pool. Please try again using a valid ID or name</td>
+</tr>
+<tr>
+<td>713</td>
+<td>ACC_POOL_NAME_ALREADY_EXISTS</td>
+<td>acceleration pool name already exists</td>
+</tr>
+<tr>
+<td>714</td>
+<td>DUPLICATE_TGT_DEVICE_PATH</td>
+<td>Duplicate SDS device path</td>
+</tr>
+<tr>
+<td>717</td>
+<td>VTREE_MIGRATION_ALREADY_EXISTS</td>
+<td>The V-Tree is already undergoing migration to the same Storage Pools</td>
+</tr>
+<tr>
+<td>718</td>
+<td>VTREE_MIGRATE_SAME_SP</td>
+<td>The destination Storage Pools and the source Storage Pools are the same. Please use a destination Storage Pools that is different than the source Storage Pools.</td>
+</tr>
+<tr>
+<td>719</td>
+<td>VTREE_MIGRATE_MULTIPLE_SP</td>
+<td>The V-Tree is currently undergoing migration. You can either roll back the current migration or wait for it to complete before initiating another migration.</td>
+</tr>
+<tr>
+<td>720</td>
+<td>VTREE_ID_NOT_FOUND</td>
+<td>The V-Tree with specified ID was not found. Please ensure that you typed the correct V-Tree ID.</td>
+</tr>
+<tr>
+<td>722</td>
+<td>BAD_FLOW_CONTROL_VALUE</td>
+<td>The provided value is out of range. Please enter a valid percentage value.</td>
+</tr>
+<tr>
+<td>723</td>
+<td>TOO_MANY_DEVICES_IN_ACC_POOL</td>
+<td>There are too many devices in acceleration pool</td>
+</tr>
+<tr>
+<td>724</td>
+<td>ACC_DEV_INSTEAD_OF_TGT_DEV</td>
+<td>An acceleration device is specified where a storage device is expected</td>
+</tr>
+<tr>
+<td>725</td>
+<td>TGT_DEV_INSTEAD_OF_ACC_DEV</td>
+<td>A storage device is specified where an acceleration device is expected</td>
+</tr>
+<tr>
+<td>726</td>
+<td>TGT_AND_ACC_DEVS_MUST_BELONG_TO_SAME_TGT</td>
+<td>The storage device and acceleration device pair must belong to the same SDS</td>
+</tr>
+<tr>
+<td>727</td>
+<td>SP_AND_ACC_POOL_MUST_BELONG_TO_SAME_FD</td>
+<td>The Storage Pools and acceleration pool must belong to the same Protection Domain</td>
+</tr>
+<tr>
+<td>729</td>
+<td>INSUFFICIENT_ACC_CAPACITY</td>
+<td>The required acceleration capacity exceeds the amount of available capacity on the acceleration device(s)</td>
+</tr>
+<tr>
+<td>730</td>
+<td>DUPLICATE_TGT_DEVS</td>
+<td>The list of SDS devices contains duplications</td>
+</tr>
+<tr>
+<td>735</td>
+<td>CHECKSUM_NOT_CONFIGURABLE</td>
+<td>The checksum feature cannot be configured for the selected devices because they are still undergoing previous configuration changes</td>
+</tr>
+<tr>
+<td>738</td>
+<td>DISABLE_CHANGELOG_ACC_PARAMS_NOT_REQUIRED</td>
+<td>Changelog acceleration parameters can only be configured if disable_changelog is not specified</td>
+</tr>
+<tr>
+<td>739</td>
+<td>CHECKSUM_NOT_ENABLED_ON_SP</td>
+<td>The checksum feature is not enabled on the selected Storage Pools</td>
+</tr>
+<tr>
+<td>740</td>
+<td>CHECKSUM_ALREADY_ENABLED_ON_SP</td>
+<td>The checksum feature is already enabled on the selected Storage Pools</td>
+</tr>
+<tr>
+<td>742</td>
+<td>CHECKSUM_MODE_IS_NOT_PERSISTENT_IN_SP</td>
+<td>The Storage Pools’s checksum mode is not one of the persistent options. To change the checksum mode, specify it explicitly in the command</td>
+</tr>
+<tr>
+<td>744</td>
+<td>TOO_MANY_ACC_DEVICES</td>
+<td>There are too many acceleration devices for SDS in the given acceleration pool</td>
+</tr>
+<tr>
+<td>746</td>
+<td>CHANGELOG_NOT_CONFIGURABLE</td>
+<td>The changelog feature cannot be configured for the selected devices because they are still undergoing previous configuration changes</td>
+</tr>
+<tr>
+<td>747</td>
+<td>SP_AND_TGT_MUST_BELONG_TO_SAME_FD</td>
+<td>The Storage Pools and SDS must belong to the same Protection Domain</td>
+</tr>
+<tr>
+<td>748</td>
+<td>SP_AND_TGT_HAVE_NO_COMMON_DEVICES</td>
+<td>The Storage Pools has no storage devices in the given SDS</td>
+</tr>
+<tr>
+<td>749</td>
+<td>ACC_DEV_MUST_BELONG_TO_TGT</td>
+<td>The acceleration device must belong to the given SDS</td>
+</tr>
+<tr>
+<td>753</td>
+<td>TGT_AND_ACC_POOL_MUST_BELONG_TO_SAME_FD</td>
+<td>The SDS and acceleration pool must belong to the same Protection Domain</td>
+</tr>
+<tr>
+<td>754</td>
+<td>ACC_POOL_MUST_BELONG_TO_GIVEN_FD</td>
+<td>The acceleration pool must belong to the specified Protection Domain</td>
+</tr>
+<tr>
+<td>755</td>
+<td>ONLY_ONE_ACC_POOL_FOR_RFCACHE_ALLOWED_PER_FD</td>
+<td>The Protection Domain already has an acceleration pool for RFcache. There cannot be more than one</td>
+</tr>
+<tr>
+<td>756</td>
+<td>TGT_DEV_FILE_MIGRATION_IN_PROGRESS</td>
+<td>The device is already during a migration</td>
+</tr>
+<tr>
+<td>757</td>
+<td>TGT_DEV_OTHER_FILE_MIGRATION_IS_IN_PROGRESS</td>
+<td>Other migration is in progress</td>
+</tr>
+<tr>
+<td>758</td>
+<td>FILE_MIGRATION_ABORTED</td>
+<td>File migration was aborted</td>
+</tr>
+<tr>
+<td>770</td>
+<td>SPSDS_NOT_FOUND</td>
+<td>The group of devices of the specified SDS and Storage Pools could not be found</td>
+</tr>
+<tr>
+<td>771</td>
+<td>TOO_MANY_SPSDS</td>
+<td>Too many groups of devices that belong to the specified SDS and Storage Pools</td>
+</tr>
+<tr>
+<td>772</td>
+<td>DUPLICATE_SPSDS</td>
+<td>Duplicated groups of devices that belong to the specified SDS and Storage Pools</td>
+</tr>
+<tr>
+<td>775</td>
+<td>FAULT_STALE_DEL_GEN</td>
+<td>Failed processing remote tooth list due to stale del gen</td>
+</tr>
+<tr>
+<td>777</td>
+<td>VTREE_MIGRATION_NOT_FOUND</td>
+<td>The V-Tree is not currently being migrated.</td>
+</tr>
+<tr>
+<td>782</td>
+<td>VTREE_MIGRATION_ALREADY_PAUSING</td>
+<td>The V-Tree migration is already paused.</td>
+</tr>
+<tr>
+<td>783</td>
+<td>ACC_DEV_IS_NOT_CLEAR</td>
+<td>The specified acceleration device is currently used by the system for acceleration.</td>
+</tr>
+<tr>
+<td>784</td>
+<td>ACC_DEV_ABORT_REMOVE_NOT_SUPPORTED</td>
+<td>Aborting the removal of acceleration device is not supported</td>
+</tr>
+<tr>
+<td>785</td>
+<td>USER_CONTENT_DETECTED</td>
+<td>User Content is present on device</td>
+</tr>
+<tr>
+<td>787</td>
+<td>VOLUME_MUST_BE_SNAPSHOT_PARENT</td>
+<td>Volume must be direct parent of the snapshot</td>
+</tr>
+<tr>
+<td>788</td>
+<td>ACC_POOL_ALREADY_USED_FOR_RFCACHE</td>
+<td>The acceleration pool specified can be used only for RFcache</td>
+</tr>
+<tr>
+<td>789</td>
+<td>ACC_DEVICE_ALREADY_USED_FOR_RFCACHE</td>
+<td>The acceleration device specified can be used only for RFcache</td>
+</tr>
+<tr>
+<td>790</td>
+<td>RFCACHE_ACC_POOL_NOT_EXISTS</td>
+<td>RFcache acceleration pool must exist in the sds Protection Domain in order to add RFcache devices</td>
+</tr>
+<tr>
+<td>798</td>
+<td>ACCELERATION_POOL_IS_NOT_FLASH</td>
+<td>The SSD acceleration pool given is not of the correct type</td>
+</tr>
+<tr>
+<td>799</td>
+<td>ACCELERATION_POOL_IS_NOT_NVDIMM</td>
+<td>The NVDIMM acceleration pool given is not of the correct type</td>
+</tr>
+<tr>
+<td>800</td>
+<td>ACC_FEATURE_MUST_BE_ENABLED_ON_SP</td>
+<td>The selected feature can only be enabled if it’s enabled on the Storage Pools</td>
+</tr>
+<tr>
+<td>801</td>
+<td>INVALID_CHECKSUM_CALCULATION_RATE</td>
+<td>The calculation rate specified is not valid</td>
+</tr>
+<tr>
+<td>804</td>
+<td>ACC_DEVS_ARE_STILL_BEING_TESTED</td>
+<td>This command cannot be completed; Acceleration devices in the SDS are still being tested</td>
+</tr>
+<tr>
+<td>805</td>
+<td>BAD_DEVICE_QUEUE_DEPTH_VALUE</td>
+<td>The provided value is out of range. Please enter a valid value.</td>
+</tr>
+<tr>
+<td>807</td>
+<td>ACC_DEV_MISSING_BACKING_DEV</td>
+<td>The specified backing device for the acceleration device couldn’t be found</td>
+</tr>
+<tr>
+<td>809</td>
+<td>VTREE_MIGRATION_MUST_BE_PAUSED</td>
+<td>V-Tree migration must be paused before it can be rolled back.</td>
+</tr>
+<tr>
+<td>810</td>
+<td>STORAGE_POOL_ALREADY_REMOVED</td>
+<td>The requested SP to be removed has already been removed</td>
+</tr>
+<tr>
+<td>811</td>
+<td>BAD_PROVISIONING_VALUE</td>
+<td>The provided value is out of range. Please enter a valid value.</td>
+</tr>
+<tr>
+<td>812</td>
+<td>MISSING_MEDIA_TYPE</td>
+<td>The media type is not configured</td>
+</tr>
+<tr>
+<td>813</td>
+<td>INVALID_EXTERNAL_ACCELERATION_TYPE</td>
+<td>The external acceleration type is invalid</td>
+</tr>
+<tr>
+<td>814</td>
+<td>MEDIA_TYPE_MISMATCH</td>
+<td>The device media type is not compatible with the Storage Pools media type</td>
+</tr>
+<tr>
+<td>815</td>
+<td>INVALID_MEDIA_TYPE</td>
+<td>The media type is invalid</td>
+</tr>
+<tr>
+<td>816</td>
+<td>EXTERNAL_ACCELERATION_TYPE_MISMATCH</td>
+<td>The device external acceleration type is not compatible with the Storage Pools external acceleration type</td>
+</tr>
+<tr>
+<td>817</td>
+<td>DEVICE_ALREADY_REMOVED_FROM_SP</td>
+<td>The requested device has already been removed from this Storage Pools</td>
+</tr>
+<tr>
+<td>818</td>
+<td>DEVICE_NOT_IN_SP</td>
+<td>The requested device does not belong to this Storage Pools</td>
+</tr>
+<tr>
+<td>819</td>
+<td>INI_STILL_REFERENCED</td>
+<td>The requested initiator to be removed is still referenced by an IO request or by Net</td>
+</tr>
+<tr>
+<td>820</td>
+<td>NOT_ALL_SPS_HAVE_MEDIA_TYPE</td>
+<td>Not all the Storage Poolss have media type configured</td>
+</tr>
+<tr>
+<td>823</td>
+<td>NVREF_SPLIT</td>
+<td>NVRef was split into 2 extents</td>
+</tr>
+<tr>
+<td>829</td>
+<td>CANNOT_RELOCATE_CHECKSUM_ON_NVDIMM</td>
+<td>Checksum may not be relocated to NVDIMM devices without first disabling the changelog (because there is no point is checksum and changelog both residing on NVDIMM)</td>
+</tr>
+<tr>
+<td>830</td>
+<td>INVALID_CHANGELOG_AMORTIZATION</td>
+<td>The amortization specified is not valid</td>
+</tr>
+<tr>
+<td>832</td>
+<td>CHECKSUM_ACC_DEVS_REQUIRED</td>
+<td>Acceleration devices must be specified with this checksum mode</td>
+</tr>
+<tr>
+<td>833</td>
+<td>CHANGELOG_ACC_PARAMS_NOT_REQUIRED</td>
+<td>Changelog can only be configured if the checksum mode is either persistent_on_device or persistent_on_acceleration_device</td>
+</tr>
+<tr>
+<td>834</td>
+<td>CHECKSUM_SHOULD_BE_CONFIGURED_SEPARATELY</td>
+<td>The enable_checksum flag is DEPRECATED. Please use enable_checksum command</td>
+</tr>
+<tr>
+<td>835</td>
+<td>FAILED_TO_ADD_DEV_TO_WBQ</td>
+<td>Tried and failed to add a device to a write back queue</td>
+</tr>
+<tr>
+<td>836</td>
+<td>CANNOT_CONFIG_DEVICE_WITH_ERRORS</td>
+<td>Device can be configured only if it has no errors</td>
+</tr>
+<tr>
+<td>837</td>
+<td>EXTERNAL_API_ERROR</td>
+<td>The third party interface returns error</td>
+</tr>
+<tr>
+<td>839</td>
+<td>INSUFFICIENT_ACC_CHECKSUM_CAPACITY</td>
+<td>The required acceleration capacity for checksum exceeds the amount of available capacity on the acceleration device(s)</td>
+</tr>
+<tr>
+<td>840</td>
+<td>INSUFFICIENT_ACC_CHANGELOG_CAPACITY</td>
+<td>The required acceleration capacity for changelog exceeds the amount of available capacity on the acceleration device(s)</td>
+</tr>
+<tr>
+<td>843</td>
+<td>CANNOT_RESUME_WITH_DEGRADED_CAPACITY</td>
+<td>You cannot resume V-Tree migration while there is degraded capacity in Protection Domain. Wait for the degraded capacity to be rebuilt before resuming V-Tree migration.</td>
+</tr>
+<tr>
+<td>844</td>
+<td>CANNOT_RESUME_WITH_INACTIVE_PD</td>
+<td>You cannot resume V-Tree migration while the Protection Domain is inactive. Activate the Protection Domain and then resume migration.</td>
+</tr>
+<tr>
+<td>845</td>
+<td>ACC_POOL_IS_IN_USE_BY_SPS</td>
+<td>The specified acceleration pool is in use by one or more Storage Poolss</td>
+</tr>
+<tr>
+<td>848</td>
+<td>NVDEV_NOT_NVDIMM_MEDIA</td>
+<td>The device is not an NVDIMM drive.</td>
+</tr>
+<tr>
+<td>849</td>
+<td>NVDEV_NOT_CONFIGURED</td>
+<td>The NVDIMM drive is not configured.</td>
+</tr>
+<tr>
+<td>850</td>
+<td>STORAGE_AND_ACC_DEVICE_COUNT_MISMATCH</td>
+<td>The number of storage devices doesn’t match the number of acceleration devices</td>
+</tr>
+<tr>
+<td>851</td>
+<td>SET_CHECKSUM_MODE_IS_DEPRECATED</td>
+<td>set_checksum_mode command is DEPRECATED, please use enable_checksum/modify_checksum/disable_checksum commands</td>
+</tr>
+<tr>
+<td>852</td>
+<td>COMMAND_NOT_SUPPORTED_FOR_RFCACHE_DEVICE</td>
+<td>Command is not supported for RFcache devices</td>
+</tr>
+<tr>
+<td>853</td>
+<td>TGT_DEV_FILE_MIGRATION_IN_INVALID_STATE</td>
+<td>Trying to migrate a file in invalid migration state</td>
+</tr>
+<tr>
+<td>855</td>
+<td>FAILOVER_FLAGS_CAN_ONLY_BE_USED_ON_SP_LEVEL</td>
+<td>Disabling Write Back Cache on missing capacity can only be used on Storage Pools level</td>
+</tr>
+<tr>
+<td>856</td>
+<td>VOL_IS_NOT_RESERVED</td>
+<td>The specified volume is not reserved</td>
+</tr>
+<tr>
+<td>857</td>
+<td>VOL_IS_NOT_RESERVED_BY_INI</td>
+<td>The specified volume is not reserved by the given SDC</td>
+</tr>
+<tr>
+<td>858</td>
+<td>SRC_TOOTH_NOT_FOUND</td>
+<td>The specified source tooth (VtoID, VtoTime) doesn’t exist</td>
+</tr>
+<tr>
+<td>859</td>
+<td>INVALID_SDC_RESTRICTION_MODE</td>
+<td>Invalid SDC restriction mode</td>
+</tr>
+<tr>
+<td>860</td>
+<td>UNAPPROVED_SDC_HAS_MAPPINGS</td>
+<td>Approve the SDC or remove its mappings</td>
+</tr>
+<tr>
+<td>863</td>
+<td>MEDIA_TYPE_SHOULD_NOT_BE_SPECIFIED_FOR_ACC_DEVS</td>
+<td>Media type should not be specified for acceleration devices</td>
+</tr>
+<tr>
+<td>865</td>
+<td>MIGRATION_ERROR</td>
+<td>Migration Error between SDSs</td>
+</tr>
+<tr>
+<td>866</td>
+<td>NO_SPACE_IN_DESTINATION_SP</td>
+<td>The destination Storage Pools or one of it’s devices is full</td>
+</tr>
+<tr>
+<td>867</td>
+<td>UNAVAILABLE_CAPACITY_IN_SOURCE_SP</td>
+<td>Unavailable capacity in source Storage Pools</td>
+</tr>
+<tr>
+<td>871</td>
+<td>INVALID_EVENT_TYPE</td>
+<td>Invalid type specified for custom event.</td>
+</tr>
+<tr>
+<td>872</td>
+<td>MIGRATION_IN_PROGRESS</td>
+<td>There is a VTree migration in progress in this Storage Pools. Cancel migrations or wait for them to finish and try again.</td>
+</tr>
+<tr>
+<td>875</td>
+<td>NVDIMM_POOL_CANT_BE_USED_FOR_RFCACHE</td>
+<td>An acceleration pool of type NVDIMM can’t be used for RFcache</td>
+</tr>
+<tr>
+<td>876</td>
+<td>TOO_MANY_VOLS_IN_DESTINATION_FD</td>
+<td>There are too many volumes in the destination Protection Domain. You can select another destination Protection Domain or remove some of the volumes at the destination.</td>
+</tr>
+<tr>
+<td>880</td>
+<td>REQUEST_QUEUING_TIMEOUT</td>
+<td>A timeout occured before message was sent</td>
+</tr>
+<tr>
+<td>882</td>
+<td>TEST_ONLY_CANNOT_BE_USED_FOR_ACC_DEV</td>
+<td>The test only mode can’t be used for acceleration devices</td>
+</tr>
+<tr>
+<td>883</td>
+<td>VTREE_MIGRATION_NOT_PAUSED</td>
+<td>The V-Tree migration is not currently paused.</td>
+</tr>
+<tr>
+<td>887</td>
+<td>SPEF_CAN_ONLY_BE_USED_FOR_SSD_SP</td>
+<td>Fine granularity can only be selected for Storage Pools with media type SSD</td>
+</tr>
+<tr>
+<td>888</td>
+<td>COMPRESSION_METHOD_ONLY_RELEVANT_FOR_SPEF</td>
+<td>Compression may only be enabled on volumes with Fine Granularity layout</td>
+</tr>
+<tr>
+<td>889</td>
+<td>SPEF_SP_CAN_ONLY_BE_SSD</td>
+<td>Fine granularity Storage Poolss can only have SSD media type</td>
+</tr>
+<tr>
+<td>890</td>
+<td>SPEF_SP_CAN_ONLY_HAVE_SSD_DEVICES</td>
+<td>Fine granularity Storage Poolss can only be added devices with SSD media type</td>
+</tr>
+<tr>
+<td>891</td>
+<td>VTREE_MAY_NOT_MIGRATED_TO_DIFFERENT_DATA_LAYOUT</td>
+<td>V-Trees with multiple volumes, V-Trees that are included in a snapshot policy, or V-Trees undergoing creation of Replication Consistency Group snapshots may not be migrated between Storage Poolss with different data layouts.</td>
+</tr>
+<tr>
+<td>892</td>
+<td>SNAPSHOT_NOT_ALLOWED_DURING_MIGRATION_TO_DIFFERENT_DATA_LAYOUT</td>
+<td>No Snapshots or auto snapshots may be taken during migration to a Storage Pools with a different data layout</td>
+</tr>
+<tr>
+<td>893</td>
+<td>SPEF_ACC_POOL_ONLY_RELEVANT_FOR_SPEF</td>
+<td>acceleration pool is only relevant for fine granularity data layout</td>
+</tr>
+<tr>
+<td>894</td>
+<td>INSUFFICIENT_ACC_SPEF_CAPACITY</td>
+<td>The required acceleration capacity for fine granularity exceeds the amount of available capacity on the acceleration device(s)</td>
+</tr>
+<tr>
+<td>895</td>
+<td>SPEF_ACC_POOL_MUST_BE_SPECIFIED</td>
+<td>acceleration pool must be specified with fine granularity data layout</td>
+</tr>
+<tr>
+<td>896</td>
+<td>SPEF_ACC_POOL_MUST_BE_NVDIMM</td>
+<td>The acceleration pool used for fine granularity must have media type NVDIMM</td>
+</tr>
+<tr>
+<td>898</td>
+<td>ZERO_PADDING_NOT_CONFIGURABLE_FOR_SPEF_SP</td>
+<td>Zero padding is not configurable for fine granularity Storage Poolss</td>
+</tr>
+<tr>
+<td>899</td>
+<td>OPERATION_NOT_SUPPORTED_FOR_SPEF_SP</td>
+<td>This operation is not supported for fine granularity Storage Poolss</td>
+</tr>
+<tr>
+<td>900</td>
+<td>RAM_CACHE_NOT_SUPPORTED_FOR_SPEF_SP</td>
+<td>RAM Read Cache is not supported for fine granularity Storage Poolss</td>
+</tr>
+<tr>
+<td>901</td>
+<td>RAM_CACHE_NOT_SUPPORTED_FOR_SPEF_VOL</td>
+<td>RAM Read Cache is not supported for fine granularity volumes</td>
+</tr>
+<tr>
+<td>902</td>
+<td>OBFUSCATION_NOT_SUPPORTED_FOR_MIGRATION</td>
+<td>V-Tree migration to Storage Poolss with different data layouts is not supported with obfuscation.</td>
+</tr>
+<tr>
+<td>903</td>
+<td>UNAPPROVED_SDC_IPS</td>
+<td>The current SDC IP must be in the set of IPs.</td>
+</tr>
+<tr>
+<td>904</td>
+<td>CANCELLED_DUE_TO_CHANNEL_INCREASE</td>
+<td>Command has been cancelled due to channel increase</td>
+</tr>
+<tr>
+<td>906</td>
+<td>VTREE_NOT_FOUND</td>
+<td>The VTree was not found</td>
+</tr>
+<tr>
+<td>907</td>
+<td>EXISTING_BAD_HOST_NAME</td>
+<td>Command failed due to existing bad host names (should be removed to succeed)</td>
+</tr>
+<tr>
+<td>908</td>
+<td>OSC_CNT_FAILURES_THRESHOLD_CANNOT_BE_ZERO</td>
+<td>The oscillating counter failures threshold cannot be zero. Please try again with a valid threshold.</td>
+</tr>
+<tr>
+<td>911</td>
+<td>NOT_ALLOWED_IN_SP_WITH_VOLS</td>
+<td>This operation is only allowed when there are no volumes in the Storage Pools.</td>
+</tr>
+<tr>
+<td>912</td>
+<td>USE_FORCE_ONLY_WITH_ROLE_ALL</td>
+<td>The force flag may be used only with role ‘all’.</td>
+</tr>
+<tr>
+<td>913</td>
+<td>UPGRADE_POST_PROCESSING_IN_PROGRESS</td>
+<td>The system is performing upgrade post processing. Please wait for the process to finish.</td>
+</tr>
+<tr>
+<td>914</td>
+<td>SP_CAPACITY_LIMIT_REACHED</td>
+<td>The total capacity of volumes per Storage Pools was exceeded</td>
+</tr>
+<tr>
+<td>916</td>
+<td>TOO_MUCH_THIN_CAPACITY_FOR_REMOVAL</td>
+<td>Reducing the capacity of the Storage Pools would cause insufficient resources for the already allocated volumes. Add capacity to the Storage Pools and retry this operation</td>
+</tr>
+<tr>
+<td>917</td>
+<td>THICK_NOT_SUPPORTED_FOR_SPEF</td>
+<td>Cannot migrate a thick-provisioned V-Tree into a fine granularity Storage Pools. Set the conversion flag to thin-provisioned and try migrating again.</td>
+</tr>
+<tr>
+<td>918</td>
+<td>VTREE_ALREADY_THIN</td>
+<td>The V-Tree is already thin-provisioned.</td>
+</tr>
+<tr>
+<td>919</td>
+<td>VTREE_ALREADY_THICK</td>
+<td>The V-Tree is already thick-provisioned.</td>
+</tr>
+<tr>
+<td>920</td>
+<td>VTREE_IS_NON_ZERO_PADDED</td>
+<td>The V-Tree is thick-provisioned and non-zero-padded, so the capacity reduction due to the migration will be minimal.</td>
+</tr>
+<tr>
+<td>921</td>
+<td>REVERSED_MIGRATION_CANNOT_CHANGE_THICKNESS</td>
+<td>The V-Tree cannot be converted to thick/thin provisioning when reversing migration direction.</td>
+</tr>
+<tr>
+<td>922</td>
+<td>PMEM_API_NOT_AVAILABLE</td>
+<td>The PMEM API is not available.</td>
+</tr>
+<tr>
+<td>923</td>
+<td>SNAP_POLICY_LEVELS_OUT_OF_RANGE</td>
+<td>The total number of snapshots for the policy exceeds the allowed maximum</td>
+</tr>
+<tr>
+<td>924</td>
+<td>UNSOPPRTED_HARDWARE</td>
+<td>Operation is unsupported by hardware</td>
+</tr>
+<tr>
+<td>926</td>
+<td>SNAP_POLICY_NAME_ALREADY_EXISTS</td>
+<td>Snapshot policy name already exists</td>
+</tr>
+<tr>
+<td>927</td>
+<td>TOO_MANY_SNAP_POLICIES</td>
+<td>There are too many snapshot policies in the system</td>
+</tr>
+<tr>
+<td>928</td>
+<td>TOO_MANY_SNAP_POLICY_LEVELS</td>
+<td>Too many snapshot policy levels</td>
+</tr>
+<tr>
+<td>929</td>
+<td>INVALID_SNAP_POLICY_ID</td>
+<td>Invalid snapshot policy. Please try again with the correct ID or name.</td>
+</tr>
+<tr>
+<td>930</td>
+<td>SNAP_POLICY_NOT_FOUND</td>
+<td>The snapshot policy was not found</td>
+</tr>
+<tr>
+<td>931</td>
+<td>SOURCE_VOL_ALREADY_IN_SNAP_POLICY</td>
+<td>The source volume is already associated with a Snapshot Policy</td>
+</tr>
+<tr>
+<td>932</td>
+<td>SOURCE_VOL_CANT_BE_AUTO_SNAPSHOT</td>
+<td>The specified volume is an auto snapshot and can’t be used as a source volume</td>
+</tr>
+<tr>
+<td>933</td>
+<td>TWO_SNAP_POLICY_SRC_VOLS_OF_SAME_VTREE</td>
+<td>A single VTree cannot contain more than one Snapshot Policy source-volume</td>
+</tr>
+<tr>
+<td>934</td>
+<td>SNAP_POLICY_HAS_SOURCE_VOLUMES</td>
+<td>The operation cannot be completed because the Snapshot Policy has source volumes associated with it</td>
+</tr>
+<tr>
+<td>935</td>
+<td>SOURCE_VOL_NOT_IN_SNAP_POLICY</td>
+<td>The source volume is not associated with the Snapshot Policy</td>
+</tr>
+<tr>
+<td>936</td>
+<td>TOO_MANY_SRC_VOLS_IN_SNAP_POLICY</td>
+<td>Too many source volumes associated with the Snapshot Policy</td>
+</tr>
+<tr>
+<td>937</td>
+<td>VOL_NOT_AUTO_SNAP</td>
+<td>The specified volume is not an auto-snapshot and hence cannot be locked</td>
+</tr>
+<tr>
+<td>938</td>
+<td>AUTO_SNAP_ALREADY_LOCKED</td>
+<td>The auto-snapshot is already locked</td>
+</tr>
+<tr>
+<td>939</td>
+<td>AUTO_SNAP_NOT_LOCKED</td>
+<td>The auto-snapshot is not locked</td>
+</tr>
+<tr>
+<td>940</td>
+<td>DEVICE_ERROR_CANNOT_BE_CLEARED_TILL_EMPTY</td>
+<td>This SDS device error cannot be cleared until all data is evacuated from it.</td>
+</tr>
+<tr>
+<td>941</td>
+<td>COMPRESSION_ONLY_ALLOWED_MG_TO_SPEF</td>
+<td>Cannot change V-Tree compression method unless migrating from a medium granularity Storage Pools to a fine granularity Storage Pools.</td>
+</tr>
+<tr>
+<td>942</td>
+<td>AUTO_SNAP_IS_MAPPED</td>
+<td>The auto-snapshot cannot be unlocked while it is mapped</td>
+</tr>
+<tr>
+<td>943</td>
+<td>UNLOCK_WILL_REMOVE_AUTO_SNAP</td>
+<td>The auto-snapshot will be removed by the Snapshot Policy following unlock. Please acknowledge this explicitly by specifying the auto-snapshot will be removed parameter</td>
+</tr>
+<tr>
+<td>944</td>
+<td>VOL_IS_UNLOCKED_AUTO_SNAPSHOT</td>
+<td>The volume is an auto-snapshot and must be locked in order to perform this operation</td>
+</tr>
+<tr>
+<td>945</td>
+<td>LOCKED_AUTO_SNAPSHOTS_EXIST</td>
+<td>The source volume has locked auto-snapshots that cannot be removed. Please unlock them, or use the option detach locked auto snapshots</td>
+</tr>
+<tr>
+<td>946</td>
+<td>VOL_IS_SNAP_POLICY_SOURCE_VOL</td>
+<td>Volume is a source-volume of a Snapshot Policy</td>
+</tr>
+<tr>
+<td>947</td>
+<td>SCG_WITH_AUTO_SNAPSHOTS_CANNOT_BE_REMOVED</td>
+<td>The snapshot consistency group cannot be removed because it contains auto snapshots</td>
+</tr>
+<tr>
+<td>948</td>
+<td>SNAP_POLICY_CADENCE_OUT_OF_RANGE</td>
+<td>The cadence value is out of range</td>
+</tr>
+<tr>
+<td>949</td>
+<td>SNAP_POLICY_LEVEL_ONE_MEANINGLESS</td>
+<td>The number of snapshots to retain at any level can’t be one when additional levels are defined</td>
+</tr>
+<tr>
+<td>The following return codes are used for the space-efficiency feature for MDM-SDS communication:</td>
+<td></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<table>
+<thead>
+<tr>
+<th>RC ID</th>
+<th>Name</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>951</td>
+<td>SPEF_COMMAND_NOT_SUPPORTED_ON_MG_SP</td>
+<td>The command is only supported on fine granularity Storage Poolss</td>
+</tr>
+<tr>
+<td>952</td>
+<td>SPEF_COMMAND_NOT_SUPPORTED_ON_MG_DEV</td>
+<td>The command is only supported on fine granularity devices</td>
+</tr>
+<tr>
+<td>955</td>
+<td>TGT_DEVICE_NOT_READY</td>
+<td>The SDS device is not ready</td>
+</tr>
+<tr>
+<td>956</td>
+<td>SPEF_COMMAND_NOT_SUPPORTED_ON_MG_VTREE</td>
+<td>The command is only supported on fine granularity VTrees</td>
+</tr>
+<tr>
+<td>957</td>
+<td>SPEF_COMMAND_NOT_SUPPORTED_ON_MG_VOL</td>
+<td>The command is only supported on fine granularity Volumes</td>
+</tr>
+<tr>
+<td>962</td>
+<td>ILLEGAL_OFFSET_ALIGNMENT</td>
+<td>The given offset is not aligned with the device native sector size</td>
+</tr>
+<tr>
+<td>963</td>
+<td>ILLEGAL_SIZE_ALIGNMENT</td>
+<td>The given size is not aligned with the device native sector size</td>
+</tr>
+<tr>
+<td>965</td>
+<td>INVALID_FGL_NVDIMM_WRITE_CACHE_SIZE</td>
+<td>The requested fine granularity NVDIMM write cache size is invalid</td>
+</tr>
+<tr>
+<td>966</td>
+<td>INVALID_FGL_METADATA_SIZE</td>
+<td>The requested fine granularity metadata size is invalid</td>
+</tr>
+<tr>
+<td>967</td>
+<td>INVALID_FGL_EXTRA_CAPACITY</td>
+<td>The requested fine granularity extra capacity is invalid</td>
+</tr>
+<tr>
+<td>968</td>
+<td>INVALID_FGL_OVER_PROVISIONING_FACTOR</td>
+<td>The requested fine granularity over provisioning factor is invalid</td>
+</tr>
+<tr>
+<td>969</td>
+<td>INVALID_FGL_WRITE_ATOMICITY_SIZE</td>
+<td>The requested fine granularity write atomicity size is invalid</td>
+</tr>
+<tr>
+<td>970</td>
+<td>INVALID_FGL_PROFILE</td>
+<td>The requested fine granularity performance profile is invalid</td>
+</tr>
+<tr>
+<td>971</td>
+<td>INVALID_FGL_NUM_CONCURRENT_WRITES</td>
+<td>The requested fine granularity num concurrent writes is invalid</td>
+</tr>
+<tr>
+<td>972</td>
+<td>INVALID_FGL_NVDIMM_METADATA_AMORTIZATION</td>
+<td>The requested fine granularity NVDIMM metadata amortization is invalid</td>
+</tr>
+<tr>
+<td>973</td>
+<td>INVALID_FGL_MAX_COMPRESSION_RATIO</td>
+<td>The requested fine granularity maximum compression ratio is invalid</td>
+</tr>
+<tr>
+<td>The following are return codes used in PowerFlex v3.0.x and later:</td>
+<td></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<table>
+<thead>
+<tr>
+<th>RC ID</th>
+<th>Name</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>975</td>
+<td>AMS_ADD_DEVICE_REQUIRE_SVM_MEM_CHANGE</td>
+<td>Add device requires the SVM memory to change</td>
+</tr>
+<tr>
+<td>976</td>
+<td>FAILED_TO_CALCULATE_REQUIRED_SVM_MEMORY</td>
+<td>Failed to calculate the required SVM memory</td>
+</tr>
+<tr>
+<td>977</td>
+<td>FAILED_TO_RECONFIGURE_SVM_MEMORY</td>
+<td>Failed to reconfigure the SVM memory</td>
+</tr>
+<tr>
+<td>978</td>
+<td>ERROR_WRITING_CERTIFICATE_FILE</td>
+<td>Error writing the certificate file</td>
+</tr>
+<tr>
+<td>979</td>
+<td>ERROR_READING_CERTIFICATE_FILE</td>
+<td>Error reading the certificate file</td>
+</tr>
+<tr>
+<td>980</td>
+<td>DATA_COMPARISON_MODE_NOT_SUPPORTED_FOR_SPEF_SP</td>
+<td>Data comparison mode for background device scanner is not supported for fine granularity Storage Poolss</td>
+</tr>
+<tr>
+<td>981</td>
+<td>UNDER_RECONSTRUCT</td>
+<td>The acceleration file is being reconstructed and no operations are allowed on it.</td>
+</tr>
+<tr>
+<td>982</td>
+<td>HW_AWARE_HYPERVISOR_DISABLED</td>
+<td>Running under hypervisor with no visible RAID controllers - disabling HW awareness.</td>
+</tr>
+<tr>
+<td>983</td>
+<td>ACC_DEV_MUST_BELONG_TO_SAME_FGL_ACC_POOL</td>
+<td>The acceleration device must belong to the same acceleration pool as currently configured for fine granularity</td>
+</tr>
+<tr>
+<td>984</td>
+<td>AMS_REQUIRE_SVM_CFG_CHANGE</td>
+<td>The SVM configuration must be changed which may require an SVM reboot</td>
+</tr>
+<tr>
+<td>986</td>
+<td>VIRT_IP_INTF_BAD_ASSIGNMENT</td>
+<td>The virtual IP address should either share the physical subnet address of its interface or not share the subnet address of none of the interfaces</td>
+</tr>
+<tr>
+<td>987</td>
+<td>LDAP_USER_FQDN_DIFFERS_FROM_SERVICE</td>
+<td>Domain path of user differs from the LDAP service domain</td>
+</tr>
+<tr>
+<td>988</td>
+<td>INVALID_FGL_CHANGELOG_CONFIGURATION</td>
+<td>The requested fine granularity changelog configuration is invalid</td>
+</tr>
+<tr>
+<td>989</td>
+<td>SYSTEM_NAME_IN_USE</td>
+<td>System name already in use. Please try a different name.</td>
+</tr>
+<tr>
+<td>995</td>
+<td>APPROVED_SDC_HAS_WRONG_IP</td>
+<td>Approve the IP addresses for the SDC or remove its mappings</td>
+</tr>
+<tr>
+<td>996</td>
+<td>VTREE_MAY_NOT_MIGRATED_TO_DIFFERENT_ZERO_PADDING</td>
+<td>You cannot migrate a V-Tree between Storage Poolss with different zero-padding settings.</td>
+</tr>
+<tr>
+<td>997</td>
+<td>SYSTEM_CAPACITY_LIMIT_REACHED</td>
+<td>The total capacity of volumes per system was exceeded</td>
+</tr>
+<tr>
+<td>998</td>
+<td>MUST_SPECIFY_MEDIA_TYPE</td>
+<td>The target Storage Pools is configured with the Transitional media type. The device media type should be provided explicitly when adding a device to the Storage Pools.</td>
+</tr>
+<tr>
+<td>999</td>
+<td>NO_ACC_DEVICES</td>
+<td>This operation cannot be completed because there are no acceleration devices in the SDS that belong to the required acceleration pool</td>
+</tr>
+<tr>
+<td>The following are return codes used for the fine granularity data layout feature:</td>
+<td></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<table>
+<thead>
+<tr>
+<th>RC ID</th>
+<th>Name</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>2000</td>
+<td>PARTIAL_SUCCESS</td>
+<td>Partial success.</td>
+</tr>
+<tr>
+<td>2013</td>
+<td>THICK_VOLUME_CANNOT_BE_ADDED_TO_SPEF_SP</td>
+<td>Thick volumes cannot be added to fine granularity Storage Poolss</td>
+</tr>
+<tr>
+<td>2014</td>
+<td>RFCACHE_NOT_SUPPORTED_FOR_SPEF_SP</td>
+<td>RFcache is not supported for fine granularity Storage Poolss</td>
+</tr>
+<tr>
+<td>2015</td>
+<td>SPEF_ALLOWED_ONLY_AFTER_UPGRADE_COMPLETES</td>
+<td>Fine granularity Storage Poolss may not be defined before the upgrade process completes</td>
+</tr>
+<tr>
+<td>2016</td>
+<td>INCOMPLETE_DATA</td>
+<td>The request cannot be satisfied due to incomplete data at the source</td>
+</tr>
+<tr>
+<td>2017</td>
+<td>SPEF_ACC_DEV_MUST_BE_NVDIMM</td>
+<td>The acceleration devices used for fine granularity must have media type NVDIMM</td>
+</tr>
+<tr>
+<td>2018</td>
+<td>SPEF_NOT_CONFIGURABLE</td>
+<td>The fine granularity settings cannot be configured for the selected devices because they are still undergoing previous configuration changes</td>
+</tr>
+<tr>
+<td>2019</td>
+<td>USER_CONTENT_POSSIBLE</td>
+<td>User content might be present on device.</td>
+</tr>
+<tr>
+<td>2037</td>
+<td>INVALID_SP_SDS_ID</td>
+<td>The SP-SDS ID is not valid. Please use a valid ID</td>
+</tr>
+<tr>
+<td>2038</td>
+<td>VIRT_IP_IS_PHYSICAL</td>
+<td>Cannot use physical IP address for virtual IP</td>
+</tr>
+<tr>
+<td>2040</td>
+<td>LDAP_PASSWORD_MUST_CHANGE</td>
+<td>The password for this user should be changed, please change it before login</td>
+</tr>
+<tr>
+<td>2041</td>
+<td>SSD_ACC_POOLS_MUST_BE_RFCACHE</td>
+<td>The selected media type can only be used for RFcache acceleration pool</td>
+</tr>
+<tr>
+<td>2042</td>
+<td>SDC_COUNTERS_EXPECT_ALL_ADC_FLAG</td>
+<td>This failure_counter requires all_sdc flag to be specified</td>
+</tr>
+<tr>
+<td>2043</td>
+<td>RFCACHE_DEV_IS_MOUNTED</td>
+<td>Unable to add a RFcache device that was already mounted</td>
+</tr>
+<tr>
+<td>2044</td>
+<td>STORAGE_POOL_WOULD_BECOME_CRITICAL</td>
+<td>Removal operation would make the capacity usage of a Storage Pools critical. Use the ‘force’ flag to override.</td>
+</tr>
+<tr>
+<td>2045</td>
+<td>DEST_VOL_IS_LOCKED_AUTO_SNAPSHOT</td>
+<td>The destination volume is a locked auto snapshot. Please acknowledge this explicitly by specifying the overwrite locked auto snapshot parameter</td>
+</tr>
+<tr>
+<td>2046</td>
+<td>CANNOT_RESUME_IN_MAINT_MODE</td>
+<td>You cannot resume V-Tree migration while there is maintenance-mode in Protection Domain. Wait for the maintenance-mode to finish before resuming V-Tree migration.</td>
+</tr>
+<tr>
+<td>2047</td>
+<td>VOL_MAP_TIMEOUT</td>
+<td>The volume map operation timed out.</td>
+</tr>
+<tr>
+<td>2048</td>
+<td>DEVICE_ERROR_CANNOT_BE_CLEARED</td>
+<td>This SDS device error cannot be cleared</td>
+</tr>
+<tr>
+<td>2049</td>
+<td>INTERFD_CONNECTIVITY_PROBLEM_FOR_MIG_ONE</td>
+<td>One destination SDS is not connected to all source SDSs</td>
+</tr>
+<tr>
+<td>2050</td>
+<td>INTERFD_CONNECTIVITY_PROBLEM_FOR_MIG_SOME</td>
+<td>Some destination SDSs are not connected to some source SDSs</td>
+</tr>
+<tr>
+<td>2051</td>
+<td>INTERFD_CONNECTIVITY_PROBLEM_FOR_MIG_ALL</td>
+<td>ALL destination SDSs are not connected to all source SDSs</td>
+</tr>
+<tr>
+<td>2052</td>
+<td>MDM_REPOSITORY_CORRUPTED</td>
+<td>The MDM repository (either file or shared memory) is corrupted</td>
+</tr>
+<tr>
+<td>2053</td>
+<td>VTREE_MIGRATION_NOT_ALLOWED</td>
+<td>This V-Tree migration is not allowed</td>
+</tr>
+<tr>
+<td>2054</td>
+<td>MDM_TOO_NEW</td>
+<td>The version of the MDM is too new</td>
+</tr>
+<tr>
+<td>2055</td>
+<td>SPEF_NEEDS_HIGH_PERF_PROFILE</td>
+<td>Fine granularity can only run on SDSs configured with high performance profile</td>
+</tr>
+<tr>
+<td>2056</td>
+<td>NET_OBJ_ID_MISMATCH</td>
+<td>The network ID of the remote cluster node is different from the ID on the primary</td>
+</tr>
+<tr>
+<td>2057</td>
+<td>AT_LEAST_ONE_TGT_DOWN</td>
+<td>This operation cannot be performed unless all SDSs are up and running</td>
+</tr>
+<tr>
+<td>2058</td>
+<td>TOO_MANY_VOLS_IN_CONSISTENCY_GROUP</td>
+<td>There are too many volumes in the consistency group</td>
+</tr>
+<tr>
+<td>2060</td>
+<td>TOO_MANY_INIS</td>
+<td>There are too many SDCs in the system</td>
+</tr>
+<tr>
+<td>2061</td>
+<td>TGT_IS_DOWN</td>
+<td>This operation cannot be performed unless SDS is up and running</td>
+</tr>
+<tr>
+<td>2062</td>
+<td>TOO_MANY_VTREES_IN_FD</td>
+<td>There are too many VTrees in the Protection Domain</td>
+</tr>
+<tr>
+<td>2063</td>
+<td>TGT_CAPACITY_LIMIT_EXCEEDED</td>
+<td>The capacity of the devices in this SDS exceeds the maximum limit</td>
+</tr>
+<tr>
+<td>2064</td>
+<td>IP_BELONGS_TO_OTHER_SDC</td>
+<td>The specified IP address can not be used to identify SDC. Please check that IP address is correct and not duplicated or specify GUID instead.</td>
+</tr>
+<tr>
+<td>2066</td>
+<td>ERROR_ENABLING_FIPS</td>
+<td>Failed to enable FIPS mode</td>
+</tr>
+<tr>
+<td>2067</td>
+<td>DEV_HAS_USED_CAPACITY</td>
+<td>The device still has a V-Tree that was not deleted</td>
+</tr>
+<tr>
+<td>2068</td>
+<td>DEV_IS_NOT_IN_ERROR</td>
+<td>Device can be force removed only if it has error, or its SDS is disconnected</td>
+</tr>
+<tr>
+<td>The following return codes are used in PowerFlex v3.0.1 and later:</td>
+<td></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<table>
+<thead>
+<tr>
+<th>RC ID</th>
+<th>Name</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>2201</td>
+<td>QUERY_CROSSES_BLOCK_BOUNDRY</td>
+<td>Requested query size crosses the volume block boundry</td>
+</tr>
+<tr>
+<td>2202</td>
+<td>INVALID_BLOCK_SIZE</td>
+<td>Invalid block size. please provide block size in multiples of 512KB</td>
+</tr>
+<tr>
+<td>2203</td>
+<td>OFFSET_BIGGER_THAN_VOLUME_SIZE</td>
+<td>The given offset within the volume is bigger than volume’s size</td>
+</tr>
+<tr>
+<td>2204</td>
+<td>TIME_BUDGET_TOO_BIG</td>
+<td>The given time budget exceeds limit</td>
+</tr>
+<tr>
+<td>RC ID</td>
+<td>Name</td>
+<td>Description</td>
+</tr>
+<tr>
+<td>-----</td>
+<td>----</td>
+<td>-----------</td>
+</tr>
+<tr>
+<td>2500</td>
+<td>PHOENIX_CREATE_FILE_SYSTEM_FAILED</td>
+<td>File System Creation Failed</td>
+</tr>
+<tr>
+<td>2501</td>
+<td>PHOENIX_DELETE_FILE_SYSTEM_FAILED</td>
+<td>File System Deletion Failed</td>
+</tr>
+<tr>
+<td>2502</td>
+<td>PHOENIX_FILE_SYSTEM_NAME_IN_USE</td>
+<td>File System name is already in use</td>
+</tr>
+<tr>
+<td>2503</td>
+<td>PHOENIX_VOL_HAS_EXISTING_FILE_SYSTEM</td>
+<td>Volume already has an existing File System</td>
+</tr>
+<tr>
+<td>2504</td>
+<td>PHOENIX_FILE_SYSTEM_NOT_FOUND</td>
+<td>File System not found</td>
+</tr>
+<tr>
+<td>2505</td>
+<td>PHOENIX_FILE_SYSTEM_NOT_MAPPED</td>
+<td>File System not mapped to any host</td>
+</tr>
+<tr>
+<td>2506</td>
+<td>PHOENIX_ASYNC_PROCESS_ENTITIES_IN_USE</td>
+<td>Another operation is already running on the requested entity</td>
+</tr>
+<tr>
+<td>2507</td>
+<td>PHOENIX_INVALID_IP_POOL</td>
+<td>IP range is invalid</td>
+</tr>
+<tr>
+<td>2508</td>
+<td>PHOENIX_INVALID_IP_POOL_DUP_NAME</td>
+<td>There is already an IP pool with the same name</td>
+</tr>
+<tr>
+<td>2509</td>
+<td>PHOENIX_INVALID_IP_POOL_DUP_IPS</td>
+<td>IP pool contains IPs that appear on other IP pools</td>
+</tr>
+<tr>
+<td>2510</td>
+<td>PHOENIX_IP_POOL_NOT_EXIST</td>
+<td>IP pool does not exist</td>
+</tr>
+<tr>
+<td>2511</td>
+<td>PHOENIX_IP_POOL_CONTAINED_IPS_IN_USE</td>
+<td>IP that was contained in the pool already being used</td>
+</tr>
+<tr>
+<td>2512</td>
+<td>PHOENIX_IP_POOL_IN_USE</td>
+<td>IP pool is in use by an existing compute environment</td>
+</tr>
+<tr>
+<td>2513</td>
+<td>PHOENIX_NOT_ENOUGH_FREE_IPS_FOR_VMKERNEL</td>
+<td>Not enough free IPs in the selected IP pool</td>
+</tr>
+<tr>
+<td>2514</td>
+<td>PHOENIX_ENVIRONMENT_NOT_FOUND</td>
+<td>Environment not found</td>
+</tr>
+<tr>
+<td>2515</td>
+<td>PHOENIX_INVALID_COMPUTE_ENV_SPEC</td>
+<td>Invalid or missing Compute Environment Spec</td>
+</tr>
+<tr>
+<td>2516</td>
+<td>PHOENIX_INVALID_NETWORK_ENV_SPEC</td>
+<td>Invalid or missing Network Environment Spec</td>
+</tr>
+<tr>
+<td>2517</td>
+<td>PHOENIX_INVALID_HYPERVISOR_MANAGER</td>
+<td>Invalid or missing Hypervisor Manager</td>
+</tr>
+<tr>
+<td>2518</td>
+<td>PHOENIX_ENVIRONMENT_HAS_EXISTING_COMPUTE</td>
+<td>Environment already has an existing compute component</td>
+</tr>
+<tr>
+<td>2519</td>
+<td>PHOENIX_CLUSTER_NAME_IN_USE</td>
+<td>Cluster name is already in use</td>
+</tr>
+<tr>
+<td>2520</td>
+<td>PHOENIX_HOST_NOT_FOUND</td>
+<td>Host not found</td>
+</tr>
+<tr>
+<td>2521</td>
+<td>PHOENIX_FAILED_DELETE_COMPUTE_ENV</td>
+<td>Failed deleting compute environment</td>
+</tr>
+<tr>
+<td>2522</td>
+<td>PHOENIX_ENV_TOO_SMALL_FOR_WL</td>
+<td>Not enough compute resources in the environment to support the requested workload</td>
+</tr>
+<tr>
+<td>2523</td>
+<td>DELETE_WORKLOAD_WHEN_NOT_ALL_VMS_ARE_OFF</td>
+<td>Cannot delete workload, some of the VMs are not powered off</td>
+</tr>
+<tr>
+<td>2524</td>
+<td>PHOENIX_NOT_READY</td>
+<td>Phoenix module is not ready for incoming request</td>
+</tr>
+<tr>
+<td>2525</td>
+<td>PHOENIX_EXTEND_WL_NO_TEMPLATE</td>
+<td>Extend workload failed to find the VM template to be used</td>
+</tr>
+<tr>
+<td>2526</td>
+<td>PHOENIX_WORKLOAD_DOES_NOT_EXIST</td>
+<td>Workload does not exist</td>
+</tr>
+<tr>
+<td>2527</td>
+<td>PHOENIX_FAILED_TO_DELETE_VIRTUAL_MACHINE</td>
+<td>Failed to delete virtual machine</td>
+</tr>
+<tr>
+<td>2528</td>
+<td>PHOENIX_VM_TEMPLATE_MISSING_NETWORK</td>
+<td>Virtual Machine Template is missing network adapters</td>
+</tr>
+<tr>
+<td>2529</td>
+<td>PHOENIX_VM_TEMPLATE_MISSING_VALID_TOOLS</td>
+<td>Virtual Machine Template has invalid VMware Tools</td>
+</tr>
+<tr>
+<td>2530</td>
+<td>PHOENIX_INVALID_VM_TEMPLATE</td>
+<td>Invalid Virtual Machine template specified</td>
+</tr>
+<tr>
+<td>2531</td>
+<td>PHOENIX_INVALID_ENVIRNOMENT_NAME</td>
+<td>Invalid or missing Environment name</td>
+</tr>
+<tr>
+<td>2532</td>
+<td>PHOENIX_INVALID_STORAGE_POOL_ID</td>
+<td>Invalid or missing Storage Pool for the target Environment</td>
+</tr>
+<tr>
+<td>2533</td>
+<td>PHOENIX_VM_NETWORK_CONFIG_MISMATCH</td>
+<td>Specified number of VM network configs does not match VM template</td>
+</tr>
+<tr>
+<td>2534</td>
+<td>PHOENIX_INVALID_VM_NETWORK_CONFIGURATION</td>
+<td>Invalid VM network configuration specified</td>
+</tr>
+<tr>
+<td>2535</td>
+<td>PHOENIX_COMPUTE_ENVIRONMENT_CONTAINS_VMS</td>
+<td>Compute Environment contains VMs</td>
+</tr>
+<tr>
+<td>2536</td>
+<td>PHOENIX_FILE_SYSTEM_CONTAINS_VMS</td>
+<td>File System contains VMs or Templates</td>
+</tr>
+<tr>
+<td>2537</td>
+<td>PHOENIX_ENTITY_TYPE_DOES_NOT_EXIST</td>
+<td>Entity type not found</td>
+</tr>
+<tr>
+<td>2538</td>
+<td>PHOENIX_INSUFFICIENT_HOSTS_IN_CLUSTER</td>
+<td>Unable to create Compute Cluster : Insufficient hosts specified</td>
+</tr>
+<tr>
+<td>2539</td>
+<td>PHOENIX_CANNOT_DELETE_DEFAULT_PROFILE</td>
+<td>Deleting default profile is not allowed</td>
+</tr>
+<tr>
+<td>2540</td>
+<td>PHOENIX_INVALID_COMPUTE_OVERCOMMIT_VALUE</td>
+<td>Invalid compute overcommit value. Must be greater than 1.00</td>
+</tr>
+<tr>
+<td>2541</td>
+<td>PHOENIX_HOST_NOT_CONNECTED_TO_VCENTER</td>
+<td>Host is not connected to vCenter</td>
+</tr>
+<tr>
+<td>2542</td>
+<td>PHOENIX_IP_RANGES_OVERLAP</td>
+<td>Provided IP Pools overlap</td>
+</tr>
+<tr>
+<td>2543</td>
+<td>PHOENIX_INSUFFICIENT_IPS_PROVIDED</td>
+<td>Insufficient IPs provided</td>
+</tr>
+<tr>
+<td>2544</td>
+<td>PHOENIX_PORT_GROUP_NAME_IN_USE</td>
+<td>Port Group name is already in use</td>
+</tr>
+<tr>
+<td>2545</td>
+<td>PHOENIX_INVALID_DATACENTER_ID</td>
+<td>Invalid Datacenter ID specified</td>
+</tr>
+<tr>
+<td>2546</td>
+<td>PHOENIX_INVALID_RAM_OVERCOMMIT_VALUE</td>
+<td>Invalid RAM overcommit value. Valid range is 1.00 to 2.00</td>
+</tr>
+<tr>
+<td>2547</td>
+<td>PHOENIX_ENVIRONMENT_HAS_EXISTING_NETWORK</td>
+<td>Environment already has an existing network component</td>
+</tr>
+<tr>
+<td>2548</td>
+<td>PHOENIX_ENVIRONMENT_HAS_EXISTING_STORAGE</td>
+<td>Environment already has an existing storage component</td>
+</tr>
+<tr>
+<td>2549</td>
+<td>PHOENIX_ENVIRONMENT_CONTAINS_VMS</td>
+<td>Environment contains workload VMs</td>
+</tr>
+<tr>
+<td>2550</td>
+<td>PHOENIX_HOST_HAS_VMS_NO_DRS</td>
+<td>Target host has active VMs that must be manually moved before removing host</td>
+</tr>
+<tr>
+<td>2551</td>
+<td>PHOENIX_INSUFFICIENT_STORAGE_POOL_CAPACITY</td>
+<td>The specified Storage Pools do not provide sufficient storage capacity</td>
+</tr>
+<tr>
+<td>2552</td>
+<td>PHOENIX_STORAGE_POOL_NOT_AVAILABLE</td>
+<td>The specified Storage Pool is not available for volume creation and may be in a degraded state</td>
+</tr>
+<tr>
+<td>2553</td>
+<td>PHOENIX_CLUSTER_HOST_IN_MAINTENANCE_MODE</td>
+<td>The specified cluster has a host in maintenance mode</td>
+</tr>
+<tr>
+<td>2554</td>
+<td>PHOENIX_BAD_ENVIRONMENT_CREATE_REQUEST</td>
+<td>Bad create environment request</td>
+</tr>
+<tr>
+<td>2555</td>
+<td>PHOENIX_INVALID_WORKLOAD_NAME</td>
+<td>The given workload name contains invalid characters. Use only alphanumeric, spaces, hypen (-), and underscore (_) characters.</td>
+</tr>
+<tr>
+<td>2556</td>
+<td>PHOENIX_SDS_ENVIRONMENT_NOT_READY</td>
+<td>The SDS environment is not currently in an ideal state for this operation.</td>
+</tr>
+<tr>
+<td>2557</td>
+<td>FAIL_TO_VERIFY_IPS</td>
+<td>Couldn’t verify all of the IPs. Either some of the IPs are disconnected, or the IPs lead to different servers.</td>
+</tr>
+<tr>
+<td>2558</td>
+<td>PHOENIX_WORKLOAD_NAME_TOO_LONG</td>
+<td>The provided workload name is too long. Max size is 18 characters.</td>
+</tr>
+<tr>
+<td>2559</td>
+<td>GUI_OFFLINE_MODE_COMMANDS_NOT_SUPPORTED</td>
+<td>Commands are not supported in Offline Mode</td>
+</tr>
+<tr>
+<td>The following return codes relate to the SDR:</td>
+<td></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<table>
+<thead>
+<tr>
+<th>RC ID</th>
+<th>Name</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>2702</td>
+<td>SDR_ACTIVE_ATTACH_TO_THIS_MDM</td>
+<td>There is an SDR actively attached to this MDM. The hostname used in the command probably belongs to another SDR</td>
+</tr>
+<tr>
+<td>2703</td>
+<td>SDR_ALREADY_ATTACH_TO_THIS_MDM</td>
+<td>The SDR is already attached to this MDM</td>
+</tr>
+<tr>
+<td>2704</td>
+<td>SDR_ACTIVE_ATTACH_TO_OTHER_MDM</td>
+<td>The SDR is actively attached to another MDM</td>
+</tr>
+<tr>
+<td>2705</td>
+<td>SDR_ALREADY_ATTACH_TO_OTHER_MDM</td>
+<td>The SDR is already attached to another MDM</td>
+</tr>
+<tr>
+<td>2706</td>
+<td>SDR_NAME_IN_USE</td>
+<td>The SDR name is already in use. Use a different name.</td>
+</tr>
+<tr>
+<td>2707</td>
+<td>SDR_ADDR_AND_PORT_IN_USE</td>
+<td>The SDR IP address and port are already in use. Try again with different ones.</td>
+</tr>
+<tr>
+<td>2708</td>
+<td>SDR_IP_NOT_FOUND</td>
+<td>The SDR IP address cannot be found</td>
+</tr>
+<tr>
+<td>2709</td>
+<td>TOO_MANY_SDRS</td>
+<td>There are too many SDRs</td>
+</tr>
+<tr>
+<td>2710</td>
+<td>SDR_ALREADY_EXISTS_AND_BEING_REMOVED</td>
+<td>The SDR already exists and is being removed. Wait for the operation to finish</td>
+</tr>
+<tr>
+<td>2711</td>
+<td>SDR_NOT_FOUND</td>
+<td>Could not find the SDR</td>
+</tr>
+<tr>
+<td>2712</td>
+<td>INVALID_SDR_ID</td>
+<td>Invalid SDR. Try again with a valid ID, name or IP address.</td>
+</tr>
+<tr>
+<td>2713</td>
+<td>SDR_BEING_REMOVED</td>
+<td>SDR is being removed</td>
+</tr>
+<tr>
+<td>2714</td>
+<td>SDR_TOO_OLD</td>
+<td>The version of the SDR is too old</td>
+</tr>
+<tr>
+<td>2718</td>
+<td>NOT_ENOUGH_TRACKING_SDRS_FOR_REPLICATION</td>
+<td>There are not enough SDRs available for replication</td>
+</tr>
+<tr>
+<td>2719</td>
+<td>SDR_PERF_PARAM_CHANGE_FAILED</td>
+<td>Could not configure the performance parameters on the SDR</td>
+</tr>
+<tr>
+<td>2720</td>
+<td>SDR_MUST_HAVE_APPLICATION_IP_ROLE</td>
+<td>The SDR must have at least one IP address for application communication</td>
+</tr>
+<tr>
+<td>2721</td>
+<td>SDR_MUST_HAVE_STORAGE_IP_ROLE</td>
+<td>The SDR must have at least one IP address for storage communication</td>
+</tr>
+<tr>
+<td>2722</td>
+<td>ADDR_BELONGS_TO_OTHER_SDR</td>
+<td>The specified address belongs to another SDR. Use the correct address.</td>
+</tr>
+<tr>
+<td>2723</td>
+<td>SDR_TOO_MANY_IPS</td>
+<td>There are too many IP addresses for this SDR</td>
+</tr>
+<tr>
+<td>2724</td>
+<td>SDR_NOT_LISTENING_ON_PORT</td>
+<td>The SDR is not listening on the specified port. Check the SDR port configuration and try again.</td>
+</tr>
+<tr>
+<td>2731</td>
+<td>SDR_MUST_HAVE_EXTERNAL_IP_ROLE</td>
+<td>The SDR must have at least one IP address for external communication</td>
+</tr>
+<tr>
+<td>2732</td>
+<td>SDR_OLD_CRASH_POINT_GEN_NUM</td>
+<td>The SDR crash point update generation number is outdated</td>
+</tr>
+<tr>
+<td>2733</td>
+<td>RPL_SESSION_REMOVAL_IN_PROGRESS</td>
+<td>The session is currently being removed</td>
+</tr>
+<tr>
+<td>2734</td>
+<td>SDR_IP_ROLE_ALREADY_SET</td>
+<td>The IP role for this SDR has already been configured</td>
+</tr>
+<tr>
+<td>2735</td>
+<td>SDR_IN_MAINTENANCE_MODE</td>
+<td>The SDR is currently in maintenance mode</td>
+</tr>
+<tr>
+<td>2736</td>
+<td>SDR_NOT_IN_MAINTENANCE_MODE</td>
+<td>The SDR is not in maintenance mode</td>
+</tr>
+<tr>
+<td>2746</td>
+<td>SDR_CLEANUP_IN_PROGRESS</td>
+<td>SDR cleanup is currently in progress</td>
+</tr>
+<tr>
+<td>2747</td>
+<td>SDR_FAILED_TO_WRITE_REPO</td>
+<td>SDR could not write in its repository</td>
+</tr>
+<tr>
+<td>2749</td>
+<td>SDR_IS_LISTENING_TO_ANOTHER_PORT</td>
+<td>The SDR is listening to another (current) port. Change the SDR port configuration and try again</td>
+</tr>
+<tr>
+<td>2752</td>
+<td>RPL_FD_REMOVAL_IN_PROGRESS</td>
+<td>The Replication Protection Domain removal is in progress</td>
+</tr>
+<tr>
+<td>2755</td>
+<td>OPERATION_NOT_SUPPORTED_WHILE_THERE_IS_ONLY_ONE_SDR</td>
+<td>The operation is not allowed when there is only one operational SDR</td>
+</tr>
+<tr>
+<td>2756</td>
+<td>SDR_SDC_REMOVAL_IN_PROGRESS</td>
+<td>SDR SDC removal is in progress</td>
+</tr>
+<tr>
+<td>2757</td>
+<td>SDR_LIBSDC_REMOVAL_IN_PROGRESS</td>
+<td>SDR LibSdc removal is in progress</td>
+</tr>
+<tr>
+<td>The following return codes relate to the MDM:</td>
+<td></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<table>
+<thead>
+<tr>
+<th>RC ID</th>
+<th>Name</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>2800</td>
+<td>PEER_MDM_ALREADY_EXISTS_AND_BEING_REMOVED</td>
+<td>The replication peer mdm already exists, and is being removed. Wait for the operation to finish</td>
+</tr>
+<tr>
+<td>2801</td>
+<td>PEER_MDM_ADDR_AND_PORT_IN_USE</td>
+<td>The replication peer mdm IP address and port are already in use. Try with different ones.</td>
+</tr>
+<tr>
+<td>2802</td>
+<td>PEER_MDM_TOO_OLD</td>
+<td>The version of the replication peer mdm is too old</td>
+</tr>
+<tr>
+<td>2803</td>
+<td>PEER_MDM_BEING_REMOVED</td>
+<td>The replication peer mdm is being removed</td>
+</tr>
+<tr>
+<td>2804</td>
+<td>PEER_MDM_NOT_FOUND</td>
+<td>Could not find the replication peer mdm</td>
+</tr>
+<tr>
+<td>2805</td>
+<td>PEER_MDM_IP_NOT_FOUND</td>
+<td>The replication peer mdm IP address cannot be found</td>
+</tr>
+<tr>
+<td>2806</td>
+<td>INVALID_PEER_MDM_ID</td>
+<td>Invalid replication peer mdm. Try again with a valid ID, name or IP address.</td>
+</tr>
+<tr>
+<td>2807</td>
+<td>TOO_MANY_PEER_MDMS</td>
+<td>There are too many replication peer mdms</td>
+</tr>
+<tr>
+<td>2808</td>
+<td>PEER_MDM_NAME_IN_USE</td>
+<td>The replication peer mdm name is already in use. Use a different name.</td>
+</tr>
+<tr>
+<td>2811</td>
+<td>PEER_MDM_ID_IN_USE</td>
+<td>The replication peer mdm ID already exists in the system. Use the modify command instead.</td>
+</tr>
+<tr>
+<td>2812</td>
+<td>PEER_MDM_ALREADY_CONNECTED</td>
+<td>The replication peer mdm has already been connected at least once. It is not possible to modify its peer system ID.</td>
+</tr>
+<tr>
+<td>2813</td>
+<td>INVALID_PEER_MDM_PORT</td>
+<td>The specified replication peer mdm port is not in the valid range. Try again with a valid port number.</td>
+</tr>
+<tr>
+<td>2815</td>
+<td>PEER_MDM_HAS_CGS</td>
+<td>The replication peer mdm has replication Consistency Groups</td>
+</tr>
+<tr>
+<td>2816</td>
+<td>PEER_MDM_CONNECTION_FAILURE</td>
+<td>Connection to the replication peer mdm failed</td>
+</tr>
+<tr>
+<td>2817</td>
+<td>PEER_MDM_HAS_NO_IP</td>
+<td>The replication peer mdm must have at least one IP address</td>
+</tr>
+<tr>
+<td>2818</td>
+<td>INVALID_PEER_MDM_NETWORK_TYPE</td>
+<td>Invalid replication peer mdm network type. Try again with a valid network type.</td>
+</tr>
+<tr>
+<td>2819</td>
+<td>REMOTE_PEER_MDM_DENIED_MESSAGE_AS_NO_WORKING_CLIENT_CONNECTION_TO_THIS_PEER</td>
+<td>The remote replication peer mdm denied the message because there is no working client connection to this peer</td>
+</tr>
+<tr>
+<td>2820</td>
+<td>REMOTE_PEER_MDM_DOES_NOT_EXIST</td>
+<td>The remote replication peer mdm does not exist</td>
+</tr>
+<tr>
+<td>2827</td>
+<td>PEER_MDM_BUSY</td>
+<td>The replication peer mdm is busy now. Retry the command later.</td>
+</tr>
+<tr>
+<td>2828</td>
+<td>JCGS_ABORT</td>
+<td>Journal I/O pinning was aborted because cease-notifications was requested</td>
+</tr>
+<tr>
+<td>2829</td>
+<td>NO_DEFAULT_JCGS</td>
+<td>CG exists but no corresponding JCGS in default session</td>
+</tr>
+<tr>
+<td>The following return codes relate to MDM replication errors:</td>
+<td></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<table>
+<thead>
+<tr>
+<th>RC ID</th>
+<th>Name</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>2901</td>
+<td>VOLUME_MARKED_FOR_REPLICATION</td>
+<td>The volume is marked for replication</td>
+</tr>
+<tr>
+<td>2902</td>
+<td>VOLUME_ALREADY_MARKED_FOR_REPLICATION</td>
+<td>The volume is already marked for replication</td>
+</tr>
+<tr>
+<td>2903</td>
+<td>VOLUME_ALREADY_UNMARKED_FOR_REPLICATION</td>
+<td>The volume is already unmarked for replication</td>
+</tr>
+<tr>
+<td>2904</td>
+<td>VOLUME_NOT_MARKED_FOR_REPLICATION</td>
+<td>The volume is not marked for replication</td>
+</tr>
+<tr>
+<td>2905</td>
+<td>VOLUME_IN_REPLICATION_PAIR</td>
+<td>The volume is in a Replication Pair</td>
+</tr>
+<tr>
+<td>2906</td>
+<td>VOLUME_IN_MARKED_PENDING_FOR_REPLICATION</td>
+<td>The volume is marked for replication, in Pending state</td>
+</tr>
+<tr>
+<td>2907</td>
+<td>NO_AVAILABLE_REPLICATION_CAPACITY</td>
+<td>There is no available replication capacity</td>
+</tr>
+<tr>
+<td>2908</td>
+<td>SP_HAS_REPLICATION_CAPACITY</td>
+<td>The Storage Pool has replication capacity. Set capacity to 0 before removing the Storage Pool.</td>
+</tr>
+<tr>
+<td>2910</td>
+<td>REPLICATION_JOURNAL_VOLUME_CAN_NOT_BE_REMOVED</td>
+<td>Could not remove replication journal volume</td>
+</tr>
+<tr>
+<td>2911</td>
+<td>INI_VER_TOO_OLD_FOR_REPLICATED_VOL</td>
+<td>The SDC version is too old, and cannot support the replicated volume</td>
+</tr>
+<tr>
+<td>2912</td>
+<td>VOL_MAP_TO_OLD_INI_DOESNT_SUPPORT_REPLICATION</td>
+<td>One or more SDCs are running a system version that is too old, and cannot support replication</td>
+</tr>
+<tr>
+<td>2913</td>
+<td>RPL_DST_VOL_CANT_HAVE_READ_WRITE_ACCESS_MODE</td>
+<td>Cannot grant read-write access to a replication destination volume. Only read-only or no-access modes are allowed.</td>
+</tr>
+<tr>
+<td>2915</td>
+<td>VOLUME_IN_UNMARKED_PENDING_FOR_REPLICATION</td>
+<td>The volume is unmarked for replication, in Pending state.</td>
+</tr>
+<tr>
+<td>2920</td>
+<td>FD_HAS_REPLICATION_JOURNAL_CAPACITY</td>
+<td>The Protection Domain contains replication journal capacity, and therefore cannot be removed or shutdown</td>
+</tr>
+<tr>
+<td>2924</td>
+<td>FAILED_TO_DECREASE_RATIO_ON_STORAGE_POOL</td>
+<td>Reducing the journal capacity ratio below the allocated capacity requires sufficient available journal capacity in other Storage Poolss in the protection domain</td>
+</tr>
+<tr>
+<td>2925</td>
+<td>CANNOT_DECREASE_REPLICATION_CAPACITY_DUE_CGS_IN_ACCUMULATING_STATES</td>
+<td>It is not possible to decrease replication capacity while there are Replication Consistency Groups in accumulation states: REVEAL, DISASTER RECOVERY IN PROGRESS, FREEZE or PAUSE</td>
+</tr>
+<tr>
+<td>2926</td>
+<td>REPLICATION_FD_ALREADY_SET</td>
+<td>The Replication Protection Domain has already been set. It is not possible to set another one</td>
+</tr>
+<tr>
+<td>2927</td>
+<td>FD_HAS_REPLICATION_JOURNAL</td>
+<td>Protection Domain has replication journal capacity</td>
+</tr>
+<tr>
+<td>2928</td>
+<td>DST_INITIAL_COPY_VOLUME_CAN_NOT_BE_MAPPED</td>
+<td>It is not possible to map target Initial Copy volumes</td>
+</tr>
+<tr>
+<td>2929</td>
+<td>RETRY_MAP_AS_VOLUME_PAIR_DELETION_IS_CURRENTLY_IN_PROGRESS</td>
+<td>A volume pair is currently being deleted</td>
+</tr>
+<tr>
+<td>2931</td>
+<td>RPL_CG_COMMAND_IS_NOT_ALLOWED_DURING_INCONSISTENT_MODE</td>
+<td>The operation is not allowed while a Replication Consistency Group is not in consistent mode</td>
+</tr>
+<tr>
+<td>2932</td>
+<td>FD_HAVE_CG_WITH_PROGRESSING_DISASTER_RECOVERY</td>
+<td>The Protection Domain has Replication Consistency Groups in the process of changing Disaster Recovery state</td>
+</tr>
+<tr>
+<td>2934</td>
+<td>VOL_IS_FAILOVER_TEST</td>
+<td>This action cannot be performed on a Failover test volume</td>
+</tr>
+<tr>
+<td>2935</td>
+<td>VTREE_HAS_FAILOVER_TEST</td>
+<td>This action cannot be performed on a Failover test volume within this V-Tree</td>
+</tr>
+<tr>
+<td>2936</td>
+<td>FAILOVER_TEST_CANNOT_START_DURING_VTREE_MIGRATION</td>
+<td>A Failover test cannot be started while a V-Tree in this Replication Consistency Group is migrating</td>
+</tr>
+<tr>
+<td>2937</td>
+<td>RPL_SDR_RATIO_VIOLATION</td>
+<td>This action cannot be performed because it violates the maximum allowed ratio of SDRs between the source and target systems SDRs. First adjust the number of SDRs</td>
+</tr>
+<tr>
+<td>The following return codes relate to MDM replication pair errors:</td>
+<td></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<table>
+<thead>
+<tr>
+<th>RC ID</th>
+<th>Name</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>3200</td>
+<td>RPL_PAIR_NOT_FOUND</td>
+<td>The Replication Pair cannot be found</td>
+</tr>
+<tr>
+<td>3201</td>
+<td>RPL_PAIR_INVALID_ID</td>
+<td>The Replication Pair ID is wrong</td>
+</tr>
+<tr>
+<td>3202</td>
+<td>RPL_PAIR_FOR_LOCAL_VOLUME_ALREADY_EXISTS</td>
+<td>A Replication Pair for the specified local volume already exists</td>
+</tr>
+<tr>
+<td>3203</td>
+<td>RPL_PAIR_FOR_REMOTE_VOLUME_ALREADY_EXISTS</td>
+<td>A Replication Pair for the specified remote volume already exists</td>
+</tr>
+<tr>
+<td>3205</td>
+<td>RPL_PAIR_REJECTION_CODE_FAILED_TO_LOCK_VOLUME_FOR_WRITE</td>
+<td>The handshake has failed because locking of the destination volume for write operations failed</td>
+</tr>
+<tr>
+<td>3206</td>
+<td>RPL_PAIR_REJECTION_CODE_VOLUME_NOT_MARKED_FOR_REPLICATION</td>
+<td>The handshake has failed because the destination volume is not marked for replication</td>
+</tr>
+<tr>
+<td>3208</td>
+<td>RPL_PAIR_REJECTION_CODE_VOLUME_NOT_FOUND</td>
+<td>The handshake has failed because the destination volume was not found</td>
+</tr>
+<tr>
+<td>3209</td>
+<td>RPL_PAIR_REJECTION_CODE_VOLUME_ALREADY_IN_ANOTHER_PAIR</td>
+<td>The handshake has failed because the destination volume is already used by another pair</td>
+</tr>
+<tr>
+<td>3210</td>
+<td>RPL_PAIR_REJECTION_CODE_RPL_CG_NOT_FOUND</td>
+<td>The handshake has failed because the Replication Consistency Group was not found</td>
+</tr>
+<tr>
+<td>3211</td>
+<td>RPL_PAIR_REJECTION_CODE_RPL_CG_IS_NOT_REMOTE_TO_LOCAL</td>
+<td>The handshake has failed because the Replication Consistency Group is not using the correct direction</td>
+</tr>
+<tr>
+<td>3212</td>
+<td>RPL_PAIR_REJECTION_CODE_RPL_CG_NOT_IN_NORMAL_LIFETIME_STATE</td>
+<td>The handshake has failed because the Replication Consistency Group is not in Normal state</td>
+</tr>
+<tr>
+<td>3213</td>
+<td>RPL_PAIR_REJECTION_CODE_DST_VOLUME_MAPPED_TO_SDC</td>
+<td>The destination volume does not have permission to be mapped to the SDC</td>
+</tr>
+<tr>
+<td>3214</td>
+<td>RPL_PAIR_REJECTION_CODE_DST_VOLUME_DIFFERS_IN_CAPACITY</td>
+<td>The destination volume capacity differs from the capacity of the source volume</td>
+</tr>
+<tr>
+<td>3215</td>
+<td>RPL_PAIR_REJECTION_CODE_DELETED_AFTER_CONFIRMED</td>
+<td>The Replication Pair was confirmed, but was then deleted</td>
+</tr>
+<tr>
+<td>3216</td>
+<td>RPL_PAIR_REJECTION_CODE_NAME_EXISTS</td>
+<td>The Replication Pair with the requested name already exists at the target side</td>
+</tr>
+<tr>
+<td>3217</td>
+<td>RPL_PAIR_IN_MOVE</td>
+<td>The Replication Pair is already participating in another move pairs operation</td>
+</tr>
+<tr>
+<td>3218</td>
+<td>RPL_PAIR_MOVE_NOT_ALLOWED_ON_REMOTE_TO_LOCAL_CG</td>
+<td>The move pairs operation is only allowed on the source side of the Replication Consistency Group</td>
+</tr>
+<tr>
+<td>3219</td>
+<td>RPL_PAIR_MOVE_INVOLVES_MORE_THAN_ONE_DST_SYSTEM</td>
+<td>The move pairs operation is not allowed on Replication Consistency Groups with different peer systems</td>
+</tr>
+<tr>
+<td>3220</td>
+<td>RPL_CG_IN_MOVE</td>
+<td>The Replication Consistency Group is already participating in another move pairs operation</td>
+</tr>
+<tr>
+<td>3221</td>
+<td>RPL_PAIR_MOVE_SYNC_TIMEOUT</td>
+<td>Unable to synchronize the move operation with destination. A timeout has occurred</td>
+</tr>
+<tr>
+<td>3223</td>
+<td>RPL_PAIR_MOVE_NEW_CG_EQUALS_CURRENT_CG</td>
+<td>The move pairs operation moves the pair to its own Replication Consistency Group</td>
+</tr>
+<tr>
+<td>3224</td>
+<td>RPL_PAIR_MOVE_DUPLICATED_PAIR_ID</td>
+<td>The move pairs operation command contains a duplicate pair ID</td>
+</tr>
+<tr>
+<td>3225</td>
+<td>RPL_PAIR_MOVE_NOT_FOUND</td>
+<td>The move pairs object was not found</td>
+</tr>
+<tr>
+<td>3226</td>
+<td>RPL_PAIR_COMMAND_IS_NOT_ALLOWED_ON_DST_SIDE</td>
+<td>The command is allowed only at the source side</td>
+</tr>
+<tr>
+<td>3227</td>
+<td>RPL_PAIR_IS_NOT_IN_NORMAL_STATE</td>
+<td>The Replication Pair is not in Normal state</td>
+</tr>
+<tr>
+<td>3228</td>
+<td>RPL_PAIR_REJECTION_CODE_NOT_ENOUGH_SDRS_FOR_REPLICATION</td>
+<td>Insufficient SDRs are available for replication at the destination</td>
+</tr>
+<tr>
+<td>3229</td>
+<td>RPL_PAIR_NOT_ENOUGH_SDRS_FOR_REPLICATION</td>
+<td>Insufficient SDRs are available for replication</td>
+</tr>
+<tr>
+<td>3230</td>
+<td>RPL_PAIR_DELETED_DURING_SYNCHRONOUS_CREATION</td>
+<td>The Replication Pair was deleted during the synchronous creation process</td>
+</tr>
+<tr>
+<td>3231</td>
+<td>RPL_PAIR_ALREADY_EXISTS</td>
+<td>The Replication Pair already exists</td>
+</tr>
+<tr>
+<td>3232</td>
+<td>RPL_PAIR_INVALID_KEY</td>
+<td>Invalid replication Pair Key</td>
+</tr>
+<tr>
+<td>3233</td>
+<td>RPL_PAIR_COMMAND_IS_NOT_ALLOWED_DURING_RPL_CG_DISASTER_RECOVERY</td>
+<td>The command is not allowed while the Replication Consistency Group is undergoing disaster recovery</td>
+</tr>
+<tr>
+<td>3234</td>
+<td>RPL_PAIR_REJECTION_CODE_RPL_CG_UNDERGO_DISASTER_RECOVERY</td>
+<td>The handshake request has been rejected because the Replication Consistency Group is undergoing disaster recovery</td>
+</tr>
+<tr>
+<td>3235</td>
+<td>RPL_PAIR_REJECTION_CODE_RPL_CG_IN_ANOTHER_FD</td>
+<td>Replication Pair creation has been rejected because the Replication Consistency Group is in a different Protection Domain from the volume</td>
+</tr>
+<tr>
+<td>3236</td>
+<td>RPL_PAIR_MAXIMAL_NUMBER_OF_PAIRS_ALREADY_IN_THE_RPL_CG</td>
+<td>The Replication Consistency Group has already reached the maximum amount of Replication Pairs</td>
+</tr>
+<tr>
+<td>3237</td>
+<td>RPL_PAIR_REJECTION_CODE_MAXIMAL_NUMBER_OF_PAIRS_ALREADY_IN_THE_RPL_CG</td>
+<td>Replication Pair creation has been rejected because the Replication Consistency Group has already reached the maximum amount of Replication Pairs</td>
+</tr>
+<tr>
+<td>3238</td>
+<td>RPL_PAIR_REJECTION_CODE_VOLUME_FD_DIFFERENT_THAN_CG_PD</td>
+<td>The handshake has failed because the target volume is in a different Protection Domain from the replication consistency group</td>
+</tr>
+<tr>
+<td>3239</td>
+<td>RPL_PAIR_INITIAL_COPY_IS_ALREADY_PAUSED</td>
+<td>The initial copy of the pair is already paused</td>
+</tr>
+<tr>
+<td>3240</td>
+<td>RPL_PAIR_INITIAL_COPY_IS_NOT_PAUSED</td>
+<td>The initial copy of the pair is not paused</td>
+</tr>
+<tr>
+<td>3241</td>
+<td>RPL_PAIR_INITIAL_COPY_OPERATION_IS_DENIED_WHILE_RPL_CG_INIT_COPY_TRANSFER_IS_PAUSED</td>
+<td>The Replication Consistency Group paused transfer for all initial copy pairs</td>
+</tr>
+<tr>
+<td>3242</td>
+<td>RPL_PAIR_IS_NOT_DURING_INITIAL_COPY</td>
+<td>The Replication Pair is not currently undergoing the initial copy process</td>
+</tr>
+<tr>
+<td>3243</td>
+<td>RPL_PAIR_BAD_INITIAL_COPY_PRIORITY</td>
+<td>An invalid initial copy priority was specified</td>
+</tr>
+<tr>
+<td>3244</td>
+<td>RPL_PAIR_REMOVAL_IN_PROGRESS</td>
+<td>The Replication Pair removal is in progress</td>
+</tr>
+<tr>
+<td>3245</td>
+<td>RPL_PAIR_TOO_MANY_PAIRS</td>
+<td>There are too many Replication Pairs</td>
+</tr>
+<tr>
+<td>3246</td>
+<td>RPL_PAIR_UNRECOGNIZED_PROXY_COMMAND</td>
+<td>The proxy command is not supported</td>
+</tr>
+<tr>
+<td>3247</td>
+<td>RPL_PAIR_TOO_MANY_PAIRS_DURING_INITIAL_COPY_IN_THE_LOCAL_SYSTEM</td>
+<td>There are too many pairs undergoing initial copy in the local system. Try again later.</td>
+</tr>
+<tr>
+<td>3248</td>
+<td>RPL_PAIR_TOO_MANY_PAIRS_DURING_INITIAL_COPY_IN_THE_REMOTE_SYSTEM</td>
+<td>There are too many pairs undergoing initial copy in the remote system. Try again later.</td>
+</tr>
+<tr>
+<td>3251</td>
+<td>RPL_VOL_IS_BIGGER_THAN_RPL_VOL_SIZE_LIMIT</td>
+<td>The volume is larger than the maximum capacity allowed for replication</td>
+</tr>
+<tr>
+<td>3252</td>
+<td>RPL_PAIR_REJECTION_CODE_RPL_VOLUME_BIGGER_THAN_RPL_VOL_SIZE_LIMIT</td>
+<td>The volume is larger than the maximum capacity allowed for replication</td>
+</tr>
+<tr>
+<td>3253</td>
+<td>RPL_PAIR_REJECTION_CODE_VOL_IS_FAILOVER_TEST</td>
+<td>The volume is a failover test snapshot</td>
+</tr>
+<tr>
+<td>3255</td>
+<td>RPL_PAIR_REJECTION_CODE_VOL_IS_VVOL</td>
+<td>It is not possible to replicate a vvol</td>
+</tr>
+<tr>
+<td>3256</td>
+<td>RPL_PAIR_REJECTION_CODE_VOL_IS_MAPPED_TO_OLD_SDC</td>
+<td>Replication Pair creation is not allowed when a volume has mapping to an SDC with an old system version that does not support replication</td>
+</tr>
+<tr>
+<td>3257</td>
+<td>RPL_PAIR_REJECTION_CODE_DST_VOL_IS_SNAP_POLICY_SRC_VOL</td>
+<td>Replication Pair creation is not allowed when the destination volume is the source volume of a snapshot policy</td>
+</tr>
+<tr>
+<td>3257</td>
+<td>RPL_PAIR_REJECTION_CODE_DST_VOL_IS_SNAP_POLICY_SRC_VOL</td>
+<td>Replication Pair creation is not allowed when the destination volume is the source volume of a snapshot policy</td>
+</tr>
+<tr>
+<td>3258</td>
+<td>RPL_PAIR_MOVE_INVALID_ID</td>
+<td>The move pairs object ID is invalid</td>
+</tr>
+<tr>
+<td>The following return codes relate to replication initial copy:</td>
+<td></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<table>
+<thead>
+<tr>
+<th>RC ID</th>
+<th>Name</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>3300</td>
+<td>RPL_PAIR_MOVE_DURING_INITIAL_COPY</td>
+<td>Moving a Replication Pair during the Initial Copy process is not allowed</td>
+</tr>
+<tr>
+<td>3301</td>
+<td>RPL_INITIAL_COPY_COMMAND_IS_ALLOWED_ONLY_ON_DST_SIDE</td>
+<td>The Initial Copy operation is only allowed on the target side</td>
+</tr>
+<tr>
+<td>3302</td>
+<td>RPL_INITIAL_COPY_COMMAND_IS_ALLOWED_ONLY_ON_SRC_SIDE</td>
+<td>The Initial Copy operation is only allowed on the source side</td>
+</tr>
+<tr>
+<td>3303</td>
+<td>RPL_RESUME_INITIAL_COPY_IS_ALLOWED_ONLY_ON_PAUSED_PAIR</td>
+<td>Attempting to resume copying of a Replication Pair which is not paused</td>
+</tr>
+<tr>
+<td>3305</td>
+<td>RPL_PAIR_ALREADY_COMPLETED_INITIAL_COPY</td>
+<td>The initial copy of the pair is already complete, so this the command has no effect</td>
+</tr>
+<tr>
+<td>3307</td>
+<td>RPL_INITIAL_COPY_WRONG_GEN_NUM</td>
+<td>The SDR rejected the StartCopyingVaes request because it has a different generation number to the one contained in the request</td>
+</tr>
+<tr>
+<td>3308</td>
+<td>RPL_INITIAL_COPY_COMMAND_IS_DENIED_WHEN_MOVE_PAIR_HAS_STARTED</td>
+<td>The MDM rejected the pause pair request because the pair has already started moving it to the target Replication Consistency Group</td>
+</tr>
+<tr>
+<td>3309</td>
+<td>RPL_PAUSE_INITIAL_COPY_ALREADY_PAUSED_PAIR</td>
+<td>The system is attempting to pause a pair that is already paused</td>
+</tr>
+<tr>
+<td>3310</td>
+<td>RPL_PAUSE_INITIAL_COPY_ALREADY_COMPLETED_INITIAL_COPY</td>
+<td>The Replication Pair has already completed the initial copy process</td>
+</tr>
+<tr>
+<td>3311</td>
+<td>RPL_PAIR_MOVE_NOT_ALLOWED_WHEN_ICP_STATE_IS_NOT_ACTIVE</td>
+<td>The Initial Copy process can start move pair only when Initial Copy state is active</td>
+</tr>
+<tr>
+<td>The following return codes relate to replication consistency group errors:</td>
+<td></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<table>
+<thead>
+<tr>
+<th>RC ID</th>
+<th>Name</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>3400</td>
+<td>RPL_CG_INVALID_ID</td>
+<td>Invalid Replication Consistency Group ID</td>
+</tr>
+<tr>
+<td>3401</td>
+<td>RPL_CG_NOT_FOUND</td>
+<td>The Replication Consistency Group was not found</td>
+</tr>
+<tr>
+<td>3402</td>
+<td>RPL_CG_ALREADY_EXISTS</td>
+<td>The Replication Consistency Group already exists</td>
+</tr>
+<tr>
+<td>3403</td>
+<td>RPL_CG_IS_NOT_IN_NORMAL_STATE</td>
+<td>The Replication Consistency Group is not in Normal state</td>
+</tr>
+<tr>
+<td>3406</td>
+<td>RPL_CG_REJECTION_CODE_CANT_ADD_RPL_CG_TO_PEER_MDM</td>
+<td>The handshake has failed because the system could not add the Replication Consistency Group to the replication peer mdm</td>
+</tr>
+<tr>
+<td>3407</td>
+<td>RPL_CG_REJECTION_CODE_DELETED_AFTER_CONFIRMED</td>
+<td>The Replication Consistency Group was confirmed, but then deleted</td>
+</tr>
+<tr>
+<td>3408</td>
+<td>RPL_CG_REJECTION_CODE_NAME_EXISTS</td>
+<td>The Replication Consistency Group with the requested name already exists at the target</td>
+</tr>
+<tr>
+<td>3409</td>
+<td>RPL_CG_NOT_IN_UNFROZEN_STATE</td>
+<td>The Replication Consistency Group is already frozen, or a freeze is in progress</td>
+</tr>
+<tr>
+<td>3410</td>
+<td>RPL_CG_ALREADY_UNFROZEN</td>
+<td>The Replication Consistency Group is already unfrozen</td>
+</tr>
+<tr>
+<td>3411</td>
+<td>RPL_CG_INVALID_PAUSE_MODE</td>
+<td>The given pause mode is invalid</td>
+</tr>
+<tr>
+<td>3412</td>
+<td>RPL_CG_DELETED_DURING_SYNCHRONOUS_CREATION</td>
+<td>The Replication Consistency Group was deleted during the synchronous creation</td>
+</tr>
+<tr>
+<td>3413</td>
+<td>RPL_CG_IS_ALREADY_IN_THE_REQUESTED_PAUSE_MODE</td>
+<td>The Replication Consistency Group is already in the requested pause mode</td>
+</tr>
+<tr>
+<td>3414</td>
+<td>RPL_CG_INVALID_KEY</td>
+<td>Invalid Replication Consistency Group key</td>
+</tr>
+<tr>
+<td>3415</td>
+<td>RPL_CG_RPO_UNAVAILABLE</td>
+<td>The Replication Consistency Group’s RPO is unavailable. A consistent point does not exist at the destination</td>
+</tr>
+<tr>
+<td>3416</td>
+<td>RPL_CG_SNAP_CREATION_IS_ALREADY_IN_PROGRESS</td>
+<td>Only one snapshot creation operation at a time is allowed on a Replication Consistency Group</td>
+</tr>
+<tr>
+<td>3417</td>
+<td>RPL_CG_IS_EMPTY</td>
+<td>The Replication Consistency Group does not contain any Replication Pairs</td>
+</tr>
+<tr>
+<td>3418</td>
+<td>RPL_CG_SNAP_CREATION_CANCELLED_DUE_TO_EMPTY_CG</td>
+<td>All of the Replication Consistency Group’s pairs were deleted, and there is nothing from which to create a snapshot</td>
+</tr>
+<tr>
+<td>3419</td>
+<td>RPL_CG_SNAP_CREATION_NEVER_STARTED</td>
+<td>The requested Replication Consistency Group never had any snapshots created, therefore no return code is available</td>
+</tr>
+<tr>
+<td>3420</td>
+<td>RPL_CG_NO_SNAP_CREATION_IN_PROGRESS</td>
+<td>No snapshot creation operation is currently in progress</td>
+</tr>
+<tr>
+<td>3421</td>
+<td>RPL_CG_SNAP_CREATION_ABORTED_BY_USER</td>
+<td>The snapshot creation process was aborted by the user</td>
+</tr>
+<tr>
+<td>3422</td>
+<td>RPL_CG_COMMAND_IS_NOT_ALLOWED_ON_SYSTEM_RCG</td>
+<td>A user operation is not allowed on a system Replication Consistency Group</td>
+</tr>
+<tr>
+<td>3424</td>
+<td>RPL_CG_COMMAND_IS_NOT_ALLOWED_DURING_DISASTER_RECOVERY</td>
+<td>The command cannot be executed during disaster recovery</td>
+</tr>
+<tr>
+<td>3425</td>
+<td>RPL_CG_TRANSFERS_TO_NEUTRAL_STATE</td>
+<td>Replication Consistency Group is transferring to Neutral state</td>
+</tr>
+<tr>
+<td>3426</td>
+<td>RPL_CG_IS_IN_NEUTRAL_STATE</td>
+<td>The Replication Consistency Group is in the Neutral state</td>
+</tr>
+<tr>
+<td>3427</td>
+<td>RPL_CG_IS_NOT_IN_NEUTRAL_STATE</td>
+<td>The Replication Consistency Group is not in Neutral state</td>
+</tr>
+<tr>
+<td>3428</td>
+<td>RPL_CG_NOT_ALL_PAIRS_COMPLETED_INITIAL_COPY</td>
+<td>The Replication Consistency Group has pairs that did not complete Initial Copy</td>
+</tr>
+<tr>
+<td>3429</td>
+<td>RPL_CG_HAS_MAPPED_VOLUMES</td>
+<td>The Replication Consistency Group has mapped volumes</td>
+</tr>
+<tr>
+<td>3430</td>
+<td>RPL_CG_NEUTRAL_STATE_NOT_SYNCED_WITH_PEER</td>
+<td>Replication Consistency Group Neutral state is not synced with the peer system</td>
+</tr>
+<tr>
+<td>3431</td>
+<td>RPL_CG_IS_WITHIN_SAME_SYSTEM</td>
+<td>The Replication Consistency Group is within the same system</td>
+</tr>
+<tr>
+<td>3432</td>
+<td>RPL_CG_OBSOLETED_SECONDARY_SET_DIRECTION_REQUEST</td>
+<td>The direction request flow at the primary requester has progressed further</td>
+</tr>
+<tr>
+<td>3433</td>
+<td>RPL_CG_SET_DIRECTION_HANDSHAKE_ABORTED_DUE_TO_NEWER_DISASTER_RECOVERY_FLOW</td>
+<td>The set direction handshake was aborted due to the newer disaster recovery flow</td>
+</tr>
+<tr>
+<td>3434</td>
+<td>RPL_CG_PAUSE_OPERATION_IS_IN_PROGRESS</td>
+<td>PAUSE operation is currently in progress</td>
+</tr>
+<tr>
+<td>3435</td>
+<td>RPL_CG_RESUME_OPERATION_IS_IN_PROGRESS</td>
+<td>A RESUME operation is currently in progress</td>
+</tr>
+<tr>
+<td>3436</td>
+<td>RPL_CG_SET_MAPPING_ACCESS_MODE_IS_IN_PROGRESS</td>
+<td>Setting of the Replication Consistency Group’s mapping access mode is in progress</td>
+</tr>
+<tr>
+<td>3437</td>
+<td>RPL_CG_IS_NOT_UNPAUSED</td>
+<td>The Replication Consistency Group is paused</td>
+</tr>
+<tr>
+<td>3438</td>
+<td>RPL_CG_SYNC_NOW_QUERY_RESULT__APPLIED</td>
+<td>The data was applied to the destination volumes</td>
+</tr>
+<tr>
+<td>3439</td>
+<td>RPL_CG_SYNC_NOW_QUERY_RESULT__STORED_CONSISTENT</td>
+<td>The data is stored in a consistent set of journals</td>
+</tr>
+<tr>
+<td>3440</td>
+<td>RPL_CG_SYNC_NOW_QUERY_RESULT__INCONSISTENT</td>
+<td>The barrier, and currently all future barriers, are inconsistent</td>
+</tr>
+<tr>
+<td>3441</td>
+<td>RPL_CG_SYNC_NOW_QUERY_RESULT__IN_PROGRESS</td>
+<td>The data is still being transferred</td>
+</tr>
+<tr>
+<td>3442</td>
+<td>RPL_CG_COMMAND_IS_NOT_ALLOWED_DURING_FAILOVER</td>
+<td>A user initiated operation is not allowed during a failover</td>
+</tr>
+<tr>
+<td>3443</td>
+<td>RPL_CG_REVERSE_IS_ALLOWED_WHEN_FAILOVER_IS_DONE</td>
+<td>The reverse replication command is allowed only when failover is done</td>
+</tr>
+<tr>
+<td>3444</td>
+<td>RPL_CG_RESTORE_IS_ALLOWED_WHEN_FAILOVER_IS_DURING_SYNC_NOW_OR_DONE</td>
+<td>The restore replication command is allowed only when failover is either during a sync now operation, or is done</td>
+</tr>
+<tr>
+<td>3445</td>
+<td>RPL_CG_HAS_TOO_MANY_PAIRS_FOR_SNAPSHOT</td>
+<td>The system cannot create snapshots because the number of Replication Pairs is larger than maximum amount allowed for the snapshot operation</td>
+</tr>
+<tr>
+<td>3446</td>
+<td>RPL_CG_PROTECTION_DOMAIN_IS_NOT_ACTIVE</td>
+<td>The Protection Domain is not active</td>
+</tr>
+<tr>
+<td>3447</td>
+<td>RPL_CG_REJECTION_CODE_PROTECTION_DOMAIN_IS_NOT_ACTIVE</td>
+<td>The Protection Domain at the target side is not active</td>
+</tr>
+<tr>
+<td>3448</td>
+<td>RPL_CG_IS_INACTIVE</td>
+<td>The Replication Consistency Group is not active because the Protection Domain is deactivated</td>
+</tr>
+<tr>
+<td>3449</td>
+<td>RPL_CG_COMMAND_IS_ALLOWED_ONLY_IF_IN_FAILOVER_TEST_REVEAL_OR_DONE</td>
+<td>It is only possible to abort a failover test when the test is in Reveal or Done states</td>
+</tr>
+<tr>
+<td>3450</td>
+<td>RPL_CG_REMOVAL_IN_PROGRESS</td>
+<td>The Replication Consistency Group removal is in progress</td>
+</tr>
+<tr>
+<td>3451</td>
+<td>FD_HAS_SDRS</td>
+<td>Protection Domain has SDRs</td>
+</tr>
+<tr>
+<td>3452</td>
+<td>CANT_MIGRATE_REPLICATION_VOLUME</td>
+<td>A replicated volume cannot be migrated to a different Protection Domain</td>
+</tr>
+<tr>
+<td>3453</td>
+<td>RPL_CG_TOO_MANY_RCGS</td>
+<td>There are too many Replication Consistency Groups</td>
+</tr>
+<tr>
+<td>3454</td>
+<td>RPL_CG_HAS_CAPACITY_UNEQUAL_PAIR</td>
+<td>When the system was attempting to exit disaster recovery, it detected that the Replication Consistency Group’s Replication Pairs are not the same in the source and target volumes</td>
+</tr>
+<tr>
+<td>3455</td>
+<td>RPL_CG_UNRECOGNIZED_PROXY_COMMAND</td>
+<td>The proxy command is not supported</td>
+</tr>
+<tr>
+<td>3456</td>
+<td>RPL_CG_RENAME_IS_ALREADY_IN_PROGRESS</td>
+<td>Only one rename Replication Consistency Group operation is allowed at a time</td>
+</tr>
+<tr>
+<td>3457</td>
+<td>RPL_CG_COMMAND_IS_NOT_ALLOWED_ON_SRC_SIDE</td>
+<td>The command is not allowed on the source side</td>
+</tr>
+<tr>
+<td>3458</td>
+<td>RPL_CG_COMMAND_IS_NOT_ALLOWED_DURING_RENAME</td>
+<td>The command is not allowed during a rename operation</td>
+</tr>
+<tr>
+<td>3459</td>
+<td>RPL_CG_IS_NOT_FROZEN</td>
+<td>The Replication Consistency Group is not in Frozen state</td>
+</tr>
+<tr>
+<td>3460</td>
+<td>RPL_CG_REJECTION_CODE_TOO_MANY_RPL_CGS</td>
+<td>There are too many Replication Consistency Groups</td>
+</tr>
+<tr>
+<td>3462</td>
+<td>RPL_CG_ANOTHER_HANDSHAKE_OPERATION_IS_IN_PROGRESS_RETRY_LATER</td>
+<td>Another synchronous operation is in progress. Retry later.</td>
+</tr>
+<tr>
+<td>3463</td>
+<td>RPL_CG_HAS_NO_PAIRS_THAT_COMPLETED_INITIAL_COPY</td>
+<td>The Replication Consistency Group does not have any pairs that completed initial copy</td>
+</tr>
+<tr>
+<td>3464</td>
+<td>RPL_CG_MGR_HAS_PENDING_RENAME_ON_THE_NAME</td>
+<td>A rename operation is pending for the Replication Consistency Group’s name</td>
+</tr>
+<tr>
+<td>3465</td>
+<td>RPL_CG_REJECTION_CODE_MGR_HAS_PENDING_RENAME_ON_THE_NAME</td>
+<td>A rename operation is pending for the Replication Consistency Group’s name</td>
+</tr>
+<tr>
+<td>3466</td>
+<td>RPL_CG_COMMAND_IS_NOT_ALLOWED_DUE_TO_EMPTY_CG</td>
+<td>The Replication Consistency Group is empty</td>
+</tr>
+<tr>
+<td>3467</td>
+<td>SELF_REPLICATION_SYSTEM_IS_NOT_ALLOWED</td>
+<td>A system cannot be replicated to itself. A separate peer system is required for replication.</td>
+</tr>
+<tr>
+<td>3468</td>
+<td>RPL_CG_COMMAND_IS_NOT_ALLOWED_ON_INACTIVE_PD</td>
+<td>A user operation is not allowed when a Protection Domain is inactive</td>
+</tr>
+<tr>
+<td>3469</td>
+<td>RPL_CG_ACTIVATE_MAPPINGS_IS_NOT_ALLOWED_ON_DESTINATION_SIDE</td>
+<td>Activation of Replication Consistency Group mapping is not allowed at the target</td>
+</tr>
+<tr>
+<td>3470</td>
+<td>RPL_CG_IS_NOT_UNFROZEN</td>
+<td>The Replication Consistency Group is either in Frozen state, or a freeze operation is in progress</td>
+</tr>
+<tr>
+<td>3471</td>
+<td>RPL_CG_RPO_OUT_OF_RANGE</td>
+<td>The RPO value is not within the allowed range</td>
+</tr>
+<tr>
+<td>3472</td>
+<td>RPL_CG_CANT_HAVE_ACTIVE_SNAP_POLICY_SRC_VOLUMES_AS_DST_VOLS</td>
+<td>The Replication Consistency Group cannot contain target volumes which are source volumes of active snapshot policies</td>
+</tr>
+<tr>
+<td>3473</td>
+<td>RPL_CG_IS_NOT_SYNCED</td>
+<td>Replication consistency group must be synced between peers before exiting neutral. Please retry the command.</td>
+</tr>
+<tr>
+<td>The following return codes relate to crash points:</td>
+<td></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<table>
+<thead>
+<tr>
+<th>RC ID</th>
+<th>Name</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>3503</td>
+<td>CRASH_POINT_BAD_PROBABILITY_PERCENTAGE</td>
+<td>The value provided for the percentage must be between 1 and 100</td>
+</tr>
+<tr>
+<td>3504</td>
+<td>CRASH_POINT_DOES_NOT_EXIST</td>
+<td>A crash point with the specified name does not exist</td>
+</tr>
+<tr>
+<td>3505</td>
+<td>CRASH_POINT_OF_MDM_SPECIFIED_WITH_SDR_KEY</td>
+<td>The MDM crash point was specified together with SDR key</td>
+</tr>
+<tr>
+<td>3506</td>
+<td>MDM_FLAG_IS_NOT_APPLICABLE_TO_THIS_COMMAND</td>
+<td>The ‘mdms’ flag is not applicable for this command</td>
+</tr>
+<tr>
+<td>3507</td>
+<td>SDRS_FLAG_IS_NOT_APPLICABLE_TO_THIS_COMMAND</td>
+<td>The ‘sdrs’ flag is not applicable for this command</td>
+</tr>
+<tr>
+<td>3508</td>
+<td>SDRS_FLAG_IS_NOT_ALLOWED_TOGETHER_WITH_SDR_KEY</td>
+<td>The ‘sdrs’ flag is not allowed together with SDR key</td>
+</tr>
+<tr>
+<td>3509</td>
+<td>BAD_CRASH_POINT_NAME</td>
+<td>Wrong crash point name</td>
+</tr>
+<tr>
+<td>The following return codes relate to the persistent checksum feature in v3.5.x and later:</td>
+<td></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<table>
+<thead>
+<tr>
+<th>RC ID</th>
+<th>Name</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>3590</td>
+<td>PERSISTENT_CHECKSUM_NOT_SUPPORTED_ON_NON_ZERO_PADDED_SP</td>
+<td>Persistent checksum is not supported on a non zero padded Storage Pools</td>
+</tr>
+<tr>
+<td>3591</td>
+<td>SCANNER_ENABLED_BEFORE_PERSISTENT_CHECKSUM</td>
+<td>The background scanner must be disabled in order to enable or disable the persistent checksum feature</td>
+</tr>
+<tr>
+<td>3592</td>
+<td>PERSISTENT_CHECKSUM_IN_PROGRESS</td>
+<td>The persistent checksum must finish being built and become protected before you can enable the background scanner</td>
+</tr>
+<tr>
+<td>3593</td>
+<td>PERSISTENT_CHECKSUM_ONLY_SUPPORTED_ON_MG</td>
+<td>Persistent checksum is only supported on medium granularity Storage Poolss</td>
+</tr>
+<tr>
+<td>3594</td>
+<td>PERSISTENT_CHECKSUM_DISABLED</td>
+<td>Persistent checksum is disabled</td>
+</tr>
+<tr>
+<td>3595</td>
+<td>INVALID_CHECKSUM_BUILDER_LIMIT</td>
+<td>The given bandwidth limit for persistent checksum builder is out of range. The valid range is: 1MBps-10MBps.</td>
+</tr>
+<tr>
+<td>3596</td>
+<td>SCANNER_MODE_NOT_SUPPORTED</td>
+<td>Both background scanner modes must be ‘Report and Fix’ when persistent checksum is enabled</td>
+</tr>
+<tr>
+<td>3597</td>
+<td>PERSISTENT_CHECKSUM_ALREADY_ENABLED</td>
+<td>Persistent checksum is already enabled</td>
+</tr>
+<tr>
+<td>3598</td>
+<td>PERSISTENT_CHECKSUM_ALREADY_DISABLED</td>
+<td>Persistent checksum is already disabled</td>
+</tr>
+<tr>
+<td>The following return codes relate to v3.5.x and later:</td>
+<td></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<table>
+<thead>
+<tr>
+<th>RC ID</th>
+<th>Name</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>3600</td>
+<td>INVALID_SIGNATURE_FORMAT</td>
+<td>The format of the signature is invalid</td>
+</tr>
+<tr>
+<td>3601</td>
+<td>SIG_VOL_ID_MISMATCH</td>
+<td>The command for the volume ID does not match the signature volume ID</td>
+</tr>
+<tr>
+<td>3602</td>
+<td>SIG_KEY_IS_OBSOLETE</td>
+<td>The key used to create this signature is obsolete</td>
+</tr>
+<tr>
+<td>3603</td>
+<td>SNAPSHOT_IS_NOT_SECURED</td>
+<td>The volume is not a secure snapshot</td>
+</tr>
+<tr>
+<td>3604</td>
+<td>VOL_IS_READ_ONLY</td>
+<td>The volume is limited to read-only access</td>
+</tr>
+<tr>
+<td>3605</td>
+<td>VOL_IS_SECURE_SNAPSHOT</td>
+<td>The volume is a secure snapshot, and cannot be removed</td>
+</tr>
+<tr>
+<td>3606</td>
+<td>VOL_HAS_READ_WRITE_MAPPING</td>
+<td>The command cannot be applied because the volume has read-write mapping</td>
+</tr>
+<tr>
+<td>3607</td>
+<td>VOL_IS_AUTO_SNAPSHOT</td>
+<td>Cannot apply command for auto snapshot</td>
+</tr>
+<tr>
+<td>3608</td>
+<td>CANNOT_REDUCE_SECURE_PERIOD</td>
+<td>The snapshot retention period cannot be reduced</td>
+</tr>
+<tr>
+<td>3609</td>
+<td>SDC_DOES_NOT_SUPPORT_THIS_ACCESS_MODE</td>
+<td>The SDC does not support this access mode</td>
+</tr>
+<tr>
+<td>3610</td>
+<td>SECURE_AUTO_SNAP_CANNOT_BE_REMOVED</td>
+<td>The snapshot policy has secure snapshots that cannot be removed. Use the detach option.</td>
+</tr>
+<tr>
+<td>3611</td>
+<td>SECURE_POLICY_CANNOT_BE_MODIFIED</td>
+<td>A snapshot policy with secure snapshots cannot be modified</td>
+</tr>
+<tr>
+<td>3615</td>
+<td>NO_DEFAULT_METADATA_CACHE_SIZE</td>
+<td>A default metadata cache size was not provided for the Protection Domain</td>
+</tr>
+<tr>
+<td>3617</td>
+<td>VOL_HAS_SCSI_RESERVATION</td>
+<td>The command cannot be executed while the volume has scsi reservation</td>
+</tr>
+<tr>
+<td>3618</td>
+<td>INVALID_METADATA_CACHE_SIZE</td>
+<td>The metadata cache size is out of range, or uses a wrong granularity</td>
+</tr>
+<tr>
+<td>3620</td>
+<td>TGT_ENTER_MM</td>
+<td>The SDS is entering maintenance mode</td>
+</tr>
+<tr>
+<td>3621</td>
+<td>FS_HAS_IMM_AND_PMM</td>
+<td>There are conflicting maintenance mode types in the same Fault Set.</td>
+</tr>
+<tr>
+<td>3622</td>
+<td>TGT_IN_ENTER_PROCESS</td>
+<td>The SDS has not finished entering maintenance mode</td>
+</tr>
+<tr>
+<td>3623</td>
+<td>MM_TYPE_CONFLICT</td>
+<td>The wrong maintenance mode type was chosen for this SDS</td>
+</tr>
+<tr>
+<td>3624</td>
+<td>LDAP_BAD_FQDN_FORMAT</td>
+<td>The system could not parse the FQDN parameter</td>
+</tr>
+<tr>
+<td>3625</td>
+<td>LDAP_BAD_USERNAME_DN_FORMAT</td>
+<td>The username DN format must contain [USER] as place holder for the user name</td>
+</tr>
+<tr>
+<td>3626</td>
+<td>LDAP_BAD_SEARCH_FILTER_FORMAT</td>
+<td>The search filter format must contain [USER] and [GROUP] as place holders for user-name and group-dn</td>
+</tr>
+<tr>
+<td>3627</td>
+<td>CERTIFICATE_ALREADY_TRUSTED</td>
+<td>The certificate is already trusted</td>
+</tr>
+<tr>
+<td>3628</td>
+<td>CERTIFICATE_ROOT_CA</td>
+<td>The certificate is a root CA</td>
+</tr>
+<tr>
+<td>3629</td>
+<td>CERTIFICATE_TOO_MANY_TRUSTED</td>
+<td>The maximum number of trusted certificates was exceeded. The maximum number allowed is 4.</td>
+</tr>
+<tr>
+<td>3630</td>
+<td>CERTIFICATE_BAD_FORMAT</td>
+<td>The certificate should be in PEM format</td>
+</tr>
+<tr>
+<td>3631</td>
+<td>CERTIFICATE_NOT_FOUND</td>
+<td>The certificate with the given fingerprint was not found</td>
+</tr>
+<tr>
+<td>3632</td>
+<td>SDC_AUTHENTICATION_ALREADY_ENABLED</td>
+<td>SDC authentication is already enabled</td>
+</tr>
+<tr>
+<td>3633</td>
+<td>SDC_AUTHENTICATION_ALREADY_DISABLED</td>
+<td>SDC authentication is already disabled</td>
+</tr>
+<tr>
+<td>3634</td>
+<td>INI_TOO_OLD</td>
+<td>The version of the SDC is too old and does not support CHAP authentication</td>
+</tr>
+<tr>
+<td>3636</td>
+<td>SDC_NOT_READY_FOR_MAPPING</td>
+<td>The SDC is not ready for mapping yet. Retry the command.</td>
+</tr>
+<tr>
+<td>3638</td>
+<td>SDC_AUTHENTICATION_NO_PASSWORD</td>
+<td>The SDC has no authentication password set</td>
+</tr>
+<tr>
+<td>3639</td>
+<td>SDC_AUTHENTICATION_IS_DISABLED</td>
+<td>SDC authentication feature is disabled</td>
+</tr>
+<tr>
+<td>3640</td>
+<td>RPL_FD_TOO_MANY_REMOTE_FDS</td>
+<td>A Protection Domain can be mapped to a maximum of 6 remote Protection Domains</td>
+</tr>
+<tr>
+<td>3641</td>
+<td>INVALID_USER_ID</td>
+<td>Invalid user key. Try again with a valid ID or name.</td>
+</tr>
+<tr>
+<td>3642</td>
+<td>POST_UPGRADE_PROCESS_IN_PROGRESS</td>
+<td>The command cannot be executed because a post-upgrade process is still in progress</td>
+</tr>
+<tr>
+<td>3643</td>
+<td>RPL_FD_COMMAND_IS_NOT_ALLOWED_DURING_SWITCHOVER</td>
+<td>The command is not allowed during Replication Consistency Group switch-over</td>
+</tr>
+<tr>
+<td>3644</td>
+<td>RPL_FD_COMMAND_IS_NOT_ALLOWED_DURING_FAILOVER</td>
+<td>The command is not allowed during a Replication Consistency Group fail-over or fail-over test</td>
+</tr>
+<tr>
+<td>3645</td>
+<td>RPL_FD_COMMAND_IS_NOT_ALLOWED_DURING_REVEAL</td>
+<td>The command is not allowed during creation of Replication Consistency Group snapshots</td>
+</tr>
+<tr>
+<td>3646</td>
+<td>NOT_SUPPORTED_WITH_MULTI_CLI</td>
+<td>This command is not allowed when MDM is configured to support simultaneous user control operations</td>
+</tr>
+<tr>
+<td>3647</td>
+<td>RPL_REMOTE_FD_NOT_FOUND</td>
+<td>The remote Protection Domain could not be found</td>
+</tr>
+<tr>
+<td>3648</td>
+<td>TOO_MANY_PROPERTIES</td>
+<td>Too many properties were requested by this query</td>
+</tr>
+<tr>
+<td>3649</td>
+<td>CANT_SNAPSHOT_RPL_DST_VOL</td>
+<td>Snapshots of replication destination volumes cannot be created</td>
+</tr>
+<tr>
+<td>3650</td>
+<td>SNAP_POLICY_CANT_BE_RESUMED</td>
+<td>The snapshot policy cannot be resumed because it contains source volumes which are replication destination volumes</td>
+</tr>
+<tr>
+<td>3651</td>
+<td>SNAPSHOT_POLICY_CANT_CONTAIN_RPL_DST_VOLS</td>
+<td>A snapshot policy cannot contain replication destination volumes</td>
+</tr>
+<tr>
+<td>3652</td>
+<td>CANT_ABORT_TGT_REMOVAL</td>
+<td>The SDS’s devices are already empty. It is no longer possible to abort SDS removal.</td>
+</tr>
+<tr>
+<td>3653</td>
+<td>CANT_ABORT_TGT_DEV_REMOVAL</td>
+<td>The device is already empty. It is no longer possible to abort device removal.</td>
+</tr>
+<tr>
+<td>3654</td>
+<td>CHG_INI_PWD_NO_REASON</td>
+<td>The password for the SDC cannot be changed unless a reason is specified</td>
+</tr>
+<tr>
+<td>3657</td>
+<td>SDC_ALREADY_APPROVED_NO_APPROVED_IPS</td>
+<td>The SDC is already approved, however the current restricted SDC mode requires approved IPs to be set</td>
+</tr>
+<tr>
+<td>3658</td>
+<td>CMD_FAILED_SDC_AUTHENTICATION_ENABLED</td>
+<td>This command cannot be completed; The SDC authentication is enabled</td>
+</tr>
+<tr>
+<td>3659</td>
+<td>CMD_FAILED_SDC_AUTHENTICATION_DRY_RUN</td>
+<td>This command cannot be completed; The SDC authentication test is in progress</td>
+</tr>
+<tr>
+<td>3660</td>
+<td>SDR_IN_MM_ENTER_PROCESS</td>
+<td>The SDR has not finished entering maintenance mode</td>
+</tr>
+<tr>
+<td>3661</td>
+<td>SP_MEDIA_TYPE_TRANSITIONAL_OR_OVERRIDE</td>
+<td>When modifying Storage Pools media type, you must first set the type to transitional (or use the option to override the SDS device media type)</td>
+</tr>
+<tr>
+<td>3704</td>
+<td>PDE_OUTDATED</td>
+<td>Some SDSs responded with outdated results. Retry the command.</td>
+</tr>
+<tr>
+<td>3705</td>
+<td>PDE_PARTIAL_RESULTS</td>
+<td>The results are partial. Some SDSs either returned partial reports of inaccessible areas, or were skipped in the query. Refer to SDS local dump files for more information, or retry later.</td>
+</tr>
+<tr>
+<td>3706</td>
+<td>CG_ACTIVATION_GEN_NUM_OF_RPL_IO_LOWER_THAN_CUR_GEN_NUM</td>
+<td>The CG-Activation-Gen-Num of RPL-IO is lower than current CG-Activation-Gen-Num</td>
+</tr>
+<tr>
+<td>3707</td>
+<td>BARRIER_OF_RPL_IO_WAS_FINALIZED</td>
+<td>The barrier of the RPL-IO was finalized</td>
+</tr>
+<tr>
+<td>The following return codes are new in PowerFlex v3.6:</td>
+<td></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<table>
+<thead>
+<tr>
+<th>RC ID</th>
+<th>Name</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>3800</td>
+<td>SPEF_FULL_UD_LOG_ERROR</td>
+<td>Entire User-Data log error.</td>
+</tr>
+<tr>
+<td>3801</td>
+<td>FD_RPL_SLIM_MODE_THRESHOLD_OUT_OF_RANGE</td>
+<td>Protection Domain replication slim mode threshold value is out of range</td>
+</tr>
+<tr>
+<td>3802</td>
+<td>FD_RPL_MAX_DST_CAPACITY_RATIO_OUT_OF_RANGE</td>
+<td>Protection Domain replication max destination capacity ratio is out of range</td>
+</tr>
+<tr>
+<td>3821</td>
+<td>PROXY_ACCESS_ALREADY_ENABLED</td>
+<td>SDC proxy access feature already enabled</td>
+</tr>
+<tr>
+<td>3822</td>
+<td>PROXY_ACCESS_ALREADY_DISABLED</td>
+<td>SDC proxy access feature already disabled</td>
+</tr>
+<tr>
+<td>3823</td>
+<td>PERF_PARAM_VAL_INVALID</td>
+<td>The specified performance parameter value is invalid. Check the help output for the allowed parameter values</td>
+</tr>
+<tr>
+<td>3832</td>
+<td>INVALID_BG_SCAN_ACTION_COMBINATION</td>
+<td>The combination of read and compare actions is not supported by the MDM</td>
+</tr>
+<tr>
+<td>3833</td>
+<td>CHAP_WRONG_RESPONSE</td>
+<td>Wrong CHAP authentication response</td>
+</tr>
+<tr>
+<td>The following return codes relate to MDM replication pairs in PowerFlex v3.6:</td>
+<td></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<table>
+<thead>
+<tr>
+<th>RC ID</th>
+<th>Name</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>3850</td>
+<td>RPL_PAIR_RPL_ENABLED_CREATION_ABORTED_AS_RCG_IS_NO_LONGER_ACTIVE</td>
+<td>Pair cannot be created in Enabled state because the replication consistency group is now terminated</td>
+</tr>
+<tr>
+<td>3851</td>
+<td>RPL_PAIR_REJECTION_CODE_ENABLED_CREATION_REJECTED_AS_RCG_IS_NOT_ACTIVE</td>
+<td>Pair cannot be created in Enabled state because the replication consistency group is terminated</td>
+</tr>
+<tr>
+<td>3852</td>
+<td>RPL_PAIR_REJECTION_CODE_ENABLED_CREATION_ABORTED_AS_RCG_IS_NO_LONGER_ACTIVE</td>
+<td>Pair cannot be created in Enabled state because the replication consistency group is now terminated at the destination</td>
+</tr>
+<tr>
+<td>3853</td>
+<td>RPL_PAIR_SRC_ENABLING_RPL_ABORTED_NOT_ENOUGH_SDRS_FOR_REPLICATION</td>
+<td>Insufficient SDRs are available for replication at the source</td>
+</tr>
+<tr>
+<td>3854</td>
+<td>RPL_PAIR_ENABLING_RPL_FAILURE_REASON_MDM_RESTART</td>
+<td>MDM restarted</td>
+</tr>
+<tr>
+<td>3855</td>
+<td>RPL_PAIR_ENABLING_RPL_FAILED_DUE_TO_RPL_CG_TERMINATION</td>
+<td>replication consistency group termination started</td>
+</tr>
+<tr>
+<td>3856</td>
+<td>RPL_PAIR_ENABLING_RPL_REJECTED_AT_DST_DUE_TO_OTHER_PAIR_UPDATES</td>
+<td>Pair cannot be enabled because the replication consistency group has other pairs in update at destination</td>
+</tr>
+<tr>
+<td>3857</td>
+<td>RPL_PAIR_ENABLING_RPL_REJECTED_AT_DST_AS_RPL_CG_ACTIVATION_GEN_NUM_IS_DIFFERENT</td>
+<td>Pair cannot be enabled because the replication consistency group is not synchronized with the destination</td>
+</tr>
+<tr>
+<td>3858</td>
+<td>RPL_PAIR_ENABLING_RPL_REJECTED_AT_DST_AS_RPL_CG_IS_NOT_IN_ACTIVE_STATE</td>
+<td>Pair cannot be enabled because the replication consistency group is not active at destination</td>
+</tr>
+<tr>
+<td>3859</td>
+<td>RPL_PAIR_ENABLING_RPL_REJECTED_AT_DST_AS_RPL_CG_PROTECTION_DOMAIN_IS_NOT_ACTIVE</td>
+<td>Pair cannot be enabled because the Protection Domain is shut down at destination</td>
+</tr>
+<tr>
+<td>3860</td>
+<td>RPL_PAIR_ENABLING_RPL_REJECTED_AT_DST_AS_NOT_ENOUGH_SDRS_FOR_REPLICATION</td>
+<td>Insufficient SDRs are available for replication at the destination</td>
+</tr>
+<tr>
+<td>3861</td>
+<td>RPL_PAIR_IS_NOT_RPL_ENABLED</td>
+<td>Pair is not enabled for replication</td>
+</tr>
+<tr>
+<td>3862</td>
+<td>RPL_PAIR_COMMAND_IS_ALLOWED_ONLY_ON_RPL_ENABLED_STATE</td>
+<td>Pair must be enabled for replication on both sides</td>
+</tr>
+<tr>
+<td>3863</td>
+<td>RPL_PAIR_COMMAND_SHOULD_BE_RETRIED_AS_CURRENTLY_ENABLING_RPL</td>
+<td>Pair command must be retried as currently enabling the pair for replication and initial copy</td>
+</tr>
+<tr>
+<td>The following return codes relate to MDM replication consistency group errors:</td>
+<td></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<table>
+<thead>
+<tr>
+<th>RC ID</th>
+<th>Name</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>3880</td>
+<td>RPL_CG_COULD_NOT_OBTAIN_PEER_VERSION</td>
+<td>Failed to obtain peer version</td>
+</tr>
+<tr>
+<td>3881</td>
+<td>RPL_CG_CANT_CREATE_INACTIVE_PEER_TOO_OLD</td>
+<td>Can’t create Inactive Replication Consistency Group as peer is too old</td>
+</tr>
+<tr>
+<td>3882</td>
+<td>RPL_CG_INACTIVE_REASON_REQUESTED_BY_USER</td>
+<td>The Replication Consistency Group is Inactive due to user request</td>
+</tr>
+<tr>
+<td>3883</td>
+<td>RPL_CG_INACTIVE_REASON_FAILED_ACTIVATION</td>
+<td>The Replication Consistency Group is Inactive due to failed activation</td>
+</tr>
+<tr>
+<td>3884</td>
+<td>RPL_CG_INACTIVE_REASON_BY_SYSTEM_DUE_TO_EO_CAPACITY</td>
+<td>The replication consistency group is Inactive due to system request following end of journal capacity at source</td>
+</tr>
+<tr>
+<td>3885</td>
+<td>RPL_CG_ACTIVATION_REJECTION_SRC_NOT_ENOUGH_SDRS_FOR_REPLICATION</td>
+<td>Source does not have enough SDRs for replication</td>
+</tr>
+<tr>
+<td>3886</td>
+<td>RPL_CG_ACTIVATION_REJECTION_DST_NOT_ENOUGH_SDRS_FOR_REPLICATION</td>
+<td>Destination does not have enough SDRs for replication</td>
+</tr>
+<tr>
+<td>3887</td>
+<td>RPL_CG_ACTIVATION_REJECTION_SRC_DR_IN_PROGRESS</td>
+<td>Source - Replication Consistency Group disaster recovery is in progress</td>
+</tr>
+<tr>
+<td>3888</td>
+<td>RPL_CG_ACTIVATION_REJECTION_DST_DR_IN_PROGRESS</td>
+<td>Destination - Replication Consistency Group disaster recovery is in progress</td>
+</tr>
+<tr>
+<td>3889</td>
+<td>RPL_CG_ACTIVATION_REJECTION_SRC_NOT_INACTIVE_ON_BOTH_SIDES</td>
+<td>Source - Replication Consistency Group not inactive on both sides</td>
+</tr>
+<tr>
+<td>3890</td>
+<td>RPL_CG_ACTIVATION_REJECTION_DST_NOT_INACTIVE_ON_BOTH_SIDES</td>
+<td>Destination - Replication Consistency Group not inactive on both sides</td>
+</tr>
+<tr>
+<td>3891</td>
+<td>RPL_CG_ACTIVATION_REJECTION_SRC_PD_NOT_ACTIVE</td>
+<td>Source - Protection Domain not active</td>
+</tr>
+<tr>
+<td>3892</td>
+<td>RPL_CG_ACTIVATION_REJECTION_DST_PD_NOT_ACTIVE</td>
+<td>Destination - Protection Domain not active</td>
+</tr>
+<tr>
+<td>3893</td>
+<td>RPL_CG_ACTIVATION_REJECTION_SRC_RENAME_IS_IN_PROGRESS</td>
+<td>Source - rename is in progress</td>
+</tr>
+<tr>
+<td>3894</td>
+<td>RPL_CG_ACTIVATION_REJECTION_DST_RENAME_IS_IN_PROGRESS</td>
+<td>Destination - rename is in progress</td>
+</tr>
+<tr>
+<td>3895</td>
+<td>RPL_CG_IS_NO_LONGER_ACTIVATING</td>
+<td>The Replication Consistency Group is no longer activating</td>
+</tr>
+<tr>
+<td>3896</td>
+<td>RPL_CG_ACTIVITY_CHANGE_IN_PROGRESS</td>
+<td>The replication consistency group is currently changing its activity status</td>
+</tr>
+<tr>
+<td>3897</td>
+<td>RPL_CG_IS_NOT_IN_STABLE_ACTIVITY_STATE</td>
+<td>The Replication Consistency Group is not in stable activity state</td>
+</tr>
+<tr>
+<td>3898</td>
+<td>RPL_CG_COMMAND_IS_ALLOWED_ONLY_ON_ACTIVE_STATE</td>
+<td>The command is allowed only during Active state</td>
+</tr>
+<tr>
+<td>3899</td>
+<td>RPL_CG_ALREADY_INACTIVE_OR_TERMINATING</td>
+<td>The Replication Consistency Group is already inactive or terminating</td>
+</tr>
+<tr>
+<td>3900</td>
+<td>RPL_CG_IS_NOT_IN_ACTIVE_STATE</td>
+<td>The Replication Consistency Group is not in Active State</td>
+</tr>
+<tr>
+<td>3901</td>
+<td>RPL_CG_FAILOVER_TEST_IS_IN_PROGRESS</td>
+<td>Failover Test is in progress</td>
+</tr>
+<tr>
+<td>3902</td>
+<td>RPL_CG_ACTIVATION_GEN_NUM_IS_DIFFERENT</td>
+<td>replication consistency group changed while attempting to enable Pair</td>
+</tr>
+<tr>
+<td>3903</td>
+<td>RPL_CG_NO_DST_IMAGE_ON_TERMINATE_DUE_TO_INITIAL_COPY</td>
+<td>No consistent image as not all pairs completed initial copy</td>
+</tr>
+<tr>
+<td>3904</td>
+<td>RPL_CG_NO_DST_IMAGE_ON_TERMINATE_DUE_TO_NOT_CONSISTENT_APPLY</td>
+<td>No consistent image as the apply mode is not Consistent</td>
+</tr>
+<tr>
+<td>3905</td>
+<td>RPL_CG_NO_DST_IMAGE_ON_TERMINATE_AS_NO_CG_TIMELINE</td>
+<td>A consistent image is not available because the replication consistency group was not in active replication prior to termination</td>
+</tr>
+<tr>
+<td>3906</td>
+<td>RPL_CG_NO_DST_IMAGE_ON_TERMINATE_DUE_TO_DR_EXIT</td>
+<td>A consistent image is not available because the replication consistency group is exiting Disaster Recovery</td>
+</tr>
+<tr>
+<td>3907</td>
+<td>RPL_CG_NO_DST_IMAGE_ON_TERMINATE_AS_NO_COMPLETED_TERMINATE</td>
+<td>No consistent image as no completed Termination operation</td>
+</tr>
+<tr>
+<td>3908</td>
+<td>RPL_CG_CANT_TERMINATE_PEER_TOO_OLD</td>
+<td>Can’t terminate Replication Consistency Group as peer is too old</td>
+</tr>
+<tr>
+<td>3910</td>
+<td>RPL_CG_PROXY_COMMAND_IS_NOT_ALLOWED_AT_THIS_TERMINATION_STAGE</td>
+<td>Proxy commands are not allowed while the replication consistency group is terminating</td>
+</tr>
+<tr>
+<td>3911</td>
+<td>RPL_CG_COMMAND_IS_NOT_ALLOWED_DUE_TO_INCONSISTENT_IMAGE_ON_DST</td>
+<td>The command is not allowed due to inconsistent image on the destination side</td>
+</tr>
+<tr>
+<td>3912</td>
+<td>RPL_CG_FAILOVER_COMMAND_ABORTED_DUE_TO_NEWER_FAILOVER_FLOW_OR_CG_TERMINATION</td>
+<td>Failover command aborted due to newer failover flow or Replication Consistency Group termination</td>
+</tr>
+<tr>
+<td>3913</td>
+<td>RPL_CG_SNAP_CREATION_CANCELLED_DUE_TO_RCG_TERMINATION</td>
+<td>replication consistency group termination is in progress</td>
+</tr>
+<tr>
+<td>3914</td>
+<td>RPL_CG_DST_IMAGE_ON_TERMINATE_IRRELEVANT_AFTER_FAILOVER</td>
+<td>Status of consistent image at destination made irrelevant by failover of inactive replication consistency group</td>
+</tr>
+<tr>
+<td>3915</td>
+<td>RPL_CG_SNAP_CREATION_ABORTED_DUE_TO_RESTART</td>
+<td>The snapshot creation process was aborted due to restart</td>
+</tr>
+<tr>
+<td>3916</td>
+<td>RPL_CG_SYSTEM_CG_CANNOT_CHANGE_SLIM_MODE_STATE</td>
+<td>Replication system consistency can not move to or from slim mode</td>
+</tr>
+<tr>
+<td>3917</td>
+<td>RPL_CG_REVEAL_IS_IN_PROGRESS</td>
+<td>The Replication Consistency Group currently creates snapshot.</td>
+</tr>
+<tr>
+<td>3918</td>
+<td>RPL_CG_REVEAL_FOR_FOT_IS_IN_PROGRESS</td>
+<td>The Replication Consistency Group currently creates snapshot for Failover Test.</td>
+</tr>
+<tr>
+<td>3919</td>
+<td>RPL_CG_REJECTION_CODE_TERMINATING_AND_CREATING_CONSISTENT_IMAGE</td>
+<td>The handshake has failed because the destination replication consistency group is terminating and committed to a consistent image</td>
+</tr>
+<tr>
+<td>3920</td>
+<td>RPL_CG_LOW_CAPACITY_OF_ORIGINAL_SRC_ON_DR_EXIT</td>
+<td>The original Source has low capacity.</td>
+</tr>
+</tbody>
+</table>
+</div>
+      <div class="markdown-sidebar">
+        <div class="markdown-toc-title">
+          <i class="icon dds__icon dds__icon--bookmark"></i>
+          On this page
+        </div>
+          <ul><li class="level-1"><a href="#return-messages-overview" data-toc-link="">Return messages overview</a></li></ul>
+      </div>
+    </div>
+  </div></div></body></html>

@@ -1,0 +1,146 @@
+<html><head><title>PowerFlex API 3.6.0: Snapshot and snapshot policies</title></head><body><p></p><div><div class="api-docs-main-div dds__pl-2">
+    <div class="markdown-wrapper dds__py-3">
+      <div class="markdown-body dds__px-3"><h1 id="snapshot-and-snapshot-policies" class="anchor-scroll-top-offset">Snapshot and snapshot policies</h1>
+<p>A snapshot policy facilitates the automation of creating and retaining volume snapshots.</p>
+<h2 id="create-a-snapshot-policy" class="anchor-scroll-top-offset">Create a snapshot policy</h2>
+<p>The following command creates a snapshot policy with a name of ‘snappolA’, and a cadence of 60 minutes. It retains 24 hourly snapshots, seven daily snapshots, and 4our weekly snapshots. The snapshots that are created are unsecured and read-only.</p>
+<pre><code class="language-json">curl -k -r POST -u &lt;user&gt;:&lt;token&gt; -H "Content-Type: application/json" 'https://&lt;PowerFlex-GW-IP&gt;/api/types/SnapshotPolicy/instances' -d  '
+{
+  "name":"snappolA",
+  "numOfRetainedSnapshotsPerLevel":
+    [
+      "24","7","4"
+    ],
+  "autoSnapshotCreationCadenceInMin": "60",
+  "secureSnapshots": "FALSE",
+  "snapshotAccessMode": "ReadOnly"
+  }'
+</code></pre>
+<p>The 200 response contains the ID of the new snapshot policy:</p>
+<pre><code class="language-json">{
+  "id":"fb4a254900000000"
+}
+</code></pre>
+<h2 id="add-a-source-volume-to-the-snapshot-policy" class="anchor-scroll-top-offset">Add a source volume to the snapshot policy</h2>
+<p>After creating the snapshot policy, add a source volume (or several source volumes) to the snapshot policy. First, obtain the volume ID by running the following and passing the volume name:</p>
+<pre><code class="language-json">curl -v -k -r POST -u &lt;user&gt;:&lt;token&gt; -H "Content-Type: application/json" 'https://&lt;PowerFlex-GW-IP/api/types/Volume/instances/action/queryIdByKey' -d '
+{
+  "name": "site-b-thick-mg"
+}'
+</code></pre>
+<p>The 200 response returns the volume ID:</p>
+<pre><code class="language-json">{
+  "id":"dcf736600000000b"
+}
+</code></pre>
+<p>Use the following command to add the source volume ID “dcf736600000000b” to snapshot policy “snappolA” with ID “fb4a254900000000” (as the URI path parameter):</p>
+<pre><code class="language-json">curl -k -r POST -u &lt;user&gt;:&lt;token&gt; -H "Content-Type: application/json" 'https://&lt;PowerFlex-GW-IP&gt;/api/instances/SnapshotPolicy::fb4a254900000000/action/addSourceVolumeToSnapshotPolicy' -d '
+{
+  "sourceVolumeId": "dcf736600000000b"
+}'
+</code></pre>
+<p>The 200 response is empty:</p>
+<pre><code class="language-json">{}
+</code></pre>
+<h2 id="retrieve-snapshot-policy-statistics" class="anchor-scroll-top-offset">Retrieve snapshot policy statistics</h2>
+<p>The following command displays statistics for the selected snapshot policy, including the source volume IDs:</p>
+<pre><code class="language-json">curl -k -r GET -u &lt;user&gt;:&lt;token&gt; 'https://&lt;PowerFlex-GW-IP /api/instances/SnapshotPolicy::fb4a254900000000/relationships/Statistics'
+</code></pre>
+<p>The 200 response lists the source volume IDs, snapshot statistics, and the IDs of the snapshot volumes:</p>
+<pre><code class="language-json">{
+  "srcVolIds": [
+      "dcf736600000000b"
+    ],
+  "numOfAutoSnapshots": 2,
+  "numOfExpiredButLockedSnapshots": 0,
+  "expiredButLockedSnapshotsIds": [],
+  "numOfSrcVols": 1,
+  "autoSnapshotVolIds": [
+      "dcf738ae00000013",
+      "dcf738ad00000012"
+  ]
+}
+</code></pre>
+<h2 id="pause-the-snapshot-policy" class="anchor-scroll-top-offset">Pause the snapshot policy</h2>
+<p>You can pause the snapshot policy using the following command:</p>
+<pre><code class="language-json">curl -k -r POST -u &lt;user&gt;:&lt;token&gt; 'https://&lt;PowerFlex-GW-IP&gt;/api/instances/SnapshotPolicy::fb4a254900000000/action/pauseSnapshotPolicy'
+</code></pre>
+<p>The 200 response is empty:</p>
+<pre><code class="language-json">{}
+</code></pre>
+<h2 id="query-the-snapshot-policy-state" class="anchor-scroll-top-offset">Query the snapshot policy state</h2>
+<p>You can retrieve the state of the snapshot policy by querying the policy:</p>
+<pre><code class="language-json">curl -k -r GET -u &lt;user&gt;:&lt;token&gt; 'https://&lt;PowerFlex-GW-IP&gt;/api/instances/SnapshotPolicy::fb4a254900000000'
+</code></pre>
+<p>The 200 response includes the snapshot policy state. In this example, snapshot policy “snappolA” is currently paused:</p>
+<pre><code class="language-json">{   
+  "autoSnapshotCreationCadenceInMin": 60,
+   "snapshotPolicyState": "Paused",
+   "maxVTreeAutoSnapshots": 33,
+   "numOfSourceVolumes": 1,
+   "numOfRetainedSnapshotsPerLevel": [24,7,4],
+   "snapshotAccessMode": "ReadOnly",
+   "secureSnapshots": false,
+   "timeOfLastAutoSnapshot": 1615321643,
+   "nextAutoSnapshotCreationTime": 0,
+   "timeOfLastAutoSnapshotCreationFailure": 0,
+   "lastAutoSnapshotCreationFailureReason": "NR",
+   "lastAutoSnapshotFailureInFirstLevel": false,
+   "numOfAutoSnapshots": 2,
+   "numOfLockedSnapshots": 0,
+   "numOfExpiredButLockedSnapshots": 0,
+   "numOfCreationFailures": 0,
+   "systemId": "6870804f36d7120f",
+   "name": "snappolA",
+   "id": "fb4a254900000000",
+   "links": [
+      {"rel": "self","href": "/api/instances/SnapshotPolicy::fb4a254900000000"},
+      {"rel": "/api/SnapshotPolicy/relationship/Statistics", "href": "/api/instances/SnapshotPolicy::fb4a254900000000/relationships/Statistics"},
+      {"rel": "/api/SnapshotPolicy/relationship/SourceVolume", "href": "/api/instances/SnapshotPolicy::fb4a254900000000/relationships/SourceVolume"},
+      {"rel": "/api/SnapshotPolicy/relationship/AutoSnapshotVolume", "href": "/api/instances/SnapshotPolicy::fb4a254900000000/relationships/AutoSnapshotVolume"},
+      {"rel": "/api/parent/relationship/systemId", "href": "/api/instances/System::6870804f36d7120f"
+      }
+    ]
+}
+</code></pre>
+<h2 id="resume-a-paused-snapshot-policy" class="anchor-scroll-top-offset">Resume a paused snapshot policy</h2>
+<p>Resume a paused snapshot policy using the following command with the snapshot policy ID as the URI path parameter:</p>
+<pre><code class="language-json">curl -k -r POST -u &lt;user&gt;:&lt;token&gt; 'https://&lt;PowerFlex-GW-IP&gt;/api/instances/SnapshotPolicy::fb4a254900000000/action/resumeSnapshotPolicy'
+</code></pre>
+<p>The 200 response is empty:</p>
+<pre><code class="language-json">{}
+</code></pre>
+<h2 id="modify-a-snapshot-policy" class="anchor-scroll-top-offset">Modify a snapshot policy</h2>
+<p>You can modify a snapshot policy. In this example, the snapshot policy’s cadence is changed from 60 minutes to 30 minutes:</p>
+<pre><code class="language-json">curl -k -r POST -u &lt;user&gt;:&lt;token&gt; -H "Content-Type: application/json" 'https://&lt;PowerFlex-GW-IP&gt;/api/instances/SnapshotPolicy::fb4a254900000000/action/modifySnapshotPolicy' -d '
+{
+  "numOfRetainedSnapshotsPerLevel": [
+    "24","7","4"
+  ],
+  "autoSnapshotCreationCadenceInMin": "30"
+}'
+</code></pre>
+<p>The 200 response is empty:</p>
+<pre><code class="language-json">{}
+</code></pre>
+<h2 id="remove-a-source-volume-from-snapshot-policy" class="anchor-scroll-top-offset">Remove a source volume from snapshot policy</h2>
+<p>To remove a source volume, use the source volume ID and specify if the snapshots should be maintained or removed. This example specifies that the snpahots should be removed:</p>
+<pre><code class="language-json">curl -k -r POST -u &lt;user&gt;:&lt;token&gt; -H "Content-Type: application/json" 'https://&lt;PowerFlex-GW-IP&gt;/api/instances/SnapshotPolicy::fb4a254900000000/action/removeSourceVolumeFromSnapshotPolicy' -d '
+{
+  "sourceVolumeId": "dcf7365d00000008",
+  "autoSnapshotRemovalAction": "Remove"
+}'
+</code></pre>
+<p>The 200 response is empty:</p>
+<pre><code class="language-json">{}
+</code></pre>
+</div>
+      <div class="markdown-sidebar">
+        <div class="markdown-toc-title">
+          <i class="icon dds__icon dds__icon--bookmark"></i>
+          On this page
+        </div>
+          <ul><li class="level-1"><a href="#snapshot-and-snapshot-policies" data-toc-link="">Snapshot and snapshot policies</a></li><li class="level-2"><a href="#create-a-snapshot-policy" data-toc-link="">Create a snapshot policy</a></li><li class="level-2"><a href="#add-a-source-volume-to-the-snapshot-policy" data-toc-link="">Add a source volume to the snapshot policy</a></li><li class="level-2"><a href="#retrieve-snapshot-policy-statistics" data-toc-link="">Retrieve snapshot policy statistics</a></li><li class="level-2"><a href="#pause-the-snapshot-policy" data-toc-link="">Pause the snapshot policy</a></li><li class="level-2"><a href="#query-the-snapshot-policy-state" data-toc-link="">Query the snapshot policy state</a></li><li class="level-2"><a href="#resume-a-paused-snapshot-policy" data-toc-link="">Resume a paused snapshot policy</a></li><li class="level-2"><a href="#modify-a-snapshot-policy" data-toc-link="">Modify a snapshot policy</a></li><li class="level-2"><a href="#remove-a-source-volume-from-snapshot-policy" data-toc-link="">Remove a source volume from snapshot policy</a></li></ul>
+      </div>
+    </div>
+  </div></div></body></html>

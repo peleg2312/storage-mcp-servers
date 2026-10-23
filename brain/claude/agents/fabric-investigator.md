@@ -1,6 +1,7 @@
 ---
 name: fabric-investigator
 model: sonnet
+tools: Read, Grep, Glob, Bash, Write, mcp__mds__*, mcp__ucsc__*, mcp__kuparashit__*, mcp__docs-search__*, mcp__docs-local__*
 color: blue
 description: Cisco MDS and UCS FI FC-side specialist - zoning, FLOGI / FCNS, device-alias, port-channels, errors, slow drain, WWPN tracing. Read-only.
 memory: user

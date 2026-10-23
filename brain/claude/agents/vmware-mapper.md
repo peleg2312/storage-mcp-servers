@@ -1,6 +1,7 @@
 ---
 name: vmware-mapper
 model: sonnet
+disallowedTools: mcp__powermax, mcp__ontap, mcp__harvest, mcp__mds, mcp__ucsc, Edit, NotebookEdit, WebFetch, WebSearch
 color: green
 description: VMware-side mapping and metrics (kuparashit inventory, Aria) - pWWN / NAA / name to ESX host / datastore / RDM / VM and back, orphan LUNs, presentation issues, changes, VM and datastore metrics. Read-only.
 memory: user

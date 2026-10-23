@@ -1,6 +1,6 @@
-# Documentation library 2026.10.23f
+# Documentation library 2026.10.24
 
-Indexed 2026-10-23T18:54:00Z: **34583 unique documents, 200471 sections** (53111 files: 18528 are identical copies, e.g. the same page in several ONTAP versions, kept as aliases of one indexed copy and shown as `also_in`). Search it with `python3 search.py search "..."` (no dependencies) or the docs-search MCP server.
+Indexed 2026-10-23T22:10:55Z: **39704 unique documents, 228345 sections** (58239 files: 18535 are identical copies, e.g. the same page in several ONTAP versions, kept as aliases of one indexed copy and shown as `also_in`). Search it with `python3 search.py search "..."` (no dependencies) or the docs-search MCP server.
 
 Document counts below are files per product; an identical copy counts in every product it appears in.
 
@@ -52,11 +52,12 @@ Document counts below are files per product; an identical copy counts in every p
 | dell | goscaleio | 47 | 975 | https://github.com/dell/goscaleio |
 | dell | goscaleio-prs | 181 | 657 | individual URLs (manifest.json) |
 | dell | infohub-csm | 57 | 4439 | individual URLs (manifest.json) |
-| dell | infohub-powerflex | 50 | 3033 | individual URLs (manifest.json) |
+| dell | infohub-powerflex | 50 | 3018 | individual URLs (manifest.json) |
 | dell | infohub-powermax | 38 | 4506 | individual URLs (manifest.json) |
 | dell | infohub-powerscale | 89 | 5722 | individual URLs (manifest.json) |
-| dell | kb | 1654 | 13592 | individual URLs (manifest.json) |
-| dell | powerflex | 116 | 9493 | https://www.dell.com/support/kbdoc/en-us/000314729/powerflex-software-documentation, https://www.dell.com/support/manuals/en-us/powerflex-rack-hw/flex-rack-flexmgr-ug/alert-messages-and-recommended-actions?guid=guid-19f77807-a5c8-4b25-8f9b-9a36a14b6305&lang=en-us |
+| dell | kb | 1713 | 14040 | individual URLs (manifest.json) |
+| dell | powerflex | 121 | 9864 | extra, https://www.dell.com/support/kbdoc/en-us/000314729/powerflex-software-documentation, https://www.dell.com/support/manuals/en-us/powerflex-rack-hw/flex-rack-flexmgr-ug/alert-messages-and-recommended-actions?guid=guid-19f77807-a5c8-4b25-8f9b-9a36a14b6305&lang=en-us |
+| dell | powerflex-api | 2231 | 4718 |  |
 | dell | powermax | 114 | 6228 | https://www.dell.com/en-sg/dt/documentation/vmax-all-flash-family.htm, https://www.dell.com/support/manuals/en-us/solutions-enabler/esd_p_array_mgmnt_alerts_guide_10_1_laurel/unisphere-policy-name-alert-id-mapping?guid=guid-ce5f01f7-6753-4ee8-a1e3-56202aab89fd&lang=en-us, https://www.dell.com/support/manuals/en-us/solutions-enabler/esd_p_array_mgmnt_alerts_guide_10_2_magnolia/preface?guid=guid-8600a2c8-6f7e-41fd-ad5a-d61c4075ded5&lang=en-us, https://www.dell.com/support/manuals/en-us/solutions-enabler/esd_p_se_array_mgmt_alerts_guide_10/unisphere-policy-name-alert-id-mapping?guid=guid-ce5f01f7-6753-4ee8-a1e3-56202aab89fd&lang=en-us, https://www.dell.com/support/manuals/en-us/unisphere-powermax/esd_p_mt_unisph_u4p_product_guide_10_3_0/overview-of-unisphere-for-powermax?guid=guid-daff12bb-453f-4ce5-a2f1-5f40f84d1bfe&lang=en-us |
 | dell | pypowerflex | 2 | 47 | https://github.com/dell/python-powerflex |
 | dell | pyu4v | 22 | 41 | https://github.com/dell/PyU4V |
@@ -80,6 +81,8 @@ Document counts below are files per product; an identical copy counts in every p
 | kubernetes | livenessprobe | 26 | 165 | https://github.com/kubernetes-csi/livenessprobe |
 | kubernetes | node-driver-registrar | 28 | 197 | https://github.com/kubernetes-csi/node-driver-registrar |
 | kubernetes | volume-data-source-validator | 24 | 104 | https://github.com/kubernetes-csi/volume-data-source-validator |
+| mcp | python-sdk | 55 | 666 | https://github.com/modelcontextprotocol/python-sdk |
+| mcp | specification | 147 | 4083 | https://github.com/modelcontextprotocol/modelcontextprotocol |
 | netapp | active-iq-unified-manager | 767 | 1483 | https://github.com/NetAppDocs/active-iq-unified-manager |
 | netapp | asa-r2 | 100 | 309 | https://github.com/NetAppDocs/asa-r2 |
 | netapp | console-setup-admin | 154 | 776 | https://github.com/NetAppDocs/console-setup-admin |
@@ -88,7 +91,7 @@ Document counts below are files per product; an identical copy counts in every p
 | netapp | harvest | 69 | 2820 | https://github.com/NetApp/harvest |
 | netapp | harvest-changelog | 1 | 285 | https://github.com/NetApp/harvest |
 | netapp | harvest-issues | 85 | 525 | individual URLs (manifest.json) |
-| netapp | kb-ontap | 3208 | 15392 | individual URLs (manifest.json) |
+| netapp | kb-ontap | 4983 | 24058 | individual URLs (manifest.json) |
 | netapp | kb-ontap-tools-vmware | 1109 | 5897 | individual URLs (manifest.json) |
 | netapp | kb-switches | 1288 | 6298 | individual URLs (manifest.json) |
 | netapp | kb-trident | 820 | 4148 | individual URLs (manifest.json) |
@@ -133,6 +136,16 @@ Document counts below are files per product; an identical copy counts in every p
 | netapp | trident-changelog | 1 | 58 | https://github.com/NetApp/trident |
 | netapp | trident-issues | 88 | 517 | individual URLs (manifest.json) |
 | openshift | storage | 318 | 448 | https://github.com/openshift/openshift-docs |
+| python | fastapi | 156 | 2094 | https://github.com/fastapi/fastapi |
+| python | fastmcp | 115 | 2468 | https://github.com/PrefectHQ/fastmcp |
+| python | httpx | 23 | 223 | https://github.com/encode/httpx |
+| python | pydantic | 91 | 825 | https://github.com/pydantic/pydantic |
+| python | pydantic-settings | 2 | 118 | https://github.com/pydantic/pydantic-settings |
+| python | pytest | 259 | 1395 | https://github.com/pytest-dev/pytest |
+| python | pytest-asyncio | 28 | 44 | https://github.com/pytest-dev/pytest-asyncio |
+| python | sqlalchemy | 142 | 1025 | https://github.com/sqlalchemy/sqlalchemy |
+| python | starlette | 25 | 450 | https://github.com/encode/starlette |
+| python | uvicorn | 15 | 295 | https://github.com/encode/uvicorn |
 | vmware | kb | 5 | 38 | individual URLs (manifest.json) |
 
 - **netapp**: docs.netapp.com is generated from these NetAppDocs repositories: the git sync IS the NetApp documentation site.

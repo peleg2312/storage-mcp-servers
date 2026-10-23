@@ -62,6 +62,7 @@ for f in environment.md tool-map.md notes.md; do
   [ -f "$DST/brain/$f" ] || cp "$SRC/brain/$f" "$DST/brain/$f"
 done
 cp "$SRC/banner/paas-banner.py" "$SRC/banner/paas-statusline.py" "$DST/banner/"
+mkdir -p "$DST/tools/vendor" && cp "$SRC/tools/report.py" "$SRC/tools/get-reports.ps1" "$DST/tools/" && cp "$SRC/tools/vendor/"*.whl "$DST/tools/vendor/"   # charts + Excel (report-export skill); pure-Python wheels, no pip
 mkdir -p "$USER_DST/themes" && cp "$SRC/themes/paas.json" "$USER_DST/themes/"   # custom themes are read from ~/.claude/themes only
 
 # Documentation library (library/*.part-* in this repo): extracted into ~/.claude/brain/library so the
@@ -125,12 +126,15 @@ __paas_banner() {
     d=${d%/*}
   done
   [ -n "$b" ] || [ ! -f "$HOME/.claude/banner/paas-banner.py" ] || b="$HOME/.claude/banner/paas-banner.py"
-  [ -n "$b" ] && python3 "$b"
+  [ -n "$b" ] && python3 "$b" --announce "$1"
 }
 claude() {
+  # Claude Code clears the screen on start, so the banner is shown inside it, under its header: written for
+  # the current window width to a settings file (companyAnnouncements) passed with --settings
   case "${1:-}" in ""|-*)
-    case " $* " in *" -p "*|*" --print "*|*" -v "*|*" --version "*|*" -h "*|*" --help "*) ;;
-      *) __paas_banner ;; esac ;;
+    case " $* " in *" -p "*|*" --print "*|*" -v "*|*" --version "*|*" -h "*|*" --help "*|*" --settings "*) ;;
+      *) __f="${TMPDIR:-/tmp}/claude-paas-banner-$(id -u).json"
+         __paas_banner "$__f" && set -- --settings "$__f" "$@" ;; esac ;;
   esac
   command claude "$@"
 }

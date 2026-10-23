@@ -1,0 +1,1062 @@
+<html><head><title>PowerFlex API 5.1.0: Get mapped ports</title></head><body><p>Mirroring APIS > PowerFlex Manager Deployment REST API > bootstrapper > api > installer-node > map-ports</p><div><div class="api-docs-main-div dds__pl-2">
+      <div class="api-doc-container">
+        <div class="api__doc__left-section dds__p-3">
+   <div class="markdown-renderer">
+          <h4 class="dds__font-weight-bold dds__pb-2">Get mapped ports</h4>       
+          <div><p>Returns the mapped ports.</p>
+</div> 
+          
+    </div>
+
+
+       <div class="api_docs_collapsible dds__mb-3" id="response"><div class="api_docs_collapsible-header dds__p-3" data-action="toggleCollapse" data-target-id="response" role="button" tabindex="0" aria-controls="response-body" aria-expanded="false"><span class="title">Responses</span><span class="icon icon-collapsed dds__icon dds__icon--chevron-right dds__mt-1 dds__ml-auto"></span><span class="icon icon-expanded dds__icon dds__icon--chevron-down dds__mt-1 dds__ml-auto"></span></div><div class="api_docs_collapsible-body" id="response-body"><div class="api_docs_collapsible dds__mb-3" id="ae11e9471bafe"><div class="api_docs_collapsible-header dds__p-3" data-action="toggleCollapse" data-target-id="ae11e9471bafe" role="button" tabindex="0" aria-controls="ae11e9471bafe-body" aria-expanded="false"><span class="title"><div class="response-frame"><span class="text-green"><span class="dds__badge dds__badge--dot dds__mr-2"></span>200</span> : OK</div></span><span class="icon icon-collapsed dds__icon dds__icon--chevron-right dds__mt-1 dds__ml-auto"></span><span class="icon icon-expanded dds__icon dds__icon--chevron-down dds__mt-1 dds__ml-auto"></span></div><div class="api_docs_collapsible-body" id="ae11e9471bafe-body"><div class="static-frame-response-section"><div><div class="headers-section"><div><p>OK</p>
+</div><h5 class="title dds__mt-2">Response Body</h5><div class="static-frame-request-section"><div class="" id="Response Body-Array Of:-m5oh">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name clickable-property" title="Array Of:" style="cursor: pointer;">Array Of:</span>
+    </div>
+    <span class="schema-toggle-icon" data-action="toggleNestedBodyCard" data-target-id="Response Body-Array Of:-m5oh" role="button" tabindex="0" aria-controls="Response Body-Array Of:-m5oh-nested-body" aria-expanded="false">
+            <span class="icon dds__icon dds__icon--chevron-right dds__mt-1 dds__ml-auto"></span>
+            <span class="icon dds__icon dds__icon--chevron-down dds__mt-1 dds__ml-auto hidden"></span>
+        </span>
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">array[object]</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div><div class="nested-body schema-child-row" id="Response Body-Array Of:-m5oh-nested-body" style="display:none">
+            <div colspan="2" class="nested">
+            <div class="" id="primitive-protocol">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="protocol">protocol</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">object</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    <div class="enums">allowed values: <span class="dds__badge dds__badge--sm dds__badge--brand dds__badge--light">LACP</span> <span class="dds__badge dds__badge--sm dds__badge--brand dds__badge--light">TRUNK</span></div>
+  </div>
+</div></div>
+<div class="" id="Response Body-Array Of:-m5oh-ports-gy0h">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name clickable-property" title="ports" style="cursor: pointer;">ports</span>
+    </div>
+    <span class="schema-toggle-icon" data-action="toggleNestedBodyCard" data-target-id="Response Body-Array Of:-m5oh-ports-gy0h" role="button" tabindex="0" aria-controls="Response Body-Array Of:-m5oh-ports-gy0h-nested-body" aria-expanded="false">
+            <span class="icon dds__icon dds__icon--chevron-right dds__mt-1 dds__ml-auto"></span>
+            <span class="icon dds__icon dds__icon--chevron-down dds__mt-1 dds__ml-auto hidden"></span>
+        </span>
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">array[object]</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div><div class="nested-body schema-child-row" id="Response Body-Array Of:-m5oh-ports-gy0h-nested-body" style="display:none">
+            <div colspan="2" class="nested">
+            <div class="" id="primitive-portId">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="portId">portId</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-osInterface">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="osInterface">osInterface</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      
+    </div>
+    
+    
+    
+    
+    <div class="desc"><p>This value is prepopulated from backend<br>
+when “isPreconfigured” is false.</p>
+</div>
+    
+    
+  </div>
+</div></div>
+<div class="" id="Response Body-Array Of:-m5oh-ports-gy0h-osInterfaces-g8u0">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name clickable-property" title="osInterfaces" style="cursor: pointer;">osInterfaces</span>
+    </div>
+    <span class="schema-toggle-icon" data-action="toggleNestedBodyCard" data-target-id="Response Body-Array Of:-m5oh-ports-gy0h-osInterfaces-g8u0" role="button" tabindex="0" aria-controls="Response Body-Array Of:-m5oh-ports-gy0h-osInterfaces-g8u0-nested-body" aria-expanded="false">
+            <span class="icon dds__icon dds__icon--chevron-right dds__mt-1 dds__ml-auto"></span>
+            <span class="icon dds__icon dds__icon--chevron-down dds__mt-1 dds__ml-auto hidden"></span>
+        </span>
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">array[object]</span>
+      
+    </div>
+    
+    
+    
+    
+    <div class="desc"><p>Used only in “Define Ports” step.</p>
+</div>
+    
+    
+  </div>
+</div><div class="nested-body schema-child-row" id="Response Body-Array Of:-m5oh-ports-gy0h-osInterfaces-g8u0-nested-body" style="display:none">
+            <div colspan="2" class="nested">
+            <div class="" id="primitive-id">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="id">id</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-name">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="name">name</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+            </div>
+          </div></div>
+<div class="" id="primitive-isPreconfigured">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="isPreconfigured">isPreconfigured</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">boolean</span>
+      
+    </div>
+    
+    
+    
+    
+    <div class="desc"><p>Whether OS interface is pre-configured.</p>
+</div>
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-isOutOfBand">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="isOutOfBand">isOutOfBand</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">boolean</span>
+      
+    </div>
+    
+    <div class="default">default: <code>false</code></div>
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+            </div>
+          </div></div>
+<div class="" id="Response Body-Array Of:-m5oh-portPairs-k0g7">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name clickable-property" title="portPairs" style="cursor: pointer;">portPairs</span>
+    </div>
+    <span class="schema-toggle-icon" data-action="toggleNestedBodyCard" data-target-id="Response Body-Array Of:-m5oh-portPairs-k0g7" role="button" tabindex="0" aria-controls="Response Body-Array Of:-m5oh-portPairs-k0g7-nested-body" aria-expanded="false">
+            <span class="icon dds__icon dds__icon--chevron-right dds__mt-1 dds__ml-auto"></span>
+            <span class="icon dds__icon dds__icon--chevron-down dds__mt-1 dds__ml-auto hidden"></span>
+        </span>
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">array[object]</span>
+      
+    </div>
+    
+    
+    
+    
+    <div class="desc"><ul>
+<li>“ports”: populated for both LACP and TRUNK protocol</li>
+<li>“portPairs”: populated only for LACP protocol</li>
+<li>“OSInterfaces”: need not be populated for “Map Networks” step.</li>
+<li>Only the “networks” are saved to the backend, other fields are readonly to dispaly in UI.</li>
+</ul>
+</div>
+    
+    
+  </div>
+</div><div class="nested-body schema-child-row" id="Response Body-Array Of:-m5oh-portPairs-k0g7-nested-body" style="display:none">
+            <div colspan="2" class="nested">
+            <div class="" id="primitive-portId">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="portId">portId</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-name">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="name">name</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      
+    </div>
+    
+    
+    
+    
+    <div class="desc"><p>Value to display in the UI. Example: “Pair 1”, “Pair 2”</p>
+</div>
+    
+    
+  </div>
+</div></div>
+<div class="" id="Response Body-Array Of:-m5oh-portPairs-k0g7-pair-j5mm">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="pair">pair</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">array[string]</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+            </div>
+          </div></div>
+<div class="" id="Response Body-Array Of:-m5oh-networks-99jx">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name clickable-property" title="networks" style="cursor: pointer;">networks</span>
+    </div>
+    <span class="schema-toggle-icon" data-action="toggleNestedBodyCard" data-target-id="Response Body-Array Of:-m5oh-networks-99jx" role="button" tabindex="0" aria-controls="Response Body-Array Of:-m5oh-networks-99jx-nested-body" aria-expanded="false">
+            <span class="icon dds__icon dds__icon--chevron-right dds__mt-1 dds__ml-auto"></span>
+            <span class="icon dds__icon dds__icon--chevron-down dds__mt-1 dds__ml-auto hidden"></span>
+        </span>
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">array[object]</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div><div class="nested-body schema-child-row" id="Response Body-Array Of:-m5oh-networks-99jx-nested-body" style="display:none">
+            <div colspan="2" class="nested">
+            <div class="" id="primitive-id">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="id">id</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-name">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="name">name</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-portId">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="portId">portId</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-isPreconfigured">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="isPreconfigured">isPreconfigured</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">boolean</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+            </div>
+          </div></div>
+<div class="" id="primitive-oobEnabled">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="oobEnabled">oobEnabled</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">boolean</span>
+      
+    </div>
+    
+    <div class="default">default: <code>false</code></div>
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="expanded" id="Response Body-Array Of:-m5oh-metadata-0blm">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name clickable-property" title="metadata" style="cursor: pointer;">metadata</span>
+    </div>
+    <span class="schema-toggle-icon" data-action="toggleNestedBodyCard" data-target-id="Response Body-Array Of:-m5oh-metadata-0blm" role="button" tabindex="0" aria-controls="Response Body-Array Of:-m5oh-metadata-0blm-nested-body" aria-expanded="true">
+            <span class="icon dds__icon dds__icon--chevron-right dds__mt-1 dds__ml-auto hidden"></span>
+            <span class="icon dds__icon dds__icon--chevron-down dds__mt-1 dds__ml-auto"></span>
+        </span>
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">object</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div><div class="nested-body schema-child-row" id="Response Body-Array Of:-m5oh-metadata-0blm-nested-body" style="">
+            <div colspan="2" class="nested">
+            <div class="expanded" id="Response Body-Array Of:-m5oh-metadata-0blm-status-wv80">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name clickable-property" title="status" style="cursor: pointer;">status</span>
+    </div>
+    <span class="schema-toggle-icon" data-action="toggleNestedBodyCard" data-target-id="Response Body-Array Of:-m5oh-metadata-0blm-status-wv80" role="button" tabindex="0" aria-controls="Response Body-Array Of:-m5oh-metadata-0blm-status-wv80-nested-body" aria-expanded="true">
+            <span class="icon dds__icon dds__icon--chevron-right dds__mt-1 dds__ml-auto hidden"></span>
+            <span class="icon dds__icon dds__icon--chevron-down dds__mt-1 dds__ml-auto"></span>
+        </span>
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">object</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div><div class="nested-body schema-child-row" id="Response Body-Array Of:-m5oh-metadata-0blm-status-wv80-nested-body" style="">
+            <div colspan="2" class="nested">
+            <div class="" id="primitive-jobId">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="jobId">jobId</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-workflow">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="workflow">workflow</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-message">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="message">message</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-progress">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="progress">progress</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">number</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-workflowStatus">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="workflowStatus">workflowStatus</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">object</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    <div class="enums">allowed values: <span class="dds__badge dds__badge--sm dds__badge--brand dds__badge--light">RUNNING</span> <span class="dds__badge dds__badge--sm dds__badge--brand dds__badge--light">COMPLETED</span> <span class="dds__badge dds__badge--sm dds__badge--brand dds__badge--light">FAILED</span> <span class="dds__badge dds__badge--sm dds__badge--brand dds__badge--light">CANCELLED</span> <span class="dds__badge dds__badge--sm dds__badge--brand dds__badge--light">UNKNOWN</span> <span class="dds__badge dds__badge--sm dds__badge--brand dds__badge--light">PENDING</span></div>
+  </div>
+</div></div>
+<div class="expanded" id="Response Body-Array Of:-m5oh-metadata-0blm-status-wv80-error-a2ed">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name clickable-property" title="error" style="cursor: pointer;">error</span>
+    </div>
+    <span class="schema-toggle-icon" data-action="toggleNestedBodyCard" data-target-id="Response Body-Array Of:-m5oh-metadata-0blm-status-wv80-error-a2ed" role="button" tabindex="0" aria-controls="Response Body-Array Of:-m5oh-metadata-0blm-status-wv80-error-a2ed-nested-body" aria-expanded="true">
+            <span class="icon dds__icon dds__icon--chevron-right dds__mt-1 dds__ml-auto hidden"></span>
+            <span class="icon dds__icon dds__icon--chevron-down dds__mt-1 dds__ml-auto"></span>
+        </span>
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">object</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div><div class="nested-body schema-child-row" id="Response Body-Array Of:-m5oh-metadata-0blm-status-wv80-error-a2ed-nested-body" style="">
+            <div colspan="2" class="nested">
+            <div class="" id="primitive-errorMessage">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="errorMessage">errorMessage</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="Response Body-Array Of:-m5oh-metadata-0blm-status-wv80-error-a2ed-errorsByField-pqhu">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name clickable-property" title="errorsByField" style="cursor: pointer;">errorsByField</span>
+    </div>
+    <span class="schema-toggle-icon" data-action="toggleNestedBodyCard" data-target-id="Response Body-Array Of:-m5oh-metadata-0blm-status-wv80-error-a2ed-errorsByField-pqhu" role="button" tabindex="0" aria-controls="Response Body-Array Of:-m5oh-metadata-0blm-status-wv80-error-a2ed-errorsByField-pqhu-nested-body" aria-expanded="false">
+            <span class="icon dds__icon dds__icon--chevron-right dds__mt-1 dds__ml-auto"></span>
+            <span class="icon dds__icon dds__icon--chevron-down dds__mt-1 dds__ml-auto hidden"></span>
+        </span>
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">array[object]</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div><div class="nested-body schema-child-row" id="Response Body-Array Of:-m5oh-metadata-0blm-status-wv80-error-a2ed-errorsByField-pqhu-nested-body" style="display:none">
+            <div colspan="2" class="nested">
+            <div class="" id="primitive-field">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="field">field</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-error">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="error">error</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+            </div>
+          </div></div>
+            </div>
+          </div></div>
+            </div>
+          </div></div>
+<div class="" id="primitive-readonly">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="readonly">readonly</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">boolean</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-allowedToDelete">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="allowedToDelete">allowedToDelete</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">boolean</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+            </div>
+          </div></div>
+            </div>
+          </div></div></div></div></div></div></div></div></div></div>
+   </div>
+        <div class="api__doc__right-section dds__pl-2"><div class="api_docs_collapsible highlight dds__mb-3 expanded" id="server"><div class="api_docs_collapsible-header dds__p-3" data-action="toggleCollapse" data-target-id="server" role="button" tabindex="0" aria-expanded="true"><div class="dds__w-100"><div class="server-title"><span class="dds__badge dds__badge--md http-method-get"><span class="dds__badge__label badge-font">GET</span></span><button style="float: right; border: 1px solid #9ca3af; display:none" class="dds__ml-auto dds__button dds__button--sm" type="button" id="drawer-trigger" data-action="clickedTryOutButton">Try it</button></div><div class="dds__p-2">/rest/v1/bootstrapper/installer-node/map-ports</div></div><span class="icon icon-collapsed dds__icon dds__icon--chevron-right dds__ml-auto"></span><span class="icon icon-expanded dds__icon dds__icon--chevron-down dds__ml-auto"></span></div><div class="api_docs_collapsible-body dds__px-3 dds__pt-2 dds__pb-3"><div class="dds__pr-2"></div><div class="dds__d-flex dds__justify-content-end dds__my-2"><button class="dds__button dds__button--sm" data-action="copyCodeById" data-target-id="server-copy-0">Copy</button></div><pre tabindex="0"><code id="server-copy-0">/rest/v1/bootstrapper/installer-node/map-ports</code></pre></div></div>
+<div class="api_docs_collapsible highlight dds__mb-3 expanded" id="responsesamples"><div class="api_docs_collapsible-header dds__p-3" data-action="toggleCollapse" data-target-id="responsesamples" role="button" tabindex="0" aria-controls="responsesamples-body" aria-expanded="true">Response Samples<span class="icon icon-collapsed dds__icon dds__icon--chevron-right dds__ml-auto"></span><span class="icon icon-expanded dds__icon dds__icon--chevron-down dds__ml-auto"></span></div><div class="api_docs_collapsible-body dds__px-3 dds__pt-2 dds__pb-3" id="responsesamples-body"><div class="response-tab-wrapper"><div class="tab-header" role="tablist"><h4 class="tab-item active" role="tab" aria-selected="true" aria-controls="responsesamples-tab-200" data-action="switchTab" data-target-id="responsesamples-tab-200">200</h4></div><div class="tab-body"><div class="tab-content active" id="responsesamples-tab-200" role="tabpanel" aria-labelledby="responsesamples-tab-200"><div class="dds__pt-2" role="presentation"><div class="content-type-box dds__mb-1"><div class="content-type-label">application/json</div></div><div class="content-description dds__mb-1"><p>OK</p>
+</div><label for="responsesamples-tab-200-example" class="dds__visually-hidden">Select response example</label>
+       <select id="responsesamples-tab-200-example" class="dds__select__field" data-action="onExampleSelectChange" data-code-container-id="responsesamples-tab-200-code" aria-label="Select response example">
+        <option value="0" data-code="[
+  {
+    &quot;protocol&quot;: &quot;LACP&quot;,
+    &quot;ports&quot;: [
+      {
+        &quot;portId&quot;: &quot;1&quot;,
+        &quot;osInterface&quot;: &quot;em1&quot;,
+        &quot;osInterfaces&quot;: [],
+        &quot;isPreconfigured&quot;: true,
+        &quot;isOutOfBand&quot;: false
+      },
+      {
+        &quot;portId&quot;: &quot;2&quot;,
+        &quot;osInterface&quot;: &quot;em2&quot;,
+        &quot;osInterfaces&quot;: [],
+        &quot;isPreconfigured&quot;: false,
+        &quot;isOutOfBand&quot;: false
+      },
+      {
+        &quot;portId&quot;: &quot;3&quot;,
+        &quot;osInterface&quot;: &quot;p1p1&quot;,
+        &quot;osInterfaces&quot;: [],
+        &quot;isPreconfigured&quot;: true,
+        &quot;isOutOfBand&quot;: false
+      },
+      {
+        &quot;portId&quot;: &quot;4&quot;,
+        &quot;osInterface&quot;: &quot;p1p2&quot;,
+        &quot;osInterfaces&quot;: [],
+        &quot;isPreconfigured&quot;: false,
+        &quot;isOutOfBand&quot;: false
+      },
+      {
+        &quot;portId&quot;: &quot;5&quot;,
+        &quot;osInterface&quot;: &quot;p2p2&quot;,
+        &quot;osInterfaces&quot;: [],
+        &quot;isPreconfigured&quot;: false,
+        &quot;isOutOfBand&quot;: true
+      }
+    ],
+    &quot;portPairs&quot;: [
+      {
+        &quot;portId&quot;: &quot;bond0&quot;,
+        &quot;name&quot;: &quot;Pair 1&quot;,
+        &quot;pair&quot;: [
+          &quot;em1&quot;,
+          &quot;p1p1&quot;
+        ]
+      },
+      {
+        &quot;portId&quot;: &quot;bond1&quot;,
+        &quot;name&quot;: &quot;Pair 2&quot;,
+        &quot;pair&quot;: [
+          &quot;em2&quot;,
+          &quot;p1p2&quot;
+        ]
+      },
+      {
+        &quot;portId&quot;: &quot;oob&quot;,
+        &quot;name&quot;: &quot;Out-of-Band management Port&quot;,
+        &quot;pair&quot;: [
+          &quot;p2p2&quot;
+        ]
+      }
+    ],
+    &quot;networks&quot;: [
+      {
+        &quot;id&quot;: &quot;m1&quot;,
+        &quot;name&quot;: &quot;PowerFlex Management&quot;,
+        &quot;portId&quot;: &quot;bond0&quot;,
+        &quot;isPreconfigured&quot;: true
+      },
+      {
+        &quot;id&quot;: &quot;d1&quot;,
+        &quot;name&quot;: &quot;Data 1&quot;,
+        &quot;portId&quot;: &quot;bond0&quot;,
+        &quot;isPreconfigured&quot;: false
+      },
+      {
+        &quot;id&quot;: &quot;d2&quot;,
+        &quot;name&quot;: &quot;Data 2&quot;,
+        &quot;portId&quot;: &quot;bond1&quot;,
+        &quot;isPreconfigured&quot;: false
+      },
+      {
+        &quot;id&quot;: &quot;d3&quot;,
+        &quot;name&quot;: &quot;Data 3&quot;,
+        &quot;portId&quot;: &quot;oob&quot;,
+        &quot;isPreconfigured&quot;: false
+      }
+    ],
+    &quot;oobEnabled&quot;: false,
+    &quot;metadata&quot;: {
+      &quot;status&quot;: {
+        &quot;jobId&quot;: &quot;string&quot;,
+        &quot;workflow&quot;: &quot;string&quot;,
+        &quot;message&quot;: &quot;string&quot;,
+        &quot;progress&quot;: 0,
+        &quot;workflowStatus&quot;: &quot;UNKNOWN&quot;,
+        &quot;error&quot;: {
+          &quot;errorMessage&quot;: &quot;string&quot;,
+          &quot;errorsByField&quot;: [
+            {
+              &quot;field&quot;: &quot;string&quot;,
+              &quot;error&quot;: &quot;string&quot;
+            }
+          ]
+        }
+      },
+      &quot;readonly&quot;: false,
+      &quot;allowedToDelete&quot;: true
+    }
+  }
+]" data-description="Example 1">
+        Example 1
+      </option>
+      </select></div><div class="dds__d-flex dds__justify-content-end dds__my-2" role="presentation"><button class="dds__button dds__button--sm" data-action="copyCodeById" data-target-id="responsesamples-tab-200-code">Copy</button></div><div id="responsesamples-tab-200-code" role="presentation"><pre tabindex="0"><code>[
+  {
+    "protocol": "LACP",
+    "ports": [
+      {
+        "portId": "1",
+        "osInterface": "em1",
+        "osInterfaces": [],
+        "isPreconfigured": true,
+        "isOutOfBand": false
+      },
+      {
+        "portId": "2",
+        "osInterface": "em2",
+        "osInterfaces": [],
+        "isPreconfigured": false,
+        "isOutOfBand": false
+      },
+      {
+        "portId": "3",
+        "osInterface": "p1p1",
+        "osInterfaces": [],
+        "isPreconfigured": true,
+        "isOutOfBand": false
+      },
+      {
+        "portId": "4",
+        "osInterface": "p1p2",
+        "osInterfaces": [],
+        "isPreconfigured": false,
+        "isOutOfBand": false
+      },
+      {
+        "portId": "5",
+        "osInterface": "p2p2",
+        "osInterfaces": [],
+        "isPreconfigured": false,
+        "isOutOfBand": true
+      }
+    ],
+    "portPairs": [
+      {
+        "portId": "bond0",
+        "name": "Pair 1",
+        "pair": [
+          "em1",
+          "p1p1"
+        ]
+      },
+      {
+        "portId": "bond1",
+        "name": "Pair 2",
+        "pair": [
+          "em2",
+          "p1p2"
+        ]
+      },
+      {
+        "portId": "oob",
+        "name": "Out-of-Band management Port",
+        "pair": [
+          "p2p2"
+        ]
+      }
+    ],
+    "networks": [
+      {
+        "id": "m1",
+        "name": "PowerFlex Management",
+        "portId": "bond0",
+        "isPreconfigured": true
+      },
+      {
+        "id": "d1",
+        "name": "Data 1",
+        "portId": "bond0",
+        "isPreconfigured": false
+      },
+      {
+        "id": "d2",
+        "name": "Data 2",
+        "portId": "bond1",
+        "isPreconfigured": false
+      },
+      {
+        "id": "d3",
+        "name": "Data 3",
+        "portId": "oob",
+        "isPreconfigured": false
+      }
+    ],
+    "oobEnabled": false,
+    "metadata": {
+      "status": {
+        "jobId": "string",
+        "workflow": "string",
+        "message": "string",
+        "progress": 0,
+        "workflowStatus": "UNKNOWN",
+        "error": {
+          "errorMessage": "string",
+          "errorsByField": [
+            {
+              "field": "string",
+              "error": "string"
+            }
+          ]
+        }
+      },
+      "readonly": false,
+      "allowedToDelete": true
+    }
+  }
+]</code></pre></div></div></div></div></div></div></div>
+      </div>
+    </div></div></body></html>

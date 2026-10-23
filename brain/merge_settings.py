@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Merge the brain's hooks (PreToolUse read-only guard, PostToolUse docs hints, UserPromptSubmit docs leads, SessionStart status), MCP permissions and the status line
+"""Merge the brain's hooks (PreToolUse read-only guard for MCP tools and shell commands, PostToolUse docs hints, UserPromptSubmit docs leads, SessionStart status), MCP permissions and the status line
 into a Claude Code settings.json (keeps everything else).
 usage: merge_settings.py <settings.json> [--hooks-dir DIR] [--banner-dir DIR] [--mcpjson NAME] [mcp-server-name ...]
   --hooks-dir / --banner-dir  where the hook and banner scripts live (default ~/.claude/hooks, ~/.claude/banner;
@@ -31,8 +31,11 @@ if os.path.exists(path):
         s = json.load(f)
 cmd = f"python3 {hooks_dir}/block-write-tools.py"
 pre = s.setdefault("hooks", {}).setdefault("PreToolUse", [])
+for e in pre:                                            # earlier installs guarded MCP tools only
+    if any(h.get("command") == cmd for h in e.get("hooks", [])):
+        e["matcher"] = "mcp__.*|Bash"
 if not any(h.get("command") == cmd for e in pre for h in e.get("hooks", [])):
-    pre.append({"matcher": "mcp__.*", "hooks": [{"type": "command", "command": cmd}]})
+    pre.append({"matcher": "mcp__.*|Bash", "hooks": [{"type": "command", "command": cmd}]})
 hint_cmd = f"python3 {hooks_dir}/docs-hints.py"         # meaning of EMS / alerts / codes seen in live results
 post = s["hooks"].setdefault("PostToolUse", [])
 if not any(h.get("command") == hint_cmd for e in post for h in e.get("hooks", [])):

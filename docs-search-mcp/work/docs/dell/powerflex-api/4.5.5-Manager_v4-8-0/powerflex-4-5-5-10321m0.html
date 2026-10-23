@@ -1,0 +1,73 @@
+<html><head><title>PowerFlex API 4.5.5-Manager_v4-8-0: PowerFlex (4.5.5)</title></head><body><p>Introduction</p><div><div class="api-docs-main-div dds__pl-2">
+    <div class="markdown-wrapper dds__py-3">
+      <div class="markdown-body dds__px-3"><h1 id="introduction-to-powerflex-455" class="anchor-scroll-top-offset">Introduction to PowerFlex (4.5.5)</h1>
+<p>PowerFlex is an enterprise-class, software-defined block storage solution that is deployed, managed, and supported as a single system. Highly flexible and scalable, PowerFlex allows customers to mix two-layer (Server SAN), single-layer, and storage-only and mixed architectures within a single deployment.</p>
+<h2 id="powerflex-block-api" class="anchor-scroll-top-offset">PowerFlex Block API</h2>
+<p>The PowerFlex Block API is installed as part of the PowerFlex installation manager/PowerFlex gateway package. The installation manager manages deployment and upgrades. The PowerFlex gateway leverages role-based security access to expose RESTful APIs for automating all frontend and backend storage tasks and core components, and also acts as a gateway for SNMP traps and secure remote services.</p>
+<p>The REST API is served from the PowerFlex gateway through the REST gateway. The PowerFlex Gateway connects to a single MDM (metadata manager) and serves requests by querying the MDM and reformatting the answers it receives from the MDM in a RESTful manner back to a REST client.</p>
+<p>Every PowerFlex SCLI command is also available in the PowerFlex REST API. The responses returned by the PowerFlex gateway are in JSON format.</p>
+<p>APIs may change as new features are added to the product or changes are made to the PowerFlex software.</p>
+<h2 id="target-audience" class="anchor-scroll-top-offset">Target audience</h2>
+<p>The PowerFlex Block API is intended for customers who want to automate PowerFlex deployment, configuration, and management tasks.</p>
+<h2 id="basic-concepts" class="anchor-scroll-top-offset">Basic concepts</h2>
+<p>The following basic concepts are relevant to understanding and operating PowerFlex.</p>
+<table>
+<thead>
+<tr>
+<th>Concept</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Acceleration pool</td>
+<td>An accleration pool is a group of one or more physical acceleration devices.</td>
+</tr>
+<tr>
+<td>Fault set</td>
+<td>A fault set is a logical entity that contains a group of SDSs that are more inclined to go offline simultaneously.</td>
+</tr>
+<tr>
+<td>Meta Data Manager</td>
+<td>A Meta Data Manager (MDM) configures and monitors PowerFlex, and is usually configured in redundant cluster mode to support high availability.</td>
+</tr>
+<tr>
+<td>Protection domain</td>
+<td>A protection domain is a logical entity that consists of a group of storage data servers (SDSs) that backs up each other</td>
+</tr>
+<tr>
+<td>Snapshot</td>
+<td>A snapshot is an image-level view of data at a particular point in time.</td>
+</tr>
+<tr>
+<td>Storage data client</td>
+<td>A storage data client (SDC) is a lightweight device driver that exposes PowerFlex volumes as block devices to the application that resides on the same server on which the SDC is install.</td>
+</tr>
+<tr>
+<td>Storage data replicator</td>
+<td>A storage data replicator (SDR) is a tool, which processes the application I/Os of the source SDRs.</td>
+</tr>
+<tr>
+<td>Storage data server</td>
+<td>A storage data server (SDS) manages the capacity of a single server and acts as a backend for data access.</td>
+</tr>
+<tr>
+<td>Storage pool</td>
+<td>A storage pool is a set of physical storage devices in a protection domain. A volume is distributed over the devices residing in the same storage pool.</td>
+</tr>
+<tr>
+<td>Volume</td>
+<td>A volume consists of multiple storage blocks spread evenly across devices.</td>
+</tr>
+</tbody>
+</table>
+</div>
+      <div class="markdown-sidebar">
+        <div class="markdown-toc-title">
+          <i class="icon dds__icon dds__icon--bookmark"></i>
+          On this page
+        </div>
+          <ul><li class="level-1"><a href="#introduction-to-powerflex-455" data-toc-link="">Introduction to PowerFlex (4.5.5)</a></li><li class="level-2"><a href="#powerflex-block-api" data-toc-link="">PowerFlex Block API</a></li><li class="level-2"><a href="#target-audience" data-toc-link="">Target audience</a></li><li class="level-2"><a href="#basic-concepts" data-toc-link="">Basic concepts</a></li></ul>
+      </div>
+    </div>
+  </div></div></body></html>

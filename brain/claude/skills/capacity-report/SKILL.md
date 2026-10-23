@@ -18,4 +18,5 @@ Thresholds come from the environment file; ask once if they are empty.
 5. **Reclaim**: link to `unused-luns` candidates and empty datastores (do not recompute here unless asked).
 
 Output: one-line status per array and per cluster, then tables sorted by risk (days-to-full asc), and a
-short "actions" list. Save CSVs under ~/storage-reports.
+short "actions" list. Save CSVs under ~/storage-reports and turn them into charts + Excel with `report-export`
+(used % per pool as bars; growth over time as lines).

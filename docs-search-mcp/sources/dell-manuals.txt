@@ -22,3 +22,11 @@ powerflex  https://www.dell.com/support/manuals/scaleio/powerflex_cli_reference_
 powerflex  https://www.dell.com/support/manuals/scaleio/flex-licensing-guide-4x-5x/Introduction?lang=en-us
 powerflex  https://www.dell.com/support/manuals/scaleio/vxf_p_monitor_guide_3_x/preface?lang=en-us
 powerflex  https://www.dell.com/support/manuals/scaleio/vxf_p_troubleshooting_guide_3_5/preface?lang=en-us
+# PowerFlex Appliance with PowerFlex 5.x (KB 000211967; HTML, in case the PDFs are entitlement-gated)
+powerflex  https://www.dell.com/support/manuals/en-us/powerflex-appliance-hw/flex_app_archg_5x/Introduction?lang=en-us
+powerflex  https://www.dell.com/support/manuals/en-us/powerflex-appliance-hw/flex-app-admin-guide-5x/Introduction?lang=en-us
+powerflex  https://www.dell.com/support/manuals/en-us/powerflex-appliance-hw/flex-app-net-plan-5x/Introduction?lang=en-us
+powerflex  https://www.dell.com/support/manuals/en-us/powerflex-appliance-hw/flex-manager-compatibility-matrix-5x/Introduction?lang=en-us
+powerflex  https://www.dell.com/support/manuals/en-us/powerflex-appliance-r660/mgmt_cluster_replacement_5x/Introduction?lang=en-us
+powerflex  https://www.dell.com/support/manuals/en-us/powerflex-appliance-hw/flex-app-upgrade-guide-5x/Introduction?lang=en-us
+powerflex  https://www.dell.com/support/manuals/powerflex-appliance-r660/flex-app-5x-50x-ic-rn/Introduction?lang=en-us

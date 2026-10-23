@@ -1,0 +1,185 @@
+<html><head><title>PowerFlex API 5.1.0: Manage volumes</title></head><body><p>Tasks > PowerFlex Block API tasks (erasure coding + mirroring)</p><div><div class="api-docs-main-div dds__pl-2">
+    <div class="markdown-wrapper dds__py-3">
+      <div class="markdown-body dds__px-3"><h1 id="volume-management" class="anchor-scroll-top-offset">Volume management</h1>
+<h2 id="create-a-thin-volume" class="anchor-scroll-top-offset">Create a thin volume</h2>
+<p>This example shows how to create a new 128GB thin, uncompressed, volume named asmdata in FG pool sp2:</p>
+<pre><code class="language-json">curl -v -k -r POST -u &lt;user&gt;:&lt;token&gt; -H "Content-Type: application/json" 'https://&lt;PowerFlex-GW-IP&gt;/api/types/Volume/instances' --d '
+{
+  "name": "asmdata",
+  "compressionMethod": "None",
+  "storagePoolId": "fe9ddde400000001",
+  "volumeType": "ThinProvisioned",
+  "volumeSizeInGb": "128"
+}'
+</code></pre>
+<p>The 200 response contains the internal identifier (volume ID) for the volume asmdata:</p>
+<pre><code class="language-json">{
+  "id":"dcf7b37a00000056"
+}
+</code></pre>
+<h2 id="map-the-volume-to-an-sdc" class="anchor-scroll-top-offset">Map the volume to an SDC</h2>
+<p>To map the volume to an SDC, first use the volume ID created in the previous step and the IP address of the SDC you want to map the volume to in order to retrieve the SDC ID. The following command returns the ID of the SDC when supplied the IP address of the SDC:</p>
+<pre><code class="language-json">curl -v -k -r POST -u &lt;user&gt;:&lt;token&gt; -H "Content-Type: application/json" 'https://&lt;PowerFlex-GW-IP/api/types/Sdc/instances/action/queryIdByKey' -d '
+{
+  "ip": "172.17.161.56"
+}'
+</code></pre>
+<p>The 200 response contains the ID of the SDC:</p>
+<pre><code class="language-json">{
+  "id":"dbb1e85d0000000e"
+}
+</code></pre>
+<p>Use the volume ID (as a URI path parameter) and the SDC ID from the previous steps to map the volume to an SDC:</p>
+<pre><code class="language-json">curl -v -k -r POST -u &lt;admin&gt;:&lt;token&gt; -H "Content-Type: application/json" 'https://&lt;PowerFlex-GW-IP&gt;/api/instances/Volume::dcf7b37a00000056/action/addMappedSdc' -d '
+{
+  "sdcId": "dbb1e85d0000000e"
+}'
+</code></pre>
+<p>The 200 response is empty:</p>
+<pre><code>{}
+</code></pre>
+<h2 id="map-the-same-volume-to-a-second-sdc" class="anchor-scroll-top-offset">Map the same volume to a second SDC</h2>
+<p>To map the volume created in the previous step to a second SDC, first allow the volume to be mapped to multiple SDCs:</p>
+<pre><code class="language-json">curl -v -k -r POST -u &lt;user&gt;:&lt;token&gt; -H "Content-Type: application/json" 'https://&lt;PowerFlex-GW-IP&gt;/api/instances/Volume::dcf7b37a00000056/action/addMappedSdc' -d '
+{
+  "sdcId": "dbb1732d00000002",
+  "allowMultipleMappings": "TRUE"
+}'
+</code></pre>
+<p>The 200 response is empty:</p>
+<pre><code>{}
+</code></pre>
+<h2 id="expand-a-mapped-volume" class="anchor-scroll-top-offset">Expand a mapped volume</h2>
+<p>To expand the volume from 128Gb to 256GB:</p>
+<pre><code class="language-json">curl -v -k -r POST -u &lt;user&gt;:&lt;token&gt; -H "Content-Type: application/json" 'https://&lt;PowerFlex-GW-IP&gt;/api/instances/Volume::dcf7b37a00000056/action/setVolumeSize' -d '
+{
+  "sizeInGB": "256"
+}'
+</code></pre>
+<p>The 200 response is empty:</p>
+<pre><code>{}
+</code></pre>
+<h2 id="remove-volume-mapping" class="anchor-scroll-top-offset">Remove volume mapping</h2>
+<p>To remove mapping of volume “asmdata” from SDC ID “dbb1732d00000002”:</p>
+<pre><code class="language-json">curl -v -k -r POST -u &lt;user&gt;:&lt;token&gt; -H "Content-Type: application/json" 'https://&lt;PowerFlex-GW-IP&gt;/api/instances/Volume::dcf7b37a00000056/action/removeMappedSdc' -d '
+{
+  "sdcId": "dbb1732d00000002"
+}'
+</code></pre>
+<p>The 200 response is empty:</p>
+<pre><code>{}
+</code></pre>
+<h2 id="create-snapshot-of-a-volume" class="anchor-scroll-top-offset">Create snapshot of a volume</h2>
+<p>To create a read-only snapshot of volume “asmdata”:</p>
+<pre><code class="language-json">curl -v -k -r POST -u &lt;user&gt;:&lt;token&gt; -H "Content-Type: application/json" 'https://&lt;PowerFlex-GW-IP&gt;/api/instances/System::6870804f36d7120f/action/snapshotVolumes' -d '
+{
+  "snapshotDefs": [
+    {
+      "volumeId": "dcf7b37a00000056",
+      "snapshotName": "asmdata_snap1"
+    }
+  ],
+  "accessModeLimit": "ReadOnly"}'
+</code></pre>
+<p>The 200 response includes the snapshot group ID and the volume ID of the snapshot:</p>
+<pre><code class="language-json">{
+  "snapshotGroupId":"ff1940a600000001",
+  "volumeIdList":
+    ["dcf7b3880000001c"]
+}
+</code></pre>
+<h2 id="lock-a-snapshot" class="anchor-scroll-top-offset">Lock a snapshot</h2>
+<p>To lock a snapshot:</p>
+<pre><code class="language-json">curl -v -k -r POST -u &lt;user&gt;:&lt;token&gt; 'https://&lt;PowerFlex-GW-IP&gt;/api/instances/Volume::dcf7b3880000001c/action/lockAutoSnapshot’  -d '
+{
+  "autoSnapshotWillBeRemoved": "false"
+}'
+</code></pre>
+<p>The 200 response is empty:</p>
+<pre><code>{}
+</code></pre>
+<h2 id="unlock-a-snapshot" class="anchor-scroll-top-offset">Unlock a snapshot</h2>
+<p>To unlock a snapshot:</p>
+<pre><code class="language-json">curl -v -k -r POST -u &lt;user&gt;:&lt;token&gt; 'https://&lt;PowerFlex-GW-IP&gt;/api/instances/Volume::dcf7b3880000001c/action/unlockAutoSnapshot' -d '
+{
+  "autoSnapshotWillBeRemoved": "false"
+}'
+</code></pre>
+<p>The 200 response is empty:</p>
+<pre><code>{}
+</code></pre>
+<h2 id="retrieve-volume-information" class="anchor-scroll-top-offset">Retrieve volume information</h2>
+<p>To retrieve volume information about a specific volume, use the volume ID as a URI path parameter:</p>
+<pre><code class="language-json">curl -v -k --request GET -u &lt;user&gt;:&lt;token&gt; 'https://&lt;PowerFlex-GW-IP&gt;/api/instances/Volume:: dcf7b37a00000056’
+</code></pre>
+<p>The 200 response contains the volume’s details:</p>
+<pre><code class="language-json">{
+    "originalExpiryTime": 0,
+    "retentionLevels": [],
+    "mappedSdcInfo": [
+        {
+            "isDirectBufferMapping": false,
+            "limitIops": 0,
+            "limitBwInMbps": 0,
+            "sdcId": "dbb1e85d0000000e",
+            "sdcName": "linuxvm",
+            "sdcIp": "172.16.161.130",
+            "accessMode": "ReadWrite"
+        }
+    ],
+    "snplIdOfSourceVolume": null,
+    "volumeReplicationState": "UnmarkedForReplication",
+    "replicationJournalVolume": false,
+    "replicationTimeStamp": 0,
+    "storagePoolId": "fe9ddde400000001",
+    "dataLayout": "FineGranularity",
+    "vtreeId": "0d4e2ed600000010",
+    "sizeInKb": 8388608,
+    "volumeType": "ThinProvisioned",
+    "consistencyGroupId": null,
+    "ancestorVolumeId": null,
+    "notGenuineSnapshot": false,
+    "accessModeLimit": "ReadWrite",
+    "secureSnapshotExpTime": 0,
+    "managedBy": "ScaleIO",
+    "lockedAutoSnapshot": false,
+    "lockedAutoSnapshotMarkedForRemoval": false,
+    "autoSnapshotGroupId": null,
+    "compressionMethod": "None",
+    "pairIds": null,
+    "timeStampIsAccurate": false,
+    "snplIdOfAutoSnapshot": null,
+    "creationTime": 1617297241,
+    "name": "asmdata",
+    "id": "dcf7b37a00000056",
+    "links": [
+        {
+            "rel": "self",
+            "href": "/api/instances/Volume::dcf7b37a00000056"
+        },
+        {
+            "rel": "/api/Volume/relationship/Statistics",
+            "href": "/api/instances/Volume::dcf7b37a00000056/relationships/Statistics"
+        },
+        {
+            "rel": "/api/parent/relationship/vtreeId",
+            "href": "/api/instances/VTree::0d4e2ed600000010"
+        },
+        {
+            "rel": "/api/parent/relationship/storagePoolId",
+            "href": "/api/instances/StoragePool::fe9ddde400000001"
+        }
+    ]
+}
+</code></pre>
+<h1 id="" class="anchor-scroll-top-offset"></h1>
+</div>
+      <div class="markdown-sidebar">
+        <div class="markdown-toc-title">
+          <i class="icon dds__icon dds__icon--bookmark"></i>
+          On this page
+        </div>
+          <ul><li class="level-1"><a href="#volume-management" data-toc-link="">Volume management</a></li><li class="level-2"><a href="#create-a-thin-volume" data-toc-link="">Create a thin volume</a></li><li class="level-2"><a href="#map-the-volume-to-an-sdc" data-toc-link="">Map the volume to an SDC</a></li><li class="level-2"><a href="#map-the-same-volume-to-a-second-sdc" data-toc-link="">Map the same volume to a second SDC</a></li><li class="level-2"><a href="#expand-a-mapped-volume" data-toc-link="">Expand a mapped volume</a></li><li class="level-2"><a href="#remove-volume-mapping" data-toc-link="">Remove volume mapping</a></li><li class="level-2"><a href="#create-snapshot-of-a-volume" data-toc-link="">Create snapshot of a volume</a></li><li class="level-2"><a href="#lock-a-snapshot" data-toc-link="">Lock a snapshot</a></li><li class="level-2"><a href="#unlock-a-snapshot" data-toc-link="">Unlock a snapshot</a></li><li class="level-2"><a href="#retrieve-volume-information" data-toc-link="">Retrieve volume information</a></li><li class="level-1"><a href="#" data-toc-link=""></a></li></ul>
+      </div>
+    </div>
+  </div></div></body></html>

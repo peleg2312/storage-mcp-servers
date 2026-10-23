@@ -22,5 +22,6 @@ Known tool names of the storage-mcp-servers builds:
 - kuparashit (vCenter snapshots, not live; `esx` pwwns/luns/cluster/fi, `vms` hostname/datastore/naas,
   `ds` naa/size/cluster = DATASTORE cluster): `overview` once (snapshot time), `locate` for any identifier,
   then `related` / `luns` / `diff`; `sql` only for joins. Ask for `fields=[...]`. Unused = by VMware only.
-- ontap, harvest, Aria: tools discovered by their descriptions until `/brain-setup` records them here.
+- ontap, harvest: NetApp's official MCP servers (the ONTAP one also has write tools: the hook blocks them).
+  Their tools, and Aria's, are discovered by their descriptions until `/brain-setup` records them here.
 - docs-search / docs-local: see the docs-lookup skill.

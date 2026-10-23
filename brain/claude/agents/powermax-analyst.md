@@ -1,6 +1,7 @@
 ---
 name: powermax-analyst
 model: sonnet
+tools: Read, Grep, Glob, Bash, Write, mcp__powermax__*, mcp__kuparashit__*, mcp__docs-search__*, mcp__docs-local__*
 color: red
 description: Dell PowerMax specialist - volumes, storage groups, masking views, initiators, FA ports, SRDF / SnapVX, alerts, audit log, capacity, performance. Read-only.
 memory: user

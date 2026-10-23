@@ -1,0 +1,712 @@
+<html><head><title>PowerFlex API 5.1.0: Get license information</title></head><body><p>Common APIs for Erasure Coding and Mirroring > PowerFlex Licensing REST API > licenses</p><div><div class="api-docs-main-div dds__pl-2">
+      <div class="api-doc-container">
+        <div class="api__doc__left-section dds__p-3">
+   <div class="markdown-renderer">
+          <h4 class="dds__font-weight-bold dds__pb-2">Get license information</h4>       
+          <div><p>Retrieves license information for the connected PowerFlex systems.</p>
+</div> 
+          
+    </div>
+
+
+       <div class="api_docs_collapsible dds__mb-3" id="response"><div class="api_docs_collapsible-header dds__p-3" data-action="toggleCollapse" data-target-id="response" role="button" tabindex="0" aria-controls="response-body" aria-expanded="false"><span class="title">Responses</span><span class="icon icon-collapsed dds__icon dds__icon--chevron-right dds__mt-1 dds__ml-auto"></span><span class="icon icon-expanded dds__icon dds__icon--chevron-down dds__mt-1 dds__ml-auto"></span></div><div class="api_docs_collapsible-body" id="response-body"><div class="api_docs_collapsible dds__mb-3" id="f782680dc1646"><div class="api_docs_collapsible-header dds__p-3" data-action="toggleCollapse" data-target-id="f782680dc1646" role="button" tabindex="0" aria-controls="f782680dc1646-body" aria-expanded="false"><span class="title"><div class="response-frame"><span class="text-green"><span class="dds__badge dds__badge--dot dds__mr-2"></span>200</span> : OK</div></span><span class="icon icon-collapsed dds__icon dds__icon--chevron-right dds__mt-1 dds__ml-auto"></span><span class="icon icon-expanded dds__icon dds__icon--chevron-down dds__mt-1 dds__ml-auto"></span></div><div class="api_docs_collapsible-body" id="f782680dc1646-body"><div class="static-frame-response-section"><div><div class="headers-section"><div><p>OK</p>
+</div><h5 class="title dds__mt-2">Response Body</h5><div class="static-frame-request-section"><div class="expanded" id="Response Body-LicensesCollection-rmh6">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name clickable-property" title="LicensesCollection" style="cursor: pointer;">LicensesCollection</span>
+    </div>
+    <span class="schema-toggle-icon" data-action="toggleNestedBodyCard" data-target-id="Response Body-LicensesCollection-rmh6" role="button" tabindex="0" aria-controls="Response Body-LicensesCollection-rmh6-nested-body" aria-expanded="true">
+            <span class="icon dds__icon dds__icon--chevron-right dds__mt-1 dds__ml-auto hidden"></span>
+            <span class="icon dds__icon dds__icon--chevron-down dds__mt-1 dds__ml-auto"></span>
+        </span>
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">object</span>
+      
+    </div>
+    
+    
+    
+    
+    <div class="desc"><p>A collection of licenses instance. It’s an array of three elements. The first element is for mirroring (we only need to return the first element for mirroring), and all three elements are used for EC.</p>
+</div>
+    
+    
+  </div>
+</div><div class="nested-body schema-child-row" id="Response Body-LicensesCollection-rmh6-nested-body" style="">
+            <div colspan="2" class="nested">
+            <div class="" id="Response Body-LicensesCollection-rmh6-results-kiil">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name clickable-property" title="results" style="cursor: pointer;">results</span>
+    </div>
+    <span class="schema-toggle-icon" data-action="toggleNestedBodyCard" data-target-id="Response Body-LicensesCollection-rmh6-results-kiil" role="button" tabindex="0" aria-controls="Response Body-LicensesCollection-rmh6-results-kiil-nested-body" aria-expanded="false">
+            <span class="icon dds__icon dds__icon--chevron-right dds__mt-1 dds__ml-auto"></span>
+            <span class="icon dds__icon dds__icon--chevron-down dds__mt-1 dds__ml-auto hidden"></span>
+        </span>
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">array[object]</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div><div class="nested-body schema-child-row" id="Response Body-LicensesCollection-rmh6-results-kiil-nested-body" style="display:none">
+            <div colspan="2" class="nested">
+            <div class="" id="primitive-id">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="id">id</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      
+    </div>
+    
+    
+    
+    
+    <div class="desc"><p>Unique identifier of a licenses resource. for a singleton system, return 0.</p>
+</div>
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-is_licensed">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="is_licensed">is_licensed</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">boolean</span>
+      
+    </div>
+    
+    
+    
+    
+    <div class="desc"><p>When false, this license has never been active on this product instance.</p>
+</div>
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-is_active">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="is_active">is_active</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">boolean</span>
+      
+    </div>
+    
+    
+    
+    
+    <div class="desc"><p>When <code>is_licensed</code> is true, and <code>expiration_time</code> is either not applicable<br>
+for the <code>expiration_type</code> or in the future, the license is currently active.</p>
+<blockquote>
+<p>The license is considered active if the <code>is_licensed</code> status is true and the <code>expiration_time</code> is either not applicable based on the <code>expiration_type</code> or has a future date.</p>
+</blockquote>
+</div>
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-name">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="name">name</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      
+    </div>
+    
+    
+    
+    
+    <div class="desc"><p>The name of the feature codes.</p>
+</div>
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-type">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="type">type</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      
+    </div>
+    
+    
+    
+    
+    <div class="desc"><p>The various types of licenses are:</p>
+<ul>
+<li><code>RELEASE</code> - Base software and included features.</li>
+<li><code>FEATURE</code> - Name should include tier or feature name.</li>
+<li><code>CAPACITY</code> - Name should include metered resource, currently only storage.</li>
+<li><code>SUPPORT</code> - Support contract - entitled, but not licensed.</li>
+<li><code>SERVED_FEATURE</code> - Licenses are drawn from license server pool of license counts.</li>
+<li><code>SERVED_CAPACITY</code> - Licenses are drawn from a license server pool of license capacity.</li>
+</ul>
+<blockquote>
+<p>For PowerFlex systems, the value will always be <code>SERVED_CAPACITY</code>.</p>
+</blockquote>
+</div>
+    
+    <div class="enums">allowed values: <span class="dds__badge dds__badge--sm dds__badge--brand dds__badge--light">RELEASE</span> <span class="dds__badge dds__badge--sm dds__badge--brand dds__badge--light">FEATURE</span> <span class="dds__badge dds__badge--sm dds__badge--brand dds__badge--light">CAPACITY</span> <span class="dds__badge dds__badge--sm dds__badge--brand dds__badge--light">SUPPORT</span> <span class="dds__badge dds__badge--sm dds__badge--brand dds__badge--light">SERVED_FEATURE</span> <span class="dds__badge dds__badge--sm dds__badge--brand dds__badge--light">SERVED_CAPACITY</span></div>
+  </div>
+</div></div>
+<div class="" id="primitive-expiration_type">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="expiration_type">expiration_type</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      
+    </div>
+    
+    
+    
+    
+    <div class="desc"><p>The various types of license duration or expiration are:</p>
+<ul>
+<li><code>TRIAL</code> - A short term license to use sample functionality.</li>
+<li><code>EXT_TRIAL</code> - A one-time extension to an existing trial license.</li>
+<li><code>TIME_LIMITED</code> - A license with an expiration time.</li>
+<li><code>GRACE_PERIOD</code> - A time limited license that allows a short period of continued use after expiration.</li>
+<li><code>RESTRICTED</code> - A time limited license that restricts functionality after expiration. After expiration, you can still use existing configurations, but provisioning new systems won’t be possible.</li>
+<li><code>PERMANENT</code> - A non-expiring license.</li>
+</ul>
+</div>
+    
+    <div class="enums">allowed values: <span class="dds__badge dds__badge--sm dds__badge--brand dds__badge--light">TRIAL</span> <span class="dds__badge dds__badge--sm dds__badge--brand dds__badge--light">EXT_TRIAL</span> <span class="dds__badge dds__badge--sm dds__badge--brand dds__badge--light">TIME_LIMITED</span> <span class="dds__badge dds__badge--sm dds__badge--brand dds__badge--light">GRACE_PERIOD</span> <span class="dds__badge dds__badge--sm dds__badge--brand dds__badge--light">RESTRICTED</span> <span class="dds__badge dds__badge--sm dds__badge--brand dds__badge--light">PERMANENT</span></div>
+  </div>
+</div></div>
+<div class="" id="primitive-expiration_time">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="expiration_time">expiration_time</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string&lt;date-time&gt;</span>
+      
+    </div>
+    
+    
+    
+    
+    <div class="desc"><p>The time at which the license expires. This is only applicable for <code>TRIAL</code>, <code>EXT_TRIAL</code>, <code>TIME_LIMITED</code>, or <code>RESTRICTED</code> types of license-expiration.</p>
+</div>
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-grace_expiration_time">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="grace_expiration_time">grace_expiration_time</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string&lt;date-time&gt;</span>
+      
+    </div>
+    
+    
+    
+    
+    <div class="desc"><p>The time at which a license’s grace period expires. This is only applicable for the <code>GRACE_PERIOD</code> type of license-expiration.</p>
+</div>
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-capacity">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="capacity">capacity</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">integer&lt;int64&gt;</span>
+      
+    </div>
+    
+    
+    
+    
+    <div class="desc"><p>The limit on the license. This is only applicable for <code>CAPACITY</code>, <code>SERVED_CAPACITY</code>, or <code>SERVED_FEATURE</code> license types.</p>
+</div>
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-capacity_units">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="capacity_units">capacity_units</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      
+    </div>
+    
+    
+    
+    
+    <div class="desc"><p>Valid values of license <code>capacity_units</code> attribute.</p>
+<ul>
+<li><code>COUNT</code> - A specific quantity limit.</li>
+<li><code>PERCENT</code> - A percentage value in the 0-100 range.</li>
+<li><code>REQUEST_P_MIN</code> - Requests per minute.</li>
+<li><code>BYTE</code> - Bytes of data.</li>
+<li><code>BYTE_P_SEC</code>- Bytes per second of throughput.</li>
+<li><code>IO_P_SEC</code> - IOs per second of throughput.</li>
+</ul>
+<blockquote>
+<p>For PowerFlex, the return value is <code>BYTE</code>.</p>
+</blockquote>
+</div>
+    
+    <div class="enums">allowed values: <span class="dds__badge dds__badge--sm dds__badge--brand dds__badge--light">COUNT</span> <span class="dds__badge dds__badge--sm dds__badge--brand dds__badge--light">PERCENT</span> <span class="dds__badge dds__badge--sm dds__badge--brand dds__badge--light">REQUEST_P_MIN</span> <span class="dds__badge dds__badge--sm dds__badge--brand dds__badge--light">BYTE</span> <span class="dds__badge dds__badge--sm dds__badge--brand dds__badge--light">BYTE_P_SEC</span> <span class="dds__badge dds__badge--sm dds__badge--brand dds__badge--light">IO_P_SEC</span></div>
+  </div>
+</div></div>
+<div class="" id="primitive-served_capacity_used_all">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="served_capacity_used_all">served_capacity_used_all</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">integer&lt;int64&gt;</span>
+      
+    </div>
+    
+    
+    
+    
+    <div class="desc"><p>For <code>SERVED_CAPACITY</code> and <code>SERVED_FEATURE</code> types of licenses, this reports the total capacity being used by all systems consuming from the pool.</p>
+</div>
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-served_capacity_used_system">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="served_capacity_used_system">served_capacity_used_system</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">integer&lt;int64&gt;</span>
+      
+    </div>
+    
+    
+    
+    
+    <div class="desc"><p>For <code>CAPACITY</code> and <code>SERVED_CAPACITY</code> types of licenses, this reports how much of the capacity is being used by the local system.</p>
+</div>
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-capacity_enforcement_status">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="capacity_enforcement_status">capacity_enforcement_status</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      
+    </div>
+    
+    
+    
+    
+    <div class="desc"><p>The compliance level or status of the license. The possible levels and their descriptions are listed below:</p>
+<ul>
+<li><code>OK</code> - Consumption is under 90% of capacity limit, and expiration is over 60 days away.</li>
+<li><code>INFO</code> - For future use to show information about licensing state that is not near expiration or consumption limit.</li>
+<li><code>WARNING</code> - The used raw capacity is over 90% and/or expiration is less than 60 days away.</li>
+<li><code>ALERT</code> - The used raw capacity is over 95% and/or expiration is less than 15 days away. Take action to adjust usage, licensed capacity, or expiration as soon as possible.</li>
+<li><code>CRITICAL</code> - The system has exceeded the licensed capacity limit or license expired. Data can still be accessed but configuration changes are blocked. Take action to adjust usage, licensed capacity, or expiration as soon as possible.</li>
+</ul>
+</div>
+    
+    <div class="enums">allowed values: <span class="dds__badge dds__badge--sm dds__badge--brand dds__badge--light">OK</span> <span class="dds__badge dds__badge--sm dds__badge--brand dds__badge--light">INFO</span> <span class="dds__badge dds__badge--sm dds__badge--brand dds__badge--light">WARNING</span> <span class="dds__badge dds__badge--sm dds__badge--brand dds__badge--light">ALERT</span> <span class="dds__badge dds__badge--sm dds__badge--brand dds__badge--light">CRITICAL</span></div>
+  </div>
+</div></div>
+            </div>
+          </div></div>
+            </div>
+          </div></div></div></div></div></div></div></div>
+<div class="api_docs_collapsible dds__mb-3" id="a98d99eac2b97"><div class="api_docs_collapsible-header dds__p-3" data-action="toggleCollapse" data-target-id="a98d99eac2b97" role="button" tabindex="0" aria-controls="a98d99eac2b97-body" aria-expanded="false"><span class="title"><div class="response-frame"><span class="text-red"><span class="dds__badge dds__badge--dot dds__mr-2"></span>400</span> : Bad Request</div></span><span class="icon icon-collapsed dds__icon dds__icon--chevron-right dds__mt-1 dds__ml-auto"></span><span class="icon icon-expanded dds__icon dds__icon--chevron-down dds__mt-1 dds__ml-auto"></span></div><div class="api_docs_collapsible-body" id="a98d99eac2b97-body"><div class="static-frame-response-section"><div><div class="headers-section"><div><p>Bad request.</p>
+</div><h5 class="title dds__mt-2">Response Body</h5><div class="static-frame-request-section"><div class="expanded" id="Response Body-error_response-kfgp">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name clickable-property" title="error_response" style="cursor: pointer;">error_response</span>
+    </div>
+    <span class="schema-toggle-icon" data-action="toggleNestedBodyCard" data-target-id="Response Body-error_response-kfgp" role="button" tabindex="0" aria-controls="Response Body-error_response-kfgp-nested-body" aria-expanded="true">
+            <span class="icon dds__icon dds__icon--chevron-right dds__mt-1 dds__ml-auto hidden"></span>
+            <span class="icon dds__icon dds__icon--chevron-down dds__mt-1 dds__ml-auto"></span>
+        </span>
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">object</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div><div class="nested-body schema-child-row" id="Response Body-error_response-kfgp-nested-body" style="">
+            <div colspan="2" class="nested">
+            <div class="" id="primitive-http_status_code">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="http_status_code">http_status_code</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">integer&lt;int32&gt;</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="Response Body-error_response-kfgp-messages-iv7u">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name clickable-property" title="messages" style="cursor: pointer;">messages</span>
+    </div>
+    <span class="schema-toggle-icon" data-action="toggleNestedBodyCard" data-target-id="Response Body-error_response-kfgp-messages-iv7u" role="button" tabindex="0" aria-controls="Response Body-error_response-kfgp-messages-iv7u-nested-body" aria-expanded="false">
+            <span class="icon dds__icon dds__icon--chevron-right dds__mt-1 dds__ml-auto"></span>
+            <span class="icon dds__icon dds__icon--chevron-down dds__mt-1 dds__ml-auto hidden"></span>
+        </span>
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">array[object]</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div><div class="nested-body schema-child-row" id="Response Body-error_response-kfgp-messages-iv7u-nested-body" style="display:none">
+            <div colspan="2" class="nested">
+            <div class="" id="primitive-code">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="code">code</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-timestamp">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="timestamp">timestamp</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string&lt;date-time&gt;</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-severity">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="severity">severity</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      
+    </div>
+    
+    
+    
+    
+    <div class="desc"><p>error message severity enum</p>
+</div>
+    
+    <div class="enums">allowed values: <span class="dds__badge dds__badge--sm dds__badge--brand dds__badge--light">INFO</span> <span class="dds__badge dds__badge--sm dds__badge--brand dds__badge--light">WARNING</span> <span class="dds__badge dds__badge--sm dds__badge--brand dds__badge--light">ERROR</span> <span class="dds__badge dds__badge--sm dds__badge--brand dds__badge--light">CRITICAL</span></div>
+  </div>
+</div></div>
+<div class="" id="primitive-message">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="message">message</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-message_l10n">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="message_l10n">message_l10n</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-substitution_args">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="substitution_args">substitution_args</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+            </div>
+          </div></div>
+            </div>
+          </div></div></div></div></div></div></div></div></div></div>
+   </div>
+        <div class="api__doc__right-section dds__pl-2"><div class="api_docs_collapsible highlight dds__mb-3 expanded" id="server"><div class="api_docs_collapsible-header dds__p-3" data-action="toggleCollapse" data-target-id="server" role="button" tabindex="0" aria-expanded="true"><div class="dds__w-100"><div class="server-title"><span class="dds__badge dds__badge--md http-method-get"><span class="dds__badge__label badge-font">GET</span></span><button style="float: right; border: 1px solid #9ca3af; display:none" class="dds__ml-auto dds__button dds__button--sm" type="button" id="drawer-trigger" data-action="clickedTryOutButton">Try it</button></div><div class="dds__p-2">/licenses</div></div><span class="icon icon-collapsed dds__icon dds__icon--chevron-right dds__ml-auto"></span><span class="icon icon-expanded dds__icon dds__icon--chevron-down dds__ml-auto"></span></div><div class="api_docs_collapsible-body dds__px-3 dds__pt-2 dds__pb-3"><div class="dds__pr-2"></div><div class="dds__d-flex dds__justify-content-end dds__my-2"><button class="dds__button dds__button--sm" data-action="copyCodeById" data-target-id="server-copy-0">Copy</button></div><pre tabindex="0"><code id="server-copy-0">/licenses</code></pre></div></div>
+<div class="api_docs_collapsible highlight dds__mb-3 expanded" id="responsesamples"><div class="api_docs_collapsible-header dds__p-3" data-action="toggleCollapse" data-target-id="responsesamples" role="button" tabindex="0" aria-controls="responsesamples-body" aria-expanded="true">Response Samples<span class="icon icon-collapsed dds__icon dds__icon--chevron-right dds__ml-auto"></span><span class="icon icon-expanded dds__icon dds__icon--chevron-down dds__ml-auto"></span></div><div class="api_docs_collapsible-body dds__px-3 dds__pt-2 dds__pb-3" id="responsesamples-body"><div class="response-tab-wrapper"><div class="tab-header" role="tablist"><h4 class="tab-item active" role="tab" aria-selected="true" aria-controls="responsesamples-tab-200" data-action="switchTab" data-target-id="responsesamples-tab-200">200</h4><h4 class="tab-item" role="tab" aria-selected="false" aria-controls="responsesamples-tab-400" data-action="switchTab" data-target-id="responsesamples-tab-400">400</h4></div><div class="tab-body"><div class="tab-content active" id="responsesamples-tab-200" role="tabpanel" aria-labelledby="responsesamples-tab-200"><div class="dds__pt-2" role="presentation"><div class="content-type-box dds__mb-1"><div class="content-type-label">application/json</div></div><div class="content-description dds__mb-1"><p>OK</p>
+</div><label for="responsesamples-tab-200-example" class="dds__visually-hidden">Select response example</label>
+       <select id="responsesamples-tab-200-example" class="dds__select__field" data-action="onExampleSelectChange" data-code-container-id="responsesamples-tab-200-code" aria-label="Select response example">
+        <option value="0" data-code="{
+  &quot;results&quot;: [
+    {
+      &quot;is_active&quot;: true,
+      &quot;grace_expiration_time&quot;: &quot;2000-01-23T04:56:07.000+00:00&quot;,
+      &quot;expiration_time&quot;: &quot;2000-01-23T04:56:07.000+00:00&quot;,
+      &quot;served_capacity_used_all&quot;: 6,
+      &quot;is_licensed&quot;: true,
+      &quot;capacity&quot;: 0,
+      &quot;name&quot;: &quot;name&quot;,
+      &quot;served_capacity_used_system&quot;: 1,
+      &quot;id&quot;: &quot;id&quot;
+    },
+    {
+      &quot;is_active&quot;: true,
+      &quot;grace_expiration_time&quot;: &quot;2000-01-23T04:56:07.000+00:00&quot;,
+      &quot;expiration_time&quot;: &quot;2000-01-23T04:56:07.000+00:00&quot;,
+      &quot;served_capacity_used_all&quot;: 6,
+      &quot;is_licensed&quot;: true,
+      &quot;capacity&quot;: 0,
+      &quot;name&quot;: &quot;name&quot;,
+      &quot;served_capacity_used_system&quot;: 1,
+      &quot;id&quot;: &quot;id&quot;
+    }
+  ]
+}" data-description="Example">
+        Example
+      </option>
+      </select></div><div class="dds__d-flex dds__justify-content-end dds__my-2" role="presentation"><button class="dds__button dds__button--sm" data-action="copyCodeById" data-target-id="responsesamples-tab-200-code">Copy</button></div><div id="responsesamples-tab-200-code" role="presentation"><pre tabindex="0"><code>{
+  "results": [
+    {
+      "is_active": true,
+      "grace_expiration_time": "2000-01-23T04:56:07.000+00:00",
+      "expiration_time": "2000-01-23T04:56:07.000+00:00",
+      "served_capacity_used_all": 6,
+      "is_licensed": true,
+      "capacity": 0,
+      "name": "name",
+      "served_capacity_used_system": 1,
+      "id": "id"
+    },
+    {
+      "is_active": true,
+      "grace_expiration_time": "2000-01-23T04:56:07.000+00:00",
+      "expiration_time": "2000-01-23T04:56:07.000+00:00",
+      "served_capacity_used_all": 6,
+      "is_licensed": true,
+      "capacity": 0,
+      "name": "name",
+      "served_capacity_used_system": 1,
+      "id": "id"
+    }
+  ]
+}</code></pre></div></div><div class="tab-content" id="responsesamples-tab-400" role="tabpanel" aria-labelledby="responsesamples-tab-400"><div class="dds__pt-2" role="presentation"><div class="content-type-box dds__mb-1"><div class="content-type-label">application/json</div></div><div class="content-description dds__mb-1"><p>Bad request.</p>
+</div><label for="responsesamples-tab-400-example" class="dds__visually-hidden">Select response example</label>
+       <select id="responsesamples-tab-400-example" class="dds__select__field" data-action="onExampleSelectChange" data-code-container-id="responsesamples-tab-400-code" aria-label="Select response example">
+        <option value="0" data-code="{
+  &quot;http_status_code&quot;: 0,
+  &quot;messages&quot;: [
+    {
+      &quot;code&quot;: &quot;string&quot;,
+      &quot;timestamp&quot;: &quot;2026-10-23T21:14:14.253Z&quot;,
+      &quot;severity&quot;: &quot;string&quot;,
+      &quot;message&quot;: &quot;string&quot;,
+      &quot;message_l10n&quot;: &quot;string&quot;,
+      &quot;substitution_args&quot;: &quot;string&quot;
+    }
+  ]
+}" data-description="Example">
+        Example
+      </option>
+      </select></div><div class="dds__d-flex dds__justify-content-end dds__my-2" role="presentation"><button class="dds__button dds__button--sm" data-action="copyCodeById" data-target-id="responsesamples-tab-400-code">Copy</button></div><div id="responsesamples-tab-400-code" role="presentation"><pre tabindex="0"><code>{
+  "http_status_code": 0,
+  "messages": [
+    {
+      "code": "string",
+      "timestamp": "2026-10-23T21:14:14.253Z",
+      "severity": "string",
+      "message": "string",
+      "message_l10n": "string",
+      "substitution_args": "string"
+    }
+  ]
+}</code></pre></div></div></div></div></div></div></div>
+      </div>
+    </div></div></body></html>

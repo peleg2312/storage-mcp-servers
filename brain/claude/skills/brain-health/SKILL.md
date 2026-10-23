@@ -30,8 +30,9 @@ Note which docs server answered (docs-search or docs-local); if neither, test th
   prints hit@1 / hit@5 / MRR); lower means a damaged or old library, or an old search.py.
 
 ## 3. Hooks and settings (`~/.claude/settings.json`)
-- `hooks.PreToolUse` has a command ending in `hooks/block-write-tools.py` with matcher `mcp__.*` (the read-only
-  guard), `hooks.PostToolUse` one ending in `hooks/docs-hints.py` (docs meaning of EMS / alerts / errors in
+- `hooks.PreToolUse` has a command ending in `hooks/block-write-tools.py` with matcher `mcp__.*|Bash` (the read-only
+  guard for MCP tools and shell commands; test: `echo '{"tool_name":"Bash","tool_input":{"command":"scli --add_volume"}}'
+  | python3 ~/.claude/hooks/block-write-tools.py` must exit 2; matcher `mcp__.*` alone = old install, re-run it), `hooks.PostToolUse` one ending in `hooks/docs-hints.py` (docs meaning of EMS / alerts / errors in
   live results), `hooks.UserPromptSubmit` one ending in `hooks/docs-leads.py` (library leads per request) and `hooks.SessionStart` one ending in `hooks/session-start.py` (user install: `~/.claude/hooks/`;
   project install: `"$CLAUDE_PROJECT_DIR"/.claude/hooks/`).
 - The four files exist in `~/.claude/hooks/` and `python3 -m py_compile` them; docs-hints check:

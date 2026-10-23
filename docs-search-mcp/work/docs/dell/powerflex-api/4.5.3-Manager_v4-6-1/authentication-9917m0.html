@@ -1,0 +1,118 @@
+<html><head><title>PowerFlex API 4.5.3-Manager_v4-6-1: Authentication</title></head><body><p>Getting Started > PowerAPI (4.5.3)</p><div><div class="api-docs-main-div dds__pl-2">
+    <div class="markdown-wrapper dds__py-3">
+      <div class="markdown-body dds__px-3"><h1 id="authentication" class="anchor-scroll-top-offset">Authentication</h1>
+<p>All API requests require OAUTH2 access tokens for command authorization.</p>
+<p>Every API call to PowerFlex must have an access token as a bearer authorization header except for the login and refresh token operations.<br>
+The login and refresh token operations uses the OIDC protocol.</p>
+<p>Authorization: Bearer &lt;insert access token here&gt;</p>
+<p><strong>Example (Get all  PowerFlex users)</strong>:</p>
+<pre><code class="language-bash">curl --location --request GET 'https://powerflex-12.example.com/rest/v1/users' \
+--header 'Accept: application/json' \
+--header 'Content-Type: application/json' \
+--header 'Authorization: Bearer eyJhbG...PSWkQ' \
+--data-raw ''
+</code></pre>
+<p><strong>Log in to PowerFlex</strong></p>
+<p><strong>Request</strong><br><br>
+POST https://&lt;host&gt;/rest/auth/login<br><br>
+The request should contain the username and password in the payload.</p>
+<p><strong>Response</strong><br><br>
+The response includes the following parameters:</p>
+<table>
+<thead>
+<tr>
+<th>Response attribute</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>access_token</td>
+<td>Use this access token for consequent calls to the system.</td>
+</tr>
+<tr>
+<td>expires_in</td>
+<td>An access token has an expiration date. The access token is valid only for 5 minutes. To continue accessing the system after the token expires, you can either update the token using standard OIDC refresh operation, or log in again to get a new access token.</td>
+</tr>
+<tr>
+<td>refresh_token</td>
+<td>OIDC allows you to refresh a token and fetch a new access token without logging in again (with username and password). This refresh token can only be used once to refresh the current session. Once you refresh or log in again, you will get a new refresh token, and the old refresh token becomes invalid.</td>
+</tr>
+<tr>
+<td>refresh_expires_in</td>
+<td>A refresh token has an expiration date. The refresh token is valid only for 30 minutes.</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Example</strong>:</p>
+<pre><code class="language-bash">curl --location --request POST 'https://powerflex-12.example.com/rest/auth/login' \
+--header 'Accept: application/json' \
+--header 'Content-Type: application/json' \
+--data-raw '{
+    "username": "davidr",
+    "password": "hf443!!e"
+}'
+
+RESPONSE:
+
+{
+    "access_token": "eyJhbG...Mudw",
+    "expires_in": 300,
+    "refresh_expires_in": 1800,
+    "refresh_token": "eyJhbG...0fKrcMEE",
+    "token_type": "bearer",
+    "id_token": "eyJhbGciO...FKNw",
+    "not-before-policy": 0,
+    "session_state": "cc2c3f61-6cc7-4c9d-b75f-0c9889eb938e",
+    "scope": "openid profile email"
+}
+</code></pre>
+<p><strong>Log out</strong></p>
+<p><strong>REQUEST</strong><br><br>
+POST https://&lt;host&gt;/rest/auth/logout<br><br>
+The request should contain the access token for authentication and the refresh token that you have received during login or refresh operation.</p>
+<p><strong>Note</strong>: For PowerFlex block, you can use the old login method. However, the old logout method is not supported.</p>
+<p><strong>Example</strong></p>
+<pre><code class="language-bash">curl --location --request POST 'https://powerflex-12.example.com/rest/auth/logout' \
+--header 'Accept: application/json' \
+--header 'Content-Type: application/json' \
+--header 'Authorization: Bearer eyJhbGciOi...-AouAgQ' \
+--data-raw '{
+    "refresh_token": "eyJhbGc...lOROrc"}'
+</code></pre>
+<p><strong>Refresh access token</strong></p>
+<p><strong>Request</strong><br><br>
+POST https://&lt;host&gt;/rest/auth/update-token<br><br>
+Access token is not required for refresh operation. Use the refresh token that you have received during login and refresh operations in payload.</p>
+<p><strong>Example:</strong></p>
+<pre><code class="language-bash">curl --location --request POST 'https://powerflex-12.example.com/rest/auth/update-token' \
+--header 'Content-Type: application/json' \
+--header 'Accept: application/json' \
+--data-raw '{
+    "refresh_token": "eyJh...C7QN0"
+}'
+
+Response:
+
+{
+    "scope": "openid profile email",
+    "access_token": "eyJhb...II1SxPBA",
+    "expires_in": 300,
+    "refresh_expires_in": 1800,
+    "refresh_token": "eyJhb...3QKhM",
+    "token_type": "Bearer",
+    "id_token": "eyJhbG...LhhhCUg",
+    "session_state": "54ff7171-5311-43fb-aa4c-ce5a5076268f"
+}
+</code></pre>
+<p><strong>Note</strong>: The default session timeout value is 15 minutes. The session will be terminated after the timeout duration.</p>
+</div>
+      <div class="markdown-sidebar">
+        <div class="markdown-toc-title">
+          <i class="icon dds__icon dds__icon--bookmark"></i>
+          On this page
+        </div>
+          <ul><li class="level-1"><a href="#authentication" data-toc-link="">Authentication</a></li></ul>
+      </div>
+    </div>
+  </div></div></body></html>

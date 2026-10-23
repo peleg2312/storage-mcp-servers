@@ -1,0 +1,39 @@
+<html><head><title>PowerFlex API 4.5.2-Manager_v4-6-0: Configuring PFMP Appliance SSL Certificates</title></head><body><p>Tasks > PowerFlex Manager API tasks</p><div><div class="api-docs-main-div dds__pl-2">
+    <div class="markdown-wrapper dds__py-3">
+      <div class="markdown-body dds__px-3"><h1 id="configuring-powerflex-management-platform-appliance-ssl-certificates" class="anchor-scroll-top-offset">Configuring PowerFlex Management Platform appliance SSL certificates</h1>
+<p>To configure PFMP appliance SSL certificates, you need to:</p>
+<ol>
+<li>Create the certificate signing request (CSR).</li>
+</ol>
+<p><code>POST /Api/V1/corelcm/csr</code></p>
+<p>Payload:</p>
+<pre><code class="language-json">{"commonName":"100.68.101.116","country":"US","emailAddress":"test@apoc.net","locality":"Round Rock","organization":"PFMP","organizationUnit":"Powerflex","state":"TX"}
+</code></pre>
+<p>Response:</p>
+<pre><code class="language-json">{"csr":"-----BEGIN CERTIFICATE REQUEST-----\nMIIE+zCCAuMCAQAwgYcxFzAVBgNVBAMMDjEwMC42OC4xMDEuMTE2MQswCQYDVQQG\nEwJVUzELMAkGA1UECAwCQ0ExETAPBgNVBAcMCFNhbiBKb3NlMQ0wCwYDVQQKDARQ\nRk1QMRIwEAYDVQQLDAlQb3dlcmZsZXgxHDAaBgkqhkiG9w0BCQEWDXRlc3RAYXBv\nYy5uZXQwggIiMA0GCSqGSIb3DQEBAQUAA4ICDwAwggIKAoICAQC4tdHyHI9FNEjZ\nPxq95ANvQ/DG8R/Lc8NGk0u7CejyE9zZClhgo2Q+ZZcYFPxCWuPHm6h8FlDvSjFN\njjkyDnCGLHhzMnuKk7Ctca4Jhqh42Z9qQ2SBzukYvHNkX9JbPrj5MwN1sd6TdUAU\nilr1XcTpAO9tTuH30kie9oFeIv/EUEciC0ECMUW+J3KQIgMj1ErPgejqRS149bFx\n1bZjg7bEuwjn7DDYofB58GAHRb/R/jd1koUk1bAO85iXJE5NIFxwhwB5jH5K3tjp\noes2ooRI9WKJoLNtDYQq9z9vyMaI5Ne8gx0vnPaSlpMZcxA7cJ8L4CWBdXCFg8jt\nnQMgZDNW64zxY2JewtnEEyOzh57kF8RIXZGt4igTxeBT3iTGAhDURvBZ0DKfkFE1\nva+kgFM1K/4lBpnAEQVbV9rDV4KU/5MGAAaza8HbvOhUOgQWA3Kyf6tydbMBac0S\nPaOgQuVAhwlk8tE5yDXsCnJZImZQXadDbR6CP7w6HoqILmfUELKNt71BJtsOQQnJ\nAIZb2vGvTp17n7MUvHBFE92hP0KJqfc5ItmTr2ibWW1Hkyj2LsCwgbioMcTE39Ss\nwgj6hN2dnBFrXHkhWOvHguxZk5I4Eu2ZrskvrWnBJVr9XpSqjznfTHUtKbQbn+xR\nRxpY0xibHdjZMRaLFkelRgJ8mK5XswIDAQABoC4wLAYJKoZIhvcNAQkOMR8wHTAb\nBgNVHREEFDAShwRkRGV0hwQK8IABhwQK8H8BMA0GCSqGSIb3DQEBCwUAA4ICAQCH\nStw5dFoB4aLDJh8pDITUfBLNh+dMbxVhPtYC1kJy9eYm6zL6yexQbmLousuBdj9o\nBEhHb6aSOVF6MCqhvig/2IQuBu9SSI7cZq/8swmRYcGPHfuYKgLCER3QXrgSZ0Wk\neGEiONCa/RYOqkeZqd5FoyZFX2I+2a7MICtdLx60ZtrF4fjVwb3mptG9IddS+wHT\nrD5hj5VA9Jx7s8yrWLJEtY48HISgqNf7REfSd5C+PfviuzBnAwpg1tx3BDVKKIPh\nh55FTw+lJ/YX318ib0zgcQTLrohitAYSAGx2OhdNwJfAa92/Su9Ii2HdSuIV9M7S\nBOJasBmG5nDcdkH7bmU6qGzfd9D/97alYamgsWrtfOGBu83PIqxKOw8EVDOwZwzp\nbYZRbFP1asCzq7Zy4HhOmukhL/sKTJCPVxoPKKbW/1Bj9/AWxHI4mibhTK8/ETNE\nOaTmMFir2BHx1M2EDTYeei2aHIE5YAY0MUcV9dRIARV6oKd4Fr+wZgXMnwrQ2BUa\nuypBxzZWfhcsHqF/kNddmFSCgB4or+td+F3IKQl1I9iVCt5AQ8OtyAlSZ0s+dNoo\nZKdy1uS8x1DV4ps+ev2WlLfBsWlth85RLuz1httGtvSsN48eEZn9sHM9SvSS010w\nCYbr63WodUkZMj6GmBtrueuTyLCmZbxjwGWmT+OxQQ==\n-----END CERTIFICATE REQUEST-----\n"}
+</code></pre>
+<ol>
+<li>Upload the signed certificate for Ingress (also, known as the “Appliance SSL certificate”). Note that the name must be empty.</li>
+</ol>
+<p><code>POST /Api/V1/corelcm/uploadSignedCertificate</code></p>
+<p>Payload:</p>
+<pre><code class="language-json">{"certificateContent":"-----BEGIN CERTIFICATE-----\r\nMIIEtDCCApygAwIBAgIRAItYdD+YW+JXqA41G4zRDlgwDQYJKoZIhvcNAQELBQAw\r\ngYoxCzAJBgNVBAYTAlVTMQswCQYDVQQIDAJUWDETMBEGA1UEBwwKUm91bmQgUm9j\r\nazERMA8GA1UECgwIREVMTCBFTUMxEDAOBgNVBAsMB1N0b3JhZ2UxGTAXBgNVBAMM\r\nEFBsYXRmb3JtIFJvb3QgQ0ExGTAXBgkqhkiG9w0BCQEWCmFAZGVsbC5jb20wHhcN\r\nMjMwMjIzMDQwNjM4WhcNMjMwNTI0MDQwNjM4WjArMRAwDgYDVQQKEwdkZWxsZW1j\r\nMRcwFQYDVQQDEw4xMDAuNjguMTAxLjExNjCCASIwDQYJKoZIhvcNAQEBBQADggEP\r\nADCCAQoCggEBANyvXMo8SpSiU9ILovi9X4oPzO06/bvkoZU6zNQQ0f/xYxZtex54\r\n8YRgMBqSweNh/RZJ2bD1fVhQLN9F7RYXZhq5/o2DloWcI8RfTThSeF3ifs8YAaGO\r\nnQtlKIZNUQwICLu3MvxlG8DglehrFqYraZSIkKkz9U4RupQWqUm6fhHEyqCgbqUs\r\nfAGRNGcQVZaH1Y7eVo11FoWxDjcN0s6KOkSvyWqYsmrwky7x5/0VpOrzUzud+LBy\r\nRch0eP9xpGA/wlvVO1Rh+kqn2lgyngWx4D6Uiz5JsSxQak0bMjgIorWz8u6b6ciE\r\nwb5jIR7XNvtcZTZd/xKkCLtXEPsLUOVsa1ECAwEAAaNzMHEwEwYDVR0lBAwwCgYI\r\nKwYBBQUHAwEwDAYDVR0TAQH/BAIwADAfBgNVHSMEGDAWgBSJyPQGIvIZh5W8UU4A\r\nkR2bwEQPPDArBgNVHREEJDAigg4xMDAuNjguMTAxLjExNocEZERldIcECvCAAYcE\r\nCvB/ATANBgkqhkiG9w0BAQsFAAOCAgEAJ3Vjji+ELnJuNrE++6a9Joj/5521iB7+\r\n36JrMW7a+9pzV756OIrqGGnp71jNOcCvqb2aWHtYtQsA44bpA86Jpc3tYV/P7sc7\r\nSKWpCNkUCEvzmSFJ5QJnb5AdkQVOB2mvv4WII08uYtkvqwGe5VOBfpFteDaVa3V5\r\nrzIzNuSobGTh9KyBl9UpeyxWig63BB/jmQr1Im9XFtkBOnRCacYNEdtxUrMxfbhu\r\nk1i8DBznOJEa6VdiXoPgW9C/BvElc5HKGxOShG1nB0U/WIE9Mjh1psLs+bYyFp/T\r\nphWZvZyYCeTpPvwAYFtKTu3fNpFt7hDBhLite5lGEcT130suFwnFcVzxjqX8oHkI\r\nH3UKycny7Dea84gDuqBYQBlB7GiRnAhXVui7eCUQIPzjlyMyagPdosD2fo47H90N\r\njCRJcuq64pIqFKai2UBoSit2kSPuXGKdMaYumHwFTYaXxZMkmbWsqQNdwTuQSkpc\r\nkOzV7BIbFPvCqcLlEq0tMRkRFrCBpDEXkxDDhykrjED9nyHbjxyLuUZ0o71/3cLE\r\nKBjJz8dnC415sOtxustOPbjvcBx/FoJs6P/Mr3RTpkczFTFHXmuJUtyn6Ptefo0B\r\nbAZPzTL4JxhxUp0eAwFLTZ8W7jmHfTgIjb1kgDAFTscnRfwJzL2B0GTb5FbSa3P+\r\nmuTbt7lE5x4=\r\n-----END CERTIFICATE-----\r\n","name":""}
+</code></pre>
+<ol>
+<li>Upload the trusted CA certificate for LDAP or SSO. The name is required. If it is empty, the call will result in an error. The name will be used as an alias in the trusted CA store.</li>
+</ol>
+<p><code>POST /Api/V1/corelcm/uploadTrustedCertificate</code></p>
+<p>Payload:</p>
+<pre><code class="language-json">{"certificateContent":"-----BEGIN CERTIFICATE-----\r\nMIIEtDCCApygAwIBAgIRAItYdD+YW+JXqA41G4zRDlgwDQYJKoZIhvcNAQELBQAw\r\ngYoxCzAJBgNVBAYTAlVTMQswCQYDVQQIDAJUWDETMBEGA1UEBwwKUm91bmQgUm9j\r\nazERMA8GA1UECgwIREVMTCBFTUMxEDAOBgNVBAsMB1N0b3JhZ2UxGTAXBgNVBAMM\r\nEFBsYXRmb3JtIFJvb3QgQ0ExGTAXBgkqhkiG9w0BCQEWCmFAZGVsbC5jb20wHhcN\r\nMjMwMjIzMDQwNjM4WhcNMjMwNTI0MDQwNjM4WjArMRAwDgYDVQQKEwdkZWxsZW1j\r\nMRcwFQYDVQQDEw4xMDAuNjguMTAxLjExNjCCASIwDQYJKoZIhvcNAQEBBQADggEP\r\nADCCAQoCggEBANyvXMo8SpSiU9ILovi9X4oPzO06/bvkoZU6zNQQ0f/xYxZtex54\r\n8YRgMBqSweNh/RZJ2bD1fVhQLN9F7RYXZhq5/o2DloWcI8RfTThSeF3ifs8YAaGO\r\nnQtlKIZNUQwICLu3MvxlG8DglehrFqYraZSIkKkz9U4RupQWqUm6fhHEyqCgbqUs\r\nfAGRNGcQVZaH1Y7eVo11FoWxDjcN0s6KOkSvyWqYsmrwky7x5/0VpOrzUzud+LBy\r\nRch0eP9xpGA/wlvVO1Rh+kqn2lgyngWx4D6Uiz5JsSxQak0bMjgIorWz8u6b6ciE\r\nwb5jIR7XNvtcZTZd/xKkCLtXEPsLUOVsa1ECAwEAAaNzMHEwEwYDVR0lBAwwCgYI\r\nKwYBBQUHAwEwDAYDVR0TAQH/BAIwADAfBgNVHSMEGDAWgBSJyPQGIvIZh5W8UU4A\r\nkR2bwEQPPDArBgNVHREEJDAigg4xMDAuNjguMTAxLjExNocEZERldIcECvCAAYcE\r\nCvB/ATANBgkqhkiG9w0BAQsFAAOCAgEAJ3Vjji+ELnJuNrE++6a9Joj/5521iB7+\r\n36JrMW7a+9pzV756OIrqGGnp71jNOcCvqb2aWHtYtQsA44bpA86Jpc3tYV/P7sc7\r\nSKWpCNkUCEvzmSFJ5QJnb5AdkQVOB2mvv4WII08uYtkvqwGe5VOBfpFteDaVa3V5\r\nrzIzNuSobGTh9KyBl9UpeyxWig63BB/jmQr1Im9XFtkBOnRCacYNEdtxUrMxfbhu\r\nk1i8DBznOJEa6VdiXoPgW9C/BvElc5HKGxOShG1nB0U/WIE9Mjh1psLs+bYyFp/T\r\nphWZvZyYCeTpPvwAYFtKTu3fNpFt7hDBhLite5lGEcT130suFwnFcVzxjqX8oHkI\r\nH3UKycny7Dea84gDuqBYQBlB7GiRnAhXVui7eCUQIPzjlyMyagPdosD2fo47H90N\r\njCRJcuq64pIqFKai2UBoSit2kSPuXGKdMaYumHwFTYaXxZMkmbWsqQNdwTuQSkpc\r\nkOzV7BIbFPvCqcLlEq0tMRkRFrCBpDEXkxDDhykrjED9nyHbjxyLuUZ0o71/3cLE\r\nKBjJz8dnC415sOtxustOPbjvcBx/FoJs6P/Mr3RTpkczFTFHXmuJUtyn6Ptefo0B\r\nbAZPzTL4JxhxUp0eAwFLTZ8W7jmHfTgIjb1kgDAFTscnRfwJzL2B0GTb5FbSa3P+\r\nmuTbt7lE5x4=\r\n-----END CERTIFICATE-----\r\n","name":"TrustedCA"
+}
+</code></pre>
+</div>
+      <div class="markdown-sidebar">
+        <div class="markdown-toc-title">
+          <i class="icon dds__icon dds__icon--bookmark"></i>
+          On this page
+        </div>
+          <ul><li class="level-1"><a href="#configuring-powerflex-management-platform-appliance-ssl-certificates" data-toc-link="">Configuring PowerFlex Management Platform appliance SSL certificates</a></li></ul>
+      </div>
+    </div>
+  </div></div></body></html>

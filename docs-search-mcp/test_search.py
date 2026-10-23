@@ -182,3 +182,6 @@ for _n in ("_index.md", "_PARTNER_DOWN__TAKEOVER_IMPOSSIBLE_1a2b.html", ".hidden
     open(os.path.join(_d, _n), "w").write("x")
 assert sorted(os.path.basename(p) for p in docs_index.iter_files(_d)) == ["_PARTNER_DOWN__TAKEOVER_IMPOSSIBLE_1a2b.html", "_index.md"]
 print("underscore files OK")
+t, secs = docs_index.parse_md("# Features { #features }\n\nx\n\n## Sub part { #sub-part }\n\ny\n", "f")
+assert t == "Features" and [h for h, _ in secs] == ["Features", "Sub part"], (t, secs)                  # mkdocs anchors dropped
+print("mkdocs anchors OK")

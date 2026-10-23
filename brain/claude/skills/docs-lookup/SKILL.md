@@ -1,7 +1,7 @@
 ---
 name: docs-lookup
 description: How to answer from the offline documentation library - product names and versions, search method, reading, citing, known bug / fixed in which version. Use for any request that depends on how a vendor product works: errors, procedures, concepts, design, best practices, APIs and SDKs, known bugs.
-when_to_use: Trigger phrases - "what do the docs say", "is this a known bug", "best practice for", "how does X work", "build / script something with ONTAP / PowerMax"
+when_to_use: Trigger phrases - "what do the docs say", "is this a known bug", "best practice for", "how does X work", "build / script something with ONTAP / PowerMax", "how do I do X in FastAPI / Pydantic / fastmcp"
 ---
 # Library lookup (how every docs answer is built)
 
@@ -19,7 +19,7 @@ vendor / product: `~/.claude/brain/library/MANIFEST.md`. There is no internet; n
 | Trident | `trident-<yymm>` of the installed release (`trident-2307` … `trident-2510`; `trident` = latest), `trident-issues`, `trident-changelog`, `kb-trident` |
 | Harvest | `harvest`, `harvest-issues`, `harvest-changelog` |
 | PowerMax, SRDF, SnapVX, Solutions Enabler, Unisphere | `dell` / `powermax` (PDFs: Product Guide, Solutions Enabler CLI Reference, SRDF Introduction, Events and Alerts guide, Host Connectivity for ESXi), `kb` |
-| PowerFlex | `dell` / `powerflex` (Technical Overview, Administration, CLI Reference, Install / Upgrade guides per version up to 5.1.x; release notes 3.6.x / 4.0.x only), `kb` (dial-home `SIO…` codes, 5.x issues, release matrix 000461757, end-of-life dates 000305299), `infohub-powerflex`. Not in the library (Dell entitlement): 4.5-5.1 release notes, Alerts and Events guides, security guides - say so |
+| PowerFlex | `dell` / `powerflex` (Technical Overview, Administration, CLI Reference, Install / Upgrade guides per version up to 5.1.x; release notes 3.6.x / 4.0.x only), `kb` (dial-home `SIO…` codes, 5.x issues, release matrix 000461757, end-of-life dates 000305299), `infohub-powerflex`, `powerflex-api` (REST API guide pages per version 3.6-5.1; every endpoint with parameters, responses and errors for 5.1.0 and 4.5.5 / Manager 4.8). Not in the library (Dell entitlement): 4.5-5.1 release notes, Alerts and Events guides, security guides - say so |
 | CSM / CSI drivers on OpenShift | `dell` / `csm` (url `content/docs/` = current, `content/v1..v3/` = older; pick the one matching the installed CSM), `csm-repo` (CHANGELOG-<ver>), `csi-powermax`, `csi-powerflex`, `csm-replication`, `csm-operator` (`operatorconfig/driverconfig/<driver>/<ver>/` = the exact manifests the operator deploys), `csm-authorization`, `csm-resiliency`, `csm-dr`, `infohub-csm`, `kb`; fixes: `csm-prs`, `csi-powermax-prs`, `csi-powerflex-prs`, `csi-powerscale-prs`, `csm-operator-prs`, `csm-replication-prs` |
 | PowerScale / Isilon / OneFS | `dell` / `kb`, `infohub-powerscale`, `csi-powerscale` (driver docs + code), `gopowerscale`, `ansible-powerscale`, `terraform-powerscale` |
 | A CSI / CSM error text, a sidecar (attacher, provisioner, resizer, snapshotter, registrar) | the error string in quotes over `dell` code (`csi-powermax`, `csi-powerflex`, `csi-powerscale`, `goscaleio`, `gopowermax`, `gobrick`, `csm-operator`, `csm-replication`) and `kubernetes` (sidecars, `csi-spec`, `csi-docs`); host-side errors (mount, multipath, iSCSI, NVMe): `gofsutil`, `gobrick`, `goiscsi`, `gonvme` |
@@ -27,7 +27,8 @@ vendor / product: `~/.claude/brain/library/MANIFEST.md`. There is no internet; n
 | Dell security advisories (DSA-*), PowerPath, Unisphere how-tos | `dell` / `kb` |
 | ESXi storage | `vmware` / `kb`, `netapp` / `kb-ontap` |
 | Concepts, architecture, design, best practices (incl. "build something like X") | `netapp`: `ontap` (concept pages), `ontap-technical-reports` (TRs), `ontap-apps-dbs` (VMware / databases), `ontap-sanhost`, `trident-<yymm>` (`trident-reco`); `dell`: `infohub-powermax` / `-powerflex` / `-powerscale` / `-csm` (white papers), `powermax` / `powerflex` product guides and technical overviews, `csm` (`concepts/`); `kubernetes`: `csi-spec`, `csi-docs` |
-| Automation, APIs, SDKs, code that talks to the arrays | `netapp`: `ontap-restapi` (every endpoint), `ontap-automation`, `harvest` (metrics); `dell`: `pyu4v` (PowerMax Python), `gopowermax`, `goscaleio`, `gopowerscale`, `pypowerflex`, `ansible-*`, `terraform-*`, `csi-*` code; `kubernetes`: sidecars |
+| Automation, APIs, SDKs, code that talks to the arrays | `netapp`: `ontap-restapi` (every endpoint), `ontap-automation`, `harvest` (metrics); `dell`: `pyu4v` (PowerMax Python), `gopowermax`, `goscaleio`, `gopowerscale`, `powerflex-api` (PowerFlex REST endpoints), `pypowerflex`, `ansible-*`, `terraform-*`, `csi-*` code; `kubernetes`: sidecars |
+| Writing a backend: FastAPI, Pydantic v2, settings, Starlette middleware, uvicorn, httpx, pytest, SQLAlchemy 2, MCP servers (fastmcp, the MCP Python SDK, the MCP specification 2026-07-28) | `python` / `fastapi`, `pydantic`, `pydantic-settings`, `starlette`, `uvicorn`, `httpx`, `pytest`, `pytest-asyncio`, `sqlalchemy`, `fastmcp`; `mcp` / `python-sdk`, `specification`. House conventions: the `fastapi-service` skill |
 | Cisco MDS / UCS, PowerMaxOS release notes, the CSM issue texts (use the `*-prs` fixes) | **not in the library**: say so; explain from general knowledge, clearly labelled |
 
 ## 2. Search: exact first, then wider
