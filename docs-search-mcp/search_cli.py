@@ -129,7 +129,7 @@ def _has(text, alt):
     return all(re.search(r"\b" + re.escape(_stem(w)), text) for w in alt.split())
 
 
-def search_docs(c, q, vendor="", product="", limit=10):
+def search_docs(c, q, vendor="", product="", limit=8):
     """The search_docs tool. Candidates: chunks containing the quoted phrases and any query word (or a
     synonym); ranking: BM25 (title incl. folder context x6, section x3, text x1) x the squared share of
     query words the chunk covers (all-word matches lead, a strong near-miss still shows) x (1 + share of
@@ -185,8 +185,12 @@ def search_docs(c, q, vendor="", product="", limit=10):
             continue
         per_doc[r["doc_id"]] = per_doc.get(r["doc_id"], 0) + 1
         r.pop("doc_id")
-        r["score"] = round(final, 2)                    # relevance: higher is better
-        r["also_in"] = also_in(c, r["path"])
+        r["score"] = round(final, 2)                    # relevance, for merging libraries (callers drop it)
+        if r["section"] == r["title"]:
+            r.pop("section")                            # token economy: no repeated text, no empty fields
+        alias = also_in(c, r["path"])
+        if alias:
+            r["also_in"] = alias
         rows.append(r)
         if len(rows) >= lim:
             break
@@ -264,7 +268,7 @@ def main():
     s.add_argument("query")
     s.add_argument("--vendor", default="", help="netapp | dell | kb | <your folder>")
     s.add_argument("--product", default="", help="substring of the product/repo, e.g. ontap-ems-9171, trident, csm")
-    s.add_argument("--limit", type=int, default=10)
+    s.add_argument("--limit", type=int, default=8)
     r = sub.add_parser("read-chunk", help="a hit in full with neighbouring sections")
     r.add_argument("chunk_id", type=int)
     r.add_argument("--context", type=int, default=1)
@@ -286,7 +290,7 @@ def main():
         print(f"{len(rows)} results ({mode}) for: {a.query}")
         for i, h in enumerate(rows, 1):
             print(f"\n[{i}] chunk {h['chunk_id']}  {h['vendor']}/{h['product']}  score {h['score']:.1f}  matched {h['matched']}")
-            print(f"    {h['title']}  ::  {h['section']}")
+            print(f"    {h['title']}  ::  {h.get('section', h['title'])}")
             print(f"    {h['url'] or h['path']}")
             if h.get("also_in"):
                 print(f"    also in: {', '.join(h['also_in'])}")

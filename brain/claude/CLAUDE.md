@@ -71,6 +71,11 @@ Live state comes from the other MCP servers.
    reports. Never store guesses, passwords or tokens; when a note contradicts `environment.md`, ask.
    Claude Code's own auto memory (`~/.claude/projects/<project>/memory/`) may exist too; `notes.md` is the
    shared, versioned memory that every session and skill reads - put environment facts there, not only in auto memory.
+11. **Token economy.** Search before reading; `read_chunk` with context 0-1, `read_document` only when the
+   answer spans sections (page with `start`, never a whole PDF at once). Ask tools for the filtered,
+   narrow result (one array, one fabric, one name) before the full list; save big outputs to a file and
+   work from it instead of re-calling. Delegate a long investigation to an agent (they run on a cheaper
+   model and return a summary); answer short questions yourself.
 
 ## Sources: which MCP answers what
 Exact tool names per server: see the tool map imported at the bottom (run `/brain-setup` to refresh it).

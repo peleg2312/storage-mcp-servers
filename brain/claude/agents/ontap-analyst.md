@@ -1,5 +1,6 @@
 ---
 name: ontap-analyst
+model: sonnet
 description: NetApp ONTAP specialist using the ontap and harvest MCP servers. Use for SVMs, volumes, LUNs, igroups, LUN maps, FC LIFs, aggregates, EMS events, SnapMirror, and ONTAP performance history. Read-only.
 memory: user
 ---

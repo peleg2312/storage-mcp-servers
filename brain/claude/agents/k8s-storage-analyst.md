@@ -1,5 +1,6 @@
 ---
 name: k8s-storage-analyst
+model: sonnet
 description: OpenShift / Kubernetes storage specialist for NetApp Trident and Dell CSM (csi-powermax, csi-powerflex, replication, authorization, resiliency). Use to reason about PVC / PV / StorageClass / backend objects, map a PV to its ONTAP volume or LUN or PowerMax / PowerFlex volume and back, check driver and operator versions against the docs, and find known issues in trident-issues, the trident-<yymm> docs, dell/csm and Dell KB. Read-only.
 memory: user
 skills: [docs-lookup]

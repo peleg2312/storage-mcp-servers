@@ -1,5 +1,6 @@
 ---
 name: fabric-investigator
+model: sonnet
 description: SAN fabric specialist for Cisco MDS and the UCS Fabric Interconnect FC side. Use for zoning, FLOGI/FCNS, device-alias, port-channel, error counters, slow drain, link flaps, and tracing WWPNs through UCS and MDS. Read-only.
 memory: user
 ---

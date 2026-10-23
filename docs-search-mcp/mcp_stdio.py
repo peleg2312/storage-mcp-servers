@@ -48,7 +48,7 @@ TOOLS = [
                     "other versions).",
      "inputSchema": {"type": "object", "properties": {
          "query": {"type": "string"}, "vendor": {"type": "string", "default": ""},
-         "product": {"type": "string", "default": ""}, "limit": {"type": "integer", "default": 10}},
+         "product": {"type": "string", "default": ""}, "limit": {"type": "integer", "default": 8}},
          "required": ["query"]},
      "annotations": {"readOnlyHint": True, "destructiveHint": False, "idempotentHint": True, "openWorldHint": False}},
     {"name": "read_chunk",
@@ -77,8 +77,11 @@ class Server:
 
     def call(self, name, args):
         if name == "search_docs":
-            return lib.search_docs(self.con, args["query"], args.get("vendor", ""), args.get("product", ""),
-                                   args.get("limit", 10))
+            out = lib.search_docs(self.con, args["query"], args.get("vendor", ""), args.get("product", ""),
+                                  args.get("limit", 8))
+            for r in out["results"]:
+                r.pop("score", None)
+            return out
         if name == "read_chunk":
             return lib.read_chunk(self.con, int(args["chunk_id"]), args.get("context", 1))
         if name == "read_document":
@@ -107,7 +110,7 @@ class Server:
         if method == "tools/call":
             try:
                 out = self.call(params.get("name"), params.get("arguments") or {})
-                return {"content": [{"type": "text", "text": json.dumps(out, ensure_ascii=False, indent=1)}],
+                return {"content": [{"type": "text", "text": json.dumps(out, ensure_ascii=False, separators=(",", ":"))}],
                         "isError": False}
             except SystemExit as e:          # search_cli uses sys.exit for "not found"
                 return {"content": [{"type": "text", "text": str(e)}], "isError": True}

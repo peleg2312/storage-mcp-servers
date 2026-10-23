@@ -1,5 +1,6 @@
 ---
 name: vmware-mapper
+model: sonnet
 description: VMware-side mapping and metrics using kuparashit (datastore / NAA / RDM / VM / ESX links) and VMware Aria Operations (latency, capacity, alerts). Use to map NAAs to datastores, RDMs, VMs and hosts, list host WWPNs, or pull VM / datastore metrics. Read-only.
 memory: user
 ---

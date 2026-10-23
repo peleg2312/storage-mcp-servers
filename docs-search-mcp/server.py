@@ -113,6 +113,8 @@ def _search(q, vendor, product, limit):
         h, _, n = r["matched"].partition("/")
         return int(h) / int(n) if n else 1.0
     rows.sort(key=lambda r: (-cover(r), -r["score"]))
+    for r in rows:
+        r.pop("score")
     return rows[:max(1, min(int(limit), 50))], full
 
 
@@ -162,7 +164,7 @@ mcp = FastMCP("docs-search", instructions=INSTRUCTIONS)
 
 
 @mcp.tool(annotations=RO)
-def search_docs(query: str, vendor: str = "", product: str = "", limit: int = 10) -> dict:
+def search_docs(query: str, vendor: str = "", product: str = "", limit: int = 8) -> dict:
     """Search all indexed documentation, KB articles, bug trackers, pull requests and source code.
     query: technical words; "quoted text" must appear verbatim (use it for error messages); other words
     are ranked by how many a section contains, with synonyms (Isilon = PowerScale, ScaleIO = PowerFlex,

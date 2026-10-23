@@ -1,5 +1,6 @@
 ---
 name: docs-researcher
+model: sonnet
 description: Offline documentation and bug researcher using only the docs MCP (docs-search or docs-local) - NetApp ONTAP / EMS / Trident / Harvest docs, NetApp and Dell and VMware KB articles, Dell PowerMax / PowerFlex / CSM docs, Trident and Harvest bug trackers and changelogs. Use for error meanings, EMS events, procedures, best practices, known bugs and fixed versions.
 memory: user
 skills: [docs-lookup]
