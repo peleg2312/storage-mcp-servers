@@ -1,7 +1,7 @@
 ---
 name: powerflex-troubleshoot
-description: Troubleshoot Dell PowerFlex (SDC / SDS / MDM, rebuild and rebalance, storage pool capacity and spare, degraded or failed capacity, data unavailable, volume access from ESXi) using the PowerFlex guides and alerts-and-events references in dell/powerflex, the Dell KB dial-home (SIO) articles, and vCenter-side data - there is no live PowerFlex MCP. Use for any PowerFlex alert, dial-home code, SDC/SDS disconnection, slow rebuild, capacity or performance question.
-when_to_use: Trigger phrases - "PowerFlex alert SIO...", "SDC disconnected", "rebuild is slow", "storage pool degraded capacity", "ESXi lost the eui devices", "PowerFlex dial-home code"
+description: Troubleshoot Dell PowerFlex (SDC / SDS / MDM, rebuild, rebalance, pool capacity, data unavailable, ESXi access) from the PowerFlex docs, Dell KB and vCenter data - no live PowerFlex MCP.
+when_to_use: Trigger phrases - "PowerFlex alert SIO...", "SDC disconnected", "rebuild is slow", "ESXi lost the eui devices"
 ---
 # PowerFlex troubleshooting
 

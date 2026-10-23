@@ -1,7 +1,7 @@
 ---
 name: datastore-latency
-description: Troubleshoot a slow datastore, VM disk or RDM top-down across VMware (Aria), the fabric (MDS/UCS) and the array (PowerMax or ONTAP via Harvest) and name the layer causing the latency. Use for "datastore X is slow", "VM latency", "high storage latency alert".
-when_to_use: Trigger phrases - "datastore X is slow", "VM latency since 14:00", "high storage latency alert", "which layer causes the latency", "RDM slow on VM Y"
+description: Find which layer (VMware, fabric, PowerMax or ONTAP) causes latency on a datastore, VM disk or RDM.
+when_to_use: Trigger phrases - "datastore X is slow", "VM latency since 14:00", "high storage latency alert", "RDM slow"
 ---
 # Datastore / VM storage latency
 

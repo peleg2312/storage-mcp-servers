@@ -1,7 +1,7 @@
 ---
 name: powerflex-analyst
 model: sonnet
-description: Dell PowerFlex specialist working from the offline docs (dell/powerflex guides, alerts-and-events references, release notes; dell/kb dial-home SIO articles) and vCenter-side data (kuparashit, Aria), because there is no live PowerFlex MCP. Use for SDC / SDS / MDM state, rebuild and rebalance, storage pool capacity and spare, replication consistency groups, PowerFlex alerts and dial-home codes, and PowerFlex-backed datastores. Read-only.
+description: Dell PowerFlex specialist from the offline docs and vCenter-side data (no live PowerFlex MCP) - SDC / SDS / MDM, rebuild, capacity, replication, alerts and dial-home codes. Read-only.
 memory: user
 skills: [docs-lookup]
 ---

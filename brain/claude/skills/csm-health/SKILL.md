@@ -1,7 +1,7 @@
 ---
 name: csm-health
-description: Health and known-issue check of Dell CSM / CSI on OpenShift - operator and driver versions (csi-powermax, csi-powerflex) against the CSM docs of that version, support matrix (OpenShift, array OS), csm-replication / csm-authorization / csm-resiliency state, Dell KB and DSA security advisories for CSM. Use for "is our CSM healthy / supported / vulnerable", before an OpenShift or array upgrade, or for a recurring CSI problem. One broken PVC is k8s-volume-troubleshoot instead.
-when_to_use: Trigger phrases - "is our CSM healthy", "is csi-powermax version X supported", "CSM security advisory", "before the OpenShift upgrade", "CSM known issues for our version", "/csm-health"
+description: Health, support and known-issue check of Dell CSM / CSI on OpenShift (driver and operator versions vs the CSM docs and support matrix, replication / authorization / resiliency, DSA advisories). One broken PVC is k8s-volume-troubleshoot.
+when_to_use: Trigger phrases - "is our CSM healthy", "is csi-powermax X supported", "CSM security advisory", "before the OpenShift upgrade"
 ---
 # CSM / CSI health check (Dell on OpenShift)
 

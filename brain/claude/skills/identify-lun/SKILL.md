@@ -1,7 +1,7 @@
 ---
 name: identify-lun
-description: Resolve any LUN identifier (naa., eui., PowerMax device ID, ONTAP serial or LUN path, datastore name, RDM, VM name) into the full picture - array, device, size, storage group / igroup, hosts, datastore or RDM, VMs, paths. Use when asked "what is naa.xxx", "where does this datastore live", "which LUN is this VM on".
-when_to_use: Trigger phrases - "which LUN is naa.6000097...", "what is behind this naa", "decode this eui", "where does datastore X live", "which device is VM Y on", "what is PowerMax device 003A5"
+description: Resolve a LUN identifier (naa, eui, PowerMax device ID, ONTAP serial or path, datastore, RDM, VM) into array, device, size, masking / igroup, hosts, datastore and VMs.
+when_to_use: Trigger phrases - "what is naa.xxx", "decode this eui", "where does datastore X live", "which LUN is VM Y on"
 ---
 # Identify a LUN
 

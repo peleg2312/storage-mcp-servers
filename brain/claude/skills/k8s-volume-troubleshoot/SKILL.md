@@ -1,7 +1,7 @@
 ---
 name: k8s-volume-troubleshoot
-description: Troubleshoot OpenShift / Kubernetes persistent volumes on Trident (NetApp) or Dell CSM (PowerMax / PowerFlex) - PVC pending, attach / mount failures, multipath issues, resize, replication - using the error text, the bug trackers and docs, and the array and fabric state. Use for any PVC / CSI / Trident / CSM problem.
-when_to_use: Trigger phrases - "PVC stuck pending", "pod cannot mount the volume", "Trident attach failed", "CSI error", "map this PV to the array", "resize failed on OpenShift"
+description: Troubleshoot an OpenShift / Kubernetes volume on Trident or Dell CSM - PVC pending, attach / mount / resize failures, multipath - from the error text, bugs, docs and the array and fabric state.
+when_to_use: Trigger phrases - "PVC stuck pending", "pod cannot mount the volume", "CSI error", "map this PV to the array"
 ---
 # Kubernetes volume troubleshooting (Trident / CSM)
 

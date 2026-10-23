@@ -1,7 +1,7 @@
 ---
 name: powermax-performance
-description: Analyse PowerMax performance for an array, storage group, host, FA port or director over a time window - response time, IOPS, throughput, utilization, cache, SRDF - with avg and max. Use for PowerMax performance questions, reports, or top-talker analysis.
-when_to_use: Trigger phrases - "PowerMax response time last 24h", "top storage groups by IOPS", "FA port utilization", "is the array busy", "SRDF link throughput", "performance report for SG X"
+description: Analyse PowerMax performance (response time, IOPS, throughput, utilization, cache, SRDF) for an array, storage group, host, FA port or director over a time window.
+when_to_use: Trigger phrases - "PowerMax response time last 24h", "top storage groups by IOPS", "FA port utilization"
 ---
 # PowerMax performance
 

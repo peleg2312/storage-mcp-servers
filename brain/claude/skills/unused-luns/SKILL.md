@@ -1,7 +1,7 @@
 ---
 name: unused-luns
-description: Find LUNs that exist on the arrays (PowerMax, ONTAP) but are not used in vCenter - unmapped devices, mapped but unseen, seen but not a datastore/RDM, empty datastores - with exclusions for OpenShift (Trident/CSM), non-VMware hosts, gatekeepers and replicas. Use for cleanup, reclaim or "which LUNs are not used on VC".
-when_to_use: Trigger phrases - "which LUNs are not used by vCenter", "find unused LUNs on the PowerMax", "what can we reclaim on the arrays", "orphaned LUNs", "mapped but not seen by any ESX host"
+description: Find array LUNs (PowerMax, ONTAP) not used in vCenter - unmapped, mapped but unseen, not a datastore or RDM, empty datastores - excluding OpenShift, non-VMware hosts, gatekeepers and replicas.
+when_to_use: Trigger phrases - "which LUNs are not used", "find unused LUNs on the PowerMax", "what can we reclaim"
 context: fork
 background: false
 ---

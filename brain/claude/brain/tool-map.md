@@ -19,8 +19,4 @@ Known tool names of the storage-mcp-servers builds:
   list_vsans, list_fc_uplinks, list_fc_port_channels, get_fc_port_errors, get_vhba_pinning,
   trace_service_profile_san, trace_san_path, get_domain_fc_health, domain_san_health, list_faults,
   get_events, get_audit_log, ucs_health_check, troubleshoot_server, query_class, get_object
-- docs-search (cluster) / docs-local (stdio on this VM), only one of them is usually connected, same tools:
-  search_docs(query, vendor, product, limit), read_chunk(chunk_id, context), read_document(path|url, start,
-  max_sections), list_sources (no MCP: python3 ~/.claude/brain/library/search.py search|read-chunk|read-doc|sources).
-  vendor = netapp | dell | vmware | kb; product = substring of the names in ~/.claude/brain/library/MANIFEST.md
-  (e.g. ontap-ems-9151, kb-ontap, trident-2410, csm, powermax, powerflex, kb).
+- docs-search / docs-local: see the docs-lookup skill.

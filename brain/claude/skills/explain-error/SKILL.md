@@ -1,7 +1,7 @@
 ---
 name: explain-error
-description: Explain an error, alert, event or log line from PowerMax, ONTAP (EMS), PowerFlex, MDS, UCS, ESXi, Trident or CSM using the offline docs and bug trackers, then check the live system for it. Use when the user pastes an error, alert or event name.
-when_to_use: Trigger phrases - "what does this error mean", "explain EMS scsiblade.san.config.active", "pasted alert text", "what is SIO02.01...", "MDS log line meaning", "ESXi APD event meaning"
+description: Explain an error, alert, event or log line (PowerMax, ONTAP EMS, PowerFlex, MDS, UCS, ESXi, Trident, CSM) from the docs and bug trackers, then check the live system for it.
+when_to_use: Trigger phrases - "what does this error mean", "explain EMS ...", "what is SIO02...", a pasted alert or log line
 ---
 # Explain an error
 

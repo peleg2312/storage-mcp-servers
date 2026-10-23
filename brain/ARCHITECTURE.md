@@ -6,10 +6,10 @@ best-practices) recommend, and where this brain stands. Re-check with `/brain-he
 
 | Doc guidance | This brain |
 |---|---|
-| CLAUDE.md under 200 lines, imports do not save context | CLAUDE.md 133 lines + 3 imports (environment, notes, tool map); `/brain-health` warns above ~200 lines total |
+| CLAUDE.md under 200 lines, imports do not save context | CLAUDE.md 107 lines + 3 imports (environment, notes, tool map), ~3,300 tokens; no inventories or lists Claude already sees (skills, tool schemas, library contents live in docs-lookup / MANIFEST.md); `/brain-health` warns above ~200 lines total |
 | Rules, not prose: enforce with hooks, CLAUDE.md is only context | PreToolUse hook `block-write-tools.py` (matcher `mcp__.*`, exit 2) blocks every write-looking MCP call; allow-list file for false positives |
 | SessionStart hooks inject fresh facts | `session-start.py` prints library version / document count, hook state, read-only mode at every start, resume and compaction |
-| Skills: description + `when_to_use` drive auto-triggering (1,536-char cap) | all 24 skills carry trigger phrases; longest 747 chars |
+| Skills: description + `when_to_use` drive auto-triggering (1,536-char cap) | one sentence + 3-4 trigger phrases each; all model-visible descriptions together ~1,600 tokens per turn (was ~2,800); verified by `claude plugin eval` (9/9) |
 | `disable-model-invocation` for user-run workflows | brain-setup, brain-health, morning-check, capacity-report, change-review, code-version-check |
 | `context: fork` for long, self-contained work | unused-luns, zoning-audit, fabric-health, rdm-inventory (foreground, result returns to the chat) |
 | Subagents: short descriptions, `memory`, preload `skills`, least privilege | 8 agents; 7 keep persistent memory (`memory: user`); research agents preload docs-lookup; infra writes are blocked by the hook, not by tool denial (agents still write reports and their memory) |

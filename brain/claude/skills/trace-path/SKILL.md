@@ -1,7 +1,7 @@
 ---
 name: trace-path
-description: Trace the SAN path end to end - VM / datastore / NAA / ESX host through UCS vHBA, Fabric Interconnect, MDS (flogi, zone, device-alias, port-channel) to the PowerMax FA or ONTAP LIF and the masking view / igroup - on both fabrics, and flag every broken or asymmetric hop. Use for path loss, "is host X zoned", new host validation, or any connectivity question.
-when_to_use: Trigger phrases - "trace naa.xxx end to end", "is host X zoned to the array", "why does host Y have only 2 paths", "show the path from VM to array", "validate the new host connectivity"
+description: Trace the SAN path end to end (VM / datastore / NAA / host, UCS vHBA, FI, MDS flogi / zone / port-channel, array port, masking or igroup) on both fabrics and flag broken or asymmetric hops.
+when_to_use: Trigger phrases - "trace naa.xxx end to end", "is host X zoned to the array", "why does host Y have only 2 paths"
 ---
 # Trace the SAN path
 

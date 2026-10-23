@@ -1,7 +1,7 @@
 ---
 name: ontap-performance
-description: Analyse NetApp ONTAP performance with Harvest metrics plus the ONTAP MCP - LUN / volume latency, IOPS, throughput, node CPU and utilization, aggregate/disk busy, FC ports, QoS - with avg and max. Use for ONTAP / NetApp performance questions and reports.
-when_to_use: Trigger phrases - "ONTAP latency on volume X", "node CPU on the NetApp", "LUN IOPS last week", "aggregate busy", "FC port throughput on the SVM", "NetApp performance report"
+description: Analyse NetApp ONTAP performance (LUN / volume latency, IOPS, throughput, node CPU, aggregates, FC ports, QoS) with Harvest and the ONTAP MCP.
+when_to_use: Trigger phrases - "ONTAP latency on volume X", "node CPU on the NetApp", "NetApp performance report"
 ---
 # ONTAP performance (Harvest + ONTAP)
 

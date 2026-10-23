@@ -1,7 +1,7 @@
 ---
 name: fabric-health
-description: Health check of the MDS fabrics and the UCS FC uplinks - interfaces down, error counters, CRC, link flaps, slow drain / TxWait / credit loss, port-channel members, optics power, onboard logs, recent zoning changes. Use for "is the fabric OK", slow drain suspicion, flapping ports, or after maintenance.
-when_to_use: Trigger phrases - "is the fabric OK", "slow drain on fabric B", "flapping port on the MDS", "CRC errors on the switch", "check the port-channels", "after the switch maintenance"
+description: Health check of the MDS fabrics and UCS FC uplinks - down ports, error counters, flaps, slow drain, port-channels, optics, recent zoning changes.
+when_to_use: Trigger phrases - "is the fabric OK", "slow drain on fabric B", "flapping port", "after the switch maintenance"
 context: fork
 agent: fabric-investigator
 background: false
