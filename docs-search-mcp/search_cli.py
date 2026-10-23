@@ -98,6 +98,8 @@ FIX_WORDS = {"pr", "fix", "fixed", "fixes", "bug", "bugs", "issue", "merged", "r
 INTENT = {"best", "practice", "practices", "recommend", "recommended", "recommendation", "recommendations",
           "guideline", "guidelines", "tips", "advice", "should", "work", "works", "explain", "overview", "difference"}
 INTENT_W = 0.3   # measured: neutral on every eval set, fixes "<topic> design best practices" picking any BP title
+CODE_WORDS = {"code", "function", "func", "functions", "implementation", "implemented", "implement", "source",
+              "golang", "method", "calls", "codebase", "exec", "runs"}
 API_WORDS = {"rest", "api", "endpoint", "curl", "json", "uuid", "http", "https", "swagger", "patch", "post"}
 VERSION = re.compile(r"\bv?(\d+(?:\.\d+)+)\b")
 STOP = set("a an the of for to in on with and or is are was were how what why when where which does do did "
@@ -222,6 +224,8 @@ def search_docs(c, q, vendor="", product="", limit=8):
         r["_found"] = found
         # document-type priors: docs first; code wins on exact error text, config samples (yaml) a little less
         weight = 0.5 if r["path"].endswith(SOURCE_EXT) else 0.8 if r["path"].endswith(CODE_EXT) else 1.0
+        if qwords & CODE_WORDS and r["path"].endswith(SOURCE_EXT):
+            weight = 1.2                                          # "how does the driver code ..." wants the code
         if r["product"] == "ontap-restapi":
             weight *= 1.5 if qwords & API_WORDS else 0.6          # API reference when asked for the API
         if r["product"] in LEGACY and not qwords & {"7", "mode", "7mode", "transition", "classic"}:

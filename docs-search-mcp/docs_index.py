@@ -60,7 +60,8 @@ _NOISE = re.compile(
     r"|한국어|polski|русский|türkçe|繁體中文|dansk|suomi|norsk|česky))$", re.I)
 # whole sections that are site chrome (cookie banner, feedback form), dropped by their heading
 _NOISE_HEAD = re.compile(r"^(your cookie preferences|manage consent preferences|cookie list|.*\bcookies"
-                         r"|we value your feedback|rate this content|was this (article|page|content) helpful.*)$", re.I)
+                         r"|we value your feedback|rate this content|was this (article|page|content) helpful.*"
+                         r"|how has this been tested\??|type of change|checklist:?)$", re.I)   # pull request template
 _LICENSE = re.compile(r"^\s*(#|//|/?\*|--)\s*.*(copyright ©|copyright \(c\)|all rights reserved|licensed under the apache"
                       r"|you may not use this file|obtain a copy of the license|apache\.org/licenses|unless required by"
                       r"|distributed under the license|without warranties or conditions|see the license for"
@@ -357,8 +358,8 @@ def iter_files(root):
     for dirpath, dirs, files in os.walk(root):
         dirs[:] = [d for d in dirs if not d.startswith(".") and d not in ("_include", "node_modules")]
         for f in files:
-            if f.startswith(("_", ".")) or f == "manifest.json":
-                continue
+            if f.startswith(".") or f == "manifest.json":    # "_index.md" (Hugo section pages: the CSM install guides)
+                continue                                  # and KB files named after a quoted title are real documents
             p = os.path.join(dirpath, f)
             if f.lower().endswith(TEXT_EXT + CODE_EXT + (".pdf", ".html", ".htm")) and os.path.isfile(p):
                 yield p                                  # isfile: a dangling symlink (sparse checkout) is skipped

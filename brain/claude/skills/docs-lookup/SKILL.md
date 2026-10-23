@@ -59,6 +59,9 @@ show both, prefer the installed one.
   older versions link `dell/csm#<n>`) and `csm-repo` CHANGELOG; then search that title's words or
   `dell/csm#<n>` over the `*-prs` products: the PR's "First release:" is the first tag of that repo with the
   fix (the `dell/csm` support matrix maps CSM to driver versions, e.g. CSM 1.18 = csi-powermax 2.18).
+- **How a driver / client works** (what it runs on the node, which function does X): read the repo's
+  `CODEMAP.md` first (search `code map <product>`: commands run and from which function, host paths, every
+  file's functions), then search the function name with the product filter, and read it.
 - **Error text from a CSI driver, operator or sidecar**: the quoted text over the code (table above); the hit's
   section heading is the function raising it - read it to say when it happens, then find the user-facing
   explanation in `dell/csm`, `dell/kb` or the CHANGELOG. Code is current `main`, not the installed release.

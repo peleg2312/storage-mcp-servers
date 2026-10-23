@@ -108,3 +108,15 @@ kubernetes  node-driver-registrar        https://github.com/kubernetes-csi/node-
 kubernetes  livenessprobe                https://github.com/kubernetes-csi/livenessprobe         README.md CHANGELOG docs code
 kubernetes  csi-lib-utils                https://github.com/kubernetes-csi/csi-lib-utils         README.md code
 kubernetes  csi-lib-iscsi                https://github.com/kubernetes-csi/csi-lib-iscsi         README.md code
+# ---- added 2026-10-23: CSI host-side libraries, CSM shared code / DR, newer sidecars, Kubernetes + OpenShift storage docs ----
+dell    goiscsi                          https://github.com/dell/goiscsi                README.md code
+dell    gonvme                           https://github.com/dell/gonvme                 README.md code
+dell    csm-metrics-common               https://github.com/dell/csm-metrics-common     README.md code
+dell    csmlog                           https://github.com/dell/csmlog                 README.md code
+dell    csm-dr                           https://github.com/dell/csm-dr                 README.md docs code
+kubernetes  external-snapshot-metadata   https://github.com/kubernetes-csi/external-snapshot-metadata README.md CHANGELOG docs code
+kubernetes  volume-data-source-validator https://github.com/kubernetes-csi/volume-data-source-validator README.md CHANGELOG code
+kubernetes  lib-volume-populator         https://github.com/kubernetes-csi/lib-volume-populator README.md code
+kubernetes  csi-test                     https://github.com/kubernetes-csi/csi-test     README.md pkg/sanity/README.md cmd/csi-sanity/README.md
+kubernetes  k8s-storage-docs             https://github.com/kubernetes/website          content/en/docs/concepts/storage content/en/docs/tasks/configure-pod-container/configure-persistent-volume-storage.md content/en/docs/tasks/administer-cluster/change-default-storage-class.md content/en/docs/tasks/administer-cluster/change-pv-reclaim-policy.md
+openshift   storage                      https://github.com/openshift/openshift-docs    storage modules/storage-*.adoc modules/persistent-storage-*.adoc modules/virt-*storage*.adoc

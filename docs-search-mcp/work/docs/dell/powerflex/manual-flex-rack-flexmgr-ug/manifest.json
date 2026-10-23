@@ -322,5 +322,17 @@
  "dell-emc-powerflex-rack-using-powerflex-manager_93367611.html": {
   "url": "https://www.dell.com/support/manuals/en-us/powerflex-rack-hw/flex-rack-flexmgr-ug/dell-emc-powerflex-rack-using-powerflex-manager?guid=guid-5b8de7b7-879f-45a4-88e0-732155904029&lang=en-us",
   "title": "Sorry | Dell US"
+ },
+ "resource-operational-state_e116530f.html": {
+  "url": "https://www.dell.com/support/manuals/en-us/powerflex-rack-hw/flex-rack-flexmgr-ug/resource-operational-state?guid=guid-2e652226-b928-4138-b25a-c385e60599c9&lang=en-us",
+  "title": "Dell EMC PowerFlex Rack Using PowerFlex Manager | Dell US"
+ },
+ "add-volumes-to-a-powerflex-storage-only-node_a0f83862.html": {
+  "url": "https://www.dell.com/support/manuals/en-us/powerflex-rack-hw/flex-rack-flexmgr-ug/add-volumes-to-a-powerflex-storage-only-node?guid=guid-561a1131-0509-4699-a960-3ebfa6365b12&lang=en-us",
+  "title": "Dell EMC PowerFlex Rack Using PowerFlex Manager | Dell US"
+ },
+ "view-and-select-volumes_72aad04e.html": {
+  "url": "https://www.dell.com/support/manuals/en-us/powerflex-rack-hw/flex-rack-flexmgr-ug/view-and-select-volumes?guid=guid-2837384f-913c-4088-8195-a04065ec8fdb&lang=en-us",
+  "title": "Dell EMC PowerFlex Rack Using PowerFlex Manager | Dell US"
  }
 }

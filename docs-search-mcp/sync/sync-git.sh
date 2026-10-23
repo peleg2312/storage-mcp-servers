@@ -67,3 +67,4 @@ while read -r vendor product url subdirs; do
 done < "$LIST"
 rm -f "$LIST"
 echo "git sources: $ok synced, $fail failed -> $DOCS"
+python3 "$HERE/sync/codemap.py" "$DOCS"          # CODEMAP.md per code repository: commands run, host paths, functions

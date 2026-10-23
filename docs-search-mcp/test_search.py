@@ -174,3 +174,11 @@ assert "Copyright" not in str(ch) and "Use helm." in str(ch), ch
 assert "Nytro" not in docs_index._clean("Best practices Your Browser is Out of Date Nytro.ai uses technology that works "
                                          "best in other browsers. For a full experience use one of the browsers below Keep RAID")
 print("banner + md license OK")
+
+# Hugo section pages (_index.md: the CSM install guides) and KBs named after a quoted title are indexed
+import tempfile as _tf
+_d = _tf.mkdtemp()
+for _n in ("_index.md", "_PARTNER_DOWN__TAKEOVER_IMPOSSIBLE_1a2b.html", ".hidden.md", "manifest.json"):
+    open(os.path.join(_d, _n), "w").write("x")
+assert sorted(os.path.basename(p) for p in docs_index.iter_files(_d)) == ["_PARTNER_DOWN__TAKEOVER_IMPOSSIBLE_1a2b.html", "_index.md"]
+print("underscore files OK")

@@ -547,6 +547,7 @@ def cmd_manuals(ctx, a):
         if not line:
             continue
         product, url = line.split(None, 1)
+        url = re.sub(r"/support/manuals/(?![a-z]{2}-[a-z]{2}/)", "/support/manuals/en-us/", url)   # index links: no locale
         m = re.search(r"(/support/manuals/[a-z]{2}-[a-z]{2}/[^/]+/[^/?]+)", url)
         if not m:
             log(f"not a dell.com manual url: {url}"); continue
@@ -562,7 +563,7 @@ def cmd_manuals(ctx, a):
                 break
             page.wait_for_timeout(500)
             first = html_of(page)
-        title = sync_web.title_of(first.encode())
+        title = sync_web.title_of(first.encode()).strip()
         if "Sign In" in title or title.strip() in ("", "Back Button"):
             log(f"{guide}: needs sign-in (run with --wait-login) - skipped"); continue
         if title.startswith("Sorry"):
@@ -581,7 +582,9 @@ def cmd_manuals(ctx, a):
                 page.goto(t, wait_until="domcontentloaded")
                 settle(page, 600)
                 body = html_of(page)
-                title = sync_web.title_of(body.encode())
+                title = sync_web.title_of(body.encode()).strip()
+                if title.startswith("Sorry") or "Sign In" in title or title.strip() in ("", "Back Button"):
+                    log(f"skipped (retired or sign-in page): {t}"); continue
                 stem = re.sub(r"[^\w\-]+", "-", t.split("?")[0].rstrip("/").rsplit("/", 1)[-1])[:80]
                 name = f"{stem}_{key}.html"
                 open(os.path.join(d, name), "w", encoding="utf-8").write(body)
