@@ -54,6 +54,7 @@ def environment_line():
 
 
 NOTES_CAP = 60
+TOPIC_CAP = 150          # a topic file is read whole when its topic comes up
 
 
 def memory_line():
@@ -69,7 +70,11 @@ def memory_line():
         text = read(path)
         title = text.split("\n", 1)[0].lstrip("# ").strip()[:70]
         facts = sum(1 for l in text.splitlines() if l.startswith("- "))
-        topics.append(f"  notes/{os.path.basename(path)} ({facts}): {title}")
+        big = len(text.splitlines()) > TOPIC_CAP
+        topics.append(f"  notes/{os.path.basename(path)} ({facts}): {title}"
+                      + (f" - OVER {TOPIC_CAP} lines: merge duplicates, drop stale facts" if big else ""))
+    if n > NOTES_CAP or any("OVER" in t for t in topics):
+        line += ". Tidy the memory files marked OVER after answering his first question, then tell him in one line"
     if topics:
         return line + ".\nMemory topics (read the one a question touches; grep notes/ for an unknown name):\n" + "\n".join(topics)
     return line + "; no topic files yet (notes/<topic>.md)."
