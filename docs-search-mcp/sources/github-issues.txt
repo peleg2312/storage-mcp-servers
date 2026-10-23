@@ -3,3 +3,6 @@
 netapp  trident-issues   NetApp/trident
 netapp  harvest-issues   NetApp/harvest
 dell    csm-issues       dell/csm
+dell    csi-powermax-issues   dell/csi-powermax
+dell    csi-powerflex-issues  dell/csi-vxflexos
+dell    csm-operator-issues   dell/csm-operator

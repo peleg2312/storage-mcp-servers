@@ -1,0 +1,7 @@
+# HTML manuals on dell.com/support/manuals saved topic by topic by  sync/dell_browser.py manuals
+# (for guides whose PDF needs a login that the download refuses, or that have no PDF at all).
+# Format:  <product-folder>  <url of any topic of the guide>
+powerflex  https://www.dell.com/support/manuals/en-us/scaleio/pfx_events_alerts_4.5.x/monitoring-alerts-and-events?guid=guid-17096493-d63d-4389-aae2-ec4bfa76c61e&lang=en-us
+powerflex  https://www.dell.com/support/manuals/en-us/powerflex-rack-hw/flex-rack-flexmgr-ug/alert-messages-and-recommended-actions?guid=guid-19f77807-a5c8-4b25-8f9b-9a36a14b6305&lang=en-us
+powermax   https://www.dell.com/support/manuals/en-us/solutions-enabler/esd_p_array_mgmnt_alerts_guide_10_2_magnolia/preface?guid=guid-8600a2c8-6f7e-41fd-ad5a-d61c4075ded5&lang=en-us
+powermax   https://www.dell.com/support/manuals/en-us/unisphere-powermax/esd_p_mt_unisph_u4p_product_guide_10_3_0/overview-of-unisphere-for-powermax?guid=guid-daff12bb-453f-4ce5-a2f1-5f40f84d1bfe&lang=en-us

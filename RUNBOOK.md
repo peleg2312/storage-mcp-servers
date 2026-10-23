@@ -40,6 +40,15 @@ python3 sync/sync_dell_kb.py --dest work/docs --browser-cookies   # Dell KB arti
 python3 sync/import_extra.py --dest work/docs
 cd .. && git add -f docs-search-mcp/extra/dell && git commit -m "Dell login-only docs" && git push origin main && cd docs-search-mcp
 
+# b3) MOST Dell content comes from a real browser (Dell's bot check and sign-in stop the plain scripts):
+#     sign in once, then the collector runs Dell Support searches for every query in sources/dell-kb-queries.txt
+#     and saves every KB article found (login-only ones too), the login-only PDFs of NEEDED.md, every Info Hub
+#     paper on PowerFlex / PowerMax / CSM, and the HTML manuals in sources/dell-manuals.txt topic by topic.
+pip install playwright && python3 -m playwright install chromium
+python3 sync/dell_browser.py login            # window opens: sign in at dell.com/support, close the window
+python3 sync/dell_browser.py all              # hours; Ctrl-C any time, re-run continues (add --headless to try without a window)
+python3 sync/import_extra.py --dest work/docs
+
 # c) Trident / CSM / Harvest bug trackers (every issue with workaround + fixed version)
 GITHUB_TOKEN=<read-only token> python3 sync/sync_github_issues.py --dest work/docs
 
