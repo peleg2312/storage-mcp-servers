@@ -37,6 +37,26 @@ DELL_COOKIE = os.getenv("DELL_KB_COOKIE", "")    # optional: your logged-in www.
 DL_COOKIE = os.getenv("DELL_DL_COOKIE", DELL_COOKIE)   # optional: the session for dl.dell.com downloads (login-only manuals)
 
 
+
+def is_redirect_pdf(body):
+    """Dell answers login-only document links with a small PDF ("Statement against modern slavery",
+    about 11 pages) instead of the document. Its text is compressed, so check the extracted first page
+    when pypdf is installed, the raw bytes otherwise."""
+    if b"modern slavery" in body[:400000].lower():
+        return True
+    if len(body) > 800000:
+        return False
+    try:
+        import io
+        from pypdf import PdfReader
+        r = PdfReader(io.BytesIO(body))
+        if len(r.pages) > 15:
+            return False
+        txt = (r.pages[0].extract_text() or "").upper()
+        return "MODERN" in txt and "SLAVERY" in txt
+    except Exception:
+        return False
+
 def fetch(url, timeout=120):
     hdrs = {"User-Agent": UA, "Accept": "*/*"}
     host = urllib.parse.urlparse(url).netloc
@@ -154,7 +174,7 @@ def main():
         name = safe_name(url)
         target = os.path.join(d, name)
         if os.path.exists(target) and os.path.getsize(target) > 0 and not (
-                a.retry and name.endswith(".pdf") and b"modern slavery" in open(target, "rb").read(400000).lower()):
+                a.retry and name.endswith(".pdf") and is_redirect_pdf(open(target, "rb").read())):
             skipped += 1
             manifests[d].setdefault(name, {"url": url, "title": title, "hub": hub})
             continue
@@ -184,7 +204,7 @@ def main():
                 print(f"not a PDF ({page_title(body) or 'no title'}): {url}", file=sys.stderr)
                 time.sleep(a.delay)
                 continue
-        if name.endswith(".pdf") and b"modern slavery" in body[:400000].lower():
+        if name.endswith(".pdf") and is_redirect_pdf(body):
             failed += 1
             print(f"not the document (download redirected to Dell's legal statement): {url}", file=sys.stderr)
             time.sleep(a.delay)

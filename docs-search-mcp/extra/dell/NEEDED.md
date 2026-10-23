@@ -1,0 +1,84 @@
+# Dell documents that need a browser download (login-only)
+
+Dell returns its 'Statement against modern slavery' PDF instead of these documents unless the browser is signed in to dell.com/support. Open each link signed in, save the PDF under `extra/dell/<product>/` with the file name shown, then `git add -f docs-search-mcp/extra/dell && git commit && git push`.
+
+
+## powerflex  ->  save into extra/dell/powerflex/
+
+| File name | Link |
+|---|---|
+| `manual55425296-dell-powerflex-5-1-x-4-5-x-and-powerflex-manager-5-1-x-release-notes.pdf` | https://dl.dell.com/content/manual55425296-dell-powerflex-5-1-x-4-5-x-and-powerflex-manager-5-1-x-release-notes.pdf |
+| `manual41313829-dell-powerflex-5-1-x-and-powerflex-manager-5-1-x-support-matrix.pdf` | https://dl.dell.com/content/manual41313829-dell-powerflex-5-1-x-and-powerflex-manager-5-1-x-support-matrix.pdf |
+| `manual69966030-dell-powerflex-family-5-x-security-configuration-guide.pdf` | https://dl.dell.com/content/manual69966030-dell-powerflex-family-5-x-security-configuration-guide.pdf |
+| `manual21472110-dell-powerflex-5-1-x-and-powerflex-manager-5-1-x-alerts-and-events-reference-guide.pdf` | https://dl.dell.com/content/manual21472110-dell-powerflex-5-1-x-and-powerflex-manager-5-1-x-alerts-and-events-reference-guide.pdf |
+| `manual16632609-dell-powerflex-5-0-x-and-powerflex-manager-5-0-x-example-csv-files.pdf` | https://dl.dell.com/content/manual16632609-dell-powerflex-5-0-x-and-powerflex-manager-5-0-x-example-csv-files.pdf |
+| `manual71189798-dell-powerflex-family-4-x-security-configuration-guide.pdf` | https://dl.dell.com/content/manual71189798-dell-powerflex-family-4-x-security-configuration-guide.pdf |
+| `manual21579043-dell-powerflex-4-5-x-and-powerflex-manager-5-1-x-alerts-and-events-reference-guide.pdf` | https://dl.dell.com/content/manual21579043-dell-powerflex-4-5-x-and-powerflex-manager-5-1-x-alerts-and-events-reference-guide.pdf |
+| `manual36345513-dell-powerflex-4-x-example-csv-files.pdf` | https://dl.dell.com/content/manual36345513-dell-powerflex-4-x-example-csv-files.pdf |
+| `manual25305810-dell-cloudlink-8-3-x-release-notes.pdf` | https://dl.dell.com/content/manual25305810-dell-cloudlink-8-3-x-release-notes.pdf |
+| `manual28911486-dell-cloudlink-security-configuration-guide.pdf` | https://dl.dell.com/content/manual28911486-dell-cloudlink-security-configuration-guide.pdf |
+| `manual37428579-dell-powerflex-5-0-x-and-powerflex-manager-5-0-x-support-matrix.pdf` | https://dl.dell.com/content/manual37428579-dell-powerflex-5-0-x-and-powerflex-manager-5-0-x-support-matrix.pdf |
+| `manual59926943-dell-powerflex-5-0-x-and-powerflex-manager-5-0-x-cli-reference-guide.pdf` | https://dl.dell.com/content/manual59926943-dell-powerflex-5-0-x-and-powerflex-manager-5-0-x-cli-reference-guide.pdf |
+| `manual55355780-dell-powerflex-5-0-x-and-powerflex-manager-5-0-x-alerts-and-events-reference-guide.pdf` | https://dl.dell.com/content/manual55355780-dell-powerflex-5-0-x-and-powerflex-manager-5-0-x-alerts-and-events-reference-guide.pdf? |
+| `manual72830551-dell-powerflex-4-5-x-and-powerflex-manager-4-8-x-release-notes.pdf` | https://dl.dell.com/content/manual72830551-dell-powerflex-4-5-x-and-powerflex-manager-4-8-x-release-notes.pdf |
+| `manual36877518-dell-powerflex-4-5-x-and-powerflex-manager-4-8-x-support-matrix.pdf` | https://dl.dell.com/content/manual36877518-dell-powerflex-4-5-x-and-powerflex-manager-4-8-x-support-matrix.pdf |
+| `manual2550056-dell-powerflex-4-5-x-and-powerflex-manager-4-8-x-alerts-and-events-reference-guide.pdf` | https://dl.dell.com/content/manual2550056-dell-powerflex-4-5-x-and-powerflex-manager-4-8-x-alerts-and-events-reference-guide.pdf |
+| `manual39480792-dell-powerflex-4-6-x-release-notes.pdf` | https://dl.dell.com/content/manual39480792-dell-powerflex-4-6-x-release-notes.pdf |
+| `manual37556768-dell-powerflex-4-6-x-alerts-and-events-reference-guide.pdf` | https://dl.dell.com/content/manual37556768-dell-powerflex-4-6-x-alerts-and-events-reference-guide.pdf |
+| `manual68830250-dell-powerflex-4-5-x-release-notes.pdf` | https://dl.dell.com/content/manual68830250-dell-powerflex-4-5-x-release-notes.pdf |
+| `manual36963827-dell-powerflex-support-matrix-v4-5-x.pdf` | https://dl.dell.com/content/manual36963827-dell-powerflex-support-matrix-v4-5-x.pdf |
+| `manual21813579-dell-powerflex-4-5-x-security-configuration-guide.pdf` | https://dl.dell.com/content/manual21813579-dell-powerflex-4-5-x-security-configuration-guide.pdf |
+| `manual28550240-dell-powerflex-4-5-x-alerts-and-events-reference-guide.pdf` | https://dl.dell.com/content/manual28550240-dell-powerflex-4-5-x-alerts-and-events-reference-guide.pdf |
+| `manual18767752-dell-powerflex-4-0-x-support-matrix.pdf` | https://dl.dell.com/content/manual18767752-dell-powerflex-4-0-x-support-matrix.pdf |
+| `manual30688224-monitor-dell-emc-powerflex.pdf` | https://dl.dell.com/content/manual30688224-monitor-dell-emc-powerflex.pdf |
+| `manual32534988-troubleshoot-and-maintain-dell-emc-powerflex.pdf` | https://dl.dell.com/content/manual32534988-troubleshoot-and-maintain-dell-emc-powerflex.pdf |
+| `manual11097151-dell-powerflex-support-matrix-v3-6-0-x.pdf` | https://dl.dell.com/content/manual11097151-dell-powerflex-support-matrix-v3-6-0-x.pdf |
+| `statement-against-modern-slavery-human-trafficking-and-child-labor.pdf` | https://www.delltechnologies.com/asset/en-us/solutions/business-solutions/legal-pricing/statement-against-modern-slavery-human-trafficking-and-child-labor.pdf |
+
+## powermax  ->  save into extra/dell/powermax/
+
+| File name | Link |
+|---|---|
+| `h17072-data-reduction-with-dell-emc-powermax.pdf` | https://www.dell.com/en-sg/collaterals/unauth/technical-guides-support-information/products/storage/h17072-data-reduction-with-dell-emc-powermax.pdf |
+| `h17108-dell-emc-service-levels-for-powermaxos.pdf` | https://www.dell.com/en-sg/collaterals/unauth/technical-guides-support-information/products/storage/h17108-dell-emc-service-levels-for-powermaxos.pdf |
+| `h17133-non-disruptive-migration-best-practices-and-operational-guide.pdf` | https://www.dell.com/en-sg/collaterals/unauth/technical-guides-support-information/products/storage/h17133-non-disruptive-migration-best-practices-and-operational-guide.pdf |
+| `h16856-dell-emc-embedded-management-on-powermax-and-vmax-all-flash.pdf` | https://www.dell.com/en-sg/collaterals/unauth/technical-guides-support-information/products/storage/h16856-dell-emc-embedded-management-on-powermax-and-vmax-all-flash.pdf |
+| `docu88905.pdf` | https://www.dell.com/en-sg/collaterals/unauth/technical-guides-support-information/products/storage/docu88905.pdf |
+| `docu71867.pdf` | https://www.dell.com/en-sg/collaterals/unauth/technical-guides-support-information/products/storage-5/docu71867.pdf |
+| `docu68889.pdf` | https://www.dell.com/en-sg/collaterals/unauth/technical-guides-support-information/products/storage-5/docu68889.pdf |
+| `docu90731.pdf` | https://www.dell.com/en-sg/collaterals/unauth/technical-guides-support-information/products/storage/docu90731.pdf |
+| `docu88876.pdf` | https://www.dell.com/en-sg/collaterals/unauth/technical-guides-support-information/products/storage/docu88876.pdf |
+| `docu88872.pdf` | https://www.dell.com/en-sg/collaterals/unauth/technical-guides-support-information/products/storage/docu88872.pdf |
+| `docu68803.pdf` | https://www.dell.com/en-sg/collaterals/unauth/technical-guides-support-information/products/networking-3/docu68803.pdf |
+| `docu68804.pdf` | https://www.dell.com/en-sg/collaterals/unauth/technical-guides-support-information/products/networking-3/docu68804.pdf |
+| `docu68805.pdf` | https://www.dell.com/en-sg/collaterals/unauth/technical-guides-support-information/products/networking-3/docu68805.pdf |
+| `h15201-data-protector-for-z-systems-zdp-essentials.pdf` | https://www.dell.com/en-sg/collaterals/unauth/white-papers/solutions/h15201-data-protector-for-z-systems-zdp-essentials.pdf |
+| `h17064-dell-emc-powermax-reliability-availability-and-serviceability-technical-white-paper.pdf` | https://www.dell.com/en-sg/collaterals/unauth/technical-guides-support-information/products/storage/h17064-dell-emc-powermax-reliability-availability-and-serviceability-technical-white-paper.pdf |
+| `h17132-role-based-access-controls-rbac-technical-overview-and-enhancements.pdf` | https://www.dell.com/en-sg/collaterals/unauth/technical-guides-support-information/products/storage/h17132-role-based-access-controls-rbac-technical-overview-and-enhancements.pdf |
+| `h14531-vmax3-iscsi-implementation-tech-note.pdf` | https://www.dell.com/en-sg/collaterals/unauth/technical-guides-support-information/products/storage-1/h14531-vmax3-iscsi-implementation-tech-note.pdf |
+| `h13697-emc-vmax3-local-replication.pdf` | https://www.dell.com/en-sg/collaterals/unauth/technical-guides-support-information/products/storage-1/h13697-emc-vmax3-local-replication.pdf |
+| `h14556-vmax3-srdf-metro-overview-and-best-practices-tech-note.pdf` | https://www.dell.com/en-sg/collaterals/unauth/technical-guides-support-information/products/storage-1/h14556-vmax3-srdf-metro-overview-and-best-practices-tech-note.pdf |
+| `h13904-vmax3-embedded-nas-technical-note.pdf` | https://www.dell.com/en-sg/collaterals/unauth/technical-guides-support-information/products/storage-1/h13904-vmax3-embedded-nas-technical-note.pdf |
+| `h15188-emc-vmax3-vmax-all-flash-enas-best-practices.pdf` | https://www.dell.com/en-sg/collaterals/unauth/white-papers/products/storage-2/h15188-emc-vmax3-vmax-all-flash-enas-best-practices.pdf |
+| `h14920-intro-to-vmax-af-storage.pdf` | https://www.dell.com/en-sg/collaterals/unauth/white-papers/products/storage/h14920-intro-to-vmax-af-storage.pdf |
+| `h13807-emc-vmax3-reliability-availability-and-serviceability-tech-note.pdf` | https://www.dell.com/en-sg/collaterals/unauth/technical-guides-support-information/products/storage-1/h13807-emc-vmax3-reliability-availability-and-serviceability-tech-note.pdf |
+| `h14040-understanding-storage-resource-pools-emc-vmax3-storage-arrays.pdf` | https://www.dell.com/en-sg/collaterals/unauth/white-papers/products/storage-1/h14040-understanding-storage-resource-pools-emc-vmax3-storage-arrays.pdf |
+| `h14944-emc-vmax-unisphere-360-wp.pdf` | https://www.dell.com/en-sg/collaterals/unauth/white-papers/products/storage-1/h14944-emc-vmax-unisphere-360-wp.pdf |
+| `h15498-dell-emc-vmax3-and-vmax-all-flash-quality-of-service-controls-for-multi-tenant-environments.pdf` | https://www.dell.com/en-sg/collaterals/unauth/white-papers/products/storage-2/h15498-dell-emc-vmax3-and-vmax-all-flash-quality-of-service-controls-for-multi-tenant-environments.pdf |
+| `h14247-fast-x-emc-cloudarray-wp.pdf` | https://www.dell.com/en-sg/collaterals/unauth/white-papers/products/storage-1/h14247-fast-x-emc-cloudarray-wp.pdf |
+| `h11108-compatible-mc-features-wp.pdf` | https://www.dell.com/en-sg/collaterals/unauth/white-papers/products/storage-1/h11108-compatible-mc-features-wp.pdf |
+| `h15260-unisphere-vmax-mainframe-dashboard.pdf` | https://www.dell.com/en-sg/collaterals/unauth/white-papers/products/storage-2/h15260-unisphere-vmax-mainframe-dashboard.pdf |
+| `h17390-deployment-bp-for-oracle-with-powermax-wp.pdf` | https://www.dell.com/en-sg/collaterals/unauth/white-papers/products/storage/h17390-deployment-bp-for-oracle-with-powermax-wp.pdf |
+| `h14557-vmax3-all-flash-storage-for-oracle-database-wp.pdf` | https://www.dell.com/en-sg/collaterals/unauth/white-papers/products/storage-1/h14557-vmax3-all-flash-storage-for-oracle-database-wp.pdf |
+| `h14232-oracle-database-backup-recovery-vmax3.pdf` | https://www.dell.com/en-sg/collaterals/unauth/white-papers/products/storage/h14232-oracle-database-backup-recovery-vmax3.pdf |
+| `h15132-vmax-all-flash-vmax3-iscsi-deploy-guide-oracle-wp.pdf` | https://www.dell.com/en-sg/collaterals/unauth/white-papers/products/storage-1/h15132-vmax-all-flash-vmax3-iscsi-deploy-guide-oracle-wp.pdf |
+| `h14577-srdf-metro-oracle-ebus-rac.pdf` | https://www.dell.com/en-sg/collaterals/unauth/white-papers/products/storage-1/h14577-srdf-metro-oracle-ebus-rac.pdf |
+| `h17234-powermax-sql-server-wp.pdf` | https://www.dell.com/en-sg/collaterals/unauth/white-papers/products/storage/h17234-powermax-sql-server-wp.pdf |
+| `h16434-vmax-all-flash-storage-for-microsoft-hyper-wp.pdf` | https://www.dell.com/en-sg/collaterals/unauth/white-papers/products/storage-2/h16434-vmax-all-flash-storage-for-microsoft-hyper-wp.pdf |
+| `h15529-vmax-all-flash-sql-srdf-wp.pdf` | https://www.dell.com/en-sg/collaterals/unauth/white-papers/products/storage-2/h15529-vmax-all-flash-sql-srdf-wp.pdf |
+| `h15143-emc-vmax-all-flash-vmax3-iscsi-deploy-win-wp.pdf` | https://www.dell.com/en-sg/collaterals/unauth/white-papers/products/storage-2/h15143-emc-vmax-all-flash-vmax3-iscsi-deploy-win-wp.pdf |
+| `h2529-vmware-esx-svr-w-symmetrix-wp-ldv.pdf` | https://www.dell.com/en-sg/collaterals/unauth/technical-guides-support-information/products/storage-2/h2529-vmware-esx-svr-w-symmetrix-wp-ldv.pdf |
+| `h8115-vmware-vstorage-vmax-wp.pdf` | https://www.dell.com/en-sg/collaterals/unauth/white-papers/products/storage/h8115-vmware-vstorage-vmax-wp.pdf |
+| `h12138-emc-vmax-content-pack-vmware-loginsight-wp.pdf` | https://www.dell.com/en-sg/collaterals/unauth/white-papers/products/storage-1/h12138-emc-vmax-content-pack-vmware-loginsight-wp.pdf |
+| `h10553-sra-vmware-tb.pdf` | https://www.dell.com/en-sg/collaterals/unauth/technical-guides-support-information/products/storage-1/h10553-sra-vmware-tb.pdf |
+| `h17000-srdf-sra-srm-tb.pdf` | https://www.dell.com/en-sg/collaterals/unauth/technical-guides-support-information/products/storage/h17000-srdf-sra-srm-tb.pdf |

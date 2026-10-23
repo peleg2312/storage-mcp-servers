@@ -1,6 +1,6 @@
-# Documentation library 2026.10.23
+# Documentation library 2026.10.23b
 
-Indexed 2026-10-22T22:36:07Z: **21127 unique documents, 109678 sections** (39111 files: 17984 are identical copies, e.g. the same page in several ONTAP versions, kept as aliases of one indexed copy and shown as `also_in`). Search it with `python3 search.py search "..."` (no dependencies) or the docs-search MCP server.
+Indexed 2026-10-23T07:31:25Z: **21503 unique documents, 112336 sections** (39498 files: 17995 are identical copies, e.g. the same page in several ONTAP versions, kept as aliases of one indexed copy and shown as `also_in`). Search it with `python3 search.py search "..."` (no dependencies) or the docs-search MCP server.
 
 Document counts below are files per product; an identical copy counts in every product it appears in.
 
@@ -21,9 +21,9 @@ Document counts below are files per product; an identical copy counts in every p
 | dell | csm-replication | 1 | 17 | https://github.com/dell/csm-replication |
 | dell | csm-repo | 22 | 200 | https://github.com/dell/csm |
 | dell | csm-resiliency | 1 | 8 | https://github.com/dell/karavi-resiliency |
-| dell | kb | 486 | 4776 | individual URLs (manifest.json) |
-| dell | powerflex | 49 | 9152 | https://www.dell.com/support/kbdoc/en-us/000314729/powerflex-software-documentation |
-| dell | powermax | 30 | 5098 | https://www.dell.com/en-sg/dt/documentation/vmax-all-flash-family.htm |
+| dell | kb | 514 | 4930 | individual URLs (manifest.json) |
+| dell | powerflex | 49 | 9191 | https://www.dell.com/support/kbdoc/en-us/000314729/powerflex-software-documentation, https://www.dell.com/support/manuals/en-us/powerflex-rack-hw/flex-rack-flexmgr-ug/alert-messages-and-recommended-actions?guid=guid-19f77807-a5c8-4b25-8f9b-9a36a14b6305&lang=en-us |
+| dell | powermax | 35 | 5852 | https://www.dell.com/en-sg/dt/documentation/vmax-all-flash-family.htm, https://www.dell.com/support/manuals/en-us/solutions-enabler/esd_p_array_mgmnt_alerts_guide_10_1_laurel/unisphere-policy-name-alert-id-mapping?guid=guid-ce5f01f7-6753-4ee8-a1e3-56202aab89fd&lang=en-us, https://www.dell.com/support/manuals/en-us/solutions-enabler/esd_p_array_mgmnt_alerts_guide_10_2_magnolia/preface?guid=guid-8600a2c8-6f7e-41fd-ad5a-d61c4075ded5&lang=en-us, https://www.dell.com/support/manuals/en-us/solutions-enabler/esd_p_se_array_mgmt_alerts_guide_10/unisphere-policy-name-alert-id-mapping?guid=guid-ce5f01f7-6753-4ee8-a1e3-56202aab89fd&lang=en-us, https://www.dell.com/support/manuals/en-us/unisphere-powermax/esd_p_mt_unisph_u4p_product_guide_10_3_0/overview-of-unisphere-for-powermax?guid=guid-daff12bb-453f-4ce5-a2f1-5f40f84d1bfe&lang=en-us |
 | dell | pypowerflex | 2 | 47 | https://github.com/dell/python-powerflex |
 | dell | pyu4v | 22 | 41 | https://github.com/dell/PyU4V |
 | dell | terraform-powerflex | 72 | 891 | https://github.com/dell/terraform-provider-powerflex |
@@ -37,7 +37,7 @@ Document counts below are files per product; an identical copy counts in every p
 | netapp | harvest | 69 | 2821 | https://github.com/NetApp/harvest |
 | netapp | harvest-changelog | 1 | 289 | https://github.com/NetApp/harvest |
 | netapp | harvest-issues | 82 | 497 | individual URLs (manifest.json) |
-| netapp | kb-ontap | 1403 | 7020 | individual URLs (manifest.json) |
+| netapp | kb-ontap | 1757 | 8731 | individual URLs (manifest.json) |
 | netapp | ontap | 2226 | 5096 | https://github.com/NetAppDocs/ontap |
 | netapp | ontap-7mode-transition | 377 | 713 | https://github.com/NetAppDocs/ontap-7mode-transition |
 | netapp | ontap-afx | 82 | 365 | https://github.com/NetAppDocs/ontap-afx |

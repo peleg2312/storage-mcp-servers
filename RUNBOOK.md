@@ -34,6 +34,12 @@ python3 sync/sync_web.py  --dest work/docs               # KB pages (Dell, VMwar
 python3 sync/sync_dell_kb.py --dest work/docs --browser-cookies   # Dell KB articles of PowerMax / PowerFlex / CSM-CSI
                                                          #   (seed list + related-article links; login-only ones with your session)
 
+# b2) login-only Dell documents (alert / event reference guides, release notes, support matrices): the
+#     scripts get Dell's redirect page for them even with cookies. Download them in your signed-in browser
+#     as listed in extra/dell/NEEDED.md (file name + link), save under extra/dell/<product>/, then:
+python3 sync/import_extra.py --dest work/docs
+cd .. && git add -f docs-search-mcp/extra/dell && git commit -m "Dell login-only docs" && git push origin main && cd docs-search-mcp
+
 # c) Trident / CSM / Harvest bug trackers (every issue with workaround + fixed version)
 GITHUB_TOKEN=<read-only token> python3 sync/sync_github_issues.py --dest work/docs
 

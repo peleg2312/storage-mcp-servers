@@ -52,6 +52,9 @@ Everything is incremental: re-running only fetches what changed. Sources are one
   `MANIFEST.md` (`kb-*` products). Re-running `sync_netapp_kb.py` continues it. Articles whose Cause /
   Solution needs a NetApp Support login are kept with their public part and flagged "Partial article"
   unless the export ran with `NETAPP_KB_COOKIE`.
+- **Login-only Dell documents** (PowerFlex alerts-and-events reference guides, release notes, support matrices,
+  security guides): Dell serves a redirect PDF for them even to the sync with cookies. `docs-search-mcp/extra/dell/NEEDED.md`
+  lists them with links; download them in a signed-in browser and run `sync/import_extra.py` (RUNBOOK step b2).
 - **Not in the library**: Cisco MDS / UCS documentation, PowerMaxOS release notes (not published as PDFs).
 
 Content stays the vendors' copyright, fetched for internal reference. Keep this repo private.

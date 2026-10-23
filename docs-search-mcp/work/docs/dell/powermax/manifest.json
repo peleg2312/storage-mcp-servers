@@ -1,46 +1,11 @@
 {
- "h17072-data-reduction-with-dell-emc-powermax.pdf": {
-  "url": "https://www.dell.com/en-sg/collaterals/unauth/technical-guides-support-information/products/storage/h17072-data-reduction-with-dell-emc-powermax.pdf",
-  "title": "pdf",
-  "hub": "https://www.dell.com/en-sg/dt/documentation/vmax-all-flash-family.htm"
- },
- "h17108-dell-emc-service-levels-for-powermaxos.pdf": {
-  "url": "https://www.dell.com/en-sg/collaterals/unauth/technical-guides-support-information/products/storage/h17108-dell-emc-service-levels-for-powermaxos.pdf",
-  "title": "pdf",
-  "hub": "https://www.dell.com/en-sg/dt/documentation/vmax-all-flash-family.htm"
- },
- "h17133-non-disruptive-migration-best-practices-and-operational-guide.pdf": {
-  "url": "https://www.dell.com/en-sg/collaterals/unauth/technical-guides-support-information/products/storage/h17133-non-disruptive-migration-best-practices-and-operational-guide.pdf",
-  "title": "pdf",
-  "hub": "https://www.dell.com/en-sg/dt/documentation/vmax-all-flash-family.htm"
- },
- "h16856-dell-emc-embedded-management-on-powermax-and-vmax-all-flash.pdf": {
-  "url": "https://www.dell.com/en-sg/collaterals/unauth/technical-guides-support-information/products/storage/h16856-dell-emc-embedded-management-on-powermax-and-vmax-all-flash.pdf",
-  "title": "pdf",
-  "hub": "https://www.dell.com/en-sg/dt/documentation/vmax-all-flash-family.htm"
- },
  "docu88904_PowerMax_Family_Product_Guide.pdf": {
   "url": "https://dl.dell.com/content/docu88904_PowerMax_Family_Product_Guide.pdf?language=en_US&source=Coveo",
   "title": "pdf",
   "hub": "https://www.dell.com/en-sg/dt/documentation/vmax-all-flash-family.htm"
  },
- "docu88905.pdf": {
-  "url": "https://www.dell.com/en-sg/collaterals/unauth/technical-guides-support-information/products/storage/docu88905.pdf",
-  "title": "pdf",
-  "hub": "https://www.dell.com/en-sg/dt/documentation/vmax-all-flash-family.htm"
- },
  "docu67503_VMAX_All_Flash_Product_Guide.pdf": {
   "url": "https://dl.dell.com/content/docu67503_VMAX_All_Flash_Product_Guide.pdf?language=en_US&source=Coveo",
-  "title": "pdf",
-  "hub": "https://www.dell.com/en-sg/dt/documentation/vmax-all-flash-family.htm"
- },
- "docu71867.pdf": {
-  "url": "https://www.dell.com/en-sg/collaterals/unauth/technical-guides-support-information/products/storage-5/docu71867.pdf",
-  "title": "pdf",
-  "hub": "https://www.dell.com/en-sg/dt/documentation/vmax-all-flash-family.htm"
- },
- "docu68889.pdf": {
-  "url": "https://www.dell.com/en-sg/collaterals/unauth/technical-guides-support-information/products/storage-5/docu68889.pdf",
   "title": "pdf",
   "hub": "https://www.dell.com/en-sg/dt/documentation/vmax-all-flash-family.htm"
  },
@@ -61,21 +26,6 @@
  },
  "docu102803_Virtual_Appliance_Manager_Installation_Guide_9.2.1.pdf": {
   "url": "https://dl.dell.com/content/docu102803_Virtual_Appliance_Manager_Installation_Guide_9.2.1.pdf?language=en_US",
-  "title": "pdf",
-  "hub": "https://www.dell.com/en-sg/dt/documentation/vmax-all-flash-family.htm"
- },
- "docu90731.pdf": {
-  "url": "https://www.dell.com/en-sg/collaterals/unauth/technical-guides-support-information/products/storage/docu90731.pdf",
-  "title": "pdf",
-  "hub": "https://www.dell.com/en-sg/dt/documentation/vmax-all-flash-family.htm"
- },
- "docu88876.pdf": {
-  "url": "https://www.dell.com/en-sg/collaterals/unauth/technical-guides-support-information/products/storage/docu88876.pdf",
-  "title": "pdf",
-  "hub": "https://www.dell.com/en-sg/dt/documentation/vmax-all-flash-family.htm"
- },
- "docu88872.pdf": {
-  "url": "https://www.dell.com/en-sg/collaterals/unauth/technical-guides-support-information/products/storage/docu88872.pdf",
   "title": "pdf",
   "hub": "https://www.dell.com/en-sg/dt/documentation/vmax-all-flash-family.htm"
  },
@@ -109,21 +59,6 @@
   "title": "pdf",
   "hub": "https://www.dell.com/en-sg/dt/documentation/vmax-all-flash-family.htm"
  },
- "docu68803.pdf": {
-  "url": "https://www.dell.com/en-sg/collaterals/unauth/technical-guides-support-information/products/networking-3/docu68803.pdf",
-  "title": "pdf",
-  "hub": "https://www.dell.com/en-sg/dt/documentation/vmax-all-flash-family.htm"
- },
- "docu68804.pdf": {
-  "url": "https://www.dell.com/en-sg/collaterals/unauth/technical-guides-support-information/products/networking-3/docu68804.pdf",
-  "title": "pdf",
-  "hub": "https://www.dell.com/en-sg/dt/documentation/vmax-all-flash-family.htm"
- },
- "docu68805.pdf": {
-  "url": "https://www.dell.com/en-sg/collaterals/unauth/technical-guides-support-information/products/networking-3/docu68805.pdf",
-  "title": "pdf",
-  "hub": "https://www.dell.com/en-sg/dt/documentation/vmax-all-flash-family.htm"
- },
  "docu102832_PowerMax_eNAS_8.1.15.323_Quick_Start_Guide.pdf": {
   "url": "https://dl.dell.com/content/docu102832_PowerMax_eNAS_8.1.15.323_Quick_Start_Guide.pdf?language=en_US",
   "title": "pdf",
@@ -144,11 +79,6 @@
   "title": "pdf",
   "hub": "https://www.dell.com/en-sg/dt/documentation/vmax-all-flash-family.htm"
  },
- "h15201-data-protector-for-z-systems-zdp-essentials.pdf": {
-  "url": "https://www.dell.com/en-sg/collaterals/unauth/white-papers/solutions/h15201-data-protector-for-z-systems-zdp-essentials.pdf",
-  "title": "pdf",
-  "hub": "https://www.dell.com/en-sg/dt/documentation/vmax-all-flash-family.htm"
- },
  "docu95482_SRDF_Introduction.pdf": {
   "url": "https://dl.dell.com/content/docu95482_SRDF_Introduction.pdf?language=en_US&source=Coveo",
   "title": "pdf",
@@ -166,151 +96,6 @@
  },
  "docu88908_SRDF_Interfamily_Connectivity_Information.pdf": {
   "url": "https://dl.dell.com/content/docu88908_SRDF_Interfamily_Connectivity_Information.pdf?language=en_US&source=Coveo",
-  "title": "pdf",
-  "hub": "https://www.dell.com/en-sg/dt/documentation/vmax-all-flash-family.htm"
- },
- "h17064-dell-emc-powermax-reliability-availability-and-serviceability-technical-white-paper.pdf": {
-  "url": "https://www.dell.com/en-sg/collaterals/unauth/technical-guides-support-information/products/storage/h17064-dell-emc-powermax-reliability-availability-and-serviceability-technical-white-paper.pdf",
-  "title": "pdf",
-  "hub": "https://www.dell.com/en-sg/dt/documentation/vmax-all-flash-family.htm"
- },
- "h17132-role-based-access-controls-rbac-technical-overview-and-enhancements.pdf": {
-  "url": "https://www.dell.com/en-sg/collaterals/unauth/technical-guides-support-information/products/storage/h17132-role-based-access-controls-rbac-technical-overview-and-enhancements.pdf",
-  "title": "pdf",
-  "hub": "https://www.dell.com/en-sg/dt/documentation/vmax-all-flash-family.htm"
- },
- "h14531-vmax3-iscsi-implementation-tech-note.pdf": {
-  "url": "https://www.dell.com/en-sg/collaterals/unauth/technical-guides-support-information/products/storage-1/h14531-vmax3-iscsi-implementation-tech-note.pdf",
-  "title": "pdf",
-  "hub": "https://www.dell.com/en-sg/dt/documentation/vmax-all-flash-family.htm"
- },
- "h13697-emc-vmax3-local-replication.pdf": {
-  "url": "https://www.dell.com/en-sg/collaterals/unauth/technical-guides-support-information/products/storage-1/h13697-emc-vmax3-local-replication.pdf",
-  "title": "pdf",
-  "hub": "https://www.dell.com/en-sg/dt/documentation/vmax-all-flash-family.htm"
- },
- "h14556-vmax3-srdf-metro-overview-and-best-practices-tech-note.pdf": {
-  "url": "https://www.dell.com/en-sg/collaterals/unauth/technical-guides-support-information/products/storage-1/h14556-vmax3-srdf-metro-overview-and-best-practices-tech-note.pdf",
-  "title": "pdf",
-  "hub": "https://www.dell.com/en-sg/dt/documentation/vmax-all-flash-family.htm"
- },
- "h13904-vmax3-embedded-nas-technical-note.pdf": {
-  "url": "https://www.dell.com/en-sg/collaterals/unauth/technical-guides-support-information/products/storage-1/h13904-vmax3-embedded-nas-technical-note.pdf",
-  "title": "pdf",
-  "hub": "https://www.dell.com/en-sg/dt/documentation/vmax-all-flash-family.htm"
- },
- "h15188-emc-vmax3-vmax-all-flash-enas-best-practices.pdf": {
-  "url": "https://www.dell.com/en-sg/collaterals/unauth/white-papers/products/storage-2/h15188-emc-vmax3-vmax-all-flash-enas-best-practices.pdf",
-  "title": "pdf",
-  "hub": "https://www.dell.com/en-sg/dt/documentation/vmax-all-flash-family.htm"
- },
- "h14920-intro-to-vmax-af-storage.pdf": {
-  "url": "https://www.dell.com/en-sg/collaterals/unauth/white-papers/products/storage/h14920-intro-to-vmax-af-storage.pdf",
-  "title": "pdf",
-  "hub": "https://www.dell.com/en-sg/dt/documentation/vmax-all-flash-family.htm"
- },
- "h13807-emc-vmax3-reliability-availability-and-serviceability-tech-note.pdf": {
-  "url": "https://www.dell.com/en-sg/collaterals/unauth/technical-guides-support-information/products/storage-1/h13807-emc-vmax3-reliability-availability-and-serviceability-tech-note.pdf",
-  "title": "pdf",
-  "hub": "https://www.dell.com/en-sg/dt/documentation/vmax-all-flash-family.htm"
- },
- "h14040-understanding-storage-resource-pools-emc-vmax3-storage-arrays.pdf": {
-  "url": "https://www.dell.com/en-sg/collaterals/unauth/white-papers/products/storage-1/h14040-understanding-storage-resource-pools-emc-vmax3-storage-arrays.pdf",
-  "title": "pdf",
-  "hub": "https://www.dell.com/en-sg/dt/documentation/vmax-all-flash-family.htm"
- },
- "h14944-emc-vmax-unisphere-360-wp.pdf": {
-  "url": "https://www.dell.com/en-sg/collaterals/unauth/white-papers/products/storage-1/h14944-emc-vmax-unisphere-360-wp.pdf",
-  "title": "pdf",
-  "hub": "https://www.dell.com/en-sg/dt/documentation/vmax-all-flash-family.htm"
- },
- "h15498-dell-emc-vmax3-and-vmax-all-flash-quality-of-service-controls-for-multi-tenant-environments.pdf": {
-  "url": "https://www.dell.com/en-sg/collaterals/unauth/white-papers/products/storage-2/h15498-dell-emc-vmax3-and-vmax-all-flash-quality-of-service-controls-for-multi-tenant-environments.pdf",
-  "title": "pdf",
-  "hub": "https://www.dell.com/en-sg/dt/documentation/vmax-all-flash-family.htm"
- },
- "h14247-fast-x-emc-cloudarray-wp.pdf": {
-  "url": "https://www.dell.com/en-sg/collaterals/unauth/white-papers/products/storage-1/h14247-fast-x-emc-cloudarray-wp.pdf",
-  "title": "pdf",
-  "hub": "https://www.dell.com/en-sg/dt/documentation/vmax-all-flash-family.htm"
- },
- "h11108-compatible-mc-features-wp.pdf": {
-  "url": "https://www.dell.com/en-sg/collaterals/unauth/white-papers/products/storage-1/h11108-compatible-mc-features-wp.pdf",
-  "title": "pdf",
-  "hub": "https://www.dell.com/en-sg/dt/documentation/vmax-all-flash-family.htm"
- },
- "h15260-unisphere-vmax-mainframe-dashboard.pdf": {
-  "url": "https://www.dell.com/en-sg/collaterals/unauth/white-papers/products/storage-2/h15260-unisphere-vmax-mainframe-dashboard.pdf",
-  "title": "pdf",
-  "hub": "https://www.dell.com/en-sg/dt/documentation/vmax-all-flash-family.htm"
- },
- "h17390-deployment-bp-for-oracle-with-powermax-wp.pdf": {
-  "url": "https://www.dell.com/en-sg/collaterals/unauth/white-papers/products/storage/h17390-deployment-bp-for-oracle-with-powermax-wp.pdf",
-  "title": "pdf",
-  "hub": "https://www.dell.com/en-sg/dt/documentation/vmax-all-flash-family.htm"
- },
- "h14557-vmax3-all-flash-storage-for-oracle-database-wp.pdf": {
-  "url": "https://www.dell.com/en-sg/collaterals/unauth/white-papers/products/storage-1/h14557-vmax3-all-flash-storage-for-oracle-database-wp.pdf",
-  "title": "pdf",
-  "hub": "https://www.dell.com/en-sg/dt/documentation/vmax-all-flash-family.htm"
- },
- "h14232-oracle-database-backup-recovery-vmax3.pdf": {
-  "url": "https://www.dell.com/en-sg/collaterals/unauth/white-papers/products/storage/h14232-oracle-database-backup-recovery-vmax3.pdf",
-  "title": "pdf",
-  "hub": "https://www.dell.com/en-sg/dt/documentation/vmax-all-flash-family.htm"
- },
- "h15132-vmax-all-flash-vmax3-iscsi-deploy-guide-oracle-wp.pdf": {
-  "url": "https://www.dell.com/en-sg/collaterals/unauth/white-papers/products/storage-1/h15132-vmax-all-flash-vmax3-iscsi-deploy-guide-oracle-wp.pdf",
-  "title": "pdf",
-  "hub": "https://www.dell.com/en-sg/dt/documentation/vmax-all-flash-family.htm"
- },
- "h14577-srdf-metro-oracle-ebus-rac.pdf": {
-  "url": "https://www.dell.com/en-sg/collaterals/unauth/white-papers/products/storage-1/h14577-srdf-metro-oracle-ebus-rac.pdf",
-  "title": "pdf",
-  "hub": "https://www.dell.com/en-sg/dt/documentation/vmax-all-flash-family.htm"
- },
- "h17234-powermax-sql-server-wp.pdf": {
-  "url": "https://www.dell.com/en-sg/collaterals/unauth/white-papers/products/storage/h17234-powermax-sql-server-wp.pdf",
-  "title": "pdf",
-  "hub": "https://www.dell.com/en-sg/dt/documentation/vmax-all-flash-family.htm"
- },
- "h16434-vmax-all-flash-storage-for-microsoft-hyper-wp.pdf": {
-  "url": "https://www.dell.com/en-sg/collaterals/unauth/white-papers/products/storage-2/h16434-vmax-all-flash-storage-for-microsoft-hyper-wp.pdf",
-  "title": "pdf",
-  "hub": "https://www.dell.com/en-sg/dt/documentation/vmax-all-flash-family.htm"
- },
- "h15529-vmax-all-flash-sql-srdf-wp.pdf": {
-  "url": "https://www.dell.com/en-sg/collaterals/unauth/white-papers/products/storage-2/h15529-vmax-all-flash-sql-srdf-wp.pdf",
-  "title": "pdf",
-  "hub": "https://www.dell.com/en-sg/dt/documentation/vmax-all-flash-family.htm"
- },
- "h15143-emc-vmax-all-flash-vmax3-iscsi-deploy-win-wp.pdf": {
-  "url": "https://www.dell.com/en-sg/collaterals/unauth/white-papers/products/storage-2/h15143-emc-vmax-all-flash-vmax3-iscsi-deploy-win-wp.pdf",
-  "title": "pdf",
-  "hub": "https://www.dell.com/en-sg/dt/documentation/vmax-all-flash-family.htm"
- },
- "h2529-vmware-esx-svr-w-symmetrix-wp-ldv.pdf": {
-  "url": "https://www.dell.com/en-sg/collaterals/unauth/technical-guides-support-information/products/storage-2/h2529-vmware-esx-svr-w-symmetrix-wp-ldv.pdf",
-  "title": "pdf",
-  "hub": "https://www.dell.com/en-sg/dt/documentation/vmax-all-flash-family.htm"
- },
- "h8115-vmware-vstorage-vmax-wp.pdf": {
-  "url": "https://www.dell.com/en-sg/collaterals/unauth/white-papers/products/storage/h8115-vmware-vstorage-vmax-wp.pdf",
-  "title": "pdf",
-  "hub": "https://www.dell.com/en-sg/dt/documentation/vmax-all-flash-family.htm"
- },
- "h12138-emc-vmax-content-pack-vmware-loginsight-wp.pdf": {
-  "url": "https://www.dell.com/en-sg/collaterals/unauth/white-papers/products/storage-1/h12138-emc-vmax-content-pack-vmware-loginsight-wp.pdf",
-  "title": "pdf",
-  "hub": "https://www.dell.com/en-sg/dt/documentation/vmax-all-flash-family.htm"
- },
- "h10553-sra-vmware-tb.pdf": {
-  "url": "https://www.dell.com/en-sg/collaterals/unauth/technical-guides-support-information/products/storage-1/h10553-sra-vmware-tb.pdf",
-  "title": "pdf",
-  "hub": "https://www.dell.com/en-sg/dt/documentation/vmax-all-flash-family.htm"
- },
- "h17000-srdf-sra-srm-tb.pdf": {
-  "url": "https://www.dell.com/en-sg/collaterals/unauth/technical-guides-support-information/products/storage/h17000-srdf-sra-srm-tb.pdf",
   "title": "pdf",
   "hub": "https://www.dell.com/en-sg/dt/documentation/vmax-all-flash-family.htm"
  },

@@ -19,33 +19,8 @@
   "title": "View",
   "hub": "https://www.dell.com/support/kbdoc/en-us/000314729/powerflex-software-documentation"
  },
- "manual55425296-dell-powerflex-5-1-x-4-5-x-and-powerflex-manager-5-1-x-release-notes.pdf": {
-  "url": "https://dl.dell.com/content/manual55425296-dell-powerflex-5-1-x-4-5-x-and-powerflex-manager-5-1-x-release-notes.pdf",
-  "title": "View",
-  "hub": "https://www.dell.com/support/kbdoc/en-us/000314729/powerflex-software-documentation"
- },
- "manual41313829-dell-powerflex-5-1-x-and-powerflex-manager-5-1-x-support-matrix.pdf": {
-  "url": "https://dl.dell.com/content/manual41313829-dell-powerflex-5-1-x-and-powerflex-manager-5-1-x-support-matrix.pdf",
-  "title": "View",
-  "hub": "https://www.dell.com/support/kbdoc/en-us/000314729/powerflex-software-documentation"
- },
- "manual69966030-dell-powerflex-family-5-x-security-configuration-guide.pdf": {
-  "url": "https://dl.dell.com/content/manual69966030-dell-powerflex-family-5-x-security-configuration-guide.pdf",
-  "title": "View",
-  "hub": "https://www.dell.com/support/kbdoc/en-us/000314729/powerflex-software-documentation"
- },
  "manual24849883-dell-powerflex-5-1-x-and-powerflex-manager-5-1-x-cli-reference-guide.pdf": {
   "url": "https://dl.dell.com/content/manual24849883-dell-powerflex-5-1-x-and-powerflex-manager-5-1-x-cli-reference-guide.pdf",
-  "title": "View",
-  "hub": "https://www.dell.com/support/kbdoc/en-us/000314729/powerflex-software-documentation"
- },
- "manual21472110-dell-powerflex-5-1-x-and-powerflex-manager-5-1-x-alerts-and-events-reference-guide.pdf": {
-  "url": "https://dl.dell.com/content/manual21472110-dell-powerflex-5-1-x-and-powerflex-manager-5-1-x-alerts-and-events-reference-guide.pdf",
-  "title": "View",
-  "hub": "https://www.dell.com/support/kbdoc/en-us/000314729/powerflex-software-documentation"
- },
- "manual16632609-dell-powerflex-5-0-x-and-powerflex-manager-5-0-x-example-csv-files.pdf": {
-  "url": "https://dl.dell.com/content/manual16632609-dell-powerflex-5-0-x-and-powerflex-manager-5-0-x-example-csv-files.pdf",
   "title": "View",
   "hub": "https://www.dell.com/support/kbdoc/en-us/000314729/powerflex-software-documentation"
  },
@@ -69,23 +44,8 @@
   "title": "View",
   "hub": "https://www.dell.com/support/kbdoc/en-us/000314729/powerflex-software-documentation"
  },
- "manual71189798-dell-powerflex-family-4-x-security-configuration-guide.pdf": {
-  "url": "https://dl.dell.com/content/manual71189798-dell-powerflex-family-4-x-security-configuration-guide.pdf",
-  "title": "View",
-  "hub": "https://www.dell.com/support/kbdoc/en-us/000314729/powerflex-software-documentation"
- },
  "manual25004677-dell-powerflex-4-5-x-and-powerflex-manager-5-1-x-cli-reference-guide.pdf": {
   "url": "https://dl.dell.com/content/manual25004677-dell-powerflex-4-5-x-and-powerflex-manager-5-1-x-cli-reference-guide.pdf",
-  "title": "View",
-  "hub": "https://www.dell.com/support/kbdoc/en-us/000314729/powerflex-software-documentation"
- },
- "manual21579043-dell-powerflex-4-5-x-and-powerflex-manager-5-1-x-alerts-and-events-reference-guide.pdf": {
-  "url": "https://dl.dell.com/content/manual21579043-dell-powerflex-4-5-x-and-powerflex-manager-5-1-x-alerts-and-events-reference-guide.pdf",
-  "title": "View",
-  "hub": "https://www.dell.com/support/kbdoc/en-us/000314729/powerflex-software-documentation"
- },
- "manual36345513-dell-powerflex-4-x-example-csv-files.pdf": {
-  "url": "https://dl.dell.com/content/manual36345513-dell-powerflex-4-x-example-csv-files.pdf",
   "title": "View",
   "hub": "https://www.dell.com/support/kbdoc/en-us/000314729/powerflex-software-documentation"
  },
@@ -96,11 +56,6 @@
  },
  "manual25439440-dell-cloudlink-8-3-x-deployment-guide.pdf": {
   "url": "https://dl.dell.com/content/manual25439440-dell-cloudlink-8-3-x-deployment-guide.pdf",
-  "title": "View",
-  "hub": "https://www.dell.com/support/kbdoc/en-us/000314729/powerflex-software-documentation"
- },
- "manual25305810-dell-cloudlink-8-3-x-release-notes.pdf": {
-  "url": "https://dl.dell.com/content/manual25305810-dell-cloudlink-8-3-x-release-notes.pdf",
   "title": "View",
   "hub": "https://www.dell.com/support/kbdoc/en-us/000314729/powerflex-software-documentation"
  },
@@ -119,11 +74,6 @@
   "title": "View",
   "hub": "https://www.dell.com/support/kbdoc/en-us/000314729/powerflex-software-documentation"
  },
- "manual28911486-dell-cloudlink-security-configuration-guide.pdf": {
-  "url": "https://dl.dell.com/content/manual28911486-dell-cloudlink-security-configuration-guide.pdf",
-  "title": "View",
-  "hub": "https://www.dell.com/support/kbdoc/en-us/000314729/powerflex-software-documentation"
- },
  "manual50330534-dell-powerflex-5-0-x-and-powerflex-manager-5-0-x-technical-overview.pdf": {
   "url": "https://dl.dell.com/content/manual50330534-dell-powerflex-5-0-x-and-powerflex-manager-5-0-x-technical-overview.pdf",
   "title": "View",
@@ -136,21 +86,6 @@
  },
  "manual32668638-dell-powerflex-5-0-x-and-powerflex-manager-5-0-x-software-administration-guide.pdf": {
   "url": "https://dl.dell.com/content/manual32668638-dell-powerflex-5-0-x-and-powerflex-manager-5-0-x-software-administration-guide.pdf",
-  "title": "View",
-  "hub": "https://www.dell.com/support/kbdoc/en-us/000314729/powerflex-software-documentation"
- },
- "manual37428579-dell-powerflex-5-0-x-and-powerflex-manager-5-0-x-support-matrix.pdf": {
-  "url": "https://dl.dell.com/content/manual37428579-dell-powerflex-5-0-x-and-powerflex-manager-5-0-x-support-matrix.pdf",
-  "title": "View",
-  "hub": "https://www.dell.com/support/kbdoc/en-us/000314729/powerflex-software-documentation"
- },
- "manual59926943-dell-powerflex-5-0-x-and-powerflex-manager-5-0-x-cli-reference-guide.pdf": {
-  "url": "https://dl.dell.com/content/manual59926943-dell-powerflex-5-0-x-and-powerflex-manager-5-0-x-cli-reference-guide.pdf",
-  "title": "View",
-  "hub": "https://www.dell.com/support/kbdoc/en-us/000314729/powerflex-software-documentation"
- },
- "manual55355780-dell-powerflex-5-0-x-and-powerflex-manager-5-0-x-alerts-and-events-reference-guide.pdf": {
-  "url": "https://dl.dell.com/content/manual55355780-dell-powerflex-5-0-x-and-powerflex-manager-5-0-x-alerts-and-events-reference-guide.pdf?",
   "title": "View",
   "hub": "https://www.dell.com/support/kbdoc/en-us/000314729/powerflex-software-documentation"
  },
@@ -174,23 +109,8 @@
   "title": "View",
   "hub": "https://www.dell.com/support/kbdoc/en-us/000314729/powerflex-software-documentation"
  },
- "manual72830551-dell-powerflex-4-5-x-and-powerflex-manager-4-8-x-release-notes.pdf": {
-  "url": "https://dl.dell.com/content/manual72830551-dell-powerflex-4-5-x-and-powerflex-manager-4-8-x-release-notes.pdf",
-  "title": "View",
-  "hub": "https://www.dell.com/support/kbdoc/en-us/000314729/powerflex-software-documentation"
- },
- "manual36877518-dell-powerflex-4-5-x-and-powerflex-manager-4-8-x-support-matrix.pdf": {
-  "url": "https://dl.dell.com/content/manual36877518-dell-powerflex-4-5-x-and-powerflex-manager-4-8-x-support-matrix.pdf",
-  "title": "View",
-  "hub": "https://www.dell.com/support/kbdoc/en-us/000314729/powerflex-software-documentation"
- },
  "manual2096778-dell-powerflex-4-5-x-and-powerflex-manager-4-8-x-cli-reference-guide.pdf": {
   "url": "https://dl.dell.com/content/manual2096778-dell-powerflex-4-5-x-and-powerflex-manager-4-8-x-cli-reference-guide.pdf",
-  "title": "View",
-  "hub": "https://www.dell.com/support/kbdoc/en-us/000314729/powerflex-software-documentation"
- },
- "manual2550056-dell-powerflex-4-5-x-and-powerflex-manager-4-8-x-alerts-and-events-reference-guide.pdf": {
-  "url": "https://dl.dell.com/content/manual2550056-dell-powerflex-4-5-x-and-powerflex-manager-4-8-x-alerts-and-events-reference-guide.pdf",
   "title": "View",
   "hub": "https://www.dell.com/support/kbdoc/en-us/000314729/powerflex-software-documentation"
  },
@@ -214,18 +134,8 @@
   "title": "View",
   "hub": "https://www.dell.com/support/kbdoc/en-us/000314729/powerflex-software-documentation"
  },
- "manual39480792-dell-powerflex-4-6-x-release-notes.pdf": {
-  "url": "https://dl.dell.com/content/manual39480792-dell-powerflex-4-6-x-release-notes.pdf",
-  "title": "View",
-  "hub": "https://www.dell.com/support/kbdoc/en-us/000314729/powerflex-software-documentation"
- },
  "manual30338909-dell-powerflex-4-5-x-and-powerflex-manager-4-6-x-cli-reference-guide.pdf": {
   "url": "https://dl.dell.com/content/manual30338909-dell-powerflex-4-5-x-and-powerflex-manager-4-6-x-cli-reference-guide.pdf",
-  "title": "View",
-  "hub": "https://www.dell.com/support/kbdoc/en-us/000314729/powerflex-software-documentation"
- },
- "manual37556768-dell-powerflex-4-6-x-alerts-and-events-reference-guide.pdf": {
-  "url": "https://dl.dell.com/content/manual37556768-dell-powerflex-4-6-x-alerts-and-events-reference-guide.pdf",
   "title": "View",
   "hub": "https://www.dell.com/support/kbdoc/en-us/000314729/powerflex-software-documentation"
  },
@@ -239,38 +149,13 @@
   "title": "View",
   "hub": "https://www.dell.com/support/kbdoc/en-us/000314729/powerflex-software-documentation"
  },
- "manual68830250-dell-powerflex-4-5-x-release-notes.pdf": {
-  "url": "https://dl.dell.com/content/manual68830250-dell-powerflex-4-5-x-release-notes.pdf",
-  "title": "View",
-  "hub": "https://www.dell.com/support/kbdoc/en-us/000314729/powerflex-software-documentation"
- },
- "manual36963827-dell-powerflex-support-matrix-v4-5-x.pdf": {
-  "url": "https://dl.dell.com/content/manual36963827-dell-powerflex-support-matrix-v4-5-x.pdf",
-  "title": "View",
-  "hub": "https://www.dell.com/support/kbdoc/en-us/000314729/powerflex-software-documentation"
- },
- "manual21813579-dell-powerflex-4-5-x-security-configuration-guide.pdf": {
-  "url": "https://dl.dell.com/content/manual21813579-dell-powerflex-4-5-x-security-configuration-guide.pdf",
-  "title": "View",
-  "hub": "https://www.dell.com/support/kbdoc/en-us/000314729/powerflex-software-documentation"
- },
  "manual32133496-dell-powerflex-4-5-x-cli-reference-guide.pdf": {
   "url": "https://dl.dell.com/content/manual32133496-dell-powerflex-4-5-x-cli-reference-guide.pdf",
   "title": "View",
   "hub": "https://www.dell.com/support/kbdoc/en-us/000314729/powerflex-software-documentation"
  },
- "manual28550240-dell-powerflex-4-5-x-alerts-and-events-reference-guide.pdf": {
-  "url": "https://dl.dell.com/content/manual28550240-dell-powerflex-4-5-x-alerts-and-events-reference-guide.pdf",
-  "title": "View",
-  "hub": "https://www.dell.com/support/kbdoc/en-us/000314729/powerflex-software-documentation"
- },
  "manual64236310-dell-powerflex-4-0-x-release-notes.pdf": {
   "url": "https://dl.dell.com/content/manual64236310-dell-powerflex-4-0-x-release-notes.pdf",
-  "title": "View",
-  "hub": "https://www.dell.com/support/kbdoc/en-us/000314729/powerflex-software-documentation"
- },
- "manual18767752-dell-powerflex-4-0-x-support-matrix.pdf": {
-  "url": "https://dl.dell.com/content/manual18767752-dell-powerflex-4-0-x-support-matrix.pdf",
   "title": "View",
   "hub": "https://www.dell.com/support/kbdoc/en-us/000314729/powerflex-software-documentation"
  },
@@ -289,18 +174,8 @@
   "title": "View",
   "hub": "https://www.dell.com/support/kbdoc/en-us/000314729/powerflex-software-documentation"
  },
- "manual30688224-monitor-dell-emc-powerflex.pdf": {
-  "url": "https://dl.dell.com/content/manual30688224-monitor-dell-emc-powerflex.pdf",
-  "title": "View",
-  "hub": "https://www.dell.com/support/kbdoc/en-us/000314729/powerflex-software-documentation"
- },
  "manual51213711-upgrade-dell-powerflex-to-v3-6-x.pdf": {
   "url": "https://dl.dell.com/content/manual51213711-upgrade-dell-powerflex-to-v3-6-x.pdf",
-  "title": "View",
-  "hub": "https://www.dell.com/support/kbdoc/en-us/000314729/powerflex-software-documentation"
- },
- "manual32534988-troubleshoot-and-maintain-dell-emc-powerflex.pdf": {
-  "url": "https://dl.dell.com/content/manual32534988-troubleshoot-and-maintain-dell-emc-powerflex.pdf",
   "title": "View",
   "hub": "https://www.dell.com/support/kbdoc/en-us/000314729/powerflex-software-documentation"
  },
@@ -339,11 +214,6 @@
   "title": "View",
   "hub": "https://www.dell.com/support/kbdoc/en-us/000314729/powerflex-software-documentation"
  },
- "manual11097151-dell-powerflex-support-matrix-v3-6-0-x.pdf": {
-  "url": "https://dl.dell.com/content/manual11097151-dell-powerflex-support-matrix-v3-6-0-x.pdf",
-  "title": "View",
-  "hub": "https://www.dell.com/support/kbdoc/en-us/000314729/powerflex-software-documentation"
- },
  "manual26731657-dell-powerflex-3-6-4-release-notes.pdf": {
   "url": "https://dl.dell.com/content/manual26731657-dell-powerflex-3-6-4-release-notes.pdf",
   "title": "View",
@@ -357,11 +227,6 @@
  "manual30402542-dell-powerflex-3-6-2-release-notes.pdf": {
   "url": "https://dl.dell.com/content/manual30402542-dell-powerflex-3-6-2-release-notes.pdf",
   "title": "View",
-  "hub": "https://www.dell.com/support/kbdoc/en-us/000314729/powerflex-software-documentation"
- },
- "statement-against-modern-slavery-human-trafficking-and-child-labor.pdf": {
-  "url": "https://www.delltechnologies.com/asset/en-us/solutions/business-solutions/legal-pricing/statement-against-modern-slavery-human-trafficking-and-child-labor.pdf",
-  "title": "Anti-Slavery, Human Trafficking & Child Labor",
   "hub": "https://www.dell.com/support/kbdoc/en-us/000314729/powerflex-software-documentation"
  },
  "how-to-locate-the-device-identifier-eui-in-a-volume-powerflex-3-6-x.html": {
