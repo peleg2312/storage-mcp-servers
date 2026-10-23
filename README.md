@@ -22,6 +22,7 @@ UCS  trace_service_profile_san   vHBA WWPN, fabric, VSAN, adapter link, FI uplin
 ```
 
 **Every command for your PC and the VM, in order: [`RUNBOOK.md`](RUNBOOK.md).**
+**Continuing the work with Claude Code on a PC (instead of the cloud session): [`HANDOFF.md`](HANDOFF.md).**
 
 ## Offline VM in one command
 
