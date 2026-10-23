@@ -20,12 +20,12 @@ vendor / product: `~/.claude/brain/library/MANIFEST.md`. There is no internet; n
 | Harvest | `harvest`, `harvest-issues`, `harvest-changelog` |
 | PowerMax, SRDF, SnapVX, Solutions Enabler, Unisphere | `dell` / `powermax` (PDFs: Product Guide, Solutions Enabler CLI Reference, SRDF Introduction, Events and Alerts guide, Host Connectivity for ESXi), `kb` |
 | PowerFlex | `dell` / `powerflex` (Technical Overview, Administration, CLI Reference and Install guides per version, release notes 3.6.x / 4.0.x / 4.5.x-5.1.x), `kb` |
-| CSM / CSI drivers on OpenShift | `dell` / `csm` (url `content/docs/` = current, `content/v1..v3/` = older; pick the one matching the installed CSM), `csm-repo` (CHANGELOG-<ver>), `csi-powermax`, `csi-powerflex`, `csm-replication`, `csm-operator`, `csm-authorization`, `csm-resiliency`, `kb` |
-| PowerScale / Isilon / OneFS | `dell` / `kb`, `infohub-powerscale`, `csi-powerscale` (driver docs + code), `gopowerscale`, `goisilon`, `ansible-powerscale`, `terraform-powerscale` |
-| A CSI / CSM error text, a sidecar (attacher, provisioner, resizer, snapshotter, registrar) | the error string in quotes over `dell` code (`csi-powermax`, `csi-powerflex`, `csi-powerscale`, `goscaleio`, `gopowermax`, `goisilon`, `gobrick`, `csm-operator`, `csm-replication`) and `kubernetes` (sidecars, `csi-spec`, `csi-docs`) |
+| CSM / CSI drivers on OpenShift | `dell` / `csm` (url `content/docs/` = current, `content/v1..v3/` = older; pick the one matching the installed CSM), `csm-repo` (CHANGELOG-<ver>), `csi-powermax`, `csi-powerflex`, `csm-replication`, `csm-operator`, `csm-authorization`, `csm-resiliency`, `kb`; fixes: `csm-prs`, `csi-powermax-prs`, `csi-powerflex-prs`, `csi-powerscale-prs`, `csm-operator-prs`, `csm-replication-prs` |
+| PowerScale / Isilon / OneFS | `dell` / `kb`, `infohub-powerscale`, `csi-powerscale` (driver docs + code), `gopowerscale`, `ansible-powerscale`, `terraform-powerscale` |
+| A CSI / CSM error text, a sidecar (attacher, provisioner, resizer, snapshotter, registrar) | the error string in quotes over `dell` code (`csi-powermax`, `csi-powerflex`, `csi-powerscale`, `goscaleio`, `gopowermax`, `gobrick`, `csm-operator`, `csm-replication`) and `kubernetes` (sidecars, `csi-spec`, `csi-docs`) |
 | Dell security advisories (DSA-*), PowerPath, Unisphere how-tos | `dell` / `kb` |
 | ESXi storage | `vmware` / `kb`, `netapp` / `kb-ontap` |
-| Cisco MDS / UCS, PowerMaxOS release notes, a CSM issue tracker | **not in the library**: say so; explain from general knowledge, clearly labelled |
+| Cisco MDS / UCS, PowerMaxOS release notes, the CSM issue texts (use the `*-prs` fixes) | **not in the library**: say so; explain from general knowledge, clearly labelled |
 
 ## 2. Search: exact first, then wider
 1. The exact string in quotes (EMS name, error text, command, KB / CONTAP / DSA number, SIO code), with
@@ -51,7 +51,11 @@ say "documented for 9.2; confirm for your version". Quote short passages verbati
   `known-issues.html`; Harvest → `harvest-issues`, `harvest-changelog`; ONTAP → `kb-ontap`
   CONTAP-* articles ("Fixed In Version" section; ranges like `9.15.1P3 to 9.15.1P20` mean affected);
   PowerFlex → the release notes PDFs in `dell/powerflex` ("fixed issues", "known issues"); CSM → the
-  `dell/csm` `csidriver/release/<driver>/` pages and `csm-repo` CHANGELOG-<ver>; PowerMax → `dell/kb`
+  `dell/csm` `release/` and `csidriver/release/<driver>/` pages ("Fixed Issues" / "Known Issues": one line per
+  bug, e.g. "PowerMax - Driver Crashes with Segmentation Fault ..."; older versions link `dell/csm#<n>`) and
+  `csm-repo` CHANGELOG-<ver>, then search that title's key words, the `dell/csm#<n>` or the symptom over the `*-prs` products: the
+  PR that fixes it, its merge date and the driver repo (merge date + release notes = first fixed version);
+  PowerMax → `dell/kb`
   (fix numbers and the PowerMaxOS level that carries them). Report: affected versions, fixed version,
   workaround, and whether the installed version (environment file / tool result) is inside the range.
 - **Error text from a CSI driver, the operator or a sidecar**: search the exact text over the source code

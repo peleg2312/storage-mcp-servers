@@ -75,6 +75,126 @@ def search(c, q, vendor="", product="", limit=10, mode="and"):
     return rows
 
 
+# Storage-domain synonyms: a query word matches any member of its group (old product names, acronyms).
+SYNONYMS = [
+    ["powerflex", "vxflex", "scaleio", "pflex"], ["powermax", "vmax", "symmetrix", "pmax"],
+    ["powerscale", "isilon", "onefs"], ["sdc", "scini"], ["pfmp", "powerflex management platform"],
+    ["mdm", "meta data manager"], ["sds", "storage data server"], ["rdp", "replication data pointer"],
+    ["srdf", "remote data facility"], ["symcli", "solutions enabler"], ["unisphere", "u4p"],
+    ["dsa", "dell security advisory"], ["csm", "container storage modules"],
+    ["csi", "container storage interface"], ["k8s", "kubernetes"], ["ocp", "openshift"],
+    ["pvc", "persistent volume claim"], ["fc", "fibre channel"], ["hu", "host utilities"],
+    ["mcc", "metrocluster"], ["sfo", "storage failover"], ["gdd", "granular data distribution"],
+    ["sm-as", "snapmirror active sync", "smbc"], ["snapmirror", "snap mirror"],
+    ["air gapped", "airgapped", "airgap", "offline", "disconnected", "dark site"],
+]
+_SYN = {w: g for g in SYNONYMS for w in g}
+CODE_EXT = (".go", ".py", ".proto", ".yaml", ".yml", ".sh")
+STOP = set("a an the of for to in on with and or is are was were how what why when where which does do did "
+           "my i it its from by at after be can could will this that there into vs via about please".split())
+
+
+def _terms(q):
+    """(required phrases, optional term groups): "quoted" text must match; every other word (or dotted /
+    dashed token such as sfo.takeover or naa.600a0980, kept as a phrase) is a group of synonyms."""
+    req, groups = [], []
+    for m in re.finditer(r'"([^"]+)"|(\S+)', q):
+        words = re.findall(r"\w+", (m.group(1) or m.group(2)).lower())
+        if not words:
+            continue
+        if m.group(1):
+            req.append(" ".join(words))
+            continue
+        raw = (m.group(2) or "").lower().strip(".,;:!?()")
+        if len(words) == 1 and words[0] in STOP:
+            continue
+        key = raw if raw in _SYN else " ".join(words)
+        alts = _SYN.get(key, [key])
+        groups.append([" ".join(re.findall(r"\w+", a)) for a in alts])
+    # two words that together form a synonym ("snap mirror", "air gapped") become one group
+    i = 0
+    while i < len(groups) - 1:
+        pair = groups[i][0] + " " + groups[i + 1][0]
+        if pair in _SYN:
+            groups[i:i + 2] = [_SYN[pair]]
+        i += 1
+    return req, groups
+
+
+def _stem(w):
+    return w[:max(4, len(w) - 3)] if len(w) > 5 else w
+
+
+def _has(text, alt):
+    return all(re.search(r"\b" + re.escape(_stem(w)), text) for w in alt.split())
+
+
+def search_docs(c, q, vendor="", product="", limit=10):
+    """The search_docs tool. Candidates: chunks containing the quoted phrases and any query word (or a
+    synonym); ranking: BM25 (title incl. folder context x6, section x3, text x1) x the squared share of
+    query words the chunk covers (all-word matches lead, a strong near-miss still shows) x (1 + share of
+    them in the title / section heading) x 0.5 for source code; at most two chunks per document."""
+    req, groups = _terms(q)
+    if not req and not groups:
+        raise ValueError("empty query")
+    phrase = lambda s: '"' + s + '"'  # noqa: E731
+    sql = ("SELECT c.id AS chunk_id, d.id AS doc_id, d.vendor, d.product, d.title, chunks_fts.heading AS section, "
+           "d.url, d.path, snippet(chunks_fts, 2, '«', '»', ' … ', 40) AS snippet, "
+           "bm25(chunks_fts, 6.0, 3.0, 1.0) AS score, chunks_fts.title AS ctx, chunks_fts.text AS body "
+           "FROM chunks_fts JOIN chunks c ON c.id = chunks_fts.rowid JOIN docs d ON d.id = c.doc_id "
+           "WHERE chunks_fts MATCH ?")
+    filters = []
+    if vendor:
+        sql += " AND d.vendor = ?"
+        filters.append(vendor.lower())
+    if product:   # the document itself or any identical copy (alias) in a matching product
+        sql += " AND (d.product LIKE ? OR EXISTS (SELECT 1 FROM docs a WHERE a.dup_of = d.id AND a.product LIKE ?))"
+        filters += [f"%{product}%", f"%{product}%"]
+    sql += " ORDER BY score LIMIT ?"
+
+    def candidates(groups):
+        # chunks holding every word group (a short page with all words is never crowded out by long pages
+        # repeating common words), plus the best chunks holding any of them
+        anyg = [phrase(r) for r in req] + (["(" + " OR ".join(phrase(a) for g in groups for a in g) + ")"] if groups else [])
+        every = [phrase(r) for r in req] + ["(" + " OR ".join(phrase(a) for a in g) + ")" for g in groups]
+        found = {}
+        for match, n in ((" AND ".join(every), 300), (" AND ".join(anyg), 400)):
+            for r in c.execute(sql, [match] + filters + [n]):
+                found.setdefault(r["chunk_id"], dict(r))
+        return found
+
+    cands = candidates(groups)
+    if not cands and any(" " in a for g in groups for a in g):   # near miss on a dotted / multi-word term:
+        groups = [[w] for g in groups for w in g[0].split()]     # try its words one by one
+        cands = candidates(groups)
+    lim = max(1, min(int(limit), 50))
+    scored = []
+    for r in cands.values():
+        title = f"{r.pop('ctx')}\n{r['section'] or ''}".lower()
+        text = f"{title}\n{r.pop('body')}".lower()
+        hit = sum(1 for g in groups if any(_has(text, a) for a in g))
+        cover = hit / len(groups) if groups else 1.0
+        in_title = sum(1 for g in groups if any(_has(title, a) for a in g)) / len(groups) if groups else 0.0
+        r["matched"] = f"{hit}/{len(groups)}" if groups else "phrases"
+        weight = 0.5 if r["path"].endswith(CODE_EXT) else 1.0     # docs first; code wins on exact error text
+        scored.append((-r["score"] * cover * cover * weight * (1 + in_title), cover, r))
+    scored.sort(key=lambda t: -t[0])
+    rows, per_doc = [], {}
+    for final, cover, r in scored:
+        if per_doc.get(r["doc_id"], 0) >= 2:
+            continue
+        per_doc[r["doc_id"]] = per_doc.get(r["doc_id"], 0) + 1
+        r.pop("doc_id")
+        r["score"] = round(final, 2)                    # relevance: higher is better
+        r["also_in"] = also_in(c, r["path"])
+        rows.append(r)
+        if len(rows) >= lim:
+            break
+    full = bool(scored) and scored[0][1] == 1.0
+    mode = "all words" if full else "partial: no chunk contains every word; best coverage first (see matched)"
+    return {"query": q, "match_mode": mode, "results": rows}
+
+
 def also_in(c, path):
     """Products / versions holding an identical copy of this document (folded by the indexer)."""
     try:
@@ -158,16 +278,14 @@ def main():
 
     c = connect(find_db(a.db))
     if a.cmd == "search":
-        rows, mode = search(c, a.query, a.vendor, a.product, a.limit), "all words"
-        if not rows:
-            rows, mode = search(c, a.query, a.vendor, a.product, a.limit, "or"), "any word"
-        out = {"query": a.query, "match_mode": mode, "results": rows}
+        out = search_docs(c, a.query, a.vendor, a.product, a.limit)
+        rows, mode = out["results"], out["match_mode"]
         if a.json:
             print(json.dumps(out, ensure_ascii=False, indent=1))
             return
         print(f"{len(rows)} results ({mode}) for: {a.query}")
         for i, h in enumerate(rows, 1):
-            print(f"\n[{i}] chunk {h['chunk_id']}  {h['vendor']}/{h['product']}  score {h['score']:.1f}")
+            print(f"\n[{i}] chunk {h['chunk_id']}  {h['vendor']}/{h['product']}  score {h['score']:.1f}  matched {h['matched']}")
             print(f"    {h['title']}  ::  {h['section']}")
             print(f"    {h['url'] or h['path']}")
             if h.get("also_in"):

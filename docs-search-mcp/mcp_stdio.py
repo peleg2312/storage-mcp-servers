@@ -24,21 +24,28 @@ except ImportError:
     import search as lib  # noqa: E402
 
 INSTRUCTIONS = """\
-Read-only, fully OFFLINE search over the team's documentation library (NetApp ONTAP + Trident docs and
-KB, Dell PowerMax / PowerFlex / CSM docs, bug trackers, KB pointers). Nothing here needs internet.
-Use search_docs first with exact technical terms (error text, EMS/event names, commands, KB numbers),
-filter by vendor (netapp | dell | vmware | kb) / product (ontap, ontap-ems-9171, kb-ontap, trident-2510,
-csm, powermax, powerflex ...). read_chunk the best hits before answering; read_document for a whole
-page. Cite title + url + version; never invent commands, settings or bug numbers. Live state comes from
-the other MCP servers; this one explains how things work, what errors mean and documented procedures."""
+Read-only, fully OFFLINE search over the team's storage documentation library: NetApp ONTAP / EMS /
+SAN hosts / Trident docs and KB, Dell PowerMax / PowerFlex / PowerScale / CSM docs and KB, the CSI
+driver and Kubernetes CSI sidecar source code, Dell CSM pull requests (the fixes) and the Trident /
+Harvest issue trackers. Nothing here needs internet; the urls are for the humans.
+1. search_docs with the exact technical terms (error text in "quotes", EMS / event names, commands,
+   KB / CONTAP / DSA numbers). Old and new product names and common acronyms match each other.
+   Filter by vendor / product when the platform is known (list_sources gives the names).
+2. read_chunk the best 2-3 hits before answering; read_document for a whole page or PDF.
+3. Cite title + url + version for every statement; never invent commands, settings or bug numbers.
+   "matched" shows how many query words a hit contains: a partial match is weak evidence."""
 
 TOOLS = [
     {"name": "search_docs",
-     "description": "Full-text search (BM25) over all indexed documentation. query: words, \"exact phrases\", "
-                    "command names, error/EMS names, KB numbers. vendor: netapp | dell | vmware | kb. product: "
-                    "substring of the product/repo (ontap, ontap-sanhost, ontap-ems-9171, kb-ontap, trident, csm, "
-                    "powermax, powerflex...). All words must match; falls back to any-word. Returns chunk_ids for "
-                    "read_chunk, with title, section, snippet (matches in «»), url.",
+     "description": "Search all indexed documentation, KB articles, bug trackers, pull requests and source "
+                    "code. query: technical words; \"quoted text\" must appear verbatim (use it for error "
+                    "messages); other words are ranked by how many a section contains, with synonyms (Isilon = "
+                    "PowerScale, ScaleIO = PowerFlex, VMAX = PowerMax, RDP, SRDF, CSM...). vendor: netapp | dell | "
+                    "kubernetes | vmware | kb. product: substring of the product (ontap-ems-9151, kb-ontap, "
+                    "trident-2510, csm, csi-powermax, csm-prs, powerflex, external-attacher...). Returns up to "
+                    "`limit` hits (max 2 per document) with chunk_id for read_chunk, title, section, snippet "
+                    "(matches in «»), url, matched (query words found / total) and also_in (identical copies in "
+                    "other versions).",
      "inputSchema": {"type": "object", "properties": {
          "query": {"type": "string"}, "vendor": {"type": "string", "default": ""},
          "product": {"type": "string", "default": ""}, "limit": {"type": "integer", "default": 10}},
@@ -70,14 +77,8 @@ class Server:
 
     def call(self, name, args):
         if name == "search_docs":
-            rows = lib.search(self.con, args["query"], args.get("vendor", ""), args.get("product", ""),
-                              args.get("limit", 10))
-            mode = "all words"
-            if not rows:
-                rows = lib.search(self.con, args["query"], args.get("vendor", ""), args.get("product", ""),
-                                  args.get("limit", 10), "or")
-                mode = "any word (no document contained all words)"
-            return {"query": args["query"], "match_mode": mode, "results": rows}
+            return lib.search_docs(self.con, args["query"], args.get("vendor", ""), args.get("product", ""),
+                                   args.get("limit", 10))
         if name == "read_chunk":
             return lib.read_chunk(self.con, int(args["chunk_id"]), args.get("context", 1))
         if name == "read_document":

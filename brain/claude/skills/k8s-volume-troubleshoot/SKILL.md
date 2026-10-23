@@ -16,10 +16,10 @@ node pod logs); CSM: the driver controller + node pod logs; the node: `oc debug 
    version (`trident-2307` … `trident-2510`; `trident` = latest) and `kb-ontap`; CSM → `dell/kb` (CSM /
    CSI articles), `dell/csm` (use the page whose url version matches the installed CSM: `content/docs/` =
    current, `content/v1..v3/` = older), `csi-powermax` / `csi-powerflex`, `csm-replication`, `csm-operator`
-   (there is no CSM issue tracker in the library), `csi-powerscale` for PowerScale. Sidecar messages
+   fixes in the `*-prs` products (`csm-prs`, `csi-powermax-prs`, `csi-powerflex-prs`, `csi-powerscale-prs`, `csm-operator-prs`, `csm-replication-prs`...: every merged / open pull request with the `dell/csm#<n>` issues it fixes), `csi-powerscale` for PowerScale. Sidecar messages
    (external-attacher / provisioner / resizer / snapshotter, node-driver-registrar): vendor `kubernetes`
    (code + CHANGELOG of each sidecar, `csi-spec`). Still unexplained: search the exact string over the driver
-   and client source code (`csi-*`, `goscaleio`, `gopowermax`, `goisilon`, `gobrick`) to see which check
+   and client source code (`csi-*`, `goscaleio`, `gopowermax`, `gobrick`) to see which check
    or array call produces it. Note the driver version the user runs and whether a fix exists in a later version.
 2. Find the backing volume on the array: PV volumeHandle / internal name → ONTAP volume / LUN (Trident
    prefix) or PowerMax / PowerFlex volume (CSM prefix). Check it exists, its size, its mapping to the

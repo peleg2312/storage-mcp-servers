@@ -32,7 +32,7 @@ back here only for the version / known-issue part. No Kubernetes MCP: the user r
   `csi-powerflex`, `csm-replication`, `csm-authorization`, `csm-resiliency`: READMEs with version tables.
 - `kb`: search `"Container Storage Modules"`, `CSM`, `csi-powermax`, the driver error text; **DSA-\***
   articles for CSM ("DSA-2026-259", "DSA-2026-234", "DSA-2023-285", "DSA-2022-328" ...): affected CSM
-  versions and the fixed version. There is no CSM issue tracker in the library: say so.
+  versions and the fixed version. Fixes and the issues they close: the `*-prs` products (`csm-prs`, `csi-powermax-prs`, `csi-powerflex-prs`, `csi-powerscale-prs`, `csm-operator-prs`, `csm-replication-prs`...: every merged / open pull request with the `dell/csm#<n>` issues it fixes).
 - Trident on the same cluster is `k8s-volume-troubleshoot` / `code-version-check` territory
   (`trident-<yymm>`, `trident-issues`).
 

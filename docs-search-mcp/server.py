@@ -8,10 +8,17 @@ import logging
 import os
 import re
 import sqlite3
+import sys
 import threading
 
 from fastmcp import FastMCP
 from mcp.types import ToolAnnotations
+
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+try:
+    import search_cli as lib  # noqa: E402  (in the library folder it is search.py)
+except ImportError:
+    import search as lib  # noqa: E402
 
 log = logging.getLogger("docs-search")
 logging.basicConfig(level=os.getenv("LOG_LEVEL", "INFO"))
@@ -92,31 +99,21 @@ def also_in(c, path):
         return []
 
 
-def _search(q, vendor, product, limit, mode):
-    lim = max(1, min(int(limit), 50))
-    sql = ("SELECT c.id AS chunk_id, d.vendor, d.product, d.title, chunks_fts.heading AS section, d.url, d.path, "
-           "snippet(chunks_fts, 2, '«', '»', ' … ', 40) AS snippet, bm25(chunks_fts, 6.0, 3.0, 1.0) AS score "
-           "FROM chunks_fts JOIN chunks c ON c.id = chunks_fts.rowid JOIN docs d ON d.id = c.doc_id "
-           "WHERE chunks_fts MATCH ?")
-    args = [fts_query(q, mode)]
-    if vendor:
-        sql += " AND d.vendor = ?"
-        args.append(vendor.lower())
-    if product:   # the document itself or any identical copy (alias) in a matching product
-        sql += (" AND (d.product LIKE ? OR EXISTS (SELECT 1 FROM docs a WHERE a.dup_of = d.id AND a.product LIKE ?))")
-        args += [f"%{product}%", f"%{product}%"]
-    sql += " ORDER BY score LIMIT ?"
-    args.append(lim)
-    rows = []
+def _search(q, vendor, product, limit):
+    """lib.search_docs over every index, merged by relevance; chunk ids made unique per index."""
+    rows, full = [], False
     for i, c in all_cons():
-        for r in c.execute(sql, args):
-            d = dict(r)
+        out = lib.search_docs(c, q, vendor, product, limit)
+        full = full or out["match_mode"] == "all words"
+        for d in out["results"]:
             d["chunk_id"] = i * ID_BASE + d["chunk_id"]
             d["library"] = "local" if i > 0 else "main"
-            d["also_in"] = also_in(c, d["path"])
             rows.append(d)
-    rows.sort(key=lambda r: r["score"])
-    return rows[:lim]
+    def cover(r):                          # BM25 scores of differently sized indexes don't compare: coverage first
+        h, _, n = r["matched"].partition("/")
+        return int(h) / int(n) if n else 1.0
+    rows.sort(key=lambda r: (-cover(r), -r["score"]))
+    return rows[:max(1, min(int(limit), 50))], full
 
 
 INSTRUCTIONS = """\
@@ -128,12 +125,19 @@ WHAT IS IN IT (vendor / product names to filter on; list_sources shows the exact
   snapcenter, ontap-metrocluster, ontap-ems-9131/9161/9171 (EMS event reference: meaning + corrective
   action), ontap-automation (REST), ontap-fli, ontap-systems (hardware), asa-r2, ontap-technical-reports,
   e-series, storagegrid, active-iq-unified-manager, trident (Trident CSI docs), harvest.
-- netapp trident-issues / harvest-issues and dell csm-issues: the public GitHub bug trackers -
-  every reported bug with its discussion, workaround and fix version. Search these for error messages.
+- netapp trident-issues / harvest-issues: the public GitHub bug trackers - every reported bug with its
+  discussion, workaround and fix version. dell *-prs (csm-prs, csi-powermax-prs, csi-powerflex-prs,
+  csi-powerscale-prs, csm-operator-prs...): every merged / open pull request of the CSM / CSI repos (Dell
+  disabled their issue trackers), naming the dell/csm issue each one fixes.
+- source code, one section per function (search an error message in "quotes"): dell csi-powermax,
+  csi-powerflex, csi-powerscale, csm-operator, csm-replication, goscaleio, gopowermax, gopowerscale, gobrick;
+  kubernetes csi-spec and the CSI sidecars (external-attacher, external-provisioner, external-resizer,
+  external-snapshotter, node-driver-registrar, livenessprobe...).
 - dell: powermax (product, Unisphere, Solutions Enabler, REST, SRDF, SnapVX, VMware papers),
   powerflex (3.6/4.x/5.x guides, release notes with fixed/known issues), csm (Dell Container Storage
   Modules: CSI PowerMax/PowerFlex/PowerScale/PowerStore/Unity, replication, observability, authorization),
   pyu4v.
+- dell kb (Dell KB: PowerMax, PowerFlex, PowerScale, CSM / CSI), infohub-* (Info Hub papers).
 - kb: curated KB pointers (ID + one-line answer + link).
 - library "local": the team's own runbooks and KB articles saved from the vendor portals.
 
@@ -159,16 +163,16 @@ mcp = FastMCP("docs-search", instructions=INSTRUCTIONS)
 
 @mcp.tool(annotations=RO)
 def search_docs(query: str, vendor: str = "", product: str = "", limit: int = 10) -> dict:
-    """Full-text search (BM25) over all indexed documentation. query: words, "exact phrases",
-    command names, error/EMS names, KB numbers. vendor: netapp | dell | kb | <your folder>.
-    product: substring of the product/repo (ontap, ontap-sanhost, ontap-ems-9171, powermax, powerflex...).
-    All words must match; if nothing matches, falls back to any-word match. Returns chunk_ids for
-    read_chunk, with title, section, snippet (matches in «»), url."""
-    rows = _search(query, vendor, product, limit, "and")
-    mode = "all words"
-    if not rows:
-        rows = _search(query, vendor, product, limit, "or")
-        mode = "any word (no document contained all words)"
+    """Search all indexed documentation, KB articles, bug trackers, pull requests and source code.
+    query: technical words; "quoted text" must appear verbatim (use it for error messages); other words
+    are ranked by how many a section contains, with synonyms (Isilon = PowerScale, ScaleIO = PowerFlex,
+    VMAX = PowerMax, RDP, SRDF, CSM...). vendor: netapp | dell | kubernetes | vmware | kb | <your folder>.
+    product: substring of the product (ontap-ems-9151, kb-ontap, trident-2510, csm, csi-powermax, csm-prs,
+    powerflex, external-attacher...). Returns up to `limit` hits (max 2 per document) with chunk_id for
+    read_chunk, title, section, snippet (matches in «»), url, matched (query words found / total) and
+    also_in (identical copies in other versions)."""
+    rows, full = _search(query, vendor, product, limit)
+    mode = "all words" if full else "partial: no chunk contains every word; best coverage first (see matched)"
     return {"query": query, "match_mode": mode, "results": rows}
 
 

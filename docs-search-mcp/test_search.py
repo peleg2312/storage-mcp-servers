@@ -87,8 +87,10 @@ async def main():
     assert len([r for r in s["results"] if "callhome" in r["path"]]) == 1, "folded copies must not appear twice"
     rd = await call("read_document", path="netapp/ontap-ems-9161/callhome-hm-events.adoc")  # alias path -> canonical
     assert rd["path"] == "netapp/ontap-ems-9181/callhome-hm-events.adoc" and rd["sections"], rd
-    s = await call("search_docs", query="callhome.hm.alarm")  # near miss -> any-word fallback
-    assert s["match_mode"].startswith("any word") and s["results"]
+    s = await call("search_docs", query="callhome.hm.alarm")  # near miss -> partial match, still found
+    assert s["match_mode"].startswith("partial") and s["results"]
+    s = await call("search_docs", query="symmetrix XCOPY")          # synonym: VMAX / Symmetrix = PowerMax
+    assert s["results"] and s["results"][0]["title"] == "VAAI with PowerMax", s
     s = await call("search_docs", query="detach unzone", vendor="runbooks")
     assert s["results"][0]["product"] == "team"
     rc = await call("read_chunk", chunk_id=top["chunk_id"], context=2)

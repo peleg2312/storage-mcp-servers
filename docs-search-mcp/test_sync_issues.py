@@ -53,4 +53,17 @@ CALLS.clear()
 gi.main()
 assert f"&since={st['since']}" in CALLS[0], CALLS[0]
 print(open(os.path.join(out, "issue-101.md")).read()[:400])
+
+# "prs" lines: merged + open pull requests (issues and unmerged PRs skipped), with the bugs they refer to
+PR = dict(ISSUES[2], number=201, title="Fix SDC rescan (#1896)", user=U, labels=[], comments=0, state="closed",
+          html_url="https://github.com/dell/csi-powerflex/pull/201", closed_at="2025-04-02T00:00:00Z",
+          body="Fixes https://github.com/dell/csm/issues/1490", pull_request={"merged_at": "2025-04-02T00:00:00Z"})
+gi.gh = lambda url, token: ([PR, dict(PR, number=202, pull_request={"merged_at": None}), ISSUES[2]], None)
+open(src, "w").write("dell csi-powerflex-prs dell/csi-powerflex prs\n")
+gi.main()
+out = os.path.join(d, "dell", "csi-powerflex-prs")
+assert sorted(f for f in os.listdir(out) if f.endswith(".md")) == ["pr-201.md"], os.listdir(out)
+t = open(os.path.join(out, "pr-201.md")).read()
+assert "- Pull request: merged 2025-04-02" in t and "- Refers to: dell/csi-powerflex#1896, dell/csm#1490" in t, t
+assert json.load(open(os.path.join(out, "manifest.json")))["pr-201.md"]["title"].startswith("dell/csi-powerflex PR #201:")
 print("ALL TESTS PASSED")

@@ -14,9 +14,9 @@ when_to_use: Trigger phrases - "what does this error mean", "explain EMS scsibla
      (NetApp KB incl. CONTAP-* bugs; "Partial article" = solution needs a support login).
    - Trident: `trident-issues`, `trident-changelog`, `trident-<release>` of the installed version.
    - CSM / CSI: `dell/kb`, `dell/csm` (the url version matching the installed CSM), `csi-powermax`,
-     `csi-powerflex`, `csi-powerscale`, `csm-replication`, `csm-operator` (no CSM issue tracker in the library).
+     `csi-powerflex`, `csi-powerscale`, `csm-replication`, `csm-operator` and their fixes: the `*-prs` products (`csm-prs`, `csi-powermax-prs`, `csi-powerflex-prs`, `csi-powerscale-prs`, `csm-operator-prs`, `csm-replication-prs`...: every merged / open pull request with the `dell/csm#<n>` issues it fixes).
      Not explained there: the same quoted string over the driver / client / sidecar **source code**
-     (`csi-*`, `goscaleio`, `gopowermax`, `goisilon`, `gobrick`, vendor `kubernetes`) shows the function that
+     (`csi-*`, `goscaleio`, `gopowermax`, `gobrick`, vendor `kubernetes`) shows the function that
      raises it and the condition behind it (code = current main, not the installed release; say so).
    - PowerScale / OneFS: `dell/kb`, `infohub-powerscale`, `csi-powerscale`.
    - PowerMax: `dell/powermax` (Events and Alerts guide, product / SRDF / SnapVX guides), `dell/kb`.

@@ -22,7 +22,7 @@ array MCPs (ontap, harvest, powermax; PowerFlex only via vCenter-side data and d
   `trident-issues`, `trident-changelog`, `kb-ontap`, `ontap-sanhost`; Dell `csm` (url version matching
   the installed CSM: `content/docs/` current, `content/v1..v3/` older), `csm-repo` CHANGELOG-<ver>,
   `csi-powermax`, `csi-powerflex`, `csm-replication`, `csm-operator`, `csm-authorization`,
-  `csm-resiliency`, `kb` (CSM articles, DSA-*). No CSM issue tracker in the library: say so.
+  `csm-resiliency`, `kb` (CSM articles, DSA-*). Fixes: `*-prs` (`csm-prs`, `csi-powermax-prs`, `csi-powerflex-prs`, `csm-operator-prs`...).
 - Search the exact error string first (`docs-lookup`); report issue number, affected and fixed versions,
   workaround; say whether the installed version is affected.
 - Worker node connectivity (WWPNs / IQNs / NQNs logged in, zoned, mapped, multipath) is the

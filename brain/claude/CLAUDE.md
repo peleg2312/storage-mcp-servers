@@ -28,11 +28,12 @@ csm-authorization, csm-observability, csm-resiliency, pyu4v, pypowerflex, ansibl
 dell/csi-powerscale, gopowerscale, csm-metrics-powerscale + infohub-powerscale (PowerScale / Isilon / OneFS);
 **source code** (one section per function, error strings searchable) of the CSI drivers (csi-powermax,
 csi-powerflex, csi-powerscale), csm-operator, csm-replication, csm-helm-charts, the array clients goscaleio /
-gopowermax / goisilon, gobrick (host FC / iSCSI / NVMe), gofsutil, gocsi; kubernetes/csi-spec, csi-docs and the
+gopowermax, gobrick (host FC / iSCSI / NVMe), gofsutil, gocsi; kubernetes/csi-spec, csi-docs and the
 sidecars external-attacher, external-provisioner, external-resizer, external-snapshotter,
 external-health-monitor, node-driver-registrar, livenessprobe, csi-lib-utils, csi-lib-iscsi (code + CHANGELOG);
-dell/infohub-* (Info Hub papers); vmware/kb (a few ESXi storage KBs); kb/kb (pointers). **Not in the library**: Cisco MDS / UCS docs, a Dell
-CSM issue tracker, PowerMaxOS release notes - say so instead of citing them.
+dell/*-prs (CSM / CSI / client pull requests = the fixes, naming the dell/csm issue each fixes;
+Dell disabled the issue trackers); dell/infohub-* (Info Hub papers); vmware/kb (a few ESXi storage KBs); kb/kb (pointers). **Not in the library**: Cisco MDS / UCS docs, the Dell
+CSM issues themselves (only the PRs that fix them), PowerMaxOS release notes - say so instead of citing them.
 Live state comes from the other MCP servers.
 
 ## Golden rules

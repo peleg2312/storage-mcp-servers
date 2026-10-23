@@ -24,7 +24,7 @@ shows: Solutions Enabler (`symcli -def`), Trident (`tridentctl -n trident versio
 | PowerFlex | `dell/powerflex` release notes PDFs (3.6.x, 4.0.x, 4.5.x / 5.1.x: fixed and known issues, upgrade paths), upgrade guides; `dell/kb` DSA-* "PowerFlex" | newer releases than the PDFs |
 | ONTAP | `netapp/ontap` "Choose a NetApp-recommended target ONTAP version for an upgrade" and the upgrade section; `ontap-systems-upgrade`; `kb-ontap` CONTAP-* "Fixed In Version" (your version inside an affected range = finding) | the live "minimum recommended release" table, NetApp security advisories (NTAP-*) |
 | Trident | `trident-<yymm>` pages `trident-rn.html` (what's new, fixed, known issues) and `known-issues.html`; `trident-changelog`; `trident-issues` (open bugs by version) | - |
-| CSM / CSI drivers | `dell/csm` `csidriver/release/powermax/` and `.../powerflex/` + `replication/release/` of the matching url version; `csm-repo` CHANGELOG-<ver>; `dell/kb` DSA-* "Container Storage Modules" | CSM issue tracker |
+| CSM / CSI drivers | `dell/csm` `csidriver/release/powermax/` and `.../powerflex/` + `replication/release/` of the matching url version; `csm-repo` CHANGELOG-<ver>; `dell/kb` DSA-* "Container Storage Modules"; `*-prs` (merged fixes, dated, with the `dell/csm#<n>` they fix) | the CSM issue texts |
 | Harvest | `harvest-changelog`, `harvest-issues` | - |
 | NX-OS (MDS), UCS, ESXi | nothing (ESXi: a few `vmware/kb`, `netapp/kb-ontap`, `ontap-sanhost` host-support pages) | everything: general knowledge only, labelled |
 

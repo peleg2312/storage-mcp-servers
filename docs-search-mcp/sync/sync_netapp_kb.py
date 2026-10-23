@@ -186,6 +186,8 @@ def main():
         pri, folder = area_of(url, areas)
         if folder is None or (a.since and mod < a.since):
             continue
+        if url.rstrip("/").endswith("KBs"):          # category pages (SAN-KBs, Perf-KBs): lists of titles
+            continue
         todo.append((pri, mod, url, folder))
     todo.sort(key=lambda t: (t[0], t[1]), reverse=False)
     # priority ascending, but newest first inside each area

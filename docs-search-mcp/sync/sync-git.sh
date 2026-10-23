@@ -40,7 +40,7 @@ patterns() {
   [ "$code" = 1 ] && docs="$docs /**/*.go /**/*.py /**/*.proto /**/*.yaml /**/*.yml /**/*.sh
     !**/vendor/** !**/third_party/** !*_test.go !**/mocks/** !**/mock/** !**/testdata/** !**/test/** !**/tests/**
     !**/zz_generated* !*.pb.go !*_mock.go !**/mockhelper/** !**/inttests/** !**/release-tools/** !**/hack/**
-    !**/crds/** !**/config/crd/** !**/.github/**"
+    !**/crds/** !**/config/crd/** !**/.github/** !/catalog/** !/catalog-template/** !/bundle/**"
   echo "$docs"
 }
 ok=0; fail=0

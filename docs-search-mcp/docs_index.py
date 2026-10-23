@@ -270,8 +270,9 @@ def iter_files(root):
         for f in files:
             if f.startswith(("_", ".")) or f == "manifest.json":
                 continue
-            if f.lower().endswith(TEXT_EXT + CODE_EXT + (".pdf", ".html", ".htm")):
-                yield os.path.join(dirpath, f)
+            p = os.path.join(dirpath, f)
+            if f.lower().endswith(TEXT_EXT + CODE_EXT + (".pdf", ".html", ".htm")) and os.path.isfile(p):
+                yield p                                  # isfile: a dangling symlink (sparse checkout) is skipped
 
 
 def parse_code(text, path):
@@ -400,15 +401,31 @@ def _text_hash(chunks):
     return m.hexdigest()
 
 
+def _context_title(rel, vendor, product, title):
+    """What the FTS title column holds: the title plus where the document sits (vendor, product, folders,
+    file name), so a page titled just "Troubleshooting" in csm/.../replication/ matches "csm replication
+    troubleshooting" and a PDF titled "pdf" matches its file name. Display still uses docs.title."""
+    seen = set(re.findall(r"\w+", title.lower()))
+    words = []
+    for w in re.findall(r"[A-Za-z0-9]+", os.path.splitext(rel)[0]):
+        lw = w.lower()
+        if lw in seen or (len(w) == 8 and re.fullmatch(r"[0-9a-f]+", lw)) or lw in ("content", "docs", "md", "html"):
+            continue
+        seen.add(lw)
+        words.append(w)
+    return f"{title} | {' '.join(words)}" if words else title
+
+
 def _insert_doc(con, rel, vendor, product, title, url, st, chunks):
     cur = con.execute("INSERT INTO docs(path, vendor, product, title, url, mtime, size, chunks, hash) "
                       "VALUES (?,?,?,?,?,?,?,?,?)", (rel, vendor, product, title, url, st.st_mtime,
                                                       st.st_size, len(chunks), _text_hash(chunks)))
     doc_id = cur.lastrowid
+    ctx_title = _context_title(rel, vendor, product, title)
     for seq, (heading, text) in enumerate(chunks):
         cid = con.execute("INSERT INTO chunks(doc_id, seq) VALUES (?,?)", (doc_id, seq)).lastrowid
         con.execute("INSERT INTO chunks_fts(rowid, title, heading, text) VALUES (?,?,?,?)",
-                    (cid, title, heading, text))
+                    (cid, ctx_title, heading, text))
     return doc_id
 
 

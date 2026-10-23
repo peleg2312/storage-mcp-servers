@@ -1,5 +1,7 @@
 """
-Export public GitHub issue trackers (bug reports, fixes, workarounds) for offline search.
+Export public GitHub issue trackers (bug reports, fixes, workarounds) for offline search; lines ending in
+"prs" export merged and open pull requests instead (the fixes, with the issues they refer to) - for repos
+whose issues are disabled, like Dell's CSM / CSI repositories.
 
     GITHUB_TOKEN=... python sync/sync_github_issues.py [--dest /data/docs] [--sources sources/github-issues.txt]
 
@@ -13,6 +15,7 @@ Standard library only.
 import argparse
 import json
 import os
+import re
 import sys
 import time
 import urllib.error
@@ -49,10 +52,21 @@ def gh(url, token):
     raise RuntimeError(f"giving up on {url}")
 
 
-def render(issue, comments):
+REFS = re.compile(r"(?:github\.com/)?([\w.-]+/[\w.-]+)(?:#|/issues/|/pull/)(\d+)|(?<![\w/])#(\d+)")
+
+
+def render(issue, comments, repo=""):
     labels = ", ".join(lb["name"] for lb in issue.get("labels", [])) or "-"
-    out = [f"# #{issue['number']} {issue['title']}", "",
-           f"- State: {issue['state']}{' (' + issue['state_reason'] + ')' if issue.get('state_reason') else ''}",
+    pr = issue.get("pull_request")
+    if pr:                                  # a pull request: the fix itself, often naming the bug it fixes
+        state = f"merged {pr['merged_at'][:10]}" if pr.get("merged_at") else issue["state"]
+        refs = sorted({f"{m[0] or repo}#{m[1] or m[2]}" for m in REFS.findall(f"{issue['title']}\n{issue.get('body') or ''}")})
+        head = [f"# PR #{issue['number']} {issue['title']}", "", f"- Pull request: {state}",
+                f"- Refers to: {', '.join(refs) if refs else '-'}"]
+    else:
+        head = [f"# #{issue['number']} {issue['title']}", "",
+                f"- State: {issue['state']}{' (' + issue['state_reason'] + ')' if issue.get('state_reason') else ''}"]
+    out = head + [
            f"- Labels: {labels}",
            f"- Opened: {issue['created_at'][:10]} by {issue['user']['login']}",
            f"- Updated: {issue['updated_at'][:10]}" + (f" | Closed: {issue['closed_at'][:10]}" if issue.get("closed_at") else ""),
@@ -79,6 +93,7 @@ def main():
         if not line:
             continue
         vendor, product, repo = line.split()[:3]
+        prs = line.split()[3:4] == ["prs"]          # "prs": merged + open pull requests instead of issues
         d = os.path.join(a.dest, vendor, product)
         os.makedirs(d, exist_ok=True)
         state_f, man_f = os.path.join(d, ".issues-state.json"), os.path.join(d, "manifest.json")
@@ -94,25 +109,28 @@ def main():
             items, url = gh(url, token)
             if first:
                 first = False
-                if not any("pull_request" not in it for it in items or []) and not (state.get("since") and manifest):
+                if not prs and not any("pull_request" not in it for it in items or []) and not (state.get("since") and manifest):
                     print(f"{repo}: the API returned no issues (only pull requests, or nothing) - issues are disabled on "
                           f"that repository (Dell disabled them on dell/csm and the CSI repos in 2026) or the token "
                           f"cannot see it", file=sys.stderr)
                 elif not items:
                     print(f"{repo}: nothing updated since {state.get('since')}", file=sys.stderr)
             for it in items or []:
-                if "pull_request" in it:
+                if ("pull_request" in it) != prs:
                     continue
+                if prs and it["state"] == "closed" and not it["pull_request"].get("merged_at"):
+                    continue                        # closed without merging: not a fix
                 comments = []
                 if it.get("comments"):
                     curl = it["comments_url"] + "?per_page=100"
                     while curl:
                         page, curl = gh(curl, token)
                         comments += page or []
-                name = f"issue-{it['number']}.md"
+                name = f"{'pr' if prs else 'issue'}-{it['number']}.md"
                 with open(os.path.join(d, name), "w", encoding="utf-8") as f:
-                    f.write(render(it, comments))
-                manifest[name] = {"url": it["html_url"], "title": f"{repo}#{it['number']}: {it['title']}"}
+                    f.write(render(it, comments, repo))
+                manifest[name] = {"url": it["html_url"],
+                                  "title": f"{repo}{' PR ' if prs else ''}#{it['number']}: {it['title']}"}
                 n += 1
                 if a.max_issues and n >= a.max_issues:
                     url = None

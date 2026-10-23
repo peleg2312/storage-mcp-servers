@@ -90,7 +90,6 @@ dell    terraform-powerscale             https://github.com/dell/terraform-provi
 # ---- Dell CSI building blocks: array clients (REST calls + their error texts), host-side libraries ----
 dell    goscaleio                        https://github.com/dell/goscaleio              README.md code
 dell    gopowermax                       https://github.com/dell/gopowermax             README.md code
-dell    goisilon                         https://github.com/dell/goisilon               README.md code
 dell    gobrick                          https://github.com/dell/gobrick                README.md code
 dell    gofsutil                         https://github.com/dell/gofsutil               README.md code
 dell    gocsi                            https://github.com/dell/gocsi                  README.md docs code
