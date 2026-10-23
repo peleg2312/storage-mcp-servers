@@ -15,8 +15,9 @@ Work on files: `~/storage-reports/<date>-unused-luns/`. Compare in python, never
 1. **Arrays**: every volume/LUN with: array, device ID or LUN path, wwn/NAA (build `naa.` + wwn for
    PowerMax; for ONTAP `naa.600a0980` + hex(serial)), size, SG / volume, masking view / igroup, host
    names + initiators, replication role, created date if available.
-2. **VMware (kuparashit)**: every NAA seen by any ESX host in **every** vCenter, with: datastore or RDM,
-   VMs, hosts. Note which vCenters kuparashit covers.
+2. **VMware (kuparashit)**: `luns(category="unused")` per vCenter (NAA seen by hosts, no datastore, no
+   RDM) and `luns(issues_only=True)` (stale RDMs, conflicts); `overview` for the vCenters covered and the
+   snapshot time. Unused here = unused **by VMware only**: the array side decides.
 3. **Aria** (optional): datastores with zero VMs / zero I/O.
 
 ## 2. Classify each array LUN

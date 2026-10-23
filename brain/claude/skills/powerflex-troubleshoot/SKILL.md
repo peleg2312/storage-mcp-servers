@@ -6,7 +6,7 @@ when_to_use: Trigger phrases - "PowerFlex alert SIO...", "SDC disconnected", "re
 # PowerFlex troubleshooting
 
 No MCP reaches PowerFlex. Evidence comes from (a) what the user runs and pastes, (b) vCenter-side data
-(kuparashit: ESXi hosts and `eui.` devices / datastores; Aria: latency, APD/PDL alerts), (c) the library:
+(kuparashit `locate` / `related` on the `eui.` ids: ESXi hosts, datastores, VMs; Aria: latency, APD/PDL alerts), (c) the library:
 `dell/powerflex` (Technical Overview, Administration Guide, CLI Reference Guide and release notes of the
 installed version: 3.6.x, 4.5.x, 4.6.x, 5.0.x, 5.1.x; PDF titles are "View": cite the file name + page)
 and `dell/kb` (PowerFlex articles: "Top Dial Home Events and Alert with Recommended Action", one article

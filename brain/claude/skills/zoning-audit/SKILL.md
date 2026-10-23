@@ -16,7 +16,7 @@ Scope: all VSANs on both fabrics unless the user narrows it. Save raw outputs to
 - active zoneset per VSAN, full zone config (to spot unactivated differences), device-alias database
 - FLOGI + FCNS (who is logged in now)
 - array initiators: PowerMax hosts / initiator groups (WWPNs), ONTAP igroups (WWPNs)
-- UCS vHBA WWPNs (ucsc) and ESX host WWPNs (kuparashit) for naming
+- UCS vHBA WWPNs (ucsc) and ESX host WWPNs (kuparashit esx `pwwns`) for naming
 
 ## Findings
 | Check | Severity |

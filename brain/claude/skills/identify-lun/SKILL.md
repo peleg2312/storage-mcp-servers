@@ -13,7 +13,9 @@ when_to_use: Trigger phrases - "what is naa.xxx", "decode this eui", "where does
 - datastore / VM / RDM name → start on the VMware side (step 2)
 
 ## 2. VMware side (kuparashit; Aria for metrics)
-- NAA → datastore or RDM, vCenter, ESX hosts that see it, VMs using it (and RDM mode if RDM)
+- kuparashit `locate` (full NAA or its last digits) then `related`: datastore or RDM (or orphan), vCenter,
+  ESX hosts that see it, VMs using it; `luns(contains=)` flags partial presentation / stale RDM. RDM mode
+  is not in kuparashit (not checked)
 - datastore/VM name → its NAA(s) (a datastore may span several extents: list all)
 
 ## 3. Array side

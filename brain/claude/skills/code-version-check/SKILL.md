@@ -13,7 +13,7 @@ The library is a snapshot (version in `~/.claude/brain/library/VERSION`): "lates
 From `~/.claude/brain/environment.md` first, then live where a tool exists (prefer live, note
 disagreements): PowerMax `list_arrays` / `get_array` (PowerMaxOS / microcode), `list_unispheres`
 (Unisphere); ONTAP cluster version (ontap MCP); Harvest (harvest MCP); MDS `run_show "show version"`;
-UCS `list_centrals` / `list_domains`; ESXi / vCenter from kuparashit or Aria. Ask him for what no tool
+UCS `list_centrals` / `list_domains`; ESXi / vCenter from Aria (kuparashit has no versions). Ask him for what no tool
 shows: Solutions Enabler (`symcli -def`), Trident (`tridentctl -n trident version`), CSM
 (`oc get csm -A`, driver image tags), PowerFlex (`scli --version`, `scli --query_all` header).
 

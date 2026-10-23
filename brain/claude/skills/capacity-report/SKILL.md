@@ -8,7 +8,7 @@ disable-model-invocation: true
 
 Thresholds come from the environment file; ask once if they are empty.
 
-1. **Datastores** (Aria / kuparashit): capacity, free %, provisioned (thin overcommit %), growth over
+1. **Datastores** (Aria; kuparashit has size and `trend` only): capacity, free %, provisioned (thin overcommit %), growth over
    30/90 days, Aria time-to-full forecast. Flag below thresholds and overcommit > 150 %.
 2. **PowerMax** (`capacity_report`, `list_srps`): SRP usable / used / subscribed %, data reduction ratio,
    snapshot usage; top storage groups by allocated capacity.

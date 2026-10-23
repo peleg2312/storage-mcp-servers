@@ -11,4 +11,6 @@ for bad in ["DELETE FROM vms", "select 1; delete from vms", "WITH t AS (SELECT 1
             "drop table paths", "PRAGMA journal_mode = wal"]:
     assert q(bad), bad
 assert h.reason_for("mcp__ontap__lun_delete", {}) and h.reason_for("mcp__aria__get_alerts", {}) is None
+for t in "overview locate related luns query aggregate history diff trend compare fields relationships sql export rescan".split():
+    assert h.reason_for("mcp__kuparashit__" + t, {"where": "naas != not found"}) is None, t
 print("hook ok")

@@ -12,7 +12,7 @@ tell him what to run.
 ## 1. MCP servers
 For each server in your tool list (`mcp__<server>__…`): one cheap call - powermax `list_unispheres` /
 `list_arrays`, ontap (cluster or SVM list), harvest (any list / metric-name call), mds `list_switches`,
-ucsc `list_centrals`, kuparashit (smallest query), Aria (any list), docs `list_sources`. Record:
+ucsc `list_centrals`, kuparashit `overview` (snapshot age and warnings), Aria (any list), docs `list_sources`. Record:
 reachable · answer time · tool count · the call that failed and its error. Servers named in the
 "Sources" table of CLAUDE.md but absent from the tool list = missing (he adds them with `claude mcp add`).
 Note which docs server answered (docs-search or docs-local); if neither, test the shell fallback

@@ -8,7 +8,8 @@ when_to_use: Trigger phrases - "I need a new 2TB datastore for cluster X", "add 
 Input: size, type (datastore / RDM / OpenShift), target cluster or hosts, array (or let you suggest one
 by capacity and standards).
 
-1. **Hosts**: the cluster's ESX hosts (kuparashit / Aria) and every vmhba WWPN.
+1. **Hosts**: the cluster's ESX hosts and every vmhba WWPN (kuparashit `query` esx where cluster = it,
+   fields name / pwwns / fi). After presenting: `luns(contains=<naa>)` shows any host that does not see it.
 2. **Fabric**: each WWPN logged in and zoned to the array ports on **both** fabrics (`trace-path` for one
    host, then compare all hosts). Missing zones → list them.
 3. **Array access**: PowerMax host / initiator group + masking view + port group already covering all

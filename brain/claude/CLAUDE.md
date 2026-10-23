@@ -53,7 +53,7 @@ Live state comes from seven MCP servers: **powermax**, **ontap**, **harvest** (O
 Exact tool names per server: see the tool map imported at the bottom (run `/brain-setup` to refresh it).
 | Question | Source |
 |---|---|
-| Which datastore / RDM / VM / ESX host uses NAA x? Which NAAs does host/VM y use? Which ESX owns pWWN z, which NAAs and array targets (ONTAP LIF / PowerMax FA port) does it see? | **kuparashit**: SQL (SELECT only) over a SQLite map of ESX hosts, datastores, VMs, RDMs, NAAs, host pWWNs and paths, with a few fields each. **The join hub**: holds the links the other MCPs lack (Aria shows an ESX but not its NAAs or pWWNs; MDS shows a pWWN but not its host). Read the schema first (tool map) |
+| Where is / what is connected to a VM, ESX host, datastore, NAA, pWWN, IP? Datastore vs RDM vs orphan LUN, partial presentation, what changed / vMotions, history | **kuparashit**: inventory of every vCenter from snapshots (as of a time, not live): ESX (pWWNs, NAAs seen, cluster, FI), VMs (host, datastore, RDM NAAs), datastores (NAA, size). **The join hub**: pWWN ↔ ESX ↔ NAA ↔ datastore / RDM ↔ VM, which Aria, MDS and the arrays do not link. No LIFs, array ports or paths |
 | VM / datastore / host latency, IOPS, capacity trends, alerts, forecasts | **VMware Aria Operations** |
 | PowerMax: volumes (wwn), storage groups, masking views, hosts/initiators, port groups, FA ports, SRDF, alerts, audit log, performance | **powermax** MCP |
 | ONTAP: SVMs, volumes, LUNs (serial), igroups, LUN maps, LIFs/FC targets, aggregates, EMS events | **ontap** MCP |
@@ -90,13 +90,15 @@ Exact tool names per server: see the tool map imported at the bottom (run `/brai
   host groups recorded in the environment file.
 
 ## SAN path model (end to end)
-VM → datastore (VMFS) or RDM → NAA → ESXi host → vmhba (WWPN, from kuparashit/Aria) → UCS service
+VM → datastore (VMFS) or RDM → NAA → ESXi host → vmhba (WWPN, from kuparashit `pwwns`) → UCS service
 profile vHBA (fabric A/B, VSAN, WWPN) → Fabric Interconnect (NPV; FC uplink / SAN port-channel) →
 MDS (FLOGI on the port-channel/interface, VSAN, FCNS, zone + device-alias) → array target port
 (PowerMax FA dir:port / ONTAP FC LIF WWPN) → masking view or igroup/LUN map → device/LUN.
-**End to end from any identifier** (pWWN, NAA, ESX, VM, datastore, LIF): look it up in kuparashit to get
-the identifiers of the other layers in one query, then confirm each layer live in its own MCP (mds,
-ucsc, powermax / ontap, Aria / harvest for performance). A kuparashit link no live MCP confirms is stale.
+**End to end from any identifier** (pWWN, NAA, ESX, VM, datastore): kuparashit `locate`, then `related`, gives
+the other layers (host, its pWWNs and FI, NAAs, datastore / RDM, VMs); then confirm each layer live in its own
+MCP: mds (flogi / zones of the pWWNs), ucsc (vHBA on that FI), ontap (igroup with those pWWNs, LUN serial
+from the NAA, LIFs) or powermax (initiator → masking view, device ID from the NAA), Aria / harvest for
+performance. State kuparashit's snapshot time; a link no live MCP confirms may be stale.
 A healthy host: every vmhba logged in, zoned on its fabric to the array ports in its masking view /
 igroup, same number of paths on both fabrics, all paths active (ALUA: optimized + non-optimized).
 

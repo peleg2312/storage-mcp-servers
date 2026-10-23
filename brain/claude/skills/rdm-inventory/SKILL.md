@@ -10,7 +10,9 @@ You run in a forked context: gather everything, then return a complete answer (a
 
 # RDM inventory
 
-1. kuparashit: every RDM with vCenter, VM, disk, mode (physical / virtual compatibility), NAA, hosts.
+1. kuparashit: every RDM (`query` on vms where `naas != not found`, fields name / hostname / naas / vc) and
+   `luns(issues_only=True)` for `rdm_no_hosts` (stale RDM), `conflict` and RDMs not visible on the VM's
+   host. Disk and compatibility mode are not in kuparashit: ask him or mark NOT CHECKED.
 2. Resolve each NAA on the array (`identify-lun` steps, in bulk via files + python).
 3. Checks:
    - the same NAA on several VMs = shared disk (cluster): all those VMs' hosts must see the LUN

@@ -17,10 +17,9 @@ For every connected MCP server (kuparashit, Aria/vROps, ontap, harvest, mds, ucs
 - which questions from the "Sources" table in CLAUDE.md it answers
 - whether any tool looks like it can change something (create/delete/modify/set/...). List those under
   "DO NOT USE" so they are never called.
-Pay special attention to **kuparashit** (SQLite, SQL SELECTs): read `sqlite_master`, record every table
-with its columns, and write one tested example query each for pWWN → ESX → NAAs / array targets (LIF, FA
-port), NAA → datastore/RDM/VM/ESX, and back; which vCenters it covers; how fresh the data is (a timestamp
-column, if any).
+Pay special attention to **kuparashit**: `overview` (vCenters covered, snapshot times, warnings) and
+`fields` / `relationships`; record the real field names and one tested call each for pWWN → ESX → NAAs and
+NAA → datastore / RDM / VM / ESX.
 
 Write the result to `~/.claude/brain/tool-map.md` (replace the whole file).
 

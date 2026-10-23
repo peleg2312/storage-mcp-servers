@@ -8,8 +8,10 @@ when_to_use: Trigger phrases - "is naa.xxx safe to remove", "can I delete datast
 Input: one or more NAAs / devices / datastores. Run `identify-lun` first for each.
 
 ## Checklist (every line gets PASS / FAIL / NOT CHECKED with evidence)
-1. Not a datastore extent and not an RDM in **any** vCenter (kuparashit; list vCenters covered)
-2. No VM files on the datastore (if it is a datastore): VMs, templates, ISOs, logs (Aria / kuparashit)
+1. Not a datastore extent and not an RDM in **any** vCenter (kuparashit `locate` + `related` on the NAA, also `history` for
+   recent use; list vCenters covered and the snapshot time)
+2. No VM files on the datastore (if it is a datastore): VMs (kuparashit `query` vms where datastore = it),
+   templates, ISOs, logs (Aria; not in kuparashit)
 3. No I/O for ≥ 30 days on the array (PowerMax perf on device/SG, Harvest for ONTAP LUN)
 4. Not mapped to non-ESX hosts; not a Trident / CSM (OpenShift) volume
 5. No replication: SRDF / Metro / SnapVX (PowerMax), SnapMirror / active sync (ONTAP); no snapshots

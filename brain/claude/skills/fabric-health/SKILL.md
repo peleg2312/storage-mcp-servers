@@ -22,7 +22,7 @@ Run per switch, both fabrics. Prefer the summary tools (`fabric_health_check`, `
    losses, discards. Rising CRC on one port = optics / cable / SFP: check transceiver Rx/Tx power.
 3. **Slow drain**: TxWait, B2B credit transitions to zero, credit loss recovery, timeout discards.
    Find the *slow device* (an edge F-port whose TxWait is high) vs the victims (ISLs / port-channels
-   carrying its traffic). Map the port to its WWPN → host (flogi + device-alias + kuparashit/ucsc).
+   carrying its traffic). Map the port to its WWPN → host (flogi + device-alias + kuparashit `locate` / ucsc).
 4. **Port-channels**: all members up, balanced, same speed; FI uplink port-channels from both sides
    (ucsc list_fc_port_channels / get_fc_port_errors).
 5. **Onboard logs**: link flaps and error events with timestamps (`show_logging_onboard`); correlate

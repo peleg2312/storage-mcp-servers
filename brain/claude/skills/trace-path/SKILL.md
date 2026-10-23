@@ -6,8 +6,8 @@ when_to_use: Trigger phrases - "trace naa.xxx end to end", "is host X zoned to t
 # Trace the SAN path
 
 ## 1. Starting point → host WWPNs
-- Any starting identifier (VM, datastore, NAA, ESX, host pWWN, LIF) → one kuparashit SQL query for the
-  rest: ESX host(s), vmhba pWWNs, NAAs, array targets it sees. Then confirm each hop live below.
+- Any starting identifier (VM, datastore, NAA, ESX, host pWWN) → kuparashit `locate` + `related`: ESX
+  host(s), their pWWNs and FI, NAAs, datastore / RDM, VMs (snapshot data: confirm each hop live below).
 - ESX host → UCS service profile: `ucsc` find_wwpn / trace_service_profile_san → vHBA name, fabric A/B,
   VSAN, WWPN, pinning (get_vhba_pinning) to FC uplink / SAN port-channel.
 
