@@ -9,7 +9,7 @@ best-practices) recommend, and where this brain stands. Re-check with `/brain-he
 | CLAUDE.md under 200 lines, imports do not save context | CLAUDE.md 133 lines + 3 imports (environment, notes, tool map); `/brain-health` warns above ~200 lines total |
 | Rules, not prose: enforce with hooks, CLAUDE.md is only context | PreToolUse hook `block-write-tools.py` (matcher `mcp__.*`, exit 2) blocks every write-looking MCP call; allow-list file for false positives |
 | SessionStart hooks inject fresh facts | `session-start.py` prints library version / document count, hook state, read-only mode at every start, resume and compaction |
-| Skills: description + `when_to_use` drive auto-triggering (1,536-char cap) | all 23 skills carry trigger phrases; longest 747 chars |
+| Skills: description + `when_to_use` drive auto-triggering (1,536-char cap) | all 24 skills carry trigger phrases; longest 747 chars |
 | `disable-model-invocation` for user-run workflows | brain-setup, brain-health, morning-check, capacity-report, change-review, code-version-check |
 | `context: fork` for long, self-contained work | unused-luns, zoning-audit, fabric-health, rdm-inventory (foreground, result returns to the chat) |
 | Subagents: short descriptions, `memory`, preload `skills`, least privilege | 8 agents; 7 keep persistent memory (`memory: user`); research agents preload docs-lookup; infra writes are blocked by the hook, not by tool denial (agents still write reports and their memory) |
@@ -60,7 +60,8 @@ Code; few high-signal tools) and measured with `docs-search-mcp/eval_search.py`:
   only let the same folder load with `--plugin-dir` for `claude plugin validate` and `claude plugin eval`
   (`brain/claude/evals/`: skill-triggering cases, docs-local mocked).
 - **Third-party plugins: curated, not "everything".** Every enabled plugin's skill / agent descriptions sit
-  in the context on every turn. Worth adding on the VM: `skill-creator` (team writes / tests skills offline);
+  in the context on every turn. Included: `skill-creator` (Anthropic, Apache-2.0, bundled in
+  `skills/skill-creator` with pure-Python PyYAML so every script runs offline; ~80 tokens per turn). Worth adding:
   `grafana-mcp` only if Harvest feeds an internal Grafana (live ONTAP performance). Not useful here: dev
   workflow plugins (code-review, feature-dev, commit-commands...), anything needing internet (context7).
   Offline install: clone the marketplace repo on the PC, copy it over, `/plugin marketplace add <path>`.

@@ -89,7 +89,7 @@ git clone https://github.com/peleg2312/storage-mcp-servers.git     # or copy the
 cd storage-mcp-servers
 sh install-vm.sh
 ```
-This installs into `~/.claude`: CLAUDE.md, the 23 skills, 8 agents, the read-only safety hook, the
+This installs into `~/.claude`: CLAUDE.md, the 24 skills, 8 agents, the read-only safety hook, the
 documentation library (`~/.claude/brain/library`), the MCP server **docs-local** (stdio, no dependencies),
 the **Peleg As A Service** banner (`claude` wrapper in `~/.bashrc`) and the status line.
 

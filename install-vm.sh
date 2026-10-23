@@ -8,7 +8,7 @@
 #   sh install-vm.sh --no-library         skip the documentation library (docs-search runs on the cluster)
 #
 # It installs:
-#   - the storage brain: CLAUDE.md, 23 skills, 8 agents, the read-only safety hook, the banner (brain/install.sh)
+#   - the storage brain: CLAUDE.md, 24 skills, 8 agents, the read-only safety hook, the banner (brain/install.sh)
 #   - the documentation library from library/*.part-* (NetApp ONTAP + Trident docs and KB, Dell
 #     PowerMax / PowerFlex / CSM docs, VMware KB pages, bug trackers when present): always ~/.claude/brain/library
 #   - the MCP server "docs-local" (stdio, standard library only, no pip, no containers) so Claude Code

@@ -1,0 +1,3 @@
+skill-creator: Anthropic, Apache-2.0 (LICENSE.txt), from github.com/anthropics/claude-plugins-official plugins/skill-creator @ 465f093.
+yaml/: PyYAML 6.0.2 pure-Python source, MIT (yaml/LICENSE), bundled so scripts/package_skill.py works on the offline VM.
+Offline: the review viewer loads Google Fonts and SheetJS (xlsx preview only) from the web; both degrade without internet.
