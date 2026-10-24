@@ -172,6 +172,7 @@ def parse_md(text, fallback):
     if "redirect" in meta:
         raise SkipDocument("redirect stub")
     text = re.sub(r"\{\{[<%].*?[%>]\}\}", "", text)          # Hugo shortcodes
+    text = re.sub(r"</?(dfn|abbr|strong|em|b|i|u|span|sup|sub|small|mark|kbd|br|a)(\s[^>]*)?/?>", "", text, flags=re.I)  # inline HTML (FastAPI docs)
     title, sections, heading, buf = None, [], None, []
     if meta.get("title"):
         title = heading = meta["title"].strip("'\"")

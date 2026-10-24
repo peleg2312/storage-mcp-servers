@@ -114,6 +114,9 @@ PAGE_CONCEPT = re.compile(r"(concept|overview|definition|architecture|getting-to
 PAGE_TASK = re.compile(r"(-task\b|\btask_|-task\.|/task-)", re.I)
 # measured on 241 questions (dev sets chose, held-out sets confirmed: MRR 0.792 -> 0.816, hit@1 0.70 -> 0.74);
 # tried and dropped: concept pages by title, everyday verb synonyms (neutral), document-level aggregation (worse)
+W_TITLE, W_SECTION = 6.0, 3.0   # BM25 field weights (text = 1)
+COVER_EXP = 2.0                 # how hard a missing query word costs
+POOL = (100, 150)               # candidates: all-words chunks, any-word chunks
 TYPE_W = 1.3     # boost of a page whose type matches the question type
 TITLE_W = 1.5    # weight of the share of query words in the title / section heading
 PROX_W = 0.3     # bonus when the matched words sit close together in the section
@@ -214,7 +217,7 @@ def search_docs(c, q, vendor="", product="", limit=8):
     phrase = lambda s: '"' + s + '"'  # noqa: E731
     sql = ("SELECT c.id AS chunk_id, d.id AS doc_id, d.vendor, d.product, d.title, chunks_fts.heading AS section, "
            "d.url, d.path, snippet(chunks_fts, 2, '«', '»', ' … ', 40) AS snippet, "
-           "bm25(chunks_fts, 6.0, 3.0, 1.0) AS score, chunks_fts.title AS ctx, chunks_fts.text AS body "
+           f"bm25(chunks_fts, {W_TITLE}, {W_SECTION}, 1.0) AS score, chunks_fts.title AS ctx, chunks_fts.text AS body "
            "FROM chunks_fts JOIN chunks c ON c.id = chunks_fts.rowid JOIN docs d ON d.id = c.doc_id "
            "WHERE chunks_fts MATCH ?")
     filters = []
@@ -232,7 +235,7 @@ def search_docs(c, q, vendor="", product="", limit=8):
         anyg = [phrase(r) for r in req] + (["(" + " OR ".join(phrase(a) for g in groups for a in g) + ")"] if groups else [])
         every = [phrase(r) for r in req] + ["(" + " OR ".join(phrase(a) for a in g) + ")" for g in groups]
         found = {}
-        for match, n in ((" AND ".join(every), 300), (" AND ".join(anyg), 400)):
+        for match, n in ((" AND ".join(every), POOL[0]), (" AND ".join(anyg), POOL[1])):
             for r in c.execute(sql, [match] + filters + [n]):
                 found.setdefault(r["chunk_id"], dict(r))
         return found
@@ -283,7 +286,7 @@ def search_docs(c, q, vendor="", product="", limit=8):
                 weight *= TYPE_W
         if hit > 1:
             weight *= 1 + PROX_W * _proximity(text, groups, found)
-        scored.append((-r["score"] * cover * cover * weight * (1 + TITLE_W * in_title), cover, r))
+        scored.append((-r["score"] * cover ** COVER_EXP * weight * (1 + TITLE_W * in_title), cover, r))
     scored.sort(key=lambda t: -t[0])
     rows, per_doc, found_in, by_key = [], {}, [], {}
     for final, cover, r in scored:
@@ -311,13 +314,38 @@ def search_docs(c, q, vendor="", product="", limit=8):
             break
     for r in rows:
         r.pop("doc_id", None)
+    facet = {}
+    for _, _, r in scored[:60]:                         # where the strong candidates live: the next product filter
+        facet[r["product"]] = facet.get(r["product"], 0) + 1
     full = bool(scored) and scored[0][1] == 1.0
     mode = "all words" if full else "partial: no chunk contains every word; best coverage first (see matched)"
     out = {"query": q, "match_mode": mode, "results": rows}
+    if not product and len(facet) > 1:
+        out["by_product"] = dict(sorted(facet.items(), key=lambda kv: -kv[1])[:6])
     # words no returned hit holds: the agent's cue to rephrase exactly those with the vendor's term
     missing = [g[0] for i, g in enumerate(groups) if rows and not any(f[i] for f in found_in)]
     if missing:
         out["unmatched"] = missing
+    return out
+
+
+def for_agent(out):
+    """The search answer as an agent reads it: no internal score, the path only when there is no url (read_document
+    takes either; citations use the url), no title repeated at the start of the snippet. ~15% fewer tokens."""
+    for r in out.get("results", []):
+        r.pop("score", None)
+        if r.get("url"):
+            r.pop("path", None)
+        sn, t = r.get("snippet") or "", re.sub(r"\s+", " ", r.get("title") or "").strip()
+        flat = re.sub(r"[«»]", "", sn).lstrip()
+        if t and flat.startswith(t):
+            n = 0
+            for i, ch in enumerate(sn):                 # skip the title, keeping the «» marks after it
+                if ch not in "«»":
+                    n += 1
+                if n >= len(t) + (len(sn) - len(sn.lstrip())):
+                    r["snippet"] = sn[i + 1:].lstrip(" \n:-")
+                    break
     return out
 
 

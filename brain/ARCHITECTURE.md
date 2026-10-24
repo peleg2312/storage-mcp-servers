@@ -57,6 +57,12 @@ Code; few high-signal tools) and measured with `docs-search-mcp/eval_search.py`:
   Properties" and manual "Table of Contents" sections are dropped at indexing (keyword bait, no answers).
   Docs leads are limited to the vendor of a product the request names (a FastAPI question no longer gets
   ONTAP REST pages).
+- **The MCP answer itself** (Oct 24, night): field weights, coverage exponent and candidate pool were swept
+  (all at their best within one question; pool cut 300/400 -> 100/150 for 35% faster searches, same scores).
+  Replies are 13-25% smaller (no internal score, path only without url, no title repeated in the snippet,
+  inline HTML stripped from Markdown) and carry `by_product` (where the strong candidates are: the next
+  filter). The server instructions tell Claude to send 2-3 rephrasings in parallel when a search misses:
+  the model is the paraphrase engine, no embeddings needed.
 - **Measured** (`eval_search.py`; hit@1 / hit@5). Sets written blind from random library sections are the
   honest ones (fresh, general); the older sets were written knowing the index:
 

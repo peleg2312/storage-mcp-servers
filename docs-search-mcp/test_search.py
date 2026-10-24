@@ -84,7 +84,7 @@ async def main():
     s = await call("search_docs", query="callhome.hm.alert.critical", product="ontap-ems-9161")  # alias product filter
     assert s["results"] and s["results"][0]["product"] == "ontap-ems-9181" and \
         sorted(s["results"][0]["also_in"]) == ["netapp/ontap-ems-9161", "netapp/ontap-ems-9171"], s["results"][:1]
-    assert len([r for r in s["results"] if "callhome" in r["path"]]) == 1, "folded copies must not appear twice"
+    assert len([r for r in s["results"] if "callhome" in (r.get("path") or r.get("url") or "")]) == 1, "folded copies must not appear twice"
     rd = await call("read_document", path="netapp/ontap-ems-9161/callhome-hm-events.adoc")  # alias path -> canonical
     assert rd["path"] == "netapp/ontap-ems-9181/callhome-hm-events.adoc" and rd["sections"], rd
     s = await call("search_docs", query="callhome.hm.alarm")  # near miss -> partial match, still found
@@ -191,3 +191,10 @@ assert not docs_index._NOISE_HEAD.match("Additional Information") and not docs_i
 import search_cli
 assert search_cli._norm_title("PowerFlex API 5.1.0: Map a volume") == search_cli._norm_title("PowerFlex API 4.5.5-Manager_v4-8-0: Map a volume")
 print("boilerplate + version folding OK")
+o = search_cli.for_agent({"results": [{"title": "Trident PVC stuck", "snippet": "«Trident» «PVC» stuck\n\nCheck the backend",
+                                       "url": "https://x/y", "path": "netapp/kb/y.html", "score": 3.2}]})["results"][0]
+assert "score" not in o and "path" not in o and o["snippet"] == "Check the backend", o       # lean answer for agents
+assert "path" in search_cli.for_agent({"results": [{"title": "t", "snippet": "s", "url": None, "path": "p"}]})["results"][0]
+t, ch = docs_index.parse_md("# T\n\nUse <dfn title='x'><strong>DI</strong></dfn>.\n\n```html\n<div>k</div>\n```\n", "f")
+assert "Use DI." in ch[0][1] and "<div>k</div>" in ch[0][1], ch                               # inline HTML out, code kept
+print("agent answer + inline html OK")

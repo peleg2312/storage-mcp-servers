@@ -25,12 +25,15 @@ except ImportError:
 
 INSTRUCTIONS = """\
 Read-only, fully OFFLINE search over the team's storage documentation library: NetApp ONTAP / EMS /
-SAN hosts / Trident docs and KB, Dell PowerMax / PowerFlex / PowerScale / CSM docs and KB, the CSI
-driver and Kubernetes CSI sidecar source code, Dell CSM pull requests (the fixes) and the Trident /
-Harvest issue trackers. Nothing here needs internet; the urls are for the humans.
+SAN hosts / Trident docs and KB, Dell PowerMax / PowerFlex (incl. the REST API) / PowerScale / CSM docs and
+KB, Kubernetes / OpenShift storage, the CSI driver and sidecar source code, Dell CSM pull requests (the
+fixes), the Trident / Harvest issue trackers, and the backend stack (FastAPI, Pydantic, httpx, pytest,
+SQLAlchemy, fastmcp, MCP SDK and spec). Nothing here needs internet; the urls are for the humans.
 1. search_docs with the exact technical terms (error text in "quotes", EMS / event names, commands,
    KB / CONTAP / DSA numbers). Old and new product names and common acronyms match each other.
-   Filter by vendor / product when the platform is known (list_sources gives the names).
+   Filter by vendor / product when the platform is known (list_sources gives the names; by_product in a
+   reply shows where the hits are). No good hit: send 2-3 rephrasings in parallel in the vendor's words
+   (as a KB title would say it; the concept name; "best practices" / "overview") and replace `unmatched` words.
 2. read_chunk the best 2-3 hits before answering; read_document for a whole page or PDF.
 3. Cite title + url + version for every statement; never invent commands, settings or bug numbers.
    "matched" shows how many query words a hit contains: a partial match is weak evidence."""
@@ -41,11 +44,13 @@ TOOLS = [
                     "code. query: technical words; \"quoted text\" must appear verbatim (use it for error "
                     "messages); other words are ranked by how many a section contains, with synonyms (Isilon = "
                     "PowerScale, ScaleIO = PowerFlex, VMAX = PowerMax, RDP, SRDF, CSM...). vendor: netapp | dell | "
-                    "kubernetes | vmware | kb. product: substring of the product (ontap-ems-9151, kb-ontap, "
-                    "trident-2510, csm, csi-powermax, csm-prs, powerflex, external-attacher...). Returns up to "
-                    "`limit` hits (max 2 per document) with chunk_id for read_chunk, title, section, snippet "
-                    "(matches in «»), url, matched (query words found / total) and also_in (identical copies in "
-                    "other versions); unmatched = query words no hit holds (rephrase those).",
+                    "kubernetes | openshift | vmware | python | mcp. product: substring of the product "
+                    "(ontap-ems-9151, kb-ontap, trident-2510, csm, csi-powermax, csm-prs, powerflex-api, fastapi...). "
+                    "Returns up to `limit` hits (max 2 per document) with chunk_id for read_chunk, title, section, "
+                    "snippet (matches in «»), url (or path), matched (query words found / total), also_in (the same "
+                    "page in other versions / copies: open the one for the installed version); by_product = where "
+                    "the strong candidates are (the next product filter); unmatched = query words no hit holds "
+                    "(rephrase those).",
      "inputSchema": {"type": "object", "properties": {
          "query": {"type": "string"}, "vendor": {"type": "string", "default": ""},
          "product": {"type": "string", "default": ""}, "limit": {"type": "integer", "default": 8}},
@@ -77,11 +82,8 @@ class Server:
 
     def call(self, name, args):
         if name == "search_docs":
-            out = lib.search_docs(self.con, args["query"], args.get("vendor", ""), args.get("product", ""),
-                                  args.get("limit", 8))
-            for r in out["results"]:
-                r.pop("score", None)
-            return out
+            return lib.for_agent(lib.search_docs(self.con, args["query"], args.get("vendor", ""),
+                                                 args.get("product", ""), args.get("limit", 8)))
         if name == "read_chunk":
             return lib.read_chunk(self.con, int(args["chunk_id"]), args.get("context", 1))
         if name == "read_document":

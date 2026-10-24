@@ -101,9 +101,11 @@ def also_in(c, path):
 
 def _search(q, vendor, product, limit):
     """lib.search_docs over every index, merged by relevance; chunk ids made unique per index."""
-    rows, full, unmatched = [], False, None
+    rows, full, unmatched, facet = [], False, None, {}
     for i, c in all_cons():
         out = lib.search_docs(c, q, vendor, product, limit)
+        for k, v in out.get("by_product", {}).items():   # where the strong candidates are, over every index
+            facet[k] = facet.get(k, 0) + v
         full = full or out["match_mode"] == "all words"
         miss = out.get("unmatched", []) if out["results"] else None     # a library with no hits says nothing
         if miss is not None:
@@ -116,9 +118,7 @@ def _search(q, vendor, product, limit):
         h, _, n = r["matched"].partition("/")
         return int(h) / int(n) if n else 1.0
     rows.sort(key=lambda r: (-cover(r), -r["score"]))
-    for r in rows:
-        r.pop("score")
-    return rows[:max(1, min(int(limit), 50))], full, unmatched or []
+    return lib.for_agent({"results": rows[:max(1, min(int(limit), 50))]})["results"], full, unmatched or [], facet
 
 
 INSTRUCTIONS = """\
@@ -171,14 +171,18 @@ def search_docs(query: str, vendor: str = "", product: str = "", limit: int = 8)
     """Search all indexed documentation, KB articles, bug trackers, pull requests and source code.
     query: technical words; "quoted text" must appear verbatim (use it for error messages); other words
     are ranked by how many a section contains, with synonyms (Isilon = PowerScale, ScaleIO = PowerFlex,
-    VMAX = PowerMax, RDP, SRDF, CSM...). vendor: netapp | dell | kubernetes | vmware | kb | <your folder>.
-    product: substring of the product (ontap-ems-9151, kb-ontap, trident-2510, csm, csi-powermax, csm-prs,
-    powerflex, external-attacher...). Returns up to `limit` hits (max 2 per document) with chunk_id for
-    read_chunk, title, section, snippet (matches in «»), url, matched (query words found / total) and
-    also_in (identical copies in other versions); unmatched = query words no hit holds (rephrase those)."""
-    rows, full, unmatched = _search(query, vendor, product, limit)
+    VMAX = PowerMax, RDP, SRDF, CSM...). vendor: netapp | dell | kubernetes | openshift | vmware | python |
+    mcp | <your folder>. product: substring of the product (ontap-ems-9151, kb-ontap, trident-2510, csm,
+    csi-powermax, csm-prs, powerflex-api, fastapi...). Returns up to `limit` hits (max 2 per document) with
+    chunk_id for read_chunk, title, section, snippet (matches in «»), url (or path), matched (query words
+    found / total), also_in (the same page in other versions / copies: open the installed version's);
+    by_product = where the strong candidates are (the next product filter); unmatched = query words no hit
+    holds (rephrase those). No good hit: send 2-3 rephrasings in parallel in the vendor's words."""
+    rows, full, unmatched, facet = _search(query, vendor, product, limit)
     mode = "all words" if full else "partial: no chunk contains every word; best coverage first (see matched)"
     out = {"query": query, "match_mode": mode, "results": rows}
+    if len(facet) > 1:
+        out["by_product"] = dict(sorted(facet.items(), key=lambda kv: -kv[1])[:6])
     if unmatched:
         out["unmatched"] = unmatched
     return out
