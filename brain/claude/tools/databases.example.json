@@ -1,0 +1,4 @@
+{
+  "app-pg": {"type": "postgres", "uri": "postgresql://app_readonly@pg01.example.corp:5432/appdb"},
+  "app-mongo": {"type": "mongo", "uri_env": "APP_MONGO_URI"}
+}

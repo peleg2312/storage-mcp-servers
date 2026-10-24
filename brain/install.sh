@@ -62,7 +62,8 @@ for f in environment.md tool-map.md notes.md; do
   [ -f "$DST/brain/$f" ] || cp "$SRC/brain/$f" "$DST/brain/$f"
 done
 cp "$SRC/banner/paas-banner.py" "$SRC/banner/paas-statusline.py" "$DST/banner/"
-mkdir -p "$DST/tools/vendor" && cp "$SRC/tools/report.py" "$SRC/tools/get-reports.ps1" "$DST/tools/" && cp "$SRC/tools/vendor/"*.whl "$DST/tools/vendor/"   # charts + Excel (report-export skill); pure-Python wheels, no pip
+mkdir -p "$DST/tools/vendor" && cp "$SRC/tools/report.py" "$SRC/tools/get-reports.ps1" "$SRC/tools/db_mcp.py" "$DST/tools/"
+[ -f "$USER_DST/brain/databases.json" ] || cp "$SRC/tools/databases.example.json" "$USER_DST/brain/databases.example.json" && cp "$SRC/tools/vendor/"*.whl "$DST/tools/vendor/"   # charts + Excel (report-export skill); pure-Python wheels, no pip
 mkdir -p "$USER_DST/themes" && cp "$SRC/themes/paas.json" "$USER_DST/themes/"   # custom themes are read from ~/.claude/themes only
 
 # Documentation library (library/*.part-* in this repo): extracted into ~/.claude/brain/library so the
@@ -102,6 +103,14 @@ with open(path, "w") as f:
 print(f"wrote {path}: MCP server docs-local (stdio) -> {lib}")
 EOP
   [ "$HAVE_LIB" = 1 ] || echo "note: $LIBDST/docs.db is not installed yet (--no-library or no library parts); docs-local will connect after a run without --no-library"
+fi
+# read-only PostgreSQL / MongoDB MCP for development (connections: ~/.claude/brain/databases.json; drivers: devtools)
+if [ -z "$PROJECT" ] && command -v claude >/dev/null 2>&1; then
+  claude mcp get databases >/dev/null 2>&1 || { claude mcp add databases -s user \
+    -- "$USER_DST/devtools-venv/bin/python" "$DST/tools/db_mcp.py" >/dev/null 2>&1 \
+    && echo "registered MCP server databases (read-only PostgreSQL / MongoDB; add connections in ~/.claude/brain/databases.json)"; }
+fi
+if [ -n "$PROJECT" ]; then :
 elif [ "$HAVE_LIB" = 1 ] && command -v claude >/dev/null 2>&1; then
   claude mcp get docs-local >/dev/null 2>&1 || claude mcp add docs-local -s user \
     -- python3 "$LIBDST/mcp_stdio.py" --db "$LIBDST/docs.db" \

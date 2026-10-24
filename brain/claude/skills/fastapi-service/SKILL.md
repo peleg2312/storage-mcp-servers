@@ -61,6 +61,15 @@ different major version (Pydantic v1 vs v2, SQLAlchemy 1.x vs 2.0, fastmcp 2 vs 
   `Field(...)`), `response_model` on every route; exceptions from `_do()` mapped once (exception handlers)
   to 404 / 403 / 502; no business logic in the route function.
 
+## 5b. Databases (PostgreSQL / MongoDB)
+- Read the real schema before writing models or queries: MCP server `databases` - `db_list`, then
+  `pg_schema` (tables; one table's columns, constraints, indexes) or `mongo_schema` (collections; fields and
+  types from a sample, indexes). Check a query with `pg_query` / `pg_explain` or `mongo_find` / `mongo_aggregate`.
+- It is read-only (no writes possible): schema changes are migrations in the app (Alembic for SQLAlchemy),
+  run by the user. Connections: `~/.claude/brain/databases.json` (passwords in ~/.pgpass or an env variable).
+- Postgres from FastAPI: SQLAlchemy 2 (async engine + asyncpg, or psycopg 3); Mongo: pymongo / motor; one
+  client per app in the lifespan, never per request.
+
 ## 6. Tests (offline, plain asserts, no pytest plugins required)
 - Fake the backend at the transport: replace `requests.Session.send` (or `httpx.MockTransport`) with a
   router returning canned JSON per path, recording every request in `SENT`.
