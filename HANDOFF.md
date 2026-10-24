@@ -110,6 +110,12 @@ search quality: `python3 eval_search.py` and `--cases tests/retrieval_heldout.js
 
 ## Pitfalls already met
 
+- Archives packed on a Mac carry hidden `._*` AppleDouble files (70,005 in the library): GNU tar on Linux unpacks
+  them and install-vm.sh stopped halfway. pack-library.sh now packs without macOS metadata; install / join delete
+  any `._*`. Test every install change with `sh brain/e2e/run.sh` (Rocky 9 x86_64 + arm64, docker / colima).
+- Claude Code's native binary crashes under x86 emulation on Apple silicon: the e2e test runs Claude Code only in
+  the arm64 container (the x86 one tests the rest; the installer works without claude and skips registrations).
+
 - Dell returns a small PDF "Statement against modern slavery" instead of login-only documents; `is_redirect_pdf()`
   in `sync/sync_dell.py` detects it (text is inside the PDF, needs pypdf). Never index those.
 - Dell's HTML manuals (`dell.com/support/manuals/...`) are sign-in gated for the PowerFlex alerts guide; the PDF link
