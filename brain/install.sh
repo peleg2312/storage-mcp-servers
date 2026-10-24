@@ -174,10 +174,10 @@ fi
 # Development: ruff + basedpyright (offline wheels) and Anthropic's official dev plugins (offline copy in
 # brain/plugins: pr-review-toolkit, feature-dev, commit-commands, security-guidance, pyright-lsp, mcp-server-dev). Copied to ~/.claude/brain/plugins (re-run after git pull to update).
 sh "$HERE/devtools/install-devtools.sh" || echo "devtools: skipped (see the message above)"
+# copied to a fixed place: Claude Code reads plugins from the registered folder, so the repo can move or go
+PLUGDST=$USER_DST/brain/plugins
+mkdir -p "$PLUGDST" && cp -R "$HERE/plugins/." "$PLUGDST/"
 if command -v claude >/dev/null 2>&1; then
-  # copied to a fixed place: Claude Code reads plugins from the registered folder, so the repo can move or go
-  PLUGDST=$USER_DST/brain/plugins
-  mkdir -p "$PLUGDST" && cp -R "$HERE/plugins/." "$PLUGDST/"
   claude plugin marketplace add "$PLUGDST" >/dev/null 2>&1 || claude plugin marketplace update brain-dev >/dev/null 2>&1 || true
   for p in pr-review-toolkit feature-dev commit-commands security-guidance pyright-lsp mcp-server-dev dev-discipline; do
     claude plugin install "$p@brain-dev" >/dev/null 2>&1 || echo "plugin $p: not installed (claude plugin install $p@brain-dev)"
