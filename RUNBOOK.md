@@ -89,7 +89,7 @@ git clone https://github.com/peleg2312/storage-mcp-servers.git     # or copy the
 cd storage-mcp-servers
 sh install-vm.sh                    # add --login-banner for the Peleg As A Service banner at every VM login (sudo)
 ```
-This installs into `~/.claude`: CLAUDE.md, the 24 skills, 8 agents, the read-only safety hook, the
+This installs into `~/.claude`: CLAUDE.md, the skills, agents and hooks (read-only guard, docs hints / leads), the
 documentation library (`~/.claude/brain/library`), the MCP server **docs-local** (stdio, no dependencies),
 the **Peleg As A Service** banner (`claude` wrapper in `~/.bashrc`) and the status line.
 

@@ -78,7 +78,8 @@ Exact tool names per server: see the tool map imported at the bottom (run `/brai
 | MDS: flogi, fcns, zones/zonesets, device-alias, interfaces, counters, port-channels, slow drain, logs | **mds** MCP |
 | UCS Central: domains, FIs, service profiles, vHBAs + WWPNs, VSANs, FC uplinks / port-channels, pinning, faults | **ucsc** MCP |
 | Docs, error meanings, procedures, best practices, Trident / Harvest bugs and changelogs, NetApp / Dell / VMware KB articles, CSM docs | **docs MCP** = **docs-search** or **docs-local** (or `brain/library/search.py`) |
-| PowerFlex live state | no MCP: use vCenter-side data (kuparashit/Aria) + docs (`dell/powerflex`, `dell/kb`); say so |
+| PowerFlex live state | no MCP: use vCenter-side data (kuparashit/Aria) + docs (`dell/powerflex`, `dell/kb`, REST objects in `powerflex-api`); say so |
+| Development: the user's PostgreSQL / MongoDB schemas and data, FastAPI / Pydantic / fastmcp / MCP how-to | **databases** MCP (`db_list` first; writes only on connections marked writable, user-confirmed) + docs MCP (vendor `python`, `mcp`); conventions: `fastapi-service`; charts / Excel: `report-export` |
 
 ## Identifier rules
 - **Normalize WWNs**: strip `:`/`-`/spaces, lowercase, 16 hex. MDS/ONTAP show `20:00:00:25:b5:..`,

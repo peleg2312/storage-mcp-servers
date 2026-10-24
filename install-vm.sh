@@ -10,7 +10,8 @@
 #                                         user (SSH, console, terminal windows); asks for sudo (brain/login-banner.sh)
 #
 # It installs:
-#   - the storage brain: CLAUDE.md, 24 skills, 8 agents, the read-only safety hook, the banner (brain/install.sh)
+#   - the storage brain: CLAUDE.md, skills, agents, hooks (read-only guard, docs hints / leads, ruff), the banner,
+#     dev tools and plugins, the read-only / writable databases MCP (brain/install.sh)
 #   - the documentation library from library/*.part-* (NetApp ONTAP + Trident docs and KB, Dell
 #     PowerMax / PowerFlex / CSM docs, VMware KB pages, bug trackers when present): always ~/.claude/brain/library
 #   - the MCP server "docs-local" (stdio, standard library only, no pip, no containers) so Claude Code

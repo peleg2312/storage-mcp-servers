@@ -14,7 +14,7 @@ Dell PowerFlex, NetApp ONTAP, NetApp Trident, Dell CSM / CSI, Cisco MDS / UCS, V
    `mcp_stdio.py` (stdio MCP server, standard library only) or `server.py` (HTTP, fastmcp) with four tools:
    search_docs, read_chunk, read_document, list_sources. Also `search.py` from the shell.
 2. **The brain** (`brain/claude/`): CLAUDE.md (107 lines, imports environment.md / notes.md / tool-map.md),
-   24 skills (incl. Anthropic's skill-creator), 8 agents (sonnet), a PreToolUse hook that blocks write-looking MCP calls (read-only policy), a SessionStart
+   26 skills (incl. Anthropic's skill-creator), 8 agents (sonnet, scoped tools), a PreToolUse hook that blocks write-looking MCP calls (read-only policy), a SessionStart
    hook, the "Peleg As A Service" banner and status line. Installed by `install-vm.sh` (user scope) or
    `install-vm.sh --project <dir>` (one folder only). Reviewed against the Claude Code docs: `brain/ARCHITECTURE.md`.
 
