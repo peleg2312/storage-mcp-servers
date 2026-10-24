@@ -105,10 +105,17 @@ print(f"wrote {path}: MCP server docs-local (stdio) -> {lib}")
 EOP
   [ "$HAVE_LIB" = 1 ] || echo "note: $LIBDST/docs.db is not installed yet (--no-library or no library parts); docs-local will connect after a run without --no-library"
 fi
-# read-only PostgreSQL / MongoDB MCP for development (connections: ~/.claude/brain/databases.json; drivers: devtools)
-if [ -z "$PROJECT" ] && command -v claude >/dev/null 2>&1; then
+# dev tools first (ruff, basedpyright, database drivers): the databases MCP below needs their Python
+sh "$HERE/devtools/install-devtools.sh" || echo "devtools: skipped (see the message above)"
+# PostgreSQL / MongoDB MCP for development (connections: ~/.claude/brain/databases.json), only when its drivers work:
+# a registered server that cannot start shows "Failed to connect" in every session
+DBPY=$USER_DST/devtools-venv/bin/python
+if ! "$DBPY" -c "import psycopg, pymongo" >/dev/null 2>&1; then
+  echo "databases MCP: not registered (no drivers in $USER_DST/devtools-venv; Linux x86_64 with Python 3.9 or 3.12 needed)"
+  command -v claude >/dev/null 2>&1 && claude mcp remove databases -s user >/dev/null 2>&1 || true
+elif [ -z "$PROJECT" ] && command -v claude >/dev/null 2>&1; then
   claude mcp get databases >/dev/null 2>&1 || { claude mcp add databases -s user \
-    -- "$USER_DST/devtools-venv/bin/python" "$DST/tools/db_mcp.py" >/dev/null 2>&1 \
+    -- "$DBPY" "$DST/tools/db_mcp.py" >/dev/null 2>&1 \
     && echo "registered MCP server databases (read-only PostgreSQL / MongoDB; add connections in ~/.claude/brain/databases.json)"; }
 fi
 if [ -n "$PROJECT" ]; then :
@@ -173,7 +180,6 @@ fi
 
 # Development: ruff + basedpyright (offline wheels) and Anthropic's official dev plugins (offline copy in
 # brain/plugins: pr-review-toolkit, feature-dev, commit-commands, security-guidance, pyright-lsp, mcp-server-dev). Copied to ~/.claude/brain/plugins (re-run after git pull to update).
-sh "$HERE/devtools/install-devtools.sh" || echo "devtools: skipped (see the message above)"
 # copied to a fixed place: Claude Code reads plugins from the registered folder, so the repo can move or go
 PLUGDST=$USER_DST/brain/plugins
 mkdir -p "$PLUGDST" && cp -R "$HERE/plugins/." "$PLUGDST/"
