@@ -11,7 +11,8 @@ TAR="docs-library-$LABEL.tar.gz"
 cat "$TAR.part-"* > "$TAR"
 if command -v sha256sum >/dev/null 2>&1; then sha256sum -c SHA256SUMS; else shasum -a 256 -c SHA256SUMS; fi
 mkdir -p "$DEST"
-tar -xzf "$TAR" -C "$DEST"
+tar -xzf "$TAR" -C "$DEST" 2>/dev/null || tar -xzf "$TAR" -C "$DEST"
+find "$DEST" -maxdepth 1 -name '._docs-library' -delete 2>/dev/null || true; find "$DEST/docs-library" -name '._*' -type f -delete 2>/dev/null || true
 rm -f "$TAR"
 echo "library $LABEL extracted to $DEST/docs-library"
 echo "  search:  python3 $DEST/docs-library/search.py search \"lun mapping show\""

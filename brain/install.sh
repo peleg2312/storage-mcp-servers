@@ -76,7 +76,8 @@ if [ "$NO_LIBRARY" = 0 ] && [ -f "$LIB/VERSION" ] && ls "$LIB"/docs-library-*.pa
     echo "installing documentation library $(cat "$LIB/VERSION") into $LIBDST (a minute)..."
     TMP=$(mktemp -d)
     sh "$LIB/join.sh" "$TMP" >/dev/null
-    rm -rf "$LIBDST"; mv "$TMP/docs-library" "$LIBDST"; rmdir "$TMP"
+    rm -rf "$LIBDST"; mv "$TMP/docs-library" "$LIBDST"; rm -rf "$TMP"
+    find "$LIBDST" -name '._*' -type f -delete 2>/dev/null || true     # macOS metadata in archives packed on a Mac
     # the tools read docs.db only; the source files (~1.3 GB) are there to rebuild the index on the PC
     [ "${KEEP_LIBRARY_DOCS:-0}" = 1 ] || rm -rf "$LIBDST/docs"
     cp "$LIB/VERSION" "$LIBDST/VERSION"

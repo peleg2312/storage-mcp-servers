@@ -48,7 +48,10 @@ cp "$STAGE/docs-library/MANIFEST.md" "$LIB/MANIFEST.md"
 echo "== packing"
 rm -f "$LIB"/docs-library-*.tar.gz.part-* "$LIB"/docs-library-*.tar.gz
 TAR="$WORK/docs-library-$LABEL.tar.gz"
-tar -C "$STAGE" -cf - docs-library | gzip -9 > "$TAR"
+# no macOS metadata: on Linux every "._<file>" AppleDouble entry becomes a junk file (it broke install-vm.sh)
+if tar --version 2>/dev/null | grep -q bsdtar; then MACOPT="--no-mac-metadata --no-xattrs"; else MACOPT=""; fi
+# shellcheck disable=SC2086
+COPYFILE_DISABLE=1 tar $MACOPT -C "$STAGE" -cf - docs-library | gzip -9 > "$TAR"
 (cd "$LIB" && split -b 45m -a 2 "$TAR" "docs-library-$LABEL.tar.gz.part-")   # part-aa, part-ab ... (GNU and BSD split)
 (cd "$WORK" && { command -v sha256sum >/dev/null 2>&1 && sha256sum "docs-library-$LABEL.tar.gz" || shasum -a 256 "docs-library-$LABEL.tar.gz"; } > "$LIB/SHA256SUMS")
 echo "$LABEL" > "$LIB/VERSION"

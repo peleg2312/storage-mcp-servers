@@ -1,4 +1,4 @@
-# Documentation library 2026.10.24d
+# Documentation library 2026.10.24e
 
 Indexed 2026-10-24T08:50:48Z: **45692 unique documents, 249724 sections** (64239 files: 18547 are identical copies, e.g. the same page in several ONTAP versions, kept as aliases of one indexed copy and shown as `also_in`). Search it with `python3 search.py search "..."` (no dependencies) or the docs-search MCP server.
 
