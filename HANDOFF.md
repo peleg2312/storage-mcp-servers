@@ -40,7 +40,7 @@ search quality: `python3 eval_search.py` and `--cases tests/retrieval_heldout.js
   develops on the VM). Agents have scoped tools. New skills: `report-export` (charts + Excel; `tools/report.py`,
   `get-reports.ps1` delivers reports to the Windows PC) and `fastapi-service` (house conventions from the MCP
   repos). The start banner shows inside Claude Code (companyAnnouncements, sized per start).
-- The user develops FastAPI backends on the VM (RHEL 9) with PostgreSQL and MongoDB: read-only MCP `databases`
+- The user develops FastAPI backends on the VM (RHEL 9) with PostgreSQL and MongoDB: MCP `databases` (reads always read-only; writes on connections marked write, user-confirmed)
   (brain/claude/tools/db_mcp.py), dev plugins in brain/plugins, ruff / basedpyright / drivers in brain/devtools.
 - The user runs NetApp's official ONTAP and Harvest MCP servers (the ONTAP one has write tools: the hook blocks them).
 - NetApp KB export still running (terminal tab; 7,934 of 14,751 checked at 00:41 on Oct 24, ~534 / hour, ends

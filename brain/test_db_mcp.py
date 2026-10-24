@@ -11,7 +11,7 @@ if not (PG and MG):
 import psycopg, pymongo  # noqa: E402
 
 with psycopg.connect(PG, autocommit=True) as c:                      # seed (the test, not the server, writes)
-    c.execute("DROP TABLE IF EXISTS users; CREATE SEQUENCE IF NOT EXISTS s1")
+    c.execute("DROP TABLE IF EXISTS users, notes; CREATE SEQUENCE IF NOT EXISTS s1")
     c.execute("CREATE TABLE users (id serial PRIMARY KEY, email text UNIQUE NOT NULL, created timestamptz DEFAULT now())")
     c.execute("INSERT INTO users (email) SELECT 'u' || g || '@x.io' FROM generate_series(1, 30) g")
 mc = pymongo.MongoClient(MG)
@@ -20,7 +20,9 @@ mc.shop.orders.insert_many([{"sku": f"A{i % 3}", "qty": i, "addr": {"city": "TLV
 mc.shop.orders.create_index("sku")
 
 conf = os.path.join(tempfile.mkdtemp(), "databases.json")
-json.dump({"app-pg": {"type": "postgres", "uri": PG}, "shop": {"type": "mongo", "uri_env": "T_MONGO"}}, open(conf, "w"))
+json.dump({"app-pg": {"type": "postgres", "uri": PG}, "shop": {"type": "mongo", "uri_env": "T_MONGO"},
+           "dev-pg": {"type": "postgres", "uri": PG, "write": True},
+           "dev-shop": {"type": "mongo", "uri": MG, "write": True}}, open(conf, "w"))
 srv = os.path.join(os.path.dirname(os.path.abspath(__file__)), "claude", "tools", "db_mcp.py")
 calls = [("db_list", {}), ("pg_schema", {"connection": "app-pg"}), ("pg_schema", {"connection": "app-pg", "table": "users"}),
          ("pg_query", {"connection": "app-pg", "sql": "SELECT id, email FROM users ORDER BY id", "limit": 5}),
@@ -40,14 +42,30 @@ calls = [("db_list", {}), ("pg_schema", {"connection": "app-pg"}), ("pg_schema",
                               "pipeline": [{"$match": {}}, {"$out": "stolen"}]}),
          ("mongo_aggregate", {"connection": "shop", "database": "shop", "collection": "orders",
                               "pipeline": '[{"$merge": {"into": "x"}}]'}),
-         ("pg_query", {"connection": "nope", "sql": "SELECT 1"})]
+         ("pg_query", {"connection": "nope", "sql": "SELECT 1"}),
+         # writes: refused on read-only connections, done on writable ones
+         ("pg_execute", {"connection": "app-pg", "sql": "DELETE FROM users"}),
+         ("pg_execute", {"connection": "dev-pg", "sql": "INSERT INTO users (email) VALUES ('new@x.io') RETURNING id, email"}),
+         ("pg_execute", {"connection": "dev-pg", "sql": "CREATE TABLE notes (id int)"}),
+         ("pg_execute", {"connection": "dev-pg", "sql": "INSERT INTO nothere VALUES (1)"}),
+         ("mongo_write", {"connection": "shop", "database": "shop", "collection": "orders", "op": "insert_one", "document": {"sku": "Z"}}),
+         ("mongo_write", {"connection": "dev-shop", "database": "shop", "collection": "orders", "op": "insert_one",
+                          "document": '{"sku": "Z9", "qty": 99}'}),
+         ("mongo_write", {"connection": "dev-shop", "database": "shop", "collection": "orders", "op": "update_many",
+                          "filter": {"sku": "A0"}, "update": {"$set": {"flag": True}}}),
+         ("mongo_write", {"connection": "dev-shop", "database": "shop", "collection": "orders", "op": "delete_many", "filter": {}}),
+         ("mongo_write", {"connection": "dev-shop", "database": "shop", "collection": "orders", "op": "delete_one", "filter": {"sku": "Z9"}}),
+         ("mongo_write", {"connection": "dev-shop", "database": "shop", "collection": "orders", "op": "create_index",
+                          "keys": {"qty": 1}}),
+         ("db_list", {})]
 msgs = [{"jsonrpc": "2.0", "id": 0, "method": "initialize", "params": {"protocolVersion": "2025-06-18"}},
         {"jsonrpc": "2.0", "method": "notifications/initialized"}, {"jsonrpc": "2.0", "id": 1, "method": "tools/list"}]
 msgs += [{"jsonrpc": "2.0", "id": i + 10, "method": "tools/call", "params": {"name": n, "arguments": a}} for i, (n, a) in enumerate(calls)]
 out = subprocess.run([sys.executable, srv], input="\n".join(json.dumps(m) for m in msgs) + "\n", capture_output=True, text=True,
                      env={**os.environ, "DB_MCP_CONFIG": conf, "T_MONGO": MG}, timeout=120).stdout
 R = {r["id"]: r["result"] for r in map(json.loads, out.splitlines())}
-assert len(R[1]["tools"]) == 8 and all(t["annotations"]["readOnlyHint"] for t in R[1]["tools"])
+assert len(R[1]["tools"]) == 10
+assert {t["name"] for t in R[1]["tools"] if not t["annotations"]["readOnlyHint"]} == {"pg_execute", "mongo_write"}
 res = lambda i: (R[i + 10]["isError"], R[i + 10]["content"][0]["text"])                   # noqa: E731
 J = lambda i: json.loads(res(i)[1])                                                          # noqa: E731
 assert ":pw@" not in res(0)[1] and "postgres@localhost" in res(0)[1], res(0)                # no password shown
@@ -64,8 +82,17 @@ f = J(12)["documents"]; assert [d["qty"] for d in f] == [10, 7] and isinstance(f
 assert J(13)["count"] == 4 and J(14)["documents"][0] == {"_id": "A0", "n": 4}
 assert res(15)[0] and "$out" in res(15)[1] and res(16)[0] and "$merge" in res(16)[1]
 assert res(17)[0] and "unknown connection" in res(17)[1]
-with psycopg.connect(PG) as c:                                                              # nothing changed
-    assert c.execute("SELECT count(*) FROM users").fetchone()[0] == 30
+assert res(18)[0] and "read-only" in res(18)[1] and 'write": true' in res(18)[1].replace("\\", ""), res(18)
+w = J(19); assert w["rowcount"] == 1 and w["rows"][0][1] == "new@x.io", w                     # INSERT ... RETURNING
+assert J(20)["status"] == "CREATE TABLE" and res(21)[0] and "nothere" in res(21)[1]
+assert res(22)[0] and "read-only" in res(22)[1]                                               # read-only Mongo connection
+assert len(J(23)["inserted_id"]) == 24 and J(24) == {"matched": 4, "modified": 4, "upserted_id": None}
+assert res(25)[0] and "all=true" in res(25)[1] and J(26)["deleted"] == 1 and J(27)["index"] == "qty_1"
+assert [(c["connection"], c["write"]) for c in J(28)["connections"]] == [("app-pg", False), ("shop", False), ("dev-pg", True), ("dev-shop", True)]
+with psycopg.connect(PG) as c:                                                              # only the writable connection changed it
+    assert c.execute("SELECT count(*) FROM users").fetchone()[0] == 31
+    assert c.execute("SELECT to_regclass('notes')").fetchone()[0] == "notes"
     assert c.execute("SELECT to_regclass('evil')").fetchone()[0] is None
 assert "stolen" not in mc.shop.list_collection_names() and "x" not in mc.shop.list_collection_names()
+assert mc.shop.orders.count_documents({}) == 12 and mc.shop.orders.count_documents({"flag": True}) == 4
 print("db-mcp ok")

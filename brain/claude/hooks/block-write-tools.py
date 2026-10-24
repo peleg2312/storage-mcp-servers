@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """Claude Code PreToolUse hook: safety net for the read-only rule.
 
-MCP tools: blocks calls that look like changes (the storage MCP servers are read-only on their own; this also
+MCP tools: blocks calls that look like changes (exception: the "databases" server's pg_execute / mongo_write on the
+user's own application databases are asked, not blocked) (the storage MCP servers are read-only on their own; this also
 covers third-party MCPs such as the official ONTAP MCP, Aria, kuparashit that expose write tools).
 Shell (Bash) commands, two levels, because the VM is also used for development:
   - blocked: commands whose only purpose is changing storage / fabric / virtualization infrastructure
@@ -253,7 +254,17 @@ def main():
         return 0
     if not name.startswith("mcp__") or allowed(name):
         return 0
-    r = reason_for(name, data.get("tool_input") or {})
+    tool_input = data.get("tool_input") or {}
+    if re.fullmatch(r"mcp__databases__(pg_execute|mongo_write)", name):
+        # the user's own application databases (writable connections only, the server checks): confirm each write
+        what = tool_input.get("sql") or " ".join(str(tool_input.get(k, "")) for k in ("op", "database", "collection"))
+        print(json.dumps({"hookSpecificOutput": {"hookEventName": "PreToolUse", "permissionDecision": "ask",
+                                                 "permissionDecisionReason": f"Database write on {tool_input.get('connection')}: "
+                                                                             f"{str(what)[:300]}"}}))
+        return 0
+    r = reason_for(name, tool_input)
+    if r and name.startswith("mcp__databases__"):
+        r += " (pg_query / mongo_* are the reading tools: use pg_execute or mongo_write on a writable connection)"
     if r:
         print(f"BLOCKED by the read-only policy: {name}: {r}. This environment is read-only; give the user "
               f"the steps to run instead. (False positive? the user can add the tool name to "

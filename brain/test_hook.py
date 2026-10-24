@@ -44,3 +44,21 @@ for bad in ["ssh admin@mds01 'conf t ; zone name z1 vsan 10'", "ssh admin@cl1 'v
             "sudo wipefs -a /dev/sdc", "$(ssh admin@mds 'copy run start')", "rescan-scsi-bus.sh -r"]:
     assert sh(bad)[0] == "block", (bad, sh(bad))
 print("shell guard ok")
+
+# databases MCP: writes are asked (the user confirms), reads pass, write SQL through the read tool stays blocked
+import io, json as _j, sys as _s
+def run_hook(payload):
+    old = _s.stdin, _s.stdout
+    _s.stdin, _s.stdout = io.StringIO(_j.dumps(payload)), io.StringIO()
+    try:
+        rc = h.main(); out = _s.stdout.getvalue()
+    finally:
+        _s.stdin, _s.stdout = old
+    return rc, out
+rc, out = run_hook({"tool_name": "mcp__databases__pg_execute", "tool_input": {"connection": "dev", "sql": "DELETE FROM t"}})
+assert rc == 0 and '"ask"' in out and "DELETE FROM t" in out, out
+rc, out = run_hook({"tool_name": "mcp__databases__mongo_write", "tool_input": {"connection": "dev", "op": "insert_one"}})
+assert rc == 0 and '"ask"' in out, out
+assert run_hook({"tool_name": "mcp__databases__pg_query", "tool_input": {"sql": "SELECT 1"}}) == (0, "")
+assert h.reason_for("mcp__databases__pg_query", {"sql": "DROP TABLE t"})
+print("databases guard ok")
