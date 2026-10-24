@@ -76,6 +76,8 @@ if [ "$NO_LIBRARY" = 0 ] && [ -f "$LIB/VERSION" ] && ls "$LIB"/docs-library-*.pa
     TMP=$(mktemp -d)
     sh "$LIB/join.sh" "$TMP" >/dev/null
     rm -rf "$LIBDST"; mv "$TMP/docs-library" "$LIBDST"; rmdir "$TMP"
+    # the tools read docs.db only; the source files (~1.3 GB) are there to rebuild the index on the PC
+    [ "${KEEP_LIBRARY_DOCS:-0}" = 1 ] || rm -rf "$LIBDST/docs"
     cp "$LIB/VERSION" "$LIBDST/VERSION"
   fi
 fi
