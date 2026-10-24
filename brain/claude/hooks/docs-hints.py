@@ -144,7 +144,8 @@ def err_hint(c, phrase):
     rowid, vendor, product, title, heading, path, _ = rows[0]
     where = f"{title}" + (f" :: {heading[:90]}" if heading and heading != title else "")
     more = f" (+{len(rows) - 1} more places)" if len(rows) > 1 else ""
-    return f'"{phrase}" [{vendor}/{product}, chunk {rowid}]: {re.sub(r"\s*\|\s*Dell.*$", "", where)[:160]}{more}'
+    where = re.sub(r"\s*\|\s*Dell.*$", "", where)[:160]       # outside the f-string: Python < 3.12 (RHEL 9: 3.9)
+    return f'"{phrase}" [{vendor}/{product}, chunk {rowid}]: {where}{more}'
 
 
 def main():
