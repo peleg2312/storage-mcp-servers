@@ -1,0 +1,7 @@
+{
+  "name": "dev-discipline",
+  "description": "Test-driven development, systematic debugging and verification-before-completion skills from obra/superpowers (MIT), without its session-start hook; descriptions scoped to software work",
+  "version": "6.3.0-brain1",
+  "author": {"name": "Jesse Vincent (superpowers); packaged for the storage brain"},
+  "license": "MIT"
+}

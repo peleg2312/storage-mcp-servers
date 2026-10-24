@@ -85,6 +85,12 @@
       "source": "./security-guidance",
       "category": "security",
       "homepage": "https://github.com/anthropics/claude-plugins-official/tree/main/plugins/security-guidance"
+    },
+    {
+      "name": "dev-discipline",
+      "description": "Test-driven development, systematic debugging and verification-before-completion skills (from obra/superpowers, MIT), scoped to software work",
+      "source": "./dev-discipline",
+      "category": "development"
     }
   ]
 }

@@ -169,13 +169,13 @@ if command -v claude >/dev/null 2>&1; then
   PLUGDST=$USER_DST/brain/plugins
   mkdir -p "$PLUGDST" && cp -R "$HERE/plugins/." "$PLUGDST/"
   claude plugin marketplace add "$PLUGDST" >/dev/null 2>&1 || claude plugin marketplace update brain-dev >/dev/null 2>&1 || true
-  for p in pr-review-toolkit feature-dev commit-commands security-guidance pyright-lsp mcp-server-dev; do
+  for p in pr-review-toolkit feature-dev commit-commands security-guidance pyright-lsp mcp-server-dev dev-discipline; do
     claude plugin install "$p@brain-dev" >/dev/null 2>&1 || echo "plugin $p: not installed (claude plugin install $p@brain-dev)"
   done
   for p in code-review code-simplifier; do      # dropped: code-review needs GitHub (gh); code-simplifier is in pr-review-toolkit
     claude plugin uninstall "$p@brain-dev" >/dev/null 2>&1 || true
   done
-  echo "dev plugins: $(claude plugin list 2>/dev/null | grep -c '@brain-dev') of 6 from brain/plugins"
+  echo "dev plugins: $(claude plugin list 2>/dev/null | grep -c '@brain-dev') of 7 from brain/plugins"
 fi
 
 echo

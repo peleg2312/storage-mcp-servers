@@ -84,6 +84,8 @@ different major version (Pydantic v1 vs v2, SQLAlchemy 1.x vs 2.0, fastmcp 2 vs 
 - Version the image tag in the Deployment, the BuildConfig and the tarball name together.
 
 ## Quality loop (tools installed on the VM)
+- Work test-first and debug by root cause (dev-discipline skills: test-driven-development,
+  systematic-debugging); before saying it works, run the tests and show the output (verification-before-completion).
 - After each edit the `py-lint` hook reports ruff errors: fix them before moving on. The pyright-lsp plugin
   (basedpyright) gives type diagnostics: resolve them, do not silence them with `# type: ignore`.
 - Bigger features: `/feature-dev` (explore -> architecture -> implement -> review). Before a commit: run the
