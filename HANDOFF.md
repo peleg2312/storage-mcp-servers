@@ -25,7 +25,7 @@ search quality: `python3 eval_search.py` and `--cases tests/retrieval_heldout.js
 
 ## Where things stand (2026-10-24, night)
 
-- Library 2026.10.24d: 64,239 files indexed (18,535 identical copies folded). New since 23f: PowerFlex REST API
+- Library 2026.10.25: 64,988 files indexed (18,535 identical copies folded). New since 23f: PowerFlex REST API
   docs from developer.dell.com (`sync/sync_dell_devportal.py`: 5.1.0 complete, 1,508 pages; 4.5.5 / Manager 4.8
   813 of 908, the rest 404 at Dell; guides 3.6 - 5.0), 59 PowerFlex KBs (SIO alerts, 5.x), public PowerFlex 5.x PDFs (appliance
   Architecture Overview + Admin Guide, Manager 5.x compatibility matrix, 5.0 spec sheet, solution brief), and the
@@ -43,8 +43,9 @@ search quality: `python3 eval_search.py` and `--cases tests/retrieval_heldout.js
 - The user develops FastAPI backends on the VM (RHEL 9) with PostgreSQL and MongoDB: MCP `databases` (reads always read-only; writes on connections marked write, user-confirmed)
   (brain/claude/tools/db_mcp.py), dev plugins in brain/plugins, ruff / basedpyright / drivers in brain/devtools.
 - The user runs NetApp's official ONTAP and Harvest MCP servers (the ONTAP one has write tools: the hook blocks them).
-- NetApp KB export still running (terminal tab; 7,934 of 14,751 checked at 00:41 on Oct 24, ~534 / hour, ends
-  ~13:30): then re-index, eval gates, `LABEL=2026.10.24e sh bundle/pack-library.sh`, commit, push.
+- NetApp KB export finished (Oct 25): 12,653 saved, 0 partial, 150 failed (network; re-run the same command to retry
+  only those). Library: kb-ontap 11,303, kb-switches 1,289, kb-ontap-tools-vmware 1,110, kb-trident 821, kb-asar2 59.
+  Sign out of kb.netapp.com in the browser whose cookie was used.
 
 ## Earlier (2026-10-23, night)
 

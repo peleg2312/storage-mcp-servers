@@ -1,6 +1,6 @@
-# Documentation library 2026.10.24e
+# Documentation library 2026.10.25
 
-Indexed 2026-10-24T08:50:48Z: **45692 unique documents, 249724 sections** (64239 files: 18547 are identical copies, e.g. the same page in several ONTAP versions, kept as aliases of one indexed copy and shown as `also_in`). Search it with `python3 search.py search "..."` (no dependencies) or the docs-search MCP server.
+Indexed 2026-10-24T10:15:00Z: **46441 unique documents, 253677 sections** (64988 files: 18547 are identical copies, e.g. the same page in several ONTAP versions, kept as aliases of one indexed copy and shown as `also_in`). Search it with `python3 search.py search "..."` (no dependencies) or the docs-search MCP server.
 
 Document counts below are files per product; an identical copy counts in every product it appears in.
 
@@ -91,7 +91,8 @@ Document counts below are files per product; an identical copy counts in every p
 | netapp | harvest | 69 | 2802 | https://github.com/NetApp/harvest |
 | netapp | harvest-changelog | 1 | 285 | https://github.com/NetApp/harvest |
 | netapp | harvest-issues | 85 | 525 | individual URLs (manifest.json) |
-| netapp | kb-ontap | 10611 | 51379 | individual URLs (manifest.json) |
+| netapp | kb-asar2 | 58 | 275 | individual URLs (manifest.json) |
+| netapp | kb-ontap | 11302 | 55057 | individual URLs (manifest.json) |
 | netapp | kb-ontap-tools-vmware | 1109 | 5897 | individual URLs (manifest.json) |
 | netapp | kb-switches | 1288 | 6298 | individual URLs (manifest.json) |
 | netapp | kb-trident | 820 | 4148 | individual URLs (manifest.json) |
