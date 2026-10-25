@@ -1,0 +1,145 @@
+# Git documentation sources, pulled TEXT ONLY (.adoc .md .rst; no images/binaries).
+# Format: <vendor> <product> <git-url> [subdir ...]
+# Content remains the owners' copyright; fetched for internal reference/search.
+#
+# ---- NetApp documentation (docs.netapp.com sources) ----
+netapp  ontap                            https://github.com/NetAppDocs/ontap
+netapp  ontap-sanhost                    https://github.com/NetAppDocs/ontap-sanhost
+netapp  ontap-automation                 https://github.com/NetAppDocs/ontap-automation
+netapp  ontap-ems                        https://github.com/NetAppDocs/ontap-ems
+netapp  ontap-ems-9171                   https://github.com/NetAppDocs/ontap-ems-9171
+netapp  ontap-ems-9161                   https://github.com/NetAppDocs/ontap-ems-9161
+netapp  ontap-ems-9131                   https://github.com/NetAppDocs/ontap-ems-9131
+netapp  ontap-metrocluster               https://github.com/NetAppDocs/ontap-metrocluster
+netapp  ontap-systems                    https://github.com/NetAppDocs/ontap-systems
+netapp  ontap-systems-switches           https://github.com/NetAppDocs/ontap-systems-switches
+netapp  asa-r2                           https://github.com/NetAppDocs/asa-r2
+netapp  ontap-afx                        https://github.com/NetAppDocs/ontap-afx
+netapp  ontap-fli                        https://github.com/NetAppDocs/ontap-fli
+netapp  ontap-technical-reports          https://github.com/NetAppDocs/ontap-technical-reports
+netapp  ontap-apps-dbs                   https://github.com/NetAppDocs/ontap-apps-dbs
+netapp  ontap-select                     https://github.com/NetAppDocs/ontap-select
+netapp  ontap-system-manager-classic     https://github.com/NetAppDocs/ontap-system-manager-classic
+netapp  ontap-7mode-transition           https://github.com/NetAppDocs/ontap-7mode-transition
+netapp  ontap-tools-vmware-vsphere-10    https://github.com/NetAppDocs/ontap-tools-vmware-vsphere-10
+netapp  ontap-tools-vmware-vsphere-103   https://github.com/NetAppDocs/ontap-tools-vmware-vsphere-103
+netapp  ontap-tools-vmware-vsphere       https://github.com/NetAppDocs/ontap-tools-vmware-vsphere
+netapp  sc-plugin-vmware-vsphere         https://github.com/NetAppDocs/sc-plugin-vmware-vsphere
+netapp  snapcenter                       https://github.com/NetAppDocs/snapcenter
+netapp  active-iq-unified-manager        https://github.com/NetAppDocs/active-iq-unified-manager
+netapp  e-series                         https://github.com/NetAppDocs/e-series
+netapp  e-series-santricity              https://github.com/NetAppDocs/e-series-santricity
+netapp  storagegrid                      https://github.com/NetAppDocs/storagegrid
+netapp  console-setup-admin              https://github.com/NetAppDocs/console-setup-admin
+
+# ---- NetApp Trident (Kubernetes CSI) and Harvest ----
+netapp  trident                          https://github.com/NetAppDocs/trident
+netapp  harvest                          https://github.com/NetApp/harvest              docs
+# changelogs: every release's fixes with the bug numbers (works offline even without the issue export)
+netapp  trident-changelog                https://github.com/NetApp/trident              CHANGELOG.md
+netapp  harvest-changelog                https://github.com/NetApp/harvest              CHANGELOG.md
+
+# ---- Dell Container Storage Modules (CSI PowerMax / PowerFlex / PowerScale / PowerStore / Unity, replication, observability, authorization...) ----
+dell    csm                              https://github.com/dell/csm-docs               content
+# ---- Dell PyU4V (PowerMax REST Python library) ----
+dell    pyu4v                            https://github.com/dell/PyU4V                  docs
+
+# ---- NetApp Trident: docs of every still-supported release (docs.netapp.com/us-en/trident-<ver>) ----
+netapp  trident-2510                     https://github.com/NetAppDocs/trident-2510
+netapp  trident-2506                     https://github.com/NetAppDocs/trident-2506
+netapp  trident-2502                     https://github.com/NetAppDocs/trident-2502
+netapp  trident-2410                     https://github.com/NetAppDocs/trident-2410
+netapp  trident-2402                     https://github.com/NetAppDocs/trident-2402
+netapp  trident-2310                     https://github.com/NetAppDocs/trident-2310
+netapp  trident-2307                     https://github.com/NetAppDocs/trident-2307
+# ---- ONTAP EMS references for the other ONTAP versions, and the REST API reference ----
+netapp  ontap-ems-9181                   https://github.com/NetAppDocs/ontap-ems-9181
+netapp  ontap-ems-9151                   https://github.com/NetAppDocs/ontap-ems-9151
+netapp  ontap-ems-9141                   https://github.com/NetAppDocs/ontap-ems-9141
+netapp  ontap-ems-9121                   https://github.com/NetAppDocs/ontap-ems-9121
+netapp  ontap-ems-9111                   https://github.com/NetAppDocs/ontap-ems-9111
+netapp  ontap-restapi                    https://github.com/NetAppDocs/ontap-restapi
+netapp  ontap-systems-upgrade            https://github.com/NetAppDocs/ontap-systems-upgrade
+
+# ---- Dell CSM / CSI driver repositories: READMEs, release notes, operator docs, changelogs ----
+dell    csm-repo                         https://github.com/dell/csm                    README.md docs CHANGELOG code
+dell    csi-powermax                     https://github.com/dell/csi-powermax           README.md docs code
+dell    csi-powerflex                    https://github.com/dell/csi-powerflex          README.md docs code
+dell    csm-operator                     https://github.com/dell/csm-operator           README.md docs code
+dell    csm-replication                  https://github.com/dell/csm-replication        README.md docs code
+dell    csm-authorization                https://github.com/dell/karavi-authorization   README.md docs
+dell    csm-observability                https://github.com/dell/karavi-observability   README.md docs code
+dell    csm-resiliency                   https://github.com/dell/karavi-resiliency      README.md docs code
+dell    csm-metrics-powerflex            https://github.com/dell/karavi-metrics-powerflex README.md docs code
+dell    csm-metrics-powermax             https://github.com/dell/csm-metrics-powermax   README.md docs code
+dell    cert-csi                         https://github.com/dell/cert-csi               README.md docs code
+dell    csm-helm-charts                  https://github.com/dell/helm-charts            README.md charts code
+# ---- Dell PowerMax / PowerFlex automation docs (every module/resource documents the array objects and options) ----
+dell    ansible-powermax                 https://github.com/dell/ansible-powermax       README.md KNOWLEDGE.md CHANGELOG.rst docs
+dell    ansible-powerflex                https://github.com/dell/ansible-powerflex      README.md CHANGELOG.rst docs
+dell    terraform-powermax               https://github.com/dell/terraform-provider-powermax  README.md docs
+dell    terraform-powerflex              https://github.com/dell/terraform-provider-powerflex README.md docs
+dell    pypowerflex                      https://github.com/dell/python-powerflex       README.md ChangeLog.md
+
+# ---- Dell PowerScale (Isilon / OneFS): CSI driver, metrics, Go client, automation docs ----
+dell    csi-powerscale                   https://github.com/dell/csi-powerscale         README.md docs code
+dell    csm-metrics-powerscale           https://github.com/dell/csm-metrics-powerscale README.md docs code
+dell    gopowerscale                     https://github.com/dell/gopowerscale           README.md docs code
+dell    ansible-powerscale               https://github.com/dell/ansible-powerscale     README.md ChangeLog.md docs
+dell    terraform-powerscale             https://github.com/dell/terraform-provider-powerscale README.md docs
+# ---- Dell CSI building blocks: array clients (REST calls + their error texts), host-side libraries ----
+dell    goscaleio                        https://github.com/dell/goscaleio              README.md code
+dell    gopowermax                       https://github.com/dell/gopowermax             README.md code
+dell    gobrick                          https://github.com/dell/gobrick                README.md code
+dell    gofsutil                         https://github.com/dell/gofsutil               README.md code
+dell    gocsi                            https://github.com/dell/gocsi                  README.md docs code
+dell    dell-csi-extensions              https://github.com/dell/dell-csi-extensions    README.md code
+dell    csi-metadata-retriever           https://github.com/dell/csi-metadata-retriever README.md code
+
+# ---- Kubernetes CSI: the spec and the sidecars every CSI driver runs beside (attacher, provisioner...) ----
+kubernetes  csi-spec                     https://github.com/container-storage-interface/spec  spec.md csi.proto README.md
+kubernetes  csi-docs                     https://github.com/kubernetes-csi/docs         book
+kubernetes  external-attacher            https://github.com/kubernetes-csi/external-attacher     README.md CHANGELOG docs code
+kubernetes  external-provisioner         https://github.com/kubernetes-csi/external-provisioner  README.md CHANGELOG docs code
+kubernetes  external-resizer             https://github.com/kubernetes-csi/external-resizer      README.md CHANGELOG docs code
+kubernetes  external-snapshotter         https://github.com/kubernetes-csi/external-snapshotter  README.md CHANGELOG docs code
+kubernetes  external-health-monitor      https://github.com/kubernetes-csi/external-health-monitor README.md CHANGELOG docs code
+kubernetes  node-driver-registrar        https://github.com/kubernetes-csi/node-driver-registrar README.md CHANGELOG docs code
+kubernetes  livenessprobe                https://github.com/kubernetes-csi/livenessprobe         README.md CHANGELOG docs code
+kubernetes  csi-lib-utils                https://github.com/kubernetes-csi/csi-lib-utils         README.md code
+kubernetes  csi-lib-iscsi                https://github.com/kubernetes-csi/csi-lib-iscsi         README.md code
+# ---- added 2026-10-23: CSI host-side libraries, CSM shared code / DR, newer sidecars, Kubernetes + OpenShift storage docs ----
+dell    goiscsi                          https://github.com/dell/goiscsi                README.md code
+dell    gonvme                           https://github.com/dell/gonvme                 README.md code
+dell    csm-metrics-common               https://github.com/dell/csm-metrics-common     README.md code
+dell    csmlog                           https://github.com/dell/csmlog                 README.md code
+dell    csm-dr                           https://github.com/dell/csm-dr                 README.md docs code
+kubernetes  external-snapshot-metadata   https://github.com/kubernetes-csi/external-snapshot-metadata README.md CHANGELOG docs code
+kubernetes  volume-data-source-validator https://github.com/kubernetes-csi/volume-data-source-validator README.md CHANGELOG code
+kubernetes  lib-volume-populator         https://github.com/kubernetes-csi/lib-volume-populator README.md code
+kubernetes  csi-test                     https://github.com/kubernetes-csi/csi-test     README.md pkg/sanity/README.md cmd/csi-sanity/README.md
+kubernetes  k8s-storage-docs             https://github.com/kubernetes/website          content/en/docs/concepts/storage content/en/docs/tasks/configure-pod-container/configure-persistent-volume-storage.md content/en/docs/tasks/administer-cluster/change-default-storage-class.md content/en/docs/tasks/administer-cluster/change-pv-reclaim-policy.md
+openshift   storage                      https://github.com/openshift/openshift-docs    storage modules/storage-*.adoc modules/persistent-storage-*.adoc modules/virt-*storage*.adoc
+# ---- added 2026-10-24: the FastAPI / MCP development stack (the brain's fastapi-service skill searches these) ----
+python  fastapi                          https://github.com/fastapi/fastapi             docs/en/docs
+python  pydantic                         https://github.com/pydantic/pydantic           docs
+python  pydantic-settings                https://github.com/pydantic/pydantic-settings  docs README.md
+python  starlette                        https://github.com/encode/starlette            docs
+python  uvicorn                          https://github.com/encode/uvicorn              docs
+python  httpx                            https://github.com/encode/httpx                docs
+python  pytest                           https://github.com/pytest-dev/pytest           doc/en
+python  pytest-asyncio                   https://github.com/pytest-dev/pytest-asyncio   docs README.rst
+python  sqlalchemy                       https://github.com/sqlalchemy/sqlalchemy       doc/build/orm doc/build/core doc/build/tutorial doc/build/faq doc/build/errors.rst doc/build/glossary.rst
+mcp     python-sdk                       https://github.com/modelcontextprotocol/python-sdk README.md docs
+mcp     specification                    https://github.com/modelcontextprotocol/modelcontextprotocol docs/specification/2026-07-28 docs/docs
+python  fastmcp                          https://github.com/PrefectHQ/fastmcp           docs/servers docs/clients docs/deployment docs/patterns docs/getting-started docs/integrations docs/changelog.mdx README.md
+# ---- added 2026-10-25: Cisco automation for NDFC / Nexus / MDS fabrics (guides: extra/cisco/NEEDED.md; APIs: sync_cisco_devnet.py) ----
+cisco   ansible-dcnm                     https://github.com/CiscoDevNet/ansible-dcnm    README.md CHANGELOG.rst docs playbooks plugins/modules
+cisco   ansible-nxos                     https://github.com/ansible-collections/cisco.nxos README.md docs
+cisco   terraform-dcnm                   https://github.com/CiscoDevNet/terraform-provider-dcnm README.md website/docs docs
+cisco   terraform-nxos                   https://github.com/CiscoDevNet/terraform-provider-nxos README.md docs
+# ---- added 2026-10-25: Terraform (language + CLI, and providers for ONTAP / vSphere / Kubernetes; Dell + Cisco above) ----
+hashicorp terraform                      https://github.com/hashicorp/web-unified-docs content/terraform/v1.17.x/docs/language content/terraform/v1.17.x/docs/cli
+netapp  terraform-ontap                  https://github.com/NetApp/terraform-provider-netapp-ontap README.md docs examples
+vmware  terraform-vsphere                https://github.com/vmware/terraform-provider-vsphere README.md docs
+hashicorp terraform-kubernetes           https://github.com/hashicorp/terraform-provider-kubernetes README.md docs

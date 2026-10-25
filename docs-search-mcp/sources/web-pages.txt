@@ -1,0 +1,23 @@
+# Individual pages to keep offline: NetApp KB, Dell KB, Broadcom/VMware KB, any vendor page.
+# Format:  <vendor> <product> <url>          (one page per line, no crawling)
+# Tip: when you open a useful KB at work, paste its URL here; the next monthly build includes it.
+# Pages that need a login are reported by the script - save those from the browser into
+# extra/<vendor>/<product>/ instead (Ctrl+S or Print -> Save as PDF).
+#
+# netapp  kb      https://kb.netapp.com/...
+# dell    kb      https://www.dell.com/support/kbdoc/en-us/000xxxxxx/...
+# vmware  kb      https://knowledge.broadcom.com/external/article/xxxxxx
+
+# ---- pages referenced by sources/kb/kb-pointers.md (Broadcom / VMware KB; Dell KB needs a non-datacenter IP) ----
+vmware  kb  https://knowledge.broadcom.com/external/article/320217/correlating-vml-id-with-naa-id-in-esxi-5.html
+vmware  kb  https://knowledge.broadcom.com/external/article/323128/how-to-detach-a-lun-device-from-esxi-hos.html
+vmware  kb  https://techdocs.broadcom.com/us/en/vmware-cis/vsphere/vsphere-sdks-tools/8-0/esxcli-concepts-and-examples-8-0/managing-storage/detach-a-device-and-remove-a-lun.html
+vmware  kb  https://techdocs.broadcom.com/us/en/vmware-cis/vsphere/vsphere/7-0/vsphere-storage/working-with-datastores-in-vsphere-storage-environment/basic-administrative-operations-for-vsphere-datastores/unmount-datastores.html
+vmware  kb  https://techdocs.broadcom.com/us/en/vmware-cis/vsphere/vsphere/8-0/vsphere-storage-8-0/managing-esxi-storage-devices/identifying-esxi-storage-connectivity-problems.html
+vmware  kb  https://techdocs.broadcom.com/us/en/vmware-cis/vsphere/vsphere/7-0/vsphere-storage/managing-esxi-storage-devices/esxi-storage-device-names-and-identifiers.html
+netapp  kb  https://kb.netapp.com/hybrid/FlexPod/How_to_match__LUNs_NAA_number_to_its_serial_number
+dell    kb  https://www.dell.com/support/kbdoc/en-us/000204833/how-to-know-what-storage-lun-is-presented-at-a-particular-naa-id
+dell    kb  https://www.dell.com/support/kbdoc/en-us/000228219/list-of-symdev-commands-with-examples-a-simplified-guide-to-symdev-related-operations
+dell    kb  https://www.dell.com/support/kbdoc/en-us/000204697/how-to-view-and-modify-powermax-vmax-host-lun-id-hlu
+dell    kb  https://www.dell.com/support/kbdoc/en-us/000264404/how-to-locate-the-device-identifier-eui-in-a-volume-powerflex-3-6-x
+dell    kb  https://www.dell.com/support/kbdoc/en-sg/000437810/powerflex-esxi-sdc-stop-responding-in-vcenter-apd

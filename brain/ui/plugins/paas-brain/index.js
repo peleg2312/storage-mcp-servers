@@ -1,0 +1,215 @@
+// Brain tab: search and grow the offline docs library, and see what this Claude knows and can do
+// (skills, agents, MCP servers, hooks, memory files). Data: server.js.
+const esc = (s) => String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const kb = (n) => (n > 1048576 ? `${(n / 1048576).toFixed(1)} MB` : `${Math.max(1, Math.round(n / 1024))} KB`);
+
+const CSS = `
+.pb{font:14px/1.55 ui-sans-serif,system-ui,sans-serif;color:hsl(var(--foreground));padding:28px;max-width:1100px;margin:0 auto}
+.pb h2{font-size:22px;font-weight:700;margin:0}.pb .sub{color:hsl(var(--muted-foreground));font-size:13px}
+.pb .head{display:flex;justify-content:space-between;align-items:flex-end;gap:12px;flex-wrap:wrap;margin-bottom:18px}
+.pb .tabs{display:flex;gap:4px;border-bottom:1px solid hsl(var(--border));margin-bottom:20px;overflow-x:auto}
+.pb .tabs button{background:none;border:0;padding:9px 14px;color:hsl(var(--muted-foreground));cursor:pointer;font:inherit;border-bottom:2px solid transparent;white-space:nowrap}
+.pb .tabs button.on{color:hsl(var(--foreground));border-image:linear-gradient(90deg,#a78bfa,#22d3ee) 1;border-bottom:2px solid;font-weight:600}
+.pb .card{border:1px solid hsl(var(--border));background:hsl(var(--card));border-radius:14px;padding:18px;margin-bottom:14px}
+.pb .card h3{margin:0 0 10px;font-size:15px;font-weight:600}
+.pb input,.pb textarea,.pb select{font:inherit;color:inherit;background:hsl(var(--background));border:1px solid hsl(var(--input));border-radius:10px;padding:9px 12px;outline:none}
+.pb input:focus,.pb textarea:focus{border-color:hsl(var(--ring))}
+.pb .search{display:flex;gap:8px}.pb .search input{flex:1;font-size:15px;padding:11px 14px}
+.pb button.go{background-image:linear-gradient(120deg,#a78bfa,#60a5fa 55%,#22d3ee);color:#0b0d1a;border:0;border-radius:10px;padding:9px 16px;font:inherit;font-weight:600;cursor:pointer}
+.pb button.go:disabled{opacity:.5;cursor:wait}
+.pb button.ghost{background:none;border:1px solid hsl(var(--border));color:inherit;border-radius:10px;padding:8px 14px;font:inherit;cursor:pointer}
+.pb .res{padding:12px 0;border-bottom:1px solid hsl(var(--border)/.6)}.pb .res:last-child{border:0}
+.pb .res a{color:hsl(var(--primary));font-weight:600;text-decoration:none}.pb .res a:hover{text-decoration:underline}
+.pb .tag{display:inline-block;font-size:11px;padding:1px 8px;border-radius:999px;background:hsl(var(--accent));color:hsl(var(--muted-foreground));margin-right:6px}
+.pb .snip{color:hsl(var(--muted-foreground));font-size:13px;margin-top:4px;white-space:pre-wrap}
+.pb .snip b{color:hsl(var(--foreground));font-weight:600}
+.pb .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:12px}
+.pb .item{border:1px solid hsl(var(--border));border-radius:12px;padding:12px 14px;background:hsl(var(--card))}
+.pb .item .t{font-weight:600}.pb .item .d{color:hsl(var(--muted-foreground));font-size:13px;margin-top:4px;display:-webkit-box;-webkit-line-clamp:4;-webkit-box-orient:vertical;overflow:hidden}
+.pb .drop{border:2px dashed hsl(var(--border));border-radius:14px;padding:22px;text-align:center;color:hsl(var(--muted-foreground));cursor:pointer}
+.pb .drop.over{border-color:#a78bfa;background:hsl(var(--accent))}
+.pb .two{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:14px}
+.pb pre{white-space:pre-wrap;font:12.5px/1.5 ui-monospace,SFMono-Regular,Menlo,monospace;background:hsl(var(--background));border:1px solid hsl(var(--border));border-radius:10px;padding:12px;max-height:520px;overflow:auto;margin:0}
+.pb table{width:100%;border-collapse:collapse;font-size:13px}.pb td,.pb th{padding:7px 6px;text-align:left;border-bottom:1px solid hsl(var(--border)/.6);vertical-align:top}
+.pb th{color:hsl(var(--muted-foreground));font-weight:500;font-size:12px}.pb code{font:12px ui-monospace,Menlo,monospace;word-break:break-all}
+.pb .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:10px}
+.pb.pb ::placeholder,.pb.pb textarea::placeholder,.pb.pb textarea::-webkit-input-placeholder,.pb.pb input::placeholder{color:hsl(var(--muted-foreground)/.6) !important;opacity:1 !important}
+.pb .search{flex-wrap:wrap}.pb .search input.q{flex:1 1 260px}.pb .search input.v{flex:0 1 170px;max-width:none !important}
+.pb .seg2{display:inline-flex;flex-wrap:wrap;border:1px solid hsl(var(--border));border-radius:10px;overflow:hidden}
+.pb .seg2 button{padding:7px 14px;background:none;border:0;color:hsl(var(--muted-foreground));cursor:pointer;font:inherit}
+.pb .seg2 button.on{background:hsl(var(--accent));color:hsl(var(--foreground));font-weight:600}
+.pb textarea.mt{width:100%;min-height:420px;font:12.5px/1.55 ui-monospace,SFMono-Regular,Menlo,monospace;resize:vertical}
+.pb .form{display:grid;gap:14px;margin-top:14px}.pb .form label{display:block;font-weight:600;font-size:13px}.pb .form label .sub{font-weight:400;margin-left:6px;font-size:12px}.pb .form label input,.pb .form label textarea{display:block;margin-top:6px}
+.pb .form input,.pb .form textarea{font-weight:400;width:100%}.pb .form textarea{font:12.5px/1.55 ui-monospace,Menlo,monospace}
+.pb .grp{margin:18px 0 10px;font-size:13px;font-weight:600;color:hsl(var(--muted-foreground));text-transform:uppercase;letter-spacing:.08em}
+.pb button.sm{padding:4px 12px;font-size:12px}.pb button.danger{color:hsl(var(--destructive))}
+.pb input[readonly]{opacity:.7}
+@media (max-width:640px){.pb{padding:16px}.pb .search input.v{flex:1 1 100%}.pb .grid,.pb .two{grid-template-columns:1fr}.pb pre{max-height:none}}`;
+
+export function mount(container, api) {
+  let data = null;
+  let tab = 'docs';
+  container.innerHTML = `<style>${CSS}</style><div class="pb"><div class="head"><div><h2>Brain</h2>
+    <div class="sub lib">Loading…</div></div></div>
+    <div class="tabs">${[['docs', 'Docs library'], ['skills', 'Skills'], ['agents', 'Agents'], ['mcp', 'MCP & hooks'], ['memory', 'Memory']]
+      .map(([k, l]) => `<button data-k="${k}" class="${k === tab ? 'on' : ''}">${l}</button>`).join('')}</div><div class="pane"></div></div>`;
+  const pane = container.querySelector('.pane');
+  container.querySelectorAll('.tabs button').forEach((b) => b.addEventListener('click', () => {
+    tab = b.dataset.k;
+    container.querySelectorAll('.tabs button').forEach((x) => x.classList.toggle('on', x === b));
+    render();
+  }));
+
+  async function refresh() {
+    try { data = await api.rpc('GET', 'overview'); } catch (e) { pane.innerHTML = `<div class="sub">Could not load: ${esc(e.message || e)}</div>`; return; }
+    const first = (data.library.sources || '').split('\n')[0];
+    container.querySelector('.lib').textContent = data.library.version
+      ? `Library ${data.library.version} · ${first.replace(/^library bundle \S+ indexed \S+: /, '')} · ${data.skills.length} skills · ${data.agents.length} agents · ${data.mcp.length} MCP servers`
+      : 'Docs library not installed on this VM';
+    render();
+  }
+
+  function render() {
+    if (!data) return;
+    if (tab === 'docs') return renderDocs();
+    if (tab === 'skills') return renderSkills();
+    if (tab === 'agents') pane.innerHTML = `<div class="grid">${data.agents.map((a) => `<div class="item"><div class="t">${esc(a.name)}</div><div class="d">${esc(a.description)}</div><div class="row"><span class="tag">${esc(a.tools)}</span>${a.model ? `<span class="tag">${esc(a.model)}</span>` : ''}</div></div>`).join('')}</div>`;
+    if (tab === 'mcp') {
+      pane.innerHTML = `<div class="card"><h3>MCP servers</h3><table><tr><th>Name</th><th>Type</th><th>Runs</th></tr>${data.mcp.map((m) => `<tr><td><b>${esc(m.name)}</b></td><td>${esc(m.type)}</td><td><code>${esc(m.target)}</code></td></tr>`).join('')}</table>
+        <div class="row"><button class="ghost chk">Check connections</button><span class="sub">runs <code>claude mcp list</code></span></div><pre class="st" style="display:none;margin-top:10px"></pre></div>
+        <div class="card"><h3>Hooks</h3><table><tr><th>When</th><th>Tools</th><th>Command</th></tr>${data.hooks.map((h) => `<tr><td>${esc(h.event)}</td><td><code>${esc(h.matcher)}</code></td><td><code>${esc(h.command)}</code></td></tr>`).join('')}</table></div>`;
+      pane.querySelector('.chk').addEventListener('click', async (e) => {
+        const pre = pane.querySelector('.st');
+        e.target.disabled = true; pre.style.display = 'block'; pre.textContent = 'Checking every server (can take a minute)…';
+        const r = await api.rpc('GET', 'mcp-status').catch((x) => ({ out: String(x) }));
+        pre.textContent = r.out || '(no output)'; e.target.disabled = false;
+      });
+    }
+    if (tab === 'memory') return renderMemory();
+  }
+
+  // Memory: notes.md / environment.md / tool-map.md are yours (kept by every install); CLAUDE.md is shown only
+  function renderMemory(i = 0) {
+    const m = data.memory[i];
+    pane.innerHTML = `<div class="seg2">${data.memory.map((x, k) => `<button class="${k === i ? 'on' : ''}" data-i="${k}">${esc(x.name)}</button>`).join('')}</div>
+      <div class="sub" style="margin:12px 0 8px">${m.editable
+        ? 'What Claude reads at the start of every session. Edit and save; the previous version is kept as a .bak file.'
+        : 'The brain\'s main instructions. Rewritten by every install, so it is read-only here: put your own facts in notes.md or environment.md.'}</div>
+      ${m.editable ? `<textarea class="mt" spellcheck="false">${esc(m.text)}</textarea>
+        <div class="row"><button class="go save">Save</button><span class="sub st"></span></div>` : `<pre>${esc(m.text)}</pre>`}`;
+    pane.querySelectorAll('.seg2 button').forEach((b) => b.addEventListener('click', () => renderMemory(Number(b.dataset.i))));
+    pane.querySelector('.save')?.addEventListener('click', async (e) => {
+      const text = pane.querySelector('.mt').value;
+      e.target.disabled = true;
+      const r = await api.rpc('POST', 'memory', { name: m.name, text }).catch((x) => ({ out: String(x) }));
+      e.target.disabled = false;
+      pane.querySelector('.st').textContent = r.ok ? `Saved ${new Date().toLocaleTimeString()}` : r.out;
+      if (r.ok) m.text = text;
+    });
+  }
+
+  // Skills: the brain's own (view) and yours (create / edit / delete; never touched by an install)
+  function renderSkills(editing = null) {
+    const mine = data.skills.filter((x) => x.mine);
+    const form = editing ? `<div class="card"><h3>${editing.name ? `Edit /${esc(editing.name)}` : 'New skill'}</h3>
+      <div class="sub">A skill is a playbook Claude loads by itself when your request matches its description.</div>
+      <div class="form">
+        <label>Name<input class="f-name" placeholder="vm-patching" value="${esc(editing.name || '')}" ${editing.name ? 'readonly' : ''}></label>
+        <label>Description <span class="sub">what it does and when to use it</span><input class="f-desc" placeholder="Monthly RHEL patching of the storage VMs: pre-checks, order, rollback" value="${esc(editing.description || '')}"></label>
+        <label>Trigger phrases <span class="sub">optional</span><input class="f-when" placeholder="&quot;patch the vms&quot;, &quot;monthly patching&quot;" value="${esc(editing.when || '')}"></label>
+        <label>Instructions <span class="sub">Markdown: steps, commands, checks, what to report</span><textarea class="f-body" rows="10" placeholder="## Steps&#10;1. ...">${esc(editing.body || '')}</textarea></label>
+      </div>
+      <div class="row"><button class="go f-save">Save skill</button><button class="ghost f-cancel">Cancel</button><span class="sub f-st"></span></div></div>` : '';
+    const card = (x) => `<div class="item" title="${esc(x.description)}"><div class="t">/${esc(x.name)}${x.mine ? ' <span class="tag">yours</span>' : ''}</div>
+      <div class="d">${esc(x.description)}</div>${x.mine ? `<div class="row"><button class="ghost sm" data-edit="${esc(x.name)}">Edit</button><button class="ghost sm danger" data-del="${esc(x.name)}">Delete</button></div>` : ''}</div>`;
+    pane.innerHTML = `<div class="row" style="margin:0 0 14px;justify-content:space-between"><span class="sub">${data.skills.length} skills · ${mine.length} of them yours</span>
+      ${editing ? '' : '<button class="go new">+ New skill</button>'}</div>${form}
+      ${mine.length ? `<h4 class="grp">Your skills</h4><div class="grid">${mine.map(card).join('')}</div><h4 class="grp">Built in</h4>` : ''}
+      <div class="grid">${data.skills.filter((x) => !x.mine).map(card).join('')}</div>`;
+    pane.querySelector('.new')?.addEventListener('click', () => renderSkills({}));
+    pane.querySelector('.f-cancel')?.addEventListener('click', () => renderSkills());
+    pane.querySelector('.f-save')?.addEventListener('click', async (e) => {
+      const v = (c) => pane.querySelector(c).value;
+      e.target.disabled = true;
+      const r = await api.rpc('POST', 'skill', { name: v('.f-name').trim(), description: v('.f-desc'), when: v('.f-when'), body: v('.f-body') }).catch((x) => ({ out: String(x) }));
+      e.target.disabled = false;
+      if (!r.ok) { pane.querySelector('.f-st').textContent = r.out; return; }
+      await refresh(); renderSkills();
+    });
+    pane.querySelectorAll('[data-edit]').forEach((b) => b.addEventListener('click', () => renderSkills(data.skills.find((x) => x.name === b.dataset.edit))));
+    pane.querySelectorAll('[data-del]').forEach((b) => b.addEventListener('click', async () => {
+      if (!window.confirm(`Delete your skill /${b.dataset.del}?`)) return;
+      const r = await api.rpc('POST', 'skill-delete', { name: b.dataset.del }).catch((x) => ({ out: String(x) }));
+      if (!r.ok) { window.alert(r.out); return; }
+      await refresh(); renderSkills();
+    }));
+  }
+
+  function renderDocs() {
+    pane.innerHTML = `
+      <div class="card"><div class="search"><input class="q" placeholder="Search the docs: an error, an event, an API, a task…" />
+        <input class="v" placeholder="vendor (optional)" style="max-width:170px" /><button class="go s">Search</button></div><div class="out"></div></div>
+      <div class="two">
+        <div class="card"><h3>Add pages or PDFs by URL</h3><div class="sub">Any URL this VM can reach. Claude can do it too: “add this to your docs: …”</div>
+          <textarea class="urls" rows="3" style="width:100%;margin-top:10px" placeholder="https://wiki.corp/san/zoning-standard"></textarea>
+          <div class="row"><input class="to" placeholder="vendor/product, e.g. cisco/mds" style="flex:1" /><button class="go add">Add</button></div><pre class="addout" style="display:none;margin-top:10px"></pre></div>
+        <div class="card"><h3>Upload files</h3><div class="sub">PDF, HTML, Markdown or text, up to 35 MB each</div>
+          <div class="drop" style="margin-top:10px">Drop files here or click to choose<input type="file" multiple hidden accept=".pdf,.html,.htm,.md,.markdown,.txt,.adoc,.rst" /></div>
+          <div class="row"><input class="to2" placeholder="vendor/product (default local/uploads)" style="flex:1" /></div><pre class="upout" style="display:none;margin-top:10px"></pre></div>
+      </div>
+      <div class="card"><h3>Your added documents</h3>${data.inbox.length ? `<table><tr><th>File</th><th>Size</th><th>Added</th></tr>${data.inbox.map((f) => `<tr><td><code>${esc(f.path)}</code></td><td>${kb(f.size)}</td><td>${new Date(f.mtime).toLocaleDateString()}</td></tr>`).join('')}</table>` : '<div class="sub">None yet</div>'}</div>`;
+    const q = pane.querySelector('.q');
+    const out = pane.querySelector('.out');
+    const search = async () => {
+      if (!q.value.trim()) return;
+      out.innerHTML = '<div class="sub" style="margin-top:12px">Searching…</div>';
+      const v = pane.querySelector('.v').value.trim();
+      const r = await api.rpc('GET', `search?q=${encodeURIComponent(q.value)}${v ? `&vendor=${encodeURIComponent(v)}` : ''}`).catch((e) => ({ error: String(e) }));
+      if (r.error) { out.innerHTML = `<pre style="margin-top:12px">${esc(r.error)}</pre>`; return; }
+      out.innerHTML = (r.results || []).map((x) => `<div class="res">
+        ${x.url ? `<a href="${esc(x.url)}" target="_blank" rel="noopener">${esc(x.title)}</a>` : `<b>${esc(x.title)}</b>`}
+        <div><span class="tag">${esc(x.vendor)}/${esc(x.product)}</span><span class="sub">${esc(x.section || '')}</span></div>
+        <div class="snip">${esc((x.snippet || '').slice(0, 420)).replace(/«(.*?)»/g, '<b>$1</b>')}</div></div>`).join('') || '<div class="sub" style="margin-top:12px">No matches: try other words</div>';
+    };
+    pane.querySelector('.s').addEventListener('click', search);
+    q.addEventListener('keydown', (e) => { if (e.key === 'Enter') search(); });
+
+    pane.querySelector('.add').addEventListener('click', async (e) => {
+      const pre = pane.querySelector('.addout');
+      e.target.disabled = true; pre.style.display = 'block'; pre.textContent = 'Fetching and indexing…';
+      const r = await api.rpc('POST', 'add-url', { urls: pane.querySelector('.urls').value, to: pane.querySelector('.to').value.trim() }).catch((x) => ({ out: String(x) }));
+      pre.textContent = r.out; e.target.disabled = false; if (r.ok) refreshInbox();
+    });
+
+    const drop = pane.querySelector('.drop');
+    const input = drop.querySelector('input');
+    const upload = async (files) => {
+      const pre = pane.querySelector('.upout');
+      pre.style.display = 'block'; pre.textContent = '';
+      for (const f of files) {
+        if (f.size > 35 * 1048576) { pre.textContent += `${f.name}: too large (35 MB max)\n`; continue; }
+        pre.textContent += `uploading ${f.name}…\n`;
+        const b64 = await new Promise((res) => { const rd = new FileReader(); rd.onload = () => res(String(rd.result).split(',')[1] || ''); rd.readAsDataURL(f); });
+        const r = await api.rpc('POST', 'upload', { name: f.name, to: pane.querySelector('.to2').value.trim(), data: b64 }).catch((x) => ({ out: String(x) }));
+        pre.textContent += r.ok ? `saved ${r.saved}\n` : `${f.name}: ${r.out}\n`;
+      }
+      pre.textContent += 'indexing…\n';
+      const r = await api.rpc('POST', 'index').catch((x) => ({ out: String(x) }));
+      pre.textContent += `${r.out}\n`; refreshInbox();
+    };
+    drop.addEventListener('click', () => input.click());
+    input.addEventListener('change', () => upload([...input.files]));
+    drop.addEventListener('dragover', (e) => { e.preventDefault(); drop.classList.add('over'); });
+    drop.addEventListener('dragleave', () => drop.classList.remove('over'));
+    drop.addEventListener('drop', (e) => { e.preventDefault(); drop.classList.remove('over'); upload([...e.dataTransfer.files]); });
+  }
+
+  async function refreshInbox() {
+    const keep = pane.querySelector('.out')?.innerHTML;
+    await refresh();
+    if (keep && pane.querySelector('.out')) pane.querySelector('.out').innerHTML = keep;
+  }
+  refresh();
+}
+
+export function unmount(container) { container.innerHTML = ''; }

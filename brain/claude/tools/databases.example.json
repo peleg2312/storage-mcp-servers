@@ -1,0 +1,6 @@
+{
+  "app-pg":    {"type": "postgres", "uri": "postgresql://app_readonly@pg01.example.corp:5432/appdb"},
+  "dev-pg":    {"type": "postgres", "uri": "postgresql://app@localhost:5432/appdb_dev", "write": true},
+  "app-mongo": {"type": "mongo",    "uri_env": "APP_MONGO_URI"},
+  "dev-mongo": {"type": "mongo",    "uri_env": "DEV_MONGO_URI", "write": true}
+}

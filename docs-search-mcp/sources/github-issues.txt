@@ -1,0 +1,20 @@
+# Public GitHub issue trackers exported for offline search (bug reports, fixes, workarounds).
+# Format: <vendor> <product-folder> <owner/repo> [prs]
+netapp  trident-issues   NetApp/trident
+netapp  harvest-issues   NetApp/harvest
+# Dell disabled issues on its CSM / CSI repositories (2026): their merged + open pull requests are the
+# record of every fix, and their descriptions name the dell/csm issue they fix.
+dell    csm-prs                  dell/csm                   prs
+dell    csi-powermax-prs         dell/csi-powermax          prs
+dell    csi-powerflex-prs        dell/csi-powerflex         prs
+dell    csi-powerscale-prs       dell/csi-powerscale        prs
+dell    csm-operator-prs         dell/csm-operator          prs
+dell    csm-replication-prs      dell/csm-replication       prs
+dell    csm-resiliency-prs       dell/karavi-resiliency     prs
+dell    csm-observability-prs    dell/karavi-observability  prs
+dell    csm-metrics-powerflex-prs dell/karavi-metrics-powerflex prs
+dell    csm-metrics-powermax-prs dell/csm-metrics-powermax  prs
+dell    goscaleio-prs            dell/goscaleio             prs
+dell    gopowermax-prs           dell/gopowermax            prs
+dell    gopowerscale-prs         dell/gopowerscale          prs
+dell    gobrick-prs              dell/gobrick               prs

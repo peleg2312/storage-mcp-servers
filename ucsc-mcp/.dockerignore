@@ -1,0 +1,6 @@
+.env
+.git
+__pycache__/
+*.pyc
+test_readonly.py
+openshift.yaml

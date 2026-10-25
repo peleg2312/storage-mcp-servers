@@ -1,0 +1,210 @@
+[
+{
+"q": "how do I run one ontap command against many objects at once with a query in curly braces",
+"expect": [
+"methods-extended-queries-concept"
+]
+},
+{
+"q": "should I enable aes encryption for kerberos on the smb server",
+"expect": [
+"configure-kerberos-aes-encryption-concept"
+]
+},
+{
+"q": "what is a flexgroup and how is it different from a flexvol",
+"expect": [
+"flexgroup/definition-concept"
+]
+},
+{
+"q": "how does snapmirror active sync work for san between two sites",
+"expect": [
+"snapmirror-active-sync/architecture-concept"
+]
+},
+{
+"q": "can snapshots be locked against ransomware and what does it support",
+"expect": [
+"snaplock/snapshot-lock-concept"
+]
+},
+{
+"q": "how to securely scrub deleted data on an encrypted volume",
+"expect": [
+"secure-purge-data-encrypted-volume-concept"
+]
+},
+{
+"q": "what happens to tape dump backups when a snapmirror destination becomes writable",
+"expect": [
+"dump-volume-access-type-changes-concept"
+]
+},
+{
+"q": "how do nfsv4 acls inherit to new files",
+"expect": [
+"nfsv4-acls-concept"
+]
+},
+{
+"q": "asa r2 best practice recommendations in system manager",
+"expect": [
+"asa-r2/monitor/view-insights"
+]
+},
+{
+"q": "is the asa r2 rest api different from regular ontap rest api",
+"expect": [
+"asa-r2/learn-more/rest-api-support"
+]
+},
+{
+"q": "when should I use nfs over tls instead of kerberos",
+"expect": [
+"nfs-tls/nfs-tls-use-cases"
+]
+},
+{
+"q": "netapp ontap security hardening guide",
+"expect": [
+"security-hardening-guides"
+]
+},
+{
+"q": "how does adding or removing nodes work in netapp afx",
+"expect": [
+"afx-architecture-cluster-scale"
+]
+},
+{
+"q": "what does netapp offer to protect against ransomware",
+"expect": [
+"ransomware-solutions/ransomware-overview"
+]
+},
+{
+"q": "ontap mediator vs metrocluster tiebreaker, which one should I use",
+"expect": [
+"concept_considerations_mediator"
+]
+},
+{
+"q": "metrocluster ip switch port speed requirements per platform",
+"expect": [
+"concept-network-speeds-and-switchport-modes"
+]
+},
+{
+"q": "trident security best practices chap",
+"expect": [
+"trident-reco/security-reco"
+]
+},
+{
+"q": "rotate the luks passphrase for trident encrypted volumes",
+"expect": [
+"security-luks"
+]
+},
+{
+"q": "limit storage consumption per namespace with trident, quotas and limit ranges",
+"expect": [
+"trident-reco/deploy-reco"
+]
+},
+{
+"q": "what is the unisphere for powermax workload planner",
+"expect": [
+"unisphere-for-powermax-workload-planner"
+]
+},
+{
+"q": "csi storage capacity tracking for powermax and unity",
+"expect": [
+"dell-storage-for-kubernetes-update-delivering"
+]
+},
+{
+"q": "powerflex with vmware cloud foundation",
+"expect": [
+"using-dell-powerflex-with-vmware-cloud-foundation"
+]
+},
+{
+"q": "what is new in powerflex 5.0 architecture, protection domains and mdm",
+"expect": [
+"powerflex-5-0-the-ultra-release"
+]
+},
+{
+"q": "how does powerflex self heal and rebalance after a node failure",
+"expect": [
+"resiliency-explained"
+]
+},
+{
+"q": "powermax alert when external disk is full",
+"expect": [
+"manual53680691",
+"Events_and_Alerts",
+"events-and-alerts"
+]
+},
+{
+"q": "how does vmax all flash protect data integrity, crc and data erasure",
+"expect": [
+"docu67503"
+]
+},
+{
+"q": "what are the snapvx operating modes and secure snaps",
+"expect": [
+"TimeFinder_SnapVX",
+"snapvx"
+]
+},
+{
+"q": "symapi server client debugging disabled message",
+"expect": [
+"docu102860",
+"Events_and_Alerts"
+]
+},
+{
+"q": "powerflex manager alert messages and recommended actions",
+"expect": [
+"alert-messages-and-recommended-actions"
+]
+},
+{
+"q": "manage services and lifecycle mode in powerflex manager on the rack",
+"expect": [
+"managing-system-resources-in-services"
+]
+},
+{
+"q": "compatibility management settings in powerflex manager",
+"expect": [
+"edit-compatibility-management-settings"
+]
+},
+{
+"q": "metro replication with openshift virtualization vms",
+"expect": [
+"replication/replication-opvirt"
+]
+},
+{
+"q": "csm replication single cluster vs two cluster topology",
+"expect": [
+"replication/cluster-topologies"
+]
+},
+{
+"q": "migrate kubernetes volumes between two powermax arrays with csm",
+"expect": [
+"migrating-volumes-diff-array"
+]
+}
+]

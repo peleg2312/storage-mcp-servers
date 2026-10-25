@@ -1,0 +1,52 @@
+# Optional: build the three images inside OpenShift straight from this repo
+# (instead of loading the tarballs from images/).
+#
+# Private repo -> give the build a read-only GitHub token first:
+#   oc create secret generic github-source --type=kubernetes.io/basic-auth \
+#     --from-literal=username=<github-user> --from-literal=password=<read-only-token>
+# Then:
+#   oc apply -f openshift/buildconfigs.yaml
+#   oc start-build powermax-mcp --follow   (and ucsc-mcp, mds-mcp)
+# Images land in the internal registry as <namespace>/<name>:2.0
+apiVersion: v1
+kind: List
+items:
+- apiVersion: image.openshift.io/v1
+  kind: ImageStream
+  metadata: {name: powermax-mcp}
+- apiVersion: image.openshift.io/v1
+  kind: ImageStream
+  metadata: {name: ucsc-mcp}
+- apiVersion: image.openshift.io/v1
+  kind: ImageStream
+  metadata: {name: mds-mcp}
+- apiVersion: build.openshift.io/v1
+  kind: BuildConfig
+  metadata: {name: powermax-mcp}
+  spec:
+    source:
+      git: {uri: "https://github.com/peleg2312/storage-mcp-servers.git", ref: main}
+      contextDir: powermax-mcp
+      sourceSecret: {name: github-source}
+    strategy: {type: Docker, dockerStrategy: {dockerfilePath: Dockerfile}}
+    output: {to: {kind: ImageStreamTag, name: "powermax-mcp:2.0"}}
+- apiVersion: build.openshift.io/v1
+  kind: BuildConfig
+  metadata: {name: ucsc-mcp}
+  spec:
+    source:
+      git: {uri: "https://github.com/peleg2312/storage-mcp-servers.git", ref: main}
+      contextDir: ucsc-mcp
+      sourceSecret: {name: github-source}
+    strategy: {type: Docker, dockerStrategy: {dockerfilePath: Dockerfile}}
+    output: {to: {kind: ImageStreamTag, name: "ucsc-mcp:2.2"}}
+- apiVersion: build.openshift.io/v1
+  kind: BuildConfig
+  metadata: {name: mds-mcp}
+  spec:
+    source:
+      git: {uri: "https://github.com/peleg2312/storage-mcp-servers.git", ref: main}
+      contextDir: mds-mcp
+      sourceSecret: {name: github-source}
+    strategy: {type: Docker, dockerStrategy: {dockerfilePath: Dockerfile}}
+    output: {to: {kind: ImageStreamTag, name: "mds-mcp:2.2"}}

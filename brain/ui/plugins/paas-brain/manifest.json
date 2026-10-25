@@ -1,0 +1,13 @@
+{
+  "name": "paas-brain",
+  "displayName": "Brain",
+  "version": "1.0.0",
+  "description": "Search and grow the offline docs library; see the skills, agents, MCP servers, hooks and memory of this VM's Claude.",
+  "author": "Peleg As A Service",
+  "icon": "icon.svg",
+  "type": "module",
+  "slot": "tab",
+  "entry": "index.js",
+  "server": "server.js",
+  "permissions": []
+}

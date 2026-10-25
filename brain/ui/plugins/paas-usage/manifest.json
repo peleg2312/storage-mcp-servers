@@ -1,0 +1,13 @@
+{
+  "name": "paas-usage",
+  "displayName": "Usage",
+  "version": "1.0.0",
+  "description": "Tokens and estimated cost per day, project, model and session (from Claude Code's session logs).",
+  "author": "Peleg As A Service",
+  "icon": "icon.svg",
+  "type": "module",
+  "slot": "tab",
+  "entry": "index.js",
+  "server": "server.js",
+  "permissions": []
+}

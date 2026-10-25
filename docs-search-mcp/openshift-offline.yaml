@@ -1,0 +1,107 @@
+# docs-search for an AIR-GAPPED cluster: no internet access needed or used.
+#
+# Main library  = inside the image docs-search-offline:<date> (built outside with bundle/build-offline.sh
+#                 and imported into your internal registry).
+# Local library = a small PVC for the team's own runbooks and KB articles saved from vendor portals;
+#                 re-indexed every 30 minutes by the local-index CronJob.
+#
+# 1) oc create secret generic docs-search-env --from-env-file=.env      (MCP_AUTH_TOKENS)
+# 2) set <registry>/docs-search-offline:<date> below (two places), then  oc apply -f openshift-offline.yaml
+# 3) add your own documents:
+#      POD=$(oc get pod -l app=docs-search-mcp -o name | head -1)
+#      oc cp ./saved-kb/ ${POD#pod/}:/data/local/docs/saved-kb/
+#    layout: /data/local/docs/<folder>/<product>/*.pdf|*.html|*.md|*.txt   (picked up within 30 min)
+# 4) monthly (or when you like): build a new dated image outside, import it, change the tag here.
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: docs-search-local
+spec:
+  accessModes: ["ReadWriteMany"]   # server + index job; with RWO keep them on one node
+  resources:
+    requests:
+      storage: 5Gi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: docs-search-mcp
+  labels: {app: docs-search-mcp}
+spec:
+  replicas: 1
+  selector:
+    matchLabels: {app: docs-search-mcp}
+  template:
+    metadata:
+      labels: {app: docs-search-mcp}
+    spec:
+      containers:
+      - name: docs-search-mcp
+        image: <registry>/docs-search-offline:2026.10.22
+        ports:
+        - containerPort: 8000
+          name: http
+        envFrom:
+        - secretRef:
+            name: docs-search-env
+        volumeMounts:
+        - name: local
+          mountPath: /data/local       # writable only so you can `oc cp` documents in; the server never writes
+        readinessProbe:
+          httpGet: {path: /healthz, port: 8000}
+          initialDelaySeconds: 3
+          periodSeconds: 10
+        livenessProbe:
+          httpGet: {path: /healthz, port: 8000}
+          initialDelaySeconds: 15
+          periodSeconds: 20
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          runAsNonRoot: true
+          capabilities: {drop: ["ALL"]}
+        resources:
+          requests: {cpu: 50m, memory: 256Mi}
+          limits: {memory: 1Gi}
+      volumes:
+      - name: local
+        persistentVolumeClaim:
+          claimName: docs-search-local
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: docs-search-mcp
+spec:
+  selector: {app: docs-search-mcp}
+  ports:
+  - name: http
+    port: 8000
+    targetPort: 8000
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: docs-local-index
+spec:
+  schedule: "*/30 * * * *"
+  concurrencyPolicy: Forbid
+  jobTemplate:
+    spec:
+      backoffLimit: 1
+      template:
+        spec:
+          restartPolicy: Never
+          containers:
+          - name: index
+            image: <registry>/docs-search-offline:2026.10.22
+            command: ["sh", "-c", "mkdir -p /data/local/docs && python3 docs_index.py --docs /data/local/docs --db /data/local/local.db"]
+            volumeMounts:
+            - {name: local, mountPath: /data/local}
+            resources:
+              requests: {cpu: 100m, memory: 256Mi}
+              limits: {memory: 1Gi}
+          volumes:
+          - name: local
+            persistentVolumeClaim:
+              claimName: docs-search-local

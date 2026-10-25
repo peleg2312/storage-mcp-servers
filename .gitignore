@@ -1,0 +1,18 @@
+.env
+*.env
+!*.env.example
+__pycache__/
+*.pyc
+build-ca.crt
+images/*.tar.gz
+docs-search-mcp/work/
+library/work/
+**/work/
+
+# claude plugin eval output
+brain/claude/evals/results/
+work-ui/
+docs-search-mcp/.claude-flow/
+# Cisco guides: their text ships in library/ (repo is public; not re-published as files)
+docs-search-mcp/extra/cisco/*/*.pdf
+docs-search-mcp/extra/cisco/*/*.html

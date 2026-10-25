@@ -1,0 +1,67 @@
+/* Peleg As A Service: the banner's violet -> mint gradient on top of CloudCLI's theme tokens (appended to src/index.css) */
+:root {
+  --paas-gradient: linear-gradient(120deg, #a78bfa 0%, #818cf8 30%, #60a5fa 55%, #22d3ee 80%, #34d399 100%);
+  --primary: 258 70% 60%;
+  --primary-foreground: 0 0% 100%;
+  --ring: 258 70% 60%;
+}
+.dark {
+  --background: 232 28% 7%;
+  --foreground: 225 30% 94%;
+  --card: 232 24% 10%;
+  --card-foreground: 225 30% 94%;
+  --popover: 232 24% 11%;
+  --popover-foreground: 225 30% 94%;
+  --primary: 255 92% 76%;
+  --primary-foreground: 232 28% 7%;
+  --secondary: 232 20% 15%;
+  --secondary-foreground: 225 30% 94%;
+  --muted: 232 20% 15%;
+  --muted-foreground: 226 14% 64%;
+  --accent: 240 22% 17%;
+  --accent-foreground: 225 30% 94%;
+  --border: 232 20% 18%;
+  --input: 232 20% 22%;
+  --ring: 255 92% 76%;
+}
+.paas-wordmark {
+  background: var(--paas-gradient);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent !important;
+}
+.paas-tagline { letter-spacing: .14em; text-transform: uppercase; }
+button.bg-primary, a.bg-primary { background-image: var(--paas-gradient); color: #0b0d1a; }
+button.bg-primary:hover, a.bg-primary:hover { filter: brightness(1.08); }
+.paas-login-glow {
+  background: radial-gradient(40rem 28rem at 50% -8rem, rgba(167, 139, 250, .22), transparent 70%),
+              radial-gradient(30rem 22rem at 100% 110%, rgba(34, 211, 238, .14), transparent 70%),
+              radial-gradient(26rem 20rem at 0% 100%, rgba(52, 211, 153, .10), transparent 70%);
+}
+a[href*="discord.gg/"], a[href*="claudecodeui/issues"] { display: none !important; }
+/* Claude-desktop composer: one floating rounded box, soft shadow, gradient glow when typing */
+form[data-slot="prompt-input"] { border-radius: 22px; background: hsl(var(--card)); box-shadow: 0 0 0 1px hsl(var(--border)), 0 14px 40px -18px rgba(0, 0, 0, .55); }
+form[data-slot="prompt-input"]:focus-within { box-shadow: 0 0 0 1px rgba(167, 139, 250, .55), 0 14px 44px -14px rgba(167, 139, 250, .35); }
+form[data-slot="prompt-input"].rounded-t-none { border-top-left-radius: 0; border-top-right-radius: 0; }
+/* Download chip next to files Claude hands over */
+.paas-dl { display: inline-flex; align-items: center; gap: 4px; margin-left: 6px; padding: 1px 10px; border-radius: 999px; font: 600 12px/20px ui-sans-serif, system-ui, sans-serif; color: #0b0d1a; background-image: var(--paas-gradient); border: 0; cursor: pointer; vertical-align: middle; }
+.paas-dl:hover { filter: brightness(1.08); }
+/* prompt bar: no hint row or divider inside the box (Claude desktop has neither) */
+form[data-slot="prompt-input"] .order-last.basis-full { display: none !important; }
+form[data-slot="prompt-input"] .border-t { border-top-color: transparent; }
+/* brand colours instead of stock blue: file links in answers, the user's avatar */
+a.text-blue-600.hover\:underline { color: hsl(var(--primary)); }
+.paas-avatar { background-image: var(--paas-gradient); color: #0b0d1a; }
+/* stock blue buttons, cards and badges -> the brand */
+.bg-blue-600, .bg-blue-500 { background-color: hsl(var(--primary)) !important; color: hsl(var(--primary-foreground)) !important; }
+.hover\:bg-blue-700:hover, .hover\:bg-blue-600:hover { background-color: hsl(var(--primary) / .85) !important; }
+.border-blue-500, .border-blue-500\/30, .border-blue-200, .dark .dark\:border-blue-800 { border-color: hsl(var(--primary) / .35) !important; }
+.dark .dark\:bg-blue-900\/20, .bg-blue-50 { background-color: hsl(var(--primary) / .08) !important; }
+.text-blue-600, .dark .dark\:text-blue-400 { color: hsl(var(--primary)) !important; }
+/* quick-settings handle on the right edge: a slim quiet tab instead of a grey box over the content */
+button[aria-label="Open settings panel"] { padding: 10px 2px !important; background: hsl(var(--card)) !important; border-color: hsl(var(--border)) !important; opacity: .55; box-shadow: none !important; }
+button[aria-label="Open settings panel"]:hover { opacity: 1; }
+button[aria-label="Open settings panel"] svg { width: 14px; height: 14px; }
+/* welcome screen: the main action */
+.paas-newchat { margin-top: 10px; display: inline-flex; align-items: center; gap: 8px; padding: 10px 26px; border-radius: 999px; border: 0; cursor: pointer; font: 600 15px/1.2 ui-sans-serif, system-ui, sans-serif; color: #0b0d1a; background-image: var(--paas-gradient); box-shadow: 0 10px 30px -12px rgba(167, 139, 250, .6); }
+.paas-newchat:hover { filter: brightness(1.08); }

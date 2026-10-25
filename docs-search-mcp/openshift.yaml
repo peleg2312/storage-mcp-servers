@@ -1,0 +1,129 @@
+# docs-search: search server + nightly documentation sync/index job, sharing one volume.
+#
+# 1) Secret:   oc create secret generic docs-search-env --from-env-file=.env
+# 2) Image:    set <registry>/docs-search-mcp:1.1 below (three places)
+# 3) Apply:    oc apply -f openshift.yaml
+# 4) First fill (don't wait for the night):  oc create job docs-sync-now --from=cronjob/docs-sync
+#
+# CONNECTED variant: the job needs outbound HTTPS to github.com + api.github.com (NetApp/Trident/CSM docs and
+# bug trackers) and dell.com / dl.dell.com / delltechnologies.com (Dell docs). Put GITHUB_TOKEN in the secret.
+# AIR-GAPPED cluster? Use openshift-offline.yaml + bundle/build-offline.sh instead.
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: docs-search-data
+spec:
+  accessModes: ["ReadWriteMany"]       # job writes while the server reads; use RWO + same node if RWX is unavailable
+  resources:
+    requests:
+      storage: 20Gi                    # NetApp text ~0.2 GB, Dell PDFs ~2-6 GB, index ~0.5-2 GB
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: docs-search-mcp
+  labels: {app: docs-search-mcp}
+spec:
+  replicas: 1
+  selector:
+    matchLabels: {app: docs-search-mcp}
+  template:
+    metadata:
+      labels: {app: docs-search-mcp}
+    spec:
+      containers:
+      - name: docs-search-mcp
+        image: <registry>/docs-search-mcp:1.1
+        ports:
+        - containerPort: 8000
+          name: http
+        envFrom:
+        - secretRef:
+            name: docs-search-env
+        volumeMounts:
+        - name: data
+          mountPath: /data
+          readOnly: true
+        readinessProbe:
+          httpGet: {path: /healthz, port: 8000}
+          initialDelaySeconds: 3
+          periodSeconds: 10
+        livenessProbe:
+          httpGet: {path: /healthz, port: 8000}
+          initialDelaySeconds: 15
+          periodSeconds: 20
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          runAsNonRoot: true
+          capabilities: {drop: ["ALL"]}
+        resources:
+          requests: {cpu: 50m, memory: 256Mi}
+          limits: {memory: 1Gi}
+      volumes:
+      - name: data
+        persistentVolumeClaim:
+          claimName: docs-search-data
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: docs-search-mcp
+spec:
+  selector: {app: docs-search-mcp}
+  ports:
+  - name: http
+    port: 8000
+    targetPort: 8000
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: docs-sync
+spec:
+  schedule: "17 2 * * *"               # nightly 02:17
+  concurrencyPolicy: Forbid
+  jobTemplate:
+    spec:
+      backoffLimit: 1
+      activeDeadlineSeconds: 21600
+      template:
+        spec:
+          restartPolicy: Never
+          initContainers:
+          # 0) copy the sync scripts and source lists out of the docs-search image
+          - name: tools
+            image: <registry>/docs-search-mcp:1.1
+            command: ["sh", "-c", "cp -r /app/sync /app/sources /tools/"]
+            volumeMounts:
+            - {name: tools, mountPath: /tools}
+          # 1) Git documentation (NetAppDocs, Trident, Harvest, Dell CSM, PyU4V; text only) - needs git.
+          #    Pin a specific tag you have verified in your registry instead of latest.
+          - name: netapp-docs
+            image: docker.io/alpine/git:latest
+            command: ["sh", "/tools/sync/sync-git.sh", "/data/docs"]
+            env:
+            - {name: HOME, value: /tmp}
+            envFrom:
+            - secretRef: {name: docs-search-env}
+            volumeMounts:
+            - {name: data, mountPath: /data}
+            - {name: tools, mountPath: /tools}
+          containers:
+          # 2) Dell PowerMax / PowerFlex docs, bug trackers, KB pointers, then (re)index everything
+          - name: dell-docs-and-index
+            image: <registry>/docs-search-mcp:1.1
+            command: ["sh", "-c", "python3 sync/sync_dell.py; python3 sync/sync_github_issues.py --dest /data/docs; python3 sync/sync_web.py --dest /data/docs; mkdir -p /data/docs/kb && cp sources/kb/*.md /data/docs/kb/ && python3 docs_index.py"]
+            envFrom:
+            - secretRef: {name: docs-search-env}
+            volumeMounts:
+            - {name: data, mountPath: /data}
+            resources:
+              requests: {cpu: 200m, memory: 512Mi}
+              limits: {memory: 2Gi}
+          volumes:
+          - name: data
+            persistentVolumeClaim:
+              claimName: docs-search-data
+          - name: tools
+            emptyDir: {}

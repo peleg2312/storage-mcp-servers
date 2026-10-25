@@ -1,0 +1,6 @@
+# Cisco DevNet API documentation for sync/sync_cisco_devnet.py (public; plain HTTP is allowed there).
+# Format: <product> <pubhub doc id> <developer.cisco.com page (the url shown in results)>
+mds   cisco-mds-9000-series-nx-api-reference-release-9-4-x   https://developer.cisco.com/docs/cisco-mds-9000-series-nx-api-reference-release-9-4-x/
+ndfc  nexus-dashboard-api-ndfc-1222                           https://developer.cisco.com/docs/nexus-dashboard-fabric-controller/12-2-2/
+ndfc  nexus-dashboard-api-v1                                  https://developer.cisco.com/docs/nexus-dashboard/latest/
+nexus cisco-nexus-3000-and-9000-series-nx-api-rest-sdk-user-guide-and-api-reference-release-10-6-x-  https://developer.cisco.com/docs/cisco-nexus-3000-and-9000-series-nx-api-rest-sdk-user-guide-and-api-reference-release-10-6-x-/

@@ -1,0 +1,144 @@
+# Dell Support search queries for sync/dell_browser.py kb (one per line; every KB article in the results is
+# fetched, then one round of related-article links). Add your own error texts and alert codes here.
+PowerFlex alert
+PowerFlex error
+PowerFlex SDC
+PowerFlex SDS
+PowerFlex MDM
+PowerFlex rebuild
+PowerFlex rebalance
+PowerFlex storage pool
+PowerFlex replication
+PowerFlex dial home
+PowerFlex Manager error
+PowerFlex Manager deployment failed
+PowerFlex Manager upgrade failed
+PowerFlex Manager resource group
+PowerFlex Manager compliance
+PowerFlex Manager backup restore
+PowerFlex Manager certificate
+PowerFlex management platform PFMP
+PowerFlex ESXi
+PowerFlex vSphere
+PowerFlex NVMe
+PowerFlex CloudLink
+PowerFlex license
+PowerFlex performance
+PowerFlex capacity
+PowerFlex snapshot
+PowerFlex volume
+PowerFlex scli
+PowerFlex drv_cfg
+PowerFlex SIO02
+PowerFlex SIO03
+PowerFlex SIO04
+PowerFlex SIO12
+PowerFlex SIO13
+PowerFlex SIO14
+PowerFlex SIO15
+PowerFlex SIO16
+PowerFlex node
+PowerFlex iDRAC
+PowerFlex DSA
+VxFlex OS
+ScaleIO
+PowerMax alert
+PowerMax error
+PowerMax SRDF
+PowerMax SnapVX
+PowerMax masking view
+PowerMax storage group
+PowerMax port
+PowerMax performance
+PowerMax capacity
+PowerMax SRP
+PowerMax director
+PowerMax host
+PowerMax ESXi
+PowerMax vSphere
+PowerMax NVMe
+PowerMax eNAS
+PowerMax file
+PowerMax upgrade
+PowerMax DSA
+PowerMaxOS
+Unisphere for PowerMax alert
+Unisphere for PowerMax error
+Unisphere for PowerMax performance
+Unisphere for PowerMax REST
+Unisphere for PowerMax certificate
+Unisphere for PowerMax upgrade
+Unisphere for PowerMax SNMP
+Solutions Enabler error
+Solutions Enabler symcli
+Solutions Enabler symapi
+SYMAPI
+symdev
+symrdf
+symsnapvx
+symaccess
+symcfg
+VMAX All Flash
+VMAX3
+PowerPath PowerMax
+PowerPath PowerFlex
+Container Storage Modules
+CSM operator
+CSM replication
+CSM authorization
+CSM resiliency
+CSM observability
+CSI PowerMax
+CSI PowerFlex
+CSI VxFlex
+CSI driver error
+CSI driver OpenShift
+CSI driver Kubernetes mount
+Dell CSI PVC pending
+# ---- PowerScale (Isilon / OneFS) ----
+PowerScale alert
+PowerScale error
+PowerScale event
+OneFS error
+OneFS event
+OneFS upgrade
+OneFS node
+OneFS SmartConnect
+OneFS SyncIQ
+OneFS SnapshotIQ
+OneFS SmartQuotas
+OneFS NFS
+OneFS SMB
+OneFS S3
+OneFS performance
+OneFS isi command
+OneFS cluster
+OneFS drive
+OneFS DSA
+Isilon error
+Isilon NFS
+PowerScale InsightIQ
+PowerScale CSI
+CSI PowerScale
+# ---- more CSI / CSM ----
+CSI PowerFlex SDC
+CSI PowerFlex volume
+CSI PowerMax iSCSI
+CSI PowerMax FC
+CSI PowerMax NVMe
+CSI PowerMax Reverse Proxy
+CSI driver snapshot
+CSI driver volume expansion
+CSI driver attach
+CSI driver mount failed
+CSI driver multipath
+CSM Observability metrics
+CSM Resiliency podmon
+CSM Authorization proxy
+CSM Replication SRDF
+CSM Replication PowerFlex
+CSM installation wizard
+CSM module upgrade
+Container Storage Modules DSA
+Dell CSI Red Hat OpenShift
+Dell CSI vSphere

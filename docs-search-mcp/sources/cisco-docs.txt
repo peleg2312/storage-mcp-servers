@@ -1,0 +1,53 @@
+# Cisco documentation for sync/cisco_browser.py (cisco.com refuses plain clients: a real browser fetches them).
+# Format: <product> <url of a guide / article / release notes page, or a "collections" page that lists articles>
+# Each page: its PDF when it has one (whole book, outline = sections), else the page's #content as HTML.
+#
+# ---- MDS 9000, NX-OS 9.x (fabric switches) ----
+mds  https://www.cisco.com/c/en/us/td/docs/dcn/mds9000/sw/9x/configuration/fabric/cisco-mds-9000-nx-os-fabric-configuration-guide-9x.html
+mds  https://www.cisco.com/c/en/us/td/docs/dcn/mds9000/sw/9x/configuration/interfaces/cisco-mds-9000-nx-os-interfaces-configuration-guide-9x.html
+mds  https://www.cisco.com/c/en/us/td/docs/dcn/mds9000/sw/9x/configuration/fundamentals/cisco-mds-9000-nx-os-fundamentals-configuration-guide-9x.html
+mds  https://www.cisco.com/c/en/us/td/docs/dcn/mds9000/sw/9x/configuration/security/cisco-mds-9000-nx-os-security-configuration-guide-9x.html
+mds  https://www.cisco.com/c/en/us/td/docs/dcn/mds9000/sw/9x/configuration/high-availability/cisco-mds-9000-nx-os-high-availability-configuration-guide-9x.html
+mds  https://www.cisco.com/c/en/us/td/docs/dcn/mds9000/sw/9x/configuration/system-management/cisco-mds-9000-nx-os-system-management-configuration-guide-9x.html
+mds  https://www.cisco.com/c/en/us/td/docs/dcn/mds9000/sw/9x/configuration/ip-services/cisco-mds-9000-nx-os-ip-services-configuration-guide-9x.html
+mds  https://www.cisco.com/c/en/us/td/docs/dcn/mds9000/sw/9x/configuration/ivr/cisco-mds-9000-nx-os-ivr-configuration-guide-9x.html
+mds  https://www.cisco.com/c/en/us/td/docs/dcn/mds9000/sw/9x/configuration/qos/cisco-mds-9000-nx-os-qos-configuration-guide-9x.html
+mds  https://www.cisco.com/c/en/us/td/docs/dcn/mds9000/sw/9x/configuration/fcoe/cisco-mds-9000-nx-os-fcoe-configuration-guide-9x.html
+mds  https://www.cisco.com/c/en/us/td/docs/dcn/mds9000/sw/9x/configuration/san-analytics/cisco-mds-9000-san-analytics-telemetry-streaming-configuration-guide-9x.html
+mds  https://www.cisco.com/c/en/us/td/docs/dcn/mds9000/sw/9x/configuration/configuration-limits/cisco-mds-9000-nx-os-configuration-limits-9x.html
+mds  https://www.cisco.com/c/en/us/td/docs/dcn/mds9000/sw/9x/configuration/licensing/cisco-mds-9000-nx-os-licensing-guide-9x.html
+mds  https://www.cisco.com/c/en/us/td/docs/dcn/mds9000/sw/9x/command/cisco-mds-9000-nx-os-command-reference-guide-9x.html
+mds  https://www.cisco.com/c/en/us/td/docs/switches/datacenter/mds9000/sw/sys-msgs/cisco-mds-9000-series-nxos-system-messages-reference.html
+mds  https://www.cisco.com/c/en/us/td/docs/dcn/mds9000/sw/9x/programmability/cisco-mds-9000-nx-os-programmability-guide-9x.html
+mds  https://www.cisco.com/c/en/us/td/docs/dcn/mds9000/sw/9x/upgrade/cisco-mds-9000-software-upgrade-downgrade-guide-9x.html
+mds  https://www.cisco.com/c/en/us/td/docs/dcn/mds9000/sw/9x/compatibility-matrix/cisco-mds-9000-nx-os-compatibility-matrix-9x.html
+mds  https://www.cisco.com/c/en/us/td/docs/dcn/mds9000/interop/cisco-mds-9000-interop-matrix.html
+mds  https://www.cisco.com/c/en/us/td/docs/dcn/mds9000/mib/cisco-mds-9000-nx-os-MIB-quick-reference.html
+mds  https://www.cisco.com/c/en/us/td/docs/dcn/mds9000/sw/9x/release-notes/cisco-mds-9000-nx-os-release-notes-945a.html
+mds  https://www.cisco.com/c/en/us/td/docs/dcn/mds9000/sw/9x/release-notes/cisco-mds-9000-nx-os-release-notes-945.html
+mds  https://www.cisco.com/c/en/us/td/docs/dcn/mds9000/sw/9x/release-notes/cisco-mds-9000-nx-os-release-notes-944.html
+mds  https://www.cisco.com/c/en/us/td/docs/dcn/mds9000/sw/9x/release-notes/cisco-mds-9000-nx-os-release-notes-942.html
+#
+# ---- Nexus Dashboard Fabric Controller (NDFC) 12.x and Nexus Dashboard ----
+ndfc https://www.cisco.com/c/en/us/td/docs/dcn/ndfc/1222/collections/ndfc-user-content-1222-san.html
+ndfc https://www.cisco.com/c/en/us/td/docs/dcn/ndfc/1213/configuration/san-controller/cisco-ndfc-san-controller-configuration-guide-1213.html
+ndfc https://www.cisco.com/c/en/us/td/docs/dcn/ndfc/1213/installation/cisco-ndfc-install-and-upgrade-guide-1213.html
+ndfc https://www.cisco.com/c/en/us/td/docs/dcn/ndfc/1221/release-notes/cisco-ndfc-release-notes-1221.html
+ndfc https://www.cisco.com/c/en/us/td/docs/dcn/ndfc/1223/verified-scalability/cisco-ndfc-verified-scalability-1223.html
+ndfc https://www.cisco.com/c/en/us/td/docs/dcn/ndfc/1213/compatibility/cisco-ndfc-compatibility-matrix-guide-1213.html
+ndfc https://www.cisco.com/c/en/us/td/docs/dcn/whitepapers/monitoring-and-alerting-in-san-fabric-with-mds9000-and-ndfc.html
+ndfc https://www.cisco.com/c/en/us/td/docs/dcn/whitepapers/how-to-upgrade-dcnm-to-ndfc-for-san-deployments.html
+ndfc https://www.cisco.com/c/en/us/td/docs/dcn/whitepapers/NDFC-12-1-3b-deployment.html
+ndfc https://www.cisco.com/c/en/us/td/docs/dcn/nd/3x/deployment/cisco-nexus-dashboard-and-services-deployment-guide-321.html
+ndfc https://www.cisco.com/c/en/us/td/docs/dcn/nd/3x/release-notes/cisco-nexus-dashboard-and-services-release-notes-322.html
+#
+# ---- Nexus 9000, NX-OS 10.6(x): storage networking (FC / FCoE, vPC, lossless QoS) and the basics ----
+nexus https://www.cisco.com/c/en/us/td/docs/dcn/nx-os/nexus9000/106x/configuration/san-switching/cisco-nexus-9000-series-nx-os-san-switching-configuration-guide-106x.html
+nexus https://www.cisco.com/c/en/us/td/docs/dcn/nx-os/nexus9000/106x/configuration/fc-npv-fcoe-npv/cisco-nexus-9000-series-nx-os-fc-npv-and-fcoe-npv-configuration-guide-106x.html
+nexus https://www.cisco.com/c/en/us/td/docs/dcn/nx-os/nexus9000/106x/configuration/interfaces/cisco-nexus-9000-series-nx-os-interfaces-configuration-guide-release-106x.html
+nexus https://www.cisco.com/c/en/us/td/docs/dcn/nx-os/nexus9000/106x/configuration/layer-2-switching/cisco-nexus-9000-series-nx-os-layer-2-switching-configuration-guide-106x.html
+nexus https://www.cisco.com/c/en/us/td/docs/dcn/nx-os/nexus9000/106x/configuration/qos/cisco-nexus-9000-series-nx-os-quality-of-service-configuration-guide-106x.html
+nexus https://www.cisco.com/c/en/us/td/docs/dcn/nx-os/nexus9000/106x/configuration/fundamentals/cisco-nexus-9000-series-nx-os-fundamentals-configuration-guide-release-106x.html
+nexus https://www.cisco.com/c/en/us/td/docs/dcn/nx-os/nexus9000/106x/configuration/high-availability/cisco-nexus-9000-series-nx-os-high-availability-and-redundancy-guide-106x.html
+nexus https://www.cisco.com/c/en/us/td/docs/switches/datacenter/nexus9000/sw/106x/config-guides/sys-mgmt/cisco-nexus-9000-series-nx-os-system-management-configuration-guide-release-106x.html
+nexus https://www.cisco.com/c/en/us/td/docs/switches/datacenter/nexus9000/sw/106x/system-messages/n9k-syslogs-10-6-2-f.html

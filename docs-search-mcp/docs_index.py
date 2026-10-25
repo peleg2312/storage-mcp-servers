@@ -1,0 +1,637 @@
+"""
+Build / update the full-text index of the documentation library.
+
+    python docs_index.py [--docs /data/docs] [--db /data/index/docs.db] [--full]
+
+Layout under --docs (one folder per vendor, one sub-folder per product/repo):
+    netapp/<repo>/**/*.adoc|*.md        NetApp docs-as-code (from sync-netapp.sh)
+    dell/<product>/*.pdf|*.html         Dell PowerMax / PowerFlex (from sync_dell.py, with manifest.json)
+    kb/*.md                             curated KB pointers
+    <anything>/<product>/**/*.md|txt|pdf|html  your own runbooks, exports, notes
+
+    python docs_index.py --docs ~/.claude/brain/inbox --db docs.db --add inbox/     # add your own docs
+
+--add PREFIX: the documents are stored as PREFIX<vendor>/<product>/... and only those are ever replaced or removed,
+so your own docs go INTO the shipped docs.db next to the library (brain: add-docs; re-added after a library update).
+Incremental: only new/changed files are re-parsed. The index is built in a copy and swapped in
+atomically, so the running search server never sees a half-written index.
+"""
+
+import argparse
+import hashlib
+import html
+import json
+import os
+import re
+import shutil
+import sqlite3
+import sys
+import time
+from html.parser import HTMLParser
+
+TEXT_EXT = (".adoc", ".md", ".mdx", ".markdown", ".rst", ".txt")      # .mdx: Markdown with components (MCP specification)
+CODE_EXT = (".go", ".py", ".proto", ".yaml", ".yml", ".sh")       # source code (sync-git.sh "code" lines)
+CODE_START = re.compile(r"^(func |type |def |class |async def |message |service |rpc |enum |[\w-]+\(\) ?\{)")
+MAX_CHUNK = 2400
+SCHEMA = """
+CREATE TABLE IF NOT EXISTS docs(id INTEGER PRIMARY KEY, path TEXT UNIQUE, vendor TEXT, product TEXT,
+  title TEXT, url TEXT, mtime REAL, size INTEGER, chunks INTEGER, hash TEXT, dup_of INTEGER);
+CREATE INDEX IF NOT EXISTS docs_hash ON docs(hash);
+CREATE INDEX IF NOT EXISTS docs_dup ON docs(dup_of);
+CREATE TABLE IF NOT EXISTS chunks(id INTEGER PRIMARY KEY, doc_id INTEGER, seq INTEGER);
+CREATE INDEX IF NOT EXISTS chunks_doc ON chunks(doc_id, seq);
+CREATE VIRTUAL TABLE IF NOT EXISTS chunks_fts USING fts5(title, heading, text,
+  tokenize='porter unicode61 remove_diacritics 2');
+CREATE TABLE IF NOT EXISTS meta(key TEXT PRIMARY KEY, value TEXT);
+"""
+
+
+# ---------------------------------------------------------------------------
+# Parsers -> list of (heading, text)
+# ---------------------------------------------------------------------------
+
+# page chrome and templates that carry no knowledge but dilute every chunk they sit in
+_NOISE = re.compile(
+    r"^(provide feedback|please select a product to check article relevancy|this article (applies|does not apply) to"
+    r"|this article is not tied to any specific product\.?|not all product versions are identified in this article\.?"
+    r"|check out other resources|identify your product|find answers to your questions from other dell users"
+    r"|visit community|support services|check if your device is covered by support services\.?|check support status"
+    r"|table of contents|detailed article|search articles|print|email|sign in|back to top"
+    r"|some article numbers may have changed.*|(print\s+)?(email\s+)?english\s+česky.*"
+    r"|[-*] \[[ x]\] i have .*|thank you for your feedback!?|download pdf|dell\.com|contact us|share|home|>"
+    r"|rate this content|was this (article|page|content) helpful\??|send us feedback.*|yes|no"
+    r"|[a-z][a-z .]+/(english|português|简体中文|français|deutsch|italiano|日本語|spanish|nederlands|español|svenska"
+    r"|한국어|polski|русский|türkçe|繁體中文|dansk|suomi|norsk|česky))$", re.I)
+# whole sections that are site chrome (cookie banner, feedback form), dropped by their heading
+_NOISE_HEAD = re.compile(r"^(your cookie preferences|manage consent preferences|cookie list|.*\bcookies"
+                         r"|we value your feedback|rate this content|was this (article|page|content) helpful.*"
+                         r"|how has this been tested\??|type of change|checklist:?"           # pull request template
+                         r"|affected products|article properties|table of contents|contents)$", re.I)   # Dell KB: product-name lists and metadata
+                         # (keyword bait that outranked the real sections; the title already names the products)
+_LICENSE = re.compile(r"^\s*(#|//|/?\*|--)\s*.*(copyright ©|copyright \(c\)|all rights reserved|licensed under the apache"
+                      r"|you may not use this file|obtain a copy of the license|apache\.org/licenses|unless required by"
+                      r"|distributed under the license|without warranties or conditions|see the license for"
+                      r"|limitations under the license)", re.I)
+
+
+_BLOCKS = re.compile(r"English\s+Česky\s+Dansk.*?简体中文"                                # Dell language menu
+                     r"|/\*(?:(?!\*/).)*?(?:Copyright|Licensed under)(?:(?!\*/).)*\*/"       # license block (code)
+                     r"|<!--(?:(?!-->).)*?(?:Copyright|Licensed under)(?:(?!-->).)*-->"          # license block (markdown)
+                     r"|Your Browser is Out of Date.{0,200}?browsers below", re.S)              # Info Hub banner
+
+
+def _clean(body):
+    body = _BLOCKS.sub("", body)
+    lines = [l for l in body.split("\n") if not _NOISE.match(l.strip()) and not _LICENSE.match(l)]
+    return "\n".join(lines)
+
+
+def _split(sections, title):
+    """Split long sections into <= MAX_CHUNK pieces on paragraph boundaries (noise lines dropped)."""
+    out, seen = [], set()
+    for heading, body in sections:
+        if _NOISE_HEAD.match((heading or "").strip()):
+            continue
+        body = re.sub(r"\n[ \t]*(?=\n)", "\n", _clean(body))
+        if (heading, body.strip()) in seen:          # the same block twice on a page (KB article properties)
+            continue
+        seen.add((heading, body.strip()))
+        body = re.sub(r"\n{3,}", "\n\n", body).strip()
+        if not body:
+            continue
+        paras, cur = body.split("\n\n"), ""
+        for p in paras:
+            if len(cur) + len(p) > MAX_CHUNK and cur:
+                out.append((heading, cur.strip()))
+                cur = ""
+            while len(p) > MAX_CHUNK:
+                out.append((heading, p[:MAX_CHUNK]))
+                p = p[MAX_CHUNK:]
+            cur += p + "\n\n"
+        if cur.strip():
+            out.append((heading, cur.strip()))
+    return out or [(title, "")]
+
+
+_ADOC_DROP = re.compile(r"^(:[\w-]+:.*|//.*|include::.*|image::.*|ifdef::.*|ifndef::.*|endif::.*|"
+                        r"\[\.?[\w\-#=\"', ]*\]|\|===|====+|----+|\*\*\*\*+|\+)$")
+
+
+def _adoc_inline(s):
+    s = re.sub(r"(?:link|xref|https?):(\S*?)\[([^\]]*)\]", lambda m: m.group(2) or m.group(1), s)
+    s = re.sub(r"image:\S+\[[^\]]*\]", "", s)
+    s = re.sub(r"\{[\w-]+\}", "", s)
+    return s.replace("`", "")
+
+
+class SkipDocument(Exception):
+    pass
+
+
+def _front_matter(text):
+    """Strip a leading YAML front-matter block; return (meta dict, body)."""
+    if not text.startswith("---"):
+        return {}, text
+    end = text.find("\n---", 3)
+    if end < 0:
+        return {}, text
+    meta = {}
+    for line in text[3:end].splitlines():
+        if ":" in line:
+            k, v = line.split(":", 1)
+            meta[k.strip()] = v.strip()
+    return meta, text[end + 4:]
+
+
+def parse_adoc(text, fallback):
+    meta, text = _front_matter(text)
+    if "redirect" in meta:
+        raise SkipDocument("redirect stub")
+    title, sections, heading, buf = None, [], None, []
+    if meta.get("summary"):
+        buf.append(meta["summary"].strip("'\""))
+    for line in text.splitlines():
+        m = re.match(r"^(=+)\s+(.+)$", line)
+        if m:
+            if len(m.group(1)) == 1 and title is None:
+                title = _adoc_inline(m.group(2)).strip()
+                heading = title
+                continue
+            sections.append((heading, "\n".join(buf)))
+            heading, buf = _adoc_inline(m.group(2)).strip(), []
+            continue
+        s = line.rstrip()
+        if _ADOC_DROP.match(s.strip()):
+            continue
+        if s.startswith("|"):
+            s = " | ".join(c.strip() for c in s.split("|") if c.strip())
+        buf.append(_adoc_inline(s))
+    sections.append((heading, "\n".join(buf)))
+    title = title or fallback
+    return title, _split([(h or title, b) for h, b in sections], title)
+
+
+def parse_md(text, fallback):
+    meta, text = _front_matter(text)
+    if "redirect" in meta:
+        raise SkipDocument("redirect stub")
+    text = re.sub(r"\{\{[<%].*?[%>]\}\}", "", text)          # Hugo shortcodes
+    text = re.sub(r"</?(dfn|abbr|strong|em|b|i|u|span|sup|sub|small|mark|kbd|br|a)(\s[^>]*)?/?>", "", text, flags=re.I)  # inline HTML (FastAPI docs)
+    title, sections, heading, buf = None, [], None, []
+    if meta.get("title"):
+        title = heading = meta["title"].strip("'\"")
+        if meta.get("description"):
+            buf.append(meta["description"].strip("'\""))
+    for line in text.splitlines():
+        m = re.match(r"^(#+)\s+(.+?)(?:\s*\{\s*#[\w-]+\s*\})?\s*$", line)   # "## Features { #features }" (mkdocs anchors)
+        if m:
+            if title is None and len(m.group(1)) == 1:
+                title = heading = m.group(2).strip()
+                continue
+            sections.append((heading, "\n".join(buf)))
+            heading, buf = m.group(2).strip(), []
+            continue
+        buf.append(line)
+    sections.append((heading, "\n".join(buf)))
+    title = title or fallback
+    return title, _split([(h or title, b) for h, b in sections], title)
+
+
+class _HTMLText(HTMLParser):
+    SKIP = {"script", "style", "nav", "header", "footer", "noscript", "svg"}
+
+    def __init__(self):
+        super().__init__()
+        self.parts, self.skip, self.title, self._in_title = [], 0, "", False
+        self.heading = None
+        self.sections = []
+
+    def handle_starttag(self, tag, attrs):
+        if tag in self.SKIP:
+            self.skip += 1
+        if tag == "title":
+            self._in_title = True
+        if tag in ("h1", "h2", "h3") and not self.skip:
+            self.sections.append((self.heading, "".join(self.parts)))
+            self.parts, self.heading = [], ""
+        if tag in ("p", "br", "li", "tr", "div", "pre"):
+            self.parts.append("\n")
+
+    def handle_endtag(self, tag):
+        if tag in self.SKIP and self.skip:
+            self.skip -= 1
+        if tag == "title":
+            self._in_title = False
+
+    def handle_data(self, data):
+        if self._in_title:
+            self.title += data
+        elif not self.skip:
+            if self.heading == "":
+                self.heading = data.strip() or ""
+            self.parts.append(data)
+
+
+def parse_html(text, fallback):
+    p = _HTMLText()
+    p.feed(text)
+    p.sections.append((p.heading, "".join(p.parts)))
+    title = re.sub(r"\s+", " ", html.unescape(p.title)).strip() or fallback
+    secs = []
+    for h, b in p.sections:
+        h = (h or title).strip() or title
+        # KB pages (Dell, NetApp) draw Symptoms / Cause / Resolution as styled text, not <h*>: a line holding
+        # only such a label starts a new section, so the content is filed under its real heading
+        for part in re.split(r"\n[ \t]*(" + _LABELS + r")[ \t]*:?[ \t]*\n", "\n" + b + "\n", flags=re.I):
+            if re.fullmatch(_LABELS, part.strip(), re.I):
+                h = part.strip()
+            else:
+                part = _clean(part).strip()
+                if part and part != h:                     # a table-of-contents entry is only its own label
+                    secs.append((h, re.sub(r"[ \t]+", " ", part)))
+    return title, _split(secs, title)
+
+
+_LABELS = (r"(?:Summary|Symptoms?|Cause|Resolution|Workaround|Issue|Solution|Procedure|Environment|Applies to"
+           r"|Additional Information|Permanent Solution|Steps to reproduce|Root cause|Answer|Question|Affected Products"
+           r"|Article Properties)")
+
+
+_PDF_SPACES = False
+
+
+def _pdf_word_gaps():
+    """Tightly set PDFs (Cisco guides) place every word with its own move and a gap of ~0.6 of a space; pypdf
+    only writes a space for a full one, so "device alias" became "devicealias". A gap of a quarter space on the
+    same line is a word break here. Patched once; pypdf versions without this hook are left as they are."""
+    global _PDF_SPACES
+    if _PDF_SPACES:
+        return
+    _PDF_SPACES = True
+    try:
+        import pypdf._text_extraction as tx
+        import pypdf._text_extraction._text_extractor as te
+    except ImportError:
+        return
+    orig = te.crlf_space_check
+
+    def check(text, cmtm_prev, cmtm_matrix, memo_cmtm, cmap, orientations, output, font_size, visitor_text,
+              str_widths, spacewidth, str_height):
+        try:
+            m_prev, m = tx.mult(cmtm_prev[1], cmtm_prev[0]), tx.mult(cmtm_matrix[1], cmtm_matrix[0])
+            gap = (m[4] - m_prev[4]) - str_widths
+            if (text and abs(m[5] - m_prev[5]) < 0.5 and spacewidth > 0 and 0.25 * spacewidth <= gap < spacewidth
+                    and not (output + text).endswith((" ", "\n"))):
+                text += " "
+        except Exception:
+            pass
+        return orig(text, cmtm_prev, cmtm_matrix, memo_cmtm, cmap, orientations, output, font_size, visitor_text,
+                    str_widths, spacewidth, str_height)
+    te.crlf_space_check = check
+
+
+def parse_pdf(path, fallback):
+    from pypdf import PdfReader
+    _pdf_word_gaps()
+    r = PdfReader(path)
+    title = fallback
+    try:
+        if r.metadata and r.metadata.title and len(r.metadata.title.strip()) > 3:
+            title = r.metadata.title.strip()
+    except Exception:
+        pass
+    heads = _pdf_headings(r)
+    secs = []
+    for i, page in enumerate(r.pages, 1):
+        try:
+            t = page.extract_text() or ""
+        except Exception:
+            t = ""
+        secs.append((f"{heads[i]} (page {i})" if heads.get(i) else f"page {i}", t))
+    return title, _split(secs, title)
+
+
+def _pdf_headings(r):
+    """{page number: 'Chapter > Section; next section'} from the PDF outline (bookmarks), so a page is found
+    by the section it belongs to, not only by its words; pages without an outline keep 'page N'."""
+    entries = []
+
+    def walk(items, parents):
+        for x in items:
+            if isinstance(x, list):
+                walk(x, parents + [entries[-1][1]] if entries else parents)
+                continue
+            try:
+                entries.append((r.get_destination_page_number(x) + 1, x.title.strip(), list(parents)))
+            except Exception:
+                pass
+    try:
+        walk(r.outline, [])
+    except Exception:
+        return {}
+    heads, last = {}, None
+    by_page = {}
+    for pg, t, parents in entries:
+        by_page.setdefault(pg, []).append((t, parents))
+    for i in range(1, len(r.pages) + 1):
+        here = by_page.get(i)
+        if here:
+            t, parents = here[0]
+            last = " > ".join(parents[-1:] + [t])           # parent chapter + section: enough context
+            heads[i] = "; ".join([last] + [x for x, _ in here[1:]])[:200]
+        elif last:
+            heads[i] = last[:200]
+    return heads
+
+
+# ---------------------------------------------------------------------------
+# Metadata
+# ---------------------------------------------------------------------------
+
+def load_manifests(root):
+    """manifest.json files written by sync_dell.py: {relative_file: {url, title, hub}}"""
+    out = {}
+    for dirpath, _, files in os.walk(root):
+        if "manifest.json" in files:
+            try:
+                data = json.load(open(os.path.join(dirpath, "manifest.json")))
+            except Exception:
+                continue
+            for name, meta in data.items():
+                out[os.path.normpath(os.path.join(dirpath, name))] = meta
+    return out
+
+
+SOURCE_URLS = {}
+
+
+def load_source_urls(root):
+    """<vendor>/<product>/.source_url written by sync-git.sh -> link to the file on GitHub."""
+    for vendor in os.listdir(root):
+        vd = os.path.join(root, vendor)
+        if not os.path.isdir(vd):
+            continue
+        for product in os.listdir(vd):
+            f = os.path.join(vd, product, ".source_url")
+            if os.path.isfile(f):
+                SOURCE_URLS[(vendor.lower(), product)] = open(f).read().strip()
+
+
+def url_for(vendor, product, rel_in_product, manifest_meta):
+    if manifest_meta and manifest_meta.get("url"):
+        return manifest_meta["url"]
+    src = SOURCE_URLS.get((vendor, product), "")
+    if rel_in_product.endswith(".adoc") and "github.com/NetAppDocs/" in src:
+        return f"https://docs.netapp.com/us-en/{product}/{rel_in_product[:-5]}.html"
+    if src == "https://github.com/dell/csm-docs" and rel_in_product.startswith("content/"):
+        # Hugo site dell.github.io/csm-docs: content/docs/a/b.md -> /docs/a/b/, content/v3/... -> /v3/...
+        page = rel_in_product[len("content/"):-3]
+        page = page[:-len("_index")] if page.endswith("_index") else page + "/"
+        return f"https://dell.github.io/csm-docs/{page}"
+    if src.startswith("https://github.com/"):
+        return f"{src}/blob/HEAD/{rel_in_product}"
+    if vendor == "netapp" and rel_in_product.endswith(".adoc"):
+        return f"https://docs.netapp.com/us-en/{product}/{rel_in_product[:-5]}.html"
+    return None
+
+
+def iter_files(root):
+    for dirpath, dirs, files in os.walk(root):
+        dirs[:] = [d for d in dirs if not d.startswith(".") and d not in ("_include", "node_modules")]
+        for f in files:
+            if f.startswith(".") or f == "manifest.json":    # "_index.md" (Hugo section pages: the CSM install guides)
+                continue                                  # and KB files named after a quoted title are real documents
+            p = os.path.join(dirpath, f)
+            if f.lower().endswith(TEXT_EXT + CODE_EXT + (".pdf", ".html", ".htm")) and os.path.isfile(p):
+                yield p                                  # isfile: a dangling symlink (sparse checkout) is skipped
+
+
+def parse_code(text, path):
+    """Source file -> one section per top-level func / type / class (heading = its first line), so a
+    search for an error string lands on the function that raises it. Title: <dir>/<file>."""
+    title = "/".join(path.replace(os.sep, "/").split("/")[-2:])
+    sections, head, cur = [], title, []
+    for line in text.splitlines():
+        if CODE_START.match(line) and cur:
+            sections.append((head, "\n".join(cur)))
+            head, cur = line.strip().rstrip("{").strip()[:160], []
+        elif CODE_START.match(line):
+            head = line.strip().rstrip("{").strip()[:160]
+        cur.append(line)
+    if cur:
+        sections.append((head, "\n".join(cur)))
+    return title, _split(sections, title)
+
+
+def parse_file(path):
+    fallback = os.path.splitext(os.path.basename(path))[0].replace("-", " ").replace("_", " ")
+    low = path.lower()
+    if low.endswith(".pdf"):
+        return parse_pdf(path, fallback)
+    text = open(path, encoding="utf-8", errors="replace").read()
+    if low.endswith(".adoc"):
+        return parse_adoc(text, fallback)
+    if low.endswith((".html", ".htm")):
+        return parse_html(text, fallback)
+    if low.endswith((".md", ".mdx", ".markdown", ".rst")):
+        return parse_md(text, fallback)
+    if low.endswith(CODE_EXT):
+        return parse_code(text, path)
+    return fallback, _split([(fallback, text)], fallback)
+
+
+# ---------------------------------------------------------------------------
+# Index build
+# ---------------------------------------------------------------------------
+
+def build(docs_root, db_path, full=False, log=print, prefix=""):
+    os.makedirs(os.path.dirname(os.path.abspath(db_path)), exist_ok=True)
+    tmp = db_path + ".building"
+    if os.path.exists(tmp):
+        os.remove(tmp)
+    if os.path.exists(db_path) and not full:
+        shutil.copyfile(db_path, tmp)
+    con = sqlite3.connect(tmp)
+    con.executescript(SCHEMA)
+    known = {p: (i, m, s) for i, p, m, s in con.execute("SELECT id, path, mtime, size FROM docs")
+             if p.startswith(prefix)}           # --add: the library's own documents are never touched
+    manifests = load_manifests(docs_root)
+    load_source_urls(docs_root)
+    seen, added, updated, errors = set(), 0, 0, 0
+    t0 = time.time()
+    for path in iter_files(docs_root):
+        parts = os.path.relpath(path, docs_root).split(os.sep)
+        rel = prefix + "/".join(parts)
+        vendor = parts[0].lower() if len(parts) > 2 or not prefix else "local"     # --add: loose files -> local/inbox
+        product = parts[1] if len(parts) > 2 else (parts[0] if not prefix or len(parts) == 2 else "inbox")
+        st = os.stat(path)
+        seen.add(rel)
+        old = known.get(rel)
+        if old and old[1] == st.st_mtime and old[2] == st.st_size:
+            continue
+        try:
+            title, chunks = parse_file(path)
+        except SkipDocument:
+            seen.discard(rel)
+            continue
+        except Exception as e:
+            errors += 1
+            log(f"skip {rel}: {e.__class__.__name__}: {e}")
+            continue
+        rel_in_product = "/".join(parts[2:]) if len(parts) > 2 else parts[-1]
+        meta = manifests.get(os.path.normpath(path))
+        if meta and meta.get("title") and _real_title(meta["title"]):
+            title = meta["title"]
+        if not _real_title(title):
+            title = os.path.splitext(os.path.basename(path))[0].replace("-", " ").replace("_", " ")
+        url = url_for(vendor, product, rel_in_product, meta)
+        if old:
+            _delete_doc(con, old[0])
+            updated += 1
+        else:
+            added += 1
+        doc_id = _insert_doc(con, rel, vendor, product, title, url, st, chunks)
+        if (added + updated) % 2000 == 0:
+            con.commit()
+            log(f"... {added + updated} documents parsed ({time.time() - t0:.0f}s)")
+    removed = 0
+    for rel, (doc_id, _, _) in known.items():
+        if rel not in seen:
+            _delete_doc(con, doc_id)
+            removed += 1
+    deduped = _dedupe(con, docs_root, log, prefix)
+    con.execute("INSERT OR REPLACE INTO meta VALUES ('indexed_at', ?)", (time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),))
+    if os.getenv("BUNDLE_LABEL"):
+        con.execute("INSERT OR REPLACE INTO meta VALUES ('bundle', ?)", (os.getenv("BUNDLE_LABEL"),))
+    con.commit()
+    if (added or updated or removed or deduped) and not prefix:     # --add: a few files, skip the slow full rewrite
+        con.execute("INSERT INTO chunks_fts(chunks_fts) VALUES ('optimize')")
+        con.commit()
+        con.execute("VACUUM")                 # give freed pages back: smaller file to ship
+    con.close()
+    os.replace(tmp, db_path)
+    docs, chunks = sqlite3.connect(db_path).execute(
+        "SELECT (SELECT count(*) FROM docs), (SELECT count(*) FROM chunks)").fetchone()
+    log(f"index {db_path}: {docs} documents ({deduped} identical copies folded), {chunks} chunks (+{added} new, "
+        f"{updated} updated, -{removed} removed, {errors} errors) in {time.time() - t0:.0f}s")
+    return {"documents": docs, "chunks": chunks, "added": added, "updated": updated,
+            "removed": removed, "errors": errors, "deduped": deduped}
+
+
+GENERIC_TITLES = {"pdf", "download", "view", "link", "here", "click here", "document", "english", "en-us", "untitled"}
+
+
+def _real_title(t):
+    t = (t or "").strip()
+    return len(t) >= 4 and t.lower() not in GENERIC_TITLES
+
+
+def _text_hash(chunks):
+    m = hashlib.sha1()
+    for heading, text in chunks:
+        m.update((heading or "").encode()); m.update(b"\x1f"); m.update((text or "").encode()); m.update(b"\x1e")
+    return m.hexdigest()
+
+
+def _context_title(rel, vendor, product, title):
+    """What the FTS title column holds: the title plus where the document sits (vendor, product, folders,
+    file name), so a page titled just "Troubleshooting" in csm/.../replication/ matches "csm replication
+    troubleshooting" and a PDF titled "pdf" matches its file name. Display still uses docs.title."""
+    seen = set(re.findall(r"\w+", title.lower()))
+    words = []
+    for w in re.findall(r"[A-Za-z0-9]+", os.path.splitext(rel)[0]):
+        lw = w.lower()
+        if lw in seen or (len(w) == 8 and re.fullmatch(r"[0-9a-f]+", lw)) or lw in ("content", "docs", "md", "html"):
+            continue
+        seen.add(lw)
+        words.append(w)
+    return f"{title} | {' '.join(words)}" if words else title
+
+
+def _insert_doc(con, rel, vendor, product, title, url, st, chunks):
+    cur = con.execute("INSERT INTO docs(path, vendor, product, title, url, mtime, size, chunks, hash) "
+                      "VALUES (?,?,?,?,?,?,?,?,?)", (rel, vendor, product, title, url, st.st_mtime,
+                                                      st.st_size, len(chunks), _text_hash(chunks)))
+    doc_id = cur.lastrowid
+    ctx_title = _context_title(rel, vendor, product, title)
+    for seq, (heading, text) in enumerate(chunks):
+        cid = con.execute("INSERT INTO chunks(doc_id, seq) VALUES (?,?)", (doc_id, seq)).lastrowid
+        con.execute("INSERT INTO chunks_fts(rowid, title, heading, text) VALUES (?,?,?,?)",
+                    (cid, ctx_title, heading, text))
+    return doc_id
+
+
+def _canonical_rank(product, path, prefix=""):
+    """Which copy of identical text to keep: the unversioned product (ontap-ems, trident, content/docs)
+    first, then the newest version (highest number), then the shortest path."""
+    m = re.search(r"(\d+)$", product)
+    versioned = 1 if m else 0
+    ver = -int(m.group(1)) if m else 0
+    cur = 0 if "/content/docs/" in path or "/content/docs" in path else (1 if re.search(r"/content/v\d+/", path) else 0)
+    return (bool(prefix) and path.startswith(prefix), versioned, ver, cur, len(path))   # library copy stays canonical
+
+
+def _dedupe(con, docs_root, log, prefix=""):
+    """Documents with identical text keep ONE copy of their chunks (the canonical one); the others become
+    aliases (dup_of -> canonical, chunks = 0) so a search shows the page once, filtering by any of the
+    products still finds it, and read_document on an alias path reads the canonical copy."""
+    # aliases whose canonical disappeared or changed hash: re-parse them
+    orphans = con.execute("SELECT a.id, a.path FROM docs a LEFT JOIN docs c ON c.id = a.dup_of "
+                          "WHERE a.dup_of IS NOT NULL AND (c.id IS NULL OR c.hash != a.hash OR c.dup_of IS NOT NULL)").fetchall()
+    for doc_id, rel in orphans:
+        if prefix and not rel.startswith(prefix):
+            continue                                  # --add: library files are not on disk here
+        path = os.path.join(docs_root, rel[len(prefix):])
+        row = con.execute("SELECT vendor, product, url FROM docs WHERE id = ?", (doc_id,)).fetchone()
+        _delete_doc(con, doc_id)
+        if os.path.exists(path):
+            try:
+                title, chunks = parse_file(path)
+            except Exception:
+                continue
+            _insert_doc(con, rel, row[0], row[1], title, row[2], os.stat(path), chunks)
+    folded = 0
+    groups = con.execute("SELECT hash FROM docs WHERE hash IS NOT NULL GROUP BY hash HAVING count(*) > 1").fetchall()
+    for (h,) in groups:
+        rows = con.execute("SELECT id, product, path, dup_of, chunks FROM docs WHERE hash = ?", (h,)).fetchall()
+        rows.sort(key=lambda r: _canonical_rank(r[1], r[2], prefix))
+        canon = rows[0]
+        if canon[3] is not None:                      # canonical must own chunks: promote it
+            con.execute("UPDATE docs SET dup_of = NULL WHERE id = ?", (canon[0],))
+            if canon[4] == 0:                         # has no chunks: take them from a sibling that has
+                donor = next((r for r in rows[1:] if r[3] is None and r[4] > 0), None)
+                if donor:
+                    con.execute("UPDATE chunks SET doc_id = ? WHERE doc_id = ?", (canon[0], donor[0]))
+                    con.execute("UPDATE docs SET chunks = ? WHERE id = ?", (donor[4], canon[0]))
+                    con.execute("UPDATE docs SET chunks = 0, dup_of = ? WHERE id = ?", (canon[0], donor[0]))
+        for r in rows[1:]:
+            if r[0] == canon[0]:
+                continue
+            if r[3] != canon[0]:
+                if r[4] > 0 and r[3] is None:
+                    con.execute("DELETE FROM chunks_fts WHERE rowid IN (SELECT id FROM chunks WHERE doc_id=?)", (r[0],))
+                    con.execute("DELETE FROM chunks WHERE doc_id=?", (r[0],))
+                con.execute("UPDATE docs SET dup_of = ?, chunks = 0 WHERE id = ?", (canon[0], r[0]))
+            folded += 1
+    con.commit()
+    return folded
+
+
+def _delete_doc(con, doc_id):
+    con.execute("DELETE FROM chunks_fts WHERE rowid IN (SELECT id FROM chunks WHERE doc_id=?)", (doc_id,))
+    con.execute("DELETE FROM chunks WHERE doc_id=?", (doc_id,))
+    con.execute("DELETE FROM docs WHERE id=?", (doc_id,))
+
+
+if __name__ == "__main__":
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--docs", default=os.getenv("DOCS_DIR", "/data/docs"))
+    ap.add_argument("--db", default=os.getenv("INDEX_DB", "/data/index/docs.db"))
+    ap.add_argument("--full", action="store_true", help="rebuild from scratch")
+    ap.add_argument("--add", metavar="PREFIX", default="", help="add/refresh only PREFIX<path> documents (e.g. inbox/)")
+    a = ap.parse_args()
+    if not os.path.isdir(a.docs):
+        sys.exit(f"docs directory {a.docs} not found")
+    if a.add and (a.full or not a.add.endswith("/")):
+        sys.exit("--add needs a prefix ending in / (e.g. inbox/) and no --full")
+    build(a.docs, a.db, a.full, prefix=a.add)

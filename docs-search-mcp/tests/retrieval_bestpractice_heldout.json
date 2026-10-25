@@ -1,0 +1,188 @@
+[
+{
+"q": "best practice when adding disks to an existing aggregate",
+"expect": [
+"What_are_the_best_practices_for_adding_disks"
+]
+},
+{
+"q": "sql server failover cluster on powermax recommendations",
+"expect": [
+"sql-server-2025-on-dell-powermax"
+]
+},
+{
+"q": "pyu4v how to collect performance metrics efficiently",
+"expect": [
+"pyu4v/docs/source/recommendations"
+]
+},
+{
+"q": "should I turn off fractional reserve for luns",
+"expect": [
+"set-fractional-reserve-concept"
+]
+},
+{
+"q": "external snapshotter distributed snapshotting flag",
+"expect": [
+"external-snapshotter/README"
+]
+},
+{
+"q": "which lifs can I use to reach the ontap rest api",
+"expect": [
+"access_rest_api"
+]
+},
+{
+"q": "csm resiliency recommended settings for powerflex array connectivity poll rate",
+"expect": [
+"modules/resiliency"
+]
+},
+{
+"q": "high file count nas workload recommendations on ontap",
+"expect": [
+"high-file-count-workloads"
+]
+},
+{
+"q": "what to consider before upgrading controller hardware by moving volumes",
+"expect": [
+"upgrade/upgrade-considerations"
+]
+},
+{
+"q": "minimum kubernetes version for the csi sidecars",
+"expect": [
+"csi-docs/book/src/project-policies"
+]
+},
+{
+"q": "grow the filesystem of a trident pv, ext4 or xfs",
+"expect": [
+"increasing_the_filesystem_size"
+]
+},
+{
+"q": "back up and restore cloudlink keys",
+"expect": [
+"manual25439440"
+]
+},
+{
+"q": "windows san luns on netapp: thin provisioning, alua and session speed",
+"expect": [
+"microsoft/win_san"
+]
+},
+{
+"q": "srdf/metro witness or bias with a vmware metro storage cluster",
+"expect": [
+"h17532"
+]
+},
+{
+"q": "replicated vvols datastores with srm on ontap",
+"expect": [
+"vmware-srm-operational_best_practices"
+]
+},
+{
+"q": "csi provisioner kube-api-burst setting",
+"expect": [
+"external-provisioner/README"
+]
+},
+{
+"q": "terraform powerscale asynchronous operations",
+"expect": [
+"aync_resource_info"
+]
+},
+{
+"q": "snapcenter sql server storage layout",
+"expect": [
+"reference_storage_layout_recommendations"
+]
+},
+{
+"q": "unified manager suggests tiering cold data to the cloud",
+"expect": [
+"concept_understand_um_recommendations_to_tier"
+]
+},
+{
+"q": "replication patterns for stateful apps on kubernetes with powermax",
+"expect": [
+"powermax-for-kubernetes-architecture-csi-integration"
+]
+},
+{
+"q": "how should I deploy pnfs",
+"expect": [
+"pnfs/pnfs-plan-concept"
+]
+},
+{
+"q": "powerscale nfs client mount settings",
+"expect": [
+"000513598"
+]
+},
+{
+"q": "sdc init container on openshift worker nodes for the powerflex csi driver",
+"expect": [
+"best-practices-for-deployment-and-life-cycle-management-of-dell-csm"
+]
+},
+{
+"q": "powermax minimally disruptive migration with ors donor update",
+"expect": [
+"non-disruptive-and-minimally-disruptive-migration"
+]
+},
+{
+"q": "ontap select how many physical ports per host",
+"expect": [
+"reference_plan_ots_general"
+]
+},
+{
+"q": "fc zoning for hosts on asa r2",
+"expect": [
+"set-up-san-host"
+]
+},
+{
+"q": "santricity mirroring manual or automatic resync",
+"expect": [
+"faq-storage-mirroring"
+]
+},
+{
+"q": "trident running out of ontap volumes, limit the volume count",
+"expect": [
+"storage-config-best-practices"
+]
+},
+{
+"q": "ontap tools guest os timeout scripts",
+"expect": [
+"reference_considerations_for_deploying_virtual_appliance"
+]
+},
+{
+"q": "storagegrid guidelines for adding a new site",
+"expect": [
+"expand/adding-new-site"
+]
+},
+{
+"q": "oracle asm redo log template on scaleio",
+"expect": [
+"oracle-asm-on-scaleio-best-practices"
+]
+}
+]
