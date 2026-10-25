@@ -1,0 +1,52 @@
+<html><head><title>PowerFlex API 4.5.1: Getting a network</title></head><body><p>Tasks > PowerFlex Manager API tasks</p><div><div class="api-docs-main-div dds__pl-2">
+    <div class="markdown-wrapper dds__py-3">
+      <div class="markdown-body dds__px-3"><h1 id="getting-a-network" class="anchor-scroll-top-offset">Getting a network</h1>
+<p>You can get one of the defined networks by calling this API with a filter that specifies the network name:</p>
+<p><code>GET /Network?filter=eq,name,vcesys-sio-data1</code></p>
+<p>Sample response:</p>
+<pre><code class="language-json">[
+    {
+        "createdBy": "admin",
+        "createdDate": "2021-05-17T19:37:03.466Z",
+        "description": "ScaleIO Data VLAN",
+        "destinationIpAddress": "192.168.152.0",
+        "id": "ff808081797bca1f01797bd4f0ee0322",
+        "link": null,
+        "name": "vcesys-sio-data1",
+        "static": true,
+        "staticNetworkConfiguration": {
+            "dnsSuffix": null,
+            "gateway": null,
+            "ipAddress": null,
+            "ipRange": [
+                {
+                    "availableIps": 151,
+                    "endingIp": "192.168.152.250",
+                    "id": "ff808081797bca1f01797bd4f0ee0323",
+                    "role": null,
+                    "startingIp": "192.168.152.100",
+                    "totalIps": 151
+                }
+            ],
+            "primaryDns": null,
+            "secondaryDns": null,
+            "subnet": "255.255.255.0"
+        },
+        "type": "SCALEIO_DATA",
+        "updatedBy": null,
+        "updatedDate": null,
+        "vlanId": 152
+    }
+]
+
+</code></pre>
+</div>
+      <div class="markdown-sidebar">
+        <div class="markdown-toc-title">
+          <i class="icon dds__icon dds__icon--bookmark"></i>
+          On this page
+        </div>
+          <ul><li class="level-1"><a href="#getting-a-network" data-toc-link="">Getting a network</a></li></ul>
+      </div>
+    </div>
+  </div></div></body></html>

@@ -1,0 +1,1385 @@
+<html><head><title>PowerFlex API 5.1.0: Update software bundle for device</title></head><body><p>Erasure coding APIS > PowerFlex Manager (AsmManager) REST API > software bundle</p><div><div class="api-docs-main-div dds__pl-2">
+      <div class="api-doc-container">
+        <div class="api__doc__left-section dds__p-3">
+   <div class="markdown-renderer">
+          <h4 class="dds__font-weight-bold dds__pb-2">Update software bundle for device</h4>       
+          <div><p>Update a software bundle for a device in the inventory.</p>
+</div> 
+          
+    </div>
+
+<div class="api_docs_collapsible dds__mb-3 expanded" id="request"><div class="api_docs_collapsible-header dds__p-3" data-action="toggleCollapse" data-target-id="request" role="button" tabindex="0" aria-controls="request-body" aria-expanded="true"><span class="title">Requests</span><span class="icon icon-collapsed dds__icon dds__icon--chevron-right dds__mt-1 dds__ml-auto"></span><span class="icon icon-expanded dds__icon dds__icon--chevron-down dds__mt-1 dds__ml-auto"></span></div><div class="api_docs_collapsible-body" id="request-body"><div class="static-frame-request-section"><div class="headers-section"><h5 class="title">Path Parameters</h5>
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="id">id</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      <span class="required">Required</span>
+    </div>
+    
+    
+    
+    
+    <div class="desc"><p>Id of software bundle to update</p>
+</div>
+    
+    
+  </div>
+</div></div></div>
+<div class="static-frame-request-section"><div class="headers-section"><h5 class="title">Request Body</h5><div class="static-frame-request-section"><div class="expanded" id="Request Body-SoftwareBundle-1j9a">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name clickable-property" title="SoftwareBundle" style="cursor: pointer;">SoftwareBundle</span>
+    </div>
+    <span class="schema-toggle-icon" data-action="toggleNestedBodyCard" data-target-id="Request Body-SoftwareBundle-1j9a" role="button" tabindex="0" aria-controls="Request Body-SoftwareBundle-1j9a-nested-body" aria-expanded="true">
+            <span class="icon dds__icon dds__icon--chevron-right dds__mt-1 dds__ml-auto hidden"></span>
+            <span class="icon dds__icon dds__icon--chevron-down dds__mt-1 dds__ml-auto"></span>
+        </span>
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">object</span>
+      
+    </div>
+    
+    
+    
+    
+    <div class="desc"><p>Software Bundle</p>
+</div>
+    
+    
+  </div>
+</div><div class="nested-body schema-child-row" id="Request Body-SoftwareBundle-1j9a-nested-body" style="">
+            <div colspan="2" class="nested">
+            <div class="" id="primitive-id">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="id">id</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-name">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="name">name</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-version">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="version">version</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-bundleDate">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="bundleDate">bundleDate</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string&lt;date-time&gt;</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-createdDate">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="createdDate">createdDate</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string&lt;date-time&gt;</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-createdBy">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="createdBy">createdBy</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-updatedDate">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="updatedDate">updatedDate</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string&lt;date-time&gt;</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-updatedBy">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="updatedBy">updatedBy</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-description">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="description">description</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-userBundle">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="userBundle">userBundle</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">boolean</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-userBundlePath">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="userBundlePath">userBundlePath</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-userBundleHashMd5">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="userBundleHashMd5">userBundleHashMd5</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-deviceType">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="deviceType">deviceType</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-deviceModel">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="deviceModel">deviceModel</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-criticality">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="criticality">criticality</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-external">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="external">external</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">boolean</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-fwRepositoryId">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="fwRepositoryId">fwRepositoryId</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="expanded" id="Request Body-SoftwareBundle-1j9a-link-2k09">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name clickable-property" title="link" style="cursor: pointer;">link</span>
+    </div>
+    <span class="schema-toggle-icon" data-action="toggleNestedBodyCard" data-target-id="Request Body-SoftwareBundle-1j9a-link-2k09" role="button" tabindex="0" aria-controls="Request Body-SoftwareBundle-1j9a-link-2k09-nested-body" aria-expanded="true">
+            <span class="icon dds__icon dds__icon--chevron-right dds__mt-1 dds__ml-auto hidden"></span>
+            <span class="icon dds__icon dds__icon--chevron-down dds__mt-1 dds__ml-auto"></span>
+        </span>
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">object</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div><div class="nested-body schema-child-row" id="Request Body-SoftwareBundle-1j9a-link-2k09-nested-body" style="">
+            <div colspan="2" class="nested">
+            <div class="" id="primitive-title">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="title">title</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-href">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="href">href</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-rel">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="rel">rel</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-type">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="type">type</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+            </div>
+          </div></div>
+<div class="" id="primitive-bundleType">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="bundleType">bundleType</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    <div class="enums">allowed values: <span class="dds__badge dds__badge--sm dds__badge--brand dds__badge--light">SOFTWARE</span> <span class="dds__badge dds__badge--sm dds__badge--brand dds__badge--light">FIRMWARE</span></div>
+  </div>
+</div></div>
+<div class="" id="primitive-custom">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="custom">custom</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">boolean</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-needsAttention">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="needsAttention">needsAttention</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">boolean</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="Request Body-SoftwareBundle-1j9a-softwareComponents-x0dv">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name clickable-property" title="softwareComponents" style="cursor: pointer;">softwareComponents</span>
+    </div>
+    <span class="schema-toggle-icon" data-action="toggleNestedBodyCard" data-target-id="Request Body-SoftwareBundle-1j9a-softwareComponents-x0dv" role="button" tabindex="0" aria-controls="Request Body-SoftwareBundle-1j9a-softwareComponents-x0dv-nested-body" aria-expanded="false">
+            <span class="icon dds__icon dds__icon--chevron-right dds__mt-1 dds__ml-auto"></span>
+            <span class="icon dds__icon dds__icon--chevron-down dds__mt-1 dds__ml-auto hidden"></span>
+        </span>
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">array[object]</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div><div class="nested-body schema-child-row" id="Request Body-SoftwareBundle-1j9a-softwareComponents-x0dv-nested-body" style="display:none">
+            <div colspan="2" class="nested">
+            <div class="" id="primitive-id">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="id">id</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-packageId">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="packageId">packageId</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-dellVersion">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="dellVersion">dellVersion</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-vendorVersion">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="vendorVersion">vendorVersion</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-componentId">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="componentId">componentId</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-deviceId">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="deviceId">deviceId</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-subDeviceId">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="subDeviceId">subDeviceId</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-vendorId">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="vendorId">vendorId</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-subVendorId">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="subVendorId">subVendorId</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-createdDate">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="createdDate">createdDate</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string&lt;date-time&gt;</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-createdBy">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="createdBy">createdBy</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-updatedDate">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="updatedDate">updatedDate</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string&lt;date-time&gt;</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-updatedBy">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="updatedBy">updatedBy</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-path">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="path">path</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-hashMd5">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="hashMd5">hashMd5</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-name">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="name">name</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-category">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="category">category</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-componentType">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="componentType">componentType</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-operatingSystem">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="operatingSystem">operatingSystem</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="Request Body-SoftwareBundle-1j9a-softwareComponents-x0dv-systemIDs-1i39">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="systemIDs">systemIDs</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">array[string]</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-custom">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="custom">custom</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">boolean</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-needsAttention">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="needsAttention">needsAttention</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">boolean</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-ignore">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="ignore">ignore</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">boolean</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-originalVersion">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="originalVersion">originalVersion</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-originalComponentId">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="originalComponentId">originalComponentId</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-firwareRepoName">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="firwareRepoName">firwareRepoName</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-external">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="external">external</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">boolean</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+            </div>
+          </div></div>
+            </div>
+          </div></div></div></div></div></div></div>
+
+       <div class="api_docs_collapsible dds__mb-3" id="response"><div class="api_docs_collapsible-header dds__p-3" data-action="toggleCollapse" data-target-id="response" role="button" tabindex="0" aria-controls="response-body" aria-expanded="false"><span class="title">Responses</span><span class="icon icon-collapsed dds__icon dds__icon--chevron-right dds__mt-1 dds__ml-auto"></span><span class="icon icon-expanded dds__icon dds__icon--chevron-down dds__mt-1 dds__ml-auto"></span></div><div class="api_docs_collapsible-body" id="response-body"><div class="api_docs_collapsible dds__mb-3" id="9708497564112"><div class="api_docs_collapsible-header dds__p-3" data-action="toggleCollapse" data-target-id="9708497564112" role="button" tabindex="0" aria-controls="9708497564112-body" aria-expanded="false"><span class="title"><div class="response-frame"><span class="text-green"><span class="dds__badge dds__badge--dot dds__mr-2"></span>200</span> : OK</div></span><span class="icon icon-collapsed dds__icon dds__icon--chevron-right dds__mt-1 dds__ml-auto"></span><span class="icon icon-expanded dds__icon dds__icon--chevron-down dds__mt-1 dds__ml-auto"></span></div><div class="api_docs_collapsible-body" id="9708497564112-body"><div class="static-frame-response-section"><div>OK</div></div></div></div></div></div>
+   </div>
+        <div class="api__doc__right-section dds__pl-2"><div class="api_docs_collapsible highlight dds__mb-3 expanded" id="server"><div class="api_docs_collapsible-header dds__p-3" data-action="toggleCollapse" data-target-id="server" role="button" tabindex="0" aria-expanded="true"><div class="dds__w-100"><div class="server-title"><span class="dds__badge dds__badge--md http-method-post"><span class="dds__badge__label badge-font">POST</span></span><button style="float: right; border: 1px solid #9ca3af; display:none" class="dds__ml-auto dds__button dds__button--sm" type="button" id="drawer-trigger" data-action="clickedTryOutButton">Try it</button></div><div class="dds__p-2">/softwareBundleFirmware/{id}</div></div><span class="icon icon-collapsed dds__icon dds__icon--chevron-right dds__ml-auto"></span><span class="icon icon-expanded dds__icon dds__icon--chevron-down dds__ml-auto"></span></div><div class="api_docs_collapsible-body dds__px-3 dds__pt-2 dds__pb-3"><div class="dds__pr-2"></div><div class="dds__d-flex dds__justify-content-end dds__my-2"><button class="dds__button dds__button--sm" data-action="copyCodeById" data-target-id="server-copy-0">Copy</button></div><pre tabindex="0"><code id="server-copy-0">/softwareBundleFirmware/{id}</code></pre></div></div>
+<div class="api_docs_collapsible highlight dds__mb-3 expanded" id="requestsamples"><div class="api_docs_collapsible-header dds__p-3" data-action="toggleCollapse" data-target-id="requestsamples" role="button" tabindex="0" aria-controls="requestsamples-body" aria-expanded="true">Request Samples<span class="icon icon-collapsed dds__icon dds__icon--chevron-right dds__ml-auto"></span><span class="icon icon-expanded dds__icon dds__icon--chevron-down dds__ml-auto"></span></div><div class="api_docs_collapsible-body dds__px-3 dds__pt-2 dds__pb-3" id="requestsamples-body">
+        <div class="dds__pt-2">
+          <label for="requestsamples-media-content-type" class="dds__visually-hidden">Select content type</label>
+          <select id="requestsamples-media-content-type" class="dds__select__field dds__mb-2" data-action="onContentTypeChange" data-example-select-id="requestsamples-media-example" data-code-container-id="requestsamples-media-code" data-examples-data="%7B%22application%2Fjson%22%3A%5B%7B%22description%22%3A%22Example%22%2C%22codeContent%22%3A%22%7B%5Cn%20%20%5C%22id%5C%22%3A%20%5C%22string%5C%22%2C%5Cn%20%20%5C%22name%5C%22%3A%20%5C%22string%5C%22%2C%5Cn%20%20%5C%22version%5C%22%3A%20%5C%22string%5C%22%2C%5Cn%20%20%5C%22bundleDate%5C%22%3A%20%5C%222026-10-23T19%3A58%3A59.110Z%5C%22%2C%5Cn%20%20%5C%22createdDate%5C%22%3A%20%5C%222026-10-23T19%3A58%3A59.110Z%5C%22%2C%5Cn%20%20%5C%22createdBy%5C%22%3A%20%5C%22string%5C%22%2C%5Cn%20%20%5C%22updatedDate%5C%22%3A%20%5C%222026-10-23T19%3A58%3A59.110Z%5C%22%2C%5Cn%20%20%5C%22updatedBy%5C%22%3A%20%5C%22string%5C%22%2C%5Cn%20%20%5C%22description%5C%22%3A%20%5C%22string%5C%22%2C%5Cn%20%20%5C%22userBundle%5C%22%3A%20false%2C%5Cn%20%20%5C%22userBundlePath%5C%22%3A%20%5C%22string%5C%22%2C%5Cn%20%20%5C%22userBundleHashMd5%5C%22%3A%20%5C%22string%5C%22%2C%5Cn%20%20%5C%22deviceType%5C%22%3A%20%5C%22string%5C%22%2C%5Cn%20%20%5C%22deviceModel%5C%22%3A%20%5C%22string%5C%22%2C%5Cn%20%20%5C%22criticality%5C%22%3A%20%5C%22string%5C%22%2C%5Cn%20%20%5C%22external%5C%22%3A%20false%2C%5Cn%20%20%5C%22fwRepositoryId%5C%22%3A%20%5C%22string%5C%22%2C%5Cn%20%20%5C%22link%5C%22%3A%20%7B%5Cn%20%20%20%20%5C%22title%5C%22%3A%20%5C%22string%5C%22%2C%5Cn%20%20%20%20%5C%22href%5C%22%3A%20%5C%22string%5C%22%2C%5Cn%20%20%20%20%5C%22rel%5C%22%3A%20%5C%22string%5C%22%2C%5Cn%20%20%20%20%5C%22type%5C%22%3A%20%5C%22string%5C%22%5Cn%20%20%7D%2C%5Cn%20%20%5C%22bundleType%5C%22%3A%20%5C%22string%5C%22%2C%5Cn%20%20%5C%22custom%5C%22%3A%20false%2C%5Cn%20%20%5C%22needsAttention%5C%22%3A%20false%2C%5Cn%20%20%5C%22softwareComponents%5C%22%3A%20%5B%5Cn%20%20%20%20%7B%5Cn%20%20%20%20%20%20%5C%22id%5C%22%3A%20%5C%22string%5C%22%2C%5Cn%20%20%20%20%20%20%5C%22packageId%5C%22%3A%20%5C%22string%5C%22%2C%5Cn%20%20%20%20%20%20%5C%22dellVersion%5C%22%3A%20%5C%22string%5C%22%2C%5Cn%20%20%20%20%20%20%5C%22vendorVersion%5C%22%3A%20%5C%22string%5C%22%2C%5Cn%20%20%20%20%20%20%5C%22componentId%5C%22%3A%20%5C%22string%5C%22%2C%5Cn%20%20%20%20%20%20%5C%22deviceId%5C%22%3A%20%5C%22string%5C%22%2C%5Cn%20%20%20%20%20%20%5C%22subDeviceId%5C%22%3A%20%5C%22string%5C%22%2C%5Cn%20%20%20%20%20%20%5C%22vendorId%5C%22%3A%20%5C%22string%5C%22%2C%5Cn%20%20%20%20%20%20%5C%22subVendorId%5C%22%3A%20%5C%22string%5C%22%2C%5Cn%20%20%20%20%20%20%5C%22createdDate%5C%22%3A%20%5C%222026-10-23T19%3A58%3A59.110Z%5C%22%2C%5Cn%20%20%20%20%20%20%5C%22createdBy%5C%22%3A%20%5C%22string%5C%22%2C%5Cn%20%20%20%20%20%20%5C%22updatedDate%5C%22%3A%20%5C%222026-10-23T19%3A58%3A59.110Z%5C%22%2C%5Cn%20%20%20%20%20%20%5C%22updatedBy%5C%22%3A%20%5C%22string%5C%22%2C%5Cn%20%20%20%20%20%20%5C%22path%5C%22%3A%20%5C%22string%5C%22%2C%5Cn%20%20%20%20%20%20%5C%22hashMd5%5C%22%3A%20%5C%22string%5C%22%2C%5Cn%20%20%20%20%20%20%5C%22name%5C%22%3A%20%5C%22string%5C%22%2C%5Cn%20%20%20%20%20%20%5C%22category%5C%22%3A%20%5C%22string%5C%22%2C%5Cn%20%20%20%20%20%20%5C%22componentType%5C%22%3A%20%5C%22string%5C%22%2C%5Cn%20%20%20%20%20%20%5C%22operatingSystem%5C%22%3A%20%5C%22string%5C%22%2C%5Cn%20%20%20%20%20%20%5C%22systemIDs%5C%22%3A%20%5B%5Cn%20%20%20%20%20%20%20%20%5C%22string%5C%22%5Cn%20%20%20%20%20%20%5D%2C%5Cn%20%20%20%20%20%20%5C%22custom%5C%22%3A%20false%2C%5Cn%20%20%20%20%20%20%5C%22needsAttention%5C%22%3A%20false%2C%5Cn%20%20%20%20%20%20%5C%22ignore%5C%22%3A%20false%2C%5Cn%20%20%20%20%20%20%5C%22originalVersion%5C%22%3A%20%5C%22string%5C%22%2C%5Cn%20%20%20%20%20%20%5C%22originalComponentId%5C%22%3A%20%5C%22string%5C%22%2C%5Cn%20%20%20%20%20%20%5C%22firwareRepoName%5C%22%3A%20%5C%22string%5C%22%2C%5Cn%20%20%20%20%20%20%5C%22external%5C%22%3A%20false%5Cn%20%20%20%20%7D%5Cn%20%20%5D%5Cn%7D%22%7D%5D%2C%22application%2Fxml%22%3A%5B%5D%7D" aria-label="Select content type">
+            <option value="application/json" selected="">application/json</option><option value="application/xml">application/xml</option>
+          </select>
+        </div><div class="dds__pt-2"><label for="requestsamples-media-example" class="dds__visually-hidden">Select example</label><select id="requestsamples-media-example" class="dds__select__field" data-action="onExampleSelectChange" data-code-container-id="requestsamples-media-code" aria-label="Select example"><option value="0" data-code="{
+  &quot;id&quot;: &quot;string&quot;,
+  &quot;name&quot;: &quot;string&quot;,
+  &quot;version&quot;: &quot;string&quot;,
+  &quot;bundleDate&quot;: &quot;2026-10-23T19:58:59.110Z&quot;,
+  &quot;createdDate&quot;: &quot;2026-10-23T19:58:59.110Z&quot;,
+  &quot;createdBy&quot;: &quot;string&quot;,
+  &quot;updatedDate&quot;: &quot;2026-10-23T19:58:59.110Z&quot;,
+  &quot;updatedBy&quot;: &quot;string&quot;,
+  &quot;description&quot;: &quot;string&quot;,
+  &quot;userBundle&quot;: false,
+  &quot;userBundlePath&quot;: &quot;string&quot;,
+  &quot;userBundleHashMd5&quot;: &quot;string&quot;,
+  &quot;deviceType&quot;: &quot;string&quot;,
+  &quot;deviceModel&quot;: &quot;string&quot;,
+  &quot;criticality&quot;: &quot;string&quot;,
+  &quot;external&quot;: false,
+  &quot;fwRepositoryId&quot;: &quot;string&quot;,
+  &quot;link&quot;: {
+    &quot;title&quot;: &quot;string&quot;,
+    &quot;href&quot;: &quot;string&quot;,
+    &quot;rel&quot;: &quot;string&quot;,
+    &quot;type&quot;: &quot;string&quot;
+  },
+  &quot;bundleType&quot;: &quot;string&quot;,
+  &quot;custom&quot;: false,
+  &quot;needsAttention&quot;: false,
+  &quot;softwareComponents&quot;: [
+    {
+      &quot;id&quot;: &quot;string&quot;,
+      &quot;packageId&quot;: &quot;string&quot;,
+      &quot;dellVersion&quot;: &quot;string&quot;,
+      &quot;vendorVersion&quot;: &quot;string&quot;,
+      &quot;componentId&quot;: &quot;string&quot;,
+      &quot;deviceId&quot;: &quot;string&quot;,
+      &quot;subDeviceId&quot;: &quot;string&quot;,
+      &quot;vendorId&quot;: &quot;string&quot;,
+      &quot;subVendorId&quot;: &quot;string&quot;,
+      &quot;createdDate&quot;: &quot;2026-10-23T19:58:59.110Z&quot;,
+      &quot;createdBy&quot;: &quot;string&quot;,
+      &quot;updatedDate&quot;: &quot;2026-10-23T19:58:59.110Z&quot;,
+      &quot;updatedBy&quot;: &quot;string&quot;,
+      &quot;path&quot;: &quot;string&quot;,
+      &quot;hashMd5&quot;: &quot;string&quot;,
+      &quot;name&quot;: &quot;string&quot;,
+      &quot;category&quot;: &quot;string&quot;,
+      &quot;componentType&quot;: &quot;string&quot;,
+      &quot;operatingSystem&quot;: &quot;string&quot;,
+      &quot;systemIDs&quot;: [
+        &quot;string&quot;
+      ],
+      &quot;custom&quot;: false,
+      &quot;needsAttention&quot;: false,
+      &quot;ignore&quot;: false,
+      &quot;originalVersion&quot;: &quot;string&quot;,
+      &quot;originalComponentId&quot;: &quot;string&quot;,
+      &quot;firwareRepoName&quot;: &quot;string&quot;,
+      &quot;external&quot;: false
+    }
+  ]
+}" data-description="Example">
+        Example
+      </option></select></div>
+        <div class="dds__d-flex dds__justify-content-end dds__my-2">
+              <button class="dds__button dds__button--sm" data-action="copyCodeById" data-target-id="requestsamples-media-code">
+                    Copy
+                  </button>
+        </div>
+        <div id="requestsamples-media-code">
+          <pre tabindex="0"><code>{
+  "id": "string",
+  "name": "string",
+  "version": "string",
+  "bundleDate": "2026-10-23T19:58:59.110Z",
+  "createdDate": "2026-10-23T19:58:59.110Z",
+  "createdBy": "string",
+  "updatedDate": "2026-10-23T19:58:59.110Z",
+  "updatedBy": "string",
+  "description": "string",
+  "userBundle": false,
+  "userBundlePath": "string",
+  "userBundleHashMd5": "string",
+  "deviceType": "string",
+  "deviceModel": "string",
+  "criticality": "string",
+  "external": false,
+  "fwRepositoryId": "string",
+  "link": {
+    "title": "string",
+    "href": "string",
+    "rel": "string",
+    "type": "string"
+  },
+  "bundleType": "string",
+  "custom": false,
+  "needsAttention": false,
+  "softwareComponents": [
+    {
+      "id": "string",
+      "packageId": "string",
+      "dellVersion": "string",
+      "vendorVersion": "string",
+      "componentId": "string",
+      "deviceId": "string",
+      "subDeviceId": "string",
+      "vendorId": "string",
+      "subVendorId": "string",
+      "createdDate": "2026-10-23T19:58:59.110Z",
+      "createdBy": "string",
+      "updatedDate": "2026-10-23T19:58:59.110Z",
+      "updatedBy": "string",
+      "path": "string",
+      "hashMd5": "string",
+      "name": "string",
+      "category": "string",
+      "componentType": "string",
+      "operatingSystem": "string",
+      "systemIDs": [
+        "string"
+      ],
+      "custom": false,
+      "needsAttention": false,
+      "ignore": false,
+      "originalVersion": "string",
+      "originalComponentId": "string",
+      "firwareRepoName": "string",
+      "external": false
+    }
+  ]
+}</code></pre>
+        </div></div></div>
+<div class="api_docs_collapsible highlight dds__mb-3 expanded" id="responsesamples"><div class="api_docs_collapsible-header dds__p-3" data-action="toggleCollapse" data-target-id="responsesamples" role="button" tabindex="0" aria-controls="responsesamples-body" aria-expanded="true">Response Samples<span class="icon icon-collapsed dds__icon dds__icon--chevron-right dds__ml-auto"></span><span class="icon icon-expanded dds__icon dds__icon--chevron-down dds__ml-auto"></span></div><div class="api_docs_collapsible-body dds__px-3 dds__pt-2 dds__pb-3" id="responsesamples-body"><div class="response-tab-wrapper"><div class="tab-header" role="tablist"><h4 class="tab-item active" role="tab" aria-selected="true" aria-controls="responsesamples-tab-200" data-action="switchTab" data-target-id="responsesamples-tab-200">200</h4></div><div class="tab-body"><div class="tab-content active" id="responsesamples-tab-200" role="tabpanel" aria-labelledby="responsesamples-tab-200"><div class="dds__pt-2" role="presentation"><div class="content-description dds__mb-1"><p>OK</p>
+</div></div></div></div></div></div></div></div>
+      </div>
+    </div></div></body></html>

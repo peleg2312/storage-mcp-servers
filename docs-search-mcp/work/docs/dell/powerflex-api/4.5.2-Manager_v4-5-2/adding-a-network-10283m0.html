@@ -1,0 +1,41 @@
+<html><head><title>PowerFlex API 4.5.2-Manager_v4-5-2: Adding a network</title></head><body><p>Tasks > PowerFlex Manager API tasks</p><div><div class="api-docs-main-div dds__pl-2">
+    <div class="markdown-wrapper dds__py-3">
+      <div class="markdown-body dds__px-3"><h1 id="adding-a-network" class="anchor-scroll-top-offset">Adding a network</h1>
+<p>You can add a network by calling this API:</p>
+<p><code>POST /Network</code></p>
+<p>Sample request body:</p>
+<pre><code class="language-json">{
+    "description": "Workload/Customer",
+    "name": "vcesys-customer-1101",
+    "static": false,
+    "type": "PUBLIC_LAN",
+    "vlanId": 1101
+}
+</code></pre>
+<p>Sample response:</p>
+<pre><code class="language-json">{
+    "createdBy": "admin",
+    "createdDate": "2021-05-17T19:35:29.233Z",
+    "description": "Workload/Customer",
+    "destinationIpAddress": null,
+    "id": "ff808081797ad05001797bd380d20221",
+    "link": null,
+    "name": "vcesys-customer-1101",
+    "static": false,
+    "staticNetworkConfiguration": null,
+    "type": "PUBLIC_LAN",
+    "updatedBy": null,
+    "updatedDate": null,
+    "vlanId": 1101
+}
+</code></pre>
+</div>
+      <div class="markdown-sidebar">
+        <div class="markdown-toc-title">
+          <i class="icon dds__icon dds__icon--bookmark"></i>
+          On this page
+        </div>
+          <ul><li class="level-1"><a href="#adding-a-network" data-toc-link="">Adding a network</a></li></ul>
+      </div>
+    </div>
+  </div></div></body></html>

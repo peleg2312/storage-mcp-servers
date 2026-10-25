@@ -1,0 +1,70 @@
+<html><head><title>PowerFlex API 3.6.0: Query the PowerFlex Gateway configuration (GET)</title></head><body><p></p><div><div class="api-docs-main-div dds__pl-2">
+    <div class="markdown-wrapper dds__py-3">
+      <div class="markdown-body dds__px-3"><h1 id="query-the-powerflex-gateway-configuration-get" class="anchor-scroll-top-offset">Query the PowerFlex Gateway configuration (GET)</h1>
+<p>You can query the Gateway configuration at any time to verify whether the MDM IP addresses are configured:</p>
+<pre><code>https://&lt;server_ip&gt;:443/api/Configuration
+GET
+</code></pre>
+<p>Log in as admin user, using the <code>gatewayAdminPassword</code>.</p>
+<p>The response includes the following:</p>
+<ul>
+<li><code>mdmAddresses</code>: List of MDM primary IP addresses that the PowerFlex Gateway will use to connect to the MDM</li>
+<li><code>mdmUsername</code>: MDM username</li>
+<li><code>mdmPort</code>: MDM port</li>
+<li><code>systemId</code>: ID of the system, configured by mdmAddresses. (See detailed explanation for <a href="change-the-configuration-of-the-powerflex-gateway-post-1226m0">Change configuration of PowerFlex Gateway (POST)</a>.")</li>
+<li><code>snmpSamplingFrequency</code>: MDM sampling frequency in seconds</li>
+<li><code>snmpResendFrequency</code>: Resend frequency of SNMP traps, in minutes</li>
+<li><code>snmpTrapsReceiverIp</code>: SNMP trap receivers’ IP addresses</li>
+<li><code>snmpPort</code>: The port number used for SNMP traps</li>
+<li><code>remoteSyslog</code>: The remote syslog servers configuration in the MDM</li>
+<li><code>featuresEnableSnmp</code>: Indicates whether SNMP is enabled</li>
+<li><code>cipherSuites</code>: List of names of cipher suites (as recognized by Java) that the SSL will use instead of the default list</li>
+<li><code>featuresEnableIM</code>: Indicates whether the PowerFlex Installer is enabled</li>
+<li><code>featuresEnableCollectAutoLogs</code>: Enable the Auto Collect Logs feature</li>
+<li><code>bypassCertificateCheck</code>: When set to TRUE, when opening a connection, the gateway will trust any certificate during the SSL handshake</li>
+<li><code>allowNonSecureCommunication</code></li>
+</ul>
+<p>Example:</p>
+<pre><code class="language-json">{
+    	"allowNonSecureCommunication": "false",
+ "bypassCertificateCheck": "false",
+    	"cipherSuites": null,
+    	"featuresEnableCollectAutoLogs": "false",
+    	"featuresEnableIM": "true",
+"snmpResendFrequency": "0",
+"snmpSamplingFrequency": "30",
+"snmpPort": "162",
+"mdmPort":"6611",
+"mdmUsername": "alertservice",
+"remoteSyslog": [
+        {
+            "hostName": "10.76.60.100",
+            "port": 1468,
+            "facility": 16
+        },
+        {
+            "hostName": "10.76.60.101",
+            "port": 1468,
+            "facility": 16
+        }
+],
+"mdmAddresses":[
+"10.76.60.150",
+"10.76.60.135"
+],
+"systemId":"7f5d8fc72a3d7f3d",
+"snmpTrapsReceiverIps": [
+        "10.76.60.192"
+    ]
+}
+</code></pre>
+</div>
+      <div class="markdown-sidebar">
+        <div class="markdown-toc-title">
+          <i class="icon dds__icon dds__icon--bookmark"></i>
+          On this page
+        </div>
+          <ul><li class="level-1"><a href="#query-the-powerflex-gateway-configuration-get" data-toc-link="">Query the PowerFlex Gateway configuration (GET)</a></li></ul>
+      </div>
+    </div>
+  </div></div></body></html>

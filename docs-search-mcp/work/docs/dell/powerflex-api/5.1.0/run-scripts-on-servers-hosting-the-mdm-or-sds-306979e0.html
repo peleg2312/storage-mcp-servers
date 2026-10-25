@@ -1,0 +1,491 @@
+<html><head><title>PowerFlex API 5.1.0: Run scripts on servers hosting the MDM or SDS</title></head><body><p>Erasure coding APIS > PowerFlex Installer REST API > Installer</p><div><div class="api-docs-main-div dds__pl-2">
+      <div class="api-doc-container">
+        <div class="api__doc__left-section dds__p-3">
+   <div class="markdown-renderer">
+          <h4 class="dds__font-weight-bold dds__pb-2">Run scripts on servers hosting the MDM or SDS</h4>       
+          <div><p>PowerFlex can be used to run user-provided scripts on servers hosting MDM or SDS components. This feature is supported on Linux-based nodes only.</p>
+<p><strong>Note</strong>: This feature can be used for any purpose external to the PowerFlex system, such as running a set of CLI commands, patching an operating system, and more. The feature allows the running of scripts in a safe manner, both from a security and a data integrity perspective. For more information, see the Dell PowerFlex 4.6.x Administration Guide.</p>
+<p>Up to one of the URI path parameters can be used at a time.</p>
+<p>If none of the required parameters are used, then executeOnAllSdss or executeOnAllMdms or both must equal TRUE. If executeOnAllSdss or executeOnAllMdms equals TRUE, none of the required parameters should be used.</p>
+<p><strong>Note</strong>: Before running the liaRunOsPatching command, ensure that you log in and get the system configuration.</p>
+<p>Authorized user roles:</p>
+<p>SuperUser, SystemAdmin, LifecycleAdmin, Support</p>
+</div> 
+          
+    </div>
+
+<div class="api_docs_collapsible dds__mb-3 expanded" id="request"><div class="api_docs_collapsible-header dds__p-3" data-action="toggleCollapse" data-target-id="request" role="button" tabindex="0" aria-controls="request-body" aria-expanded="true"><span class="title">Requests</span><span class="icon icon-collapsed dds__icon dds__icon--chevron-right dds__mt-1 dds__ml-auto"></span><span class="icon icon-expanded dds__icon dds__icon--chevron-down dds__mt-1 dds__ml-auto"></span></div><div class="api_docs_collapsible-body" id="request-body"><div class="static-frame-request-section"><div class="headers-section"><h5 class="title">Query Parameters</h5>
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="executeOnAllSdss">executeOnAllSdss</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">boolean</span>
+      <span class="required">Required</span>
+    </div>
+    
+    
+    
+    
+    <div class="desc"><p>Run on all SDSs (true or false)</p>
+</div>
+    
+    
+  </div>
+</div>
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="executeOnAllMdms">executeOnAllMdms</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">boolean</span>
+      <span class="required">Required</span>
+    </div>
+    
+    
+    
+    
+    <div class="desc"><p>Run on all MDMs (true or false)</p>
+</div>
+    
+    
+  </div>
+</div>
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="pdIds">pdIds</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      <span class="required">Required</span>
+    </div>
+    
+    
+    
+    
+    <div class="desc"><p>List of Protection Domain IDs. Use string representation of decimal values.</p>
+</div>
+    
+    
+  </div>
+</div>
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="fsIds">fsIds</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      <span class="required">Required</span>
+    </div>
+    
+    
+    
+    
+    <div class="desc"><p>List of Fault Set IDs. Use string representation of decimal values.</p>
+</div>
+    
+    
+  </div>
+</div>
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="sdsIds">sdsIds</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      <span class="required">Required</span>
+    </div>
+    
+    
+    
+    
+    <div class="desc"><p>List of SDS IDs. Use string representation of decimal values.</p>
+</div>
+    
+    
+  </div>
+</div>
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="mdmIds">mdmIds</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      <span class="required">Required</span>
+    </div>
+    
+    
+    
+    
+    <div class="desc"><p>List of MDM IDs. Use string representation of decimal values.</p>
+</div>
+    
+    
+  </div>
+</div>
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="isRebootRequired">isRebootRequired</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">boolean</span>
+      
+    </div>
+    
+    
+    
+    
+    <div class="desc"><p>Indicates if each node requires reboot after running the patch script (values: true or false)</p>
+</div>
+    
+    
+  </div>
+</div>
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="isVerificationScriptRequired">isVerificationScriptRequired</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">boolean</span>
+      
+    </div>
+    
+    
+    
+    
+    <div class="desc"><p>Indicates if verification script should run on each node (values: true or false)</p>
+</div>
+    
+    
+  </div>
+</div>
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="isRunningInParallelOnPds">isRunningInParallelOnPds</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">boolean</span>
+      
+    </div>
+    
+    
+    
+    
+    <div class="desc"><p>Indicates if the operation should run in a parallel way on nodes that belong to different PDs (values: true/false)</p>
+</div>
+    
+    
+  </div>
+</div>
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="isStopProcessingOnScriptFailure">isStopProcessingOnScriptFailure</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">boolean</span>
+      
+    </div>
+    
+    
+    
+    
+    <div class="desc"><p>should entire operation stop in case of a script failure (values: true/false)</p>
+</div>
+    
+    
+  </div>
+</div>
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="TimeoutInMsec">TimeoutInMsec</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      
+    </div>
+    
+    
+    
+    
+    <div class="desc"><p>Timeout for running the ‘patch script’ in milliseconds</p>
+</div>
+    
+    
+  </div>
+</div>
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="isUploadFileNeeded">isUploadFileNeeded</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">boolean</span>
+      
+    </div>
+    
+    
+    
+    
+    <div class="desc"><p>Indicates if GW  should upload scripts to the nodes (values: true/false)</p>
+</div>
+    
+    
+  </div>
+</div>
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="patchScriptFilePath">patchScriptFilePath</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      
+    </div>
+    
+    
+    
+    
+    <div class="desc"><p>Either local folder name or an http/https URL of ‘patch script’. This parameter is required if isUploadFileNeeded value is true.</p>
+</div>
+    
+    
+  </div>
+</div>
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="verificationScriptFilePath">verificationScriptFilePath</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      
+    </div>
+    
+    
+    
+    
+    <div class="desc"><p>Either local folder name or an http/https URL of verification script. This parameter is required if isUploadFileNeeded value is true.</p>
+</div>
+    
+    
+  </div>
+</div>
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="maintenanceModeType">maintenanceModeType</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      
+    </div>
+    
+    
+    
+    
+    <div class="desc"><p>Maintenance Mode type (values: IMM/PMM)</p>
+</div>
+    
+    
+  </div>
+</div>
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="verificationScriptTimeoutSec">verificationScriptTimeoutSec</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      
+    </div>
+    
+    
+    
+    
+    <div class="desc"><p>Verification script timeout in seconds</p>
+</div>
+    
+    
+  </div>
+</div>
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="rebootTimeoutSec">rebootTimeoutSec</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      
+    </div>
+    
+    
+    
+    
+    <div class="desc"><p>Node reboot timeout in seconds</p>
+</div>
+    
+    
+  </div>
+</div></div></div>
+<div class="static-frame-request-section"><div class="headers-section"><h5 class="title">Request Body</h5>No Schema Available.</div></div></div></div>
+
+       <div class="api_docs_collapsible dds__mb-3" id="response"><div class="api_docs_collapsible-header dds__p-3" data-action="toggleCollapse" data-target-id="response" role="button" tabindex="0" aria-controls="response-body" aria-expanded="false"><span class="title">Responses</span><span class="icon icon-collapsed dds__icon dds__icon--chevron-right dds__mt-1 dds__ml-auto"></span><span class="icon icon-expanded dds__icon dds__icon--chevron-down dds__mt-1 dds__ml-auto"></span></div><div class="api_docs_collapsible-body" id="response-body"><div class="api_docs_collapsible dds__mb-3" id="53ea6212c8a41"><div class="api_docs_collapsible-header dds__p-3" data-action="toggleCollapse" data-target-id="53ea6212c8a41" role="button" tabindex="0" aria-controls="53ea6212c8a41-body" aria-expanded="false"><span class="title"><div class="response-frame"><span class="text-green"><span class="dds__badge dds__badge--dot dds__mr-2"></span>200</span> : OK</div></span><span class="icon icon-collapsed dds__icon dds__icon--chevron-right dds__mt-1 dds__ml-auto"></span><span class="icon icon-expanded dds__icon dds__icon--chevron-down dds__mt-1 dds__ml-auto"></span></div><div class="api_docs_collapsible-body" id="53ea6212c8a41-body"><div class="static-frame-response-section"><div><div class="headers-section"><div><p>OK</p>
+</div><h5 class="title dds__mt-2">Response Body</h5>No Schema Available.</div></div></div></div></div>
+<div class="api_docs_collapsible dds__mb-3" id="1c612cc69e4b6"><div class="api_docs_collapsible-header dds__p-3" data-action="toggleCollapse" data-target-id="1c612cc69e4b6" role="button" tabindex="0" aria-controls="1c612cc69e4b6-body" aria-expanded="false"><span class="title"><div class="response-frame"><span class="text-red"><span class="dds__badge dds__badge--dot dds__mr-2"></span>400</span> : Bad Request</div></span><span class="icon icon-collapsed dds__icon dds__icon--chevron-right dds__mt-1 dds__ml-auto"></span><span class="icon icon-expanded dds__icon dds__icon--chevron-down dds__mt-1 dds__ml-auto"></span></div><div class="api_docs_collapsible-body" id="1c612cc69e4b6-body"><div class="static-frame-response-section"><div><div class="headers-section"><div><p>Bad Request</p>
+</div><h5 class="title dds__mt-2">Response Body</h5>No Schema Available.</div></div></div></div></div>
+<div class="api_docs_collapsible dds__mb-3" id="993d04e2a4810"><div class="api_docs_collapsible-header dds__p-3" data-action="toggleCollapse" data-target-id="993d04e2a4810" role="button" tabindex="0" aria-controls="993d04e2a4810-body" aria-expanded="false"><span class="title"><div class="response-frame"><span class="text-red"><span class="dds__badge dds__badge--dot dds__mr-2"></span>401</span> : Unauthorized</div></span><span class="icon icon-collapsed dds__icon dds__icon--chevron-right dds__mt-1 dds__ml-auto"></span><span class="icon icon-expanded dds__icon dds__icon--chevron-down dds__mt-1 dds__ml-auto"></span></div><div class="api_docs_collapsible-body" id="993d04e2a4810-body"><div class="static-frame-response-section"><div><div class="headers-section"><div><p>Unauthorized</p>
+</div><h5 class="title dds__mt-2">Response Body</h5>No Schema Available.</div></div></div></div></div>
+<div class="api_docs_collapsible dds__mb-3" id="3fe96aa39c769"><div class="api_docs_collapsible-header dds__p-3" data-action="toggleCollapse" data-target-id="3fe96aa39c769" role="button" tabindex="0" aria-controls="3fe96aa39c769-body" aria-expanded="false"><span class="title"><div class="response-frame"><span class="text-red"><span class="dds__badge dds__badge--dot dds__mr-2"></span>403</span> : Forbidden</div></span><span class="icon icon-collapsed dds__icon dds__icon--chevron-right dds__mt-1 dds__ml-auto"></span><span class="icon icon-expanded dds__icon dds__icon--chevron-down dds__mt-1 dds__ml-auto"></span></div><div class="api_docs_collapsible-body" id="3fe96aa39c769-body"><div class="static-frame-response-section"><div><div class="headers-section"><div><p>Forbidden</p>
+</div><h5 class="title dds__mt-2">Response Body</h5>No Schema Available.</div></div></div></div></div>
+<div class="api_docs_collapsible dds__mb-3" id="353c36184d33c"><div class="api_docs_collapsible-header dds__p-3" data-action="toggleCollapse" data-target-id="353c36184d33c" role="button" tabindex="0" aria-controls="353c36184d33c-body" aria-expanded="false"><span class="title"><div class="response-frame"><span class="text-red"><span class="dds__badge dds__badge--dot dds__mr-2"></span>404</span> : Not Found</div></span><span class="icon icon-collapsed dds__icon dds__icon--chevron-right dds__mt-1 dds__ml-auto"></span><span class="icon icon-expanded dds__icon dds__icon--chevron-down dds__mt-1 dds__ml-auto"></span></div><div class="api_docs_collapsible-body" id="353c36184d33c-body"><div class="static-frame-response-section"><div><div class="headers-section"><div><p>Not Found</p>
+</div><h5 class="title dds__mt-2">Response Body</h5>No Schema Available.</div></div></div></div></div>
+<div class="api_docs_collapsible dds__mb-3" id="5476cc06bb4aa"><div class="api_docs_collapsible-header dds__p-3" data-action="toggleCollapse" data-target-id="5476cc06bb4aa" role="button" tabindex="0" aria-controls="5476cc06bb4aa-body" aria-expanded="false"><span class="title"><div class="response-frame"><span class="text-red"><span class="dds__badge dds__badge--dot dds__mr-2"></span>500</span> : Server Error</div></span><span class="icon icon-collapsed dds__icon dds__icon--chevron-right dds__mt-1 dds__ml-auto"></span><span class="icon icon-expanded dds__icon dds__icon--chevron-down dds__mt-1 dds__ml-auto"></span></div><div class="api_docs_collapsible-body" id="5476cc06bb4aa-body"><div class="static-frame-response-section"><div><div class="headers-section"><div><p>Internal Server Error</p>
+</div><h5 class="title dds__mt-2">Response Body</h5>No Schema Available.</div></div></div></div></div></div></div>
+   </div>
+        <div class="api__doc__right-section dds__pl-2"><div class="api_docs_collapsible highlight dds__mb-3 expanded" id="server"><div class="api_docs_collapsible-header dds__p-3" data-action="toggleCollapse" data-target-id="server" role="button" tabindex="0" aria-expanded="true"><div class="dds__w-100"><div class="server-title"><span class="dds__badge dds__badge--md http-method-post"><span class="dds__badge__label badge-font">POST</span></span><button style="float: right; border: 1px solid #9ca3af; display:none" class="dds__ml-auto dds__button dds__button--sm" type="button" id="drawer-trigger" data-action="clickedTryOutButton">Try it</button></div><div class="dds__p-2">/im/types/Configuration/actions/liaRunOsPatching</div></div><span class="icon icon-collapsed dds__icon dds__icon--chevron-right dds__ml-auto"></span><span class="icon icon-expanded dds__icon dds__icon--chevron-down dds__ml-auto"></span></div><div class="api_docs_collapsible-body dds__px-3 dds__pt-2 dds__pb-3"><div class="dds__pr-2"></div><div class="dds__d-flex dds__justify-content-end dds__my-2"><button class="dds__button dds__button--sm" data-action="copyCodeById" data-target-id="server-copy-0">Copy</button></div><pre tabindex="0"><code id="server-copy-0">/im/types/Configuration/actions/liaRunOsPatching</code></pre></div></div>
+<div class="api_docs_collapsible highlight dds__mb-3 expanded" id="requestsamples"><div class="api_docs_collapsible-header dds__p-3" data-action="toggleCollapse" data-target-id="requestsamples" role="button" tabindex="0" aria-controls="requestsamples-body" aria-expanded="true">Request Samples<span class="icon icon-collapsed dds__icon dds__icon--chevron-right dds__ml-auto"></span><span class="icon icon-expanded dds__icon dds__icon--chevron-down dds__ml-auto"></span></div><div class="api_docs_collapsible-body dds__px-3 dds__pt-2 dds__pb-3" id="requestsamples-body">
+        <div class="dds__pt-2">
+          <label for="requestsamples-media-content-type" class="dds__visually-hidden">Select content type</label>
+          <select id="requestsamples-media-content-type" class="dds__select__field dds__mb-2" data-action="onContentTypeChange" data-example-select-id="requestsamples-media-example" data-code-container-id="requestsamples-media-code" data-examples-data="%7B%22application%2Fjson%22%3A%5B%7B%22description%22%3A%22Example%22%2C%22codeContent%22%3A%22%7B%5Cn%20%20%5C%22value%5C%22%3A%20%7B%7D%5Cn%7D%22%7D%5D%2C%22application%2Fxml%22%3A%5B%5D%7D" aria-label="Select content type">
+            <option value="application/json" selected="">application/json</option><option value="application/xml">application/xml</option>
+          </select>
+        </div><div class="dds__pt-2"><label for="requestsamples-media-example" class="dds__visually-hidden">Select example</label><select id="requestsamples-media-example" class="dds__select__field" data-action="onExampleSelectChange" data-code-container-id="requestsamples-media-code" aria-label="Select example"><option value="0" data-code="{
+  &quot;value&quot;: {}
+}" data-description="Example">
+        Example
+      </option></select></div>
+        <div class="dds__d-flex dds__justify-content-end dds__my-2">
+              <button class="dds__button dds__button--sm" data-action="copyCodeById" data-target-id="requestsamples-media-code">
+                    Copy
+                  </button>
+        </div>
+        <div id="requestsamples-media-code">
+          <pre tabindex="0"><code>{
+  "value": {}
+}</code></pre>
+        </div></div></div>
+<div class="api_docs_collapsible highlight dds__mb-3 expanded" id="responsesamples"><div class="api_docs_collapsible-header dds__p-3" data-action="toggleCollapse" data-target-id="responsesamples" role="button" tabindex="0" aria-controls="responsesamples-body" aria-expanded="true">Response Samples<span class="icon icon-collapsed dds__icon dds__icon--chevron-right dds__ml-auto"></span><span class="icon icon-expanded dds__icon dds__icon--chevron-down dds__ml-auto"></span></div><div class="api_docs_collapsible-body dds__px-3 dds__pt-2 dds__pb-3" id="responsesamples-body"><div class="response-tab-wrapper"><div class="tab-header" role="tablist"><h4 class="tab-item active" role="tab" aria-selected="true" aria-controls="responsesamples-tab-200" data-action="switchTab" data-target-id="responsesamples-tab-200">200</h4><h4 class="tab-item" role="tab" aria-selected="false" aria-controls="responsesamples-tab-400" data-action="switchTab" data-target-id="responsesamples-tab-400">400</h4><h4 class="tab-item" role="tab" aria-selected="false" aria-controls="responsesamples-tab-401" data-action="switchTab" data-target-id="responsesamples-tab-401">401</h4><h4 class="tab-item" role="tab" aria-selected="false" aria-controls="responsesamples-tab-403" data-action="switchTab" data-target-id="responsesamples-tab-403">403</h4><h4 class="tab-item" role="tab" aria-selected="false" aria-controls="responsesamples-tab-404" data-action="switchTab" data-target-id="responsesamples-tab-404">404</h4><h4 class="tab-item" role="tab" aria-selected="false" aria-controls="responsesamples-tab-500" data-action="switchTab" data-target-id="responsesamples-tab-500">500</h4></div><div class="tab-body"><div class="tab-content active" id="responsesamples-tab-200" role="tabpanel" aria-labelledby="responsesamples-tab-200"><div class="dds__pt-2" role="presentation">
+        <label for="responsesamples-tab-200-content-type" class="dds__visually-hidden">Select content type</label>
+        <select id="responsesamples-tab-200-content-type" class="dds__select__field dds__mb-2" data-action="onContentTypeChange" data-example-select-id="responsesamples-tab-200-example" data-code-container-id="responsesamples-tab-200-code" data-examples-data="%7B%22application%2Fjson%22%3A%5B%7B%22description%22%3A%22Example%22%2C%22codeContent%22%3A%22%7B%7D%22%7D%5D%2C%22application%2Fxml%22%3A%5B%5D%7D" aria-label="Select content type">
+          <option value="application/json" selected="">application/json</option><option value="application/xml">application/xml</option>
+        </select><div class="content-description dds__mb-1"><p>OK</p>
+</div><label for="responsesamples-tab-200-example" class="dds__visually-hidden">Select response example</label>
+       <select id="responsesamples-tab-200-example" class="dds__select__field" data-action="onExampleSelectChange" data-code-container-id="responsesamples-tab-200-code" aria-label="Select response example">
+        <option value="0" data-code="{}" data-description="Example">
+        Example
+      </option>
+      </select></div><div class="dds__d-flex dds__justify-content-end dds__my-2" role="presentation"><button class="dds__button dds__button--sm" data-action="copyCodeById" data-target-id="responsesamples-tab-200-code">Copy</button></div><div id="responsesamples-tab-200-code" role="presentation"><pre tabindex="0"><code>{}</code></pre></div></div><div class="tab-content" id="responsesamples-tab-400" role="tabpanel" aria-labelledby="responsesamples-tab-400"><div class="dds__pt-2" role="presentation">
+        <label for="responsesamples-tab-400-content-type" class="dds__visually-hidden">Select content type</label>
+        <select id="responsesamples-tab-400-content-type" class="dds__select__field dds__mb-2" data-action="onContentTypeChange" data-example-select-id="responsesamples-tab-400-example" data-code-container-id="responsesamples-tab-400-code" data-examples-data="%7B%22application%2Fjson%22%3A%5B%7B%22description%22%3A%22Example%22%2C%22codeContent%22%3A%22%7B%7D%22%7D%5D%2C%22application%2Fxml%22%3A%5B%5D%7D" aria-label="Select content type">
+          <option value="application/json" selected="">application/json</option><option value="application/xml">application/xml</option>
+        </select><div class="content-description dds__mb-1"><p>Bad Request</p>
+</div><label for="responsesamples-tab-400-example" class="dds__visually-hidden">Select response example</label>
+       <select id="responsesamples-tab-400-example" class="dds__select__field" data-action="onExampleSelectChange" data-code-container-id="responsesamples-tab-400-code" aria-label="Select response example">
+        <option value="0" data-code="{}" data-description="Example">
+        Example
+      </option>
+      </select></div><div class="dds__d-flex dds__justify-content-end dds__my-2" role="presentation"><button class="dds__button dds__button--sm" data-action="copyCodeById" data-target-id="responsesamples-tab-400-code">Copy</button></div><div id="responsesamples-tab-400-code" role="presentation"><pre tabindex="0"><code>{}</code></pre></div></div><div class="tab-content" id="responsesamples-tab-401" role="tabpanel" aria-labelledby="responsesamples-tab-401"><div class="dds__pt-2" role="presentation">
+        <label for="responsesamples-tab-401-content-type" class="dds__visually-hidden">Select content type</label>
+        <select id="responsesamples-tab-401-content-type" class="dds__select__field dds__mb-2" data-action="onContentTypeChange" data-example-select-id="responsesamples-tab-401-example" data-code-container-id="responsesamples-tab-401-code" data-examples-data="%7B%22application%2Fjson%22%3A%5B%7B%22description%22%3A%22Example%22%2C%22codeContent%22%3A%22%7B%7D%22%7D%5D%2C%22application%2Fxml%22%3A%5B%5D%7D" aria-label="Select content type">
+          <option value="application/json" selected="">application/json</option><option value="application/xml">application/xml</option>
+        </select><div class="content-description dds__mb-1"><p>Unauthorized</p>
+</div><label for="responsesamples-tab-401-example" class="dds__visually-hidden">Select response example</label>
+       <select id="responsesamples-tab-401-example" class="dds__select__field" data-action="onExampleSelectChange" data-code-container-id="responsesamples-tab-401-code" aria-label="Select response example">
+        <option value="0" data-code="{}" data-description="Example">
+        Example
+      </option>
+      </select></div><div class="dds__d-flex dds__justify-content-end dds__my-2" role="presentation"><button class="dds__button dds__button--sm" data-action="copyCodeById" data-target-id="responsesamples-tab-401-code">Copy</button></div><div id="responsesamples-tab-401-code" role="presentation"><pre tabindex="0"><code>{}</code></pre></div></div><div class="tab-content" id="responsesamples-tab-403" role="tabpanel" aria-labelledby="responsesamples-tab-403"><div class="dds__pt-2" role="presentation">
+        <label for="responsesamples-tab-403-content-type" class="dds__visually-hidden">Select content type</label>
+        <select id="responsesamples-tab-403-content-type" class="dds__select__field dds__mb-2" data-action="onContentTypeChange" data-example-select-id="responsesamples-tab-403-example" data-code-container-id="responsesamples-tab-403-code" data-examples-data="%7B%22application%2Fjson%22%3A%5B%7B%22description%22%3A%22Example%22%2C%22codeContent%22%3A%22%7B%7D%22%7D%5D%2C%22application%2Fxml%22%3A%5B%5D%7D" aria-label="Select content type">
+          <option value="application/json" selected="">application/json</option><option value="application/xml">application/xml</option>
+        </select><div class="content-description dds__mb-1"><p>Forbidden</p>
+</div><label for="responsesamples-tab-403-example" class="dds__visually-hidden">Select response example</label>
+       <select id="responsesamples-tab-403-example" class="dds__select__field" data-action="onExampleSelectChange" data-code-container-id="responsesamples-tab-403-code" aria-label="Select response example">
+        <option value="0" data-code="{}" data-description="Example">
+        Example
+      </option>
+      </select></div><div class="dds__d-flex dds__justify-content-end dds__my-2" role="presentation"><button class="dds__button dds__button--sm" data-action="copyCodeById" data-target-id="responsesamples-tab-403-code">Copy</button></div><div id="responsesamples-tab-403-code" role="presentation"><pre tabindex="0"><code>{}</code></pre></div></div><div class="tab-content" id="responsesamples-tab-404" role="tabpanel" aria-labelledby="responsesamples-tab-404"><div class="dds__pt-2" role="presentation">
+        <label for="responsesamples-tab-404-content-type" class="dds__visually-hidden">Select content type</label>
+        <select id="responsesamples-tab-404-content-type" class="dds__select__field dds__mb-2" data-action="onContentTypeChange" data-example-select-id="responsesamples-tab-404-example" data-code-container-id="responsesamples-tab-404-code" data-examples-data="%7B%22application%2Fjson%22%3A%5B%7B%22description%22%3A%22Example%22%2C%22codeContent%22%3A%22%7B%7D%22%7D%5D%2C%22application%2Fxml%22%3A%5B%5D%7D" aria-label="Select content type">
+          <option value="application/json" selected="">application/json</option><option value="application/xml">application/xml</option>
+        </select><div class="content-description dds__mb-1"><p>Not Found</p>
+</div><label for="responsesamples-tab-404-example" class="dds__visually-hidden">Select response example</label>
+       <select id="responsesamples-tab-404-example" class="dds__select__field" data-action="onExampleSelectChange" data-code-container-id="responsesamples-tab-404-code" aria-label="Select response example">
+        <option value="0" data-code="{}" data-description="Example">
+        Example
+      </option>
+      </select></div><div class="dds__d-flex dds__justify-content-end dds__my-2" role="presentation"><button class="dds__button dds__button--sm" data-action="copyCodeById" data-target-id="responsesamples-tab-404-code">Copy</button></div><div id="responsesamples-tab-404-code" role="presentation"><pre tabindex="0"><code>{}</code></pre></div></div><div class="tab-content" id="responsesamples-tab-500" role="tabpanel" aria-labelledby="responsesamples-tab-500"><div class="dds__pt-2" role="presentation">
+        <label for="responsesamples-tab-500-content-type" class="dds__visually-hidden">Select content type</label>
+        <select id="responsesamples-tab-500-content-type" class="dds__select__field dds__mb-2" data-action="onContentTypeChange" data-example-select-id="responsesamples-tab-500-example" data-code-container-id="responsesamples-tab-500-code" data-examples-data="%7B%22application%2Fjson%22%3A%5B%7B%22description%22%3A%22Example%22%2C%22codeContent%22%3A%22%7B%7D%22%7D%5D%2C%22application%2Fxml%22%3A%5B%5D%7D" aria-label="Select content type">
+          <option value="application/json" selected="">application/json</option><option value="application/xml">application/xml</option>
+        </select><div class="content-description dds__mb-1"><p>Internal Server Error</p>
+</div><label for="responsesamples-tab-500-example" class="dds__visually-hidden">Select response example</label>
+       <select id="responsesamples-tab-500-example" class="dds__select__field" data-action="onExampleSelectChange" data-code-container-id="responsesamples-tab-500-code" aria-label="Select response example">
+        <option value="0" data-code="{}" data-description="Example">
+        Example
+      </option>
+      </select></div><div class="dds__d-flex dds__justify-content-end dds__my-2" role="presentation"><button class="dds__button dds__button--sm" data-action="copyCodeById" data-target-id="responsesamples-tab-500-code">Copy</button></div><div id="responsesamples-tab-500-code" role="presentation"><pre tabindex="0"><code>{}</code></pre></div></div></div></div></div></div></div>
+      </div>
+    </div></div></body></html>

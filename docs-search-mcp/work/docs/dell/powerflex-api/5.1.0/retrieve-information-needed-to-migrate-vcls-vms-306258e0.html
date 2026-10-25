@@ -1,0 +1,5079 @@
+<html><head><title>PowerFlex API 5.1.0: Retrieve information needed to migrate vCLS VMs</title></head><body><p>Mirroring APIS > PowerFlex Manager REST API > Deployment</p><div><div class="api-docs-main-div dds__pl-2">
+      <div class="api-doc-container">
+        <div class="api__doc__left-section dds__p-3">
+   <div class="markdown-renderer">
+          <h4 class="dds__font-weight-bold dds__pb-2">Retrieve information needed to migrate vCLS VMs</h4>       
+          <div><p>Retrieve information needed to migrate vCLS VMs</p>
+</div> 
+          
+    </div>
+
+<div class="api_docs_collapsible dds__mb-3 expanded" id="request"><div class="api_docs_collapsible-header dds__p-3" data-action="toggleCollapse" data-target-id="request" role="button" tabindex="0" aria-controls="request-body" aria-expanded="true"><span class="title">Requests</span><span class="icon icon-collapsed dds__icon dds__icon--chevron-right dds__mt-1 dds__ml-auto"></span><span class="icon icon-expanded dds__icon dds__icon--chevron-down dds__mt-1 dds__ml-auto"></span></div><div class="api_docs_collapsible-body" id="request-body"><div class="static-frame-request-section"><div class="headers-section"><h5 class="title">Path Parameters</h5>
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="id">id</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      <span class="required">Required</span>
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div></div></div></div>
+
+       <div class="api_docs_collapsible dds__mb-3" id="response"><div class="api_docs_collapsible-header dds__p-3" data-action="toggleCollapse" data-target-id="response" role="button" tabindex="0" aria-controls="response-body" aria-expanded="false"><span class="title">Responses</span><span class="icon icon-collapsed dds__icon dds__icon--chevron-right dds__mt-1 dds__ml-auto"></span><span class="icon icon-expanded dds__icon dds__icon--chevron-down dds__mt-1 dds__ml-auto"></span></div><div class="api_docs_collapsible-body" id="response-body"><div class="api_docs_collapsible dds__mb-3" id="4072d9b2af3b6"><div class="api_docs_collapsible-header dds__p-3" data-action="toggleCollapse" data-target-id="4072d9b2af3b6" role="button" tabindex="0" aria-controls="4072d9b2af3b6-body" aria-expanded="false"><span class="title"><div class="response-frame"><span class="text-green"><span class="dds__badge dds__badge--dot dds__mr-2"></span>200</span> : OK</div></span><span class="icon icon-collapsed dds__icon dds__icon--chevron-right dds__mt-1 dds__ml-auto"></span><span class="icon icon-expanded dds__icon dds__icon--chevron-down dds__mt-1 dds__ml-auto"></span></div><div class="api_docs_collapsible-body" id="4072d9b2af3b6-body"><div class="static-frame-response-section"><div><div class="headers-section"><div><p>OK</p>
+</div><h5 class="title dds__mt-2">Response Body</h5><div class="static-frame-request-section"><div class="expanded" id="Response Body-VclsVmsMigrateInfo-aj9y">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name clickable-property" title="VclsVmsMigrateInfo" style="cursor: pointer;">VclsVmsMigrateInfo</span>
+    </div>
+    <span class="schema-toggle-icon" data-action="toggleNestedBodyCard" data-target-id="Response Body-VclsVmsMigrateInfo-aj9y" role="button" tabindex="0" aria-controls="Response Body-VclsVmsMigrateInfo-aj9y-nested-body" aria-expanded="true">
+            <span class="icon dds__icon dds__icon--chevron-right dds__mt-1 dds__ml-auto hidden"></span>
+            <span class="icon dds__icon dds__icon--chevron-down dds__mt-1 dds__ml-auto"></span>
+        </span>
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">object</span>
+      
+    </div>
+    
+    
+    
+    
+    <div class="desc"><p>VclsVmsMigrateInfo</p>
+</div>
+    
+    
+  </div>
+</div><div class="nested-body schema-child-row" id="Response Body-VclsVmsMigrateInfo-aj9y-nested-body" style="">
+            <div colspan="2" class="nested">
+            <div class="" id="Response Body-VclsVmsMigrateInfo-aj9y-vclsVms-ufhl">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="vclsVms">vclsVms</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">array[string]</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="Response Body-VclsVmsMigrateInfo-aj9y-currentStoragePools-h3d5">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="currentStoragePools">currentStoragePools</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">array[string]</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="Response Body-VclsVmsMigrateInfo-aj9y-currentDatastores-3te3">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="currentDatastores">currentDatastores</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">array[string]</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="Response Body-VclsVmsMigrateInfo-aj9y-destinationDatastores-7kra">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="destinationDatastores">destinationDatastores</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">array[string]</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="Response Body-VclsVmsMigrateInfo-aj9y-protectionDomains-wiai">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name clickable-property" title="protectionDomains" style="cursor: pointer;">protectionDomains</span>
+    </div>
+    <span class="schema-toggle-icon" data-action="toggleNestedBodyCard" data-target-id="Response Body-VclsVmsMigrateInfo-aj9y-protectionDomains-wiai" role="button" tabindex="0" aria-controls="Response Body-VclsVmsMigrateInfo-aj9y-protectionDomains-wiai-nested-body" aria-expanded="false">
+            <span class="icon dds__icon dds__icon--chevron-right dds__mt-1 dds__ml-auto"></span>
+            <span class="icon dds__icon dds__icon--chevron-down dds__mt-1 dds__ml-auto hidden"></span>
+        </span>
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">array[object]</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div><div class="nested-body schema-child-row" id="Response Body-VclsVmsMigrateInfo-aj9y-protectionDomains-wiai-nested-body" style="display:none">
+            <div colspan="2" class="nested">
+            <div class="expanded" id="Response Body-VclsVmsMigrateInfo-aj9y-protectionDomains-wiai-general-ioi1">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name clickable-property" title="general" style="cursor: pointer;">general</span>
+    </div>
+    <span class="schema-toggle-icon" data-action="toggleNestedBodyCard" data-target-id="Response Body-VclsVmsMigrateInfo-aj9y-protectionDomains-wiai-general-ioi1" role="button" tabindex="0" aria-controls="Response Body-VclsVmsMigrateInfo-aj9y-protectionDomains-wiai-general-ioi1-nested-body" aria-expanded="true">
+            <span class="icon dds__icon dds__icon--chevron-right dds__mt-1 dds__ml-auto hidden"></span>
+            <span class="icon dds__icon dds__icon--chevron-down dds__mt-1 dds__ml-auto"></span>
+        </span>
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">object</span>
+      
+    </div>
+    
+    
+    
+    
+    <div class="desc"><p>ProtectionDomainGeneral</p>
+</div>
+    
+    
+  </div>
+</div><div class="nested-body schema-child-row" id="Response Body-VclsVmsMigrateInfo-aj9y-protectionDomains-wiai-general-ioi1-nested-body" style="">
+            <div colspan="2" class="nested">
+            <div class="" id="primitive-id">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="id">id</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-name">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="name">name</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-systemId">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="systemId">systemId</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-protectionDomainState">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="protectionDomainState">protectionDomainState</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-rebuildNetworkThrottlingInKbps">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="rebuildNetworkThrottlingInKbps">rebuildNetworkThrottlingInKbps</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">integer&lt;int64&gt;</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-rebalanceNetworkThrottlingInKbps">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="rebalanceNetworkThrottlingInKbps">rebalanceNetworkThrottlingInKbps</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">integer&lt;int64&gt;</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-overallIoNetworkThrottlingInKbps">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="overallIoNetworkThrottlingInKbps">overallIoNetworkThrottlingInKbps</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">integer&lt;int64&gt;</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="expanded" id="Response Body-VclsVmsMigrateInfo-aj9y-protectionDomains-wiai-general-ioi1-sdsDecoupledCounterParameters-7jpq">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name clickable-property" title="sdsDecoupledCounterParameters" style="cursor: pointer;">sdsDecoupledCounterParameters</span>
+    </div>
+    <span class="schema-toggle-icon" data-action="toggleNestedBodyCard" data-target-id="Response Body-VclsVmsMigrateInfo-aj9y-protectionDomains-wiai-general-ioi1-sdsDecoupledCounterParameters-7jpq" role="button" tabindex="0" aria-controls="Response Body-VclsVmsMigrateInfo-aj9y-protectionDomains-wiai-general-ioi1-sdsDecoupledCounterParameters-7jpq-nested-body" aria-expanded="true">
+            <span class="icon dds__icon dds__icon--chevron-right dds__mt-1 dds__ml-auto hidden"></span>
+            <span class="icon dds__icon dds__icon--chevron-down dds__mt-1 dds__ml-auto"></span>
+        </span>
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">object</span>
+      
+    </div>
+    
+    
+    
+    
+    <div class="desc"><p>CounterParameters</p>
+</div>
+    
+    
+  </div>
+</div><div class="nested-body schema-child-row" id="Response Body-VclsVmsMigrateInfo-aj9y-protectionDomains-wiai-general-ioi1-sdsDecoupledCounterParameters-7jpq-nested-body" style="">
+            <div colspan="2" class="nested">
+            <div class="expanded" id="Response Body-VclsVmsMigrateInfo-aj9y-protectionDomains-wiai-general-ioi1-sdsDecoupledCounterParameters-7jpq-shortWindow-kmiy">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name clickable-property" title="shortWindow" style="cursor: pointer;">shortWindow</span>
+    </div>
+    <span class="schema-toggle-icon" data-action="toggleNestedBodyCard" data-target-id="Response Body-VclsVmsMigrateInfo-aj9y-protectionDomains-wiai-general-ioi1-sdsDecoupledCounterParameters-7jpq-shortWindow-kmiy" role="button" tabindex="0" aria-controls="Response Body-VclsVmsMigrateInfo-aj9y-protectionDomains-wiai-general-ioi1-sdsDecoupledCounterParameters-7jpq-shortWindow-kmiy-nested-body" aria-expanded="true">
+            <span class="icon dds__icon dds__icon--chevron-right dds__mt-1 dds__ml-auto hidden"></span>
+            <span class="icon dds__icon dds__icon--chevron-down dds__mt-1 dds__ml-auto"></span>
+        </span>
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">object</span>
+      
+    </div>
+    
+    
+    
+    
+    <div class="desc"><p>Window</p>
+</div>
+    
+    
+  </div>
+</div><div class="nested-body schema-child-row" id="Response Body-VclsVmsMigrateInfo-aj9y-protectionDomains-wiai-general-ioi1-sdsDecoupledCounterParameters-7jpq-shortWindow-kmiy-nested-body" style="">
+            <div colspan="2" class="nested">
+            <div class="" id="primitive-threshold">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="threshold">threshold</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">integer&lt;int32&gt;</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-windowSizeInSec">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="windowSizeInSec">windowSizeInSec</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">integer&lt;int32&gt;</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+            </div>
+          </div></div>
+<div class="expanded" id="Response Body-VclsVmsMigrateInfo-aj9y-protectionDomains-wiai-general-ioi1-sdsDecoupledCounterParameters-7jpq-mediumWindow-tjag">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name clickable-property" title="mediumWindow" style="cursor: pointer;">mediumWindow</span>
+    </div>
+    <span class="schema-toggle-icon" data-action="toggleNestedBodyCard" data-target-id="Response Body-VclsVmsMigrateInfo-aj9y-protectionDomains-wiai-general-ioi1-sdsDecoupledCounterParameters-7jpq-mediumWindow-tjag" role="button" tabindex="0" aria-controls="Response Body-VclsVmsMigrateInfo-aj9y-protectionDomains-wiai-general-ioi1-sdsDecoupledCounterParameters-7jpq-mediumWindow-tjag-nested-body" aria-expanded="true">
+            <span class="icon dds__icon dds__icon--chevron-right dds__mt-1 dds__ml-auto hidden"></span>
+            <span class="icon dds__icon dds__icon--chevron-down dds__mt-1 dds__ml-auto"></span>
+        </span>
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">object</span>
+      
+    </div>
+    
+    
+    
+    
+    <div class="desc"><p>Window</p>
+</div>
+    
+    
+  </div>
+</div><div class="nested-body schema-child-row" id="Response Body-VclsVmsMigrateInfo-aj9y-protectionDomains-wiai-general-ioi1-sdsDecoupledCounterParameters-7jpq-mediumWindow-tjag-nested-body" style="">
+            <div colspan="2" class="nested">
+            <div class="" id="primitive-threshold">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="threshold">threshold</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">integer&lt;int32&gt;</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-windowSizeInSec">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="windowSizeInSec">windowSizeInSec</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">integer&lt;int32&gt;</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+            </div>
+          </div></div>
+<div class="expanded" id="Response Body-VclsVmsMigrateInfo-aj9y-protectionDomains-wiai-general-ioi1-sdsDecoupledCounterParameters-7jpq-longWindow-4uup">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name clickable-property" title="longWindow" style="cursor: pointer;">longWindow</span>
+    </div>
+    <span class="schema-toggle-icon" data-action="toggleNestedBodyCard" data-target-id="Response Body-VclsVmsMigrateInfo-aj9y-protectionDomains-wiai-general-ioi1-sdsDecoupledCounterParameters-7jpq-longWindow-4uup" role="button" tabindex="0" aria-controls="Response Body-VclsVmsMigrateInfo-aj9y-protectionDomains-wiai-general-ioi1-sdsDecoupledCounterParameters-7jpq-longWindow-4uup-nested-body" aria-expanded="true">
+            <span class="icon dds__icon dds__icon--chevron-right dds__mt-1 dds__ml-auto hidden"></span>
+            <span class="icon dds__icon dds__icon--chevron-down dds__mt-1 dds__ml-auto"></span>
+        </span>
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">object</span>
+      
+    </div>
+    
+    
+    
+    
+    <div class="desc"><p>Window</p>
+</div>
+    
+    
+  </div>
+</div><div class="nested-body schema-child-row" id="Response Body-VclsVmsMigrateInfo-aj9y-protectionDomains-wiai-general-ioi1-sdsDecoupledCounterParameters-7jpq-longWindow-4uup-nested-body" style="">
+            <div colspan="2" class="nested">
+            <div class="" id="primitive-threshold">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="threshold">threshold</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">integer&lt;int32&gt;</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-windowSizeInSec">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="windowSizeInSec">windowSizeInSec</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">integer&lt;int32&gt;</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+            </div>
+          </div></div>
+            </div>
+          </div></div>
+<div class="expanded" id="Response Body-VclsVmsMigrateInfo-aj9y-protectionDomains-wiai-general-ioi1-sdsConfigurationFailureCounterParameters-8bmd">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name clickable-property" title="sdsConfigurationFailureCounterParameters" style="cursor: pointer;">sdsConfigurationFailureCounterParameters</span>
+    </div>
+    <span class="schema-toggle-icon" data-action="toggleNestedBodyCard" data-target-id="Response Body-VclsVmsMigrateInfo-aj9y-protectionDomains-wiai-general-ioi1-sdsConfigurationFailureCounterParameters-8bmd" role="button" tabindex="0" aria-controls="Response Body-VclsVmsMigrateInfo-aj9y-protectionDomains-wiai-general-ioi1-sdsConfigurationFailureCounterParameters-8bmd-nested-body" aria-expanded="true">
+            <span class="icon dds__icon dds__icon--chevron-right dds__mt-1 dds__ml-auto hidden"></span>
+            <span class="icon dds__icon dds__icon--chevron-down dds__mt-1 dds__ml-auto"></span>
+        </span>
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">object</span>
+      
+    </div>
+    
+    
+    
+    
+    <div class="desc"><p>CounterParameters</p>
+</div>
+    
+    
+  </div>
+</div><div class="nested-body schema-child-row" id="Response Body-VclsVmsMigrateInfo-aj9y-protectionDomains-wiai-general-ioi1-sdsConfigurationFailureCounterParameters-8bmd-nested-body" style="">
+            <div colspan="2" class="nested">
+            <div class="expanded" id="Response Body-VclsVmsMigrateInfo-aj9y-protectionDomains-wiai-general-ioi1-sdsConfigurationFailureCounterParameters-8bmd-shortWindow-1tt8">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name clickable-property" title="shortWindow" style="cursor: pointer;">shortWindow</span>
+    </div>
+    <span class="schema-toggle-icon" data-action="toggleNestedBodyCard" data-target-id="Response Body-VclsVmsMigrateInfo-aj9y-protectionDomains-wiai-general-ioi1-sdsConfigurationFailureCounterParameters-8bmd-shortWindow-1tt8" role="button" tabindex="0" aria-controls="Response Body-VclsVmsMigrateInfo-aj9y-protectionDomains-wiai-general-ioi1-sdsConfigurationFailureCounterParameters-8bmd-shortWindow-1tt8-nested-body" aria-expanded="true">
+            <span class="icon dds__icon dds__icon--chevron-right dds__mt-1 dds__ml-auto hidden"></span>
+            <span class="icon dds__icon dds__icon--chevron-down dds__mt-1 dds__ml-auto"></span>
+        </span>
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">object</span>
+      
+    </div>
+    
+    
+    
+    
+    <div class="desc"><p>Window</p>
+</div>
+    
+    
+  </div>
+</div><div class="nested-body schema-child-row" id="Response Body-VclsVmsMigrateInfo-aj9y-protectionDomains-wiai-general-ioi1-sdsConfigurationFailureCounterParameters-8bmd-shortWindow-1tt8-nested-body" style="">
+            <div colspan="2" class="nested">
+            <div class="" id="primitive-threshold">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="threshold">threshold</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">integer&lt;int32&gt;</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-windowSizeInSec">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="windowSizeInSec">windowSizeInSec</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">integer&lt;int32&gt;</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+            </div>
+          </div></div>
+<div class="expanded" id="Response Body-VclsVmsMigrateInfo-aj9y-protectionDomains-wiai-general-ioi1-sdsConfigurationFailureCounterParameters-8bmd-mediumWindow-dynp">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name clickable-property" title="mediumWindow" style="cursor: pointer;">mediumWindow</span>
+    </div>
+    <span class="schema-toggle-icon" data-action="toggleNestedBodyCard" data-target-id="Response Body-VclsVmsMigrateInfo-aj9y-protectionDomains-wiai-general-ioi1-sdsConfigurationFailureCounterParameters-8bmd-mediumWindow-dynp" role="button" tabindex="0" aria-controls="Response Body-VclsVmsMigrateInfo-aj9y-protectionDomains-wiai-general-ioi1-sdsConfigurationFailureCounterParameters-8bmd-mediumWindow-dynp-nested-body" aria-expanded="true">
+            <span class="icon dds__icon dds__icon--chevron-right dds__mt-1 dds__ml-auto hidden"></span>
+            <span class="icon dds__icon dds__icon--chevron-down dds__mt-1 dds__ml-auto"></span>
+        </span>
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">object</span>
+      
+    </div>
+    
+    
+    
+    
+    <div class="desc"><p>Window</p>
+</div>
+    
+    
+  </div>
+</div><div class="nested-body schema-child-row" id="Response Body-VclsVmsMigrateInfo-aj9y-protectionDomains-wiai-general-ioi1-sdsConfigurationFailureCounterParameters-8bmd-mediumWindow-dynp-nested-body" style="">
+            <div colspan="2" class="nested">
+            <div class="" id="primitive-threshold">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="threshold">threshold</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">integer&lt;int32&gt;</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-windowSizeInSec">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="windowSizeInSec">windowSizeInSec</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">integer&lt;int32&gt;</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+            </div>
+          </div></div>
+<div class="expanded" id="Response Body-VclsVmsMigrateInfo-aj9y-protectionDomains-wiai-general-ioi1-sdsConfigurationFailureCounterParameters-8bmd-longWindow-7vqh">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name clickable-property" title="longWindow" style="cursor: pointer;">longWindow</span>
+    </div>
+    <span class="schema-toggle-icon" data-action="toggleNestedBodyCard" data-target-id="Response Body-VclsVmsMigrateInfo-aj9y-protectionDomains-wiai-general-ioi1-sdsConfigurationFailureCounterParameters-8bmd-longWindow-7vqh" role="button" tabindex="0" aria-controls="Response Body-VclsVmsMigrateInfo-aj9y-protectionDomains-wiai-general-ioi1-sdsConfigurationFailureCounterParameters-8bmd-longWindow-7vqh-nested-body" aria-expanded="true">
+            <span class="icon dds__icon dds__icon--chevron-right dds__mt-1 dds__ml-auto hidden"></span>
+            <span class="icon dds__icon dds__icon--chevron-down dds__mt-1 dds__ml-auto"></span>
+        </span>
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">object</span>
+      
+    </div>
+    
+    
+    
+    
+    <div class="desc"><p>Window</p>
+</div>
+    
+    
+  </div>
+</div><div class="nested-body schema-child-row" id="Response Body-VclsVmsMigrateInfo-aj9y-protectionDomains-wiai-general-ioi1-sdsConfigurationFailureCounterParameters-8bmd-longWindow-7vqh-nested-body" style="">
+            <div colspan="2" class="nested">
+            <div class="" id="primitive-threshold">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="threshold">threshold</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">integer&lt;int32&gt;</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-windowSizeInSec">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="windowSizeInSec">windowSizeInSec</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">integer&lt;int32&gt;</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+            </div>
+          </div></div>
+            </div>
+          </div></div>
+<div class="expanded" id="Response Body-VclsVmsMigrateInfo-aj9y-protectionDomains-wiai-general-ioi1-mdmSdsCounterParameters-qr1q">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name clickable-property" title="mdmSdsCounterParameters" style="cursor: pointer;">mdmSdsCounterParameters</span>
+    </div>
+    <span class="schema-toggle-icon" data-action="toggleNestedBodyCard" data-target-id="Response Body-VclsVmsMigrateInfo-aj9y-protectionDomains-wiai-general-ioi1-mdmSdsCounterParameters-qr1q" role="button" tabindex="0" aria-controls="Response Body-VclsVmsMigrateInfo-aj9y-protectionDomains-wiai-general-ioi1-mdmSdsCounterParameters-qr1q-nested-body" aria-expanded="true">
+            <span class="icon dds__icon dds__icon--chevron-right dds__mt-1 dds__ml-auto hidden"></span>
+            <span class="icon dds__icon dds__icon--chevron-down dds__mt-1 dds__ml-auto"></span>
+        </span>
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">object</span>
+      
+    </div>
+    
+    
+    
+    
+    <div class="desc"><p>CounterParameters</p>
+</div>
+    
+    
+  </div>
+</div><div class="nested-body schema-child-row" id="Response Body-VclsVmsMigrateInfo-aj9y-protectionDomains-wiai-general-ioi1-mdmSdsCounterParameters-qr1q-nested-body" style="">
+            <div colspan="2" class="nested">
+            <div class="expanded" id="Response Body-VclsVmsMigrateInfo-aj9y-protectionDomains-wiai-general-ioi1-mdmSdsCounterParameters-qr1q-shortWindow-uv2b">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name clickable-property" title="shortWindow" style="cursor: pointer;">shortWindow</span>
+    </div>
+    <span class="schema-toggle-icon" data-action="toggleNestedBodyCard" data-target-id="Response Body-VclsVmsMigrateInfo-aj9y-protectionDomains-wiai-general-ioi1-mdmSdsCounterParameters-qr1q-shortWindow-uv2b" role="button" tabindex="0" aria-controls="Response Body-VclsVmsMigrateInfo-aj9y-protectionDomains-wiai-general-ioi1-mdmSdsCounterParameters-qr1q-shortWindow-uv2b-nested-body" aria-expanded="true">
+            <span class="icon dds__icon dds__icon--chevron-right dds__mt-1 dds__ml-auto hidden"></span>
+            <span class="icon dds__icon dds__icon--chevron-down dds__mt-1 dds__ml-auto"></span>
+        </span>
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">object</span>
+      
+    </div>
+    
+    
+    
+    
+    <div class="desc"><p>Window</p>
+</div>
+    
+    
+  </div>
+</div><div class="nested-body schema-child-row" id="Response Body-VclsVmsMigrateInfo-aj9y-protectionDomains-wiai-general-ioi1-mdmSdsCounterParameters-qr1q-shortWindow-uv2b-nested-body" style="">
+            <div colspan="2" class="nested">
+            <div class="" id="primitive-threshold">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="threshold">threshold</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">integer&lt;int32&gt;</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-windowSizeInSec">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="windowSizeInSec">windowSizeInSec</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">integer&lt;int32&gt;</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+            </div>
+          </div></div>
+<div class="expanded" id="Response Body-VclsVmsMigrateInfo-aj9y-protectionDomains-wiai-general-ioi1-mdmSdsCounterParameters-qr1q-mediumWindow-cwt1">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name clickable-property" title="mediumWindow" style="cursor: pointer;">mediumWindow</span>
+    </div>
+    <span class="schema-toggle-icon" data-action="toggleNestedBodyCard" data-target-id="Response Body-VclsVmsMigrateInfo-aj9y-protectionDomains-wiai-general-ioi1-mdmSdsCounterParameters-qr1q-mediumWindow-cwt1" role="button" tabindex="0" aria-controls="Response Body-VclsVmsMigrateInfo-aj9y-protectionDomains-wiai-general-ioi1-mdmSdsCounterParameters-qr1q-mediumWindow-cwt1-nested-body" aria-expanded="true">
+            <span class="icon dds__icon dds__icon--chevron-right dds__mt-1 dds__ml-auto hidden"></span>
+            <span class="icon dds__icon dds__icon--chevron-down dds__mt-1 dds__ml-auto"></span>
+        </span>
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">object</span>
+      
+    </div>
+    
+    
+    
+    
+    <div class="desc"><p>Window</p>
+</div>
+    
+    
+  </div>
+</div><div class="nested-body schema-child-row" id="Response Body-VclsVmsMigrateInfo-aj9y-protectionDomains-wiai-general-ioi1-mdmSdsCounterParameters-qr1q-mediumWindow-cwt1-nested-body" style="">
+            <div colspan="2" class="nested">
+            <div class="" id="primitive-threshold">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="threshold">threshold</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">integer&lt;int32&gt;</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-windowSizeInSec">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="windowSizeInSec">windowSizeInSec</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">integer&lt;int32&gt;</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+            </div>
+          </div></div>
+<div class="expanded" id="Response Body-VclsVmsMigrateInfo-aj9y-protectionDomains-wiai-general-ioi1-mdmSdsCounterParameters-qr1q-longWindow-gqiy">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name clickable-property" title="longWindow" style="cursor: pointer;">longWindow</span>
+    </div>
+    <span class="schema-toggle-icon" data-action="toggleNestedBodyCard" data-target-id="Response Body-VclsVmsMigrateInfo-aj9y-protectionDomains-wiai-general-ioi1-mdmSdsCounterParameters-qr1q-longWindow-gqiy" role="button" tabindex="0" aria-controls="Response Body-VclsVmsMigrateInfo-aj9y-protectionDomains-wiai-general-ioi1-mdmSdsCounterParameters-qr1q-longWindow-gqiy-nested-body" aria-expanded="true">
+            <span class="icon dds__icon dds__icon--chevron-right dds__mt-1 dds__ml-auto hidden"></span>
+            <span class="icon dds__icon dds__icon--chevron-down dds__mt-1 dds__ml-auto"></span>
+        </span>
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">object</span>
+      
+    </div>
+    
+    
+    
+    
+    <div class="desc"><p>Window</p>
+</div>
+    
+    
+  </div>
+</div><div class="nested-body schema-child-row" id="Response Body-VclsVmsMigrateInfo-aj9y-protectionDomains-wiai-general-ioi1-mdmSdsCounterParameters-qr1q-longWindow-gqiy-nested-body" style="">
+            <div colspan="2" class="nested">
+            <div class="" id="primitive-threshold">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="threshold">threshold</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">integer&lt;int32&gt;</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-windowSizeInSec">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="windowSizeInSec">windowSizeInSec</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">integer&lt;int32&gt;</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+            </div>
+          </div></div>
+            </div>
+          </div></div>
+<div class="expanded" id="Response Body-VclsVmsMigrateInfo-aj9y-protectionDomains-wiai-general-ioi1-sdsSdsCounterParameters-9cpl">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name clickable-property" title="sdsSdsCounterParameters" style="cursor: pointer;">sdsSdsCounterParameters</span>
+    </div>
+    <span class="schema-toggle-icon" data-action="toggleNestedBodyCard" data-target-id="Response Body-VclsVmsMigrateInfo-aj9y-protectionDomains-wiai-general-ioi1-sdsSdsCounterParameters-9cpl" role="button" tabindex="0" aria-controls="Response Body-VclsVmsMigrateInfo-aj9y-protectionDomains-wiai-general-ioi1-sdsSdsCounterParameters-9cpl-nested-body" aria-expanded="true">
+            <span class="icon dds__icon dds__icon--chevron-right dds__mt-1 dds__ml-auto hidden"></span>
+            <span class="icon dds__icon dds__icon--chevron-down dds__mt-1 dds__ml-auto"></span>
+        </span>
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">object</span>
+      
+    </div>
+    
+    
+    
+    
+    <div class="desc"><p>CounterParameters</p>
+</div>
+    
+    
+  </div>
+</div><div class="nested-body schema-child-row" id="Response Body-VclsVmsMigrateInfo-aj9y-protectionDomains-wiai-general-ioi1-sdsSdsCounterParameters-9cpl-nested-body" style="">
+            <div colspan="2" class="nested">
+            <div class="expanded" id="Response Body-VclsVmsMigrateInfo-aj9y-protectionDomains-wiai-general-ioi1-sdsSdsCounterParameters-9cpl-shortWindow-fh4n">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name clickable-property" title="shortWindow" style="cursor: pointer;">shortWindow</span>
+    </div>
+    <span class="schema-toggle-icon" data-action="toggleNestedBodyCard" data-target-id="Response Body-VclsVmsMigrateInfo-aj9y-protectionDomains-wiai-general-ioi1-sdsSdsCounterParameters-9cpl-shortWindow-fh4n" role="button" tabindex="0" aria-controls="Response Body-VclsVmsMigrateInfo-aj9y-protectionDomains-wiai-general-ioi1-sdsSdsCounterParameters-9cpl-shortWindow-fh4n-nested-body" aria-expanded="true">
+            <span class="icon dds__icon dds__icon--chevron-right dds__mt-1 dds__ml-auto hidden"></span>
+            <span class="icon dds__icon dds__icon--chevron-down dds__mt-1 dds__ml-auto"></span>
+        </span>
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">object</span>
+      
+    </div>
+    
+    
+    
+    
+    <div class="desc"><p>Window</p>
+</div>
+    
+    
+  </div>
+</div><div class="nested-body schema-child-row" id="Response Body-VclsVmsMigrateInfo-aj9y-protectionDomains-wiai-general-ioi1-sdsSdsCounterParameters-9cpl-shortWindow-fh4n-nested-body" style="">
+            <div colspan="2" class="nested">
+            <div class="" id="primitive-threshold">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="threshold">threshold</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">integer&lt;int32&gt;</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-windowSizeInSec">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="windowSizeInSec">windowSizeInSec</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">integer&lt;int32&gt;</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+            </div>
+          </div></div>
+<div class="expanded" id="Response Body-VclsVmsMigrateInfo-aj9y-protectionDomains-wiai-general-ioi1-sdsSdsCounterParameters-9cpl-mediumWindow-1pln">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name clickable-property" title="mediumWindow" style="cursor: pointer;">mediumWindow</span>
+    </div>
+    <span class="schema-toggle-icon" data-action="toggleNestedBodyCard" data-target-id="Response Body-VclsVmsMigrateInfo-aj9y-protectionDomains-wiai-general-ioi1-sdsSdsCounterParameters-9cpl-mediumWindow-1pln" role="button" tabindex="0" aria-controls="Response Body-VclsVmsMigrateInfo-aj9y-protectionDomains-wiai-general-ioi1-sdsSdsCounterParameters-9cpl-mediumWindow-1pln-nested-body" aria-expanded="true">
+            <span class="icon dds__icon dds__icon--chevron-right dds__mt-1 dds__ml-auto hidden"></span>
+            <span class="icon dds__icon dds__icon--chevron-down dds__mt-1 dds__ml-auto"></span>
+        </span>
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">object</span>
+      
+    </div>
+    
+    
+    
+    
+    <div class="desc"><p>Window</p>
+</div>
+    
+    
+  </div>
+</div><div class="nested-body schema-child-row" id="Response Body-VclsVmsMigrateInfo-aj9y-protectionDomains-wiai-general-ioi1-sdsSdsCounterParameters-9cpl-mediumWindow-1pln-nested-body" style="">
+            <div colspan="2" class="nested">
+            <div class="" id="primitive-threshold">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="threshold">threshold</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">integer&lt;int32&gt;</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-windowSizeInSec">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="windowSizeInSec">windowSizeInSec</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">integer&lt;int32&gt;</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+            </div>
+          </div></div>
+<div class="expanded" id="Response Body-VclsVmsMigrateInfo-aj9y-protectionDomains-wiai-general-ioi1-sdsSdsCounterParameters-9cpl-longWindow-6xk6">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name clickable-property" title="longWindow" style="cursor: pointer;">longWindow</span>
+    </div>
+    <span class="schema-toggle-icon" data-action="toggleNestedBodyCard" data-target-id="Response Body-VclsVmsMigrateInfo-aj9y-protectionDomains-wiai-general-ioi1-sdsSdsCounterParameters-9cpl-longWindow-6xk6" role="button" tabindex="0" aria-controls="Response Body-VclsVmsMigrateInfo-aj9y-protectionDomains-wiai-general-ioi1-sdsSdsCounterParameters-9cpl-longWindow-6xk6-nested-body" aria-expanded="true">
+            <span class="icon dds__icon dds__icon--chevron-right dds__mt-1 dds__ml-auto hidden"></span>
+            <span class="icon dds__icon dds__icon--chevron-down dds__mt-1 dds__ml-auto"></span>
+        </span>
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">object</span>
+      
+    </div>
+    
+    
+    
+    
+    <div class="desc"><p>Window</p>
+</div>
+    
+    
+  </div>
+</div><div class="nested-body schema-child-row" id="Response Body-VclsVmsMigrateInfo-aj9y-protectionDomains-wiai-general-ioi1-sdsSdsCounterParameters-9cpl-longWindow-6xk6-nested-body" style="">
+            <div colspan="2" class="nested">
+            <div class="" id="primitive-threshold">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="threshold">threshold</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">integer&lt;int32&gt;</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-windowSizeInSec">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="windowSizeInSec">windowSizeInSec</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">integer&lt;int32&gt;</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+            </div>
+          </div></div>
+            </div>
+          </div></div>
+<div class="" id="primitive-rfcacheOpertionalMode">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="rfcacheOpertionalMode">rfcacheOpertionalMode</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-rfcachePageSizeKb">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="rfcachePageSizeKb">rfcachePageSizeKb</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">integer&lt;int64&gt;</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-rfcacheMaxIoSizeKb">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="rfcacheMaxIoSizeKb">rfcacheMaxIoSizeKb</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">integer&lt;int64&gt;</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="expanded" id="Response Body-VclsVmsMigrateInfo-aj9y-protectionDomains-wiai-general-ioi1-sdsReceiveBufferAllocationFailuresCounterParameters-2p2c">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name clickable-property" title="sdsReceiveBufferAllocationFailuresCounterParameters" style="cursor: pointer;">sdsReceiveBufferAllocationFailuresCounterParameters</span>
+    </div>
+    <span class="schema-toggle-icon" data-action="toggleNestedBodyCard" data-target-id="Response Body-VclsVmsMigrateInfo-aj9y-protectionDomains-wiai-general-ioi1-sdsReceiveBufferAllocationFailuresCounterParameters-2p2c" role="button" tabindex="0" aria-controls="Response Body-VclsVmsMigrateInfo-aj9y-protectionDomains-wiai-general-ioi1-sdsReceiveBufferAllocationFailuresCounterParameters-2p2c-nested-body" aria-expanded="true">
+            <span class="icon dds__icon dds__icon--chevron-right dds__mt-1 dds__ml-auto hidden"></span>
+            <span class="icon dds__icon dds__icon--chevron-down dds__mt-1 dds__ml-auto"></span>
+        </span>
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">object</span>
+      
+    </div>
+    
+    
+    
+    
+    <div class="desc"><p>CounterParameters</p>
+</div>
+    
+    
+  </div>
+</div><div class="nested-body schema-child-row" id="Response Body-VclsVmsMigrateInfo-aj9y-protectionDomains-wiai-general-ioi1-sdsReceiveBufferAllocationFailuresCounterParameters-2p2c-nested-body" style="">
+            <div colspan="2" class="nested">
+            <div class="expanded" id="Response Body-VclsVmsMigrateInfo-aj9y-protectionDomains-wiai-general-ioi1-sdsReceiveBufferAllocationFailuresCounterParameters-2p2c-shortWindow-6bpz">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name clickable-property" title="shortWindow" style="cursor: pointer;">shortWindow</span>
+    </div>
+    <span class="schema-toggle-icon" data-action="toggleNestedBodyCard" data-target-id="Response Body-VclsVmsMigrateInfo-aj9y-protectionDomains-wiai-general-ioi1-sdsReceiveBufferAllocationFailuresCounterParameters-2p2c-shortWindow-6bpz" role="button" tabindex="0" aria-controls="Response Body-VclsVmsMigrateInfo-aj9y-protectionDomains-wiai-general-ioi1-sdsReceiveBufferAllocationFailuresCounterParameters-2p2c-shortWindow-6bpz-nested-body" aria-expanded="true">
+            <span class="icon dds__icon dds__icon--chevron-right dds__mt-1 dds__ml-auto hidden"></span>
+            <span class="icon dds__icon dds__icon--chevron-down dds__mt-1 dds__ml-auto"></span>
+        </span>
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">object</span>
+      
+    </div>
+    
+    
+    
+    
+    <div class="desc"><p>Window</p>
+</div>
+    
+    
+  </div>
+</div><div class="nested-body schema-child-row" id="Response Body-VclsVmsMigrateInfo-aj9y-protectionDomains-wiai-general-ioi1-sdsReceiveBufferAllocationFailuresCounterParameters-2p2c-shortWindow-6bpz-nested-body" style="">
+            <div colspan="2" class="nested">
+            <div class="" id="primitive-threshold">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="threshold">threshold</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">integer&lt;int32&gt;</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-windowSizeInSec">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="windowSizeInSec">windowSizeInSec</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">integer&lt;int32&gt;</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+            </div>
+          </div></div>
+<div class="expanded" id="Response Body-VclsVmsMigrateInfo-aj9y-protectionDomains-wiai-general-ioi1-sdsReceiveBufferAllocationFailuresCounterParameters-2p2c-mediumWindow-9n98">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name clickable-property" title="mediumWindow" style="cursor: pointer;">mediumWindow</span>
+    </div>
+    <span class="schema-toggle-icon" data-action="toggleNestedBodyCard" data-target-id="Response Body-VclsVmsMigrateInfo-aj9y-protectionDomains-wiai-general-ioi1-sdsReceiveBufferAllocationFailuresCounterParameters-2p2c-mediumWindow-9n98" role="button" tabindex="0" aria-controls="Response Body-VclsVmsMigrateInfo-aj9y-protectionDomains-wiai-general-ioi1-sdsReceiveBufferAllocationFailuresCounterParameters-2p2c-mediumWindow-9n98-nested-body" aria-expanded="true">
+            <span class="icon dds__icon dds__icon--chevron-right dds__mt-1 dds__ml-auto hidden"></span>
+            <span class="icon dds__icon dds__icon--chevron-down dds__mt-1 dds__ml-auto"></span>
+        </span>
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">object</span>
+      
+    </div>
+    
+    
+    
+    
+    <div class="desc"><p>Window</p>
+</div>
+    
+    
+  </div>
+</div><div class="nested-body schema-child-row" id="Response Body-VclsVmsMigrateInfo-aj9y-protectionDomains-wiai-general-ioi1-sdsReceiveBufferAllocationFailuresCounterParameters-2p2c-mediumWindow-9n98-nested-body" style="">
+            <div colspan="2" class="nested">
+            <div class="" id="primitive-threshold">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="threshold">threshold</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">integer&lt;int32&gt;</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-windowSizeInSec">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="windowSizeInSec">windowSizeInSec</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">integer&lt;int32&gt;</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+            </div>
+          </div></div>
+<div class="expanded" id="Response Body-VclsVmsMigrateInfo-aj9y-protectionDomains-wiai-general-ioi1-sdsReceiveBufferAllocationFailuresCounterParameters-2p2c-longWindow-e38n">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name clickable-property" title="longWindow" style="cursor: pointer;">longWindow</span>
+    </div>
+    <span class="schema-toggle-icon" data-action="toggleNestedBodyCard" data-target-id="Response Body-VclsVmsMigrateInfo-aj9y-protectionDomains-wiai-general-ioi1-sdsReceiveBufferAllocationFailuresCounterParameters-2p2c-longWindow-e38n" role="button" tabindex="0" aria-controls="Response Body-VclsVmsMigrateInfo-aj9y-protectionDomains-wiai-general-ioi1-sdsReceiveBufferAllocationFailuresCounterParameters-2p2c-longWindow-e38n-nested-body" aria-expanded="true">
+            <span class="icon dds__icon dds__icon--chevron-right dds__mt-1 dds__ml-auto hidden"></span>
+            <span class="icon dds__icon dds__icon--chevron-down dds__mt-1 dds__ml-auto"></span>
+        </span>
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">object</span>
+      
+    </div>
+    
+    
+    
+    
+    <div class="desc"><p>Window</p>
+</div>
+    
+    
+  </div>
+</div><div class="nested-body schema-child-row" id="Response Body-VclsVmsMigrateInfo-aj9y-protectionDomains-wiai-general-ioi1-sdsReceiveBufferAllocationFailuresCounterParameters-2p2c-longWindow-e38n-nested-body" style="">
+            <div colspan="2" class="nested">
+            <div class="" id="primitive-threshold">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="threshold">threshold</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">integer&lt;int32&gt;</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-windowSizeInSec">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="windowSizeInSec">windowSizeInSec</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">integer&lt;int32&gt;</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+            </div>
+          </div></div>
+            </div>
+          </div></div>
+<div class="" id="primitive-rebuildNetworkThrottlingEnabled">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="rebuildNetworkThrottlingEnabled">rebuildNetworkThrottlingEnabled</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">boolean</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-rebalanceNetworkThrottlingEnabled">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="rebalanceNetworkThrottlingEnabled">rebalanceNetworkThrottlingEnabled</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">boolean</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-overallIoNetworkThrottlingEnabled">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="overallIoNetworkThrottlingEnabled">overallIoNetworkThrottlingEnabled</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">boolean</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-rfcacheEnabled">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="rfcacheEnabled">rfcacheEnabled</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">boolean</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+            </div>
+          </div></div>
+<div class="expanded" id="Response Body-VclsVmsMigrateInfo-aj9y-protectionDomains-wiai-statistics-ydlx">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name clickable-property" title="statistics" style="cursor: pointer;">statistics</span>
+    </div>
+    <span class="schema-toggle-icon" data-action="toggleNestedBodyCard" data-target-id="Response Body-VclsVmsMigrateInfo-aj9y-protectionDomains-wiai-statistics-ydlx" role="button" tabindex="0" aria-controls="Response Body-VclsVmsMigrateInfo-aj9y-protectionDomains-wiai-statistics-ydlx-nested-body" aria-expanded="true">
+            <span class="icon dds__icon dds__icon--chevron-right dds__mt-1 dds__ml-auto hidden"></span>
+            <span class="icon dds__icon dds__icon--chevron-down dds__mt-1 dds__ml-auto"></span>
+        </span>
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">object</span>
+      
+    </div>
+    
+    
+    
+    
+    <div class="desc"><p>ProtectionDomainStatistics</p>
+</div>
+    
+    
+  </div>
+</div><div class="nested-body schema-child-row" id="Response Body-VclsVmsMigrateInfo-aj9y-protectionDomains-wiai-statistics-ydlx-nested-body" style="">
+            <div colspan="2" class="nested">
+            <div class="" id="primitive-unusedCapacityInKb">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="unusedCapacityInKb">unusedCapacityInKb</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">integer&lt;int64&gt;</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-numOfMappedToAllVolumes">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="numOfMappedToAllVolumes">numOfMappedToAllVolumes</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">integer&lt;int32&gt;</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-capacityAvailableForVolumeAllocationInKb">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="capacityAvailableForVolumeAllocationInKb">capacityAvailableForVolumeAllocationInKb</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">integer&lt;int64&gt;</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-capacityLimitInKb">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="capacityLimitInKb">capacityLimitInKb</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">integer&lt;int64&gt;</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-numOfUnmappedVolumes">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="numOfUnmappedVolumes">numOfUnmappedVolumes</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">integer&lt;int64&gt;</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-spareCapacityInKb">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="spareCapacityInKb">spareCapacityInKb</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">integer&lt;int64&gt;</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-numOfSds">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="numOfSds">numOfSds</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">integer&lt;int32&gt;</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-capacityInUseInKb">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="capacityInUseInKb">capacityInUseInKb</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">integer&lt;int64&gt;</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-numOfStoragePools">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="numOfStoragePools">numOfStoragePools</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">integer&lt;int32&gt;</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-numOfFaultSets">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="numOfFaultSets">numOfFaultSets</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">integer&lt;int32&gt;</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-maxCapacityInKb">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="maxCapacityInKb">maxCapacityInKb</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">integer&lt;int64&gt;</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-thinCapacityInUseInKb">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="thinCapacityInUseInKb">thinCapacityInUseInKb</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">integer&lt;int64&gt;</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-thickCapacityInUseInKb">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="thickCapacityInUseInKb">thickCapacityInUseInKb</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">integer&lt;int64&gt;</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+            </div>
+          </div></div>
+<div class="" id="Response Body-VclsVmsMigrateInfo-aj9y-protectionDomains-wiai-storage_pool_list-r0ir">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name clickable-property" title="storage_pool_list" style="cursor: pointer;">storage_pool_list</span>
+    </div>
+    <span class="schema-toggle-icon" data-action="toggleNestedBodyCard" data-target-id="Response Body-VclsVmsMigrateInfo-aj9y-protectionDomains-wiai-storage_pool_list-r0ir" role="button" tabindex="0" aria-controls="Response Body-VclsVmsMigrateInfo-aj9y-protectionDomains-wiai-storage_pool_list-r0ir-nested-body" aria-expanded="false">
+            <span class="icon dds__icon dds__icon--chevron-right dds__mt-1 dds__ml-auto"></span>
+            <span class="icon dds__icon dds__icon--chevron-down dds__mt-1 dds__ml-auto hidden"></span>
+        </span>
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">array[object]</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div><div class="nested-body schema-child-row" id="Response Body-VclsVmsMigrateInfo-aj9y-protectionDomains-wiai-storage_pool_list-r0ir-nested-body" style="display:none">
+            <div colspan="2" class="nested">
+            <div class="" id="primitive-id">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="id">id</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-name">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="name">name</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-rebuildIoPriorityPolicy">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="rebuildIoPriorityPolicy">rebuildIoPriorityPolicy</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-rebalanceIoPriorityPolicy">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="rebalanceIoPriorityPolicy">rebalanceIoPriorityPolicy</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-rebuildIoPriorityNumOfConcurrentIosPerDevice">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="rebuildIoPriorityNumOfConcurrentIosPerDevice">rebuildIoPriorityNumOfConcurrentIosPerDevice</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">integer&lt;int32&gt;</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-rebalanceIoPriorityNumOfConcurrentIosPerDevice">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="rebalanceIoPriorityNumOfConcurrentIosPerDevice">rebalanceIoPriorityNumOfConcurrentIosPerDevice</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">integer&lt;int32&gt;</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-rebuildIoPriorityBwLimitPerDeviceInKbps">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="rebuildIoPriorityBwLimitPerDeviceInKbps">rebuildIoPriorityBwLimitPerDeviceInKbps</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">integer&lt;int64&gt;</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-rebalanceIoPriorityBwLimitPerDeviceInKbps">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="rebalanceIoPriorityBwLimitPerDeviceInKbps">rebalanceIoPriorityBwLimitPerDeviceInKbps</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">integer&lt;int64&gt;</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-rebuildIoPriorityAppIopsPerDeviceThreshold">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="rebuildIoPriorityAppIopsPerDeviceThreshold">rebuildIoPriorityAppIopsPerDeviceThreshold</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-rebalanceIoPriorityAppIopsPerDeviceThreshold">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="rebalanceIoPriorityAppIopsPerDeviceThreshold">rebalanceIoPriorityAppIopsPerDeviceThreshold</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-rebuildIoPriorityAppBwPerDeviceThresholdInKbps">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="rebuildIoPriorityAppBwPerDeviceThresholdInKbps">rebuildIoPriorityAppBwPerDeviceThresholdInKbps</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">integer&lt;int64&gt;</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-rebuildIoPriorityQuietPeriodInMsec">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="rebuildIoPriorityQuietPeriodInMsec">rebuildIoPriorityQuietPeriodInMsec</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">integer&lt;int64&gt;</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-rebalanceIoPriorityQuietPeriodInMsec">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="rebalanceIoPriorityQuietPeriodInMsec">rebalanceIoPriorityQuietPeriodInMsec</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">integer&lt;int64&gt;</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-zeroPaddingEnabled">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="zeroPaddingEnabled">zeroPaddingEnabled</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">boolean</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-backgroundScannerMode">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="backgroundScannerMode">backgroundScannerMode</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-backgroundScannerBWLimitKBps">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="backgroundScannerBWLimitKBps">backgroundScannerBWLimitKBps</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">integer&lt;int64&gt;</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-useRmcache">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="useRmcache">useRmcache</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">boolean</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-protectionDomainId">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="protectionDomainId">protectionDomainId</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-useRfcache">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="useRfcache">useRfcache</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">boolean</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-sparePercentage">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="sparePercentage">sparePercentage</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">integer&lt;int32&gt;</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-rmcacheWriteHandlingMode">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="rmcacheWriteHandlingMode">rmcacheWriteHandlingMode</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-checksumEnabled">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="checksumEnabled">checksumEnabled</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">boolean</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-rebuildEnabled">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="rebuildEnabled">rebuildEnabled</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">boolean</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-rebalanceEnabled">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="rebalanceEnabled">rebalanceEnabled</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">boolean</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-numOfParallelRebuildRebalanceJobsPerDevice">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="numOfParallelRebuildRebalanceJobsPerDevice">numOfParallelRebuildRebalanceJobsPerDevice</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">integer&lt;int32&gt;</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-capacityAlertHighThreshold">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="capacityAlertHighThreshold">capacityAlertHighThreshold</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">integer&lt;int32&gt;</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-capacityAlertCriticalThreshold">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="capacityAlertCriticalThreshold">capacityAlertCriticalThreshold</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">integer&lt;int32&gt;</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="expanded" id="Response Body-VclsVmsMigrateInfo-aj9y-protectionDomains-wiai-storage_pool_list-r0ir-statistics-snef">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name clickable-property" title="statistics" style="cursor: pointer;">statistics</span>
+    </div>
+    <span class="schema-toggle-icon" data-action="toggleNestedBodyCard" data-target-id="Response Body-VclsVmsMigrateInfo-aj9y-protectionDomains-wiai-storage_pool_list-r0ir-statistics-snef" role="button" tabindex="0" aria-controls="Response Body-VclsVmsMigrateInfo-aj9y-protectionDomains-wiai-storage_pool_list-r0ir-statistics-snef-nested-body" aria-expanded="true">
+            <span class="icon dds__icon dds__icon--chevron-right dds__mt-1 dds__ml-auto hidden"></span>
+            <span class="icon dds__icon dds__icon--chevron-down dds__mt-1 dds__ml-auto"></span>
+        </span>
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">object</span>
+      
+    </div>
+    
+    
+    
+    
+    <div class="desc"><p>StroagePoolStatistics</p>
+</div>
+    
+    
+  </div>
+</div><div class="nested-body schema-child-row" id="Response Body-VclsVmsMigrateInfo-aj9y-protectionDomains-wiai-storage_pool_list-r0ir-statistics-snef-nested-body" style="">
+            <div colspan="2" class="nested">
+            <div class="" id="primitive-numOfDevices">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="numOfDevices">numOfDevices</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">integer&lt;int32&gt;</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-unusedCapacityInKb">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="unusedCapacityInKb">unusedCapacityInKb</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">integer&lt;int64&gt;</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-numOfVolumes">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="numOfVolumes">numOfVolumes</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">integer&lt;int32&gt;</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-numOfMappedToAllVolumes">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="numOfMappedToAllVolumes">numOfMappedToAllVolumes</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">integer&lt;int32&gt;</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-capacityAvailableForVolumeAllocationInKb">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="capacityAvailableForVolumeAllocationInKb">capacityAvailableForVolumeAllocationInKb</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">integer&lt;int64&gt;</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-volumeAllocationLimitInKb">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="volumeAllocationLimitInKb">volumeAllocationLimitInKb</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">integer&lt;int64&gt;</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-capacityLimitInKb">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="capacityLimitInKb">capacityLimitInKb</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">integer&lt;int64&gt;</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-numOfUnmappedVolumes">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="numOfUnmappedVolumes">numOfUnmappedVolumes</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">integer&lt;int32&gt;</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-spareCapacityInKb">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="spareCapacityInKb">spareCapacityInKb</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">integer&lt;int64&gt;</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-capacityInUseInKb">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="capacityInUseInKb">capacityInUseInKb</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">integer&lt;int64&gt;</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-maxCapacityInKb">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="maxCapacityInKb">maxCapacityInKb</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">integer&lt;int64&gt;</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+            </div>
+          </div></div>
+<div class="" id="primitive-dataLayout">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="dataLayout">dataLayout</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-replicationCapacityMaxRatio">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="replicationCapacityMaxRatio">replicationCapacityMaxRatio</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-mediaType">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="mediaType">mediaType</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    <div class="enums">allowed values: <span class="dds__badge dds__badge--sm dds__badge--brand dds__badge--light">HDD</span> <span class="dds__badge dds__badge--sm dds__badge--brand dds__badge--light">SDD</span> <span class="dds__badge dds__badge--sm dds__badge--brand dds__badge--light">PCI_FLASH</span> <span class="dds__badge dds__badge--sm dds__badge--brand dds__badge--light">NVRAM</span></div>
+  </div>
+</div></div>
+<div class="" id="primitive-mediaTypeFromDiskType">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="mediaTypeFromDiskType">mediaTypeFromDiskType</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    <div class="enums">allowed values: <span class="dds__badge dds__badge--sm dds__badge--brand dds__badge--light">SSD</span> <span class="dds__badge dds__badge--sm dds__badge--brand dds__badge--light">HDD</span> <span class="dds__badge dds__badge--sm dds__badge--brand dds__badge--light">NVME</span></div>
+  </div>
+</div></div>
+<div class="" id="Response Body-VclsVmsMigrateInfo-aj9y-protectionDomains-wiai-storage_pool_list-r0ir-disk_list-bt5g">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name clickable-property" title="disk_list" style="cursor: pointer;">disk_list</span>
+    </div>
+    <span class="schema-toggle-icon" data-action="toggleNestedBodyCard" data-target-id="Response Body-VclsVmsMigrateInfo-aj9y-protectionDomains-wiai-storage_pool_list-r0ir-disk_list-bt5g" role="button" tabindex="0" aria-controls="Response Body-VclsVmsMigrateInfo-aj9y-protectionDomains-wiai-storage_pool_list-r0ir-disk_list-bt5g-nested-body" aria-expanded="false">
+            <span class="icon dds__icon dds__icon--chevron-right dds__mt-1 dds__ml-auto"></span>
+            <span class="icon dds__icon dds__icon--chevron-down dds__mt-1 dds__ml-auto hidden"></span>
+        </span>
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">array[object]</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div><div class="nested-body schema-child-row" id="Response Body-VclsVmsMigrateInfo-aj9y-protectionDomains-wiai-storage_pool_list-r0ir-disk_list-bt5g-nested-body" style="display:none">
+            <div colspan="2" class="nested">
+            <div class="" id="primitive-id">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="id">id</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-name">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="name">name</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-errorState">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="errorState">errorState</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-sdsId">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="sdsId">sdsId</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-deviceState">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="deviceState">deviceState</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-capacityLimitInKb">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="capacityLimitInKb">capacityLimitInKb</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">integer&lt;int64&gt;</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-maxCapacityInKb">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="maxCapacityInKb">maxCapacityInKb</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">integer&lt;int64&gt;</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-storagePoolId">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="storagePoolId">storagePoolId</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-deviceCurrentPathName">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="deviceCurrentPathName">deviceCurrentPathName</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-deviceOriginalPathName">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="deviceOriginalPathName">deviceOriginalPathName</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-serialNumber">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="serialNumber">serialNumber</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-vendorName">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="vendorName">vendorName</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-modelName">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="modelName">modelName</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+            </div>
+          </div></div>
+<div class="" id="Response Body-VclsVmsMigrateInfo-aj9y-protectionDomains-wiai-storage_pool_list-r0ir-volume_list-n594">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name clickable-property" title="volume_list" style="cursor: pointer;">volume_list</span>
+    </div>
+    <span class="schema-toggle-icon" data-action="toggleNestedBodyCard" data-target-id="Response Body-VclsVmsMigrateInfo-aj9y-protectionDomains-wiai-storage_pool_list-r0ir-volume_list-n594" role="button" tabindex="0" aria-controls="Response Body-VclsVmsMigrateInfo-aj9y-protectionDomains-wiai-storage_pool_list-r0ir-volume_list-n594-nested-body" aria-expanded="false">
+            <span class="icon dds__icon dds__icon--chevron-right dds__mt-1 dds__ml-auto"></span>
+            <span class="icon dds__icon dds__icon--chevron-down dds__mt-1 dds__ml-auto hidden"></span>
+        </span>
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">array[object]</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div><div class="nested-body schema-child-row" id="Response Body-VclsVmsMigrateInfo-aj9y-protectionDomains-wiai-storage_pool_list-r0ir-volume_list-n594-nested-body" style="display:none">
+            <div colspan="2" class="nested">
+            <div class="" id="primitive-id">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="id">id</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-name">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="name">name</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-volumeType">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="volumeType">volumeType</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-storagePoolId">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="storagePoolId">storagePoolId</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-dataLayout">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="dataLayout">dataLayout</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-compressionMethod">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="compressionMethod">compressionMethod</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-sizeInKb">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="sizeInKb">sizeInKb</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">integer&lt;int64&gt;</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="Response Body-VclsVmsMigrateInfo-aj9y-protectionDomains-wiai-storage_pool_list-r0ir-volume_list-n594-mappedSdcInfo-75ie">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name clickable-property" title="mappedSdcInfo" style="cursor: pointer;">mappedSdcInfo</span>
+    </div>
+    <span class="schema-toggle-icon" data-action="toggleNestedBodyCard" data-target-id="Response Body-VclsVmsMigrateInfo-aj9y-protectionDomains-wiai-storage_pool_list-r0ir-volume_list-n594-mappedSdcInfo-75ie" role="button" tabindex="0" aria-controls="Response Body-VclsVmsMigrateInfo-aj9y-protectionDomains-wiai-storage_pool_list-r0ir-volume_list-n594-mappedSdcInfo-75ie-nested-body" aria-expanded="false">
+            <span class="icon dds__icon dds__icon--chevron-right dds__mt-1 dds__ml-auto"></span>
+            <span class="icon dds__icon dds__icon--chevron-down dds__mt-1 dds__ml-auto hidden"></span>
+        </span>
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">array[object]</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div><div class="nested-body schema-child-row" id="Response Body-VclsVmsMigrateInfo-aj9y-protectionDomains-wiai-storage_pool_list-r0ir-volume_list-n594-mappedSdcInfo-75ie-nested-body" style="display:none">
+            <div colspan="2" class="nested">
+            <div class="" id="primitive-sdcIp">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="sdcIp">sdcIp</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-sdcId">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="sdcId">sdcId</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-limitBwInMbps">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="limitBwInMbps">limitBwInMbps</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">integer</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-limitIops">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="limitIops">limitIops</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">integer&lt;int32&gt;</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+            </div>
+          </div></div>
+            </div>
+          </div></div>
+<div class="" id="primitive-fglAccpId">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="fglAccpId">fglAccpId</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-rebalanceIoPriorityAppBwPerDeviceThresholdInKbps">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="rebalanceIoPriorityAppBwPerDeviceThresholdInKbps">rebalanceIoPriorityAppBwPerDeviceThresholdInKbps</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">integer&lt;int64&gt;</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+            </div>
+          </div></div>
+<div class="" id="Response Body-VclsVmsMigrateInfo-aj9y-protectionDomains-wiai-sds_list-rsdh">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name clickable-property" title="sds_list" style="cursor: pointer;">sds_list</span>
+    </div>
+    <span class="schema-toggle-icon" data-action="toggleNestedBodyCard" data-target-id="Response Body-VclsVmsMigrateInfo-aj9y-protectionDomains-wiai-sds_list-rsdh" role="button" tabindex="0" aria-controls="Response Body-VclsVmsMigrateInfo-aj9y-protectionDomains-wiai-sds_list-rsdh-nested-body" aria-expanded="false">
+            <span class="icon dds__icon dds__icon--chevron-right dds__mt-1 dds__ml-auto"></span>
+            <span class="icon dds__icon dds__icon--chevron-down dds__mt-1 dds__ml-auto hidden"></span>
+        </span>
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">array[object]</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div><div class="nested-body schema-child-row" id="Response Body-VclsVmsMigrateInfo-aj9y-protectionDomains-wiai-sds_list-rsdh-nested-body" style="display:none">
+            <div colspan="2" class="nested">
+            <div class="" id="primitive-id">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="id">id</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-name">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="name">name</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-port">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="port">port</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">integer</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-protectionDomainId">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="protectionDomainId">protectionDomainId</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-faultSetId">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="faultSetId">faultSetId</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-softwareVersionInfo">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="softwareVersionInfo">softwareVersionInfo</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-sdsState">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="sdsState">sdsState</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-membershipState">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="membershipState">membershipState</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-mdmConnectionState">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="mdmConnectionState">mdmConnectionState</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-drlMode">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="drlMode">drlMode</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-maintenanceState">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="maintenanceState">maintenanceState</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-perfProfile">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="perfProfile">perfProfile</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-onVmWare">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="onVmWare">onVmWare</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">boolean</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="Response Body-VclsVmsMigrateInfo-aj9y-protectionDomains-wiai-sds_list-rsdh-ipList-frxm">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name clickable-property" title="ipList" style="cursor: pointer;">ipList</span>
+    </div>
+    <span class="schema-toggle-icon" data-action="toggleNestedBodyCard" data-target-id="Response Body-VclsVmsMigrateInfo-aj9y-protectionDomains-wiai-sds_list-rsdh-ipList-frxm" role="button" tabindex="0" aria-controls="Response Body-VclsVmsMigrateInfo-aj9y-protectionDomains-wiai-sds_list-rsdh-ipList-frxm-nested-body" aria-expanded="false">
+            <span class="icon dds__icon dds__icon--chevron-right dds__mt-1 dds__ml-auto"></span>
+            <span class="icon dds__icon dds__icon--chevron-down dds__mt-1 dds__ml-auto hidden"></span>
+        </span>
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">array[object]</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div><div class="nested-body schema-child-row" id="Response Body-VclsVmsMigrateInfo-aj9y-protectionDomains-wiai-sds_list-rsdh-ipList-frxm-nested-body" style="display:none">
+            <div colspan="2" class="nested">
+            <div class="" id="primitive-ip">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="ip">ip</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-role">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="role">role</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+            </div>
+          </div></div>
+            </div>
+          </div></div>
+<div class="" id="Response Body-VclsVmsMigrateInfo-aj9y-protectionDomains-wiai-sdr_list-r4nx">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name clickable-property" title="sdr_list" style="cursor: pointer;">sdr_list</span>
+    </div>
+    <span class="schema-toggle-icon" data-action="toggleNestedBodyCard" data-target-id="Response Body-VclsVmsMigrateInfo-aj9y-protectionDomains-wiai-sdr_list-r4nx" role="button" tabindex="0" aria-controls="Response Body-VclsVmsMigrateInfo-aj9y-protectionDomains-wiai-sdr_list-r4nx-nested-body" aria-expanded="false">
+            <span class="icon dds__icon dds__icon--chevron-right dds__mt-1 dds__ml-auto"></span>
+            <span class="icon dds__icon dds__icon--chevron-down dds__mt-1 dds__ml-auto hidden"></span>
+        </span>
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">array[object]</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div><div class="nested-body schema-child-row" id="Response Body-VclsVmsMigrateInfo-aj9y-protectionDomains-wiai-sdr_list-r4nx-nested-body" style="display:none">
+            <div colspan="2" class="nested">
+            <div class="" id="primitive-id">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="id">id</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-name">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="name">name</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-port">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="port">port</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">integer</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-protectionDomainId">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="protectionDomainId">protectionDomainId</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-softwareVersionInfo">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="softwareVersionInfo">softwareVersionInfo</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-sdrState">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="sdrState">sdrState</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-membershipState">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="membershipState">membershipState</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-mdmConnectionState">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="mdmConnectionState">mdmConnectionState</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-maintenanceState">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="maintenanceState">maintenanceState</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-perfProfile">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="perfProfile">perfProfile</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="Response Body-VclsVmsMigrateInfo-aj9y-protectionDomains-wiai-sdr_list-r4nx-ipList-ql4j">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name clickable-property" title="ipList" style="cursor: pointer;">ipList</span>
+    </div>
+    <span class="schema-toggle-icon" data-action="toggleNestedBodyCard" data-target-id="Response Body-VclsVmsMigrateInfo-aj9y-protectionDomains-wiai-sdr_list-r4nx-ipList-ql4j" role="button" tabindex="0" aria-controls="Response Body-VclsVmsMigrateInfo-aj9y-protectionDomains-wiai-sdr_list-r4nx-ipList-ql4j-nested-body" aria-expanded="false">
+            <span class="icon dds__icon dds__icon--chevron-right dds__mt-1 dds__ml-auto"></span>
+            <span class="icon dds__icon dds__icon--chevron-down dds__mt-1 dds__ml-auto hidden"></span>
+        </span>
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">array[object]</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div><div class="nested-body schema-child-row" id="Response Body-VclsVmsMigrateInfo-aj9y-protectionDomains-wiai-sdr_list-r4nx-ipList-ql4j-nested-body" style="display:none">
+            <div colspan="2" class="nested">
+            <div class="" id="primitive-ip">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="ip">ip</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-role">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="role">role</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+            </div>
+          </div></div>
+            </div>
+          </div></div>
+<div class="" id="Response Body-VclsVmsMigrateInfo-aj9y-protectionDomains-wiai-acceleration_pool-2oov">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name clickable-property" title="acceleration_pool" style="cursor: pointer;">acceleration_pool</span>
+    </div>
+    <span class="schema-toggle-icon" data-action="toggleNestedBodyCard" data-target-id="Response Body-VclsVmsMigrateInfo-aj9y-protectionDomains-wiai-acceleration_pool-2oov" role="button" tabindex="0" aria-controls="Response Body-VclsVmsMigrateInfo-aj9y-protectionDomains-wiai-acceleration_pool-2oov-nested-body" aria-expanded="false">
+            <span class="icon dds__icon dds__icon--chevron-right dds__mt-1 dds__ml-auto"></span>
+            <span class="icon dds__icon dds__icon--chevron-down dds__mt-1 dds__ml-auto hidden"></span>
+        </span>
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">array[object]</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div><div class="nested-body schema-child-row" id="Response Body-VclsVmsMigrateInfo-aj9y-protectionDomains-wiai-acceleration_pool-2oov-nested-body" style="display:none">
+            <div colspan="2" class="nested">
+            <div class="" id="primitive-id">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="id">id</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-name">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="name">name</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-protectionDomainId">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="protectionDomainId">protectionDomainId</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-mediaType">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="mediaType">mediaType</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-rfcache">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="rfcache">rfcache</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">boolean</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+            </div>
+          </div></div>
+            </div>
+          </div></div>
+            </div>
+          </div></div></div></div></div></div></div></div></div></div>
+   </div>
+        <div class="api__doc__right-section dds__pl-2"><div class="api_docs_collapsible highlight dds__mb-3 expanded" id="server"><div class="api_docs_collapsible-header dds__p-3" data-action="toggleCollapse" data-target-id="server" role="button" tabindex="0" aria-expanded="true"><div class="dds__w-100"><div class="server-title"><span class="dds__badge dds__badge--md http-method-get"><span class="dds__badge__label badge-font">GET</span></span><button style="float: right; border: 1px solid #9ca3af; display:none" class="dds__ml-auto dds__button dds__button--sm" type="button" id="drawer-trigger" data-action="clickedTryOutButton">Try it</button></div><div class="dds__p-2">/Deployment/{id}/vcslvmsmigrateinfo</div></div><span class="icon icon-collapsed dds__icon dds__icon--chevron-right dds__ml-auto"></span><span class="icon icon-expanded dds__icon dds__icon--chevron-down dds__ml-auto"></span></div><div class="api_docs_collapsible-body dds__px-3 dds__pt-2 dds__pb-3"><div class="dds__pr-2"></div><div class="dds__d-flex dds__justify-content-end dds__my-2"><button class="dds__button dds__button--sm" data-action="copyCodeById" data-target-id="server-copy-0">Copy</button></div><pre tabindex="0"><code id="server-copy-0">/Deployment/{id}/vcslvmsmigrateinfo</code></pre></div></div>
+<div class="api_docs_collapsible highlight dds__mb-3 expanded" id="responsesamples"><div class="api_docs_collapsible-header dds__p-3" data-action="toggleCollapse" data-target-id="responsesamples" role="button" tabindex="0" aria-controls="responsesamples-body" aria-expanded="true">Response Samples<span class="icon icon-collapsed dds__icon dds__icon--chevron-right dds__ml-auto"></span><span class="icon icon-expanded dds__icon dds__icon--chevron-down dds__ml-auto"></span></div><div class="api_docs_collapsible-body dds__px-3 dds__pt-2 dds__pb-3" id="responsesamples-body"><div class="response-tab-wrapper"><div class="tab-header" role="tablist"><h4 class="tab-item active" role="tab" aria-selected="true" aria-controls="responsesamples-tab-200" data-action="switchTab" data-target-id="responsesamples-tab-200">200</h4></div><div class="tab-body"><div class="tab-content active" id="responsesamples-tab-200" role="tabpanel" aria-labelledby="responsesamples-tab-200"><div class="dds__pt-2" role="presentation">
+        <label for="responsesamples-tab-200-content-type" class="dds__visually-hidden">Select content type</label>
+        <select id="responsesamples-tab-200-content-type" class="dds__select__field dds__mb-2" data-action="onContentTypeChange" data-example-select-id="responsesamples-tab-200-example" data-code-container-id="responsesamples-tab-200-code" data-examples-data="%7B%22application%2Fjson%22%3A%5B%7B%22description%22%3A%22Example%22%2C%22codeContent%22%3A%22%7B%5Cn%20%20%5C%22vclsVms%5C%22%3A%20%5B%5Cn%20%20%20%20%5C%22string%5C%22%5Cn%20%20%5D%2C%5Cn%20%20%5C%22currentStoragePools%5C%22%3A%20%5B%5Cn%20%20%20%20%5C%22string%5C%22%5Cn%20%20%5D%2C%5Cn%20%20%5C%22currentDatastores%5C%22%3A%20%5B%5Cn%20%20%20%20%5C%22string%5C%22%5Cn%20%20%5D%2C%5Cn%20%20%5C%22destinationDatastores%5C%22%3A%20%5B%5Cn%20%20%20%20%5C%22string%5C%22%5Cn%20%20%5D%2C%5Cn%20%20%5C%22protectionDomains%5C%22%3A%20%5B%5Cn%20%20%20%20%7B%5Cn%20%20%20%20%20%20%5C%22general%5C%22%3A%20%7B%5Cn%20%20%20%20%20%20%20%20%5C%22id%5C%22%3A%20%5C%22string%5C%22%2C%5Cn%20%20%20%20%20%20%20%20%5C%22name%5C%22%3A%20%5C%22string%5C%22%2C%5Cn%20%20%20%20%20%20%20%20%5C%22systemId%5C%22%3A%20%5C%22string%5C%22%2C%5Cn%20%20%20%20%20%20%20%20%5C%22protectionDomainState%5C%22%3A%20%5C%22string%5C%22%2C%5Cn%20%20%20%20%20%20%20%20%5C%22rebuildNetworkThrottlingInKbps%5C%22%3A%200%2C%5Cn%20%20%20%20%20%20%20%20%5C%22rebalanceNetworkThrottlingInKbps%5C%22%3A%200%2C%5Cn%20%20%20%20%20%20%20%20%5C%22overallIoNetworkThrottlingInKbps%5C%22%3A%200%2C%5Cn%20%20%20%20%20%20%20%20%5C%22sdsDecoupledCounterParameters%5C%22%3A%20%7B%5Cn%20%20%20%20%20%20%20%20%20%20%5C%22shortWindow%5C%22%3A%20%7B%5Cn%20%20%20%20%20%20%20%20%20%20%20%20%5C%22threshold%5C%22%3A%200%2C%5Cn%20%20%20%20%20%20%20%20%20%20%20%20%5C%22windowSizeInSec%5C%22%3A%200%5Cn%20%20%20%20%20%20%20%20%20%20%7D%2C%5Cn%20%20%20%20%20%20%20%20%20%20%5C%22mediumWindow%5C%22%3A%20%7B%5Cn%20%20%20%20%20%20%20%20%20%20%20%20%5C%22threshold%5C%22%3A%200%2C%5Cn%20%20%20%20%20%20%20%20%20%20%20%20%5C%22windowSizeInSec%5C%22%3A%200%5Cn%20%20%20%20%20%20%20%20%20%20%7D%2C%5Cn%20%20%20%20%20%20%20%20%20%20%5C%22longWindow%5C%22%3A%20%7B%5Cn%20%20%20%20%20%20%20%20%20%20%20%20%5C%22threshold%5C%22%3A%200%2C%5Cn%20%20%20%20%20%20%20%20%20%20%20%20%5C%22windowSizeInSec%5C%22%3A%200%5Cn%20%20%20%20%20%20%20%20%20%20%7D%5Cn%20%20%20%20%20%20%20%20%7D%2C%5Cn%20%20%20%20%20%20%20%20%5C%22sdsConfigurationFailureCounterParameters%5C%22%3A%20%7B%5Cn%20%20%20%20%20%20%20%20%20%20%5C%22shortWindow%5C%22%3A%20%7B%5Cn%20%20%20%20%20%20%20%20%20%20%20%20%5C%22threshold%5C%22%3A%200%2C%5Cn%20%20%20%20%20%20%20%20%20%20%20%20%5C%22windowSizeInSec%5C%22%3A%200%5Cn%20%20%20%20%20%20%20%20%20%20%7D%2C%5Cn%20%20%20%20%20%20%20%20%20%20%5C%22mediumWindow%5C%22%3A%20%7B%5Cn%20%20%20%20%20%20%20%20%20%20%20%20%5C%22threshold%5C%22%3A%200%2C%5Cn%20%20%20%20%20%20%20%20%20%20%20%20%5C%22windowSizeInSec%5C%22%3A%200%5Cn%20%20%20%20%20%20%20%20%20%20%7D%2C%5Cn%20%20%20%20%20%20%20%20%20%20%5C%22longWindow%5C%22%3A%20%7B%5Cn%20%20%20%20%20%20%20%20%20%20%20%20%5C%22threshold%5C%22%3A%200%2C%5Cn%20%20%20%20%20%20%20%20%20%20%20%20%5C%22windowSizeInSec%5C%22%3A%200%5Cn%20%20%20%20%20%20%20%20%20%20%7D%5Cn%20%20%20%20%20%20%20%20%7D%2C%5Cn%20%20%20%20%20%20%20%20%5C%22mdmSdsCounterParameters%5C%22%3A%20%7B%5Cn%20%20%20%20%20%20%20%20%20%20%5C%22shortWindow%5C%22%3A%20%7B%5Cn%20%20%20%20%20%20%20%20%20%20%20%20%5C%22threshold%5C%22%3A%200%2C%5Cn%20%20%20%20%20%20%20%20%20%20%20%20%5C%22windowSizeInSec%5C%22%3A%200%5Cn%20%20%20%20%20%20%20%20%20%20%7D%2C%5Cn%20%20%20%20%20%20%20%20%20%20%5C%22mediumWindow%5C%22%3A%20%7B%5Cn%20%20%20%20%20%20%20%20%20%20%20%20%5C%22threshold%5C%22%3A%200%2C%5Cn%20%20%20%20%20%20%20%20%20%20%20%20%5C%22windowSizeInSec%5C%22%3A%200%5Cn%20%20%20%20%20%20%20%20%20%20%7D%2C%5Cn%20%20%20%20%20%20%20%20%20%20%5C%22longWindow%5C%22%3A%20%7B%5Cn%20%20%20%20%20%20%20%20%20%20%20%20%5C%22threshold%5C%22%3A%200%2C%5Cn%20%20%20%20%20%20%20%20%20%20%20%20%5C%22windowSizeInSec%5C%22%3A%200%5Cn%20%20%20%20%20%20%20%20%20%20%7D%5Cn%20%20%20%20%20%20%20%20%7D%2C%5Cn%20%20%20%20%20%20%20%20%5C%22sdsSdsCounterParameters%5C%22%3A%20%7B%5Cn%20%20%20%20%20%20%20%20%20%20%5C%22shortWindow%5C%22%3A%20%7B%5Cn%20%20%20%20%20%20%20%20%20%20%20%20%5C%22threshold%5C%22%3A%200%2C%5Cn%20%20%20%20%20%20%20%20%20%20%20%20%5C%22windowSizeInSec%5C%22%3A%200%5Cn%20%20%20%20%20%20%20%20%20%20%7D%2C%5Cn%20%20%20%20%20%20%20%20%20%20%5C%22mediumWindow%5C%22%3A%20%7B%5Cn%20%20%20%20%20%20%20%20%20%20%20%20%5C%22threshold%5C%22%3A%200%2C%5Cn%20%20%20%20%20%20%20%20%20%20%20%20%5C%22windowSizeInSec%5C%22%3A%200%5Cn%20%20%20%20%20%20%20%20%20%20%7D%2C%5Cn%20%20%20%20%20%20%20%20%20%20%5C%22longWindow%5C%22%3A%20%7B%5Cn%20%20%20%20%20%20%20%20%20%20%20%20%5C%22threshold%5C%22%3A%200%2C%5Cn%20%20%20%20%20%20%20%20%20%20%20%20%5C%22windowSizeInSec%5C%22%3A%200%5Cn%20%20%20%20%20%20%20%20%20%20%7D%5Cn%20%20%20%20%20%20%20%20%7D%2C%5Cn%20%20%20%20%20%20%20%20%5C%22rfcacheOpertionalMode%5C%22%3A%20%5C%22string%5C%22%2C%5Cn%20%20%20%20%20%20%20%20%5C%22rfcachePageSizeKb%5C%22%3A%200%2C%5Cn%20%20%20%20%20%20%20%20%5C%22rfcacheMaxIoSizeKb%5C%22%3A%200%2C%5Cn%20%20%20%20%20%20%20%20%5C%22sdsReceiveBufferAllocationFailuresCounterParameters%5C%22%3A%20%7B%5Cn%20%20%20%20%20%20%20%20%20%20%5C%22shortWindow%5C%22%3A%20%7B%5Cn%20%20%20%20%20%20%20%20%20%20%20%20%5C%22threshold%5C%22%3A%200%2C%5Cn%20%20%20%20%20%20%20%20%20%20%20%20%5C%22windowSizeInSec%5C%22%3A%200%5Cn%20%20%20%20%20%20%20%20%20%20%7D%2C%5Cn%20%20%20%20%20%20%20%20%20%20%5C%22mediumWindow%5C%22%3A%20%7B%5Cn%20%20%20%20%20%20%20%20%20%20%20%20%5C%22threshold%5C%22%3A%200%2C%5Cn%20%20%20%20%20%20%20%20%20%20%20%20%5C%22windowSizeInSec%5C%22%3A%200%5Cn%20%20%20%20%20%20%20%20%20%20%7D%2C%5Cn%20%20%20%20%20%20%20%20%20%20%5C%22longWindow%5C%22%3A%20%7B%5Cn%20%20%20%20%20%20%20%20%20%20%20%20%5C%22threshold%5C%22%3A%200%2C%5Cn%20%20%20%20%20%20%20%20%20%20%20%20%5C%22windowSizeInSec%5C%22%3A%200%5Cn%20%20%20%20%20%20%20%20%20%20%7D%5Cn%20%20%20%20%20%20%20%20%7D%2C%5Cn%20%20%20%20%20%20%20%20%5C%22rebuildNetworkThrottlingEnabled%5C%22%3A%20false%2C%5Cn%20%20%20%20%20%20%20%20%5C%22rebalanceNetworkThrottlingEnabled%5C%22%3A%20false%2C%5Cn%20%20%20%20%20%20%20%20%5C%22overallIoNetworkThrottlingEnabled%5C%22%3A%20false%2C%5Cn%20%20%20%20%20%20%20%20%5C%22rfcacheEnabled%5C%22%3A%20false%5Cn%20%20%20%20%20%20%7D%2C%5Cn%20%20%20%20%20%20%5C%22statistics%5C%22%3A%20%7B%5Cn%20%20%20%20%20%20%20%20%5C%22unusedCapacityInKb%5C%22%3A%200%2C%5Cn%20%20%20%20%20%20%20%20%5C%22numOfMappedToAllVolumes%5C%22%3A%200%2C%5Cn%20%20%20%20%20%20%20%20%5C%22capacityAvailableForVolumeAllocationInKb%5C%22%3A%200%2C%5Cn%20%20%20%20%20%20%20%20%5C%22capacityLimitInKb%5C%22%3A%200%2C%5Cn%20%20%20%20%20%20%20%20%5C%22numOfUnmappedVolumes%5C%22%3A%200%2C%5Cn%20%20%20%20%20%20%20%20%5C%22spareCapacityInKb%5C%22%3A%200%2C%5Cn%20%20%20%20%20%20%20%20%5C%22numOfSds%5C%22%3A%200%2C%5Cn%20%20%20%20%20%20%20%20%5C%22capacityInUseInKb%5C%22%3A%200%2C%5Cn%20%20%20%20%20%20%20%20%5C%22numOfStoragePools%5C%22%3A%200%2C%5Cn%20%20%20%20%20%20%20%20%5C%22numOfFaultSets%5C%22%3A%200%2C%5Cn%20%20%20%20%20%20%20%20%5C%22maxCapacityInKb%5C%22%3A%200%2C%5Cn%20%20%20%20%20%20%20%20%5C%22thinCapacityInUseInKb%5C%22%3A%200%2C%5Cn%20%20%20%20%20%20%20%20%5C%22thickCapacityInUseInKb%5C%22%3A%200%5Cn%20%20%20%20%20%20%7D%2C%5Cn%20%20%20%20%20%20%5C%22storage_pool_list%5C%22%3A%20%5B%5Cn%20%20%20%20%20%20%20%20%7B%5Cn%20%20%20%20%20%20%20%20%20%20%5C%22id%5C%22%3A%20%5C%22string%5C%22%2C%5Cn%20%20%20%20%20%20%20%20%20%20%5C%22name%5C%22%3A%20%5C%22string%5C%22%2C%5Cn%20%20%20%20%20%20%20%20%20%20%5C%22rebuildIoPriorityPolicy%5C%22%3A%20%5C%22string%5C%22%2C%5Cn%20%20%20%20%20%20%20%20%20%20%5C%22rebalanceIoPriorityPolicy%5C%22%3A%20%5C%22string%5C%22%2C%5Cn%20%20%20%20%20%20%20%20%20%20%5C%22rebuildIoPriorityNumOfConcurrentIosPerDevice%5C%22%3A%200%2C%5Cn%20%20%20%20%20%20%20%20%20%20%5C%22rebalanceIoPriorityNumOfConcurrentIosPerDevice%5C%22%3A%200%2C%5Cn%20%20%20%20%20%20%20%20%20%20%5C%22rebuildIoPriorityBwLimitPerDeviceInKbps%5C%22%3A%200%2C%5Cn%20%20%20%20%20%20%20%20%20%20%5C%22rebalanceIoPriorityBwLimitPerDeviceInKbps%5C%22%3A%200%2C%5Cn%20%20%20%20%20%20%20%20%20%20%5C%22rebuildIoPriorityAppIopsPerDeviceThreshold%5C%22%3A%20%5C%22string%5C%22%2C%5Cn%20%20%20%20%20%20%20%20%20%20%5C%22rebalanceIoPriorityAppIopsPerDeviceThreshold%5C%22%3A%20%5C%22string%5C%22%2C%5Cn%20%20%20%20%20%20%20%20%20%20%5C%22rebuildIoPriorityAppBwPerDeviceThresholdInKbps%5C%22%3A%200%2C%5Cn%20%20%20%20%20%20%20%20%20%20%5C%22rebuildIoPriorityQuietPeriodInMsec%5C%22%3A%200%2C%5Cn%20%20%20%20%20%20%20%20%20%20%5C%22rebalanceIoPriorityQuietPeriodInMsec%5C%22%3A%200%2C%5Cn%20%20%20%20%20%20%20%20%20%20%5C%22zeroPaddingEnabled%5C%22%3A%20false%2C%5Cn%20%20%20%20%20%20%20%20%20%20%5C%22backgroundScannerMode%5C%22%3A%20%5C%22string%5C%22%2C%5Cn%20%20%20%20%20%20%20%20%20%20%5C%22backgroundScannerBWLimitKBps%5C%22%3A%200%2C%5Cn%20%20%20%20%20%20%20%20%20%20%5C%22useRmcache%5C%22%3A%20false%2C%5Cn%20%20%20%20%20%20%20%20%20%20%5C%22protectionDomainId%5C%22%3A%20%5C%22string%5C%22%2C%5Cn%20%20%20%20%20%20%20%20%20%20%5C%22useRfcache%5C%22%3A%20false%2C%5Cn%20%20%20%20%20%20%20%20%20%20%5C%22sparePercentage%5C%22%3A%200%2C%5Cn%20%20%20%20%20%20%20%20%20%20%5C%22rmcacheWriteHandlingMode%5C%22%3A%20%5C%22string%5C%22%2C%5Cn%20%20%20%20%20%20%20%20%20%20%5C%22checksumEnabled%5C%22%3A%20false%2C%5Cn%20%20%20%20%20%20%20%20%20%20%5C%22rebuildEnabled%5C%22%3A%20false%2C%5Cn%20%20%20%20%20%20%20%20%20%20%5C%22rebalanceEnabled%5C%22%3A%20false%2C%5Cn%20%20%20%20%20%20%20%20%20%20%5C%22numOfParallelRebuildRebalanceJobsPerDevice%5C%22%3A%200%2C%5Cn%20%20%20%20%20%20%20%20%20%20%5C%22capacityAlertHighThreshold%5C%22%3A%200%2C%5Cn%20%20%20%20%20%20%20%20%20%20%5C%22capacityAlertCriticalThreshold%5C%22%3A%200%2C%5Cn%20%20%20%20%20%20%20%20%20%20%5C%22statistics%5C%22%3A%20%7B%5Cn%20%20%20%20%20%20%20%20%20%20%20%20%5C%22numOfDevices%5C%22%3A%200%2C%5Cn%20%20%20%20%20%20%20%20%20%20%20%20%5C%22unusedCapacityInKb%5C%22%3A%200%2C%5Cn%20%20%20%20%20%20%20%20%20%20%20%20%5C%22numOfVolumes%5C%22%3A%200%2C%5Cn%20%20%20%20%20%20%20%20%20%20%20%20%5C%22numOfMappedToAllVolumes%5C%22%3A%200%2C%5Cn%20%20%20%20%20%20%20%20%20%20%20%20%5C%22capacityAvailableForVolumeAllocationInKb%5C%22%3A%200%2C%5Cn%20%20%20%20%20%20%20%20%20%20%20%20%5C%22volumeAllocationLimitInKb%5C%22%3A%200%2C%5Cn%20%20%20%20%20%20%20%20%20%20%20%20%5C%22capacityLimitInKb%5C%22%3A%200%2C%5Cn%20%20%20%20%20%20%20%20%20%20%20%20%5C%22numOfUnmappedVolumes%5C%22%3A%200%2C%5Cn%20%20%20%20%20%20%20%20%20%20%20%20%5C%22spareCapacityInKb%5C%22%3A%200%2C%5Cn%20%20%20%20%20%20%20%20%20%20%20%20%5C%22capacityInUseInKb%5C%22%3A%200%2C%5Cn%20%20%20%20%20%20%20%20%20%20%20%20%5C%22maxCapacityInKb%5C%22%3A%200%5Cn%20%20%20%20%20%20%20%20%20%20%7D%2C%5Cn%20%20%20%20%20%20%20%20%20%20%5C%22dataLayout%5C%22%3A%20%5C%22string%5C%22%2C%5Cn%20%20%20%20%20%20%20%20%20%20%5C%22replicationCapacityMaxRatio%5C%22%3A%20%5C%22string%5C%22%2C%5Cn%20%20%20%20%20%20%20%20%20%20%5C%22mediaType%5C%22%3A%20%5C%22string%5C%22%2C%5Cn%20%20%20%20%20%20%20%20%20%20%5C%22mediaTypeFromDiskType%5C%22%3A%20%5C%22string%5C%22%2C%5Cn%20%20%20%20%20%20%20%20%20%20%5C%22disk_list%5C%22%3A%20%5B%5Cn%20%20%20%20%20%20%20%20%20%20%20%20%7B%5Cn%20%20%20%20%20%20%20%20%20%20%20%20%20%20%5C%22id%5C%22%3A%20%5C%22string%5C%22%2C%5Cn%20%20%20%20%20%20%20%20%20%20%20%20%20%20%5C%22name%5C%22%3A%20%5C%22string%5C%22%2C%5Cn%20%20%20%20%20%20%20%20%20%20%20%20%20%20%5C%22errorState%5C%22%3A%20%5C%22string%5C%22%2C%5Cn%20%20%20%20%20%20%20%20%20%20%20%20%20%20%5C%22sdsId%5C%22%3A%20%5C%22string%5C%22%2C%5Cn%20%20%20%20%20%20%20%20%20%20%20%20%20%20%5C%22deviceState%5C%22%3A%20%5C%22string%5C%22%2C%5Cn%20%20%20%20%20%20%20%20%20%20%20%20%20%20%5C%22capacityLimitInKb%5C%22%3A%200%2C%5Cn%20%20%20%20%20%20%20%20%20%20%20%20%20%20%5C%22maxCapacityInKb%5C%22%3A%200%2C%5Cn%20%20%20%20%20%20%20%20%20%20%20%20%20%20%5C%22storagePoolId%5C%22%3A%20%5C%22string%5C%22%2C%5Cn%20%20%20%20%20%20%20%20%20%20%20%20%20%20%5C%22deviceCurrentPathName%5C%22%3A%20%5C%22string%5C%22%2C%5Cn%20%20%20%20%20%20%20%20%20%20%20%20%20%20%5C%22deviceOriginalPathName%5C%22%3A%20%5C%22string%5C%22%2C%5Cn%20%20%20%20%20%20%20%20%20%20%20%20%20%20%5C%22serialNumber%5C%22%3A%20%5C%22string%5C%22%2C%5Cn%20%20%20%20%20%20%20%20%20%20%20%20%20%20%5C%22vendorName%5C%22%3A%20%5C%22string%5C%22%2C%5Cn%20%20%20%20%20%20%20%20%20%20%20%20%20%20%5C%22modelName%5C%22%3A%20%5C%22string%5C%22%5Cn%20%20%20%20%20%20%20%20%20%20%20%20%7D%5Cn%20%20%20%20%20%20%20%20%20%20%5D%2C%5Cn%20%20%20%20%20%20%20%20%20%20%5C%22volume_list%5C%22%3A%20%5B%5Cn%20%20%20%20%20%20%20%20%20%20%20%20%7B%5Cn%20%20%20%20%20%20%20%20%20%20%20%20%20%20%5C%22id%5C%22%3A%20%5C%22string%5C%22%2C%5Cn%20%20%20%20%20%20%20%20%20%20%20%20%20%20%5C%22name%5C%22%3A%20%5C%22string%5C%22%2C%5Cn%20%20%20%20%20%20%20%20%20%20%20%20%20%20%5C%22volumeType%5C%22%3A%20%5C%22string%5C%22%2C%5Cn%20%20%20%20%20%20%20%20%20%20%20%20%20%20%5C%22storagePoolId%5C%22%3A%20%5C%22string%5C%22%2C%5Cn%20%20%20%20%20%20%20%20%20%20%20%20%20%20%5C%22dataLayout%5C%22%3A%20%5C%22string%5C%22%2C%5Cn%20%20%20%20%20%20%20%20%20%20%20%20%20%20%5C%22compressionMethod%5C%22%3A%20%5C%22string%5C%22%2C%5Cn%20%20%20%20%20%20%20%20%20%20%20%20%20%20%5C%22sizeInKb%5C%22%3A%200%2C%5Cn%20%20%20%20%20%20%20%20%20%20%20%20%20%20%5C%22mappedSdcInfo%5C%22%3A%20%5B%5Cn%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%7B%5Cn%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%5C%22sdcIp%5C%22%3A%20%5C%22string%5C%22%2C%5Cn%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%5C%22sdcId%5C%22%3A%20%5C%22string%5C%22%2C%5Cn%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%5C%22limitBwInMbps%5C%22%3A%200%2C%5Cn%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%5C%22limitIops%5C%22%3A%200%5Cn%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%7D%5Cn%20%20%20%20%20%20%20%20%20%20%20%20%20%20%5D%5Cn%20%20%20%20%20%20%20%20%20%20%20%20%7D%5Cn%20%20%20%20%20%20%20%20%20%20%5D%2C%5Cn%20%20%20%20%20%20%20%20%20%20%5C%22fglAccpId%5C%22%3A%20%5C%22string%5C%22%2C%5Cn%20%20%20%20%20%20%20%20%20%20%5C%22rebalanceIoPriorityAppBwPerDeviceThresholdInKbps%5C%22%3A%200%5Cn%20%20%20%20%20%20%20%20%7D%5Cn%20%20%20%20%20%20%5D%2C%5Cn%20%20%20%20%20%20%5C%22sds_list%5C%22%3A%20%5B%5Cn%20%20%20%20%20%20%20%20%7B%5Cn%20%20%20%20%20%20%20%20%20%20%5C%22id%5C%22%3A%20%5C%22string%5C%22%2C%5Cn%20%20%20%20%20%20%20%20%20%20%5C%22name%5C%22%3A%20%5C%22string%5C%22%2C%5Cn%20%20%20%20%20%20%20%20%20%20%5C%22port%5C%22%3A%200%2C%5Cn%20%20%20%20%20%20%20%20%20%20%5C%22protectionDomainId%5C%22%3A%20%5C%22string%5C%22%2C%5Cn%20%20%20%20%20%20%20%20%20%20%5C%22faultSetId%5C%22%3A%20%5C%22string%5C%22%2C%5Cn%20%20%20%20%20%20%20%20%20%20%5C%22softwareVersionInfo%5C%22%3A%20%5C%22string%5C%22%2C%5Cn%20%20%20%20%20%20%20%20%20%20%5C%22sdsState%5C%22%3A%20%5C%22string%5C%22%2C%5Cn%20%20%20%20%20%20%20%20%20%20%5C%22membershipState%5C%22%3A%20%5C%22string%5C%22%2C%5Cn%20%20%20%20%20%20%20%20%20%20%5C%22mdmConnectionState%5C%22%3A%20%5C%22string%5C%22%2C%5Cn%20%20%20%20%20%20%20%20%20%20%5C%22drlMode%5C%22%3A%20%5C%22string%5C%22%2C%5Cn%20%20%20%20%20%20%20%20%20%20%5C%22maintenanceState%5C%22%3A%20%5C%22string%5C%22%2C%5Cn%20%20%20%20%20%20%20%20%20%20%5C%22perfProfile%5C%22%3A%20%5C%22string%5C%22%2C%5Cn%20%20%20%20%20%20%20%20%20%20%5C%22onVmWare%5C%22%3A%20false%2C%5Cn%20%20%20%20%20%20%20%20%20%20%5C%22ipList%5C%22%3A%20%5B%5Cn%20%20%20%20%20%20%20%20%20%20%20%20%7B%5Cn%20%20%20%20%20%20%20%20%20%20%20%20%20%20%5C%22ip%5C%22%3A%20%5C%22string%5C%22%2C%5Cn%20%20%20%20%20%20%20%20%20%20%20%20%20%20%5C%22role%5C%22%3A%20%5C%22string%5C%22%5Cn%20%20%20%20%20%20%20%20%20%20%20%20%7D%5Cn%20%20%20%20%20%20%20%20%20%20%5D%5Cn%20%20%20%20%20%20%20%20%7D%5Cn%20%20%20%20%20%20%5D%2C%5Cn%20%20%20%20%20%20%5C%22sdr_list%5C%22%3A%20%5B%5Cn%20%20%20%20%20%20%20%20%7B%5Cn%20%20%20%20%20%20%20%20%20%20%5C%22id%5C%22%3A%20%5C%22string%5C%22%2C%5Cn%20%20%20%20%20%20%20%20%20%20%5C%22name%5C%22%3A%20%5C%22string%5C%22%2C%5Cn%20%20%20%20%20%20%20%20%20%20%5C%22port%5C%22%3A%200%2C%5Cn%20%20%20%20%20%20%20%20%20%20%5C%22protectionDomainId%5C%22%3A%20%5C%22string%5C%22%2C%5Cn%20%20%20%20%20%20%20%20%20%20%5C%22softwareVersionInfo%5C%22%3A%20%5C%22string%5C%22%2C%5Cn%20%20%20%20%20%20%20%20%20%20%5C%22sdrState%5C%22%3A%20%5C%22string%5C%22%2C%5Cn%20%20%20%20%20%20%20%20%20%20%5C%22membershipState%5C%22%3A%20%5C%22string%5C%22%2C%5Cn%20%20%20%20%20%20%20%20%20%20%5C%22mdmConnectionState%5C%22%3A%20%5C%22string%5C%22%2C%5Cn%20%20%20%20%20%20%20%20%20%20%5C%22maintenanceState%5C%22%3A%20%5C%22string%5C%22%2C%5Cn%20%20%20%20%20%20%20%20%20%20%5C%22perfProfile%5C%22%3A%20%5C%22string%5C%22%2C%5Cn%20%20%20%20%20%20%20%20%20%20%5C%22ipList%5C%22%3A%20%5B%5Cn%20%20%20%20%20%20%20%20%20%20%20%20%7B%5Cn%20%20%20%20%20%20%20%20%20%20%20%20%20%20%5C%22ip%5C%22%3A%20%5C%22string%5C%22%2C%5Cn%20%20%20%20%20%20%20%20%20%20%20%20%20%20%5C%22role%5C%22%3A%20%5C%22string%5C%22%5Cn%20%20%20%20%20%20%20%20%20%20%20%20%7D%5Cn%20%20%20%20%20%20%20%20%20%20%5D%5Cn%20%20%20%20%20%20%20%20%7D%5Cn%20%20%20%20%20%20%5D%2C%5Cn%20%20%20%20%20%20%5C%22acceleration_pool%5C%22%3A%20%5B%5Cn%20%20%20%20%20%20%20%20%7B%5Cn%20%20%20%20%20%20%20%20%20%20%5C%22id%5C%22%3A%20%5C%22string%5C%22%2C%5Cn%20%20%20%20%20%20%20%20%20%20%5C%22name%5C%22%3A%20%5C%22string%5C%22%2C%5Cn%20%20%20%20%20%20%20%20%20%20%5C%22protectionDomainId%5C%22%3A%20%5C%22string%5C%22%2C%5Cn%20%20%20%20%20%20%20%20%20%20%5C%22mediaType%5C%22%3A%20%5C%22string%5C%22%2C%5Cn%20%20%20%20%20%20%20%20%20%20%5C%22rfcache%5C%22%3A%20false%5Cn%20%20%20%20%20%20%20%20%7D%5Cn%20%20%20%20%20%20%5D%5Cn%20%20%20%20%7D%5Cn%20%20%5D%5Cn%7D%22%7D%5D%2C%22application%2Fxml%22%3A%5B%5D%7D" aria-label="Select content type">
+          <option value="application/json" selected="">application/json</option><option value="application/xml">application/xml</option>
+        </select><div class="content-description dds__mb-1"><p>OK</p>
+</div><label for="responsesamples-tab-200-example" class="dds__visually-hidden">Select response example</label>
+       <select id="responsesamples-tab-200-example" class="dds__select__field" data-action="onExampleSelectChange" data-code-container-id="responsesamples-tab-200-code" aria-label="Select response example">
+        <option value="0" data-code="{
+  &quot;vclsVms&quot;: [
+    &quot;string&quot;
+  ],
+  &quot;currentStoragePools&quot;: [
+    &quot;string&quot;
+  ],
+  &quot;currentDatastores&quot;: [
+    &quot;string&quot;
+  ],
+  &quot;destinationDatastores&quot;: [
+    &quot;string&quot;
+  ],
+  &quot;protectionDomains&quot;: [
+    {
+      &quot;general&quot;: {
+        &quot;id&quot;: &quot;string&quot;,
+        &quot;name&quot;: &quot;string&quot;,
+        &quot;systemId&quot;: &quot;string&quot;,
+        &quot;protectionDomainState&quot;: &quot;string&quot;,
+        &quot;rebuildNetworkThrottlingInKbps&quot;: 0,
+        &quot;rebalanceNetworkThrottlingInKbps&quot;: 0,
+        &quot;overallIoNetworkThrottlingInKbps&quot;: 0,
+        &quot;sdsDecoupledCounterParameters&quot;: {
+          &quot;shortWindow&quot;: {
+            &quot;threshold&quot;: 0,
+            &quot;windowSizeInSec&quot;: 0
+          },
+          &quot;mediumWindow&quot;: {
+            &quot;threshold&quot;: 0,
+            &quot;windowSizeInSec&quot;: 0
+          },
+          &quot;longWindow&quot;: {
+            &quot;threshold&quot;: 0,
+            &quot;windowSizeInSec&quot;: 0
+          }
+        },
+        &quot;sdsConfigurationFailureCounterParameters&quot;: {
+          &quot;shortWindow&quot;: {
+            &quot;threshold&quot;: 0,
+            &quot;windowSizeInSec&quot;: 0
+          },
+          &quot;mediumWindow&quot;: {
+            &quot;threshold&quot;: 0,
+            &quot;windowSizeInSec&quot;: 0
+          },
+          &quot;longWindow&quot;: {
+            &quot;threshold&quot;: 0,
+            &quot;windowSizeInSec&quot;: 0
+          }
+        },
+        &quot;mdmSdsCounterParameters&quot;: {
+          &quot;shortWindow&quot;: {
+            &quot;threshold&quot;: 0,
+            &quot;windowSizeInSec&quot;: 0
+          },
+          &quot;mediumWindow&quot;: {
+            &quot;threshold&quot;: 0,
+            &quot;windowSizeInSec&quot;: 0
+          },
+          &quot;longWindow&quot;: {
+            &quot;threshold&quot;: 0,
+            &quot;windowSizeInSec&quot;: 0
+          }
+        },
+        &quot;sdsSdsCounterParameters&quot;: {
+          &quot;shortWindow&quot;: {
+            &quot;threshold&quot;: 0,
+            &quot;windowSizeInSec&quot;: 0
+          },
+          &quot;mediumWindow&quot;: {
+            &quot;threshold&quot;: 0,
+            &quot;windowSizeInSec&quot;: 0
+          },
+          &quot;longWindow&quot;: {
+            &quot;threshold&quot;: 0,
+            &quot;windowSizeInSec&quot;: 0
+          }
+        },
+        &quot;rfcacheOpertionalMode&quot;: &quot;string&quot;,
+        &quot;rfcachePageSizeKb&quot;: 0,
+        &quot;rfcacheMaxIoSizeKb&quot;: 0,
+        &quot;sdsReceiveBufferAllocationFailuresCounterParameters&quot;: {
+          &quot;shortWindow&quot;: {
+            &quot;threshold&quot;: 0,
+            &quot;windowSizeInSec&quot;: 0
+          },
+          &quot;mediumWindow&quot;: {
+            &quot;threshold&quot;: 0,
+            &quot;windowSizeInSec&quot;: 0
+          },
+          &quot;longWindow&quot;: {
+            &quot;threshold&quot;: 0,
+            &quot;windowSizeInSec&quot;: 0
+          }
+        },
+        &quot;rebuildNetworkThrottlingEnabled&quot;: false,
+        &quot;rebalanceNetworkThrottlingEnabled&quot;: false,
+        &quot;overallIoNetworkThrottlingEnabled&quot;: false,
+        &quot;rfcacheEnabled&quot;: false
+      },
+      &quot;statistics&quot;: {
+        &quot;unusedCapacityInKb&quot;: 0,
+        &quot;numOfMappedToAllVolumes&quot;: 0,
+        &quot;capacityAvailableForVolumeAllocationInKb&quot;: 0,
+        &quot;capacityLimitInKb&quot;: 0,
+        &quot;numOfUnmappedVolumes&quot;: 0,
+        &quot;spareCapacityInKb&quot;: 0,
+        &quot;numOfSds&quot;: 0,
+        &quot;capacityInUseInKb&quot;: 0,
+        &quot;numOfStoragePools&quot;: 0,
+        &quot;numOfFaultSets&quot;: 0,
+        &quot;maxCapacityInKb&quot;: 0,
+        &quot;thinCapacityInUseInKb&quot;: 0,
+        &quot;thickCapacityInUseInKb&quot;: 0
+      },
+      &quot;storage_pool_list&quot;: [
+        {
+          &quot;id&quot;: &quot;string&quot;,
+          &quot;name&quot;: &quot;string&quot;,
+          &quot;rebuildIoPriorityPolicy&quot;: &quot;string&quot;,
+          &quot;rebalanceIoPriorityPolicy&quot;: &quot;string&quot;,
+          &quot;rebuildIoPriorityNumOfConcurrentIosPerDevice&quot;: 0,
+          &quot;rebalanceIoPriorityNumOfConcurrentIosPerDevice&quot;: 0,
+          &quot;rebuildIoPriorityBwLimitPerDeviceInKbps&quot;: 0,
+          &quot;rebalanceIoPriorityBwLimitPerDeviceInKbps&quot;: 0,
+          &quot;rebuildIoPriorityAppIopsPerDeviceThreshold&quot;: &quot;string&quot;,
+          &quot;rebalanceIoPriorityAppIopsPerDeviceThreshold&quot;: &quot;string&quot;,
+          &quot;rebuildIoPriorityAppBwPerDeviceThresholdInKbps&quot;: 0,
+          &quot;rebuildIoPriorityQuietPeriodInMsec&quot;: 0,
+          &quot;rebalanceIoPriorityQuietPeriodInMsec&quot;: 0,
+          &quot;zeroPaddingEnabled&quot;: false,
+          &quot;backgroundScannerMode&quot;: &quot;string&quot;,
+          &quot;backgroundScannerBWLimitKBps&quot;: 0,
+          &quot;useRmcache&quot;: false,
+          &quot;protectionDomainId&quot;: &quot;string&quot;,
+          &quot;useRfcache&quot;: false,
+          &quot;sparePercentage&quot;: 0,
+          &quot;rmcacheWriteHandlingMode&quot;: &quot;string&quot;,
+          &quot;checksumEnabled&quot;: false,
+          &quot;rebuildEnabled&quot;: false,
+          &quot;rebalanceEnabled&quot;: false,
+          &quot;numOfParallelRebuildRebalanceJobsPerDevice&quot;: 0,
+          &quot;capacityAlertHighThreshold&quot;: 0,
+          &quot;capacityAlertCriticalThreshold&quot;: 0,
+          &quot;statistics&quot;: {
+            &quot;numOfDevices&quot;: 0,
+            &quot;unusedCapacityInKb&quot;: 0,
+            &quot;numOfVolumes&quot;: 0,
+            &quot;numOfMappedToAllVolumes&quot;: 0,
+            &quot;capacityAvailableForVolumeAllocationInKb&quot;: 0,
+            &quot;volumeAllocationLimitInKb&quot;: 0,
+            &quot;capacityLimitInKb&quot;: 0,
+            &quot;numOfUnmappedVolumes&quot;: 0,
+            &quot;spareCapacityInKb&quot;: 0,
+            &quot;capacityInUseInKb&quot;: 0,
+            &quot;maxCapacityInKb&quot;: 0
+          },
+          &quot;dataLayout&quot;: &quot;string&quot;,
+          &quot;replicationCapacityMaxRatio&quot;: &quot;string&quot;,
+          &quot;mediaType&quot;: &quot;string&quot;,
+          &quot;mediaTypeFromDiskType&quot;: &quot;string&quot;,
+          &quot;disk_list&quot;: [
+            {
+              &quot;id&quot;: &quot;string&quot;,
+              &quot;name&quot;: &quot;string&quot;,
+              &quot;errorState&quot;: &quot;string&quot;,
+              &quot;sdsId&quot;: &quot;string&quot;,
+              &quot;deviceState&quot;: &quot;string&quot;,
+              &quot;capacityLimitInKb&quot;: 0,
+              &quot;maxCapacityInKb&quot;: 0,
+              &quot;storagePoolId&quot;: &quot;string&quot;,
+              &quot;deviceCurrentPathName&quot;: &quot;string&quot;,
+              &quot;deviceOriginalPathName&quot;: &quot;string&quot;,
+              &quot;serialNumber&quot;: &quot;string&quot;,
+              &quot;vendorName&quot;: &quot;string&quot;,
+              &quot;modelName&quot;: &quot;string&quot;
+            }
+          ],
+          &quot;volume_list&quot;: [
+            {
+              &quot;id&quot;: &quot;string&quot;,
+              &quot;name&quot;: &quot;string&quot;,
+              &quot;volumeType&quot;: &quot;string&quot;,
+              &quot;storagePoolId&quot;: &quot;string&quot;,
+              &quot;dataLayout&quot;: &quot;string&quot;,
+              &quot;compressionMethod&quot;: &quot;string&quot;,
+              &quot;sizeInKb&quot;: 0,
+              &quot;mappedSdcInfo&quot;: [
+                {
+                  &quot;sdcIp&quot;: &quot;string&quot;,
+                  &quot;sdcId&quot;: &quot;string&quot;,
+                  &quot;limitBwInMbps&quot;: 0,
+                  &quot;limitIops&quot;: 0
+                }
+              ]
+            }
+          ],
+          &quot;fglAccpId&quot;: &quot;string&quot;,
+          &quot;rebalanceIoPriorityAppBwPerDeviceThresholdInKbps&quot;: 0
+        }
+      ],
+      &quot;sds_list&quot;: [
+        {
+          &quot;id&quot;: &quot;string&quot;,
+          &quot;name&quot;: &quot;string&quot;,
+          &quot;port&quot;: 0,
+          &quot;protectionDomainId&quot;: &quot;string&quot;,
+          &quot;faultSetId&quot;: &quot;string&quot;,
+          &quot;softwareVersionInfo&quot;: &quot;string&quot;,
+          &quot;sdsState&quot;: &quot;string&quot;,
+          &quot;membershipState&quot;: &quot;string&quot;,
+          &quot;mdmConnectionState&quot;: &quot;string&quot;,
+          &quot;drlMode&quot;: &quot;string&quot;,
+          &quot;maintenanceState&quot;: &quot;string&quot;,
+          &quot;perfProfile&quot;: &quot;string&quot;,
+          &quot;onVmWare&quot;: false,
+          &quot;ipList&quot;: [
+            {
+              &quot;ip&quot;: &quot;string&quot;,
+              &quot;role&quot;: &quot;string&quot;
+            }
+          ]
+        }
+      ],
+      &quot;sdr_list&quot;: [
+        {
+          &quot;id&quot;: &quot;string&quot;,
+          &quot;name&quot;: &quot;string&quot;,
+          &quot;port&quot;: 0,
+          &quot;protectionDomainId&quot;: &quot;string&quot;,
+          &quot;softwareVersionInfo&quot;: &quot;string&quot;,
+          &quot;sdrState&quot;: &quot;string&quot;,
+          &quot;membershipState&quot;: &quot;string&quot;,
+          &quot;mdmConnectionState&quot;: &quot;string&quot;,
+          &quot;maintenanceState&quot;: &quot;string&quot;,
+          &quot;perfProfile&quot;: &quot;string&quot;,
+          &quot;ipList&quot;: [
+            {
+              &quot;ip&quot;: &quot;string&quot;,
+              &quot;role&quot;: &quot;string&quot;
+            }
+          ]
+        }
+      ],
+      &quot;acceleration_pool&quot;: [
+        {
+          &quot;id&quot;: &quot;string&quot;,
+          &quot;name&quot;: &quot;string&quot;,
+          &quot;protectionDomainId&quot;: &quot;string&quot;,
+          &quot;mediaType&quot;: &quot;string&quot;,
+          &quot;rfcache&quot;: false
+        }
+      ]
+    }
+  ]
+}" data-description="Example">
+        Example
+      </option>
+      </select></div><div class="dds__d-flex dds__justify-content-end dds__my-2" role="presentation"><button class="dds__button dds__button--sm" data-action="copyCodeById" data-target-id="responsesamples-tab-200-code">Copy</button></div><div id="responsesamples-tab-200-code" role="presentation"><pre tabindex="0"><code>{
+  "vclsVms": [
+    "string"
+  ],
+  "currentStoragePools": [
+    "string"
+  ],
+  "currentDatastores": [
+    "string"
+  ],
+  "destinationDatastores": [
+    "string"
+  ],
+  "protectionDomains": [
+    {
+      "general": {
+        "id": "string",
+        "name": "string",
+        "systemId": "string",
+        "protectionDomainState": "string",
+        "rebuildNetworkThrottlingInKbps": 0,
+        "rebalanceNetworkThrottlingInKbps": 0,
+        "overallIoNetworkThrottlingInKbps": 0,
+        "sdsDecoupledCounterParameters": {
+          "shortWindow": {
+            "threshold": 0,
+            "windowSizeInSec": 0
+          },
+          "mediumWindow": {
+            "threshold": 0,
+            "windowSizeInSec": 0
+          },
+          "longWindow": {
+            "threshold": 0,
+            "windowSizeInSec": 0
+          }
+        },
+        "sdsConfigurationFailureCounterParameters": {
+          "shortWindow": {
+            "threshold": 0,
+            "windowSizeInSec": 0
+          },
+          "mediumWindow": {
+            "threshold": 0,
+            "windowSizeInSec": 0
+          },
+          "longWindow": {
+            "threshold": 0,
+            "windowSizeInSec": 0
+          }
+        },
+        "mdmSdsCounterParameters": {
+          "shortWindow": {
+            "threshold": 0,
+            "windowSizeInSec": 0
+          },
+          "mediumWindow": {
+            "threshold": 0,
+            "windowSizeInSec": 0
+          },
+          "longWindow": {
+            "threshold": 0,
+            "windowSizeInSec": 0
+          }
+        },
+        "sdsSdsCounterParameters": {
+          "shortWindow": {
+            "threshold": 0,
+            "windowSizeInSec": 0
+          },
+          "mediumWindow": {
+            "threshold": 0,
+            "windowSizeInSec": 0
+          },
+          "longWindow": {
+            "threshold": 0,
+            "windowSizeInSec": 0
+          }
+        },
+        "rfcacheOpertionalMode": "string",
+        "rfcachePageSizeKb": 0,
+        "rfcacheMaxIoSizeKb": 0,
+        "sdsReceiveBufferAllocationFailuresCounterParameters": {
+          "shortWindow": {
+            "threshold": 0,
+            "windowSizeInSec": 0
+          },
+          "mediumWindow": {
+            "threshold": 0,
+            "windowSizeInSec": 0
+          },
+          "longWindow": {
+            "threshold": 0,
+            "windowSizeInSec": 0
+          }
+        },
+        "rebuildNetworkThrottlingEnabled": false,
+        "rebalanceNetworkThrottlingEnabled": false,
+        "overallIoNetworkThrottlingEnabled": false,
+        "rfcacheEnabled": false
+      },
+      "statistics": {
+        "unusedCapacityInKb": 0,
+        "numOfMappedToAllVolumes": 0,
+        "capacityAvailableForVolumeAllocationInKb": 0,
+        "capacityLimitInKb": 0,
+        "numOfUnmappedVolumes": 0,
+        "spareCapacityInKb": 0,
+        "numOfSds": 0,
+        "capacityInUseInKb": 0,
+        "numOfStoragePools": 0,
+        "numOfFaultSets": 0,
+        "maxCapacityInKb": 0,
+        "thinCapacityInUseInKb": 0,
+        "thickCapacityInUseInKb": 0
+      },
+      "storage_pool_list": [
+        {
+          "id": "string",
+          "name": "string",
+          "rebuildIoPriorityPolicy": "string",
+          "rebalanceIoPriorityPolicy": "string",
+          "rebuildIoPriorityNumOfConcurrentIosPerDevice": 0,
+          "rebalanceIoPriorityNumOfConcurrentIosPerDevice": 0,
+          "rebuildIoPriorityBwLimitPerDeviceInKbps": 0,
+          "rebalanceIoPriorityBwLimitPerDeviceInKbps": 0,
+          "rebuildIoPriorityAppIopsPerDeviceThreshold": "string",
+          "rebalanceIoPriorityAppIopsPerDeviceThreshold": "string",
+          "rebuildIoPriorityAppBwPerDeviceThresholdInKbps": 0,
+          "rebuildIoPriorityQuietPeriodInMsec": 0,
+          "rebalanceIoPriorityQuietPeriodInMsec": 0,
+          "zeroPaddingEnabled": false,
+          "backgroundScannerMode": "string",
+          "backgroundScannerBWLimitKBps": 0,
+          "useRmcache": false,
+          "protectionDomainId": "string",
+          "useRfcache": false,
+          "sparePercentage": 0,
+          "rmcacheWriteHandlingMode": "string",
+          "checksumEnabled": false,
+          "rebuildEnabled": false,
+          "rebalanceEnabled": false,
+          "numOfParallelRebuildRebalanceJobsPerDevice": 0,
+          "capacityAlertHighThreshold": 0,
+          "capacityAlertCriticalThreshold": 0,
+          "statistics": {
+            "numOfDevices": 0,
+            "unusedCapacityInKb": 0,
+            "numOfVolumes": 0,
+            "numOfMappedToAllVolumes": 0,
+            "capacityAvailableForVolumeAllocationInKb": 0,
+            "volumeAllocationLimitInKb": 0,
+            "capacityLimitInKb": 0,
+            "numOfUnmappedVolumes": 0,
+            "spareCapacityInKb": 0,
+            "capacityInUseInKb": 0,
+            "maxCapacityInKb": 0
+          },
+          "dataLayout": "string",
+          "replicationCapacityMaxRatio": "string",
+          "mediaType": "string",
+          "mediaTypeFromDiskType": "string",
+          "disk_list": [
+            {
+              "id": "string",
+              "name": "string",
+              "errorState": "string",
+              "sdsId": "string",
+              "deviceState": "string",
+              "capacityLimitInKb": 0,
+              "maxCapacityInKb": 0,
+              "storagePoolId": "string",
+              "deviceCurrentPathName": "string",
+              "deviceOriginalPathName": "string",
+              "serialNumber": "string",
+              "vendorName": "string",
+              "modelName": "string"
+            }
+          ],
+          "volume_list": [
+            {
+              "id": "string",
+              "name": "string",
+              "volumeType": "string",
+              "storagePoolId": "string",
+              "dataLayout": "string",
+              "compressionMethod": "string",
+              "sizeInKb": 0,
+              "mappedSdcInfo": [
+                {
+                  "sdcIp": "string",
+                  "sdcId": "string",
+                  "limitBwInMbps": 0,
+                  "limitIops": 0
+                }
+              ]
+            }
+          ],
+          "fglAccpId": "string",
+          "rebalanceIoPriorityAppBwPerDeviceThresholdInKbps": 0
+        }
+      ],
+      "sds_list": [
+        {
+          "id": "string",
+          "name": "string",
+          "port": 0,
+          "protectionDomainId": "string",
+          "faultSetId": "string",
+          "softwareVersionInfo": "string",
+          "sdsState": "string",
+          "membershipState": "string",
+          "mdmConnectionState": "string",
+          "drlMode": "string",
+          "maintenanceState": "string",
+          "perfProfile": "string",
+          "onVmWare": false,
+          "ipList": [
+            {
+              "ip": "string",
+              "role": "string"
+            }
+          ]
+        }
+      ],
+      "sdr_list": [
+        {
+          "id": "string",
+          "name": "string",
+          "port": 0,
+          "protectionDomainId": "string",
+          "softwareVersionInfo": "string",
+          "sdrState": "string",
+          "membershipState": "string",
+          "mdmConnectionState": "string",
+          "maintenanceState": "string",
+          "perfProfile": "string",
+          "ipList": [
+            {
+              "ip": "string",
+              "role": "string"
+            }
+          ]
+        }
+      ],
+      "acceleration_pool": [
+        {
+          "id": "string",
+          "name": "string",
+          "protectionDomainId": "string",
+          "mediaType": "string",
+          "rfcache": false
+        }
+      ]
+    }
+  ]
+}</code></pre></div></div></div></div></div></div></div>
+      </div>
+    </div></div></body></html>

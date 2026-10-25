@@ -1,0 +1,28 @@
+<html><head><title>PowerFlex API 4.5.2-Manager_v4-5-2: Deploying a new resource group</title></head><body><p>Tasks > PowerFlex Manager API tasks</p><div><div class="api-docs-main-div dds__pl-2">
+    <div class="markdown-wrapper dds__py-3">
+      <div class="markdown-body dds__px-3"><h1 id="deploying-a-new-resource-group" class="anchor-scroll-top-offset">Deploying a new resource group</h1>
+<p>To create a resource group from a template, you need to:</p>
+<ol>
+<li>
+<p>Retrieve the template with <code>GET /Api/V1/ServiceTemplate/{id}?forDeployment=true</code>.</p>
+</li>
+<li>
+<p>Create the JSON for a deployment object and set <code>deploymentName</code> and <code>useDefaultCatalog = true</code> (if you want to use the appliance default catalog). Also, set <code>updateServerFirmware = true</code> and set <code>serviceTemplate</code> to the template retrieved in step 1. If you want to use a different catalog other than the appliance default, specify useDefaultCatalog = false and set firwmareRepositoryId = the id of the RCM, catalog, or firmware repository that you want to use for the new resource group deployment.</p>
+</li>
+<li>
+<p>Modify the template. For any components that have instances &gt; 1, you need to create a separate component for each desired instance. In other words, if the component has 3 instances, you should clone it to create 3 top-level components. Each component must have a unique id and the <code>associatedComponents</code> map must be updated to reflect the newly created component ids.</p>
+</li>
+<li>
+<p>Start the resource group with <code>POST /Api/V1/Deployment</code>.</p>
+</li>
+</ol>
+</div>
+      <div class="markdown-sidebar">
+        <div class="markdown-toc-title">
+          <i class="icon dds__icon dds__icon--bookmark"></i>
+          On this page
+        </div>
+          <ul><li class="level-1"><a href="#deploying-a-new-resource-group" data-toc-link="">Deploying a new resource group</a></li></ul>
+      </div>
+    </div>
+  </div></div></body></html>

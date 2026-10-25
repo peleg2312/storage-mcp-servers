@@ -1,0 +1,679 @@
+<html><head><title>PowerFlex API 5.1.0: Instance update</title></head><body><p>Common APIs for Erasure Coding and Mirroring > PowerFlex Security Engine REST API > security-settings</p><div><div class="api-docs-main-div dds__pl-2">
+      <div class="api-doc-container">
+        <div class="api__doc__left-section dds__p-3">
+   <div class="markdown-renderer">
+          <h4 class="dds__font-weight-bold dds__pb-2">Instance update</h4>       
+          <div><p>Updates the ingresses list by completing one of the following options:</p>
+<ul>
+<li>Replacing the entire list (ingresses)</li>
+<li>Adding new entries (add_ingresses)</li>
+<li>Removing entries (remove_ingresses)</li>
+</ul>
+<p>Only one option is allower per API call.</p>
+<p>Load balancer (LB) ingress entries cannot be removed.</p>
+<p>Where the ingresses option is provided, it replaces the existing list, except for any load balancer IPs, which are preserved.</p>
+<p>In rare cases, a 299 HTTP status code is returned. The status code means the operation succeeded with a warning.</p>
+<p>This warning occurs if the payload includes an “ingresses” field and any item in that list meets one of the following conditions:</p>
+<ul>
+<li>The network name already exists in the system but is associated with a different IP address.</li>
+<li>The IP address for that network name is missing (empty) in the payload.</li>
+</ul>
+</div> 
+          
+    </div>
+
+<div class="api_docs_collapsible dds__mb-3 expanded" id="request"><div class="api_docs_collapsible-header dds__p-3" data-action="toggleCollapse" data-target-id="request" role="button" tabindex="0" aria-controls="request-body" aria-expanded="true"><span class="title">Requests</span><span class="icon icon-collapsed dds__icon dds__icon--chevron-right dds__mt-1 dds__ml-auto"></span><span class="icon icon-expanded dds__icon dds__icon--chevron-down dds__mt-1 dds__ml-auto"></span></div><div class="api_docs_collapsible-body" id="request-body"><div class="static-frame-request-section"><div class="headers-section"><h5 class="title">Path Parameters</h5>
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="id">id</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      <span class="required">Required</span>
+    </div>
+    
+    
+    
+    
+    <div class="desc"><p>ID of security settings to modify, and since it’s a singleton, will always be 0</p>
+</div>
+    
+    
+  </div>
+</div></div></div>
+<div class="static-frame-request-section"><div class="headers-section"><h5 class="title">Request Body</h5><div class="static-frame-request-section"><div class="expanded" id="Request Body-modify_security_settings-45do">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name clickable-property" title="modify_security_settings" style="cursor: pointer;">modify_security_settings</span>
+    </div>
+    <span class="schema-toggle-icon" data-action="toggleNestedBodyCard" data-target-id="Request Body-modify_security_settings-45do" role="button" tabindex="0" aria-controls="Request Body-modify_security_settings-45do-nested-body" aria-expanded="true">
+            <span class="icon dds__icon dds__icon--chevron-right dds__mt-1 dds__ml-auto hidden"></span>
+            <span class="icon dds__icon dds__icon--chevron-down dds__mt-1 dds__ml-auto"></span>
+        </span>
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">object</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div><div class="nested-body schema-child-row" id="Request Body-modify_security_settings-45do-nested-body" style="">
+            <div colspan="2" class="nested">
+            <div class="" id="Request Body-modify_security_settings-45do-ingresses-m1u7">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name clickable-property" title="ingresses" style="cursor: pointer;">ingresses</span>
+    </div>
+    <span class="schema-toggle-icon" data-action="toggleNestedBodyCard" data-target-id="Request Body-modify_security_settings-45do-ingresses-m1u7" role="button" tabindex="0" aria-controls="Request Body-modify_security_settings-45do-ingresses-m1u7-nested-body" aria-expanded="false">
+            <span class="icon dds__icon dds__icon--chevron-right dds__mt-1 dds__ml-auto"></span>
+            <span class="icon dds__icon dds__icon--chevron-down dds__mt-1 dds__ml-auto hidden"></span>
+        </span>
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">array[object]</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div><div class="nested-body schema-child-row" id="Request Body-modify_security_settings-45do-ingresses-m1u7-nested-body" style="display:none">
+            <div colspan="2" class="nested">
+            <div class="" id="primitive-network_name">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="network_name">network_name</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-ip">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="ip">ip</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-hostname">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="hostname">hostname</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+            </div>
+          </div></div>
+<div class="" id="Request Body-modify_security_settings-45do-add_ingresses-rhfs">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name clickable-property" title="add_ingresses" style="cursor: pointer;">add_ingresses</span>
+    </div>
+    <span class="schema-toggle-icon" data-action="toggleNestedBodyCard" data-target-id="Request Body-modify_security_settings-45do-add_ingresses-rhfs" role="button" tabindex="0" aria-controls="Request Body-modify_security_settings-45do-add_ingresses-rhfs-nested-body" aria-expanded="false">
+            <span class="icon dds__icon dds__icon--chevron-right dds__mt-1 dds__ml-auto"></span>
+            <span class="icon dds__icon dds__icon--chevron-down dds__mt-1 dds__ml-auto hidden"></span>
+        </span>
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">array[object]</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div><div class="nested-body schema-child-row" id="Request Body-modify_security_settings-45do-add_ingresses-rhfs-nested-body" style="display:none">
+            <div colspan="2" class="nested">
+            <div class="" id="primitive-network_name">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="network_name">network_name</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-ip">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="ip">ip</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-hostname">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="hostname">hostname</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+            </div>
+          </div></div>
+<div class="" id="Request Body-modify_security_settings-45do-remove_ingresses-6omi">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name clickable-property" title="remove_ingresses" style="cursor: pointer;">remove_ingresses</span>
+    </div>
+    <span class="schema-toggle-icon" data-action="toggleNestedBodyCard" data-target-id="Request Body-modify_security_settings-45do-remove_ingresses-6omi" role="button" tabindex="0" aria-controls="Request Body-modify_security_settings-45do-remove_ingresses-6omi-nested-body" aria-expanded="false">
+            <span class="icon dds__icon dds__icon--chevron-right dds__mt-1 dds__ml-auto"></span>
+            <span class="icon dds__icon dds__icon--chevron-down dds__mt-1 dds__ml-auto hidden"></span>
+        </span>
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">array[object]</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div><div class="nested-body schema-child-row" id="Request Body-modify_security_settings-45do-remove_ingresses-6omi-nested-body" style="display:none">
+            <div colspan="2" class="nested">
+            <div class="" id="primitive-network_name">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="network_name">network_name</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-ip">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="ip">ip</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-hostname">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="hostname">hostname</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+            </div>
+          </div></div>
+            </div>
+          </div></div></div></div></div></div></div>
+
+       <div class="api_docs_collapsible dds__mb-3" id="response"><div class="api_docs_collapsible-header dds__p-3" data-action="toggleCollapse" data-target-id="response" role="button" tabindex="0" aria-controls="response-body" aria-expanded="false"><span class="title">Responses</span><span class="icon icon-collapsed dds__icon dds__icon--chevron-right dds__mt-1 dds__ml-auto"></span><span class="icon icon-expanded dds__icon dds__icon--chevron-down dds__mt-1 dds__ml-auto"></span></div><div class="api_docs_collapsible-body" id="response-body"><div class="api_docs_collapsible dds__mb-3" id="4921d9cbb8bbc"><div class="api_docs_collapsible-header dds__p-3" data-action="toggleCollapse" data-target-id="4921d9cbb8bbc" role="button" tabindex="0" aria-controls="4921d9cbb8bbc-body" aria-expanded="false"><span class="title"><div class="response-frame"><span class="text-green"><span class="dds__badge dds__badge--dot dds__mr-2"></span>204</span> </div></span><span class="icon icon-collapsed dds__icon dds__icon--chevron-right dds__mt-1 dds__ml-auto"></span><span class="icon icon-expanded dds__icon dds__icon--chevron-down dds__mt-1 dds__ml-auto"></span></div><div class="api_docs_collapsible-body" id="4921d9cbb8bbc-body"><div class="static-frame-response-section"><div>Successful operation</div></div></div></div>
+<div class="api_docs_collapsible dds__mb-3" id="53c5e2cfba922"><div class="api_docs_collapsible-header dds__p-3" data-action="toggleCollapse" data-target-id="53c5e2cfba922" role="button" tabindex="0" aria-controls="53c5e2cfba922-body" aria-expanded="false"><span class="title"><div class="response-frame"><span class="text-red"><span class="dds__badge dds__badge--dot dds__mr-2"></span>400</span> : Bad Request</div></span><span class="icon icon-collapsed dds__icon dds__icon--chevron-right dds__mt-1 dds__ml-auto"></span><span class="icon icon-expanded dds__icon dds__icon--chevron-down dds__mt-1 dds__ml-auto"></span></div><div class="api_docs_collapsible-body" id="53c5e2cfba922-body"><div class="static-frame-response-section"><div>Bad Request.
+
+In STRINGENT or STANDARD_TO_STRINGENT modes, the hostname field must not be empty.
+
+You cannot use ingresses in combination with add_ingresses or remove_ingresses. These options are mutually exclusive.
+
+To remove ingress in the payload:
+ - Entries in the remove_ingresses list must include a valid network name—empty values are not permitted.
+ - remove_ingresses must not contain entries that are currently active in the system’s ingress list (e.g., kubeops load balancer IPs).</div></div></div></div>
+<div class="api_docs_collapsible dds__mb-3" id="0f57fe80598c8"><div class="api_docs_collapsible-header dds__p-3" data-action="toggleCollapse" data-target-id="0f57fe80598c8" role="button" tabindex="0" aria-controls="0f57fe80598c8-body" aria-expanded="false"><span class="title"><div class="response-frame"><span class="text-red"><span class="dds__badge dds__badge--dot dds__mr-2"></span>404</span> : Not Found</div></span><span class="icon icon-collapsed dds__icon dds__icon--chevron-right dds__mt-1 dds__ml-auto"></span><span class="icon icon-expanded dds__icon dds__icon--chevron-down dds__mt-1 dds__ml-auto"></span></div><div class="api_docs_collapsible-body" id="0f57fe80598c8-body"><div class="static-frame-response-section"><div><div class="headers-section"><div><p>Action does not exist</p>
+</div><h5 class="title dds__mt-2">Response Body</h5><div class="static-frame-request-section"><div class="expanded" id="Response Body-error_response-hpq3">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name clickable-property" title="error_response" style="cursor: pointer;">error_response</span>
+    </div>
+    <span class="schema-toggle-icon" data-action="toggleNestedBodyCard" data-target-id="Response Body-error_response-hpq3" role="button" tabindex="0" aria-controls="Response Body-error_response-hpq3-nested-body" aria-expanded="true">
+            <span class="icon dds__icon dds__icon--chevron-right dds__mt-1 dds__ml-auto hidden"></span>
+            <span class="icon dds__icon dds__icon--chevron-down dds__mt-1 dds__ml-auto"></span>
+        </span>
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">object</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div><div class="nested-body schema-child-row" id="Response Body-error_response-hpq3-nested-body" style="">
+            <div colspan="2" class="nested">
+            <div class="" id="primitive-http_status_code">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="http_status_code">http_status_code</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">integer&lt;int32&gt;</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="Response Body-error_response-hpq3-messages-68rw">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name clickable-property" title="messages" style="cursor: pointer;">messages</span>
+    </div>
+    <span class="schema-toggle-icon" data-action="toggleNestedBodyCard" data-target-id="Response Body-error_response-hpq3-messages-68rw" role="button" tabindex="0" aria-controls="Response Body-error_response-hpq3-messages-68rw-nested-body" aria-expanded="false">
+            <span class="icon dds__icon dds__icon--chevron-right dds__mt-1 dds__ml-auto"></span>
+            <span class="icon dds__icon dds__icon--chevron-down dds__mt-1 dds__ml-auto hidden"></span>
+        </span>
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">array[object]</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div><div class="nested-body schema-child-row" id="Response Body-error_response-hpq3-messages-68rw-nested-body" style="display:none">
+            <div colspan="2" class="nested">
+            <div class="" id="primitive-code">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="code">code</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-timestamp">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="timestamp">timestamp</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string&lt;date-time&gt;</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-severity">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="severity">severity</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      
+    </div>
+    
+    
+    
+    
+    <div class="desc"><p>error message severity enum</p>
+</div>
+    
+    <div class="enums">allowed values: <span class="dds__badge dds__badge--sm dds__badge--brand dds__badge--light">INFO</span> <span class="dds__badge dds__badge--sm dds__badge--brand dds__badge--light">WARNING</span> <span class="dds__badge dds__badge--sm dds__badge--brand dds__badge--light">ERROR</span> <span class="dds__badge dds__badge--sm dds__badge--brand dds__badge--light">CRITICAL</span></div>
+  </div>
+</div></div>
+<div class="" id="primitive-message">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="message">message</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-message_l10n">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="message_l10n">message_l10n</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-substitution_args">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="substitution_args">substitution_args</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+            </div>
+          </div></div>
+            </div>
+          </div></div></div></div></div></div></div></div></div></div>
+   </div>
+        <div class="api__doc__right-section dds__pl-2"><div class="api_docs_collapsible highlight dds__mb-3 expanded" id="server"><div class="api_docs_collapsible-header dds__p-3" data-action="toggleCollapse" data-target-id="server" role="button" tabindex="0" aria-expanded="true"><div class="dds__w-100"><div class="server-title"><span class="dds__badge dds__badge--md http-method-patch"><span class="dds__badge__label badge-font">PATCH</span></span><button style="float: right; border: 1px solid #9ca3af; display:none" class="dds__ml-auto dds__button dds__button--sm" type="button" id="drawer-trigger" data-action="clickedTryOutButton">Try it</button></div><div class="dds__p-2">/security-settings/{id}</div></div><span class="icon icon-collapsed dds__icon dds__icon--chevron-right dds__ml-auto"></span><span class="icon icon-expanded dds__icon dds__icon--chevron-down dds__ml-auto"></span></div><div class="api_docs_collapsible-body dds__px-3 dds__pt-2 dds__pb-3"><div class="dds__pr-2"></div><div class="dds__d-flex dds__justify-content-end dds__my-2"><button class="dds__button dds__button--sm" data-action="copyCodeById" data-target-id="server-copy-0">Copy</button></div><pre tabindex="0"><code id="server-copy-0">/security-settings/{id}</code></pre></div></div>
+<div class="api_docs_collapsible highlight dds__mb-3 expanded" id="requestsamples"><div class="api_docs_collapsible-header dds__p-3" data-action="toggleCollapse" data-target-id="requestsamples" role="button" tabindex="0" aria-controls="requestsamples-body" aria-expanded="true">Request Samples<span class="icon icon-collapsed dds__icon dds__icon--chevron-right dds__ml-auto"></span><span class="icon icon-expanded dds__icon dds__icon--chevron-down dds__ml-auto"></span></div><div class="api_docs_collapsible-body dds__px-3 dds__pt-2 dds__pb-3" id="requestsamples-body"><div class="dds__pt-2"><label for="requestsamples-media-example" class="dds__visually-hidden">Select example</label><select id="requestsamples-media-example" class="dds__select__field" data-action="onExampleSelectChange" data-code-container-id="requestsamples-media-code" aria-label="Select example"><option value="0" data-code="{
+  &quot;ingresses&quot;: [
+    {
+      &quot;hostname&quot;: &quot;hostname&quot;,
+      &quot;ip&quot;: &quot;ip&quot;,
+      &quot;network_name&quot;: &quot;network_name&quot;
+    }
+  ],
+  &quot;add_ingresses&quot;: [
+    {
+      &quot;hostname&quot;: &quot;hostname&quot;,
+      &quot;ip&quot;: &quot;ip&quot;,
+      &quot;network_name&quot;: &quot;network_name&quot;
+    }
+  ],
+  &quot;remove_ingresses&quot;: [
+    {
+      &quot;hostname&quot;: &quot;hostname&quot;,
+      &quot;ip&quot;: &quot;ip&quot;,
+      &quot;network_name&quot;: &quot;network_name&quot;
+    }
+  ]
+}" data-description="Example">
+        Example
+      </option></select></div>
+        <div class="dds__d-flex dds__justify-content-end dds__my-2">
+              <button class="dds__button dds__button--sm" data-action="copyCodeById" data-target-id="requestsamples-media-code">
+                    Copy
+                  </button>
+        </div>
+        <div id="requestsamples-media-code">
+          <pre tabindex="0"><code>{
+  "ingresses": [
+    {
+      "hostname": "hostname",
+      "ip": "ip",
+      "network_name": "network_name"
+    }
+  ],
+  "add_ingresses": [
+    {
+      "hostname": "hostname",
+      "ip": "ip",
+      "network_name": "network_name"
+    }
+  ],
+  "remove_ingresses": [
+    {
+      "hostname": "hostname",
+      "ip": "ip",
+      "network_name": "network_name"
+    }
+  ]
+}</code></pre>
+        </div></div></div>
+<div class="api_docs_collapsible highlight dds__mb-3 expanded" id="responsesamples"><div class="api_docs_collapsible-header dds__p-3" data-action="toggleCollapse" data-target-id="responsesamples" role="button" tabindex="0" aria-controls="responsesamples-body" aria-expanded="true">Response Samples<span class="icon icon-collapsed dds__icon dds__icon--chevron-right dds__ml-auto"></span><span class="icon icon-expanded dds__icon dds__icon--chevron-down dds__ml-auto"></span></div><div class="api_docs_collapsible-body dds__px-3 dds__pt-2 dds__pb-3" id="responsesamples-body"><div class="response-tab-wrapper"><div class="tab-header" role="tablist"><h4 class="tab-item active" role="tab" aria-selected="true" aria-controls="responsesamples-tab-204" data-action="switchTab" data-target-id="responsesamples-tab-204">204</h4><h4 class="tab-item" role="tab" aria-selected="false" aria-controls="responsesamples-tab-400" data-action="switchTab" data-target-id="responsesamples-tab-400">400</h4><h4 class="tab-item" role="tab" aria-selected="false" aria-controls="responsesamples-tab-404" data-action="switchTab" data-target-id="responsesamples-tab-404">404</h4></div><div class="tab-body"><div class="tab-content active" id="responsesamples-tab-204" role="tabpanel" aria-labelledby="responsesamples-tab-204"><div class="dds__pt-2" role="presentation"><div class="content-description dds__mb-1"><p>Successful operation</p>
+</div></div></div><div class="tab-content" id="responsesamples-tab-400" role="tabpanel" aria-labelledby="responsesamples-tab-400"><div class="dds__pt-2" role="presentation"><div class="content-description dds__mb-1"><p>Bad Request.</p>
+<p>In STRINGENT or STANDARD_TO_STRINGENT modes, the hostname field must not be empty.</p>
+<p>You cannot use ingresses in combination with add_ingresses or remove_ingresses. These options are mutually exclusive.</p>
+<p>To remove ingress in the payload:</p>
+<ul>
+<li>Entries in the remove_ingresses list must include a valid network name—empty values are not permitted.</li>
+<li>remove_ingresses must not contain entries that are currently active in the system’s ingress list (e.g., kubeops load balancer IPs).</li>
+</ul>
+</div></div></div><div class="tab-content" id="responsesamples-tab-404" role="tabpanel" aria-labelledby="responsesamples-tab-404"><div class="dds__pt-2" role="presentation"><div class="content-type-box dds__mb-1"><div class="content-type-label">application/json</div></div><div class="content-description dds__mb-1"><p>Action does not exist</p>
+</div><label for="responsesamples-tab-404-example" class="dds__visually-hidden">Select response example</label>
+       <select id="responsesamples-tab-404-example" class="dds__select__field" data-action="onExampleSelectChange" data-code-container-id="responsesamples-tab-404-code" aria-label="Select response example">
+        <option value="0" data-code="{
+  &quot;http_status_code&quot;: 0,
+  &quot;messages&quot;: [
+    {
+      &quot;code&quot;: &quot;string&quot;,
+      &quot;timestamp&quot;: &quot;2026-10-23T21:16:14.501Z&quot;,
+      &quot;severity&quot;: &quot;string&quot;,
+      &quot;message&quot;: &quot;string&quot;,
+      &quot;message_l10n&quot;: &quot;string&quot;,
+      &quot;substitution_args&quot;: &quot;string&quot;
+    }
+  ]
+}" data-description="Example">
+        Example
+      </option>
+      </select></div><div class="dds__d-flex dds__justify-content-end dds__my-2" role="presentation"><button class="dds__button dds__button--sm" data-action="copyCodeById" data-target-id="responsesamples-tab-404-code">Copy</button></div><div id="responsesamples-tab-404-code" role="presentation"><pre tabindex="0"><code>{
+  "http_status_code": 0,
+  "messages": [
+    {
+      "code": "string",
+      "timestamp": "2026-10-23T21:16:14.501Z",
+      "severity": "string",
+      "message": "string",
+      "message_l10n": "string",
+      "substitution_args": "string"
+    }
+  ]
+}</code></pre></div></div></div></div></div></div></div>
+      </div>
+    </div></div></body></html>

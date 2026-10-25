@@ -1,0 +1,47 @@
+<html><head><title>PowerFlex API 4.5.5-Manager_v4-8-0: Configuring PowerFlex Management Platform appliance SSL certificates</title></head><body><p>Tasks > Tasks for the PowerFlex Manager API</p><div><div class="api-docs-main-div dds__pl-2">
+    <div class="markdown-wrapper dds__py-3">
+      <div class="markdown-body dds__px-3"><h1 id="configuring-powerflex-management-platform-appliance-ssl-certificates" class="anchor-scroll-top-offset">Configuring PowerFlex management platform appliance SSL certificates</h1>
+<p>You must configure SSL certificates on the PowerFlex Management Platform appliance to ensure secure, trusted, and encrypted communication for the PowerFlex Manager user interface and integrations, and to replace the default self‑signed certificate with one that meets enterprise security and certificate‑chain requirements.</p>
+<p><strong>Prerequsites</strong></p>
+<p>Before calling an endpoint, you must first authenticate and generate an access token. This is done by using the following operation:<br>
+<code>POST /rest/auth/login</code></p>
+<p>After a successful login, the API returns a JSON response containing an access token.<br>
+Store this token in a variable (for example, <code>ACCESS_TOKEN</code>) for use in subsequent API calls.</p>
+<p><strong>1. Create the certificate signing request (CSR)</strong></p>
+<p>The operaton you must use is: <code>POST /rest/v1/security-settings/0/generate-ingress-csr </code></p>
+<p>The request body is:</p>
+<pre><code class="language-bash">curl  -i --insecure -X POST "https://${INGRESS_IP_OR_HOSTNAME}:443/rest/v1/security-settings/0/generate-ingress-csr" -H "accept: application/json"  \
+-H "Content-Type: application/json" -H "Authorization: Bearer ${ACCESS_TOKEN}" \
+-d '{"common_name": "dellpowerflex3.com","organizational_unit": "PowerFlex","organization": "Dell","country": "US","state": "CA","locality": "San Jose"}' | awk  '{gsub("\\\\n","\n")};1'
+</code></pre>
+<p>The expected common name is the <strong>hostname</strong> for the STRINGENT certificate generation:</p>
+<pre><code class="language-bash">{"common_name": "dellpowerflex.com", "organizational_unit": "PowerFlex", "organization": "Dell", "country": "US", "state": "CA", "locality": "San Jose"}
+</code></pre>
+<p>The expected common name is the <strong>IP address</strong> for the STANDARD certificate generation:</p>
+<pre><code>{"common_name": "100.68.101.116", "organizational_unit": "PowerFlex", "organization": "Dell", "country": "US", "state": "CA", "locality": "San Jose"}
+</code></pre>
+<p><strong>2. Generate the SSL certificate and trusted Certificate Authority</strong></p>
+<p>The CSR generated above must be used to create a valid TLS certificate and trusted CA, which are then uploaded to the PowerFlex management platform appliance.</p>
+<p><strong>3. Upload the ingress certificate</strong></p>
+<p>The request body is:</p>
+<pre><code class="language-bash">curl -F "sslCertificateFile=@/tmp/certificate.pem" \
+-i --insecure -X POST "https://${INGRESS_IP_OR_HOSTNAME}:443/rest/v1/security-settings/0/upload-ingress-certificate" \
+-H "Authorization: Bearer ${ACCESS_TOKEN}"
+</code></pre>
+<p><strong>4. Upload the Certificate Authority</strong></p>
+<p>The request body is:</p>
+<pre><code class="language-bash">curl  -F "file=@/tmp/ca.pem" -F "name=TrustedCA" -i --insecure --request POST \
+  --url https://${INGRESS_IP_OR_HOSTNAME}/Api/V1/ui/lcm/uploadssltrustedcert \
+  --header 'Content-Type: multipart/form-data' \
+  -H "Authorization: Bearer ${ACCESS_TOKEN}"
+</code></pre>
+</div>
+      <div class="markdown-sidebar">
+        <div class="markdown-toc-title">
+          <i class="icon dds__icon dds__icon--bookmark"></i>
+          On this page
+        </div>
+          <ul><li class="level-1"><a href="#configuring-powerflex-management-platform-appliance-ssl-certificates" data-toc-link="">Configuring PowerFlex management platform appliance SSL certificates</a></li></ul>
+      </div>
+    </div>
+  </div></div></body></html>

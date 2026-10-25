@@ -1,0 +1,24 @@
+<html><head><title>PowerFlex API 4.5.5-Manager_v4-8-0: HTTP message body</title></head><body><p>Getting Started > PowerFlex Manager API (4.8.x)</p><div><div class="api-docs-main-div dds__pl-2">
+    <div class="markdown-wrapper dds__py-3">
+      <div class="markdown-body dds__px-3"><h1 id="http-message-body" class="anchor-scroll-top-offset">HTTP message body</h1>
+<p>HTTP requests and responses support both XML and JSON content types. The examples used throughout this document show HTTP body content in XML form. The represented data models that are accepted and returned from the API calls can be complex.</p>
+<p>The structure of these data models is detailed in API reference in a language-independent representation.</p>
+<p>It is possible to craft, for example, an XML request body from this reference documentation. However, a more convenient method is to GET an existing object from PowerFlex Manager in either a (XML or JSON) representation. You can save it to a file for use as a skeleton for future requests involving that model type.</p>
+<p>Message bodies are subject to a wide range of validations. Capturing every validation rule is beyond the scope of this document but a few general rules are worth noting.</p>
+<ul>
+<li>In general, validation failures generate exceptions and structured messages to isolate the violation. Most validation exceptions return a 400 HTTP response, but some API methods generate specific HTTP response codes to indicate particular exceptions. The response codes are listed in the API reference.</li>
+<li>Uniqueness validations - many models require unique names. Notable models include ServiceTempate, Deployment, Network, User. This violation returns a 409 HTTP response in these cases.</li>
+<li>Relationship constraints - an exception occurs when you try, for example, to delete an entity that is in use by another entity.</li>
+<li>If a ServiceTemplate contains a server component, and a hostname is supplied with a hostname_template (hostname<br>
+generator), a validation exception is not generated. The preference is to use the hostname_template.</li>
+</ul>
+</div>
+      <div class="markdown-sidebar">
+        <div class="markdown-toc-title">
+          <i class="icon dds__icon dds__icon--bookmark"></i>
+          On this page
+        </div>
+          <ul><li class="level-1"><a href="#http-message-body" data-toc-link="">HTTP message body</a></li></ul>
+      </div>
+    </div>
+  </div></div></body></html>

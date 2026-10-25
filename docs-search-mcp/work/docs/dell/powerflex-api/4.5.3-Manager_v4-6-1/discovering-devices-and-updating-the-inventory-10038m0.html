@@ -1,0 +1,107 @@
+<html><head><title>PowerFlex API 4.5.3-Manager_v4-6-1: Discovering devices and updating the inventory</title></head><body><p>Tasks > PowerFlex Manager API tasks</p><div><div class="api-docs-main-div dds__pl-2">
+    <div class="markdown-wrapper dds__py-3">
+      <div class="markdown-body dds__px-3"><h1 id="discovering-devices-and-updating-the-inventory" class="anchor-scroll-top-offset">Discovering devices and updating the inventory</h1>
+<h2 id="device-discovery" class="anchor-scroll-top-offset">Device Discovery</h2>
+<p>Discovering devices is initiated by creating a <code>DiscoveryRequest</code> with a <code>discoveryRequestList</code>. The<br>
+<code>discoveryRequestList</code> contains a list of <code>DiscoverIPRangeDeviceRequest</code>’s each of which specifies:</p>
+<ul>
+<li>The IP address range to discover defined by <code>deviceStartIp</code> and (optionally) <code>deviceEndIp</code>. If<br>
+<code>deviceEndIp</code> is not specified only <code>deviceStartIp</code> will be discovered.</li>
+<li>The <code>deviceType</code> which should be set to one of the following values depending on type of device<br>
+being discovered: <code>genericswitch</code>, <code>Server</code>, <code>vcenter</code>, <code>scaleio</code> or <code>em</code>. <code>em</code> should be used for<br>
+discovering Panduit IPI cabinets.</li>
+<li>The <code>Credential</code> to use for discovery. This must be specified as one of the following parameters<br>
+depending on the <code>deviceType</code> being discovered: <code>deviceServerCredRef</code>, <code>deviceSwitchCredRef</code>,<br>
+<code>deviceVCenterCredRef</code>, <code>deviceScaleIOCredRef</code> or <code>deviceEMCredRef</code>. The value should be the<br>
+<code>Credential</code> id.</li>
+</ul>
+<p>A sample request issued to <code>POST /Api/V1/DiscoveryRequest</code> is:</p>
+<pre><code class="language-json">{
+   "discoveryRequestList": {
+       "DiscoverIPRangeDeviceRequest": [
+           {
+               "deviceEndIp": "100.68.112.33",
+               "deviceServerCredRef": "fd9e94f6-703e-42b3-8287-ec1b9e785926",
+               "deviceStartIp": "100.68.112.30",
+               "deviceType": "Server",
+               "reserved": false,
+               "serverPoolId": "",
+               "unmanaged": false
+           }
+       ]
+   }
+}
+</code></pre>
+<p>Sample response is:</p>
+<pre><code class="language-json">{
+    "devices": null,
+    "discoveryRequestList": {
+        "DiscoverIPRangeDeviceRequest": [ ... omitted ... ]
+        "discoverIpRangeDeviceRequests": [ ... omitted ... ]
+    },
+    "id": "Job-7d163350-c1a0-4052-aa0e-420c6754083b",
+    "link": null,
+    "status": "INPROGRESS",
+    "statusMessage": null,
+    "totalCount": 0
+}
+</code></pre>
+<p>The discovery request has now been initiated and a job created for it identified by<br>
+<code>Job-7d163350-c1a0-4052-aa0e-420c6754083b</code>. Monitoring the status of this job is done by calling<br>
+<code>GET /Api/V1/DiscoveryRequest/{job_id}</code></p>
+<p>Sample response to <code>GET /Api/V1/DiscoveryRequest/Job-7d163350-c1a0-4052-aa0e-420c6754083b</code>:</p>
+<pre><code class="language-json">{
+    "devices": [],
+    "discoveryRequestList": {
+        "DiscoverIPRangeDeviceRequest": [ ... omitted ... ]
+        "discoverIpRangeDeviceRequests": [ ... omitted ... ]
+    },
+    "id": "Job-9282b26f-1eb3-4b18-a12d-daf5254c49a5",
+    "link": null,
+    "status": "INPROGRESS",
+    "statusMessage": "Inprogress",
+    "totalCount": 0
+}
+</code></pre>
+<p>The <code>DiscoveryRequest</code> will be removed and return 404 once the job is complete. In order to verify<br>
+that the expected device was successfully discovered and added as a Resource it can be retrieved<br>
+either by the IP address it was discovered with or with the service tag:</p>
+<ul>
+<li>Search by ip address: <code>GET /Api/V1/ManagedDevice?filter=eq,ipAddress,100.68.112.30</code></li>
+<li>Search by service tag: <code>GET /Api/V1/ManagedDevice?serviceTag=eq,serviceTag,XXXXXX</code></li>
+</ul>
+<h2 id="device-inventory" class="anchor-scroll-top-offset">Device Inventory</h2>
+<p>If configuration is changed on devices outside of PowerFlex Manager (for example, adding or changing<br>
+settings in vCenter or PowerFlex) it is important to re-inventory those devices so that PowerFlex<br>
+Manager has a view of those changes. This inventory will happen automatically on a nightly cadence<br>
+for most device types, or hourly for the PowerFlex Gateway. Inventory can also be triggered earlier<br>
+via the REST API as described here.</p>
+<p>To initiate a new inventory job on an existing device execute<br>
+<code>POST /Api/V1/ManagedDevice/update?deviceId={refId}</code>. The <code>refId</code> can be found by running<br>
+<code>GET /Api/V1/ManagedDevice</code>.</p>
+<p>Sample response:</p>
+<pre><code class="language-json">[
+    {
+        "jobName": "Job-6ff9d2ac-f47f-452f-a5f4-8b16fcca2974"
+    }
+]
+</code></pre>
+<p>The job can be polled to monitor for successful completion via<br>
+<code>GET /Api/V1/JobHistory/{job_id}/status</code>, e.g.<br>
+<code>GET /Api/V1/JobHistory/Job-6ff9d2ac-f47f-452f-a5f4-8b16fcca2974/status</code></p>
+<p>Sample response:</p>
+<pre><code>"IN_PROGRESS"
+</code></pre>
+<p>The response is a string value indicating the current status of the job. Possible return values are:<br>
+<code>"STARTING"</code>, <code>"IN_PROGRESS"</code>, <code>"SUCCESSFUL"</code>, <code>"FAILED"</code>, <code>"CANCELLED"</code> and<br>
+<code>"ABNORMAL_TERMINATION"</code>. Once the job is no longer <code>"STARTING"</code> or <code>"IN_PROGRESS"</code> it is complete.</p>
+</div>
+      <div class="markdown-sidebar">
+        <div class="markdown-toc-title">
+          <i class="icon dds__icon dds__icon--bookmark"></i>
+          On this page
+        </div>
+          <ul><li class="level-1"><a href="#discovering-devices-and-updating-the-inventory" data-toc-link="">Discovering devices and updating the inventory</a></li><li class="level-2"><a href="#device-discovery" data-toc-link="">Device Discovery</a></li><li class="level-2"><a href="#device-inventory" data-toc-link="">Device Inventory</a></li></ul>
+      </div>
+    </div>
+  </div></div></body></html>

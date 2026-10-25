@@ -1,0 +1,80 @@
+<html><head><title>PowerFlex API 3.6.0: PowerFlex Gateway</title></head><body><p></p><div><div class="api-docs-main-div dds__pl-2">
+    <div class="markdown-wrapper dds__py-3">
+      <div class="markdown-body dds__px-3"><h1 id="powerflex-gateway" class="anchor-scroll-top-offset">PowerFlex Gateway</h1>
+<h2 id="configure-the-powerflex-gateway-using-the-rest-api" class="anchor-scroll-top-offset">Configure the PowerFlex Gateway using the REST API</h2>
+<p>If the PowerFlex Gateway was installed manually after PowerFlex was installed, use the following procedure to configure MDM connection properties and passwords in the PowerFlex Gateway. If the PowerFlex Gateway/PowerFlex Installer was used to install PowerFlex, the MDM connection properties are already configured, and you can skip this task.</p>
+<ol>
+<li>Invoke an HTTP GET request using the Gateway URI, followed by /api/gatewayLogin:<br>
+<code>https://&lt;GATEWAY_IP_ADDRESS&gt;/api/gatewayLogin</code></li>
+</ol>
+<p>Example:</p>
+<pre><code class="language-json">https://10.76.60.190:443/api/gatewayLogin
+GET
+</code></pre>
+<ol>
+<li>
+<p>Log in as an admin user, using the <code>gatewayAdminPassword</code>. A token is returned.</p>
+</li>
+<li>
+<p>Set (POST) the MDM configuration:<br>
+<code>https://&lt;server_ip&gt;:443/api/updateConfiguration</code></p>
+</li>
+</ol>
+<p>with the following payload:</p>
+<pre><code class="language-json">{
+	"mdmAddresses":
+		["&lt;MDM_MANAGEMENT_IP_ADDRESS1&gt;", "&lt;MDM_MANAGEMENT_IP_ADDRESS2&gt;"],
+		"mdmPort":"&lt;MDM_PORT&gt;",
+		"gatewayAdminPassword":"&lt;ADMIN_PASSWORD&gt;",
+}
+</code></pre>
+<p>For example:<br>
+<a href="https://10.76.61.100:443/api/updateConfiguration">https://10.76.61.100:443/api/updateConfiguration</a></p>
+<pre><code class="language-json">{
+	"mdmAddresses":["10.76.61.32", "10.76.61.33"],
+	"mdmPort":"6611",
+	"gatewayAdminPassword":"123",
+}
+</code></pre>
+<p>Configuration is complete.</p>
+
+<blockquote>
+<h3 id="note" class="anchor-scroll-top-offset">NOTE:</h3>
+<p>For instructions on configuring the PowerFlex Gateway using cURL or manually editing the Gateway properties, see <a href="additional-gateway-configuration-methods-1223m0">Additional Gateway configuration methods</a>.]</p>
+</blockquote>
+<h2 id="gatewayadminpassword" class="anchor-scroll-top-offset">gatewayAdminPassword</h2>
+<p>A number of requests require the <code>gatewayAdminPassword</code> instead of the admin password. These requests work similarly to requests requiring the MDM password, with the following exceptions:</p>
+<ul>
+<li>Instead of <code>/api/login</code>, you should invoke an HTTP GET request, <code>/api/gatewayLogin</code>, with user: <code>admin</code> password: GATEWAY_ADMIN_PASSWORD in HTTP Basic authentication. A token is returned.</li>
+</ul>
+<p>Example:</p>
+<pre><code class="language-json">https://10.76.60.190:443/api/gatewayLogin
+GET
+</code></pre>
+<ul>
+<li>Instead of invoking <code>/api/logout</code>, invoke <code>/api/gatewayLogout</code> with the token received when you logged in:</li>
+</ul>
+<p>Example:</p>
+<pre><code class="language-json">https://10.76.60.190:443/api/gatewayLogout
+GET
+</code></pre>
+<p>Requests that require the gatewayAdminPassword are:</p>
+<ul>
+<li><code>GET /api/Configuration</code></li>
+<li><code>GET /api/gatewayLogout</code></li>
+<li><code>GET /api/getHostCertificate/{Mdm | Lia}</code></li>
+<li><code>POST /api/updateConfiguration</code></li>
+<li><code>POST /api/instances/System/action/createMdmCluster</code></li>
+<li><code>POST /api/trustHostCertificate/{Mdm | Lia}</code></li>
+<li><code>POST /api/gatewaySetSecureCommunication</code></li>
+</ul>
+</div>
+      <div class="markdown-sidebar">
+        <div class="markdown-toc-title">
+          <i class="icon dds__icon dds__icon--bookmark"></i>
+          On this page
+        </div>
+          <ul><li class="level-1"><a href="#powerflex-gateway" data-toc-link="">PowerFlex Gateway</a></li><li class="level-2"><a href="#configure-the-powerflex-gateway-using-the-rest-api" data-toc-link="">Configure the PowerFlex Gateway using the REST API</a></li><li class="level-2"><a href="#gatewayadminpassword" data-toc-link="">gatewayAdminPassword</a></li></ul>
+      </div>
+    </div>
+  </div></div></body></html>

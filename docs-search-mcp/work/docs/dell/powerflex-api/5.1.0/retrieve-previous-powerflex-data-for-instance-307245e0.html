@@ -1,0 +1,1814 @@
+<html><head><title>PowerFlex API 5.1.0: Retrieve previous PowerFlex data for instance</title></head><body><p>Erasure coding APIS > PowerFlex Manager (AsmManager) REST API > Telemetry connection</p><div><div class="api-docs-main-div dds__pl-2">
+      <div class="api-doc-container">
+        <div class="api__doc__left-section dds__p-3">
+   <div class="markdown-renderer">
+          <h4 class="dds__font-weight-bold dds__pb-2">Retrieve previous PowerFlex data for instance</h4>       
+          <div><p>Retrieve previous PowerFlex metrics data for a single instance.</p>
+</div> 
+          
+    </div>
+
+<div class="api_docs_collapsible dds__mb-3 expanded" id="request"><div class="api_docs_collapsible-header dds__p-3" data-action="toggleCollapse" data-target-id="request" role="button" tabindex="0" aria-controls="request-body" aria-expanded="true"><span class="title">Requests</span><span class="icon icon-collapsed dds__icon dds__icon--chevron-right dds__mt-1 dds__ml-auto"></span><span class="icon icon-expanded dds__icon dds__icon--chevron-down dds__mt-1 dds__ml-auto"></span></div><div class="api_docs_collapsible-body" id="request-body"><div class="static-frame-request-section"><div class="headers-section"><h5 class="title">Query Parameters</h5>
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="host">host</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      <span class="required">Required</span>
+    </div>
+    
+    
+    
+    
+    <div class="desc"><p>Hostname/IP of the device for which latest performance metrics have to be retrieved</p>
+</div>
+    
+    
+  </div>
+</div>
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="instance">instance</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      
+    </div>
+    
+    
+    
+    
+    <div class="desc"><p>Instance name of the device metrics will be gathered from</p>
+</div>
+    
+    
+  </div>
+</div>
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="id">id</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      
+    </div>
+    
+    
+    
+    
+    <div class="desc"><p>ID of the device metrics will be gathered from</p>
+</div>
+    
+    
+  </div>
+</div>
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="type">type</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      <span class="required">Required</span>
+    </div>
+    
+    
+    
+    
+    <div class="desc"><p>Device Type of the instance metrics will be gathered from</p>
+</div>
+    
+    
+  </div>
+</div></div></div></div></div>
+
+       <div class="api_docs_collapsible dds__mb-3" id="response"><div class="api_docs_collapsible-header dds__p-3" data-action="toggleCollapse" data-target-id="response" role="button" tabindex="0" aria-controls="response-body" aria-expanded="false"><span class="title">Responses</span><span class="icon icon-collapsed dds__icon dds__icon--chevron-right dds__mt-1 dds__ml-auto"></span><span class="icon icon-expanded dds__icon dds__icon--chevron-down dds__mt-1 dds__ml-auto"></span></div><div class="api_docs_collapsible-body" id="response-body"><div class="api_docs_collapsible dds__mb-3" id="0f3fe89e0fdbf"><div class="api_docs_collapsible-header dds__p-3" data-action="toggleCollapse" data-target-id="0f3fe89e0fdbf" role="button" tabindex="0" aria-controls="0f3fe89e0fdbf-body" aria-expanded="false"><span class="title"><div class="response-frame"><span class="text-green"><span class="dds__badge dds__badge--dot dds__mr-2"></span>200</span> : OK</div></span><span class="icon icon-collapsed dds__icon dds__icon--chevron-right dds__mt-1 dds__ml-auto"></span><span class="icon icon-expanded dds__icon dds__icon--chevron-down dds__mt-1 dds__ml-auto"></span></div><div class="api_docs_collapsible-body" id="0f3fe89e0fdbf-body"><div class="static-frame-response-section"><div><div class="headers-section"><div><p>OK</p>
+</div><h5 class="title dds__mt-2">Response Body</h5><div class="static-frame-request-section"><div class="" id="Response Body-Array Of:-qrz8">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name clickable-property" title="Array Of:" style="cursor: pointer;">Array Of:</span>
+    </div>
+    <span class="schema-toggle-icon" data-action="toggleNestedBodyCard" data-target-id="Response Body-Array Of:-qrz8" role="button" tabindex="0" aria-controls="Response Body-Array Of:-qrz8-nested-body" aria-expanded="false">
+            <span class="icon dds__icon dds__icon--chevron-right dds__mt-1 dds__ml-auto"></span>
+            <span class="icon dds__icon dds__icon--chevron-down dds__mt-1 dds__ml-auto hidden"></span>
+        </span>
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">array[object]</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div><div class="nested-body schema-child-row" id="Response Body-Array Of:-qrz8-nested-body" style="display:none">
+            <div colspan="2" class="nested">
+            <div class="" id="primitive-type">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="type">type</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-name">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="name">name</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-timeframe">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="timeframe">timeframe</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="expanded" id="Response Body-Array Of:-qrz8-iops-83tz">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name clickable-property" title="iops" style="cursor: pointer;">iops</span>
+    </div>
+    <span class="schema-toggle-icon" data-action="toggleNestedBodyCard" data-target-id="Response Body-Array Of:-qrz8-iops-83tz" role="button" tabindex="0" aria-controls="Response Body-Array Of:-qrz8-iops-83tz-nested-body" aria-expanded="true">
+            <span class="icon dds__icon dds__icon--chevron-right dds__mt-1 dds__ml-auto hidden"></span>
+            <span class="icon dds__icon dds__icon--chevron-down dds__mt-1 dds__ml-auto"></span>
+        </span>
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">object</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div><div class="nested-body schema-child-row" id="Response Body-Array Of:-qrz8-iops-83tz-nested-body" style="">
+            <div colspan="2" class="nested">
+            <div class="" id="Response Body-Array Of:-qrz8-iops-83tz-totalReadPerformances-5jgk">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name clickable-property" title="totalReadPerformances" style="cursor: pointer;">totalReadPerformances</span>
+    </div>
+    <span class="schema-toggle-icon" data-action="toggleNestedBodyCard" data-target-id="Response Body-Array Of:-qrz8-iops-83tz-totalReadPerformances-5jgk" role="button" tabindex="0" aria-controls="Response Body-Array Of:-qrz8-iops-83tz-totalReadPerformances-5jgk-nested-body" aria-expanded="false">
+            <span class="icon dds__icon dds__icon--chevron-right dds__mt-1 dds__ml-auto"></span>
+            <span class="icon dds__icon dds__icon--chevron-down dds__mt-1 dds__ml-auto hidden"></span>
+        </span>
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">array[object]</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div><div class="nested-body schema-child-row" id="Response Body-Array Of:-qrz8-iops-83tz-totalReadPerformances-5jgk-nested-body" style="display:none">
+            <div colspan="2" class="nested">
+            <div class="" id="primitive-timestamp">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="timestamp">timestamp</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-value">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="value">value</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+            </div>
+          </div></div>
+<div class="" id="Response Body-Array Of:-qrz8-iops-83tz-totalWritePerformances-parh">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name clickable-property" title="totalWritePerformances" style="cursor: pointer;">totalWritePerformances</span>
+    </div>
+    <span class="schema-toggle-icon" data-action="toggleNestedBodyCard" data-target-id="Response Body-Array Of:-qrz8-iops-83tz-totalWritePerformances-parh" role="button" tabindex="0" aria-controls="Response Body-Array Of:-qrz8-iops-83tz-totalWritePerformances-parh-nested-body" aria-expanded="false">
+            <span class="icon dds__icon dds__icon--chevron-right dds__mt-1 dds__ml-auto"></span>
+            <span class="icon dds__icon dds__icon--chevron-down dds__mt-1 dds__ml-auto hidden"></span>
+        </span>
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">array[object]</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div><div class="nested-body schema-child-row" id="Response Body-Array Of:-qrz8-iops-83tz-totalWritePerformances-parh-nested-body" style="display:none">
+            <div colspan="2" class="nested">
+            <div class="" id="primitive-timestamp">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="timestamp">timestamp</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-value">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="value">value</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+            </div>
+          </div></div>
+<div class="" id="Response Body-Array Of:-qrz8-iops-83tz-totalPerformances-khtf">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name clickable-property" title="totalPerformances" style="cursor: pointer;">totalPerformances</span>
+    </div>
+    <span class="schema-toggle-icon" data-action="toggleNestedBodyCard" data-target-id="Response Body-Array Of:-qrz8-iops-83tz-totalPerformances-khtf" role="button" tabindex="0" aria-controls="Response Body-Array Of:-qrz8-iops-83tz-totalPerformances-khtf-nested-body" aria-expanded="false">
+            <span class="icon dds__icon dds__icon--chevron-right dds__mt-1 dds__ml-auto"></span>
+            <span class="icon dds__icon dds__icon--chevron-down dds__mt-1 dds__ml-auto hidden"></span>
+        </span>
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">array[object]</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div><div class="nested-body schema-child-row" id="Response Body-Array Of:-qrz8-iops-83tz-totalPerformances-khtf-nested-body" style="display:none">
+            <div colspan="2" class="nested">
+            <div class="" id="primitive-timestamp">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="timestamp">timestamp</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-value">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="value">value</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+            </div>
+          </div></div>
+            </div>
+          </div></div>
+<div class="expanded" id="Response Body-Array Of:-qrz8-bw-kyum">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name clickable-property" title="bw" style="cursor: pointer;">bw</span>
+    </div>
+    <span class="schema-toggle-icon" data-action="toggleNestedBodyCard" data-target-id="Response Body-Array Of:-qrz8-bw-kyum" role="button" tabindex="0" aria-controls="Response Body-Array Of:-qrz8-bw-kyum-nested-body" aria-expanded="true">
+            <span class="icon dds__icon dds__icon--chevron-right dds__mt-1 dds__ml-auto hidden"></span>
+            <span class="icon dds__icon dds__icon--chevron-down dds__mt-1 dds__ml-auto"></span>
+        </span>
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">object</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div><div class="nested-body schema-child-row" id="Response Body-Array Of:-qrz8-bw-kyum-nested-body" style="">
+            <div colspan="2" class="nested">
+            <div class="" id="Response Body-Array Of:-qrz8-bw-kyum-totalReadPerformances-wl50">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name clickable-property" title="totalReadPerformances" style="cursor: pointer;">totalReadPerformances</span>
+    </div>
+    <span class="schema-toggle-icon" data-action="toggleNestedBodyCard" data-target-id="Response Body-Array Of:-qrz8-bw-kyum-totalReadPerformances-wl50" role="button" tabindex="0" aria-controls="Response Body-Array Of:-qrz8-bw-kyum-totalReadPerformances-wl50-nested-body" aria-expanded="false">
+            <span class="icon dds__icon dds__icon--chevron-right dds__mt-1 dds__ml-auto"></span>
+            <span class="icon dds__icon dds__icon--chevron-down dds__mt-1 dds__ml-auto hidden"></span>
+        </span>
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">array[object]</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div><div class="nested-body schema-child-row" id="Response Body-Array Of:-qrz8-bw-kyum-totalReadPerformances-wl50-nested-body" style="display:none">
+            <div colspan="2" class="nested">
+            <div class="" id="primitive-timestamp">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="timestamp">timestamp</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-value">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="value">value</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+            </div>
+          </div></div>
+<div class="" id="Response Body-Array Of:-qrz8-bw-kyum-totalWritePerformances-pv5t">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name clickable-property" title="totalWritePerformances" style="cursor: pointer;">totalWritePerformances</span>
+    </div>
+    <span class="schema-toggle-icon" data-action="toggleNestedBodyCard" data-target-id="Response Body-Array Of:-qrz8-bw-kyum-totalWritePerformances-pv5t" role="button" tabindex="0" aria-controls="Response Body-Array Of:-qrz8-bw-kyum-totalWritePerformances-pv5t-nested-body" aria-expanded="false">
+            <span class="icon dds__icon dds__icon--chevron-right dds__mt-1 dds__ml-auto"></span>
+            <span class="icon dds__icon dds__icon--chevron-down dds__mt-1 dds__ml-auto hidden"></span>
+        </span>
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">array[object]</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div><div class="nested-body schema-child-row" id="Response Body-Array Of:-qrz8-bw-kyum-totalWritePerformances-pv5t-nested-body" style="display:none">
+            <div colspan="2" class="nested">
+            <div class="" id="primitive-timestamp">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="timestamp">timestamp</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-value">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="value">value</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+            </div>
+          </div></div>
+<div class="" id="Response Body-Array Of:-qrz8-bw-kyum-totalPerformances-gryo">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name clickable-property" title="totalPerformances" style="cursor: pointer;">totalPerformances</span>
+    </div>
+    <span class="schema-toggle-icon" data-action="toggleNestedBodyCard" data-target-id="Response Body-Array Of:-qrz8-bw-kyum-totalPerformances-gryo" role="button" tabindex="0" aria-controls="Response Body-Array Of:-qrz8-bw-kyum-totalPerformances-gryo-nested-body" aria-expanded="false">
+            <span class="icon dds__icon dds__icon--chevron-right dds__mt-1 dds__ml-auto"></span>
+            <span class="icon dds__icon dds__icon--chevron-down dds__mt-1 dds__ml-auto hidden"></span>
+        </span>
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">array[object]</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div><div class="nested-body schema-child-row" id="Response Body-Array Of:-qrz8-bw-kyum-totalPerformances-gryo-nested-body" style="display:none">
+            <div colspan="2" class="nested">
+            <div class="" id="primitive-timestamp">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="timestamp">timestamp</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-value">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="value">value</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+            </div>
+          </div></div>
+            </div>
+          </div></div>
+<div class="expanded" id="Response Body-Array Of:-qrz8-iosize-y1uy">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name clickable-property" title="iosize" style="cursor: pointer;">iosize</span>
+    </div>
+    <span class="schema-toggle-icon" data-action="toggleNestedBodyCard" data-target-id="Response Body-Array Of:-qrz8-iosize-y1uy" role="button" tabindex="0" aria-controls="Response Body-Array Of:-qrz8-iosize-y1uy-nested-body" aria-expanded="true">
+            <span class="icon dds__icon dds__icon--chevron-right dds__mt-1 dds__ml-auto hidden"></span>
+            <span class="icon dds__icon dds__icon--chevron-down dds__mt-1 dds__ml-auto"></span>
+        </span>
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">object</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div><div class="nested-body schema-child-row" id="Response Body-Array Of:-qrz8-iosize-y1uy-nested-body" style="">
+            <div colspan="2" class="nested">
+            <div class="" id="Response Body-Array Of:-qrz8-iosize-y1uy-totalReadPerformances-kvr2">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name clickable-property" title="totalReadPerformances" style="cursor: pointer;">totalReadPerformances</span>
+    </div>
+    <span class="schema-toggle-icon" data-action="toggleNestedBodyCard" data-target-id="Response Body-Array Of:-qrz8-iosize-y1uy-totalReadPerformances-kvr2" role="button" tabindex="0" aria-controls="Response Body-Array Of:-qrz8-iosize-y1uy-totalReadPerformances-kvr2-nested-body" aria-expanded="false">
+            <span class="icon dds__icon dds__icon--chevron-right dds__mt-1 dds__ml-auto"></span>
+            <span class="icon dds__icon dds__icon--chevron-down dds__mt-1 dds__ml-auto hidden"></span>
+        </span>
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">array[object]</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div><div class="nested-body schema-child-row" id="Response Body-Array Of:-qrz8-iosize-y1uy-totalReadPerformances-kvr2-nested-body" style="display:none">
+            <div colspan="2" class="nested">
+            <div class="" id="primitive-timestamp">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="timestamp">timestamp</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-value">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="value">value</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+            </div>
+          </div></div>
+<div class="" id="Response Body-Array Of:-qrz8-iosize-y1uy-totalWritePerformances-so44">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name clickable-property" title="totalWritePerformances" style="cursor: pointer;">totalWritePerformances</span>
+    </div>
+    <span class="schema-toggle-icon" data-action="toggleNestedBodyCard" data-target-id="Response Body-Array Of:-qrz8-iosize-y1uy-totalWritePerformances-so44" role="button" tabindex="0" aria-controls="Response Body-Array Of:-qrz8-iosize-y1uy-totalWritePerformances-so44-nested-body" aria-expanded="false">
+            <span class="icon dds__icon dds__icon--chevron-right dds__mt-1 dds__ml-auto"></span>
+            <span class="icon dds__icon dds__icon--chevron-down dds__mt-1 dds__ml-auto hidden"></span>
+        </span>
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">array[object]</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div><div class="nested-body schema-child-row" id="Response Body-Array Of:-qrz8-iosize-y1uy-totalWritePerformances-so44-nested-body" style="display:none">
+            <div colspan="2" class="nested">
+            <div class="" id="primitive-timestamp">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="timestamp">timestamp</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-value">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="value">value</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+            </div>
+          </div></div>
+<div class="" id="Response Body-Array Of:-qrz8-iosize-y1uy-totalPerformances-vj0y">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name clickable-property" title="totalPerformances" style="cursor: pointer;">totalPerformances</span>
+    </div>
+    <span class="schema-toggle-icon" data-action="toggleNestedBodyCard" data-target-id="Response Body-Array Of:-qrz8-iosize-y1uy-totalPerformances-vj0y" role="button" tabindex="0" aria-controls="Response Body-Array Of:-qrz8-iosize-y1uy-totalPerformances-vj0y-nested-body" aria-expanded="false">
+            <span class="icon dds__icon dds__icon--chevron-right dds__mt-1 dds__ml-auto"></span>
+            <span class="icon dds__icon dds__icon--chevron-down dds__mt-1 dds__ml-auto hidden"></span>
+        </span>
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">array[object]</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div><div class="nested-body schema-child-row" id="Response Body-Array Of:-qrz8-iosize-y1uy-totalPerformances-vj0y-nested-body" style="display:none">
+            <div colspan="2" class="nested">
+            <div class="" id="primitive-timestamp">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="timestamp">timestamp</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-value">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="value">value</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+            </div>
+          </div></div>
+            </div>
+          </div></div>
+<div class="expanded" id="Response Body-Array Of:-qrz8-latency-u9ws">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name clickable-property" title="latency" style="cursor: pointer;">latency</span>
+    </div>
+    <span class="schema-toggle-icon" data-action="toggleNestedBodyCard" data-target-id="Response Body-Array Of:-qrz8-latency-u9ws" role="button" tabindex="0" aria-controls="Response Body-Array Of:-qrz8-latency-u9ws-nested-body" aria-expanded="true">
+            <span class="icon dds__icon dds__icon--chevron-right dds__mt-1 dds__ml-auto hidden"></span>
+            <span class="icon dds__icon dds__icon--chevron-down dds__mt-1 dds__ml-auto"></span>
+        </span>
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">object</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div><div class="nested-body schema-child-row" id="Response Body-Array Of:-qrz8-latency-u9ws-nested-body" style="">
+            <div colspan="2" class="nested">
+            <div class="" id="Response Body-Array Of:-qrz8-latency-u9ws-totalReadPerformances-cufe">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name clickable-property" title="totalReadPerformances" style="cursor: pointer;">totalReadPerformances</span>
+    </div>
+    <span class="schema-toggle-icon" data-action="toggleNestedBodyCard" data-target-id="Response Body-Array Of:-qrz8-latency-u9ws-totalReadPerformances-cufe" role="button" tabindex="0" aria-controls="Response Body-Array Of:-qrz8-latency-u9ws-totalReadPerformances-cufe-nested-body" aria-expanded="false">
+            <span class="icon dds__icon dds__icon--chevron-right dds__mt-1 dds__ml-auto"></span>
+            <span class="icon dds__icon dds__icon--chevron-down dds__mt-1 dds__ml-auto hidden"></span>
+        </span>
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">array[object]</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div><div class="nested-body schema-child-row" id="Response Body-Array Of:-qrz8-latency-u9ws-totalReadPerformances-cufe-nested-body" style="display:none">
+            <div colspan="2" class="nested">
+            <div class="" id="primitive-timestamp">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="timestamp">timestamp</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-value">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="value">value</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+            </div>
+          </div></div>
+<div class="" id="Response Body-Array Of:-qrz8-latency-u9ws-totalWritePerformances-0lvn">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name clickable-property" title="totalWritePerformances" style="cursor: pointer;">totalWritePerformances</span>
+    </div>
+    <span class="schema-toggle-icon" data-action="toggleNestedBodyCard" data-target-id="Response Body-Array Of:-qrz8-latency-u9ws-totalWritePerformances-0lvn" role="button" tabindex="0" aria-controls="Response Body-Array Of:-qrz8-latency-u9ws-totalWritePerformances-0lvn-nested-body" aria-expanded="false">
+            <span class="icon dds__icon dds__icon--chevron-right dds__mt-1 dds__ml-auto"></span>
+            <span class="icon dds__icon dds__icon--chevron-down dds__mt-1 dds__ml-auto hidden"></span>
+        </span>
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">array[object]</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div><div class="nested-body schema-child-row" id="Response Body-Array Of:-qrz8-latency-u9ws-totalWritePerformances-0lvn-nested-body" style="display:none">
+            <div colspan="2" class="nested">
+            <div class="" id="primitive-timestamp">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="timestamp">timestamp</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-value">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="value">value</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+            </div>
+          </div></div>
+<div class="" id="Response Body-Array Of:-qrz8-latency-u9ws-totalPerformances-ahw5">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name clickable-property" title="totalPerformances" style="cursor: pointer;">totalPerformances</span>
+    </div>
+    <span class="schema-toggle-icon" data-action="toggleNestedBodyCard" data-target-id="Response Body-Array Of:-qrz8-latency-u9ws-totalPerformances-ahw5" role="button" tabindex="0" aria-controls="Response Body-Array Of:-qrz8-latency-u9ws-totalPerformances-ahw5-nested-body" aria-expanded="false">
+            <span class="icon dds__icon dds__icon--chevron-right dds__mt-1 dds__ml-auto"></span>
+            <span class="icon dds__icon dds__icon--chevron-down dds__mt-1 dds__ml-auto hidden"></span>
+        </span>
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">array[object]</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div><div class="nested-body schema-child-row" id="Response Body-Array Of:-qrz8-latency-u9ws-totalPerformances-ahw5-nested-body" style="display:none">
+            <div colspan="2" class="nested">
+            <div class="" id="primitive-timestamp">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="timestamp">timestamp</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-value">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="value">value</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+            </div>
+          </div></div>
+            </div>
+          </div></div>
+<div class="expanded" id="Response Body-Array Of:-qrz8-primarySecondaryIops-deob">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name clickable-property" title="primarySecondaryIops" style="cursor: pointer;">primarySecondaryIops</span>
+    </div>
+    <span class="schema-toggle-icon" data-action="toggleNestedBodyCard" data-target-id="Response Body-Array Of:-qrz8-primarySecondaryIops-deob" role="button" tabindex="0" aria-controls="Response Body-Array Of:-qrz8-primarySecondaryIops-deob-nested-body" aria-expanded="true">
+            <span class="icon dds__icon dds__icon--chevron-right dds__mt-1 dds__ml-auto hidden"></span>
+            <span class="icon dds__icon dds__icon--chevron-down dds__mt-1 dds__ml-auto"></span>
+        </span>
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">object</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div><div class="nested-body schema-child-row" id="Response Body-Array Of:-qrz8-primarySecondaryIops-deob-nested-body" style="">
+            <div colspan="2" class="nested">
+            <div class="" id="Response Body-Array Of:-qrz8-primarySecondaryIops-deob-primaryPerformances-8j7x">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name clickable-property" title="primaryPerformances" style="cursor: pointer;">primaryPerformances</span>
+    </div>
+    <span class="schema-toggle-icon" data-action="toggleNestedBodyCard" data-target-id="Response Body-Array Of:-qrz8-primarySecondaryIops-deob-primaryPerformances-8j7x" role="button" tabindex="0" aria-controls="Response Body-Array Of:-qrz8-primarySecondaryIops-deob-primaryPerformances-8j7x-nested-body" aria-expanded="false">
+            <span class="icon dds__icon dds__icon--chevron-right dds__mt-1 dds__ml-auto"></span>
+            <span class="icon dds__icon dds__icon--chevron-down dds__mt-1 dds__ml-auto hidden"></span>
+        </span>
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">array[object]</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div><div class="nested-body schema-child-row" id="Response Body-Array Of:-qrz8-primarySecondaryIops-deob-primaryPerformances-8j7x-nested-body" style="display:none">
+            <div colspan="2" class="nested">
+            <div class="" id="primitive-timestamp">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="timestamp">timestamp</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-value">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="value">value</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+            </div>
+          </div></div>
+<div class="" id="Response Body-Array Of:-qrz8-primarySecondaryIops-deob-secondaryPerformances-lsdp">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name clickable-property" title="secondaryPerformances" style="cursor: pointer;">secondaryPerformances</span>
+    </div>
+    <span class="schema-toggle-icon" data-action="toggleNestedBodyCard" data-target-id="Response Body-Array Of:-qrz8-primarySecondaryIops-deob-secondaryPerformances-lsdp" role="button" tabindex="0" aria-controls="Response Body-Array Of:-qrz8-primarySecondaryIops-deob-secondaryPerformances-lsdp-nested-body" aria-expanded="false">
+            <span class="icon dds__icon dds__icon--chevron-right dds__mt-1 dds__ml-auto"></span>
+            <span class="icon dds__icon dds__icon--chevron-down dds__mt-1 dds__ml-auto hidden"></span>
+        </span>
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">array[object]</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div><div class="nested-body schema-child-row" id="Response Body-Array Of:-qrz8-primarySecondaryIops-deob-secondaryPerformances-lsdp-nested-body" style="display:none">
+            <div colspan="2" class="nested">
+            <div class="" id="primitive-timestamp">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="timestamp">timestamp</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-value">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="value">value</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+            </div>
+          </div></div>
+<div class="" id="Response Body-Array Of:-qrz8-primarySecondaryIops-deob-instanceNames-pvyf">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="instanceNames">instanceNames</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">array[string]</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+            </div>
+          </div></div>
+<div class="expanded" id="Response Body-Array Of:-qrz8-primarySecondaryBw-2m6e">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name clickable-property" title="primarySecondaryBw" style="cursor: pointer;">primarySecondaryBw</span>
+    </div>
+    <span class="schema-toggle-icon" data-action="toggleNestedBodyCard" data-target-id="Response Body-Array Of:-qrz8-primarySecondaryBw-2m6e" role="button" tabindex="0" aria-controls="Response Body-Array Of:-qrz8-primarySecondaryBw-2m6e-nested-body" aria-expanded="true">
+            <span class="icon dds__icon dds__icon--chevron-right dds__mt-1 dds__ml-auto hidden"></span>
+            <span class="icon dds__icon dds__icon--chevron-down dds__mt-1 dds__ml-auto"></span>
+        </span>
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">object</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div><div class="nested-body schema-child-row" id="Response Body-Array Of:-qrz8-primarySecondaryBw-2m6e-nested-body" style="">
+            <div colspan="2" class="nested">
+            <div class="" id="Response Body-Array Of:-qrz8-primarySecondaryBw-2m6e-primaryPerformances-3gxw">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name clickable-property" title="primaryPerformances" style="cursor: pointer;">primaryPerformances</span>
+    </div>
+    <span class="schema-toggle-icon" data-action="toggleNestedBodyCard" data-target-id="Response Body-Array Of:-qrz8-primarySecondaryBw-2m6e-primaryPerformances-3gxw" role="button" tabindex="0" aria-controls="Response Body-Array Of:-qrz8-primarySecondaryBw-2m6e-primaryPerformances-3gxw-nested-body" aria-expanded="false">
+            <span class="icon dds__icon dds__icon--chevron-right dds__mt-1 dds__ml-auto"></span>
+            <span class="icon dds__icon dds__icon--chevron-down dds__mt-1 dds__ml-auto hidden"></span>
+        </span>
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">array[object]</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div><div class="nested-body schema-child-row" id="Response Body-Array Of:-qrz8-primarySecondaryBw-2m6e-primaryPerformances-3gxw-nested-body" style="display:none">
+            <div colspan="2" class="nested">
+            <div class="" id="primitive-timestamp">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="timestamp">timestamp</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-value">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="value">value</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+            </div>
+          </div></div>
+<div class="" id="Response Body-Array Of:-qrz8-primarySecondaryBw-2m6e-secondaryPerformances-ihfs">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name clickable-property" title="secondaryPerformances" style="cursor: pointer;">secondaryPerformances</span>
+    </div>
+    <span class="schema-toggle-icon" data-action="toggleNestedBodyCard" data-target-id="Response Body-Array Of:-qrz8-primarySecondaryBw-2m6e-secondaryPerformances-ihfs" role="button" tabindex="0" aria-controls="Response Body-Array Of:-qrz8-primarySecondaryBw-2m6e-secondaryPerformances-ihfs-nested-body" aria-expanded="false">
+            <span class="icon dds__icon dds__icon--chevron-right dds__mt-1 dds__ml-auto"></span>
+            <span class="icon dds__icon dds__icon--chevron-down dds__mt-1 dds__ml-auto hidden"></span>
+        </span>
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">array[object]</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div><div class="nested-body schema-child-row" id="Response Body-Array Of:-qrz8-primarySecondaryBw-2m6e-secondaryPerformances-ihfs-nested-body" style="display:none">
+            <div colspan="2" class="nested">
+            <div class="" id="primitive-timestamp">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="timestamp">timestamp</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-value">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="value">value</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+            </div>
+          </div></div>
+<div class="" id="Response Body-Array Of:-qrz8-primarySecondaryBw-2m6e-instanceNames-gj7s">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="instanceNames">instanceNames</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">array[string]</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+            </div>
+          </div></div>
+            </div>
+          </div></div></div></div></div></div></div></div></div></div>
+   </div>
+        <div class="api__doc__right-section dds__pl-2"><div class="api_docs_collapsible highlight dds__mb-3 expanded" id="server"><div class="api_docs_collapsible-header dds__p-3" data-action="toggleCollapse" data-target-id="server" role="button" tabindex="0" aria-expanded="true"><div class="dds__w-100"><div class="server-title"><span class="dds__badge dds__badge--md http-method-get"><span class="dds__badge__label badge-font">GET</span></span><button style="float: right; border: 1px solid #9ca3af; display:none" class="dds__ml-auto dds__button dds__button--sm" type="button" id="drawer-trigger" data-action="clickedTryOutButton">Try it</button></div><div class="dds__p-2">/telemetryconnector/allFlexosData</div></div><span class="icon icon-collapsed dds__icon dds__icon--chevron-right dds__ml-auto"></span><span class="icon icon-expanded dds__icon dds__icon--chevron-down dds__ml-auto"></span></div><div class="api_docs_collapsible-body dds__px-3 dds__pt-2 dds__pb-3"><div class="dds__pr-2"></div><div class="dds__d-flex dds__justify-content-end dds__my-2"><button class="dds__button dds__button--sm" data-action="copyCodeById" data-target-id="server-copy-0">Copy</button></div><pre tabindex="0"><code id="server-copy-0">/telemetryconnector/allFlexosData</code></pre></div></div>
+<div class="api_docs_collapsible highlight dds__mb-3 expanded" id="responsesamples"><div class="api_docs_collapsible-header dds__p-3" data-action="toggleCollapse" data-target-id="responsesamples" role="button" tabindex="0" aria-controls="responsesamples-body" aria-expanded="true">Response Samples<span class="icon icon-collapsed dds__icon dds__icon--chevron-right dds__ml-auto"></span><span class="icon icon-expanded dds__icon dds__icon--chevron-down dds__ml-auto"></span></div><div class="api_docs_collapsible-body dds__px-3 dds__pt-2 dds__pb-3" id="responsesamples-body"><div class="response-tab-wrapper"><div class="tab-header" role="tablist"><h4 class="tab-item active" role="tab" aria-selected="true" aria-controls="responsesamples-tab-200" data-action="switchTab" data-target-id="responsesamples-tab-200">200</h4></div><div class="tab-body"><div class="tab-content active" id="responsesamples-tab-200" role="tabpanel" aria-labelledby="responsesamples-tab-200"><div class="dds__pt-2" role="presentation">
+        <label for="responsesamples-tab-200-content-type" class="dds__visually-hidden">Select content type</label>
+        <select id="responsesamples-tab-200-content-type" class="dds__select__field dds__mb-2" data-action="onContentTypeChange" data-example-select-id="responsesamples-tab-200-example" data-code-container-id="responsesamples-tab-200-code" data-examples-data="%7B%22application%2Fjson%22%3A%5B%7B%22description%22%3A%22Example%22%2C%22codeContent%22%3A%22%5B%5Cn%20%20%7B%5Cn%20%20%20%20%5C%22type%5C%22%3A%20%5C%22string%5C%22%2C%5Cn%20%20%20%20%5C%22name%5C%22%3A%20%5C%22string%5C%22%2C%5Cn%20%20%20%20%5C%22timeframe%5C%22%3A%20%5C%22string%5C%22%2C%5Cn%20%20%20%20%5C%22iops%5C%22%3A%20%7B%5Cn%20%20%20%20%20%20%5C%22totalReadPerformances%5C%22%3A%20%5B%5Cn%20%20%20%20%20%20%20%20%7B%5Cn%20%20%20%20%20%20%20%20%20%20%5C%22timestamp%5C%22%3A%20%5C%22string%5C%22%2C%5Cn%20%20%20%20%20%20%20%20%20%20%5C%22value%5C%22%3A%20%5C%22string%5C%22%5Cn%20%20%20%20%20%20%20%20%7D%5Cn%20%20%20%20%20%20%5D%2C%5Cn%20%20%20%20%20%20%5C%22totalWritePerformances%5C%22%3A%20%5B%5Cn%20%20%20%20%20%20%20%20%7B%5Cn%20%20%20%20%20%20%20%20%20%20%5C%22timestamp%5C%22%3A%20%5C%22string%5C%22%2C%5Cn%20%20%20%20%20%20%20%20%20%20%5C%22value%5C%22%3A%20%5C%22string%5C%22%5Cn%20%20%20%20%20%20%20%20%7D%5Cn%20%20%20%20%20%20%5D%2C%5Cn%20%20%20%20%20%20%5C%22totalPerformances%5C%22%3A%20%5B%5Cn%20%20%20%20%20%20%20%20%7B%5Cn%20%20%20%20%20%20%20%20%20%20%5C%22timestamp%5C%22%3A%20%5C%22string%5C%22%2C%5Cn%20%20%20%20%20%20%20%20%20%20%5C%22value%5C%22%3A%20%5C%22string%5C%22%5Cn%20%20%20%20%20%20%20%20%7D%5Cn%20%20%20%20%20%20%5D%5Cn%20%20%20%20%7D%2C%5Cn%20%20%20%20%5C%22bw%5C%22%3A%20%7B%5Cn%20%20%20%20%20%20%5C%22totalReadPerformances%5C%22%3A%20%5B%5Cn%20%20%20%20%20%20%20%20%7B%5Cn%20%20%20%20%20%20%20%20%20%20%5C%22timestamp%5C%22%3A%20%5C%22string%5C%22%2C%5Cn%20%20%20%20%20%20%20%20%20%20%5C%22value%5C%22%3A%20%5C%22string%5C%22%5Cn%20%20%20%20%20%20%20%20%7D%5Cn%20%20%20%20%20%20%5D%2C%5Cn%20%20%20%20%20%20%5C%22totalWritePerformances%5C%22%3A%20%5B%5Cn%20%20%20%20%20%20%20%20%7B%5Cn%20%20%20%20%20%20%20%20%20%20%5C%22timestamp%5C%22%3A%20%5C%22string%5C%22%2C%5Cn%20%20%20%20%20%20%20%20%20%20%5C%22value%5C%22%3A%20%5C%22string%5C%22%5Cn%20%20%20%20%20%20%20%20%7D%5Cn%20%20%20%20%20%20%5D%2C%5Cn%20%20%20%20%20%20%5C%22totalPerformances%5C%22%3A%20%5B%5Cn%20%20%20%20%20%20%20%20%7B%5Cn%20%20%20%20%20%20%20%20%20%20%5C%22timestamp%5C%22%3A%20%5C%22string%5C%22%2C%5Cn%20%20%20%20%20%20%20%20%20%20%5C%22value%5C%22%3A%20%5C%22string%5C%22%5Cn%20%20%20%20%20%20%20%20%7D%5Cn%20%20%20%20%20%20%5D%5Cn%20%20%20%20%7D%2C%5Cn%20%20%20%20%5C%22iosize%5C%22%3A%20%7B%5Cn%20%20%20%20%20%20%5C%22totalReadPerformances%5C%22%3A%20%5B%5Cn%20%20%20%20%20%20%20%20%7B%5Cn%20%20%20%20%20%20%20%20%20%20%5C%22timestamp%5C%22%3A%20%5C%22string%5C%22%2C%5Cn%20%20%20%20%20%20%20%20%20%20%5C%22value%5C%22%3A%20%5C%22string%5C%22%5Cn%20%20%20%20%20%20%20%20%7D%5Cn%20%20%20%20%20%20%5D%2C%5Cn%20%20%20%20%20%20%5C%22totalWritePerformances%5C%22%3A%20%5B%5Cn%20%20%20%20%20%20%20%20%7B%5Cn%20%20%20%20%20%20%20%20%20%20%5C%22timestamp%5C%22%3A%20%5C%22string%5C%22%2C%5Cn%20%20%20%20%20%20%20%20%20%20%5C%22value%5C%22%3A%20%5C%22string%5C%22%5Cn%20%20%20%20%20%20%20%20%7D%5Cn%20%20%20%20%20%20%5D%2C%5Cn%20%20%20%20%20%20%5C%22totalPerformances%5C%22%3A%20%5B%5Cn%20%20%20%20%20%20%20%20%7B%5Cn%20%20%20%20%20%20%20%20%20%20%5C%22timestamp%5C%22%3A%20%5C%22string%5C%22%2C%5Cn%20%20%20%20%20%20%20%20%20%20%5C%22value%5C%22%3A%20%5C%22string%5C%22%5Cn%20%20%20%20%20%20%20%20%7D%5Cn%20%20%20%20%20%20%5D%5Cn%20%20%20%20%7D%2C%5Cn%20%20%20%20%5C%22latency%5C%22%3A%20%7B%5Cn%20%20%20%20%20%20%5C%22totalReadPerformances%5C%22%3A%20%5B%5Cn%20%20%20%20%20%20%20%20%7B%5Cn%20%20%20%20%20%20%20%20%20%20%5C%22timestamp%5C%22%3A%20%5C%22string%5C%22%2C%5Cn%20%20%20%20%20%20%20%20%20%20%5C%22value%5C%22%3A%20%5C%22string%5C%22%5Cn%20%20%20%20%20%20%20%20%7D%5Cn%20%20%20%20%20%20%5D%2C%5Cn%20%20%20%20%20%20%5C%22totalWritePerformances%5C%22%3A%20%5B%5Cn%20%20%20%20%20%20%20%20%7B%5Cn%20%20%20%20%20%20%20%20%20%20%5C%22timestamp%5C%22%3A%20%5C%22string%5C%22%2C%5Cn%20%20%20%20%20%20%20%20%20%20%5C%22value%5C%22%3A%20%5C%22string%5C%22%5Cn%20%20%20%20%20%20%20%20%7D%5Cn%20%20%20%20%20%20%5D%2C%5Cn%20%20%20%20%20%20%5C%22totalPerformances%5C%22%3A%20%5B%5Cn%20%20%20%20%20%20%20%20%7B%5Cn%20%20%20%20%20%20%20%20%20%20%5C%22timestamp%5C%22%3A%20%5C%22string%5C%22%2C%5Cn%20%20%20%20%20%20%20%20%20%20%5C%22value%5C%22%3A%20%5C%22string%5C%22%5Cn%20%20%20%20%20%20%20%20%7D%5Cn%20%20%20%20%20%20%5D%5Cn%20%20%20%20%7D%2C%5Cn%20%20%20%20%5C%22primarySecondaryIops%5C%22%3A%20%7B%5Cn%20%20%20%20%20%20%5C%22primaryPerformances%5C%22%3A%20%5B%5Cn%20%20%20%20%20%20%20%20%7B%5Cn%20%20%20%20%20%20%20%20%20%20%5C%22timestamp%5C%22%3A%20%5C%22string%5C%22%2C%5Cn%20%20%20%20%20%20%20%20%20%20%5C%22value%5C%22%3A%20%5C%22string%5C%22%5Cn%20%20%20%20%20%20%20%20%7D%5Cn%20%20%20%20%20%20%5D%2C%5Cn%20%20%20%20%20%20%5C%22secondaryPerformances%5C%22%3A%20%5B%5Cn%20%20%20%20%20%20%20%20%7B%5Cn%20%20%20%20%20%20%20%20%20%20%5C%22timestamp%5C%22%3A%20%5C%22string%5C%22%2C%5Cn%20%20%20%20%20%20%20%20%20%20%5C%22value%5C%22%3A%20%5C%22string%5C%22%5Cn%20%20%20%20%20%20%20%20%7D%5Cn%20%20%20%20%20%20%5D%2C%5Cn%20%20%20%20%20%20%5C%22instanceNames%5C%22%3A%20%5B%5Cn%20%20%20%20%20%20%20%20%5C%22string%5C%22%5Cn%20%20%20%20%20%20%5D%5Cn%20%20%20%20%7D%2C%5Cn%20%20%20%20%5C%22primarySecondaryBw%5C%22%3A%20%7B%5Cn%20%20%20%20%20%20%5C%22primaryPerformances%5C%22%3A%20%5B%5Cn%20%20%20%20%20%20%20%20%7B%5Cn%20%20%20%20%20%20%20%20%20%20%5C%22timestamp%5C%22%3A%20%5C%22string%5C%22%2C%5Cn%20%20%20%20%20%20%20%20%20%20%5C%22value%5C%22%3A%20%5C%22string%5C%22%5Cn%20%20%20%20%20%20%20%20%7D%5Cn%20%20%20%20%20%20%5D%2C%5Cn%20%20%20%20%20%20%5C%22secondaryPerformances%5C%22%3A%20%5B%5Cn%20%20%20%20%20%20%20%20%7B%5Cn%20%20%20%20%20%20%20%20%20%20%5C%22timestamp%5C%22%3A%20%5C%22string%5C%22%2C%5Cn%20%20%20%20%20%20%20%20%20%20%5C%22value%5C%22%3A%20%5C%22string%5C%22%5Cn%20%20%20%20%20%20%20%20%7D%5Cn%20%20%20%20%20%20%5D%2C%5Cn%20%20%20%20%20%20%5C%22instanceNames%5C%22%3A%20%5B%5Cn%20%20%20%20%20%20%20%20%5C%22string%5C%22%5Cn%20%20%20%20%20%20%5D%5Cn%20%20%20%20%7D%5Cn%20%20%7D%5Cn%5D%22%7D%5D%2C%22application%2Fxml%22%3A%5B%5D%7D" aria-label="Select content type">
+          <option value="application/json" selected="">application/json</option><option value="application/xml">application/xml</option>
+        </select><div class="content-description dds__mb-1"><p>OK</p>
+</div><label for="responsesamples-tab-200-example" class="dds__visually-hidden">Select response example</label>
+       <select id="responsesamples-tab-200-example" class="dds__select__field" data-action="onExampleSelectChange" data-code-container-id="responsesamples-tab-200-code" aria-label="Select response example">
+        <option value="0" data-code="[
+  {
+    &quot;type&quot;: &quot;string&quot;,
+    &quot;name&quot;: &quot;string&quot;,
+    &quot;timeframe&quot;: &quot;string&quot;,
+    &quot;iops&quot;: {
+      &quot;totalReadPerformances&quot;: [
+        {
+          &quot;timestamp&quot;: &quot;string&quot;,
+          &quot;value&quot;: &quot;string&quot;
+        }
+      ],
+      &quot;totalWritePerformances&quot;: [
+        {
+          &quot;timestamp&quot;: &quot;string&quot;,
+          &quot;value&quot;: &quot;string&quot;
+        }
+      ],
+      &quot;totalPerformances&quot;: [
+        {
+          &quot;timestamp&quot;: &quot;string&quot;,
+          &quot;value&quot;: &quot;string&quot;
+        }
+      ]
+    },
+    &quot;bw&quot;: {
+      &quot;totalReadPerformances&quot;: [
+        {
+          &quot;timestamp&quot;: &quot;string&quot;,
+          &quot;value&quot;: &quot;string&quot;
+        }
+      ],
+      &quot;totalWritePerformances&quot;: [
+        {
+          &quot;timestamp&quot;: &quot;string&quot;,
+          &quot;value&quot;: &quot;string&quot;
+        }
+      ],
+      &quot;totalPerformances&quot;: [
+        {
+          &quot;timestamp&quot;: &quot;string&quot;,
+          &quot;value&quot;: &quot;string&quot;
+        }
+      ]
+    },
+    &quot;iosize&quot;: {
+      &quot;totalReadPerformances&quot;: [
+        {
+          &quot;timestamp&quot;: &quot;string&quot;,
+          &quot;value&quot;: &quot;string&quot;
+        }
+      ],
+      &quot;totalWritePerformances&quot;: [
+        {
+          &quot;timestamp&quot;: &quot;string&quot;,
+          &quot;value&quot;: &quot;string&quot;
+        }
+      ],
+      &quot;totalPerformances&quot;: [
+        {
+          &quot;timestamp&quot;: &quot;string&quot;,
+          &quot;value&quot;: &quot;string&quot;
+        }
+      ]
+    },
+    &quot;latency&quot;: {
+      &quot;totalReadPerformances&quot;: [
+        {
+          &quot;timestamp&quot;: &quot;string&quot;,
+          &quot;value&quot;: &quot;string&quot;
+        }
+      ],
+      &quot;totalWritePerformances&quot;: [
+        {
+          &quot;timestamp&quot;: &quot;string&quot;,
+          &quot;value&quot;: &quot;string&quot;
+        }
+      ],
+      &quot;totalPerformances&quot;: [
+        {
+          &quot;timestamp&quot;: &quot;string&quot;,
+          &quot;value&quot;: &quot;string&quot;
+        }
+      ]
+    },
+    &quot;primarySecondaryIops&quot;: {
+      &quot;primaryPerformances&quot;: [
+        {
+          &quot;timestamp&quot;: &quot;string&quot;,
+          &quot;value&quot;: &quot;string&quot;
+        }
+      ],
+      &quot;secondaryPerformances&quot;: [
+        {
+          &quot;timestamp&quot;: &quot;string&quot;,
+          &quot;value&quot;: &quot;string&quot;
+        }
+      ],
+      &quot;instanceNames&quot;: [
+        &quot;string&quot;
+      ]
+    },
+    &quot;primarySecondaryBw&quot;: {
+      &quot;primaryPerformances&quot;: [
+        {
+          &quot;timestamp&quot;: &quot;string&quot;,
+          &quot;value&quot;: &quot;string&quot;
+        }
+      ],
+      &quot;secondaryPerformances&quot;: [
+        {
+          &quot;timestamp&quot;: &quot;string&quot;,
+          &quot;value&quot;: &quot;string&quot;
+        }
+      ],
+      &quot;instanceNames&quot;: [
+        &quot;string&quot;
+      ]
+    }
+  }
+]" data-description="Example">
+        Example
+      </option>
+      </select></div><div class="dds__d-flex dds__justify-content-end dds__my-2" role="presentation"><button class="dds__button dds__button--sm" data-action="copyCodeById" data-target-id="responsesamples-tab-200-code">Copy</button></div><div id="responsesamples-tab-200-code" role="presentation"><pre tabindex="0"><code>[
+  {
+    "type": "string",
+    "name": "string",
+    "timeframe": "string",
+    "iops": {
+      "totalReadPerformances": [
+        {
+          "timestamp": "string",
+          "value": "string"
+        }
+      ],
+      "totalWritePerformances": [
+        {
+          "timestamp": "string",
+          "value": "string"
+        }
+      ],
+      "totalPerformances": [
+        {
+          "timestamp": "string",
+          "value": "string"
+        }
+      ]
+    },
+    "bw": {
+      "totalReadPerformances": [
+        {
+          "timestamp": "string",
+          "value": "string"
+        }
+      ],
+      "totalWritePerformances": [
+        {
+          "timestamp": "string",
+          "value": "string"
+        }
+      ],
+      "totalPerformances": [
+        {
+          "timestamp": "string",
+          "value": "string"
+        }
+      ]
+    },
+    "iosize": {
+      "totalReadPerformances": [
+        {
+          "timestamp": "string",
+          "value": "string"
+        }
+      ],
+      "totalWritePerformances": [
+        {
+          "timestamp": "string",
+          "value": "string"
+        }
+      ],
+      "totalPerformances": [
+        {
+          "timestamp": "string",
+          "value": "string"
+        }
+      ]
+    },
+    "latency": {
+      "totalReadPerformances": [
+        {
+          "timestamp": "string",
+          "value": "string"
+        }
+      ],
+      "totalWritePerformances": [
+        {
+          "timestamp": "string",
+          "value": "string"
+        }
+      ],
+      "totalPerformances": [
+        {
+          "timestamp": "string",
+          "value": "string"
+        }
+      ]
+    },
+    "primarySecondaryIops": {
+      "primaryPerformances": [
+        {
+          "timestamp": "string",
+          "value": "string"
+        }
+      ],
+      "secondaryPerformances": [
+        {
+          "timestamp": "string",
+          "value": "string"
+        }
+      ],
+      "instanceNames": [
+        "string"
+      ]
+    },
+    "primarySecondaryBw": {
+      "primaryPerformances": [
+        {
+          "timestamp": "string",
+          "value": "string"
+        }
+      ],
+      "secondaryPerformances": [
+        {
+          "timestamp": "string",
+          "value": "string"
+        }
+      ],
+      "instanceNames": [
+        "string"
+      ]
+    }
+  }
+]</code></pre></div></div></div></div></div></div></div>
+      </div>
+    </div></div></body></html>

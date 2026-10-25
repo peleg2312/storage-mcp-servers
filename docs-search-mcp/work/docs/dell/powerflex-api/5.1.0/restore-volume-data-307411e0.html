@@ -1,0 +1,291 @@
+<html><head><title>PowerFlex API 5.1.0: Restore volume data</title></head><body><p>Erasure coding APIS > PowerFlex Block REST API > Volume</p><div><div class="api-docs-main-div dds__pl-2">
+      <div class="api-doc-container">
+        <div class="api__doc__left-section dds__p-3">
+   <div class="markdown-renderer">
+          <h4 class="dds__font-weight-bold dds__pb-2">Restore volume data</h4>       
+          <div><p>Restores the volume data from one of it’s directly related snapshots.</p>
+</div> 
+          
+    </div>
+
+<div class="api_docs_collapsible dds__mb-3 expanded" id="request"><div class="api_docs_collapsible-header dds__p-3" data-action="toggleCollapse" data-target-id="request" role="button" tabindex="0" aria-controls="request-body" aria-expanded="true"><span class="title">Requests</span><span class="icon icon-collapsed dds__icon dds__icon--chevron-right dds__mt-1 dds__ml-auto"></span><span class="icon icon-expanded dds__icon dds__icon--chevron-down dds__mt-1 dds__ml-auto"></span></div><div class="api_docs_collapsible-body" id="request-body"><div class="static-frame-request-section"><div class="headers-section"><h5 class="title">Path Parameters</h5>
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="id">id</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      <span class="required">Required</span>
+    </div>
+    
+    
+    
+    
+    <div class="desc"><p>The id is the target volume to be restored.</p>
+</div>
+    
+    
+  </div>
+</div></div></div>
+<div class="static-frame-request-section"><div class="headers-section"><h5 class="title">Request Body</h5><div class="static-frame-request-section"><div class="" id="primitive-snapshotId">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="snapshotId">snapshotId</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      
+    </div>
+    
+    
+    
+    
+    <div class="desc"><p>The ID of the snapshot to restore from.</p>
+</div>
+    
+    
+  </div>
+</div></div></div></div></div></div></div>
+
+       <div class="api_docs_collapsible dds__mb-3" id="response"><div class="api_docs_collapsible-header dds__p-3" data-action="toggleCollapse" data-target-id="response" role="button" tabindex="0" aria-controls="response-body" aria-expanded="false"><span class="title">Responses</span><span class="icon icon-collapsed dds__icon dds__icon--chevron-right dds__mt-1 dds__ml-auto"></span><span class="icon icon-expanded dds__icon dds__icon--chevron-down dds__mt-1 dds__ml-auto"></span></div><div class="api_docs_collapsible-body" id="response-body"><div class="api_docs_collapsible dds__mb-3" id="bac205f0237c5"><div class="api_docs_collapsible-header dds__p-3" data-action="toggleCollapse" data-target-id="bac205f0237c5" role="button" tabindex="0" aria-controls="bac205f0237c5-body" aria-expanded="false"><span class="title"><div class="response-frame"><span class="text-green"><span class="dds__badge dds__badge--dot dds__mr-2"></span>200</span> : OK</div></span><span class="icon icon-collapsed dds__icon dds__icon--chevron-right dds__mt-1 dds__ml-auto"></span><span class="icon icon-expanded dds__icon dds__icon--chevron-down dds__mt-1 dds__ml-auto"></span></div><div class="api_docs_collapsible-body" id="bac205f0237c5-body"><div class="static-frame-response-section"><div><div class="headers-section"><div><p>OK</p>
+</div><h5 class="title dds__mt-2">Response Body</h5><div class="static-frame-request-section"><div class="expanded" id="Response Body-Volume_object-ryus">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name clickable-property" title="Volume_object" style="cursor: pointer;">Volume_object</span>
+    </div>
+    <span class="schema-toggle-icon" data-action="toggleNestedBodyCard" data-target-id="Response Body-Volume_object-ryus" role="button" tabindex="0" aria-controls="Response Body-Volume_object-ryus-nested-body" aria-expanded="true">
+            <span class="icon dds__icon dds__icon--chevron-right dds__mt-1 dds__ml-auto hidden"></span>
+            <span class="icon dds__icon dds__icon--chevron-down dds__mt-1 dds__ml-auto"></span>
+        </span>
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">object</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div><div class="nested-body schema-child-row" id="Response Body-Volume_object-ryus-nested-body" style="">
+            <div colspan="2" class="nested">
+            <div class="" id="Response Body-Volume_object-ryus-childVolumeIds-iv5z">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="childVolumeIds">childVolumeIds</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">array[object]</span>
+      
+    </div>
+    
+    
+    
+    
+    <div class="desc"><p>A list of identifiers that reference subordinate or nested volume objects within a parent volume.</p>
+</div>
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-numOfChildVolumes">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="numOfChildVolumes">numOfChildVolumes</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">integer</span>
+      
+    </div>
+    
+    
+    
+    
+    <div class="desc"><p>The total number of child volumes associated with a parent volume object.</p>
+</div>
+    
+    
+  </div>
+</div></div>
+<div class="" id="Response Body-Volume_object-ryus-descendantVolumeIds-p711">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="descendantVolumeIds">descendantVolumeIds</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">array[object]</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-numOfDescendantVolumes">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="numOfDescendantVolumes">numOfDescendantVolumes</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">integer</span>
+      
+    </div>
+    
+    
+    
+    
+    <div class="desc"><p>The total number of volume objects that are hierarchically nested under the current volume, including both direct children and all deeper nested descendants.</p>
+</div>
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-numOfMappedSdcs">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="numOfMappedSdcs">numOfMappedSdcs</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">integer</span>
+      
+    </div>
+    
+    
+    
+    
+    <div class="desc"><p>Indicates the number of storage data clients (SDCs) that are mapped to the volume object.</p>
+</div>
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-registrationKey">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="registrationKey">registrationKey</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">integer</span>
+      
+    </div>
+    
+    
+    
+    
+    <div class="desc"><p>A unique identifier or token used to authenticate, activate, or associate a volume object with a specific system.</p>
+</div>
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-registrationType">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="registrationType">registrationType</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">integer</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+            </div>
+          </div></div></div></div></div></div></div></div></div></div>
+   </div>
+        <div class="api__doc__right-section dds__pl-2"><div class="api_docs_collapsible highlight dds__mb-3 expanded" id="server"><div class="api_docs_collapsible-header dds__p-3" data-action="toggleCollapse" data-target-id="server" role="button" tabindex="0" aria-expanded="true"><div class="dds__w-100"><div class="server-title"><span class="dds__badge dds__badge--md http-method-post"><span class="dds__badge__label badge-font">POST</span></span><button style="float: right; border: 1px solid #9ca3af; display:none" class="dds__ml-auto dds__button dds__button--sm" type="button" id="drawer-trigger" data-action="clickedTryOutButton">Try it</button></div><div class="dds__p-2">/api/instances/Volume::{id}/action/restore</div></div><span class="icon icon-collapsed dds__icon dds__icon--chevron-right dds__ml-auto"></span><span class="icon icon-expanded dds__icon dds__icon--chevron-down dds__ml-auto"></span></div><div class="api_docs_collapsible-body dds__px-3 dds__pt-2 dds__pb-3"><div class="dds__pr-2"></div><div class="dds__d-flex dds__justify-content-end dds__my-2"><button class="dds__button dds__button--sm" data-action="copyCodeById" data-target-id="server-copy-0">Copy</button></div><pre tabindex="0"><code id="server-copy-0">/api/instances/Volume::{id}/action/restore</code></pre></div></div>
+<div class="api_docs_collapsible highlight dds__mb-3 expanded" id="requestsamples"><div class="api_docs_collapsible-header dds__p-3" data-action="toggleCollapse" data-target-id="requestsamples" role="button" tabindex="0" aria-controls="requestsamples-body" aria-expanded="true">Request Samples<span class="icon icon-collapsed dds__icon dds__icon--chevron-right dds__ml-auto"></span><span class="icon icon-expanded dds__icon dds__icon--chevron-down dds__ml-auto"></span></div><div class="api_docs_collapsible-body dds__px-3 dds__pt-2 dds__pb-3" id="requestsamples-body"><div class="dds__pt-2"><label for="requestsamples-media-example" class="dds__visually-hidden">Select example</label><select id="requestsamples-media-example" class="dds__select__field" data-action="onExampleSelectChange" data-code-container-id="requestsamples-media-code" aria-label="Select example"><option value="0" data-code="&quot;string&quot;" data-description="Example">
+        Example
+      </option></select></div>
+        <div class="dds__d-flex dds__justify-content-end dds__my-2">
+              <button class="dds__button dds__button--sm" data-action="copyCodeById" data-target-id="requestsamples-media-code">
+                    Copy
+                  </button>
+        </div>
+        <div id="requestsamples-media-code">
+          <pre tabindex="0"><code>"string"</code></pre>
+        </div></div></div>
+<div class="api_docs_collapsible highlight dds__mb-3 expanded" id="responsesamples"><div class="api_docs_collapsible-header dds__p-3" data-action="toggleCollapse" data-target-id="responsesamples" role="button" tabindex="0" aria-controls="responsesamples-body" aria-expanded="true">Response Samples<span class="icon icon-collapsed dds__icon dds__icon--chevron-right dds__ml-auto"></span><span class="icon icon-expanded dds__icon dds__icon--chevron-down dds__ml-auto"></span></div><div class="api_docs_collapsible-body dds__px-3 dds__pt-2 dds__pb-3" id="responsesamples-body"><div class="response-tab-wrapper"><div class="tab-header" role="tablist"><h4 class="tab-item active" role="tab" aria-selected="true" aria-controls="responsesamples-tab-200" data-action="switchTab" data-target-id="responsesamples-tab-200">200</h4></div><div class="tab-body"><div class="tab-content active" id="responsesamples-tab-200" role="tabpanel" aria-labelledby="responsesamples-tab-200"><div class="dds__pt-2" role="presentation"><div class="content-type-box dds__mb-1"><div class="content-type-label">application/json</div></div><div class="content-description dds__mb-1"><p>OK</p>
+</div><label for="responsesamples-tab-200-example" class="dds__visually-hidden">Select response example</label>
+       <select id="responsesamples-tab-200-example" class="dds__select__field" data-action="onExampleSelectChange" data-code-container-id="responsesamples-tab-200-code" aria-label="Select response example">
+        <option value="0" data-code="{
+  &quot;childVolumeIds&quot;: [
+    null
+  ],
+  &quot;numOfChildVolumes&quot;: 0,
+  &quot;descendantVolumeIds&quot;: [
+    null
+  ],
+  &quot;numOfDescendantVolumes&quot;: 0,
+  &quot;numOfMappedSdcs&quot;: 0,
+  &quot;registrationKey&quot;: 0,
+  &quot;registrationType&quot;: 0
+}" data-description="Example">
+        Example
+      </option>
+      </select></div><div class="dds__d-flex dds__justify-content-end dds__my-2" role="presentation"><button class="dds__button dds__button--sm" data-action="copyCodeById" data-target-id="responsesamples-tab-200-code">Copy</button></div><div id="responsesamples-tab-200-code" role="presentation"><pre tabindex="0"><code>{
+  "childVolumeIds": [
+    null
+  ],
+  "numOfChildVolumes": 0,
+  "descendantVolumeIds": [
+    null
+  ],
+  "numOfDescendantVolumes": 0,
+  "numOfMappedSdcs": 0,
+  "registrationKey": 0,
+  "registrationType": 0
+}</code></pre></div></div></div></div></div></div></div>
+      </div>
+    </div></div></body></html>

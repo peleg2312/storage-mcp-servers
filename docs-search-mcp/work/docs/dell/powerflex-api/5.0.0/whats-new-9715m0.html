@@ -1,0 +1,166 @@
+<html><head><title>PowerFlex API 5.0.0: What's new</title></head><body><p>Getting Started > PowerFlex Manager API</p><div><div class="api-docs-main-div dds__pl-2">
+    <div class="markdown-wrapper dds__py-3">
+      <div class="markdown-body dds__px-3"><h1 id="what-is-new-in-the-powerflex-manager-api" class="anchor-scroll-top-offset">What is new in the PowerFlex Manager API</h1>
+<p>In PowerFlex 5.0, the storage node API and asmcore API were merged in the PowerFlex Manager API. The following API calls were added, changed, or removed in the PowerFlex Manager API:</p>
+<h4 id="added-the-following-new-api-calls" class="anchor-scroll-top-offset">Added the following new API calls:</h4>
+<ul>
+<li>/alertmanagement/updatealerts</li>
+<li>/compliancecomponent</li>
+<li>/Configure</li>
+<li>/ConfigureTemplate</li>
+<li>/ConfigureTemplate/upload</li>
+<li>/corelcm/getsdnasstatus</li>
+<li>/corelcm/setBackupSchedule</li>
+<li>/credential/export/pem</li>
+<li>/credential/generateKeyPair</li>
+<li>/credential/importKeyPair</li>
+<li>/Deployment/{deploymentId}/addNVMeStorageAccess</li>
+<li>/Deployment/{deploymentId}/networks</li>
+<li>/Deployment/{deploymentId}/virtualdistributedswitches</li>
+<li>/Deployment/{gatewayId}/storagenodeconfiguration</li>
+<li>/Deployment/{id}/addnetworks</li>
+<li>/Deployment/{id}/firmware/compliancereportsummary</li>
+<li>/Deployment/{id}/forceServiceMode</li>
+<li>/Deployment/{id}/node-os</li>
+<li>/Deployment/{id}/resources</li>
+<li>/DeviceGroup</li>
+<li>/discovery</li>
+<li>/discovery/{jobName}/devices</li>
+<li>/error</li>
+<li>/firmwareRepository/getBundleVersion</li>
+<li>/firmwareRepository/getmodifycompliance</li>
+<li>/ipicabinet/getIpiCabinetDetails</li>
+<li>/ipicabinet/setDoorStatus</li>
+<li>/JobManager/start</li>
+<li>/ManagedDevice/{refId}</li>
+<li>/ManagedDevice/licenseCapacity</li>
+<li>/ManagedDevice/node-os/migrate</li>
+<li>/ManagedDevice/nvdimmop</li>
+<li>/ManagedDevice/puppet/health/{refId}</li>
+<li>/ManagedDevice/puppet/health/maintenance/{refId}</li>
+<li>/ManagedDevice/refresh</li>
+<li>/ManagedDevice/updateAsync</li>
+<li>/PerformanceMetric/{refId}/{duration}/{time}</li>
+<li>/PuppetDevice/{id}</li>
+<li>/resourcegroup/{resourceGroupId}/addnodedetails</li>
+<li>/server/discovery/{refId}/type/{refType</li>
+<li>/ServerDiscoveryRequest</li>
+<li>/ServerDiscoveryRequest/{refId}</li>
+<li>/ServiceTemplate/{templateId}/addcomponents</li>
+<li>/ServiceTemplate/{templateId}/removecomponents</li>
+<li>/ServiceTemplate/components/template/{templateId}</li>
+<li>/setting</li>
+<li>/setting/{id}</li>
+<li>/setting/{name}</li>
+<li>/snmptrapforwarding/getSnmpTrapConfigurations</li>
+<li>/snmptrapforwarding/setSnmpTrapConfigurations</li>
+<li>/softwareBundleFirmware</li>
+<li>/softwareBundleFirmware/{fwRepoId}</li>
+<li>/softwareBundleFirmware/{id}</li>
+<li>/softwareBundleFirmware/refId}</li>
+<li>/softwareComponent/</li>
+<li>/softwareLicense</li>
+<li>/softwareLicense/{id}</li>
+<li>/srsconnector/getallsnmpalerts</li>
+<li>/srsconnector/settings</li>
+<li>/supportassist/connectionState</li>
+<li>/supportassist/systemMode</li>
+<li>/syslogforwarding/addForwardingDetails</li>
+<li>/syslogforwarding/getForwardingDetails</li>
+<li>/telemetryconnector</li>
+<li>/troubleshootingbundle/gatewayNodeIps</li>
+<li>/troubleshootingbundle/info</li>
+<li>/troubleshootingbundle/status</li>
+<li>/user</li>
+<li>/user/{userId}</li>
+<li>/user/preferences/{userId}</li>
+<li>/volumes/inventory</li>
+<li>/volumes/inventory/{deviceId}</li>
+</ul>
+<h4 id="changed-the-following-api-calls" class="anchor-scroll-top-offset">Changed the following API calls:</h4>
+<table>
+<thead>
+<tr>
+<th>Current</th>
+<th>Previous</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>/DiscoveryRequest/{refId}</td>
+<td>PowerFlex Manager 4.6 had this API: /DiscoveryRequest/{id}, which had both GET and DELETE requests. PowerFlex Manager 5.0 does not have the GET request.</td>
+</tr>
+<tr>
+<td>/ManagedDevice/{refId}/firmware/compliancereport</td>
+<td>PowerFlex Manager 4.6 had this API: /ManagedDevice/{refId}/firmware/compliancereport</td>
+</tr>
+<tr>
+<td>/ManagedDevice/{refId}/getflexosgatewaymigrateinfo</td>
+<td>PowerFlex Manager 4.6 had this API: /ManagedDevice/getflexosgatewaymigrateinfo</td>
+</tr>
+<tr>
+<td>/osRepository/{refId}</td>
+<td>PowerFlex Manager 4.6 had this API: /OSRepository/{id}. PowerFlex Manager 5.0 does not have the GET and PUT requests.</td>
+</tr>
+</tbody>
+</table>
+<h4 id="removed-the-following-api-calls" class="anchor-scroll-top-offset">Removed the following API calls:</h4>
+<ul>
+<li>/Appliance</li>
+<li>/Appliance/health</li>
+<li>/Appliance/status</li>
+<li>/Appliance/upgrade</li>
+<li>/Deployment/{id}/vcslvmsmigrateinfo</li>
+<li>/Deployment/network/{networkId}</li>
+<li>/Deployment/summaries</li>
+<li>/DHCP</li>
+<li>/DiscoveryRequest/{id}  the delete has been removed</li>
+<li>/DiscoveryRequest/discoverydresult/{id}</li>
+<li>/License</li>
+<li>/ManagedDevice/{refId}/firmware/ compliancereport</li>
+<li>/ManagedDevice/getflexosgatewaymigrateinfo</li>
+<li>/ManagedDevice/getImportNetworksJobStatus</li>
+<li>/Network</li>
+<li>/Network/{networkId}</li>
+<li>/Network/{networkId}/byNetworkId</li>
+<li>/Network/{networkId}/ipaddresses</li>
+<li>/Network/{networkId}/release</li>
+<li>/Network/{networkId}/usage/{usageId}/assign</li>
+<li>/Network/{networkId}/usageids</li>
+<li>/Network/{resourceId}/byResourceId</li>
+<li>/Network/{resourceId}/networkUsage</li>
+<li>/Network/allNetworkConfig</li>
+<li>/Network/export/csv</li>
+<li>/Network/GetNetworks</li>
+<li>/Network/importNetworks</li>
+<li>/Network/ipAddress/{ipAddress}/usage</li>
+<li>/Network/ipAddress/{networkId}/device/{deviceId}/reserve</li>
+<li>/Network/ipAddress/{usageId}/permanent</li>
+<li>/Network/ipAddress/assign</li>
+<li>/Network/ipAddress/filterAvailable</li>
+<li>/Network/ipAddress/release</li>
+<li>/Network/name/{networkName}</li>
+<li>/Network/networkUsages</li>
+<li>/Network/saveOrUpdate/{byResourceId}</li>
+<li>/Network/static</li>
+<li>/Network/type/{networkType}</li>
+<li>/Network/usage/{usageId}/release</li>
+<li>/NTP</li>
+<li>/OSRepository/{id}  delete</li>
+<li>/Proxy</li>
+<li>/Proxy/test</li>
+<li>/Timezone</li>
+<li>/Timezone/{id}</li>
+<li>/Timezone/all</li>
+<li>/Timezone/allMicrosoft</li>
+</ul>
+</div>
+      <div class="markdown-sidebar">
+        <div class="markdown-toc-title">
+          <i class="icon dds__icon dds__icon--bookmark"></i>
+          On this page
+        </div>
+          <ul><li class="level-1"><a href="#what-is-new-in-the-powerflex-manager-api" data-toc-link="">What is new in the PowerFlex Manager API</a></li></ul>
+      </div>
+    </div>
+  </div></div></body></html>

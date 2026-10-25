@@ -1,0 +1,99 @@
+<html><head><title>PowerFlex API 5.1.0: Update device in inventory</title></head><body><p>Mirroring APIS > PowerFlex Manager REST API > Managed Device</p><div><div class="api-docs-main-div dds__pl-2">
+      <div class="api-doc-container">
+        <div class="api__doc__left-section dds__p-3">
+   <div class="markdown-renderer">
+          <h4 class="dds__font-weight-bold dds__pb-2">Update device in inventory</h4>       
+          <div><p>Update Device in Inventory.</p>
+<p>Response Content-Type: application/xml, application/json</p>
+<p>This API takes a deviceId query parameter. Here’s an example showing how to use the query parameter:</p>
+<p>POST /ManagedDevice/update?deviceId=refId1,refId2,refId3,…</p>
+</div> 
+          
+    </div>
+
+<div class="api_docs_collapsible dds__mb-3 expanded" id="request"><div class="api_docs_collapsible-header dds__p-3" data-action="toggleCollapse" data-target-id="request" role="button" tabindex="0" aria-controls="request-body" aria-expanded="true"><span class="title">Requests</span><span class="icon icon-collapsed dds__icon dds__icon--chevron-right dds__mt-1 dds__ml-auto"></span><span class="icon icon-expanded dds__icon dds__icon--chevron-down dds__mt-1 dds__ml-auto"></span></div><div class="api_docs_collapsible-body" id="request-body"><div class="static-frame-request-section"><div class="headers-section"><h5 class="title">Query Parameters</h5>
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="deviceId">deviceId</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">array&lt;string&gt;</span>
+      
+    </div>
+    
+    
+    
+    
+    <div class="desc"><p>Device Inventory Ids</p>
+</div>
+    
+    
+  </div>
+</div></div></div></div></div>
+
+       <div class="api_docs_collapsible dds__mb-3" id="response"><div class="api_docs_collapsible-header dds__p-3" data-action="toggleCollapse" data-target-id="response" role="button" tabindex="0" aria-controls="response-body" aria-expanded="false"><span class="title">Responses</span><span class="icon icon-collapsed dds__icon dds__icon--chevron-right dds__mt-1 dds__ml-auto"></span><span class="icon icon-expanded dds__icon dds__icon--chevron-down dds__mt-1 dds__ml-auto"></span></div><div class="api_docs_collapsible-body" id="response-body"><div class="api_docs_collapsible dds__mb-3" id="86a6586645401"><div class="api_docs_collapsible-header dds__p-3" data-action="toggleCollapse" data-target-id="86a6586645401" role="button" tabindex="0" aria-controls="86a6586645401-body" aria-expanded="false"><span class="title"><div class="response-frame"><span class="text-green"><span class="dds__badge dds__badge--dot dds__mr-2"></span>201</span> </div></span><span class="icon icon-collapsed dds__icon dds__icon--chevron-right dds__mt-1 dds__ml-auto"></span><span class="icon icon-expanded dds__icon dds__icon--chevron-down dds__mt-1 dds__ml-auto"></span></div><div class="api_docs_collapsible-body" id="86a6586645401-body"><div class="static-frame-response-section"><div><div class="headers-section"><div><p>Device Inventory jobs scheduled.</p>
+</div><h5 class="title dds__mt-2">Response Body</h5><div class="static-frame-request-section"><div class="" id="primitive-value">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="value">value</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">null</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div></div></div></div></div></div></div>
+<div class="api_docs_collapsible dds__mb-3" id="07a0db773bcc8"><div class="api_docs_collapsible-header dds__p-3" data-action="toggleCollapse" data-target-id="07a0db773bcc8" role="button" tabindex="0" aria-controls="07a0db773bcc8-body" aria-expanded="false"><span class="title"><div class="response-frame"><span class="text-red"><span class="dds__badge dds__badge--dot dds__mr-2"></span>400</span> : Bad Request</div></span><span class="icon icon-collapsed dds__icon dds__icon--chevron-right dds__mt-1 dds__ml-auto"></span><span class="icon icon-expanded dds__icon dds__icon--chevron-down dds__mt-1 dds__ml-auto"></span></div><div class="api_docs_collapsible-body" id="07a0db773bcc8-body"><div class="static-frame-response-section"><div><div class="headers-section"><div><p>Invalid Device.</p>
+</div><h5 class="title dds__mt-2">Response Body</h5>No Schema Available.</div></div></div></div></div>
+<div class="api_docs_collapsible dds__mb-3" id="00408e87a9288"><div class="api_docs_collapsible-header dds__p-3" data-action="toggleCollapse" data-target-id="00408e87a9288" role="button" tabindex="0" aria-controls="00408e87a9288-body" aria-expanded="false"><span class="title"><div class="response-frame"><span class="text-red"><span class="dds__badge dds__badge--dot dds__mr-2"></span>404</span> : Not Found</div></span><span class="icon icon-collapsed dds__icon dds__icon--chevron-right dds__mt-1 dds__ml-auto"></span><span class="icon icon-expanded dds__icon dds__icon--chevron-down dds__mt-1 dds__ml-auto"></span></div><div class="api_docs_collapsible-body" id="00408e87a9288-body"><div class="static-frame-response-section"><div><div class="headers-section"><div><p>Device not found in inventory.</p>
+</div><h5 class="title dds__mt-2">Response Body</h5>No Schema Available.</div></div></div></div></div></div></div>
+   </div>
+        <div class="api__doc__right-section dds__pl-2"><div class="api_docs_collapsible highlight dds__mb-3 expanded" id="server"><div class="api_docs_collapsible-header dds__p-3" data-action="toggleCollapse" data-target-id="server" role="button" tabindex="0" aria-expanded="true"><div class="dds__w-100"><div class="server-title"><span class="dds__badge dds__badge--md http-method-post"><span class="dds__badge__label badge-font">POST</span></span><button style="float: right; border: 1px solid #9ca3af; display:none" class="dds__ml-auto dds__button dds__button--sm" type="button" id="drawer-trigger" data-action="clickedTryOutButton">Try it</button></div><div class="dds__p-2">/ManagedDevice/update</div></div><span class="icon icon-collapsed dds__icon dds__icon--chevron-right dds__ml-auto"></span><span class="icon icon-expanded dds__icon dds__icon--chevron-down dds__ml-auto"></span></div><div class="api_docs_collapsible-body dds__px-3 dds__pt-2 dds__pb-3"><div class="dds__pr-2"></div><div class="dds__d-flex dds__justify-content-end dds__my-2"><button class="dds__button dds__button--sm" data-action="copyCodeById" data-target-id="server-copy-0">Copy</button></div><pre tabindex="0"><code id="server-copy-0">/ManagedDevice/update</code></pre></div></div>
+<div class="api_docs_collapsible highlight dds__mb-3 expanded" id="responsesamples"><div class="api_docs_collapsible-header dds__p-3" data-action="toggleCollapse" data-target-id="responsesamples" role="button" tabindex="0" aria-controls="responsesamples-body" aria-expanded="true">Response Samples<span class="icon icon-collapsed dds__icon dds__icon--chevron-right dds__ml-auto"></span><span class="icon icon-expanded dds__icon dds__icon--chevron-down dds__ml-auto"></span></div><div class="api_docs_collapsible-body dds__px-3 dds__pt-2 dds__pb-3" id="responsesamples-body"><div class="response-tab-wrapper"><div class="tab-header" role="tablist"><h4 class="tab-item active" role="tab" aria-selected="true" aria-controls="responsesamples-tab-201" data-action="switchTab" data-target-id="responsesamples-tab-201">201</h4><h4 class="tab-item" role="tab" aria-selected="false" aria-controls="responsesamples-tab-400" data-action="switchTab" data-target-id="responsesamples-tab-400">400</h4><h4 class="tab-item" role="tab" aria-selected="false" aria-controls="responsesamples-tab-404" data-action="switchTab" data-target-id="responsesamples-tab-404">404</h4></div><div class="tab-body"><div class="tab-content active" id="responsesamples-tab-201" role="tabpanel" aria-labelledby="responsesamples-tab-201"><div class="dds__pt-2" role="presentation">
+        <label for="responsesamples-tab-201-content-type" class="dds__visually-hidden">Select content type</label>
+        <select id="responsesamples-tab-201-content-type" class="dds__select__field dds__mb-2" data-action="onContentTypeChange" data-example-select-id="responsesamples-tab-201-example" data-code-container-id="responsesamples-tab-201-code" data-examples-data="%7B%22application%2Fjson%22%3A%5B%7B%22description%22%3A%22Example%22%2C%22codeContent%22%3A%22null%22%7D%5D%2C%22application%2Fxml%22%3A%5B%5D%7D" aria-label="Select content type">
+          <option value="application/json" selected="">application/json</option><option value="application/xml">application/xml</option>
+        </select><div class="content-description dds__mb-1"><p>Device Inventory jobs scheduled.</p>
+</div><label for="responsesamples-tab-201-example" class="dds__visually-hidden">Select response example</label>
+       <select id="responsesamples-tab-201-example" class="dds__select__field" data-action="onExampleSelectChange" data-code-container-id="responsesamples-tab-201-code" aria-label="Select response example">
+        <option value="0" data-code="null" data-description="Example">
+        Example
+      </option>
+      </select></div><div class="dds__d-flex dds__justify-content-end dds__my-2" role="presentation"><button class="dds__button dds__button--sm" data-action="copyCodeById" data-target-id="responsesamples-tab-201-code">Copy</button></div><div id="responsesamples-tab-201-code" role="presentation"><pre tabindex="0"><code>null</code></pre></div></div><div class="tab-content" id="responsesamples-tab-400" role="tabpanel" aria-labelledby="responsesamples-tab-400"><div class="dds__pt-2" role="presentation">
+        <label for="responsesamples-tab-400-content-type" class="dds__visually-hidden">Select content type</label>
+        <select id="responsesamples-tab-400-content-type" class="dds__select__field dds__mb-2" data-action="onContentTypeChange" data-example-select-id="responsesamples-tab-400-example" data-code-container-id="responsesamples-tab-400-code" data-examples-data="%7B%22application%2Fjson%22%3A%5B%7B%22description%22%3A%22Example%22%2C%22codeContent%22%3A%22%7B%7D%22%7D%5D%2C%22application%2Fxml%22%3A%5B%5D%7D" aria-label="Select content type">
+          <option value="application/json" selected="">application/json</option><option value="application/xml">application/xml</option>
+        </select><div class="content-description dds__mb-1"><p>Invalid Device.</p>
+</div><label for="responsesamples-tab-400-example" class="dds__visually-hidden">Select response example</label>
+       <select id="responsesamples-tab-400-example" class="dds__select__field" data-action="onExampleSelectChange" data-code-container-id="responsesamples-tab-400-code" aria-label="Select response example">
+        <option value="0" data-code="{}" data-description="Example">
+        Example
+      </option>
+      </select></div><div class="dds__d-flex dds__justify-content-end dds__my-2" role="presentation"><button class="dds__button dds__button--sm" data-action="copyCodeById" data-target-id="responsesamples-tab-400-code">Copy</button></div><div id="responsesamples-tab-400-code" role="presentation"><pre tabindex="0"><code>{}</code></pre></div></div><div class="tab-content" id="responsesamples-tab-404" role="tabpanel" aria-labelledby="responsesamples-tab-404"><div class="dds__pt-2" role="presentation">
+        <label for="responsesamples-tab-404-content-type" class="dds__visually-hidden">Select content type</label>
+        <select id="responsesamples-tab-404-content-type" class="dds__select__field dds__mb-2" data-action="onContentTypeChange" data-example-select-id="responsesamples-tab-404-example" data-code-container-id="responsesamples-tab-404-code" data-examples-data="%7B%22application%2Fjson%22%3A%5B%7B%22description%22%3A%22Example%22%2C%22codeContent%22%3A%22%7B%7D%22%7D%5D%2C%22application%2Fxml%22%3A%5B%5D%7D" aria-label="Select content type">
+          <option value="application/json" selected="">application/json</option><option value="application/xml">application/xml</option>
+        </select><div class="content-description dds__mb-1"><p>Device not found in inventory.</p>
+</div><label for="responsesamples-tab-404-example" class="dds__visually-hidden">Select response example</label>
+       <select id="responsesamples-tab-404-example" class="dds__select__field" data-action="onExampleSelectChange" data-code-container-id="responsesamples-tab-404-code" aria-label="Select response example">
+        <option value="0" data-code="{}" data-description="Example">
+        Example
+      </option>
+      </select></div><div class="dds__d-flex dds__justify-content-end dds__my-2" role="presentation"><button class="dds__button dds__button--sm" data-action="copyCodeById" data-target-id="responsesamples-tab-404-code">Copy</button></div><div id="responsesamples-tab-404-code" role="presentation"><pre tabindex="0"><code>{}</code></pre></div></div></div></div></div></div></div>
+      </div>
+    </div></div></body></html>

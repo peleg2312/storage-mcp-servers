@@ -1,0 +1,529 @@
+<html><head><title>PowerFlex API 4.5.2-Manager_v4-6-0: Performing non-disruptive upgrade operations</title></head><body><p>Tasks > PowerFlex Manager API tasks</p><div><div class="api-docs-main-div dds__pl-2">
+    <div class="markdown-wrapper dds__py-3">
+      <div class="markdown-body dds__px-3"><h1 id="performing-non-disruptive-upgrade-operations" class="anchor-scroll-top-offset">Performing non-disruptive upgrade operations</h1>
+<p>This task describes how to perform non-disruptive upgrade operations.</p>
+<h2 id="step-1-upgrading-the-pfmp" class="anchor-scroll-top-offset">Step 1: Upgrading the PFMP</h2>
+<p>You can upgrade the PFMP by calling this API:</p>
+<p><code>POST /Api/V1/Appliance/upgrade</code></p>
+<p>Here is a sample payload for three nodes:</p>
+<pre><code class="language-json">{
+  "location": "http://192.168.201.2/artifactory/vxfm-yum-release/pfmp20/PFMP2-4.6.0.0-1036.tgz",
+  "username": "",
+  "password": "",
+  "nodes": {
+    "nodes": [
+      {
+        "name": "pfmp452-46-bvt-mvm-1", &lt;=== hostname of k8s node 1
+        "ipAddress": "192.168.201.31",        &lt;=== ip of k8s node 1
+        "username": "root",
+        "credential": {
+          "name": "pfmp452-46-bvt-mvm-1",
+          "type": "password",
+          "password": "admin"
+        }
+      },
+      {
+        "name": "pfmp452-46-bvt-mvm-2",
+        "ipAddress": "192.168.201.32",
+        "username": "root",
+        "credential": {
+          "name": "pfmp452-46-bvt-mvm-2",
+          "type": "password",
+          "password": "admin"
+        }
+      },
+      {
+        "name": "pfmp452-46-bvt-mvm-3",
+        "ipAddress": "192.168.201.33",
+        "username": "root",
+        "credential": {
+          "name": "pfmp452-46-bvt-mvm-3",
+          "type": "password",
+          "password": "admin"
+        }
+      }
+    ]
+  }
+}
+
+</code></pre>
+<p>After upgrading the PFMP, check the status by calling this API:</p>
+<p><code>GET /Api/V1/corelcm/status</code></p>
+<p>Here’s a sample response body:</p>
+<pre><code class="language-json">
+{
+  "lcmStatus" : "UPGRADING",
+  "clusterVersion" : "4.5.2.0",
+  "clusterBuild" : "120"
+}
+
+</code></pre>
+<h2 id="step-2-uploading-a-new-rcm-and-setting-it-to-default" class="anchor-scroll-top-offset">Step 2: Uploading a new RCM and setting it to default</h2>
+<p>You can upload a new RCM and make it the default compliance version by following the steps below.</p>
+<h3 id="upload-the-new-rcm" class="anchor-scroll-top-offset">Upload the new RCM</h3>
+<p>Upload the new RCM by calling this API:</p>
+<p><code>POST /Api/V1/FirmwareRepository</code></p>
+<p>Here’s a sample payload:</p>
+<pre><code class="language-json">
+{
+  "sourceLocation": "https://100.65.27.72/artifactory/vxfm-yum-release/pfmp20/RCM/Onyx/RCMs/SoftwareOnly/PowerFlex_Software_4.5.2.0_135_r1.zip",
+  "defaultCatalog": true
+}
+
+</code></pre>
+<p>Here’s a sample response body:</p>
+<pre><code class="language-json">{
+  "id": "8aaa8d3e8db2b115018db31bb5c806f2",
+  "name": null,
+  "sourceLocation": "https://100.65.27.72/artifactory/vxfm-yum-release/pfmp20/RCM/Onyx/RCMs/SoftwareOnly/PowerFlex_Software_4.5.2.0_135_r1.zip",
+  "sourceType": null,
+  "diskLocation": null,
+  "filename": null,
+  "md5Hash": null,
+  "username": null,
+  "password": null,
+  "downloadStatus": null,
+  "createdDate": null,
+  "createdBy": null,
+  "updatedDate": null,
+  "updatedBy": null,
+  "defaultCatalog": true,
+  "state": "copying",
+  "softwareComponents": [
+    
+  ],
+  "softwareBundles": [
+    
+  ],
+  "deployments": [
+    
+  ],
+  "bundleCount": 0,
+  "componentCount": 0,
+  "userBundleCount": 0,
+  "minimal": false,
+  "downloadProgress": 0,
+  "extractProgress": 0,
+  "fileSizeInGigabytes": null,
+  "signedKeySourceLocation": null,
+  "signature": null,
+  "custom": false,
+  "needsAttention": false,
+  "jobId": null,
+  "rcmapproved": false
+}
+
+</code></pre>
+<p>After uploading the new RCM, check the status by getting the source location with this API:</p>
+<p><code>API GET /Api/V1/FirmwareRepository</code></p>
+<p>Here’s a sample response body:</p>
+<pre><code class="language-json">
+{
+  "id"=&gt;"8aaa8d3e8db2b115018db31bb5c806f2", 
+  "name"=&gt;"PowerFlex 4.5.2.0", 
+  "sourceLocation"=&gt;"https://100.65.27.72/artifactory/vxfm-yum-release/pfmp20/RCM/Onyx/RCMs/SoftwareOnly/PowerFlex_Software_4.5.2.0_135_r1.zip", 
+  "sourceType"=&gt;nil, 
+  "diskLocation"=&gt;"/opt/Dell/ASM/temp/RCM_8aaa97968de9d010018df304415300b8/catalog", 
+  "filename"=&gt;"catalog.xml", 
+  "md5Hash"=&gt;nil, 
+  "username"=&gt;nil, 
+  "password"=&gt;nil, 
+  "downloadStatus"=&gt;"pending_default", 
+  "createdDate"=&gt;"2024-02-29T03:59:18.867+00:00", 
+  "createdBy"=&gt;"asmuiuser", 
+  "updatedDate"=&gt;"2024-02-29T04:00:09.024+00:00", 
+  "updatedBy"=&gt;"asmuiuser", 
+  "defaultCatalog"=&gt;false, 
+  "state"=&gt;"copying", &lt;= available state: pending, copying, needapproval, errors, available
+  "softwareComponents"=&gt;[], 
+  "softwareBundles"=&gt;[], 
+  "deployments"=&gt;[], 
+  "bundleCount"=&gt;0, 
+  "componentCount"=&gt;0, 
+  "userBundleCount"=&gt;0, 
+  "minimal"=&gt;false, 
+  "downloadProgress"=&gt;100, 
+  "extractProgress"=&gt;0, 
+  "fileSizeInGigabytes"=&gt;3.2, 
+  "signedKeySourceLocation"=&gt;nil,
+  "signature"=&gt;"Unsigned", 
+  "custom"=&gt;false,
+  "needsAttention"=&gt;false, 
+  "jobId"=&gt;"Job-e1ae9581-4b76-475b-ad74-607d9ec72971",
+  "rcmapproved"=&gt;false
+}
+
+</code></pre>
+<h3 id="allow-unsigned-rcm" class="anchor-scroll-top-offset">Allow unsigned RCM</h3>
+<p>If the state returned from the GET is “needapproval”, you can allow an unsigned RCM  by calling this API:</p>
+<p><code>PUT /Api/V1/FirmwareRepository/8aaa8d3e8db2b115018db31bb5c806f2/allowunsignedfile</code></p>
+<h3 id="set-the-rcm-to-be-the-default-catalog" class="anchor-scroll-top-offset">Set the RCM to be the default catalog</h3>
+<p>If the state is “available” and defaultCatalog in the create payload is “true”, set this RCM to defaultCatalog by calling this API:</p>
+<p><code>PUT /Api/V1/FirmwareRepository/8aaa8d3e8db2b115018db31bb5c806f2</code></p>
+<p>Here’s a sample payload:</p>
+<pre><code class="language-json">
+{
+   "sourceLocation":"https://100.65.27.72/artifactory/vxfm-yum-release/pfmp20/RCM/Onyx/RCMs/SoftwareOnly/PowerFlex_Software_4.5.2.0_135_r1.zip",
+   "defaultCatalog":true,
+   "id":"8aaa8d3e8db2b115018db31bb5c806f2",
+   "name":"PowerFlex 4.5.2.0",
+"state":"available"
+}
+
+</code></pre>
+<p>Here is some sample output:</p>
+<pre><code class="language-json">
+{ 
+"id": "8aaa25518de8e5d0018deb661225003f", 
+"name": "PowerFlex 4.5.2.0", 
+"sourceLocation":"https://100.65.27.72/artifactory/vxfm-yum-release/pfmp20/RCM/Onyx/RCMs/SoftwareOnly/PowerFlex_Software_4.5.2.0_135_r1.zip", 
+"sourceType": null, 
+"diskLocation": null, 
+"filename": null, 
+"md5Hash": null, 
+"username": null, 
+"password": null, 
+"downloadStatus": null, 
+"createdDate": null, 
+"createdBy": null, 
+"updatedDate": null, 
+"updatedBy": null, 
+"defaultCatalog": true, 
+"state": "available", 
+"softwareComponents": [], 
+"softwareBundles": [], 
+"deployments": [], 
+"bundleCount": 0, 
+"componentCount": 0, 
+"userBundleCount": 0, 
+"minimal": false, 
+"downloadProgress": 0, 
+"extractProgress": 0, 
+"fileSizeInGigabytes": null, 
+"signedKeySourceLocation": null, 
+"signature": null, 
+"custom": false, 
+"needsAttention": false, 
+"jobId": null, 
+"rcmapproved": false 
+}
+
+</code></pre>
+<h2 id="step-3-update-the-powerflex-gateway" class="anchor-scroll-top-offset">Step 3: Update the PowerFlex gateway</h2>
+<p>You can update the PowerFlex gateway by following the steps below.</p>
+<h3 id="get-the-identifier" class="anchor-scroll-top-offset">Get the identifier</h3>
+<p>Get the identifier by calling this API:</p>
+<p><code>POST Api/V1/Deployment/getcomponentbyips</code></p>
+<p>Here is a sample payload:</p>
+<pre><code class="language-json">
+{"ipAddresses":["192.168.201.37"]}
+Sample output:
+
+</code></pre>
+<p>The IP address is the software-only VM IP configured during the initial installation.</p>
+<p>You can retrieve the identifier from the output by looking at this information:</p>
+<pre><code class="language-json">
+["deployment"]["serviceTemplate"]["components"][0]["identifier"]
+
+</code></pre>
+<p>Here is some sample output:</p>
+<pre><code class="language-json">
+{"deployment": 
+  {
+    "id": "8aaa2dcf8de82bcd018de86f33b704ed",
+    "deploymentName": "BVT Software Only Hyperconverged",
+    "deploymentDescription": null,  
+    "deploymentValid": null,  
+    "retry": false, 
+    "teardown": false,  
+    "teardownAfterCancel": false,  
+    "removeService": false,  
+    "createdDate": null,   
+    "createdBy": null, 
+    "updatedDate": null,  
+    "updatedBy": null, 
+    "deploymentScheduledDate": null,
+    "deploymentStartedDate": null,  
+    "deploymentFinishedDate": null, 
+    "serviceTemplate": 
+    { 
+      "id": "8aaa2dcf8de82bcd018de86f33b704ed",
+      "templateName": "BVT Software Only Hyperconverged (8aaa2dcf8de82bcd018de86f33b704ed)",
+      "templateDescription": null, 
+      "templateType": "VxRack FLEX",   
+      "templateVersion": null,   
+      "templateValid": {"valid": true, "messages": [... ]},
+      "originalTemplateId": null,  
+      "templateLocked": false, 
+      "draft": false,     
+      "inConfiguration : false,  
+      "createdDate": null,    
+      "createdBy": null,  
+      "updatedDate : null,   
+      "lastDeployedDate": null,  
+      "updatedBy": null,    
+      "components": 
+      [{ 
+        "id": "5fea00b2-245b-4480-ad7a-5cc8c803c24d",
+        "componentID" : "component-server-software-only-1",
+        "identifier" : "b7b0087f00000000",
+        "componentValid" : {...}
+      }]……
+    }
+……
+  }
+……
+}
+
+</code></pre>
+<h3 id="update-the-gateway" class="anchor-scroll-top-offset">Update the gateway</h3>
+<p>Update the gateway by calling this API:</p>
+<p><code>PUT /Api/V1/ManagedDevice/firmware</code></p>
+<p>Here is a sample payload:</p>
+<pre><code class="language-json">
+{
+  "idList": [
+    "scaleio-block-legacy-gateway"
+  ],
+  "device Update List": [  
+    " b7b0087f00000000",             
+    " b7b0087f00000001",
+    " b7b0087f00000002"
+  ],
+  "scheduleType": "updatenow",
+  "exitMaintenanceMode": false,
+  "scheduleDate": "",
+  "updateType": "GATEWAY",
+  "option": "protected",
+  "reconfigure": false
+}
+
+</code></pre>
+<p>Use the “device Update List” to pass in the list of IDs you previously retrieved from the deployment:</p>
+<pre><code class="language-json">
+["deployment"]["serviceTemplate"]["components"][0]["identifier"]
+
+</code></pre>
+<h3 id="monitor-the-process" class="anchor-scroll-top-offset">Monitor the process</h3>
+<p>Monitor the update process by calling this API:</p>
+<p><code>GET /API/V1/ManagedDevice/scaleio-block-legacy-gateway</code></p>
+<p>Here is some sample output:</p>
+<pre><code class="language-json">
+{
+  "refId": "scaleio-block-legacy-gateway",
+  "refType": null,
+  "ipAddress": "block-legacy-gateway",
+  "currentIpAddress": "10.43.165.212",
+  "serviceTag": "block-legacy-gateway",
+  "model": "PowerFlex Gateway",
+  "deviceType": "scaleio",
+  "discoverDeviceType": "SCALEIO",
+  "displayName": "scaleio-block-legacy-gateway",
+  "managedState": "MANAGED",
+  "state": "UPDATING", &lt;== possible state: UPDATING, UPDATE_FAILED, READY, DEPLOYED; expected state: READY
+  "inUse": true,
+…….
+……
+}
+
+</code></pre>
+<h2 id="step-4-update-the-resource-groups" class="anchor-scroll-top-offset">Step 4: Update the resource groups</h2>
+<p>You can upate the resource groups by following the steps below.</p>
+<h3 id="get-all-reference-ids" class="anchor-scroll-top-offset">Get all reference IDs</h3>
+<p>Get all refId values by calling this API:</p>
+<p><code>GET /Api/V1/ManagedDevice</code></p>
+<p>Here is some sample output:</p>
+<pre><code class="language-json">
+[{
+  "refId": "softwareOnlyServer-192.168.201.35",
+  "refType": null,
+  "ipAddress": "192.168.201.35",
+  "currentIpAddress": "192.168.201.35",
+  "serviceTag": "VMware-42 3f eb bb cb 8e 24 8f-c9 35 ad c2 9a 90 e3 c8-SW",
+  "model": "VMware Virtual Platform",
+  "deviceType": "SoftwareOnlyServer",
+  "discoverDeviceType": "SOFTWAREONLYSERVER_SLES",
+  "displayName": "pfmp451-46-bvt-swo-1",
+  "managedState": "MANAGED",
+  "state": "DEPLOYED",
+  "inUse": true,
+  "serviceReferences": [
+    {
+      "id": "8aaa2dcf8de82bcd018de86f33b704ed",
+      "name": "BVT Software Only Hyperconverged"
+    }
+  ],
+  "statusMessage": null,
+  "firmwareName": "Service Catalog - PowerFlex 4.5.2.0",
+  "customFirmware": false,
+  "needsAttention": false,
+  "manufacturer": "VMware, Inc.",
+  "systemId": null,
+  "health": "NA",
+  "healthMessage": null,
+  "operatingSystem": "N/A",
+  "numberOfCPUs": 0,
+  "cpuType": null,
+  "nics": 0,
+  "memoryInGB": 0,
+  "infraTemplateDate": null,
+  "infraTemplateId": null,
+  "serverTemplateDate": null,
+  "serverTemplateId": null,
+  "inventoryDate": null,
+  "complianceCheckDate": "2024-02-27T19:31:03.521+00:00",
+  "discoveredDate": "2024-02-27T01:33:21.571+00:00",
+  "deviceGroupList": {
+    "paging": null,
+    "deviceGroup": [
+      {
+        "link": null,
+        "groupSeqId": -1,
+        "groupName": "Global",
+        "groupDescription": null,
+        "createdDate": null,
+        "createdBy": "admin",
+        "updatedDate": null,
+        "updatedBy": null,
+        "managedDeviceList": null,
+        "groupUserList": null
+      }
+    ]
+  },
+  "detailLink": null,
+  "credId": "757be2ba-a0be-41f1-8001-e74743dcadd2",
+  "compliance": "NONCOMPLIANT",
+  "failuresCount": 0
+……
+},
+{
+  "refId": "softwareOnlyServer-192.168.201.36",
+  "refType": null,
+  "ipAddress": "192.168.201.36",
+  "currentIpAddress": "192.168.201.36",
+  "serviceTag": "VMware-42 3f 02 05 9a 24 e4 0b-1b 6d dc 5f 8f 25 ce 60-SW",
+  "model": "VMware Virtual Platform",
+  "deviceType": "SoftwareOnlyServer",
+  "discoverDeviceType": "SOFTWAREONLYSERVER_SLES",
+  "displayName": "pfmp451-46-bvt-swo-2",
+  "managedState": "MANAGED",
+  "state": "DEPLOYED",
+  "inUse": true,
+  "serviceReferences": [
+    {
+      "id": "8aaa2dcf8de82bcd018de86f33b704ed",
+      "name": "BVT Software Only Hyperconverged"
+    }
+  ],
+  "statusMessage": null,
+  "firmwareName": "Service Catalog - PowerFlex 4.5.2.0",
+  "customFirmware": false,
+  "needsAttention": false,
+  "manufacturer": "VMware, Inc.",
+  "systemId": null,
+  "health": "NA",
+  "healthMessage": null,
+  "operatingSystem": "N/A",
+  "numberOfCPUs": 0,
+  "cpuType": null,
+  "nics": 0,
+  "memoryInGB": 0,
+  "infraTemplateDate": null,
+  "infraTemplateId": null,
+  "serverTemplateDate": null,
+  "serverTemplateId": null,
+  "inventoryDate": null,
+  "complianceCheckDate": "2024-02-27T19:50:51.804+00:00",
+  "discoveredDate": "2024-02-27T01:33:21.620+00:00",
+  "deviceGroupList": {
+    "paging": null,
+    "deviceGroup": [
+      {…
+      }
+    ]
+  },
+  "detailLink": null,
+  "credId": "757be2ba-a0be-41f1-8001-e74743dcadd2",
+  "compliance": "NONCOMPLIANT",
+  "failuresCount": 0,
+……
+}
+……
+]
+
+</code></pre>
+<p>For a software-only deployment, check the “deviceType” and “ipAddress” properties. The “deviceType” should be  “SoftwareOnlyServer” and the “ipAddress” should be the software-only VM IP address.<br>
+For a rack deployment, check the “deviceType” and “osIpAddress” properties. The “deviceType” should be “RackServer” and the “osIpAddress” should not be empty.</p>
+<h3 id="update-a-resource-group" class="anchor-scroll-top-offset">Update a resource group</h3>
+<p>You can update a software-only resource group by calling this API:</p>
+<p><code>PUT /Api/V1/ManagedDevice/updateAsync</code></p>
+<p>Here is a sample payload:</p>
+<pre><code class="language-json">
+["softwareOnlyServer-192.168.201.36",  &lt;== refId from previous step
+"softwareOnlyServer-192.168.201.37",
+"softwareOnlyServer-192.168.201.35"]
+
+</code></pre>
+<p>See the list of refId values returned by managed_device get_by_id  /Api/V1/ManagedDevice/softwareOnlyServer-192.168.201.36</p>
+<p>You can update a rack resource group by calling this API:</p>
+<p><code>PUT /Api/V1/ManagedDevice/firmware</code></p>
+<p>Here is a sample payload:</p>
+<pre><code class="language-json">
+{
+  "idList": [
+    "8aaa2dcf8de82bcd018de86f33b704ed",
+  ],
+  "deviceIdToUpdateList": [ &lt;== refId from managed_device get
+    "ad22b50400000001",
+    "ad22b50500000002",
+    "ad22b50300000000"
+  ],
+  "scheduleType": "disruptiveupdate",
+  "exitMaintenanceMode": false,
+  "scheduleDate": "",
+  "updateType": "SERVICE",
+  "option": "protected",
+  "reconfigure": false
+}
+
+</code></pre>
+<p>The idList shows a list of serviceReference id values from managed_device Get_by_id. The deviceIdToUpdateList shows a list of refId values from managed_device Get_by_id.</p>
+<h3 id="monitor-the-process" class="anchor-scroll-top-offset">Monitor the process</h3>
+<p>Monitor the update process by calling this API:</p>
+<p><code>GET /Api/V1/ManagedDevice/softwareOnlyServer-192.168.201.35</code></p>
+<p>Check the compliance and state values from managed_device get_by_id.</p>
+<p>Here is some sample output:</p>
+<pre><code class="language-json">
+{
+  "refId": "softwareOnlyServer-192.168.201.35",
+  "refType": null,
+  "ipAddress": "192.168.201.35",
+  "currentIpAddress": "192.168.201.35",
+  "serviceTag": "VMware-42 3f eb bb cb 8e 24 8f-c9 35 ad c2 9a 90 e3 c8-SW",
+  "model": "VMware Virtual Platform",
+  "deviceType": "SoftwareOnlyServer",
+  "discoverDeviceType": "SOFTWAREONLYSERVER_SLES",
+  "displayName": "pfmp451-46-bvt-swo-1",
+  "managedState": "MANAGED",
+  "state": "DEPLOYED", &lt;== possible state: UPDATING, UPDATE_FAILED, READY, DEPLOYED. expected state: READY, DEPLOYED
+  "inUse": true,
+  ……
+  "detailLink": null,
+  "credId": "757be2ba-a0be-41f1-8001-e74743dcadd2",
+  "compliance": "COMPLIANT",  expected 
+  "failuresCount": 0
+……
+}
+
+
+</code></pre>
+</div>
+      <div class="markdown-sidebar">
+        <div class="markdown-toc-title">
+          <i class="icon dds__icon dds__icon--bookmark"></i>
+          On this page
+        </div>
+          <ul><li class="level-1"><a href="#performing-non-disruptive-upgrade-operations" data-toc-link="">Performing non-disruptive upgrade operations</a></li><li class="level-2"><a href="#step-1-upgrading-the-pfmp" data-toc-link="">Step 1: Upgrading the PFMP</a></li><li class="level-2"><a href="#step-2-uploading-a-new-rcm-and-setting-it-to-default" data-toc-link="">Step 2: Uploading a new RCM and setting it to default</a></li><li class="level-2"><a href="#step-3-update-the-powerflex-gateway" data-toc-link="">Step 3: Update the PowerFlex gateway</a></li><li class="level-2"><a href="#step-4-update-the-resource-groups" data-toc-link="">Step 4: Update the resource groups</a></li></ul>
+      </div>
+    </div>
+  </div></div></body></html>

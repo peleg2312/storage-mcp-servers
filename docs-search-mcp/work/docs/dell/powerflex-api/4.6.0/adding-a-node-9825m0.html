@@ -1,0 +1,66 @@
+<html><head><title>PowerFlex API 4.6.0: Adding a node</title></head><body><p>Tasks > PowerFlex Manager API tasks</p><div><div class="api-docs-main-div dds__pl-2">
+    <div class="markdown-wrapper dds__py-3">
+      <div class="markdown-body dds__px-3"><h1 id="adding-a-node" class="anchor-scroll-top-offset">Adding a node</h1>
+<p>You can add a node by calling this API:</p>
+<p><code>PUT /API/V1/Deployment{id}</code></p>
+<p>To add a node, you need to:</p>
+<ol>
+<li>
+<p>Get the current deployment for which you want to add a node.</p>
+</li>
+<li>
+<p>Edit the retrieved deployment object and use that as the payload for adding the node.</p>
+</li>
+<li>
+<p>Make these required edits:</p>
+<ul>
+<li>
+<p>Set <code>scaleup: true</code> and <code>retry: true</code>.</p>
+</li>
+<li>
+<p>In the serviceTemplate, add a new component object (this will be  the scale up node) by copying one of the current components with <code>type: SERVER</code>.</p>
+</li>
+<li>
+<p>In the new component object, set the following fields to null:</p>
+<ul>
+<li><code>identifier:</code></li>
+<li><code>asmGUID:</code></li>
+<li><code>puppetCertName:</code></li>
+<li><code>osPuppetCertName:</code></li>
+<li><code>managementIpAddress:</code></li>
+</ul>
+</li>
+<li>
+<p>In the new component object, set the following fields with the specified values:</p>
+<ul>
+<li><code>id: &lt;unique uuid&gt;</code></li>
+<li><code>name: &lt;unique name&gt;</code></li>
+<li><code>brownfield: false</code></li>
+</ul>
+</li>
+<li>
+<p>For the new component object, edit the asm:server resource. Go through each parameter under that resource and set its value to null, but leave the following parameters as is:</p>
+<ul>
+<li><code>razor_image</code></li>
+<li><code>scaleio_enabled</code></li>
+<li><code>scaleio_role</code></li>
+<li><code>compression_enabled</code></li>
+<li><code>replication_enabled</code></li>
+</ul>
+</li>
+</ul>
+</li>
+<li>
+<p>Call <code>PUT /Api/V1/Deployment/{id}</code> with the newly created deployment object.</p>
+</li>
+</ol>
+</div>
+      <div class="markdown-sidebar">
+        <div class="markdown-toc-title">
+          <i class="icon dds__icon dds__icon--bookmark"></i>
+          On this page
+        </div>
+          <ul><li class="level-1"><a href="#adding-a-node" data-toc-link="">Adding a node</a></li></ul>
+      </div>
+    </div>
+  </div></div></body></html>

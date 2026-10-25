@@ -1,0 +1,73 @@
+<html><head><title>PowerFlex API 4.5.2-Manager_v4-6-0: PowerFlex (4.5.2.1)</title></head><body><p>Introduction</p><div><div class="api-docs-main-div dds__pl-2">
+    <div class="markdown-wrapper dds__py-3">
+      <div class="markdown-body dds__px-3"><h1 id="introduction-to-powerflex" class="anchor-scroll-top-offset">Introduction to PowerFlex</h1>
+<p>PowerFlex is an enterprise-class, software-defined block storage solution that is deployed, managed, and supported as a single system. Highly flexible and scalable, PowerFlex allows customers to mix two-layer (Server SAN), single-layer, and storage-only and mixed architectures within a single deployment.</p>
+<h2 id="powerflex-api" class="anchor-scroll-top-offset">PowerFlex API</h2>
+<p>The PowerFlex API is installed as part of the PowerFlex installation manager/PowerFlex gateway package. The Installation Manager manages deployment and upgrades. The PowerFlex gateway leverages role-based security access to expose RESTful APIs for automating all frontend and backend storage tasks and core components, and also acts as a gateway for SNMP traps and SRS.</p>
+<p>The REST API is served from the PowerFlex gateway through the REST gateway. The PowerFlex Gateway connects to a single MDM (metadata manager) and serves requests by querying the MDM and reformatting the answers it receives from the MDM in a RESTful manner back to a REST client. Every PowerFlex SCLI command is also available in the PowerFlex REST API. The responses returned by the PowerFlex gateway are in JSON format.</p>
+<p>APIs may change as new features are added to the product or changes are made to the PowerFlex software.</p>
+<p>For more information on using the APIs, see the <em>Dell PowerFlex 4.6.x Administration Guide</em>.</p>
+<h2 id="target-audience" class="anchor-scroll-top-offset">Target audience</h2>
+<p>The PowerFlex REST API is intended for customers who want to automate PowerFlex deployment, configuration, and management tasks.</p>
+<h2 id="basic-concepts" class="anchor-scroll-top-offset">Basic concepts</h2>
+<p>The following basic concepts are relevant to understanding and operating PowerFlex.</p>
+<table>
+<thead>
+<tr>
+<th>Concept</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>MDM</td>
+<td>Meta Data Manager. The MDM configures and monitors PowerFlex, and is usually configured in redundant cluster mode to support high availability.</td>
+</tr>
+<tr>
+<td>SDC</td>
+<td>Storage Data Client. The SDC is a lightweight device driver that exposes PowerFlex volumes as block devices to the application that resides on the same server on which the SDC is install.</td>
+</tr>
+<tr>
+<td>SDS</td>
+<td>Storage Data Server. The SDS manages the capacity of a single server and acts as a backend for data access.</td>
+</tr>
+<tr>
+<td>Protection Domain</td>
+<td>A logical entity that consists of a group of SDSs that backs up each other</td>
+</tr>
+<tr>
+<td>Fault Set</td>
+<td>A logical entity that contains a group of SDSs that are more inclined to go offline simultaneously</td>
+</tr>
+<tr>
+<td>Storage Pool</td>
+<td>A set of physical storage devices in a Protection Domain. A volume is distributed over all devices residing in the same Storage Pool.</td>
+</tr>
+<tr>
+<td>Acceleration Pool</td>
+<td>A group of one or more physical acceleration devices.</td>
+</tr>
+<tr>
+<td>Volume</td>
+<td>Consists of multiple storage blocks spread evenly across Storage Pool devices.</td>
+</tr>
+<tr>
+<td>Snapshot</td>
+<td>An image-level view of data at a particular point in time</td>
+</tr>
+<tr>
+<td>SDR</td>
+<td>Storage Data Replicator, which processes the application I/Os of the source SDRs</td>
+</tr>
+</tbody>
+</table>
+</div>
+      <div class="markdown-sidebar">
+        <div class="markdown-toc-title">
+          <i class="icon dds__icon dds__icon--bookmark"></i>
+          On this page
+        </div>
+          <ul><li class="level-1"><a href="#introduction-to-powerflex" data-toc-link="">Introduction to PowerFlex</a></li><li class="level-2"><a href="#powerflex-api" data-toc-link="">PowerFlex API</a></li><li class="level-2"><a href="#target-audience" data-toc-link="">Target audience</a></li><li class="level-2"><a href="#basic-concepts" data-toc-link="">Basic concepts</a></li></ul>
+      </div>
+    </div>
+  </div></div></body></html>

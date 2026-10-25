@@ -1,0 +1,200 @@
+<html><head><title>PowerFlex API 4.6.0: Responses</title></head><body><p>Getting Started > PowerFlex Block API (4.5.2.1)</p><div><div class="api-docs-main-div dds__pl-2">
+    <div class="markdown-wrapper dds__py-3">
+      <div class="markdown-body dds__px-3"><h1 id="responses" class="anchor-scroll-top-offset">Responses</h1>
+<h2 id="response-codes" class="anchor-scroll-top-offset">Response codes</h2>
+<p>The API returns one of the following responses:</p>
+<table>
+<thead>
+<tr>
+<th>Code</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>200</td>
+<td>(OK) Indicates that the request has succeeded.</td>
+</tr>
+<tr>
+<td>400</td>
+<td>(Bad Request) The request could not be understood by the server due to incorrect syntax. The client should not repeat the request without modifications.</td>
+</tr>
+<tr>
+<td>401</td>
+<td>(Unauthorized) Indicates that the request requires user authentication information. The client may repeat the request with a suitable Authorization header field</td>
+</tr>
+<tr>
+<td>403</td>
+<td>(Forbidden) Unauthorized request. The client does not have access rights to the content. Unlike 401, the client’s identity is known to the server.</td>
+</tr>
+<tr>
+<td>404</td>
+<td>(Not Found) The server cannot find the requested resource.</td>
+</tr>
+<tr>
+<td>500</td>
+<td>(Internal Server Error) The server encountered an unexpected condition which prevented it from fulfilling the request.</td>
+</tr>
+</tbody>
+</table>
+<h2 id="response-fields" class="anchor-scroll-top-offset">Response fields</h2>
+<p>The order of the fields in the responses may change. More fields may be added in the future.</p>
+<ul>
+<li>Every row in the object’s Parent table appears as a link in the response of a GET object:</li>
+</ul>
+<p><code>/api/instances/{type::id}</code></p>
+<ul>
+<li>Every row in the object’s Relationships table appears as a link in the response of a GET object:</li>
+</ul>
+<p><code>/api/instances/{type::id}/relationships/{Relationship name}</code></p>
+<table>
+<thead>
+<tr>
+<th>Property</th>
+<th>Type</th>
+<th>Note</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>sessionTag</td>
+<td>Long</td>
+<td>–</td>
+</tr>
+<tr>
+<td>isDirty</td>
+<td>Boolean</td>
+<td>The version on some objects changed while the MDM created the response.</td>
+</tr>
+<tr>
+<td>System</td>
+<td>List of System objects. See the System objects table.</td>
+<td>–</td>
+</tr>
+<tr>
+<td>lastSystemVersion</td>
+<td>Long</td>
+<td>–</td>
+</tr>
+<tr>
+<td>protectionDomainList</td>
+<td>List of Protection Domain objects. See the Protection Domain objects table.</td>
+<td>–</td>
+</tr>
+<tr>
+<td>lastProtectionDomainVersion</td>
+<td>Long</td>
+<td>–</td>
+</tr>
+<tr>
+<td>sdsList</td>
+<td>List of SDS objects. See the SDS objects table.</td>
+<td>–</td>
+</tr>
+<tr>
+<td>lastSdsVersion</td>
+<td>Long</td>
+<td>–</td>
+</tr>
+<tr>
+<td>storagePoolList</td>
+<td>List of Storage Pool objects. See the Storage Pool objects table.</td>
+<td>–</td>
+</tr>
+<tr>
+<td>lastStoragePoolVersion</td>
+<td>Long</td>
+<td>–</td>
+</tr>
+<tr>
+<td>deviceList</td>
+<td>List of Device objects. Device objects</td>
+<td>–</td>
+</tr>
+<tr>
+<td>lastDeviceVersion</td>
+<td>Long</td>
+<td>–</td>
+</tr>
+<tr>
+<td>volumeList</td>
+<td>List of Volume objects. See the Volume objects table.</td>
+<td>–</td>
+</tr>
+<tr>
+<td>lastVolumeVersion</td>
+<td>Long</td>
+<td>–</td>
+</tr>
+<tr>
+<td>vTreeList</td>
+<td>List of V-Tree objects. See the V-Tree objects table.</td>
+<td>–</td>
+</tr>
+<tr>
+<td>lastVTreeVersion</td>
+<td>Long</td>
+<td>–</td>
+</tr>
+<tr>
+<td>sdcList</td>
+<td>List of SDC objects. See the SDC Objects table.</td>
+<td>–</td>
+</tr>
+<tr>
+<td>lastSdcVersion</td>
+<td>Long</td>
+<td>–</td>
+</tr>
+<tr>
+<td>faultSetList</td>
+<td>List of Fault Set objects. See the Fault Set objects table.</td>
+<td>–</td>
+</tr>
+<tr>
+<td>lastFaultSetVersion</td>
+<td>Long</td>
+<td>–</td>
+</tr>
+<tr>
+<td>accelerationPoolList</td>
+<td>List of AccelerationPool objects. See the Acceleration Pool objects table.</td>
+<td>–</td>
+</tr>
+<tr>
+<td>lastAccelerationPoolVersion</td>
+<td>Long</td>
+<td>–</td>
+</tr>
+<tr>
+<td>spSdslList</td>
+<td>List of SpSds objects. See the SpSds objects table.</td>
+<td>–</td>
+</tr>
+<tr>
+<td>lastSpSdsVersion</td>
+<td>Long</td>
+<td>–</td>
+</tr>
+<tr>
+<td>snapshotPolicyList</td>
+<td>List of SnapshotPolicy objects. See the SnapshotPolicy objects table.</td>
+<td>–</td>
+</tr>
+<tr>
+<td>lastSnapshotPolicyVersion</td>
+<td>Long</td>
+<td>–</td>
+</tr>
+</tbody>
+</table>
+</div>
+      <div class="markdown-sidebar">
+        <div class="markdown-toc-title">
+          <i class="icon dds__icon dds__icon--bookmark"></i>
+          On this page
+        </div>
+          <ul><li class="level-1"><a href="#responses" data-toc-link="">Responses</a></li><li class="level-2"><a href="#response-codes" data-toc-link="">Response codes</a></li><li class="level-2"><a href="#response-fields" data-toc-link="">Response fields</a></li></ul>
+      </div>
+    </div>
+  </div></div></body></html>

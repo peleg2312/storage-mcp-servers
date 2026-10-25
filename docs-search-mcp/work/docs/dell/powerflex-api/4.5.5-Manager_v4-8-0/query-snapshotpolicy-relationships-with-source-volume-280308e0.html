@@ -1,0 +1,963 @@
+<html><head><title>PowerFlex API 4.5.5-Manager_v4-8-0: Query SnapshotPolicy relationships with source volume</title></head><body><p>APIS > PowerFlex Block REST API > SnapshotPolicy</p><div><div class="api-docs-main-div dds__pl-2">
+      <div class="api-doc-container">
+        <div class="api__doc__left-section dds__p-3">
+   <div class="markdown-renderer">
+          <h4 class="dds__font-weight-bold dds__pb-2">Query SnapshotPolicy relationships with source volume</h4>       
+          <div><p>Query the SnapshotPolicy object to retrieve a list of volumes that are connected to it as source volumes.</p>
+</div> 
+          
+    </div>
+
+<div class="api_docs_collapsible dds__mb-3 expanded" id="request"><div class="api_docs_collapsible-header dds__p-3" data-action="toggleCollapse" data-target-id="request" role="button" tabindex="0" aria-controls="request-body" aria-expanded="true"><span class="title">Requests</span><span class="icon icon-collapsed dds__icon dds__icon--chevron-right dds__mt-1 dds__ml-auto"></span><span class="icon icon-expanded dds__icon dds__icon--chevron-down dds__mt-1 dds__ml-auto"></span></div><div class="api_docs_collapsible-body" id="request-body"><div class="static-frame-request-section"><div class="headers-section"><h5 class="title">Path Parameters</h5>
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="id">id</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      <span class="required">Required</span>
+    </div>
+    
+    
+    
+    
+    <div class="desc"><p>SnapshotPolicy ID</p>
+</div>
+    
+    
+  </div>
+</div></div></div></div></div>
+
+       <div class="api_docs_collapsible dds__mb-3" id="response"><div class="api_docs_collapsible-header dds__p-3" data-action="toggleCollapse" data-target-id="response" role="button" tabindex="0" aria-controls="response-body" aria-expanded="false"><span class="title">Responses</span><span class="icon icon-collapsed dds__icon dds__icon--chevron-right dds__mt-1 dds__ml-auto"></span><span class="icon icon-expanded dds__icon dds__icon--chevron-down dds__mt-1 dds__ml-auto"></span></div><div class="api_docs_collapsible-body" id="response-body"><div class="api_docs_collapsible dds__mb-3" id="3b9da5e683e83"><div class="api_docs_collapsible-header dds__p-3" data-action="toggleCollapse" data-target-id="3b9da5e683e83" role="button" tabindex="0" aria-controls="3b9da5e683e83-body" aria-expanded="false"><span class="title"><div class="response-frame"><span class="text-green"><span class="dds__badge dds__badge--dot dds__mr-2"></span>200</span> : OK</div></span><span class="icon icon-collapsed dds__icon dds__icon--chevron-right dds__mt-1 dds__ml-auto"></span><span class="icon icon-expanded dds__icon dds__icon--chevron-down dds__mt-1 dds__ml-auto"></span></div><div class="api_docs_collapsible-body" id="3b9da5e683e83-body"><div class="static-frame-response-section"><div><div class="headers-section"><div><p>OK</p>
+</div><h5 class="title dds__mt-2">Response Body</h5><div class="static-frame-request-section"><div class="" id="Response Body-Array Of:-nyeb">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name clickable-property" title="Array Of:" style="cursor: pointer;">Array Of:</span>
+    </div>
+    <span class="schema-toggle-icon" data-action="toggleNestedBodyCard" data-target-id="Response Body-Array Of:-nyeb" role="button" tabindex="0" aria-controls="Response Body-Array Of:-nyeb-nested-body" aria-expanded="false">
+            <span class="icon dds__icon dds__icon--chevron-right dds__mt-1 dds__ml-auto"></span>
+            <span class="icon dds__icon dds__icon--chevron-down dds__mt-1 dds__ml-auto hidden"></span>
+        </span>
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">array[object]</span>
+      
+    </div>
+    
+    
+    
+    
+    <div class="desc"><p>List of Volume objects that are connected to this SnapshotPolicy object as source volumes.</p>
+</div>
+    
+    
+  </div>
+</div><div class="nested-body schema-child-row" id="Response Body-Array Of:-nyeb-nested-body" style="display:none">
+            <div colspan="2" class="nested">
+            <div class="" id="primitive-id">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="id">id</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-name">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="name">name</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-sizeInKb">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="sizeInKb">sizeInKb</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">number</span>
+      <span class="required">Required</span>
+    </div>
+    
+    
+    
+    
+    <div class="desc"><p>Required (name of the property for POST: volumeSizeInKb or volumeSizeInGb)</p>
+</div>
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-creationTime">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="creationTime">creationTime</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">number</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-volumeType">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="volumeType">volumeType</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      
+    </div>
+    
+    
+    
+    
+    <div class="desc"><p>Optional (only ThickProvisioned and ThinProvisioned)</p>
+</div>
+    
+    <div class="enums">allowed values: <span class="dds__badge dds__badge--sm dds__badge--brand dds__badge--light">ThickProvisioned</span> <span class="dds__badge dds__badge--sm dds__badge--brand dds__badge--light">Snapshot</span></div>
+  </div>
+</div></div>
+<div class="" id="primitive-consistencyGroupId">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="consistencyGroupId">consistencyGroupId</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      
+    </div>
+    
+    
+    
+    
+    <div class="desc"><p>This identifier is assigned to all snapshots taken in a single command (the snapshots are consistent across the group).</p>
+</div>
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-mappingToAllSdcsEnabled">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="mappingToAllSdcsEnabled">mappingToAllSdcsEnabled</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">boolean</span>
+      
+    </div>
+    
+    
+    
+    
+    <div class="desc"><p>Indicates whether the volume is mapped to all SDCs</p>
+</div>
+    
+    
+  </div>
+</div></div>
+<div class="" id="Response Body-Array Of:-nyeb-mappedSdcInfoList-lkz7">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name clickable-property" title="mappedSdcInfoList" style="cursor: pointer;">mappedSdcInfoList</span>
+    </div>
+    <span class="schema-toggle-icon" data-action="toggleNestedBodyCard" data-target-id="Response Body-Array Of:-nyeb-mappedSdcInfoList-lkz7" role="button" tabindex="0" aria-controls="Response Body-Array Of:-nyeb-mappedSdcInfoList-lkz7-nested-body" aria-expanded="false">
+            <span class="icon dds__icon dds__icon--chevron-right dds__mt-1 dds__ml-auto"></span>
+            <span class="icon dds__icon dds__icon--chevron-down dds__mt-1 dds__ml-auto hidden"></span>
+        </span>
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">array[object]</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div><div class="nested-body schema-child-row" id="Response Body-Array Of:-nyeb-mappedSdcInfoList-lkz7-nested-body" style="display:none">
+            <div colspan="2" class="nested">
+            <div class="" id="primitive-sdcId">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="sdcId">sdcId</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-sdcIp">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="sdcIp">sdcIp</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-limitIops">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="limitIops">limitIops</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">number</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-limitBwInMbps">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="limitBwInMbps">limitBwInMbps</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">number</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-acssesMode">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="acssesMode">acssesMode</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    <div class="enums">allowed values: <span class="dds__badge dds__badge--sm dds__badge--brand dds__badge--light">ReadWrite</span> <span class="dds__badge dds__badge--sm dds__badge--brand dds__badge--light">ReadOnly</span> <span class="dds__badge dds__badge--sm dds__badge--brand dds__badge--light">NoAccess</span></div>
+  </div>
+</div></div>
+            </div>
+          </div></div>
+<div class="" id="primitive-ancestorVolumeId">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="ancestorVolumeId">ancestorVolumeId</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      
+    </div>
+    
+    
+    
+    
+    <div class="desc"><p>This is the volume ID of the root of the specified volume’s V-Tree.</p>
+</div>
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-vtreeId">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="vtreeId">vtreeId</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-storagePoolId">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="storagePoolId">storagePoolId</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      <span class="required">Required</span>
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-notGenuineSnapshot">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="notGenuineSnapshot">notGenuineSnapshot</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">boolean</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-useRmcache">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="useRmcache">useRmcache</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">boolean</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-volumeClass">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="volumeClass">volumeClass</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      
+    </div>
+    
+    
+    
+    
+    <div class="desc"><p>If the value is not set, by default, the volumeClass value is set to ‘defaultclass’.</p>
+</div>
+    
+    <div class="enums">allowed values: <span class="dds__badge dds__badge--sm dds__badge--brand dds__badge--light">defaultclass</span> <span class="dds__badge dds__badge--sm dds__badge--brand dds__badge--light">replication</span> <span class="dds__badge dds__badge--sm dds__badge--brand dds__badge--light">csi</span> <span class="dds__badge dds__badge--sm dds__badge--brand dds__badge--light">openstack</span> <span class="dds__badge dds__badge--sm dds__badge--brand dds__badge--light">vvol</span> <span class="dds__badge dds__badge--sm dds__badge--brand dds__badge--light">datastore</span> <span class="dds__badge dds__badge--sm dds__badge--brand dds__badge--light">nasfs</span> <span class="dds__badge dds__badge--sm dds__badge--brand dds__badge--light">nasvdm</span> <span class="dds__badge dds__badge--sm dds__badge--brand dds__badge--light">nascluster</span> <span class="dds__badge dds__badge--sm dds__badge--brand dds__badge--light">nas</span> <span class="dds__badge dds__badge--sm dds__badge--brand dds__badge--light">snap_mobility</span></div>
+  </div>
+</div></div>
+<div class="" id="primitive-snplIdOfAutoSnapshot">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="snplIdOfAutoSnapshot">snplIdOfAutoSnapshot</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-lockedAutoSnapshot">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="lockedAutoSnapshot">lockedAutoSnapshot</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">boolean</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-lockedAutoSnapshotMarkedForRemoval">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="lockedAutoSnapshotMarkedForRemoval">lockedAutoSnapshotMarkedForRemoval</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">boolean</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-originalExpiryTime">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="originalExpiryTime">originalExpiryTime</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">number</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-autoSnapshotGroupId">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="autoSnapshotGroupId">autoSnapshotGroupId</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="Response Body-Array Of:-nyeb-retentionLevels-4ldw">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="retentionLevels">retentionLevels</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">array[integer]</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-snplIdOfSourceVolume">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="snplIdOfSourceVolume">snplIdOfSourceVolume</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-compressionMethod">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="compressionMethod">compressionMethod</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    <div class="enums">allowed values: <span class="dds__badge dds__badge--sm dds__badge--brand dds__badge--light">Invalid</span> <span class="dds__badge dds__badge--sm dds__badge--brand dds__badge--light">None</span> <span class="dds__badge dds__badge--sm dds__badge--brand dds__badge--light">Normal</span></div>
+  </div>
+</div></div>
+<div class="" id="primitive-dataLayout">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="dataLayout">dataLayout</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    <div class="enums">allowed values: <span class="dds__badge dds__badge--sm dds__badge--brand dds__badge--light">InvalidLayout</span> <span class="dds__badge dds__badge--sm dds__badge--brand dds__badge--light">MediumGranularity</span> <span class="dds__badge dds__badge--sm dds__badge--brand dds__badge--light">FineGranularity</span></div>
+  </div>
+</div></div>
+<div class="" id="primitive-accessModeLimit">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="accessModeLimit">accessModeLimit</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    <div class="enums">allowed values: <span class="dds__badge dds__badge--sm dds__badge--brand dds__badge--light">ReadWrite</span> <span class="dds__badge dds__badge--sm dds__badge--brand dds__badge--light">ReadOnly</span> <span class="dds__badge dds__badge--sm dds__badge--brand dds__badge--light">NoAccess</span></div>
+  </div>
+</div></div>
+<div class="" id="primitive-secureSnapshotExpTime">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="secureSnapshotExpTime">secureSnapshotExpTime</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">number</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-volumeReplicationState">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="volumeReplicationState">volumeReplicationState</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    <div class="enums">allowed values: <span class="dds__badge dds__badge--sm dds__badge--brand dds__badge--light">MarkedForReplication</span> <span class="dds__badge dds__badge--sm dds__badge--brand dds__badge--light">UnmarkedForReplication</span> <span class="dds__badge dds__badge--sm dds__badge--brand dds__badge--light">MarkedPendingForReplication</span> <span class="dds__badge dds__badge--sm dds__badge--brand dds__badge--light">UnmarkedPendingForReplication</span></div>
+  </div>
+</div></div>
+<div class="" id="Response Body-Array Of:-nyeb-pairIds-7gnr">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="pairIds">pairIds</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">array[string]</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-replicationTimeStamp">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="replicationTimeStamp">replicationTimeStamp</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">number</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-timeStampIsAccurate">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="timeStampIsAccurate">timeStampIsAccurate</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">boolean</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+            </div>
+          </div></div></div></div></div></div></div></div>
+<div class="api_docs_collapsible dds__mb-3" id="54dca4afa51a8"><div class="api_docs_collapsible-header dds__p-3" data-action="toggleCollapse" data-target-id="54dca4afa51a8" role="button" tabindex="0" aria-controls="54dca4afa51a8-body" aria-expanded="false"><span class="title"><div class="response-frame"><span class="text-red"><span class="dds__badge dds__badge--dot dds__mr-2"></span>400</span> : Bad Request</div></span><span class="icon icon-collapsed dds__icon dds__icon--chevron-right dds__mt-1 dds__ml-auto"></span><span class="icon icon-expanded dds__icon dds__icon--chevron-down dds__mt-1 dds__ml-auto"></span></div><div class="api_docs_collapsible-body" id="54dca4afa51a8-body"><div class="static-frame-response-section"><div><div class="headers-section"><div><p>Bad Request</p>
+</div><h5 class="title dds__mt-2">Response Body</h5>No Schema Available.</div></div></div></div></div>
+<div class="api_docs_collapsible dds__mb-3" id="b621ea5049ab3"><div class="api_docs_collapsible-header dds__p-3" data-action="toggleCollapse" data-target-id="b621ea5049ab3" role="button" tabindex="0" aria-controls="b621ea5049ab3-body" aria-expanded="false"><span class="title"><div class="response-frame"><span class="text-red"><span class="dds__badge dds__badge--dot dds__mr-2"></span>401</span> : Unauthorized</div></span><span class="icon icon-collapsed dds__icon dds__icon--chevron-right dds__mt-1 dds__ml-auto"></span><span class="icon icon-expanded dds__icon dds__icon--chevron-down dds__mt-1 dds__ml-auto"></span></div><div class="api_docs_collapsible-body" id="b621ea5049ab3-body"><div class="static-frame-response-section"><div><div class="headers-section"><div><p>Unauthorized</p>
+</div><h5 class="title dds__mt-2">Response Body</h5>No Schema Available.</div></div></div></div></div>
+<div class="api_docs_collapsible dds__mb-3" id="d6e3a9854914d"><div class="api_docs_collapsible-header dds__p-3" data-action="toggleCollapse" data-target-id="d6e3a9854914d" role="button" tabindex="0" aria-controls="d6e3a9854914d-body" aria-expanded="false"><span class="title"><div class="response-frame"><span class="text-red"><span class="dds__badge dds__badge--dot dds__mr-2"></span>403</span> : Forbidden</div></span><span class="icon icon-collapsed dds__icon dds__icon--chevron-right dds__mt-1 dds__ml-auto"></span><span class="icon icon-expanded dds__icon dds__icon--chevron-down dds__mt-1 dds__ml-auto"></span></div><div class="api_docs_collapsible-body" id="d6e3a9854914d-body"><div class="static-frame-response-section"><div><div class="headers-section"><div><p>Forbidden</p>
+</div><h5 class="title dds__mt-2">Response Body</h5>No Schema Available.</div></div></div></div></div>
+<div class="api_docs_collapsible dds__mb-3" id="e3ff7ba6a7159"><div class="api_docs_collapsible-header dds__p-3" data-action="toggleCollapse" data-target-id="e3ff7ba6a7159" role="button" tabindex="0" aria-controls="e3ff7ba6a7159-body" aria-expanded="false"><span class="title"><div class="response-frame"><span class="text-red"><span class="dds__badge dds__badge--dot dds__mr-2"></span>404</span> : Not Found</div></span><span class="icon icon-collapsed dds__icon dds__icon--chevron-right dds__mt-1 dds__ml-auto"></span><span class="icon icon-expanded dds__icon dds__icon--chevron-down dds__mt-1 dds__ml-auto"></span></div><div class="api_docs_collapsible-body" id="e3ff7ba6a7159-body"><div class="static-frame-response-section"><div><div class="headers-section"><div><p>Not Found</p>
+</div><h5 class="title dds__mt-2">Response Body</h5>No Schema Available.</div></div></div></div></div>
+<div class="api_docs_collapsible dds__mb-3" id="402941d438d34"><div class="api_docs_collapsible-header dds__p-3" data-action="toggleCollapse" data-target-id="402941d438d34" role="button" tabindex="0" aria-controls="402941d438d34-body" aria-expanded="false"><span class="title"><div class="response-frame"><span class="text-red"><span class="dds__badge dds__badge--dot dds__mr-2"></span>500</span> : Server Error</div></span><span class="icon icon-collapsed dds__icon dds__icon--chevron-right dds__mt-1 dds__ml-auto"></span><span class="icon icon-expanded dds__icon dds__icon--chevron-down dds__mt-1 dds__ml-auto"></span></div><div class="api_docs_collapsible-body" id="402941d438d34-body"><div class="static-frame-response-section"><div><div class="headers-section"><div><p>Internal Server Error</p>
+</div><h5 class="title dds__mt-2">Response Body</h5>No Schema Available.</div></div></div></div></div></div></div>
+   </div>
+        <div class="api__doc__right-section dds__pl-2"><div class="api_docs_collapsible highlight dds__mb-3 expanded" id="server"><div class="api_docs_collapsible-header dds__p-3" data-action="toggleCollapse" data-target-id="server" role="button" tabindex="0" aria-expanded="true"><div class="dds__w-100"><div class="server-title"><span class="dds__badge dds__badge--md http-method-get"><span class="dds__badge__label badge-font">GET</span></span><button style="float: right; border: 1px solid #9ca3af; display:none" class="dds__ml-auto dds__button dds__button--sm" type="button" id="drawer-trigger" data-action="clickedTryOutButton">Try it</button></div><div class="dds__p-2">/api/instances/SnapshotPolicy::{id}/relationships/SourceVolume</div></div><span class="icon icon-collapsed dds__icon dds__icon--chevron-right dds__ml-auto"></span><span class="icon icon-expanded dds__icon dds__icon--chevron-down dds__ml-auto"></span></div><div class="api_docs_collapsible-body dds__px-3 dds__pt-2 dds__pb-3"><div class="dds__pr-2"></div><div class="dds__d-flex dds__justify-content-end dds__my-2"><button class="dds__button dds__button--sm" data-action="copyCodeById" data-target-id="server-copy-0">Copy</button></div><pre tabindex="0"><code id="server-copy-0">/api/instances/SnapshotPolicy::{id}/relationships/SourceVolume</code></pre></div></div>
+<div class="api_docs_collapsible highlight dds__mb-3 expanded" id="responsesamples"><div class="api_docs_collapsible-header dds__p-3" data-action="toggleCollapse" data-target-id="responsesamples" role="button" tabindex="0" aria-controls="responsesamples-body" aria-expanded="true">Response Samples<span class="icon icon-collapsed dds__icon dds__icon--chevron-right dds__ml-auto"></span><span class="icon icon-expanded dds__icon dds__icon--chevron-down dds__ml-auto"></span></div><div class="api_docs_collapsible-body dds__px-3 dds__pt-2 dds__pb-3" id="responsesamples-body"><div class="response-tab-wrapper"><div class="tab-header" role="tablist"><h4 class="tab-item active" role="tab" aria-selected="true" aria-controls="responsesamples-tab-200" data-action="switchTab" data-target-id="responsesamples-tab-200">200</h4><h4 class="tab-item" role="tab" aria-selected="false" aria-controls="responsesamples-tab-400" data-action="switchTab" data-target-id="responsesamples-tab-400">400</h4><h4 class="tab-item" role="tab" aria-selected="false" aria-controls="responsesamples-tab-401" data-action="switchTab" data-target-id="responsesamples-tab-401">401</h4><h4 class="tab-item" role="tab" aria-selected="false" aria-controls="responsesamples-tab-403" data-action="switchTab" data-target-id="responsesamples-tab-403">403</h4><h4 class="tab-item" role="tab" aria-selected="false" aria-controls="responsesamples-tab-404" data-action="switchTab" data-target-id="responsesamples-tab-404">404</h4><h4 class="tab-item" role="tab" aria-selected="false" aria-controls="responsesamples-tab-500" data-action="switchTab" data-target-id="responsesamples-tab-500">500</h4></div><div class="tab-body"><div class="tab-content active" id="responsesamples-tab-200" role="tabpanel" aria-labelledby="responsesamples-tab-200"><div class="dds__pt-2" role="presentation"><div class="content-type-box dds__mb-1"><div class="content-type-label">application/json</div></div><div class="content-description dds__mb-1"><p>OK</p>
+</div><label for="responsesamples-tab-200-example" class="dds__visually-hidden">Select response example</label>
+       <select id="responsesamples-tab-200-example" class="dds__select__field" data-action="onExampleSelectChange" data-code-container-id="responsesamples-tab-200-code" aria-label="Select response example">
+        <option value="0" data-code="[
+  {
+    &quot;id&quot;: &quot;string&quot;,
+    &quot;name&quot;: &quot;string&quot;,
+    &quot;sizeInKb&quot;: 0,
+    &quot;creationTime&quot;: 0,
+    &quot;volumeType&quot;: &quot;string&quot;,
+    &quot;consistencyGroupId&quot;: &quot;string&quot;,
+    &quot;mappingToAllSdcsEnabled&quot;: false,
+    &quot;mappedSdcInfoList&quot;: [
+      {
+        &quot;sdcId&quot;: &quot;string&quot;,
+        &quot;sdcIp&quot;: &quot;string&quot;,
+        &quot;limitIops&quot;: 0,
+        &quot;limitBwInMbps&quot;: 0,
+        &quot;acssesMode&quot;: &quot;string&quot;
+      }
+    ],
+    &quot;ancestorVolumeId&quot;: &quot;string&quot;,
+    &quot;vtreeId&quot;: &quot;string&quot;,
+    &quot;storagePoolId&quot;: &quot;string&quot;,
+    &quot;notGenuineSnapshot&quot;: false,
+    &quot;useRmcache&quot;: false,
+    &quot;volumeClass&quot;: &quot;string&quot;,
+    &quot;snplIdOfAutoSnapshot&quot;: &quot;string&quot;,
+    &quot;lockedAutoSnapshot&quot;: false,
+    &quot;lockedAutoSnapshotMarkedForRemoval&quot;: false,
+    &quot;originalExpiryTime&quot;: 0,
+    &quot;autoSnapshotGroupId&quot;: &quot;string&quot;,
+    &quot;retentionLevels&quot;: [
+      0
+    ],
+    &quot;snplIdOfSourceVolume&quot;: &quot;string&quot;,
+    &quot;compressionMethod&quot;: &quot;string&quot;,
+    &quot;dataLayout&quot;: &quot;string&quot;,
+    &quot;accessModeLimit&quot;: &quot;string&quot;,
+    &quot;secureSnapshotExpTime&quot;: 0,
+    &quot;volumeReplicationState&quot;: &quot;string&quot;,
+    &quot;pairIds&quot;: [
+      &quot;string&quot;
+    ],
+    &quot;replicationTimeStamp&quot;: 0,
+    &quot;timeStampIsAccurate&quot;: false
+  }
+]" data-description="Example">
+        Example
+      </option>
+      </select></div><div class="dds__d-flex dds__justify-content-end dds__my-2" role="presentation"><button class="dds__button dds__button--sm" data-action="copyCodeById" data-target-id="responsesamples-tab-200-code">Copy</button></div><div id="responsesamples-tab-200-code" role="presentation"><pre tabindex="0"><code>[
+  {
+    "id": "string",
+    "name": "string",
+    "sizeInKb": 0,
+    "creationTime": 0,
+    "volumeType": "string",
+    "consistencyGroupId": "string",
+    "mappingToAllSdcsEnabled": false,
+    "mappedSdcInfoList": [
+      {
+        "sdcId": "string",
+        "sdcIp": "string",
+        "limitIops": 0,
+        "limitBwInMbps": 0,
+        "acssesMode": "string"
+      }
+    ],
+    "ancestorVolumeId": "string",
+    "vtreeId": "string",
+    "storagePoolId": "string",
+    "notGenuineSnapshot": false,
+    "useRmcache": false,
+    "volumeClass": "string",
+    "snplIdOfAutoSnapshot": "string",
+    "lockedAutoSnapshot": false,
+    "lockedAutoSnapshotMarkedForRemoval": false,
+    "originalExpiryTime": 0,
+    "autoSnapshotGroupId": "string",
+    "retentionLevels": [
+      0
+    ],
+    "snplIdOfSourceVolume": "string",
+    "compressionMethod": "string",
+    "dataLayout": "string",
+    "accessModeLimit": "string",
+    "secureSnapshotExpTime": 0,
+    "volumeReplicationState": "string",
+    "pairIds": [
+      "string"
+    ],
+    "replicationTimeStamp": 0,
+    "timeStampIsAccurate": false
+  }
+]</code></pre></div></div><div class="tab-content" id="responsesamples-tab-400" role="tabpanel" aria-labelledby="responsesamples-tab-400"><div class="dds__pt-2" role="presentation"><div class="content-type-box dds__mb-1"><div class="content-type-label">application/json</div></div><div class="content-description dds__mb-1"><p>Bad Request</p>
+</div><label for="responsesamples-tab-400-example" class="dds__visually-hidden">Select response example</label>
+       <select id="responsesamples-tab-400-example" class="dds__select__field" data-action="onExampleSelectChange" data-code-container-id="responsesamples-tab-400-code" aria-label="Select response example">
+        <option value="0" data-code="{}" data-description="Example">
+        Example
+      </option>
+      </select></div><div class="dds__d-flex dds__justify-content-end dds__my-2" role="presentation"><button class="dds__button dds__button--sm" data-action="copyCodeById" data-target-id="responsesamples-tab-400-code">Copy</button></div><div id="responsesamples-tab-400-code" role="presentation"><pre tabindex="0"><code>{}</code></pre></div></div><div class="tab-content" id="responsesamples-tab-401" role="tabpanel" aria-labelledby="responsesamples-tab-401"><div class="dds__pt-2" role="presentation"><div class="content-type-box dds__mb-1"><div class="content-type-label">application/json</div></div><div class="content-description dds__mb-1"><p>Unauthorized</p>
+</div><label for="responsesamples-tab-401-example" class="dds__visually-hidden">Select response example</label>
+       <select id="responsesamples-tab-401-example" class="dds__select__field" data-action="onExampleSelectChange" data-code-container-id="responsesamples-tab-401-code" aria-label="Select response example">
+        <option value="0" data-code="{}" data-description="Example">
+        Example
+      </option>
+      </select></div><div class="dds__d-flex dds__justify-content-end dds__my-2" role="presentation"><button class="dds__button dds__button--sm" data-action="copyCodeById" data-target-id="responsesamples-tab-401-code">Copy</button></div><div id="responsesamples-tab-401-code" role="presentation"><pre tabindex="0"><code>{}</code></pre></div></div><div class="tab-content" id="responsesamples-tab-403" role="tabpanel" aria-labelledby="responsesamples-tab-403"><div class="dds__pt-2" role="presentation"><div class="content-type-box dds__mb-1"><div class="content-type-label">application/json</div></div><div class="content-description dds__mb-1"><p>Forbidden</p>
+</div><label for="responsesamples-tab-403-example" class="dds__visually-hidden">Select response example</label>
+       <select id="responsesamples-tab-403-example" class="dds__select__field" data-action="onExampleSelectChange" data-code-container-id="responsesamples-tab-403-code" aria-label="Select response example">
+        <option value="0" data-code="{}" data-description="Example">
+        Example
+      </option>
+      </select></div><div class="dds__d-flex dds__justify-content-end dds__my-2" role="presentation"><button class="dds__button dds__button--sm" data-action="copyCodeById" data-target-id="responsesamples-tab-403-code">Copy</button></div><div id="responsesamples-tab-403-code" role="presentation"><pre tabindex="0"><code>{}</code></pre></div></div><div class="tab-content" id="responsesamples-tab-404" role="tabpanel" aria-labelledby="responsesamples-tab-404"><div class="dds__pt-2" role="presentation"><div class="content-type-box dds__mb-1"><div class="content-type-label">application/json</div></div><div class="content-description dds__mb-1"><p>Not Found</p>
+</div><label for="responsesamples-tab-404-example" class="dds__visually-hidden">Select response example</label>
+       <select id="responsesamples-tab-404-example" class="dds__select__field" data-action="onExampleSelectChange" data-code-container-id="responsesamples-tab-404-code" aria-label="Select response example">
+        <option value="0" data-code="{}" data-description="Example">
+        Example
+      </option>
+      </select></div><div class="dds__d-flex dds__justify-content-end dds__my-2" role="presentation"><button class="dds__button dds__button--sm" data-action="copyCodeById" data-target-id="responsesamples-tab-404-code">Copy</button></div><div id="responsesamples-tab-404-code" role="presentation"><pre tabindex="0"><code>{}</code></pre></div></div><div class="tab-content" id="responsesamples-tab-500" role="tabpanel" aria-labelledby="responsesamples-tab-500"><div class="dds__pt-2" role="presentation"><div class="content-type-box dds__mb-1"><div class="content-type-label">application/json</div></div><div class="content-description dds__mb-1"><p>Internal Server Error</p>
+</div><label for="responsesamples-tab-500-example" class="dds__visually-hidden">Select response example</label>
+       <select id="responsesamples-tab-500-example" class="dds__select__field" data-action="onExampleSelectChange" data-code-container-id="responsesamples-tab-500-code" aria-label="Select response example">
+        <option value="0" data-code="{}" data-description="Example">
+        Example
+      </option>
+      </select></div><div class="dds__d-flex dds__justify-content-end dds__my-2" role="presentation"><button class="dds__button dds__button--sm" data-action="copyCodeById" data-target-id="responsesamples-tab-500-code">Copy</button></div><div id="responsesamples-tab-500-code" role="presentation"><pre tabindex="0"><code>{}</code></pre></div></div></div></div></div></div></div>
+      </div>
+    </div></div></body></html>

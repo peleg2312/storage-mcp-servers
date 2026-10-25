@@ -1,0 +1,66 @@
+<html><head><title>PowerFlex API 3.6.0: Change the configuration of the PowerFlex Gateway (POST)</title></head><body><p></p><div><div class="api-docs-main-div dds__pl-2">
+    <div class="markdown-wrapper dds__py-3">
+      <div class="markdown-body dds__px-3"><h1 id="change-the-configuration-of-the-powerflex-gateway-post" class="anchor-scroll-top-offset">Change the configuration of the PowerFlex Gateway (POST)</h1>
+<p>You can change the PowerFlex Gateway configuration at any time using the <code>/api/updateConfiguration</code> command:<br>
+<code>https://&lt;server_ip&gt;:443/api/updateConfiguration</code></p>
+<h3 id="note" class="anchor-scroll-top-offset">Note</h3>
+<blockquote>
+<p>This command requires the <code>gatewayAdminPassword</code>.</p>
+</blockquote>
+<p>The request must contain one or more of the following parameters:</p>
+<ul>
+<li>
+<p><code>mdmAddresses</code>: List of MDM IP addresses that the PowerFlex Gateway will use to connect to the MDM. For performance improvement, place the primary MDM IP addresses before the secondary ones).</p>
+</li>
+<li>
+<p><code>mdmPort</code>: MDM port</p>
+</li>
+<li>
+<p><code>gatewayAdminPassword</code>: Password for installation manager, getting/updating the PowerFlex Gateway configuration, and adding the primary MDM</p>
+</li>
+<li>
+<p><code>systemId</code>: ID of the system configured by mdmAddresses. If systemId is left empty, it will be populated on the first invocation of /api/login. At every /api/login, the system ID value is compared to the ID of the PowerFlex cluster (MDM). If the IDs are different ( mdmAddresses points to a cluster that does not match the systemId), an error message is displayed, and all login tokens (/api/login, /api/gatewayLogin) are invalidated. None of the PowerFlex Gateway clients will be able to send requests to the MDM until one of the following happens:</p>
+<ul>
+<li><code>systemId</code> is configured to the correct value</li>
+<li><code>mdmAddresses</code> is configured to the correct IP addresses</li>
+<li><code>systemId</code> is set to an empty value. In this case, on the first invocation of /api/login, the value for systemId will be populated according to the ID of the matching mdmAddresses.<br>
+If the value for systemId is different from the configured systemId (and the configured systemId is not empty), all login tokens (/api/login, /api/gatewayLogin) are invalidated.</li>
+</ul>
+</li>
+<li>
+<p><code>snmpSamplingFrequency</code>: MDM sampling frequency in seconds. If sampling frequency is set to 0, the SNMP trap sender will be disabled, and no sampling to the MDM will be performed.</p>
+</li>
+<li>
+<p><code>snmpResendFrequency</code>: Resend frequency of SNMP traps, in minutes. If resend frequency is set to 0, all traps will be sent in every sampling.</p>
+</li>
+<li>
+<p><code>snmpTrapsReceiverIp</code>: SNMP trap receivers’ IP addresses (supports up to two comma-separated or semi-colon-separated IP addresses)</p>
+</li>
+<li>
+<p><code>snmpPort</code>: Port number used for SNMP traps</p>
+</li>
+</ul>
+<p>Example:</p>
+<pre><code class="language-json">{
+  "mdmAddresses":[
+    "10.76.60.150", "10.76.60.11"
+    ],
+  "mdmPort":"6611",
+  "gatewayAdminPassword":"1000:3ac8ab8129d71c9641e02ec809140c765f22459d78e4a5cc805f3b164d3bfb1f:02e80453f62ba3caddc42db3818a4c0e084cd50f8f681da6c2b40dec8e92af94",
+  "systemId":"7f5d8fc72a3d7f3d" ,
+  "snmpSamplingFrequency":"30",
+  "snmpResendFrequency":"0",
+  "snmpTrapsReceiverIps":["10.76.60.190","10.76.60.191"],
+  "snmpPort":"162"
+}
+</code></pre>
+</div>
+      <div class="markdown-sidebar">
+        <div class="markdown-toc-title">
+          <i class="icon dds__icon dds__icon--bookmark"></i>
+          On this page
+        </div>
+          <ul><li class="level-1"><a href="#change-the-configuration-of-the-powerflex-gateway-post" data-toc-link="">Change the configuration of the PowerFlex Gateway (POST)</a></li></ul>
+      </div>
+    </div>
+  </div></div></body></html>

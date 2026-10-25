@@ -1,0 +1,90 @@
+<html><head><title>PowerFlex API 3.6.0: Getting started</title></head><body><p></p><div><div class="api-docs-main-div dds__pl-2">
+    <div class="markdown-wrapper dds__py-3">
+      <div class="markdown-body dds__px-3"><h1 id="getting-started" class="anchor-scroll-top-offset">Getting started</h1>
+<h2 id="prerequisites-for-connecting-to-the-api" class="anchor-scroll-top-offset">Prerequisites for connecting to the API</h2>
+<p>If you installed the PowerFlex Gateway manually, ensure that the MDM connection properties are configured correctly in the PowerFlex Gateway configuration file.</p>
+<p>If the PowerFlex Installer was used to install PowerFlex, the MDM connection properties are already configured in<br>
+the PowerFlex Gateway configurtation file, and no action is required.</p>
+<p>Run a self-test to verify connectivity and correct configuration:</p>
+<ol>
+<li>From a browser: Navigate to the login page at this URL: https://&lt;GATEWAY_IP_ADDRESS&gt;/api/login.</li>
+<li>Log in as an admin user, using the MDM password.</li>
+</ol>
+<p>If a message is returned that a connection cannot be established, the PowerFlex Gateway requires configuration. To configure the Gateway, see <a href="/.3a-Configurating-the-Gateway.md">Configure the PowerFlex Gateway using the REST API</a>.</p>
+
+<blockquote>
+<h3 id="note" class="anchor-scroll-top-offset">NOTE:</h3>
+<p>A PowerFlex Gateway deployed on RHEL 6.x requires a specific version of NSS. For more information, see “Approved encryption methods” in the <a href="https://cpsdocs.dellemc.com/bundle/PF_CONF_CUST/page/GUID-9F32E9EE-6B97-439F-A7C0-2D9DD0BF9788.html">PowerFlex User Guide</a>.</p>
+</blockquote>
+
+<blockquote>
+<h3 id="note" class="anchor-scroll-top-offset">NOTE:</h3>
+<p>You can query the Gateway configuration at any time to verify whether the MDM IP addresses are configured:<br>
+<code>https://&lt;server_ip&gt;:443/api/Configuration</code></p>
+<blockquote>
+<p>For reponse details, see <a href="/.4b-get-gateway-config.md">Query the PowerFlex Gateway configuration</a>.</p>
+</blockquote>
+</blockquote>
+<h3 id="user-permissions" class="anchor-scroll-top-offset">User permissions</h3>
+<p>REST command execution is allowed according to the user role and permissions. These roles are explained in detail in the <em>PowerFlex User Roles and LDAP Usage Technical Notes</em>.</p>
+<h2 id="authentication" class="anchor-scroll-top-offset">Authentication</h2>
+<p>The PowerFlex API uses HTTP Basic authentication. To connect to the PowerFlex Gateway to configure PowerFlex, invoke an HTTP GET request that includes the PowerFlex Gateway’s IP address, followed by <code>/api/login</code>:<br>
+<code>https://&lt;GATEWAY_IP_ADDRESS&gt;/api/login</code></p>
+<p>Example:</p>
+<pre><code class="language-json">https://10.76.60.190:443/api/login
+GET
+</code></pre>
+<blockquote>
+<h3 id="note" class="anchor-scroll-top-offset">NOTE:</h3>
+<p>When running a GET command, the json is empty.</p>
+</blockquote>
+<p>Log in as an admin user, using the MDM password. A token is returned.</p>
+<p>For a list of commands requiring the <code>gatewayAdminPassword</code>, see <a href="/.3a-Configuring-the-Gateway.md">gateAdminPassword</a>.</p>
+<h3 id="user-token" class="anchor-scroll-top-offset">User token</h3>
+<p>The login request returns a token in response. This token is valid for eight hours from the time it was created, unless there has been no activity for 10 minutes or the client has sent a logout request. When working directly in REST client, the user will be asked to refresh the token.</p>
+<p>For every subsequent REST API request that does not require the gatewayAdminPassword, pass the token as the password in the HTTP Basic authentication. The user is ignored and can be empty.</p>
+<h3 id="secured-communications" class="anchor-scroll-top-offset">Secured communications</h3>
+<p>You can set the PowerFlex Gateway to work with secured communications with the MDM (POST):</p>
+<p><code>https://&lt;server&gt;:&lt;port&gt;/api/gatewaySetSecureCommunication</code></p>
+<p>Log in as an admin user, using the <code>gatewayAdminPassword</code>.</p>
+<p>The PowerFlex Gateway will be unable to connect to the MDM using non-secured communications.</p>
+<h3 id="http-token-invalidation-logout" class="anchor-scroll-top-offset">HTTP token invalidation (logout)</h3>
+<p>To invalidate the token, invoke the HTTP GET request with the URI, followed by <code>/api/logout</code>. The user is ignored and can be empty.</p>
+<p>Example:</p>
+<pre><code class="language-json">https://10.76.60.190:443/api/logout
+GET
+</code></pre>
+<h2 id="rest-api-version" class="anchor-scroll-top-offset">REST API version</h2>
+<p>The REST API version should be added to the <code>Accept</code> parameter in the header field. For example:<br>
+<code>Accept: application/ json;version=1.0</code></p>
+<p>If no <code>Accept</code> header field is present, it is assumed that the client accepts all media types and versions.</p>
+<h2 id="uris" class="anchor-scroll-top-offset">URIs</h2>
+<h3 id="general-uris" class="anchor-scroll-top-offset">General URIs</h3>
+<p><strong>POST (create) / GET all objects for a given type</strong><br>
+<code>/api/types/{type}/instances</code></p>
+<p><strong>GET by ID</strong><br>
+<code>/api/instances/{type::id}</code></p>
+<p><strong>POST a special action on an object</strong><br>
+<code>/api/instances/{type::id}/action/{actionName}</code></p>
+<p><strong>POST a special action on a given type</strong><br>
+<code>/api/types/{type}/instances/action/{actionName}</code></p>
+<p><strong>Get current API version</strong><br>
+<code>/api/version</code></p>
+<p><strong>GET all instances</strong><br>
+<code>/api/instances/</code></p>
+<h2 id="logs" class="anchor-scroll-top-offset">Logs</h2>
+<p>Logs for REST activity are saved in the following locations on the PowerFlex Gateway:</p>
+<ul>
+<li>Windows: <code>C:\Program Files\EMC\ScaleIO\Gateway\logs\api_operations.log</code></li>
+<li>Linux: <code>/opt/emc/scaleio/gateway/logs/api_operations.log</code></li>
+</ul>
+</div>
+      <div class="markdown-sidebar">
+        <div class="markdown-toc-title">
+          <i class="icon dds__icon dds__icon--bookmark"></i>
+          On this page
+        </div>
+          <ul><li class="level-1"><a href="#getting-started" data-toc-link="">Getting started</a></li><li class="level-2"><a href="#prerequisites-for-connecting-to-the-api" data-toc-link="">Prerequisites for connecting to the API</a></li><li class="level-2"><a href="#authentication" data-toc-link="">Authentication</a></li><li class="level-2"><a href="#rest-api-version" data-toc-link="">REST API version</a></li><li class="level-2"><a href="#uris" data-toc-link="">URIs</a></li><li class="level-2"><a href="#logs" data-toc-link="">Logs</a></li></ul>
+      </div>
+    </div>
+  </div></div></body></html>

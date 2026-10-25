@@ -1,0 +1,224 @@
+<html><head><title>PowerFlex API 3.6.0: SDC management</title></head><body><p></p><div><div class="api-docs-main-div dds__pl-2">
+    <div class="markdown-wrapper dds__py-3">
+      <div class="markdown-body dds__px-3"><h1 id="sdc-management" class="anchor-scroll-top-offset">SDC management</h1>
+<h2 id="list-the-volumes-mapped-to-an-sdc" class="anchor-scroll-top-offset">List the volumes mapped to an SDC</h2>
+<p>In order to list the volumes mapped to an SDC, you must first retrieve the SDC ID by querying the SDC IP address. In this example the IP address is 192.168.161.56.:</p>
+<pre><code class="language-json">curl -k -r POST -u &lt;user&gt;:&lt;token&gt; -H "Content-Type: application/json" 'https://&lt;PowerFlex-GW-IP&gt;/api/types/Sdc/instances/action/queryIdByKey' -d '
+{
+  "ip":"192.168.161.56"
+}'
+</code></pre>
+<p>The 200 response contains the SDC ID:</p>
+<pre><code class="language-json">{
+  "id":"dbb1e85c00000003"
+}
+</code></pre>
+<p>Use the SDC ID from the previous step as the URI path parameter in the following query to list the details of each mapped volume for the SDC:</p>
+<pre><code class="language-json">curl -k -r POST -u &lt;user&gt;:&lt;token&gt; 'https://&lt;PowerFlex-GW-IP&gt;/api/instances/Sdc::dbb1e85c00000003/relationships/Volume'
+</code></pre>
+<p>The 200 response includes key parameters for the SDC, mapped volumes, and references to statistics, V-Tree, and Storage Pool:</p>
+<pre><code class="language-json">[
+  {
+    "originalExpiryTime": 0,
+    "retentionLevels": [],
+    "mappedSdcInfo": [
+      {
+      "isDirectBufferMapping": false,
+      "limitIops": 0,
+      "limitBwInMbps": 0,
+      "sdcId": "dbb1e85c00000003",
+      "sdcName": "sdc1",
+      "sdcIp": "192.168.161.56",
+      "accessMode": "ReadWrite"
+      }],
+    "snplIdOfSourceVolume": null,
+    "volumeReplicationState": "UnmarkedForReplication",
+    "replicationJournalVolume": false,
+    "replicationTimeStamp": 0,
+    "storagePoolId": "fe9ddde400000001",
+    "dataLayout": "FineGranularity",
+    "vtreeId": "0d4de0b60000000c",
+    "sizeInKb": 268435456,
+    "volumeType": "ThinProvisioned",
+    "consistencyGroupId": null,
+    "ancestorVolumeId": null,
+    "notGenuineSnapshot": false,
+    "accessModeLimit": "ReadWrite",
+    "secureSnapshotExpTime": 0,
+    "useRmcache": false,
+    "managedBy": "ScaleIO",
+    "lockedAutoSnapshot": false,
+    "lockedAutoSnapshotMarkedForRemoval": false,
+    "autoSnapshotGroupId": null,
+    "compressionMethod": "None",
+    "pairIds": null,
+    "timeStampIsAccurate": false,
+    "snplIdOfAutoSnapshot": null,
+    "creationTime": 1614795858,
+    "name": "asmdata",
+    "id": "dcf7381200000010",
+    "links": [
+      {   
+        "rel": "self", "href": "/api/instances/Volume::dcf7381200000010"},
+      { 
+        "rel": "/api/Volume/relationship/Statistics", "href": "/api/instances/Volume::dcf7381200000010/relationships/Statistics"},
+      {
+         "rel": "/api/parent/relationship/vtreeId", "href": "/api/instances/VTree::0d4de0b60000000c"},
+      {
+         "rel": "/api/parent/relationship/storagePoolId", "href": "/api/instances/StoragePool::fe9ddde400000001"}
+        ]
+</code></pre>
+<h2 id="list-the-volumes-in-a-v-tree" class="anchor-scroll-top-offset">List the volumes in a V-Tree</h2>
+<p>Run the following to list the volumes in a V-Tree:</p>
+<pre><code class="language-json">curl -k -r GET -u &lt;user&gt;:&lt;token&gt; 'https://&lt;PowerFlex-GW-IP&gt; /api/instances/VTree::0d4de0b60000000c/relationships/Volume'
+</code></pre>
+<p>The response lists the volumes that make up the selected V-Tree. In this example the volumes are ‘asmdata’ and ‘asmdata_snap1’:</p>
+<pre><code class="language-json">[
+  {
+    "originalExpiryTime": 0,
+    "retentionLevels": [],
+    "mappedSdcInfo": null,
+    "snplIdOfSourceVolume": null,
+    "volumeReplicationState": "UnmarkedForReplication",
+    "replicationJournalVolume": false,
+    "replicationTimeStamp": 0,
+    "storagePoolId": "fe9ddde400000001",
+    "dataLayout": "FineGranularity",
+    "vtreeId": "0d4de0b60000000c",
+    "sizeInKb": 268435456,
+    "volumeType": "Snapshot",
+    "consistencyGroupId": "ff1940a600000001",
+    "ancestorVolumeId": "dcf7381200000010",
+    "notGenuineSnapshot": false,
+    "accessModeLimit": "ReadWrite",
+    "secureSnapshotExpTime": 0,
+    "useRmcache": false,
+    "managedBy": "ScaleIO",
+    "lockedAutoSnapshot": false,
+    "lockedAutoSnapshotMarkedForRemoval": false,
+    "autoSnapshotGroupId": null,
+    "compressionMethod": "None",
+    "pairIds": null,
+    "timeStampIsAccurate": false,
+    "snplIdOfAutoSnapshot": null,
+    "creationTime": 1614880706,
+    "name": "asmdata_snap1",
+    "id": "dcf7382b0000000f",
+    "links": [
+        {
+            "rel": "self",
+            "href": "/api/instances/Volume::dcf7382b0000000f"
+        },
+        {
+            "rel": "/api/Volume/relationship/Statistics",
+            "href": "/api/instances/Volume::dcf7382b0000000f/relationships/Statistics"
+        },
+        {
+            "rel": "/api/parent/relationship/ancestorVolumeId",
+            "href": "/api/instances/Volume::dcf7381200000010"
+        },
+        {
+            "rel": "/api/parent/relationship/vtreeId",
+            "href": "/api/instances/VTree::0d4de0b60000000c"
+        },
+        {
+            "rel": "/api/parent/relationship/storagePoolId",
+            "href": "/api/instances/StoragePool::fe9ddde400000001"
+        }
+      ]
+    },
+    {
+    "originalExpiryTime": 0,
+    "retentionLevels": [],
+    "mappedSdcInfo": [
+        {
+          "isDirectBufferMapping": false,
+          "limitIops": 0,
+          "limitBwInMbps": 0,
+          "sdcId": "dbb1e85c00000003",
+          "sdcName": "sdc1",
+          "sdcIp": "192.168.161.56",
+          "accessMode": "ReadWrite"
+        }
+      ],
+    "snplIdOfSourceVolume": null,
+    "volumeReplicationState": "UnmarkedForReplication",
+    "replicationJournalVolume": false,
+    "replicationTimeStamp": 0,
+    "storagePoolId": "fe9ddde400000001",
+    "dataLayout": "FineGranularity",
+    "vtreeId": "0d4de0b60000000c",
+    "sizeInKb": 268435456,
+    "volumeType": "ThinProvisioned",
+    "consistencyGroupId": null,
+    "ancestorVolumeId": null,
+    "notGenuineSnapshot": false,
+    "accessModeLimit": "ReadWrite",
+    "secureSnapshotExpTime": 0,
+    "useRmcache": false,
+    "managedBy": "ScaleIO",
+    "lockedAutoSnapshot": false,
+    "lockedAutoSnapshotMarkedForRemoval": false,
+    "autoSnapshotGroupId": null,
+    "compressionMethod": "None",
+    "pairIds": null,
+    "timeStampIsAccurate": false,
+    "snplIdOfAutoSnapshot": null,
+    "creationTime": 1614795858,
+    "name": "asmdata",
+    "id": "dcf7381200000010",
+    "links": [
+        {
+            "rel": "self",
+            "href": "/api/instances/Volume::dcf7381200000010"
+        },
+        {
+            "rel": "/api/Volume/relationship/Statistics",
+            "href": "/api/instances/Volume::dcf7381200000010/relationships/Statistics"
+        },
+        {
+            "rel": "/api/parent/relationship/vtreeId",
+            "href": "/api/instances/VTree::0d4de0b60000000c"
+        },
+        {
+            "rel": "/api/parent/relationship/storagePoolId",
+            "href": "/api/instances/StoragePool::fe9ddde400000001"
+        }]
+    }]
+</code></pre>
+<h2 id="remove-an-sdc" class="anchor-scroll-top-offset">Remove an SDC</h2>
+<p>To remove an SDC from the PowerFlex system, you must first retrieve the SDC ID by running a query using its IP address. In this example the IP address is 172.17.161.130:</p>
+<pre><code class="language-json">curl -k -r POST -u &lt;user&gt;:&lt;token&gt; -H "Content-Type: application/json" 'https://&lt;PowerFlex-GW-IP&gt;/api/types/Sdc/instances/action/queryIdByKey' -d '
+{
+  "ip":"172.17.161.130"
+}'
+</code></pre>
+<p>The 200 response returns the SDC ID:</p>
+<pre><code class="language-json">{
+  "id":"dbb1e85b0000000e"
+}
+</code></pre>
+<h2 id="check-if-volumes-are-mapped-to-the-sdc" class="anchor-scroll-top-offset">Check if volumes are mapped to the SDC</h2>
+<p>Before removing the SDC, verify there are no volumes mapped to the SDC:</p>
+<pre><code class="language-json">curl -k -r GET -u &lt;user&gt;:&lt;token&gt; 'https://&lt;PowerFlex-GW-IP&gt; /api/instances/Sdc::dbb1e85b0000000e/relationships/Volume'
+</code></pre>
+<p>If the 200 response is empty, it is an indication that there are no volumes mapped to the SDC.</p>
+<p>After stopping the SDC service, remove the SDC from the PowerFlex system:</p>
+<pre><code class="language-json">curl -k -r POST -H "Content-Type: application/json" -u &lt;user&gt;:&lt;token&gt; 'https:// &lt;PowerFlex-GW-IP&gt; /api/instances/Sdc::dbb1e85b0000000e/action/removeSdc' -d '
+{
+  "id":"dbb1e85b0000000e"
+}'
+</code></pre>
+<p>The 200 response is empty and the SDC is successfully removed:</p>
+<pre><code class="language-json">{}
+</code></pre>
+</div>
+      <div class="markdown-sidebar">
+        <div class="markdown-toc-title">
+          <i class="icon dds__icon dds__icon--bookmark"></i>
+          On this page
+        </div>
+          <ul><li class="level-1"><a href="#sdc-management" data-toc-link="">SDC management</a></li><li class="level-2"><a href="#list-the-volumes-mapped-to-an-sdc" data-toc-link="">List the volumes mapped to an SDC</a></li><li class="level-2"><a href="#list-the-volumes-in-a-v-tree" data-toc-link="">List the volumes in a V-Tree</a></li><li class="level-2"><a href="#remove-an-sdc" data-toc-link="">Remove an SDC</a></li><li class="level-2"><a href="#check-if-volumes-are-mapped-to-the-sdc" data-toc-link="">Check if volumes are mapped to the SDC</a></li></ul>
+      </div>
+    </div>
+  </div></div></body></html>

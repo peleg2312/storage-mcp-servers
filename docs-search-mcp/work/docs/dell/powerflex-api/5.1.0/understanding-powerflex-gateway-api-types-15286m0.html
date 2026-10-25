@@ -1,0 +1,83 @@
+<html><head><title>PowerFlex API 5.1.0: Understanding PowerFlex gateway API types</title></head><body><p>Tasks > PowerFlex Block API tasks (erasure coding + mirroring)</p><div><div class="api-docs-main-div dds__pl-2">
+    <div class="markdown-wrapper dds__py-3">
+      <div class="markdown-body dds__px-3"><h1 id="understanding-powerflex-gateway-api-types" class="anchor-scroll-top-offset">Understanding PowerFlex gateway API types</h1>
+<p>PowerFlex gateway hosts two distinct REST API services, differentiated by their URI prefixes:</p>
+<ul>
+<li><strong>PowerFlex REST API</strong>: Uses <code>/api/</code> prefix</li>
+<li><strong>PowerFlex Installation Manager (IM) REST API</strong>: Uses <code>/im/</code> prefix</li>
+</ul>
+<h3 id="distinction-between-powerflex-rest-api-and-installation-manager-im-rest-api" class="anchor-scroll-top-offset">Distinction Between PowerFlex REST API and Installation Manager (IM) REST API</h3>
+<table>
+<thead>
+<tr>
+<th>Aspect</th>
+<th>PowerFlex REST API (<code>/api/</code>)</th>
+<th>IM REST API (<code>/im/</code>)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Purpose</strong></td>
+<td>Exposes MDM functionality using REST (similar to SCLI)</td>
+<td>Manages operations including install, upgrade, and OS patching)</td>
+</tr>
+<tr>
+<td><strong>Scope</strong></td>
+<td>Single object or action per request</td>
+<td>Primarily asynchronous (HTTP 202); but some endpoints are synchronous (for example, POST /im/types/Configuration/instances returns the Configuration JSON directly)</td>
+</tr>
+<tr>
+<td><strong>Execution model</strong></td>
+<td>Synchronous - returns result immediately</td>
+<td>Asynchronous—returns HTTP 202 for long-running operations</td>
+</tr>
+<tr>
+<td><strong>Backend communication</strong></td>
+<td>Protocol Buffers (protobuf) over TCP to MDM</td>
+<td>SSH or LIA to target cluster nodes and MDM</td>
+</tr>
+<tr>
+<td><strong>Data model</strong></td>
+<td>In-memory cached MDM model (auto-polled)</td>
+<td>Declarative Configuration JSON (client-provided)</td>
+</tr>
+<tr>
+<td><strong>Statefulness</strong></td>
+<td>Stateless—requests can route to any pod</td>
+<td>Stateful—operation state persists on the initiating pod</td>
+</tr>
+</tbody>
+</table>
+<h3 id="authentication-for-powerflex-gateway-apis" class="anchor-scroll-top-offset">Authentication for PowerFlex Gateway APIs</h3>
+<p>Both <code>/api/</code> and <code>/im/</code> endpoints use unified PFMP (PowerFlex Management Platform) cluster authentication using Keycloak. There is no authentication difference between the two API types.</p>
+<p><strong>Authentication Methods</strong>:</p>
+<h4 id="method-1-keycloak-token-authentication" class="anchor-scroll-top-offset">Method 1: Keycloak Token Authentication</h4>
+<p><strong>Login endpoint</strong>:</p>
+<pre><code class="language-http">POST /rest/auth/login
+Content-Type: application/json
+
+{
+  "username": "admin",
+  "password": "&lt;password&gt;"
+}
+</code></pre>
+<p><strong>Response</strong>: Returns a Keycloak access token</p>
+<p><strong>Subsequent requests</strong>: Use the same Bearer token for both <code>/api/</code> and <code>/im/</code> endpoints:</p>
+<pre><code class="language-http">Authorization: Bearer &lt;access_token&gt;
+</code></pre>
+<h4 id="method-2-legacy-login-endpoint-backward-compatible" class="anchor-scroll-top-offset">Method 2: Legacy Login Endpoint (Backward Compatible)</h4>
+<p><strong>Login Endpoint</strong>:</p>
+<pre><code class="language-http">GET /api/login
+Authorization: Basic &lt;base64-encoded-credentials&gt;
+</code></pre>
+<p><code>/api/login</code> authenticates against Keycloak (PFMP) and returns a token that works for both <code>/api/</code> and <code>/im/</code></p>
+</div>
+      <div class="markdown-sidebar">
+        <div class="markdown-toc-title">
+          <i class="icon dds__icon dds__icon--bookmark"></i>
+          On this page
+        </div>
+          <ul><li class="level-1"><a href="#understanding-powerflex-gateway-api-types" data-toc-link="">Understanding PowerFlex gateway API types</a></li></ul>
+      </div>
+    </div>
+  </div></div></body></html>

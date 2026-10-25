@@ -1,0 +1,332 @@
+<html><head><title>PowerFlex API 3.6.0: Expand a cluster</title></head><body><p></p><div><div class="api-docs-main-div dds__pl-2">
+    <div class="markdown-wrapper dds__py-3">
+      <div class="markdown-body dds__px-3"><h1 id="expand-a-cluster" class="anchor-scroll-top-offset">Expand a cluster</h1>
+<h2 id="overview" class="anchor-scroll-top-offset">Overview</h2>
+<p>The workflow expands an existing PowerFlex cluster by submitting a complete cluster topology to the Installation Manager.</p>
+<p>The Installation Manager compares the submitted topology with the existing cluster configuration and installs only the newly added resources. The operation is asynchronous and must be monitored until it completes.</p>
+<hr>
+<h2 id="purpose" class="anchor-scroll-top-offset">Purpose</h2>
+<p>The expand a cluster workflow allows administrators to add one or more storage nodes to an existing PowerFlex cluster.</p>
+<p>The workflow performs prerequisite validation, verifies service readiness, submits the updated cluster configuration to the Installation Manager (IM), monitors deployment progress, and validates the successful completion of the workflow.</p>
+<hr>
+<h2 id="prerequisites" class="anchor-scroll-top-offset">Prerequisites</h2>
+<p>Before starting the expand a workflow cluster, ensure the following:</p>
+<ul>
+<li>There are valid PowerFlex Manager credentials available.</li>
+<li>An authentication token is acquired.</li>
+<li>There are no active vtree migrations running.</li>
+<li>The Lifecycle Management (ALCM) service is healthy and available.</li>
+<li>The target protection domain exists.</li>
+<li>There are no conflicting deployment or upgrade jobs are currently running.</li>
+<li>The configuration details for new nodes are available.</li>
+</ul>
+<hr>
+<h1 id="workflow-phases" class="anchor-scroll-top-offset">Workflow phases</h1>
+<h2 id="phase-1-precheck" class="anchor-scroll-top-offset">Phase 1: Precheck</h2>
+<h3 id="11-validate-authentication-by-running" class="anchor-scroll-top-offset">1.1 Validate authentication by running:</h3>
+<pre><code class="language-http">POST /rest/v1/tokens
+</code></pre>
+<p><strong>Purpose</strong>:</p>
+<ul>
+<li>Acquires a bearer token for all the subsequent requests.</li>
+</ul>
+<h3 id="12-validate-no-active-vtree-migrations-are-in-progress-by-running" class="anchor-scroll-top-offset">1.2 Validate no active Vtree migrations are in progress by running:</h3>
+<pre><code class="language-http">GET /rest/v1/mirror-vtrees
+</code></pre>
+<p>Purpose: Verifies that no migration operations are currently active.</p>
+<p><strong>Failure condition:</strong></p>
+<ul>
+<li>Migration exists.</li>
+</ul>
+<p><strong>Result:</strong></p>
+<ul>
+<li>Workflow is blocked until migration completes.</li>
+</ul>
+<h3 id="13-validate-life-cycle-management-readiness-by-running" class="anchor-scroll-top-offset">1.3 Validate life cycle management readiness by running:</h3>
+<pre><code class="language-http">GET /app-ready?services=alcm
+</code></pre>
+<p><strong>Purpose</strong>:</p>
+<ul>
+<li>Verifies the Installation Manager services are operational.</li>
+</ul>
+<p><strong>Failure condition:</strong></p>
+<ul>
+<li>Service is unavailable.</li>
+</ul>
+<p><strong>Result:</strong></p>
+<ul>
+<li>Workflow is blocked.</li>
+</ul>
+<h3 id="14-retrieve-protection-domains-by-running" class="anchor-scroll-top-offset">1.4 Retrieve protection domains by running:</h3>
+<pre><code class="language-http">GET /api/types/ProtectionDomain/instances
+</code></pre>
+<p><strong>Purpose</strong>:</p>
+<ul>
+<li>Loads available protection domains and validates the target placement.</li>
+</ul>
+<hr>
+<h2 id="phase-2-initiation" class="anchor-scroll-top-offset">Phase 2: Initiation</h2>
+<h3 id="21-check-existing-deployment-jobs-by-running" class="anchor-scroll-top-offset">2.1 Check existing deployment jobs by running:</h3>
+<pre><code class="language-http">POST /Api/V1/ui/jobs/getjoblist
+</code></pre>
+<p>Purpose: Verifies that no deployment or upgrade jobs are running.</p>
+<p><strong>Failure Condition</strong></p>
+<ul>
+<li>An active job is detected.</li>
+</ul>
+<p><strong>Result</strong></p>
+<ul>
+<li>You are warned that the workflow is prevented from starting.</li>
+</ul>
+<h3 id="22-upload-the-required-powerflex-core-rpm-bundles-to-the-installation-manager-only-once-per-bundle-by-running" class="anchor-scroll-top-offset">2.2 Upload the required PowerFlex core RPM bundles to the Installation Manager only once per bundle by running:</h3>
+<pre><code class="language-curl">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;-H "Authorization: Bearer $MNO_TOKEN" \
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;-F "file=@&lt;/path/to/core-rpms-or-bundle.rpm&gt;" \
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"https://&lt;PFMP_IP&gt;/im/types/installationPackages/instances/actions/uploadPackages"
+</code></pre>
+<p><strong>Purpose</strong>:</p>
+<ul>
+<li>Expands a cluster.</li>
+</ul>
+<h3 id="23-upload-the-csv-topology-file-with-the-new-nodes-by-running" class="anchor-scroll-top-offset">2.3 Upload the CSV topology file with the new nodes by running:</h3>
+<pre><code class="language-curl">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;-H "Authorization: Bearer $MNO_TOKEN" \
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;-F "file=@&lt;/path/to/topology.csv&gt;" \
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"https://&lt;PFMP_IP&gt;/im/types/Configuration/instances/actions/parseFromCSV"
+</code></pre>
+<p><strong>Purpose</strong>:</p>
+<ul>
+<li>Prepares the CSV file with the additional nodes.</li>
+</ul>
+<p><strong>Result</strong>:</p>
+<ul>
+<li>The response is the parsed configuration JSON that you will pass into the installation call below <code>(&lt;PREPARED_CSV_DICT_JSON&gt;)</code>in step 2.4.</li>
+</ul>
+<hr>
+<h3 id="24-upload-the-csv-file-and-ensure-it-passes-the-validation-checks-by-running" class="anchor-scroll-top-offset">2.4 Upload the CSV file and ensure it passes the validation checks by running:</h3>
+<pre><code class="language-curl">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;-H "Authorization: Bearer $MNO_TOKEN" \
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;-H "Content-Type: application/json" \
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;-X POST \
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"https://&lt;PFMP_IP&gt;/im/types/Configuration/actions/install?runAllPhases=true&amp;clearProcess=true&amp;noSecurityBootstrap=false&amp;enableDeviceHardwareChecks=true&amp;forceDevic
+&nbsp;&nbsp;&nbsp;eTakeover=true" \
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;-d '&lt;PREPARED_CSV_DICT_JSON&gt;'
+</code></pre>
+<p><strong>Note</strong>:</p>
+<ul>
+<li>
+<p>Enable the device takeover command only if the target disks were previously in use by a PowerFlex cluster.</p>
+</li>
+<li>
+<p>Replace <code>&lt;PFMP_IP&gt;</code>, the file paths, and <code>(&lt;PREPARED_CSV_DICT_JSON&gt;)</code>with the specific values for your environment.</p>
+</li>
+<li>
+<p><code>(&lt;PREPARED_CSV_DICT_JSON&gt;)</code>is typically the JSON payload returned by the<code>parseFromCSV</code> API call, either unchanged or with the minimal modifications as you require.</p>
+</li>
+</ul>
+<hr>
+<h2 id="phase-3-run" class="anchor-scroll-top-offset">Phase 3: Run</h2>
+<h3 id="31-run-the-installation-operation-by-running" class="anchor-scroll-top-offset">3.1 Run the installation operation by running:</h3>
+<pre><code>POST /im/types/Configuration/actions/install
+</code></pre>
+<p>The Installation Manager completes the following tasks as part of the installation operation:</p>
+<ol>
+<li>Compares the submitted topology to the current topology.</li>
+<li>Identifies any new nodes.</li>
+<li>Performs hardware validation.</li>
+<li>Configures security trust.</li>
+<li>Claims devices.</li>
+<li>Expands the cluster.</li>
+</ol>
+<h4 id="expected-response" class="anchor-scroll-top-offset">Expected response:</h4>
+<pre><code class="language-http">202 Accepted
+</code></pre>
+<p>The workflow continues asynchronously.</p>
+<hr>
+<h2 id="phase-4-monitor" class="anchor-scroll-top-offset">Phase 4: Monitor</h2>
+<h3 id="41-monitor-active-jobs-by-running" class="anchor-scroll-top-offset">4.1 Monitor active jobs by running:</h3>
+<pre><code class="language-http">GET /pfblock/ps/http/jobs/count
+</code></pre>
+<h4 id="purpose" class="anchor-scroll-top-offset">Purpose</h4>
+<p>Determines whether the workflow is still running.</p>
+<h4 id="status" class="anchor-scroll-top-offset">Status</h4>
+<pre><code class="language-text">&gt; 0 = Running
+0 = Complete
+</code></pre>
+<h3 id="42-monitor-workflow-progress" class="anchor-scroll-top-offset">4.2 Monitor workflow progress</h3>
+<pre><code class="language-http">GET /pfblock/ps/jetty/observe
+</code></pre>
+<h4 id="purpose" class="anchor-scroll-top-offset">Purpose</h4>
+<p>Streams step-level workflow updates.</p>
+<h4 id="returns" class="anchor-scroll-top-offset">Returns</h4>
+<ul>
+<li>Current phase</li>
+<li>Current step</li>
+<li>Status</li>
+<li>Percent complete</li>
+</ul>
+<h3 id="43-monitor-critical-alerts-by-running" class="anchor-scroll-top-offset">4.3 Monitor critical alerts by running:</h3>
+<pre><code class="language-http">GET /rest/v1/alerts
+</code></pre>
+<h4 id="purpose" class="anchor-scroll-top-offset">Purpose</h4>
+<p>Detect deployment-related critical conditions.</p>
+<h4 id="failure-condition" class="anchor-scroll-top-offset">Failure condition</h4>
+<ul>
+<li>Active critical alert detected.</li>
+</ul>
+<h3 id="44-monitor-events-by-running" class="anchor-scroll-top-offset">4.4 Monitor events by running:</h3>
+<pre><code class="language-http">GET /rest/v1/events
+</code></pre>
+<h4 id="purpose" class="anchor-scroll-top-offset">Purpose</h4>
+<ul>
+<li>Detects success and failure events.</li>
+<li>Captures workflow completion messages.</li>
+</ul>
+<hr>
+<h2 id="phase-5-post-process" class="anchor-scroll-top-offset">Phase 5: Post-process</h2>
+<h3 id="51-update-cluster-inventory" class="anchor-scroll-top-offset">5.1 Update cluster inventory</h3>
+<p>Following successful completion:</p>
+<ul>
+<li>New storage nodes are registered.</li>
+<li>Devices are assigned to the specified protection domain.</li>
+<li>Storage pools are updated.</li>
+<li>Cluster topology reflects newly added resources.</li>
+</ul>
+<hr>
+<h2 id="phase-6-validate" class="anchor-scroll-top-offset">Phase 6: Validate</h2>
+<h3 id="61-validate-workflow-completion" class="anchor-scroll-top-offset">6.1 Validate workflow completion</h3>
+<p>Perform the following validation checks:</p>
+<ul>
+<li>Job count equals <code>0</code>.</li>
+<li>No active critical alerts exist.</li>
+<li>Successful completion event recorded.</li>
+<li>New storage nodes visible in cluster inventory.</li>
+<li>Protection domain membership confirmed.</li>
+<li>Storage devices operational.</li>
+</ul>
+<hr>
+<h1 id="expected-outcome" class="anchor-scroll-top-offset">Expected outcome</h1>
+<p>Upon successful completion:</p>
+<ul>
+<li>The requested storage node(s) are added to the existing PowerFlex cluster.</li>
+<li>The Installation Manager reports successful completion.</li>
+<li>There are no active critical alerts.</li>
+<li>New resources are available for normal operation.</li>
+<li>The cluster topology reflects the updated configuration.</li>
+</ul>
+<hr>
+<h1 id="error-handling" class="anchor-scroll-top-offset">Error handling</h1>
+<h2 id="an-active-migration-is-detected" class="anchor-scroll-top-offset">An active migration is detected</h2>
+<h3 id="cause" class="anchor-scroll-top-offset">Cause</h3>
+<p>An existing vtree migration is currently in progress.</p>
+<h3 id="user-impact" class="anchor-scroll-top-offset">User impact</h3>
+<p>The cluster expansion cannot start.</p>
+<h3 id="recovery" class="anchor-scroll-top-offset">Recovery</h3>
+<p>Wait for the migration to complete and retry the workflow.</p>
+<h3 id="returned-status" class="anchor-scroll-top-offset">Returned status</h3>
+<pre><code class="language-text">Workflow Blocked
+</code></pre>
+<hr>
+<h2 id="a-life-cycle-management-alcm-service-is-unavailable" class="anchor-scroll-top-offset">A life cycle management (ALCM) service is unavailable</h2>
+<h3 id="cause" class="anchor-scroll-top-offset">Cause</h3>
+<p>The Installation Manager service is unavailable.</p>
+<h3 id="user-impact" class="anchor-scroll-top-offset">User impact</h3>
+<p>The configuration cannot be submitted.</p>
+<h3 id="recovery" class="anchor-scroll-top-offset">Recovery</h3>
+<p>Restore the service health and retry the workflow.</p>
+<h3 id="returned-status" class="anchor-scroll-top-offset">Returned status</h3>
+<pre><code class="language-text">Service Unavailable
+</code></pre>
+<hr>
+<h2 id="an-existing-deployment-job-is-running" class="anchor-scroll-top-offset">An existing deployment job is running</h2>
+<h3 id="cause" class="anchor-scroll-top-offset">Cause</h3>
+<p>Another deployment or upgrade workflow is already running.</p>
+<h3 id="user-impact" class="anchor-scroll-top-offset">User impact</h3>
+<p>The expand operation is denied.</p>
+<h3 id="recovery" class="anchor-scroll-top-offset">Recovery</h3>
+<p>Wait for the active job to complete and rerun the workflow.</p>
+<h3 id="returned-status" class="anchor-scroll-top-offset">Returned status</h3>
+<pre><code class="language-text">Request Blocked
+</code></pre>
+<hr>
+<h2 id="a-critical-alert-is-generated" class="anchor-scroll-top-offset">A critical alert is generated</h2>
+<h3 id="cause" class="anchor-scroll-top-offset">Cause</h3>
+<p>A deployment issue detected during execution.</p>
+<h3 id="user-impact" class="anchor-scroll-top-offset">User impact</h3>
+<p>The workflow may not complete successfully.</p>
+<h3 id="recovery" class="anchor-scroll-top-offset">Recovery</h3>
+<p>Review the alert details and remediate before retrying.</p>
+<h3 id="returned-status" class="anchor-scroll-top-offset">Returned status</h3>
+<pre><code class="language-text">Warning
+or
+Failed Deployment
+</code></pre>
+<hr>
+<h2 id="an-installation-manager-failure" class="anchor-scroll-top-offset">An Installation Manager failure</h2>
+<h3 id="cause" class="anchor-scroll-top-offset">Cause</h3>
+<p>A configuration, network, hardware, or deployment failure.</p>
+<h3 id="user-impact" class="anchor-scroll-top-offset">User impact</h3>
+<p>A cluster expansion remains incomplete.</p>
+<h3 id="recovery" class="anchor-scroll-top-offset">Recovery</h3>
+<p>Review the Installation Manager logs using the transaction ID (<code>x-id</code>) and rerun the workflow after corrective actions are complete.</p>
+<h3 id="returned-status" class="anchor-scroll-top-offset">Returned status</h3>
+<pre><code class="language-text">Failed
+</code></pre>
+<h2 id="related-apis" class="anchor-scroll-top-offset">Related APIs:</h2>
+<table>
+<thead>
+<tr>
+<th>Purpose</th>
+<th>API</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Authentication</td>
+<td><code>POST /rest/v1/tokens</code></td>
+</tr>
+<tr>
+<td>Check active migrations</td>
+<td><code>GET /rest/v1/mirror-vtrees</code></td>
+</tr>
+<tr>
+<td>Check ALCM readiness</td>
+<td><code>GET /app-ready?services=alcm</code></td>
+</tr>
+<tr>
+<td>Retrieve protection domains</td>
+<td><code>GET /api/types/ProtectionDomain/instances</code></td>
+</tr>
+<tr>
+<td>Check running jobs</td>
+<td><code>POST /Api/V1/ui/jobs/getjoblist</code></td>
+</tr>
+<tr>
+<td>Submit extend cluster workflow</td>
+<td><code>POST /im/types/Configuration/actions/install</code></td>
+</tr>
+<tr>
+<td>Monitor active jobs</td>
+<td><code>GET /pfblock/ps/http/jobs/count</code></td>
+</tr>
+<tr>
+<td>Monitor workflow progress</td>
+<td><code>GET /pfblock/ps/jetty/observe</code></td>
+</tr>
+<tr>
+<td>Check critical alerts</td>
+<td><code>GET /rest/v1/alerts</code></td>
+</tr>
+<tr>
+<td>Monitor system events</td>
+<td><code>GET /rest/v1/events</code></td>
+</tr>
+</tbody>
+</table>
+</div>
+      <div class="markdown-sidebar">
+        <div class="markdown-toc-title">
+          <i class="icon dds__icon dds__icon--bookmark"></i>
+          On this page
+        </div>
+          <ul><li class="level-1"><a href="#expand-a-cluster" data-toc-link="">Expand a cluster</a></li><li class="level-2"><a href="#overview" data-toc-link="">Overview</a></li><li class="level-2"><a href="#purpose" data-toc-link="">Purpose</a></li><li class="level-2"><a href="#prerequisites" data-toc-link="">Prerequisites</a></li><li class="level-1"><a href="#workflow-phases" data-toc-link="">Workflow phases</a></li><li class="level-2"><a href="#phase-1-precheck" data-toc-link="">Phase 1: Precheck</a></li><li class="level-2"><a href="#phase-2-initiation" data-toc-link="">Phase 2: Initiation</a></li><li class="level-2"><a href="#phase-3-run" data-toc-link="">Phase 3: Run</a></li><li class="level-2"><a href="#phase-4-monitor" data-toc-link="">Phase 4: Monitor</a></li><li class="level-2"><a href="#phase-5-post-process" data-toc-link="">Phase 5: Post-process</a></li><li class="level-2"><a href="#phase-6-validate" data-toc-link="">Phase 6: Validate</a></li><li class="level-1"><a href="#expected-outcome" data-toc-link="">Expected outcome</a></li><li class="level-1"><a href="#error-handling" data-toc-link="">Error handling</a></li><li class="level-2"><a href="#an-active-migration-is-detected" data-toc-link="">An active migration is detected</a></li><li class="level-2"><a href="#a-life-cycle-management-alcm-service-is-unavailable" data-toc-link="">A life cycle management (ALCM) service is unavailable</a></li><li class="level-2"><a href="#an-existing-deployment-job-is-running" data-toc-link="">An existing deployment job is running</a></li><li class="level-2"><a href="#a-critical-alert-is-generated" data-toc-link="">A critical alert is generated</a></li><li class="level-2"><a href="#an-installation-manager-failure" data-toc-link="">An Installation Manager failure</a></li><li class="level-2"><a href="#related-apis" data-toc-link="">Related APIs:</a></li></ul>
+      </div>
+    </div>
+  </div></div></body></html>

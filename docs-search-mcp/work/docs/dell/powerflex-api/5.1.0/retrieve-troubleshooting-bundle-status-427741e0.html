@@ -1,0 +1,300 @@
+<html><head><title>PowerFlex API 5.1.0: Retrieve troubleshooting bundle status</title></head><body><p>Erasure coding APIS > PowerFlex Manager (AsmManager) REST API > Troubleshooting Bundle</p><div><div class="api-docs-main-div dds__pl-2">
+      <div class="api-doc-container">
+        <div class="api__doc__left-section dds__p-3">
+   <div class="markdown-renderer">
+          <h4 class="dds__font-weight-bold dds__pb-2">Retrieve troubleshooting bundle status</h4>       
+          <div><p>Retrieves the current status of a troubleshooting bundle creation process.</p>
+</div> 
+          
+    </div>
+
+<div class="api_docs_collapsible dds__mb-3 expanded" id="request"><div class="api_docs_collapsible-header dds__p-3" data-action="toggleCollapse" data-target-id="request" role="button" tabindex="0" aria-controls="request-body" aria-expanded="true"><span class="title">Requests</span><span class="icon icon-collapsed dds__icon dds__icon--chevron-right dds__mt-1 dds__ml-auto"></span><span class="icon icon-expanded dds__icon dds__icon--chevron-down dds__mt-1 dds__ml-auto"></span></div><div class="api_docs_collapsible-body" id="request-body"><div class="static-frame-request-section"><div class="headers-section"><h5 class="title">Request Body</h5><div class="static-frame-request-section"><div class="" id="primitive-bundleDest">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="bundleDest">bundleDest</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      <span class="required">Required</span>
+    </div>
+    
+    
+    
+    
+    <div class="desc"><p>The destination path or identifier where the troubleshooting bundle is being created.</p>
+</div>
+    
+    
+  </div>
+</div></div></div></div></div></div></div>
+
+       <div class="api_docs_collapsible dds__mb-3" id="response"><div class="api_docs_collapsible-header dds__p-3" data-action="toggleCollapse" data-target-id="response" role="button" tabindex="0" aria-controls="response-body" aria-expanded="false"><span class="title">Responses</span><span class="icon icon-collapsed dds__icon dds__icon--chevron-right dds__mt-1 dds__ml-auto"></span><span class="icon icon-expanded dds__icon dds__icon--chevron-down dds__mt-1 dds__ml-auto"></span></div><div class="api_docs_collapsible-body" id="response-body"><div class="api_docs_collapsible dds__mb-3" id="09a04fa7fbcfd"><div class="api_docs_collapsible-header dds__p-3" data-action="toggleCollapse" data-target-id="09a04fa7fbcfd" role="button" tabindex="0" aria-controls="09a04fa7fbcfd-body" aria-expanded="false"><span class="title"><div class="response-frame"><span class="text-green"><span class="dds__badge dds__badge--dot dds__mr-2"></span>204</span> </div></span><span class="icon icon-collapsed dds__icon dds__icon--chevron-right dds__mt-1 dds__ml-auto"></span><span class="icon icon-expanded dds__icon dds__icon--chevron-down dds__mt-1 dds__ml-auto"></span></div><div class="api_docs_collapsible-body" id="09a04fa7fbcfd-body"><div class="static-frame-response-section"><div><div class="headers-section"><div><p>No Content</p>
+</div><h5 class="title dds__mt-2">Response Body</h5><div class="static-frame-request-section"><div class="" id="primitive-id">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="id">id</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      <span class="required">Required</span>
+    </div>
+    
+    
+    
+    
+    <div class="desc"><p>The unique identifier of the troubleshooting bundle job.</p>
+</div>
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-filepath">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="filepath">filepath</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      <span class="required">Required</span>
+    </div>
+    
+    
+    
+    
+    <div class="desc"><p>The file path where the troubleshooting bundle is being stored.</p>
+</div>
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-username">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="username">username</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      <span class="required">Required</span>
+    </div>
+    
+    
+    
+    
+    <div class="desc"><p>The username associated with the bundle creation request.</p>
+</div>
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-generationDate">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="generationDate">generationDate</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      <span class="required">Required</span>
+    </div>
+    
+    
+    
+    
+    <div class="desc"><p>The timestamp when the troubleshooting bundle was generated.</p>
+</div>
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-bundleDest">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="bundleDest">bundleDest</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      <span class="required">Required</span>
+    </div>
+    
+    
+    
+    
+    <div class="desc"><p>The destination path or identifier for the troubleshooting bundle.</p>
+</div>
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-downloadUrl">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="downloadUrl">downloadUrl</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      <span class="required">Required</span>
+    </div>
+    
+    
+    
+    
+    <div class="desc"><p>The URL from which the troubleshooting bundle can be downloaded.</p>
+</div>
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-status">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="status">status</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      <span class="required">Required</span>
+    </div>
+    
+    
+    
+    
+    <div class="desc"><p>The current status of the bundle creation. For example, IN_PROGRESS, COMPLETED, FAILED.</p>
+</div>
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-statusMessage">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="statusMessage">statusMessage</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      <span class="required">Required</span>
+    </div>
+    
+    
+    
+    
+    <div class="desc"><p>The detailed message describing the current status or any errors encountered.</p>
+</div>
+    
+    
+  </div>
+</div></div></div></div></div></div></div></div></div></div>
+   </div>
+        <div class="api__doc__right-section dds__pl-2"><div class="api_docs_collapsible highlight dds__mb-3 expanded" id="server"><div class="api_docs_collapsible-header dds__p-3" data-action="toggleCollapse" data-target-id="server" role="button" tabindex="0" aria-expanded="true"><div class="dds__w-100"><div class="server-title"><span class="dds__badge dds__badge--md http-method-post"><span class="dds__badge__label badge-font">POST</span></span><button style="float: right; border: 1px solid #9ca3af; display:none" class="dds__ml-auto dds__button dds__button--sm" type="button" id="drawer-trigger" data-action="clickedTryOutButton">Try it</button></div><div class="dds__p-2">/Troubleshootingbundle/status</div></div><span class="icon icon-collapsed dds__icon dds__icon--chevron-right dds__ml-auto"></span><span class="icon icon-expanded dds__icon dds__icon--chevron-down dds__ml-auto"></span></div><div class="api_docs_collapsible-body dds__px-3 dds__pt-2 dds__pb-3"><div class="dds__pr-2"></div><div class="dds__d-flex dds__justify-content-end dds__my-2"><button class="dds__button dds__button--sm" data-action="copyCodeById" data-target-id="server-copy-0">Copy</button></div><pre tabindex="0"><code id="server-copy-0">/Troubleshootingbundle/status</code></pre></div></div>
+<div class="api_docs_collapsible highlight dds__mb-3 expanded" id="requestsamples"><div class="api_docs_collapsible-header dds__p-3" data-action="toggleCollapse" data-target-id="requestsamples" role="button" tabindex="0" aria-controls="requestsamples-body" aria-expanded="true">Request Samples<span class="icon icon-collapsed dds__icon dds__icon--chevron-right dds__ml-auto"></span><span class="icon icon-expanded dds__icon dds__icon--chevron-down dds__ml-auto"></span></div><div class="api_docs_collapsible-body dds__px-3 dds__pt-2 dds__pb-3" id="requestsamples-body"><div class="dds__pt-2"><label for="requestsamples-media-example" class="dds__visually-hidden">Select example</label><select id="requestsamples-media-example" class="dds__select__field" data-action="onExampleSelectChange" data-code-container-id="requestsamples-media-code" aria-label="Select example"><option value="0" data-code="{
+  &quot;bundleDest&quot;: &quot;local&quot;
+}" data-description="Sample Request">
+        Sample Request
+      </option><option value="1" data-code="{
+  &quot;id&quot;: &quot;58303fc5-a533-4e48-aaea-27f66ff27252&quot;,
+  &quot;bundleDest&quot;: &quot;local&quot;,
+  &quot;generationDate&quot;: &quot;2026-06-16 21:41:52.826&quot;,
+  &quot;downloadUrl&quot;: &quot;/httpshare/download/troubleshooting_logs/Dell_EMC_PFxM_Logs.tar.gz&quot;,
+  &quot;status&quot;: &quot;complete&quot;,
+  &quot;statusMessage&quot;: &quot;&quot;,
+  &quot;troubleshootingBundleParams&quot;: {
+    &quot;productName&quot;: &quot;&quot;,
+    &quot;serviceId&quot;: &quot;&quot;,
+    &quot;bundleDest&quot;: &quot;local&quot;,
+    &quot;filepath&quot;: &quot;/httpshare/download/troubleshooting_logs/Dell_EMC_PFxM_Logs.tar.gz&quot;,
+    &quot;username&quot;: &quot;&quot;,
+    &quot;password&quot;: &quot;&quot;,
+    &quot;logLevel&quot;: &quot;defaultNodeLogs&quot;,
+    &quot;selectedNodeList&quot;: [
+      {
+        &quot;id&quot;: &quot;8aaa81b59d9485fd019d95f058bb1d87&quot;,
+        &quot;name&quot;: &quot;node1&quot;,
+        &quot;ipAddress&quot;: &quot;100.68.109.31&quot;
+      }
+    ],
+    &quot;downloadFileKey&quot;: &quot;58303fc5-a533-4e48-aaea-27f66ff27252&quot;,
+    &quot;includeEsxiLogs&quot;: false,
+    &quot;cloudLinkLogs&quot;: false,
+    &quot;includeOldPodLogs&quot;: false,
+    &quot;mgmtPlatformLogs&quot;: false,
+    &quot;powerflexBlockLogs&quot;: false,
+    &quot;switchLogs&quot;: false,
+    &quot;idracLogs&quot;: true
+  }
+}" data-description="Sample Response">
+        Sample Response
+      </option></select></div>
+        <div class="dds__d-flex dds__justify-content-end dds__my-2">
+              <button class="dds__button dds__button--sm" data-action="copyCodeById" data-target-id="requestsamples-media-code">
+                    Copy
+                  </button>
+        </div>
+        <div id="requestsamples-media-code">
+          <pre tabindex="0"><code>{
+  "bundleDest": "local"
+}</code></pre>
+        </div></div></div>
+<div class="api_docs_collapsible highlight dds__mb-3 expanded" id="responsesamples"><div class="api_docs_collapsible-header dds__p-3" data-action="toggleCollapse" data-target-id="responsesamples" role="button" tabindex="0" aria-controls="responsesamples-body" aria-expanded="true">Response Samples<span class="icon icon-collapsed dds__icon dds__icon--chevron-right dds__ml-auto"></span><span class="icon icon-expanded dds__icon dds__icon--chevron-down dds__ml-auto"></span></div><div class="api_docs_collapsible-body dds__px-3 dds__pt-2 dds__pb-3" id="responsesamples-body"><div class="response-tab-wrapper"><div class="tab-header" role="tablist"><h4 class="tab-item active" role="tab" aria-selected="true" aria-controls="responsesamples-tab-204" data-action="switchTab" data-target-id="responsesamples-tab-204">204</h4></div><div class="tab-body"><div class="tab-content active" id="responsesamples-tab-204" role="tabpanel" aria-labelledby="responsesamples-tab-204"><div class="dds__pt-2" role="presentation">
+        <label for="responsesamples-tab-204-content-type" class="dds__visually-hidden">Select content type</label>
+        <select id="responsesamples-tab-204-content-type" class="dds__select__field dds__mb-2" data-action="onContentTypeChange" data-example-select-id="responsesamples-tab-204-example" data-code-container-id="responsesamples-tab-204-code" data-examples-data="%7B%22application%2Fjson%22%3A%5B%7B%22description%22%3A%22Sample%20Response%22%2C%22codeContent%22%3A%22%7B%5Cn%20%20%5C%22id%5C%22%3A%20%5C%22fe0edbcd-63c1-4303-9a40-46758bbda3f3%5C%22%2C%5Cn%20%20%5C%22filepath%5C%22%3A%20%5C%22%5C%22%2C%5Cn%20%20%5C%22username%5C%22%3A%20%5C%22%5C%22%2C%5Cn%20%20%5C%22generationDate%5C%22%3A%20%5C%222026-06-30%2018%3A48%3A14.935%5C%22%2C%5Cn%20%20%5C%22bundleDest%5C%22%3A%20%5C%22local%5C%22%2C%5Cn%20%20%5C%22downloadUrl%5C%22%3A%20%5C%22%2Fhttpshare%2Fdownload%2Ftroubleshooting_logs%2FDell_EMC_PFxM_Logs.tar.gz%5C%22%2C%5Cn%20%20%5C%22status%5C%22%3A%20%5C%22complete%5C%22%2C%5Cn%20%20%5C%22statusMessage%5C%22%3A%20%5C%22%5C%22%5Cn%7D%22%7D%5D%2C%22application%2Fxml%22%3A%5B%5D%7D" aria-label="Select content type">
+          <option value="application/json" selected="">application/json</option><option value="application/xml">application/xml</option>
+        </select><div class="content-description dds__mb-1"><p>No Content</p>
+</div><label for="responsesamples-tab-204-example" class="dds__visually-hidden">Select response example</label>
+       <select id="responsesamples-tab-204-example" class="dds__select__field" data-action="onExampleSelectChange" data-code-container-id="responsesamples-tab-204-code" aria-label="Select response example">
+        <option value="0" data-code="{
+  &quot;id&quot;: &quot;fe0edbcd-63c1-4303-9a40-46758bbda3f3&quot;,
+  &quot;filepath&quot;: &quot;&quot;,
+  &quot;username&quot;: &quot;&quot;,
+  &quot;generationDate&quot;: &quot;2026-06-30 18:48:14.935&quot;,
+  &quot;bundleDest&quot;: &quot;local&quot;,
+  &quot;downloadUrl&quot;: &quot;/httpshare/download/troubleshooting_logs/Dell_EMC_PFxM_Logs.tar.gz&quot;,
+  &quot;status&quot;: &quot;complete&quot;,
+  &quot;statusMessage&quot;: &quot;&quot;
+}" data-description="Sample Response">
+        Sample Response
+      </option>
+      </select></div><div class="dds__d-flex dds__justify-content-end dds__my-2" role="presentation"><button class="dds__button dds__button--sm" data-action="copyCodeById" data-target-id="responsesamples-tab-204-code">Copy</button></div><div id="responsesamples-tab-204-code" role="presentation"><pre tabindex="0"><code>{
+  "id": "fe0edbcd-63c1-4303-9a40-46758bbda3f3",
+  "filepath": "",
+  "username": "",
+  "generationDate": "2026-06-30 18:48:14.935",
+  "bundleDest": "local",
+  "downloadUrl": "/httpshare/download/troubleshooting_logs/Dell_EMC_PFxM_Logs.tar.gz",
+  "status": "complete",
+  "statusMessage": ""
+}</code></pre></div></div></div></div></div></div></div>
+      </div>
+    </div></div></body></html>

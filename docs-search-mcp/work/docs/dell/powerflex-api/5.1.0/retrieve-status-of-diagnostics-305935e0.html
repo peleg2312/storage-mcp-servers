@@ -1,0 +1,2501 @@
+<html><head><title>PowerFlex API 5.1.0: Retrieve status of diagnostics</title></head><body><p>Common APIs for Erasure Coding and Mirroring > PowerFlex Maintenance Manager REST API > maintenance-manager</p><div><div class="api-docs-main-div dds__pl-2">
+      <div class="api-doc-container">
+        <div class="api__doc__left-section dds__p-3">
+   <div class="markdown-renderer">
+          <h4 class="dds__font-weight-bold dds__pb-2">Retrieve status of diagnostics</h4>       
+          <div><p>Retrieves the current status of diagnostics, including:</p>
+<ul>
+<li>A list of existing diagnostic instances (with ID, name, last execution result, and schedule).</li>
+<li>An indicator showing whether a network connection is available.</li>
+</ul>
+</div> 
+          
+    </div>
+
+
+       <div class="api_docs_collapsible dds__mb-3" id="response"><div class="api_docs_collapsible-header dds__p-3" data-action="toggleCollapse" data-target-id="response" role="button" tabindex="0" aria-controls="response-body" aria-expanded="false"><span class="title">Responses</span><span class="icon icon-collapsed dds__icon dds__icon--chevron-right dds__mt-1 dds__ml-auto"></span><span class="icon icon-expanded dds__icon dds__icon--chevron-down dds__mt-1 dds__ml-auto"></span></div><div class="api_docs_collapsible-body" id="response-body"><div class="api_docs_collapsible dds__mb-3" id="460f7ec171057"><div class="api_docs_collapsible-header dds__p-3" data-action="toggleCollapse" data-target-id="460f7ec171057" role="button" tabindex="0" aria-controls="460f7ec171057-body" aria-expanded="false"><span class="title"><div class="response-frame"><span class="text-green"><span class="dds__badge dds__badge--dot dds__mr-2"></span>200</span> : OK</div></span><span class="icon icon-collapsed dds__icon dds__icon--chevron-right dds__mt-1 dds__ml-auto"></span><span class="icon icon-expanded dds__icon dds__icon--chevron-down dds__mt-1 dds__ml-auto"></span></div><div class="api_docs_collapsible-body" id="460f7ec171057-body"><div class="static-frame-response-section"><div><div class="headers-section"><div><p>Successful operation</p>
+</div><h5 class="title dds__mt-2">Response Body</h5><div class="static-frame-request-section"><div class="expanded" id="Response Body-diagnostics_response-r2yn">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name clickable-property" title="diagnostics_response" style="cursor: pointer;">diagnostics_response</span>
+    </div>
+    <span class="schema-toggle-icon" data-action="toggleNestedBodyCard" data-target-id="Response Body-diagnostics_response-r2yn" role="button" tabindex="0" aria-controls="Response Body-diagnostics_response-r2yn-nested-body" aria-expanded="true">
+            <span class="icon dds__icon dds__icon--chevron-right dds__mt-1 dds__ml-auto hidden"></span>
+            <span class="icon dds__icon dds__icon--chevron-down dds__mt-1 dds__ml-auto"></span>
+        </span>
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">object</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div><div class="nested-body schema-child-row" id="Response Body-diagnostics_response-r2yn-nested-body" style="">
+            <div colspan="2" class="nested">
+            <div class="expanded" id="Response Body-diagnostics_response-r2yn-paging_information-81bk">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name clickable-property" title="paging_information" style="cursor: pointer;">paging_information</span>
+    </div>
+    <span class="schema-toggle-icon" data-action="toggleNestedBodyCard" data-target-id="Response Body-diagnostics_response-r2yn-paging_information-81bk" role="button" tabindex="0" aria-controls="Response Body-diagnostics_response-r2yn-paging_information-81bk-nested-body" aria-expanded="true">
+            <span class="icon dds__icon dds__icon--chevron-right dds__mt-1 dds__ml-auto hidden"></span>
+            <span class="icon dds__icon dds__icon--chevron-down dds__mt-1 dds__ml-auto"></span>
+        </span>
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">object</span>
+      
+    </div>
+    
+    
+    
+    
+    <div class="desc"><p>Information provided in paged collection query responses, only when the response is partial, meaning that not all queried instances are returned. The return code will be 206 when this is returned.</p>
+</div>
+    
+    
+  </div>
+</div><div class="nested-body schema-child-row" id="Response Body-diagnostics_response-r2yn-paging_information-81bk-nested-body" style="">
+            <div colspan="2" class="nested">
+            <div class="" id="primitive-total_instances">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="total_instances">total_instances</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">integer&lt;int64&gt;</span>
+      <span class="required">Required</span>
+    </div>
+    
+    
+    
+    
+    <div class="desc"><p>The number of instances in the complete queried collection (not just the size of the current response). If the request was filtered, then this is the size of the complete filtered collection.</p>
+</div>
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-first">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="first">first</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string&lt;uri&gt;</span>
+      
+    </div>
+    
+    
+    
+    
+    <div class="desc"><p>The URL to fetch the first page of this collection (including filtering and sorting parameters).</p>
+</div>
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-last">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="last">last</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string&lt;uri&gt;</span>
+      
+    </div>
+    
+    
+    
+    
+    <div class="desc"><p>The URL to fetch the last page of this collection (including filtering and sorting parameters).</p>
+</div>
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-next">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="next">next</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string&lt;uri&gt;</span>
+      
+    </div>
+    
+    
+    
+    
+    <div class="desc"><p>The URL to fetch the next page of this collection (including filtering and sorting parameters). This will not be returned with the last page of a collection.</p>
+</div>
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-prev">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="prev">prev</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string&lt;uri&gt;</span>
+      
+    </div>
+    
+    
+    
+    
+    <div class="desc"><p>The URL to fetch the previous page of this collection (including filtering and sorting parameters). This will not be returned with the first page of a collection.</p>
+</div>
+    
+    
+  </div>
+</div></div>
+            </div>
+          </div></div>
+<div class="" id="Response Body-diagnostics_response-r2yn-results-dr3v">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name clickable-property" title="results" style="cursor: pointer;">results</span>
+    </div>
+    <span class="schema-toggle-icon" data-action="toggleNestedBodyCard" data-target-id="Response Body-diagnostics_response-r2yn-results-dr3v" role="button" tabindex="0" aria-controls="Response Body-diagnostics_response-r2yn-results-dr3v-nested-body" aria-expanded="false">
+            <span class="icon dds__icon dds__icon--chevron-right dds__mt-1 dds__ml-auto"></span>
+            <span class="icon dds__icon dds__icon--chevron-down dds__mt-1 dds__ml-auto hidden"></span>
+        </span>
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">array[object]</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div><div class="nested-body schema-child-row" id="Response Body-diagnostics_response-r2yn-results-dr3v-nested-body" style="display:none">
+            <div colspan="2" class="nested">
+            <div class="" id="primitive-id">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="id">id</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      <span class="required">Required</span>
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="expanded" id="Response Body-diagnostics_response-r2yn-results-dr3v-diagnostic_executions_info-cubc">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name clickable-property" title="diagnostic_executions_info" style="cursor: pointer;">diagnostic_executions_info</span>
+    </div>
+    <span class="schema-toggle-icon" data-action="toggleNestedBodyCard" data-target-id="Response Body-diagnostics_response-r2yn-results-dr3v-diagnostic_executions_info-cubc" role="button" tabindex="0" aria-controls="Response Body-diagnostics_response-r2yn-results-dr3v-diagnostic_executions_info-cubc-nested-body" aria-expanded="true">
+            <span class="icon dds__icon dds__icon--chevron-right dds__mt-1 dds__ml-auto hidden"></span>
+            <span class="icon dds__icon dds__icon--chevron-down dds__mt-1 dds__ml-auto"></span>
+        </span>
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">object</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div><div class="nested-body schema-child-row" id="Response Body-diagnostics_response-r2yn-results-dr3v-diagnostic_executions_info-cubc-nested-body" style="">
+            <div colspan="2" class="nested">
+            <div class="expanded" id="Response Body-diagnostics_response-r2yn-results-dr3v-diagnostic_executions_info-cubc-current-dger">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name clickable-property" title="current" style="cursor: pointer;">current</span>
+    </div>
+    <span class="schema-toggle-icon" data-action="toggleNestedBodyCard" data-target-id="Response Body-diagnostics_response-r2yn-results-dr3v-diagnostic_executions_info-cubc-current-dger" role="button" tabindex="0" aria-controls="Response Body-diagnostics_response-r2yn-results-dr3v-diagnostic_executions_info-cubc-current-dger-nested-body" aria-expanded="true">
+            <span class="icon dds__icon dds__icon--chevron-right dds__mt-1 dds__ml-auto hidden"></span>
+            <span class="icon dds__icon dds__icon--chevron-down dds__mt-1 dds__ml-auto"></span>
+        </span>
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">object</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div><div class="nested-body schema-child-row" id="Response Body-diagnostics_response-r2yn-results-dr3v-diagnostic_executions_info-cubc-current-dger-nested-body" style="">
+            <div colspan="2" class="nested">
+            <div class="" id="primitive-invocation_source_type">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="invocation_source_type">invocation_source_type</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      <span class="required">Required</span>
+    </div>
+    
+    
+    
+    
+    
+    
+    <div class="enums">allowed values: <span class="dds__badge dds__badge--sm dds__badge--brand dds__badge--light">MANUAL</span> <span class="dds__badge dds__badge--sm dds__badge--brand dds__badge--light">SCHEDULED</span></div>
+  </div>
+</div></div>
+<div class="expanded" id="Response Body-diagnostics_response-r2yn-results-dr3v-diagnostic_executions_info-cubc-current-dger-diagnostic_result_data-ah0f">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name clickable-property" title="diagnostic_result_data" style="cursor: pointer;">diagnostic_result_data</span>
+    </div>
+    <span class="schema-toggle-icon" data-action="toggleNestedBodyCard" data-target-id="Response Body-diagnostics_response-r2yn-results-dr3v-diagnostic_executions_info-cubc-current-dger-diagnostic_result_data-ah0f" role="button" tabindex="0" aria-controls="Response Body-diagnostics_response-r2yn-results-dr3v-diagnostic_executions_info-cubc-current-dger-diagnostic_result_data-ah0f-nested-body" aria-expanded="true">
+            <span class="icon dds__icon dds__icon--chevron-right dds__mt-1 dds__ml-auto hidden"></span>
+            <span class="icon dds__icon dds__icon--chevron-down dds__mt-1 dds__ml-auto"></span>
+        </span>
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">object</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div><div class="nested-body schema-child-row" id="Response Body-diagnostics_response-r2yn-results-dr3v-diagnostic_executions_info-cubc-current-dger-diagnostic_result_data-ah0f-nested-body" style="">
+            <div colspan="2" class="nested">
+            <div class="" id="primitive-status">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="status">status</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      <span class="required">Required</span>
+    </div>
+    
+    
+    
+    
+    
+    
+    <div class="enums">allowed values: <span class="dds__badge dds__badge--sm dds__badge--brand dds__badge--light">UNKNOWN</span> <span class="dds__badge dds__badge--sm dds__badge--brand dds__badge--light">OK</span> <span class="dds__badge dds__badge--sm dds__badge--brand dds__badge--light">WARNING</span> <span class="dds__badge dds__badge--sm dds__badge--brand dds__badge--light">ERROR</span></div>
+  </div>
+</div></div>
+<div class="" id="primitive-failure_title">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="failure_title">failure_title</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      <span class="required">Required</span>
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-failure_reason">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="failure_reason">failure_reason</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      <span class="required">Required</span>
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="Response Body-diagnostics_response-r2yn-results-dr3v-diagnostic_executions_info-cubc-current-dger-diagnostic_result_data-ah0f-fix_recommendations-ad4w">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="fix_recommendations">fix_recommendations</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">array[string]</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-raw_output">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="raw_output">raw_output</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      <span class="required">Required</span>
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-benchmark">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="benchmark">benchmark</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      <span class="required">Required</span>
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+            </div>
+          </div></div>
+<div class="" id="primitive-diagnostic_execution_status">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="diagnostic_execution_status">diagnostic_execution_status</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      <span class="required">Required</span>
+    </div>
+    
+    
+    
+    
+    
+    
+    <div class="enums">allowed values: <span class="dds__badge dds__badge--sm dds__badge--brand dds__badge--light">NOT_STARTED</span> <span class="dds__badge dds__badge--sm dds__badge--brand dds__badge--light">IN_PROGRESS</span> <span class="dds__badge dds__badge--sm dds__badge--brand dds__badge--light">ABORTED</span> <span class="dds__badge dds__badge--sm dds__badge--brand dds__badge--light">COMPLETED</span></div>
+  </div>
+</div></div>
+<div class="" id="primitive-start_time">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="start_time">start_time</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string&lt;date-time&gt;</span>
+      <span class="required">Required</span>
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-end_time">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="end_time">end_time</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string&lt;date-time&gt;</span>
+      <span class="required">Required</span>
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="Response Body-diagnostics_response-r2yn-results-dr3v-diagnostic_executions_info-cubc-current-dger-remediations-dz9r">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name clickable-property" title="remediations" style="cursor: pointer;">remediations</span>
+    </div>
+    <span class="schema-toggle-icon" data-action="toggleNestedBodyCard" data-target-id="Response Body-diagnostics_response-r2yn-results-dr3v-diagnostic_executions_info-cubc-current-dger-remediations-dz9r" role="button" tabindex="0" aria-controls="Response Body-diagnostics_response-r2yn-results-dr3v-diagnostic_executions_info-cubc-current-dger-remediations-dz9r-nested-body" aria-expanded="false">
+            <span class="icon dds__icon dds__icon--chevron-right dds__mt-1 dds__ml-auto"></span>
+            <span class="icon dds__icon dds__icon--chevron-down dds__mt-1 dds__ml-auto hidden"></span>
+        </span>
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">array[object]</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div><div class="nested-body schema-child-row" id="Response Body-diagnostics_response-r2yn-results-dr3v-diagnostic_executions_info-cubc-current-dger-remediations-dz9r-nested-body" style="display:none">
+            <div colspan="2" class="nested">
+            <div class="" id="primitive-action">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="action">action</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      <span class="required">Required</span>
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-action_info">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="action_info">action_info</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      <span class="required">Required</span>
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-status">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="status">status</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      <span class="required">Required</span>
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+            </div>
+          </div></div>
+            </div>
+          </div></div>
+<div class="expanded" id="Response Body-diagnostics_response-r2yn-results-dr3v-diagnostic_executions_info-cubc-last_finished_manual-7uk1">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name clickable-property" title="last_finished_manual" style="cursor: pointer;">last_finished_manual</span>
+    </div>
+    <span class="schema-toggle-icon" data-action="toggleNestedBodyCard" data-target-id="Response Body-diagnostics_response-r2yn-results-dr3v-diagnostic_executions_info-cubc-last_finished_manual-7uk1" role="button" tabindex="0" aria-controls="Response Body-diagnostics_response-r2yn-results-dr3v-diagnostic_executions_info-cubc-last_finished_manual-7uk1-nested-body" aria-expanded="true">
+            <span class="icon dds__icon dds__icon--chevron-right dds__mt-1 dds__ml-auto hidden"></span>
+            <span class="icon dds__icon dds__icon--chevron-down dds__mt-1 dds__ml-auto"></span>
+        </span>
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">object</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div><div class="nested-body schema-child-row" id="Response Body-diagnostics_response-r2yn-results-dr3v-diagnostic_executions_info-cubc-last_finished_manual-7uk1-nested-body" style="">
+            <div colspan="2" class="nested">
+            <div class="" id="primitive-invocation_source_type">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="invocation_source_type">invocation_source_type</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      <span class="required">Required</span>
+    </div>
+    
+    
+    
+    
+    
+    
+    <div class="enums">allowed values: <span class="dds__badge dds__badge--sm dds__badge--brand dds__badge--light">MANUAL</span> <span class="dds__badge dds__badge--sm dds__badge--brand dds__badge--light">SCHEDULED</span></div>
+  </div>
+</div></div>
+<div class="expanded" id="Response Body-diagnostics_response-r2yn-results-dr3v-diagnostic_executions_info-cubc-last_finished_manual-7uk1-diagnostic_result_data-c56s">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name clickable-property" title="diagnostic_result_data" style="cursor: pointer;">diagnostic_result_data</span>
+    </div>
+    <span class="schema-toggle-icon" data-action="toggleNestedBodyCard" data-target-id="Response Body-diagnostics_response-r2yn-results-dr3v-diagnostic_executions_info-cubc-last_finished_manual-7uk1-diagnostic_result_data-c56s" role="button" tabindex="0" aria-controls="Response Body-diagnostics_response-r2yn-results-dr3v-diagnostic_executions_info-cubc-last_finished_manual-7uk1-diagnostic_result_data-c56s-nested-body" aria-expanded="true">
+            <span class="icon dds__icon dds__icon--chevron-right dds__mt-1 dds__ml-auto hidden"></span>
+            <span class="icon dds__icon dds__icon--chevron-down dds__mt-1 dds__ml-auto"></span>
+        </span>
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">object</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div><div class="nested-body schema-child-row" id="Response Body-diagnostics_response-r2yn-results-dr3v-diagnostic_executions_info-cubc-last_finished_manual-7uk1-diagnostic_result_data-c56s-nested-body" style="">
+            <div colspan="2" class="nested">
+            <div class="" id="primitive-status">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="status">status</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      <span class="required">Required</span>
+    </div>
+    
+    
+    
+    
+    
+    
+    <div class="enums">allowed values: <span class="dds__badge dds__badge--sm dds__badge--brand dds__badge--light">UNKNOWN</span> <span class="dds__badge dds__badge--sm dds__badge--brand dds__badge--light">OK</span> <span class="dds__badge dds__badge--sm dds__badge--brand dds__badge--light">WARNING</span> <span class="dds__badge dds__badge--sm dds__badge--brand dds__badge--light">ERROR</span></div>
+  </div>
+</div></div>
+<div class="" id="primitive-failure_title">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="failure_title">failure_title</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      <span class="required">Required</span>
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-failure_reason">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="failure_reason">failure_reason</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      <span class="required">Required</span>
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="Response Body-diagnostics_response-r2yn-results-dr3v-diagnostic_executions_info-cubc-last_finished_manual-7uk1-diagnostic_result_data-c56s-fix_recommendations-opmt">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="fix_recommendations">fix_recommendations</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">array[string]</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-raw_output">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="raw_output">raw_output</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      <span class="required">Required</span>
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-benchmark">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="benchmark">benchmark</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      <span class="required">Required</span>
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+            </div>
+          </div></div>
+<div class="" id="primitive-diagnostic_execution_status">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="diagnostic_execution_status">diagnostic_execution_status</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      <span class="required">Required</span>
+    </div>
+    
+    
+    
+    
+    
+    
+    <div class="enums">allowed values: <span class="dds__badge dds__badge--sm dds__badge--brand dds__badge--light">NOT_STARTED</span> <span class="dds__badge dds__badge--sm dds__badge--brand dds__badge--light">IN_PROGRESS</span> <span class="dds__badge dds__badge--sm dds__badge--brand dds__badge--light">ABORTED</span> <span class="dds__badge dds__badge--sm dds__badge--brand dds__badge--light">COMPLETED</span></div>
+  </div>
+</div></div>
+<div class="" id="primitive-start_time">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="start_time">start_time</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string&lt;date-time&gt;</span>
+      <span class="required">Required</span>
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-end_time">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="end_time">end_time</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string&lt;date-time&gt;</span>
+      <span class="required">Required</span>
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="Response Body-diagnostics_response-r2yn-results-dr3v-diagnostic_executions_info-cubc-last_finished_manual-7uk1-remediations-gext">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name clickable-property" title="remediations" style="cursor: pointer;">remediations</span>
+    </div>
+    <span class="schema-toggle-icon" data-action="toggleNestedBodyCard" data-target-id="Response Body-diagnostics_response-r2yn-results-dr3v-diagnostic_executions_info-cubc-last_finished_manual-7uk1-remediations-gext" role="button" tabindex="0" aria-controls="Response Body-diagnostics_response-r2yn-results-dr3v-diagnostic_executions_info-cubc-last_finished_manual-7uk1-remediations-gext-nested-body" aria-expanded="false">
+            <span class="icon dds__icon dds__icon--chevron-right dds__mt-1 dds__ml-auto"></span>
+            <span class="icon dds__icon dds__icon--chevron-down dds__mt-1 dds__ml-auto hidden"></span>
+        </span>
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">array[object]</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div><div class="nested-body schema-child-row" id="Response Body-diagnostics_response-r2yn-results-dr3v-diagnostic_executions_info-cubc-last_finished_manual-7uk1-remediations-gext-nested-body" style="display:none">
+            <div colspan="2" class="nested">
+            <div class="" id="primitive-action">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="action">action</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      <span class="required">Required</span>
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-action_info">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="action_info">action_info</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      <span class="required">Required</span>
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-status">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="status">status</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      <span class="required">Required</span>
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+            </div>
+          </div></div>
+            </div>
+          </div></div>
+<div class="expanded" id="Response Body-diagnostics_response-r2yn-results-dr3v-diagnostic_executions_info-cubc-last_completed-fdr2">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name clickable-property" title="last_completed" style="cursor: pointer;">last_completed</span>
+    </div>
+    <span class="schema-toggle-icon" data-action="toggleNestedBodyCard" data-target-id="Response Body-diagnostics_response-r2yn-results-dr3v-diagnostic_executions_info-cubc-last_completed-fdr2" role="button" tabindex="0" aria-controls="Response Body-diagnostics_response-r2yn-results-dr3v-diagnostic_executions_info-cubc-last_completed-fdr2-nested-body" aria-expanded="true">
+            <span class="icon dds__icon dds__icon--chevron-right dds__mt-1 dds__ml-auto hidden"></span>
+            <span class="icon dds__icon dds__icon--chevron-down dds__mt-1 dds__ml-auto"></span>
+        </span>
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">object</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div><div class="nested-body schema-child-row" id="Response Body-diagnostics_response-r2yn-results-dr3v-diagnostic_executions_info-cubc-last_completed-fdr2-nested-body" style="">
+            <div colspan="2" class="nested">
+            <div class="" id="primitive-invocation_source_type">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="invocation_source_type">invocation_source_type</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      <span class="required">Required</span>
+    </div>
+    
+    
+    
+    
+    
+    
+    <div class="enums">allowed values: <span class="dds__badge dds__badge--sm dds__badge--brand dds__badge--light">MANUAL</span> <span class="dds__badge dds__badge--sm dds__badge--brand dds__badge--light">SCHEDULED</span></div>
+  </div>
+</div></div>
+<div class="expanded" id="Response Body-diagnostics_response-r2yn-results-dr3v-diagnostic_executions_info-cubc-last_completed-fdr2-diagnostic_result_data-l1df">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name clickable-property" title="diagnostic_result_data" style="cursor: pointer;">diagnostic_result_data</span>
+    </div>
+    <span class="schema-toggle-icon" data-action="toggleNestedBodyCard" data-target-id="Response Body-diagnostics_response-r2yn-results-dr3v-diagnostic_executions_info-cubc-last_completed-fdr2-diagnostic_result_data-l1df" role="button" tabindex="0" aria-controls="Response Body-diagnostics_response-r2yn-results-dr3v-diagnostic_executions_info-cubc-last_completed-fdr2-diagnostic_result_data-l1df-nested-body" aria-expanded="true">
+            <span class="icon dds__icon dds__icon--chevron-right dds__mt-1 dds__ml-auto hidden"></span>
+            <span class="icon dds__icon dds__icon--chevron-down dds__mt-1 dds__ml-auto"></span>
+        </span>
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">object</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div><div class="nested-body schema-child-row" id="Response Body-diagnostics_response-r2yn-results-dr3v-diagnostic_executions_info-cubc-last_completed-fdr2-diagnostic_result_data-l1df-nested-body" style="">
+            <div colspan="2" class="nested">
+            <div class="" id="primitive-status">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="status">status</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      <span class="required">Required</span>
+    </div>
+    
+    
+    
+    
+    
+    
+    <div class="enums">allowed values: <span class="dds__badge dds__badge--sm dds__badge--brand dds__badge--light">UNKNOWN</span> <span class="dds__badge dds__badge--sm dds__badge--brand dds__badge--light">OK</span> <span class="dds__badge dds__badge--sm dds__badge--brand dds__badge--light">WARNING</span> <span class="dds__badge dds__badge--sm dds__badge--brand dds__badge--light">ERROR</span></div>
+  </div>
+</div></div>
+<div class="" id="primitive-failure_title">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="failure_title">failure_title</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      <span class="required">Required</span>
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-failure_reason">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="failure_reason">failure_reason</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      <span class="required">Required</span>
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="Response Body-diagnostics_response-r2yn-results-dr3v-diagnostic_executions_info-cubc-last_completed-fdr2-diagnostic_result_data-l1df-fix_recommendations-5l8j">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="fix_recommendations">fix_recommendations</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">array[string]</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-raw_output">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="raw_output">raw_output</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      <span class="required">Required</span>
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-benchmark">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="benchmark">benchmark</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      <span class="required">Required</span>
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+            </div>
+          </div></div>
+<div class="" id="primitive-diagnostic_execution_status">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="diagnostic_execution_status">diagnostic_execution_status</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      <span class="required">Required</span>
+    </div>
+    
+    
+    
+    
+    
+    
+    <div class="enums">allowed values: <span class="dds__badge dds__badge--sm dds__badge--brand dds__badge--light">NOT_STARTED</span> <span class="dds__badge dds__badge--sm dds__badge--brand dds__badge--light">IN_PROGRESS</span> <span class="dds__badge dds__badge--sm dds__badge--brand dds__badge--light">ABORTED</span> <span class="dds__badge dds__badge--sm dds__badge--brand dds__badge--light">COMPLETED</span></div>
+  </div>
+</div></div>
+<div class="" id="primitive-start_time">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="start_time">start_time</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string&lt;date-time&gt;</span>
+      <span class="required">Required</span>
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-end_time">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="end_time">end_time</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string&lt;date-time&gt;</span>
+      <span class="required">Required</span>
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="Response Body-diagnostics_response-r2yn-results-dr3v-diagnostic_executions_info-cubc-last_completed-fdr2-remediations-ngex">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name clickable-property" title="remediations" style="cursor: pointer;">remediations</span>
+    </div>
+    <span class="schema-toggle-icon" data-action="toggleNestedBodyCard" data-target-id="Response Body-diagnostics_response-r2yn-results-dr3v-diagnostic_executions_info-cubc-last_completed-fdr2-remediations-ngex" role="button" tabindex="0" aria-controls="Response Body-diagnostics_response-r2yn-results-dr3v-diagnostic_executions_info-cubc-last_completed-fdr2-remediations-ngex-nested-body" aria-expanded="false">
+            <span class="icon dds__icon dds__icon--chevron-right dds__mt-1 dds__ml-auto"></span>
+            <span class="icon dds__icon dds__icon--chevron-down dds__mt-1 dds__ml-auto hidden"></span>
+        </span>
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">array[object]</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div><div class="nested-body schema-child-row" id="Response Body-diagnostics_response-r2yn-results-dr3v-diagnostic_executions_info-cubc-last_completed-fdr2-remediations-ngex-nested-body" style="display:none">
+            <div colspan="2" class="nested">
+            <div class="" id="primitive-action">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="action">action</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      <span class="required">Required</span>
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-action_info">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="action_info">action_info</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      <span class="required">Required</span>
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-status">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="status">status</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      <span class="required">Required</span>
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+            </div>
+          </div></div>
+            </div>
+          </div></div>
+            </div>
+          </div></div>
+<div class="expanded" id="Response Body-diagnostics_response-r2yn-results-dr3v-meta_data-lyuc">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name clickable-property" title="meta_data" style="cursor: pointer;">meta_data</span>
+    </div>
+    <span class="schema-toggle-icon" data-action="toggleNestedBodyCard" data-target-id="Response Body-diagnostics_response-r2yn-results-dr3v-meta_data-lyuc" role="button" tabindex="0" aria-controls="Response Body-diagnostics_response-r2yn-results-dr3v-meta_data-lyuc-nested-body" aria-expanded="true">
+            <span class="icon dds__icon dds__icon--chevron-right dds__mt-1 dds__ml-auto hidden"></span>
+            <span class="icon dds__icon dds__icon--chevron-down dds__mt-1 dds__ml-auto"></span>
+        </span>
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">object</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div><div class="nested-body schema-child-row" id="Response Body-diagnostics_response-r2yn-results-dr3v-meta_data-lyuc-nested-body" style="">
+            <div colspan="2" class="nested">
+            <div class="" id="primitive-display_name">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="display_name">display_name</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      <span class="required">Required</span>
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-completed_once">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="completed_once">completed_once</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">boolean</span>
+      <span class="required">Required</span>
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-scheduled_consecutive_failures">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="scheduled_consecutive_failures">scheduled_consecutive_failures</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">integer&lt;int32&gt;</span>
+      <span class="required">Required</span>
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-scheduled_consecutive_failures_threshold">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="scheduled_consecutive_failures_threshold">scheduled_consecutive_failures_threshold</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">integer&lt;int32&gt;</span>
+      <span class="required">Required</span>
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-scheduler_interval">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="scheduler_interval">scheduler_interval</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      <span class="required">Required</span>
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-execution_approval_needed">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="execution_approval_needed">execution_approval_needed</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">boolean</span>
+      <span class="required">Required</span>
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-execution_available_on_connection_error">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="execution_available_on_connection_error">execution_available_on_connection_error</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">boolean</span>
+      <span class="required">Required</span>
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+            </div>
+          </div></div>
+            </div>
+          </div></div>
+<div class="" id="primitive-connection_error">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="connection_error">connection_error</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      <span class="required">Required</span>
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+            </div>
+          </div></div></div></div></div></div></div></div>
+<div class="api_docs_collapsible dds__mb-3" id="8fa98fcf90ec8"><div class="api_docs_collapsible-header dds__p-3" data-action="toggleCollapse" data-target-id="8fa98fcf90ec8" role="button" tabindex="0" aria-controls="8fa98fcf90ec8-body" aria-expanded="false"><span class="title"><div class="response-frame"><span class="text-red"><span class="dds__badge dds__badge--dot dds__mr-2"></span>403</span> : Forbidden</div></span><span class="icon icon-collapsed dds__icon dds__icon--chevron-right dds__mt-1 dds__ml-auto"></span><span class="icon icon-expanded dds__icon dds__icon--chevron-down dds__mt-1 dds__ml-auto"></span></div><div class="api_docs_collapsible-body" id="8fa98fcf90ec8-body"><div class="static-frame-response-section"><div><div class="headers-section"><div><p>Authorization failure - The credentials do not allow the requested operation.</p>
+</div><h5 class="title dds__mt-2">Response Body</h5><div class="static-frame-request-section"><div class="expanded" id="Response Body-error_response-p3s8">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name clickable-property" title="error_response" style="cursor: pointer;">error_response</span>
+    </div>
+    <span class="schema-toggle-icon" data-action="toggleNestedBodyCard" data-target-id="Response Body-error_response-p3s8" role="button" tabindex="0" aria-controls="Response Body-error_response-p3s8-nested-body" aria-expanded="true">
+            <span class="icon dds__icon dds__icon--chevron-right dds__mt-1 dds__ml-auto hidden"></span>
+            <span class="icon dds__icon dds__icon--chevron-down dds__mt-1 dds__ml-auto"></span>
+        </span>
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">object</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div><div class="nested-body schema-child-row" id="Response Body-error_response-p3s8-nested-body" style="">
+            <div colspan="2" class="nested">
+            <div class="" id="primitive-http_status_code">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="http_status_code">http_status_code</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">integer&lt;int32&gt;</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="Response Body-error_response-p3s8-messages-jfwy">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name clickable-property" title="messages" style="cursor: pointer;">messages</span>
+    </div>
+    <span class="schema-toggle-icon" data-action="toggleNestedBodyCard" data-target-id="Response Body-error_response-p3s8-messages-jfwy" role="button" tabindex="0" aria-controls="Response Body-error_response-p3s8-messages-jfwy-nested-body" aria-expanded="false">
+            <span class="icon dds__icon dds__icon--chevron-right dds__mt-1 dds__ml-auto"></span>
+            <span class="icon dds__icon dds__icon--chevron-down dds__mt-1 dds__ml-auto hidden"></span>
+        </span>
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">array[object]</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div><div class="nested-body schema-child-row" id="Response Body-error_response-p3s8-messages-jfwy-nested-body" style="display:none">
+            <div colspan="2" class="nested">
+            <div class="" id="primitive-code">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="code">code</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-timestamp">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="timestamp">timestamp</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string&lt;date-time&gt;</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-severity">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="severity">severity</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      
+    </div>
+    
+    
+    
+    
+    <div class="desc"><p>error message severity enum</p>
+</div>
+    
+    <div class="enums">allowed values: <span class="dds__badge dds__badge--sm dds__badge--brand dds__badge--light">INFO</span> <span class="dds__badge dds__badge--sm dds__badge--brand dds__badge--light">WARNING</span> <span class="dds__badge dds__badge--sm dds__badge--brand dds__badge--light">ERROR</span> <span class="dds__badge dds__badge--sm dds__badge--brand dds__badge--light">CRITICAL</span></div>
+  </div>
+</div></div>
+<div class="" id="primitive-message">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="message">message</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-message_l10n">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="message_l10n">message_l10n</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-substitution_args">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="substitution_args">substitution_args</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+            </div>
+          </div></div>
+            </div>
+          </div></div></div></div></div></div></div></div>
+<div class="api_docs_collapsible dds__mb-3" id="b25864e7f0532"><div class="api_docs_collapsible-header dds__p-3" data-action="toggleCollapse" data-target-id="b25864e7f0532" role="button" tabindex="0" aria-controls="b25864e7f0532-body" aria-expanded="false"><span class="title"><div class="response-frame"><span class="text-red"><span class="dds__badge dds__badge--dot dds__mr-2"></span>500</span> : Server Error</div></span><span class="icon icon-collapsed dds__icon dds__icon--chevron-right dds__mt-1 dds__ml-auto"></span><span class="icon icon-expanded dds__icon dds__icon--chevron-down dds__mt-1 dds__ml-auto"></span></div><div class="api_docs_collapsible-body" id="b25864e7f0532-body"><div class="static-frame-response-section"><div><div class="headers-section"><div><p>Internal Server Error</p>
+</div><h5 class="title dds__mt-2">Response Body</h5><div class="static-frame-request-section"><div class="expanded" id="Response Body-error_response-e1op">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name clickable-property" title="error_response" style="cursor: pointer;">error_response</span>
+    </div>
+    <span class="schema-toggle-icon" data-action="toggleNestedBodyCard" data-target-id="Response Body-error_response-e1op" role="button" tabindex="0" aria-controls="Response Body-error_response-e1op-nested-body" aria-expanded="true">
+            <span class="icon dds__icon dds__icon--chevron-right dds__mt-1 dds__ml-auto hidden"></span>
+            <span class="icon dds__icon dds__icon--chevron-down dds__mt-1 dds__ml-auto"></span>
+        </span>
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">object</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div><div class="nested-body schema-child-row" id="Response Body-error_response-e1op-nested-body" style="">
+            <div colspan="2" class="nested">
+            <div class="" id="primitive-http_status_code">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="http_status_code">http_status_code</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">integer&lt;int32&gt;</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="Response Body-error_response-e1op-messages-e1jc">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name clickable-property" title="messages" style="cursor: pointer;">messages</span>
+    </div>
+    <span class="schema-toggle-icon" data-action="toggleNestedBodyCard" data-target-id="Response Body-error_response-e1op-messages-e1jc" role="button" tabindex="0" aria-controls="Response Body-error_response-e1op-messages-e1jc-nested-body" aria-expanded="false">
+            <span class="icon dds__icon dds__icon--chevron-right dds__mt-1 dds__ml-auto"></span>
+            <span class="icon dds__icon dds__icon--chevron-down dds__mt-1 dds__ml-auto hidden"></span>
+        </span>
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">array[object]</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div><div class="nested-body schema-child-row" id="Response Body-error_response-e1op-messages-e1jc-nested-body" style="display:none">
+            <div colspan="2" class="nested">
+            <div class="" id="primitive-code">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="code">code</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-timestamp">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="timestamp">timestamp</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string&lt;date-time&gt;</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-severity">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="severity">severity</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      
+    </div>
+    
+    
+    
+    
+    <div class="desc"><p>error message severity enum</p>
+</div>
+    
+    <div class="enums">allowed values: <span class="dds__badge dds__badge--sm dds__badge--brand dds__badge--light">INFO</span> <span class="dds__badge dds__badge--sm dds__badge--brand dds__badge--light">WARNING</span> <span class="dds__badge dds__badge--sm dds__badge--brand dds__badge--light">ERROR</span> <span class="dds__badge dds__badge--sm dds__badge--brand dds__badge--light">CRITICAL</span></div>
+  </div>
+</div></div>
+<div class="" id="primitive-message">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="message">message</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-message_l10n">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="message_l10n">message_l10n</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+<div class="" id="primitive-substitution_args">
+<div class="dds__row row-border">
+  <div class="left-col dds__col--lg-4 dds__col--md-4 dds__col--sm-3 dds__col-2">
+    <div class="property-name-container">
+      <span class="property-name" title="substitution_args">substitution_args</span>
+    </div>
+    
+  </div>
+  <div class="right-col dds__col--lg-8 dds__col--md-8 dds__col--sm-3 dds__col-2">
+    <div class="type-required-line">
+      <span class="type">string</span>
+      
+    </div>
+    
+    
+    
+    
+    
+    
+    
+  </div>
+</div></div>
+            </div>
+          </div></div>
+            </div>
+          </div></div></div></div></div></div></div></div></div></div>
+   </div>
+        <div class="api__doc__right-section dds__pl-2"><div class="api_docs_collapsible highlight dds__mb-3 expanded" id="server"><div class="api_docs_collapsible-header dds__p-3" data-action="toggleCollapse" data-target-id="server" role="button" tabindex="0" aria-expanded="true"><div class="dds__w-100"><div class="server-title"><span class="dds__badge dds__badge--md http-method-get"><span class="dds__badge__label badge-font">GET</span></span><button style="float: right; border: 1px solid #9ca3af; display:none" class="dds__ml-auto dds__button dds__button--sm" type="button" id="drawer-trigger" data-action="clickedTryOutButton">Try it</button></div><div class="dds__p-2">/pfmp-diagnostics</div></div><span class="icon icon-collapsed dds__icon dds__icon--chevron-right dds__ml-auto"></span><span class="icon icon-expanded dds__icon dds__icon--chevron-down dds__ml-auto"></span></div><div class="api_docs_collapsible-body dds__px-3 dds__pt-2 dds__pb-3"><div class="dds__pr-2"></div><div class="dds__d-flex dds__justify-content-end dds__my-2"><button class="dds__button dds__button--sm" data-action="copyCodeById" data-target-id="server-copy-0">Copy</button></div><pre tabindex="0"><code id="server-copy-0">/pfmp-diagnostics</code></pre></div></div>
+<div class="api_docs_collapsible highlight dds__mb-3 expanded" id="responsesamples"><div class="api_docs_collapsible-header dds__p-3" data-action="toggleCollapse" data-target-id="responsesamples" role="button" tabindex="0" aria-controls="responsesamples-body" aria-expanded="true">Response Samples<span class="icon icon-collapsed dds__icon dds__icon--chevron-right dds__ml-auto"></span><span class="icon icon-expanded dds__icon dds__icon--chevron-down dds__ml-auto"></span></div><div class="api_docs_collapsible-body dds__px-3 dds__pt-2 dds__pb-3" id="responsesamples-body"><div class="response-tab-wrapper"><div class="tab-header" role="tablist"><h4 class="tab-item active" role="tab" aria-selected="true" aria-controls="responsesamples-tab-200" data-action="switchTab" data-target-id="responsesamples-tab-200">200</h4><h4 class="tab-item" role="tab" aria-selected="false" aria-controls="responsesamples-tab-403" data-action="switchTab" data-target-id="responsesamples-tab-403">403</h4><h4 class="tab-item" role="tab" aria-selected="false" aria-controls="responsesamples-tab-500" data-action="switchTab" data-target-id="responsesamples-tab-500">500</h4></div><div class="tab-body"><div class="tab-content active" id="responsesamples-tab-200" role="tabpanel" aria-labelledby="responsesamples-tab-200"><div class="dds__pt-2" role="presentation"><div class="content-type-box dds__mb-1"><div class="content-type-label">application/json</div></div><div class="content-description dds__mb-1"><p>Successful operation</p>
+</div><label for="responsesamples-tab-200-example" class="dds__visually-hidden">Select response example</label>
+       <select id="responsesamples-tab-200-example" class="dds__select__field" data-action="onExampleSelectChange" data-code-container-id="responsesamples-tab-200-code" aria-label="Select response example">
+        <option value="0" data-code="{
+  &quot;connection_error&quot;: &quot;connection_error&quot;,
+  &quot;paging_information&quot;: {
+    &quot;next&quot;: &quot;https://openapi-generator.tech&quot;,
+    &quot;last&quot;: &quot;https://openapi-generator.tech&quot;,
+    &quot;prev&quot;: &quot;https://openapi-generator.tech&quot;,
+    &quot;total_instances&quot;: 0,
+    &quot;first&quot;: &quot;https://openapi-generator.tech&quot;
+  },
+  &quot;results&quot;: [
+    {
+      &quot;diagnostic_executions_info&quot;: {
+        &quot;current&quot;: {
+          &quot;start_time&quot;: &quot;2000-01-23T04:56:07.000+00:00&quot;,
+          &quot;diagnostic_result_data&quot;: {
+            &quot;fix_recommendations&quot;: [
+              &quot;fix_recommendations&quot;,
+              &quot;fix_recommendations&quot;
+            ],
+            &quot;raw_output&quot;: &quot;raw_output&quot;,
+            &quot;failure_reason&quot;: &quot;failure_reason&quot;,
+            &quot;failure_title&quot;: &quot;failure_title&quot;,
+            &quot;benchmark&quot;: &quot;benchmark&quot;,
+            &quot;status&quot;: &quot;UNKNOWN&quot;
+          },
+          &quot;diagnostic_execution_status&quot;: &quot;NOT_STARTED&quot;,
+          &quot;remediations&quot;: [
+            {
+              &quot;action_info&quot;: &quot;action_info&quot;,
+              &quot;action&quot;: &quot;action&quot;,
+              &quot;status&quot;: &quot;status&quot;
+            },
+            {
+              &quot;action_info&quot;: &quot;action_info&quot;,
+              &quot;action&quot;: &quot;action&quot;,
+              &quot;status&quot;: &quot;status&quot;
+            }
+          ],
+          &quot;end_time&quot;: &quot;2000-01-23T04:56:07.000+00:00&quot;,
+          &quot;invocation_source_type&quot;: &quot;MANUAL&quot;
+        },
+        &quot;last_finished_manual&quot;: {
+          &quot;start_time&quot;: &quot;2000-01-23T04:56:07.000+00:00&quot;,
+          &quot;diagnostic_result_data&quot;: {
+            &quot;fix_recommendations&quot;: [
+              &quot;fix_recommendations&quot;,
+              &quot;fix_recommendations&quot;
+            ],
+            &quot;raw_output&quot;: &quot;raw_output&quot;,
+            &quot;failure_reason&quot;: &quot;failure_reason&quot;,
+            &quot;failure_title&quot;: &quot;failure_title&quot;,
+            &quot;benchmark&quot;: &quot;benchmark&quot;,
+            &quot;status&quot;: &quot;UNKNOWN&quot;
+          },
+          &quot;diagnostic_execution_status&quot;: &quot;NOT_STARTED&quot;,
+          &quot;remediations&quot;: [
+            {
+              &quot;action_info&quot;: &quot;action_info&quot;,
+              &quot;action&quot;: &quot;action&quot;,
+              &quot;status&quot;: &quot;status&quot;
+            },
+            {
+              &quot;action_info&quot;: &quot;action_info&quot;,
+              &quot;action&quot;: &quot;action&quot;,
+              &quot;status&quot;: &quot;status&quot;
+            }
+          ],
+          &quot;end_time&quot;: &quot;2000-01-23T04:56:07.000+00:00&quot;,
+          &quot;invocation_source_type&quot;: &quot;MANUAL&quot;
+        },
+        &quot;last_completed&quot;: {
+          &quot;start_time&quot;: &quot;2000-01-23T04:56:07.000+00:00&quot;,
+          &quot;diagnostic_result_data&quot;: {
+            &quot;fix_recommendations&quot;: [
+              &quot;fix_recommendations&quot;,
+              &quot;fix_recommendations&quot;
+            ],
+            &quot;raw_output&quot;: &quot;raw_output&quot;,
+            &quot;failure_reason&quot;: &quot;failure_reason&quot;,
+            &quot;failure_title&quot;: &quot;failure_title&quot;,
+            &quot;benchmark&quot;: &quot;benchmark&quot;,
+            &quot;status&quot;: &quot;UNKNOWN&quot;
+          },
+          &quot;diagnostic_execution_status&quot;: &quot;NOT_STARTED&quot;,
+          &quot;remediations&quot;: [
+            {
+              &quot;action_info&quot;: &quot;action_info&quot;,
+              &quot;action&quot;: &quot;action&quot;,
+              &quot;status&quot;: &quot;status&quot;
+            },
+            {
+              &quot;action_info&quot;: &quot;action_info&quot;,
+              &quot;action&quot;: &quot;action&quot;,
+              &quot;status&quot;: &quot;status&quot;
+            }
+          ],
+          &quot;end_time&quot;: &quot;2000-01-23T04:56:07.000+00:00&quot;,
+          &quot;invocation_source_type&quot;: &quot;MANUAL&quot;
+        }
+      },
+      &quot;meta_data&quot;: {
+        &quot;execution_available_on_connection_error&quot;: true,
+        &quot;scheduled_consecutive_failures&quot;: 6,
+        &quot;execution_approval_needed&quot;: true,
+        &quot;completed_once&quot;: true,
+        &quot;scheduled_consecutive_failures_threshold&quot;: 1,
+        &quot;display_name&quot;: &quot;display_name&quot;,
+        &quot;scheduler_interval&quot;: &quot;scheduler_interval&quot;
+      },
+      &quot;id&quot;: &quot;id&quot;
+    },
+    {
+      &quot;diagnostic_executions_info&quot;: {
+        &quot;current&quot;: {
+          &quot;start_time&quot;: &quot;2000-01-23T04:56:07.000+00:00&quot;,
+          &quot;diagnostic_result_data&quot;: {
+            &quot;fix_recommendations&quot;: [
+              &quot;fix_recommendations&quot;,
+              &quot;fix_recommendations&quot;
+            ],
+            &quot;raw_output&quot;: &quot;raw_output&quot;,
+            &quot;failure_reason&quot;: &quot;failure_reason&quot;,
+            &quot;failure_title&quot;: &quot;failure_title&quot;,
+            &quot;benchmark&quot;: &quot;benchmark&quot;,
+            &quot;status&quot;: &quot;UNKNOWN&quot;
+          },
+          &quot;diagnostic_execution_status&quot;: &quot;NOT_STARTED&quot;,
+          &quot;remediations&quot;: [
+            {
+              &quot;action_info&quot;: &quot;action_info&quot;,
+              &quot;action&quot;: &quot;action&quot;,
+              &quot;status&quot;: &quot;status&quot;
+            },
+            {
+              &quot;action_info&quot;: &quot;action_info&quot;,
+              &quot;action&quot;: &quot;action&quot;,
+              &quot;status&quot;: &quot;status&quot;
+            }
+          ],
+          &quot;end_time&quot;: &quot;2000-01-23T04:56:07.000+00:00&quot;,
+          &quot;invocation_source_type&quot;: &quot;MANUAL&quot;
+        },
+        &quot;last_finished_manual&quot;: {
+          &quot;start_time&quot;: &quot;2000-01-23T04:56:07.000+00:00&quot;,
+          &quot;diagnostic_result_data&quot;: {
+            &quot;fix_recommendations&quot;: [
+              &quot;fix_recommendations&quot;,
+              &quot;fix_recommendations&quot;
+            ],
+            &quot;raw_output&quot;: &quot;raw_output&quot;,
+            &quot;failure_reason&quot;: &quot;failure_reason&quot;,
+            &quot;failure_title&quot;: &quot;failure_title&quot;,
+            &quot;benchmark&quot;: &quot;benchmark&quot;,
+            &quot;status&quot;: &quot;UNKNOWN&quot;
+          },
+          &quot;diagnostic_execution_status&quot;: &quot;NOT_STARTED&quot;,
+          &quot;remediations&quot;: [
+            {
+              &quot;action_info&quot;: &quot;action_info&quot;,
+              &quot;action&quot;: &quot;action&quot;,
+              &quot;status&quot;: &quot;status&quot;
+            },
+            {
+              &quot;action_info&quot;: &quot;action_info&quot;,
+              &quot;action&quot;: &quot;action&quot;,
+              &quot;status&quot;: &quot;status&quot;
+            }
+          ],
+          &quot;end_time&quot;: &quot;2000-01-23T04:56:07.000+00:00&quot;,
+          &quot;invocation_source_type&quot;: &quot;MANUAL&quot;
+        },
+        &quot;last_completed&quot;: {
+          &quot;start_time&quot;: &quot;2000-01-23T04:56:07.000+00:00&quot;,
+          &quot;diagnostic_result_data&quot;: {
+            &quot;fix_recommendations&quot;: [
+              &quot;fix_recommendations&quot;,
+              &quot;fix_recommendations&quot;
+            ],
+            &quot;raw_output&quot;: &quot;raw_output&quot;,
+            &quot;failure_reason&quot;: &quot;failure_reason&quot;,
+            &quot;failure_title&quot;: &quot;failure_title&quot;,
+            &quot;benchmark&quot;: &quot;benchmark&quot;,
+            &quot;status&quot;: &quot;UNKNOWN&quot;
+          },
+          &quot;diagnostic_execution_status&quot;: &quot;NOT_STARTED&quot;,
+          &quot;remediations&quot;: [
+            {
+              &quot;action_info&quot;: &quot;action_info&quot;,
+              &quot;action&quot;: &quot;action&quot;,
+              &quot;status&quot;: &quot;status&quot;
+            },
+            {
+              &quot;action_info&quot;: &quot;action_info&quot;,
+              &quot;action&quot;: &quot;action&quot;,
+              &quot;status&quot;: &quot;status&quot;
+            }
+          ],
+          &quot;end_time&quot;: &quot;2000-01-23T04:56:07.000+00:00&quot;,
+          &quot;invocation_source_type&quot;: &quot;MANUAL&quot;
+        }
+      },
+      &quot;meta_data&quot;: {
+        &quot;execution_available_on_connection_error&quot;: true,
+        &quot;scheduled_consecutive_failures&quot;: 6,
+        &quot;execution_approval_needed&quot;: true,
+        &quot;completed_once&quot;: true,
+        &quot;scheduled_consecutive_failures_threshold&quot;: 1,
+        &quot;display_name&quot;: &quot;display_name&quot;,
+        &quot;scheduler_interval&quot;: &quot;scheduler_interval&quot;
+      },
+      &quot;id&quot;: &quot;id&quot;
+    }
+  ]
+}" data-description="Example">
+        Example
+      </option>
+      </select></div><div class="dds__d-flex dds__justify-content-end dds__my-2" role="presentation"><button class="dds__button dds__button--sm" data-action="copyCodeById" data-target-id="responsesamples-tab-200-code">Copy</button></div><div id="responsesamples-tab-200-code" role="presentation"><pre tabindex="0"><code>{
+  "connection_error": "connection_error",
+  "paging_information": {
+    "next": "https://openapi-generator.tech",
+    "last": "https://openapi-generator.tech",
+    "prev": "https://openapi-generator.tech",
+    "total_instances": 0,
+    "first": "https://openapi-generator.tech"
+  },
+  "results": [
+    {
+      "diagnostic_executions_info": {
+        "current": {
+          "start_time": "2000-01-23T04:56:07.000+00:00",
+          "diagnostic_result_data": {
+            "fix_recommendations": [
+              "fix_recommendations",
+              "fix_recommendations"
+            ],
+            "raw_output": "raw_output",
+            "failure_reason": "failure_reason",
+            "failure_title": "failure_title",
+            "benchmark": "benchmark",
+            "status": "UNKNOWN"
+          },
+          "diagnostic_execution_status": "NOT_STARTED",
+          "remediations": [
+            {
+              "action_info": "action_info",
+              "action": "action",
+              "status": "status"
+            },
+            {
+              "action_info": "action_info",
+              "action": "action",
+              "status": "status"
+            }
+          ],
+          "end_time": "2000-01-23T04:56:07.000+00:00",
+          "invocation_source_type": "MANUAL"
+        },
+        "last_finished_manual": {
+          "start_time": "2000-01-23T04:56:07.000+00:00",
+          "diagnostic_result_data": {
+            "fix_recommendations": [
+              "fix_recommendations",
+              "fix_recommendations"
+            ],
+            "raw_output": "raw_output",
+            "failure_reason": "failure_reason",
+            "failure_title": "failure_title",
+            "benchmark": "benchmark",
+            "status": "UNKNOWN"
+          },
+          "diagnostic_execution_status": "NOT_STARTED",
+          "remediations": [
+            {
+              "action_info": "action_info",
+              "action": "action",
+              "status": "status"
+            },
+            {
+              "action_info": "action_info",
+              "action": "action",
+              "status": "status"
+            }
+          ],
+          "end_time": "2000-01-23T04:56:07.000+00:00",
+          "invocation_source_type": "MANUAL"
+        },
+        "last_completed": {
+          "start_time": "2000-01-23T04:56:07.000+00:00",
+          "diagnostic_result_data": {
+            "fix_recommendations": [
+              "fix_recommendations",
+              "fix_recommendations"
+            ],
+            "raw_output": "raw_output",
+            "failure_reason": "failure_reason",
+            "failure_title": "failure_title",
+            "benchmark": "benchmark",
+            "status": "UNKNOWN"
+          },
+          "diagnostic_execution_status": "NOT_STARTED",
+          "remediations": [
+            {
+              "action_info": "action_info",
+              "action": "action",
+              "status": "status"
+            },
+            {
+              "action_info": "action_info",
+              "action": "action",
+              "status": "status"
+            }
+          ],
+          "end_time": "2000-01-23T04:56:07.000+00:00",
+          "invocation_source_type": "MANUAL"
+        }
+      },
+      "meta_data": {
+        "execution_available_on_connection_error": true,
+        "scheduled_consecutive_failures": 6,
+        "execution_approval_needed": true,
+        "completed_once": true,
+        "scheduled_consecutive_failures_threshold": 1,
+        "display_name": "display_name",
+        "scheduler_interval": "scheduler_interval"
+      },
+      "id": "id"
+    },
+    {
+      "diagnostic_executions_info": {
+        "current": {
+          "start_time": "2000-01-23T04:56:07.000+00:00",
+          "diagnostic_result_data": {
+            "fix_recommendations": [
+              "fix_recommendations",
+              "fix_recommendations"
+            ],
+            "raw_output": "raw_output",
+            "failure_reason": "failure_reason",
+            "failure_title": "failure_title",
+            "benchmark": "benchmark",
+            "status": "UNKNOWN"
+          },
+          "diagnostic_execution_status": "NOT_STARTED",
+          "remediations": [
+            {
+              "action_info": "action_info",
+              "action": "action",
+              "status": "status"
+            },
+            {
+              "action_info": "action_info",
+              "action": "action",
+              "status": "status"
+            }
+          ],
+          "end_time": "2000-01-23T04:56:07.000+00:00",
+          "invocation_source_type": "MANUAL"
+        },
+        "last_finished_manual": {
+          "start_time": "2000-01-23T04:56:07.000+00:00",
+          "diagnostic_result_data": {
+            "fix_recommendations": [
+              "fix_recommendations",
+              "fix_recommendations"
+            ],
+            "raw_output": "raw_output",
+            "failure_reason": "failure_reason",
+            "failure_title": "failure_title",
+            "benchmark": "benchmark",
+            "status": "UNKNOWN"
+          },
+          "diagnostic_execution_status": "NOT_STARTED",
+          "remediations": [
+            {
+              "action_info": "action_info",
+              "action": "action",
+              "status": "status"
+            },
+            {
+              "action_info": "action_info",
+              "action": "action",
+              "status": "status"
+            }
+          ],
+          "end_time": "2000-01-23T04:56:07.000+00:00",
+          "invocation_source_type": "MANUAL"
+        },
+        "last_completed": {
+          "start_time": "2000-01-23T04:56:07.000+00:00",
+          "diagnostic_result_data": {
+            "fix_recommendations": [
+              "fix_recommendations",
+              "fix_recommendations"
+            ],
+            "raw_output": "raw_output",
+            "failure_reason": "failure_reason",
+            "failure_title": "failure_title",
+            "benchmark": "benchmark",
+            "status": "UNKNOWN"
+          },
+          "diagnostic_execution_status": "NOT_STARTED",
+          "remediations": [
+            {
+              "action_info": "action_info",
+              "action": "action",
+              "status": "status"
+            },
+            {
+              "action_info": "action_info",
+              "action": "action",
+              "status": "status"
+            }
+          ],
+          "end_time": "2000-01-23T04:56:07.000+00:00",
+          "invocation_source_type": "MANUAL"
+        }
+      },
+      "meta_data": {
+        "execution_available_on_connection_error": true,
+        "scheduled_consecutive_failures": 6,
+        "execution_approval_needed": true,
+        "completed_once": true,
+        "scheduled_consecutive_failures_threshold": 1,
+        "display_name": "display_name",
+        "scheduler_interval": "scheduler_interval"
+      },
+      "id": "id"
+    }
+  ]
+}</code></pre></div></div><div class="tab-content" id="responsesamples-tab-403" role="tabpanel" aria-labelledby="responsesamples-tab-403"><div class="dds__pt-2" role="presentation"><div class="content-type-box dds__mb-1"><div class="content-type-label">application/json</div></div><div class="content-description dds__mb-1"><p>Authorization failure - The credentials do not allow the requested operation.</p>
+</div><label for="responsesamples-tab-403-example" class="dds__visually-hidden">Select response example</label>
+       <select id="responsesamples-tab-403-example" class="dds__select__field" data-action="onExampleSelectChange" data-code-container-id="responsesamples-tab-403-code" aria-label="Select response example">
+        <option value="0" data-code="{
+  &quot;http_status_code&quot;: 0,
+  &quot;messages&quot;: [
+    {
+      &quot;code&quot;: &quot;string&quot;,
+      &quot;timestamp&quot;: &quot;2026-10-23T21:14:44.762Z&quot;,
+      &quot;severity&quot;: &quot;string&quot;,
+      &quot;message&quot;: &quot;string&quot;,
+      &quot;message_l10n&quot;: &quot;string&quot;,
+      &quot;substitution_args&quot;: &quot;string&quot;
+    }
+  ]
+}" data-description="Example">
+        Example
+      </option>
+      </select></div><div class="dds__d-flex dds__justify-content-end dds__my-2" role="presentation"><button class="dds__button dds__button--sm" data-action="copyCodeById" data-target-id="responsesamples-tab-403-code">Copy</button></div><div id="responsesamples-tab-403-code" role="presentation"><pre tabindex="0"><code>{
+  "http_status_code": 0,
+  "messages": [
+    {
+      "code": "string",
+      "timestamp": "2026-10-23T21:14:44.762Z",
+      "severity": "string",
+      "message": "string",
+      "message_l10n": "string",
+      "substitution_args": "string"
+    }
+  ]
+}</code></pre></div></div><div class="tab-content" id="responsesamples-tab-500" role="tabpanel" aria-labelledby="responsesamples-tab-500"><div class="dds__pt-2" role="presentation"><div class="content-type-box dds__mb-1"><div class="content-type-label">application/json</div></div><div class="content-description dds__mb-1"><p>Internal Server Error</p>
+</div><label for="responsesamples-tab-500-example" class="dds__visually-hidden">Select response example</label>
+       <select id="responsesamples-tab-500-example" class="dds__select__field" data-action="onExampleSelectChange" data-code-container-id="responsesamples-tab-500-code" aria-label="Select response example">
+        <option value="0" data-code="{
+  &quot;http_status_code&quot;: 0,
+  &quot;messages&quot;: [
+    {
+      &quot;code&quot;: &quot;string&quot;,
+      &quot;timestamp&quot;: &quot;2026-10-23T21:14:44.762Z&quot;,
+      &quot;severity&quot;: &quot;string&quot;,
+      &quot;message&quot;: &quot;string&quot;,
+      &quot;message_l10n&quot;: &quot;string&quot;,
+      &quot;substitution_args&quot;: &quot;string&quot;
+    }
+  ]
+}" data-description="Example">
+        Example
+      </option>
+      </select></div><div class="dds__d-flex dds__justify-content-end dds__my-2" role="presentation"><button class="dds__button dds__button--sm" data-action="copyCodeById" data-target-id="responsesamples-tab-500-code">Copy</button></div><div id="responsesamples-tab-500-code" role="presentation"><pre tabindex="0"><code>{
+  "http_status_code": 0,
+  "messages": [
+    {
+      "code": "string",
+      "timestamp": "2026-10-23T21:14:44.762Z",
+      "severity": "string",
+      "message": "string",
+      "message_l10n": "string",
+      "substitution_args": "string"
+    }
+  ]
+}</code></pre></div></div></div></div></div></div></div>
+      </div>
+    </div></div></body></html>

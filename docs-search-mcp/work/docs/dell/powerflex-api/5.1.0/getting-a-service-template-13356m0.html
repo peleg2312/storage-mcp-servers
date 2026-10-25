@@ -1,0 +1,100 @@
+<html><head><title>PowerFlex API 5.1.0: Getting a service template</title></head><body><p>Tasks > PowerFlex Manager API tasks</p><div><div class="api-docs-main-div dds__pl-2">
+    <div class="markdown-wrapper dds__py-3">
+      <div class="markdown-body dds__px-3"><h1 id="getting-a-service-template" class="anchor-scroll-top-offset">Getting a service template</h1>
+<p>You can get a service template by calling this API with a specific ID:</p>
+<p><code>GET /ServiceTemplate/ff808081797bca5f01797bf8e50a3035</code></p>
+<p>The response can be quite large, so the sample presented below shows an abbreviated response.</p>
+<p>Sample response:</p>
+<pre><code class="language-json">{
+    "allUsersAllowed": false,
+    "assignedUsers": [],
+    "attachments": [],
+    "blockServiceOperationsMap": {},
+    "brownfieldTemplateType": "NONE",
+    "category": "AER1",
+    "clusterCount": 1,
+    "components": [
+        {
+            "asmGUID": null,
+            "associatedComponents": {
+                "entry": [
+                    {
+                        "key": "c1e3be9d-04b6-4325-8730-afe68e4e4a7d",
+                        "value": {
+                            "entry": [
+                                {
+                                    "key": "name",
+                                    "value": "PowerFlex Presentation Server"
+                                }
+                            ]
+                        }
+                    }
+                ]
+            },
+            "brownfield": false,
+            "cloned": false,
+            "clonedFromId": null,
+            "componentID": "component-cluster-vcenter-1",
+            "componentValid": {
+                "messages": [
+                    {
+                        "agentId": "ASM Manager",
+                        "category": "USER_FACING",
+                        "correlationId": null,
+                        "detailedMessage": "The template cannot be published with data missing for the required fields.",
+                        "displayMessage": "The component VMWare Cluster is missing data for required field: vcesys-sio-mgmt Port Group.",
+                        "messageBundle": "AsmManagerMessages",
+                        "messageCode": "VXFM00215",
+                        "responseAction": "Enter a valid value for the required field.",
+                        "sequenceNumber": 0,
+                        "severity": "ERROR",
+                        "timeStamp": "2021-05-17T20:16:19.719+00:00"
+                    }
+                ],
+                "valid": false
+            },
+            "configFile": null,
+            "helpText": null,
+            "id": "0dc9b3a9-054e-4b6b-a584-73188353f163",
+            "identifier": null,
+            "instances": 1,
+            "ip": null,
+            "manageFirmware": false,
+            "managementIpAddress": null,
+            "name": "VMWare Cluster",
+            "puppetCertName": null,
+            "refId": null,
+            "relatedComponents": {},
+            "resources": [
+                {
+                    "displayName": "Cluster Settings",
+                    "id": "asm::cluster",
+                    "parameters": [
+                        {
+                            "attributes": {},
+                            "dependencies": [],
+                            "dependencyTarget": null,
+                            "dependencyValue": null,
+                            "displayName": "Target Virtual Machine Manager",
+                            "faultSetSettings": null,
+                            "generated": false,
+                            "group": null,
+                            "hideFromTemplate": false,
+                            "id": "asm_guid",
+                            "infoIcon": false,
+                            "max": null,
+                            "maxLength": 256,
+                            "min": null,
+...
+
+</code></pre>
+</div>
+      <div class="markdown-sidebar">
+        <div class="markdown-toc-title">
+          <i class="icon dds__icon dds__icon--bookmark"></i>
+          On this page
+        </div>
+          <ul><li class="level-1"><a href="#getting-a-service-template" data-toc-link="">Getting a service template</a></li></ul>
+      </div>
+    </div>
+  </div></div></body></html>

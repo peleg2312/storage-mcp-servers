@@ -1,0 +1,86 @@
+<html><head><title>PowerFlex API 5.1.0: PowerFlex (erasure coding)</title></head><body><p>Introduction</p><div><div class="api-docs-main-div dds__pl-2">
+    <div class="markdown-wrapper dds__py-3">
+      <div class="markdown-body dds__px-3"><h1 id="introduction-to-powerflex-erasure-coding" class="anchor-scroll-top-offset">Introduction to PowerFlex (erasure coding)</h1>
+<p>PowerFlex is an enterprise-class, software-defined block storage solution that is deployed, managed, and supported as a single system. Highly flexible and scalable, PowerFlex allows you to mix two-layer (Server SAN), single-layer, storage-only, and mixed architectures within a single deployment.</p>
+<p>In this release, PowerFlex introduces a new storage platform and architecture based on erasure coding. Erasure coding is a method of data protection that provides improved data durability, resiliency and reliability, and higher capacity usage, which reduces storage overhead. PowerFlex uses dual parity erasure coding, which is implemented using multiple protection schemes based on the number of PowerFlex storage nodes.</p>
+<h2 id="powerflex-block-api" class="anchor-scroll-top-offset">PowerFlex Block API</h2>
+<p>The PowerFlex Block API is installed as part of the PowerFlex installation manager and PowerFlex gateway package. The installation manager manages deployment and upgrades. The PowerFlex gateway leverages role-based security access to expose RESTful APIs for automating frontend and backend storage tasks and core components. the PowerFlex gateway also acts as a gateway for SNMP traps and secure remote services (SRS).</p>
+<p>The REST API is served from the PowerFlex gateway through the REST gateway. The PowerFlex Gateway connects to a single metadata manager (MDM) and serves requests by querying the MDM and reformatting the answers it receives from the MDM in a RESTful manner back to a REST client.<br>
+Every PowerFlex SCLI command is also available in the PowerFlex REST API. The responses returned by the PowerFlex gateway are in JSON format.</p>
+<p>APIs may change as new features are added to the product or changes are made to the PowerFlex software.</p>
+<h2 id="target-audience" class="anchor-scroll-top-offset">Target audience</h2>
+<p>The PowerFlex Block API is intended for customers who want to automate PowerFlex deployment, configuration, and management tasks.</p>
+<h2 id="basic-concepts" class="anchor-scroll-top-offset">Basic concepts</h2>
+<p>The following basic concepts are relevant to the understanding and operation of PowerFlex:</p>
+<table>
+<thead>
+<tr>
+<th>Concept</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Device</td>
+<td>A storage device or persistent memory device that is added to a storage system.</td>
+</tr>
+<tr>
+<td>Device group</td>
+<td>A device group consists of devices that come from five or more nodes that are contained in a single protection domain. The nodes that belong to a device group have the same media type.</td>
+</tr>
+<tr>
+<td>Device gateway target</td>
+<td>A device gateway target (DGWT) is a distributed capacity service running on the storage node. The DGWT service processes and saves the data to the devices. The component is accountable for placing data on the storage drives using erasure coding protection schemes.</td>
+</tr>
+<tr>
+<td>Metadata manager</td>
+<td>A metadata manager (MDM) configures and monitors PowerFlex, and is usually configured in redundant cluster mode to support high availability.</td>
+</tr>
+<tr>
+<td>PowerFlex data server</td>
+<td>A PowerFlex data server (PDS) is a storage service that is responsible for processing host I/Os. The PDS service organizes the data within the storage node and divides it into smaller chunks of data of equal size.</td>
+</tr>
+<tr>
+<td>Protection domain</td>
+<td>A protection domain is a logical entity that consists of and manages a group of storage nodes each of which contains devices.</td>
+</tr>
+<tr>
+<td>Snapshot</td>
+<td>A snapshot is a read-only copy of volumes that are used for local data protection. They provide a method of recovery for data that has been corrupted or accidentally deleted.</td>
+</tr>
+<tr>
+<td>Storage system</td>
+<td>A storage system consists of logical entities, such as devices and device groups, storage pools, and NVMe targets, which form the protection domain.</td>
+</tr>
+<tr>
+<td>Storage data client</td>
+<td>A storage data client (SDC) is a lightweight device driver that exposes PowerFlex volumes as block devices to the application that resides on the same server on which the SDC is installed.</td>
+</tr>
+<tr>
+<td>Storage node</td>
+<td>A storage node provide storage capacity, but no compute power for the compute cluster.</td>
+</tr>
+<tr>
+<td>Storage pool</td>
+<td>A storage pool is a logical structure where volumes are created.</td>
+</tr>
+<tr>
+<td>Thin clone</td>
+<td>A thin clone is a read/write copy of a volume or a snapshot that allows changes to content using writes. Thin clones are thin copies of the object from which they were created.</td>
+</tr>
+<tr>
+<td>Volume</td>
+<td>A volume consists of multiple storage blocks spread evenly across devices.</td>
+</tr>
+</tbody>
+</table>
+</div>
+      <div class="markdown-sidebar">
+        <div class="markdown-toc-title">
+          <i class="icon dds__icon dds__icon--bookmark"></i>
+          On this page
+        </div>
+          <ul><li class="level-1"><a href="#introduction-to-powerflex-erasure-coding" data-toc-link="">Introduction to PowerFlex (erasure coding)</a></li><li class="level-2"><a href="#powerflex-block-api" data-toc-link="">PowerFlex Block API</a></li><li class="level-2"><a href="#target-audience" data-toc-link="">Target audience</a></li><li class="level-2"><a href="#basic-concepts" data-toc-link="">Basic concepts</a></li></ul>
+      </div>
+    </div>
+  </div></div></body></html>

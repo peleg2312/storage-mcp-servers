@@ -1,0 +1,42 @@
+<html><head><title>PowerFlex API 3.6.0: Add host certificates to the truststore</title></head><body><p></p><div><div class="api-docs-main-div dds__pl-2">
+    <div class="markdown-wrapper dds__py-3">
+      <div class="markdown-body dds__px-3"><h1 id="add-host-certificates-to-the-truststore" class="anchor-scroll-top-offset">Add host certificates to the truststore</h1>
+<p>The truststore contains a list of the valid Certificate Authorities (CAs) that are trusted by the client machine for SSL server authentication. Use the following workflow to retrieve the MDM or LIA host’s certificates and add them to the truststore.</p>
+<ol>
+<li>
+<p>Log in to the PowerFlex Gateway as an admin user, using the <code>gatewayAdminPassword</code>. A token is returned.</p>
+</li>
+<li>
+<p>Retrieve (GET) the MDM’s or LIA’s certificate:<br>
+<code>/api/getHostCertificate/{Mdm|Lia}?host={host ip}</code></p>
+</li>
+</ol>
+<p>Example:<br>
+<code>/api/getHostCertificate/Mdm?host=10.76.60.10</code></p>
+<p>The request returns a response similar to the following:</p>
+<pre><code>-----BEGIN CERTIFICATE-----
+MIIDcTCCAlmgAwIBAAIBATANBgkqhkiG9w0BAQUFADB8MQwwCgYDVQQqEwNNRE0xFzAVBgNVBAMTDmNlbnRvcy02LTQtYWRpMRIwEAYDVQQHEwlIb3BraW50b24xFjAUBgNVBAgTDU1hc3NhY2h1c2V0dHMxCzAJBgNVBAYTAlVTMQwwCgYDVQQKEwNFTUMxDDAKBgNVBAsTA0FTRDAeFw0xNTEyMTkwNzI4MTVaFw0yNTEyMTcwODI4MTVaMHwxDDAKBgNVBCoTA01ETTEXMBUGA1UEAxMOY2VudG9zLTYtNC1hZGkxEjAQBgNVBAcTCUhvcGtpbnRvbjEWMBQGA1UECBMNTWFzc2FjaHVzZXR0czELMAkGA1UEBhMCVVMxDDAKBgNVBAoTA0VNQzEMMAoGA1UECxMDQVNEMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA4SMybaAEZjfBX9wLglr3wxYHOvID5Pe1Z26Pv8oIR/MTOVa1Bw4A9px1MHHSIfkAfgRlLC24uebZXhbh0snBq+OL+SJPwEfbOVbif/saXL8RJFwm/VNg8KHUwjuq/sJkKDjx9uSf0U+/9FzwvKVuM87xDj/rVvJgBYh6pH34q/XD5l8am/iEQr/EnGZmIsa+VkCL0IeYKbkA3ZINfI4YsjSJ+qeu5e/KMsNlHEvmhk1DdJbLayn9QkiS5Q9e8A40jjkb2e1Q71awoOlb6+8XXWWkpBhxAnRa9P8Pb1BfcNyUfXtrKuy+fRjw4Gp+rw2MdoIDuMbO1+1sQaRvVPTYxwIDAQABMA0GCSqGSIb3DQEBBQUAA4IBAQCu1e/jBz63ZFDS+pFvZ3XI/VMdn9NArM+8Cjn7Luar8oEVAYI6jqYYcZCk2jQyfuI1HP2jXqPTJo8CNyNT5S6rZ5ryHOiRjn/K2pVC6kT497LY5lc3LjhXUdLjpWnW2jsGfM93cCkkrxu8wmkh9oo8WizOiRAyKmz02uTEuEok7GJBS/DR6csnLo2YLUV6ZqeBN9jdzZbIY7SoFWya1K4xZmqhkAtnj1ynP3uoxTkd+wfDRmYeDv8l5eciLj2BXNuV8zXYWSCyABZC//jvajNtSEXgUura3uh0YBIfbO/AZ980zUMwJBMBr06yw4tHnHRRYgfI3tnZOD4byaJOdHuq
+-----END CERTIFICATE-----
+</code></pre>
+<ol>
+<li>
+<p>Save the entire certificate to a <code>cer</code> file.</p>
+</li>
+<li>
+<p>Save (POST) the certificate to the truststore:<br>
+<code>/api/trustHostCertificate/{Mdm|Lia}</code></p>
+</li>
+</ol>
+<p>The body of the request should contain a part named “file” and the file containing the certificate to be trusted.</p>
+<p>Example:<br>
+<code>/api/trustHostCertificate/Mdm</code></p>
+</div>
+      <div class="markdown-sidebar">
+        <div class="markdown-toc-title">
+          <i class="icon dds__icon dds__icon--bookmark"></i>
+          On this page
+        </div>
+          <ul><li class="level-1"><a href="#add-host-certificates-to-the-truststore" data-toc-link="">Add host certificates to the truststore</a></li></ul>
+      </div>
+    </div>
+  </div></div></body></html>

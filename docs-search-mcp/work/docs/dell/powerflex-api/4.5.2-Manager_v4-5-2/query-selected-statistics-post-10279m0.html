@@ -1,0 +1,54 @@
+<html><head><title>PowerFlex API 4.5.2-Manager_v4-5-2: Query selected statistics (POST)</title></head><body><p>Tasks > PowerFlex Block API tasks</p><div><div class="api-docs-main-div dds__pl-2">
+    <div class="markdown-wrapper dds__py-3">
+      <div class="markdown-body dds__px-3"><h1 id="query-selected-statistics-post" class="anchor-scroll-top-offset">Query selected statistics (POST)</h1>
+<p>The <code>querySelectedStatistics</code> command allows you to retrieve information about the system.<br>
+<code>/api/instances/querySelectedStatistics</code>.</p>
+<p>The body of the request reguires the <code>selectedStatisticsList</code> parameter, which is a list of objects containing:</p>
+<ul>
+<li><code>type</code>: object type (System, ProtectionDomain, Sds, StoragePool, Device, Volume, VTree, Sdc, FaultSet, AccelerationPool, SpSds, SnapshotPolicy)</li>
+<li><code>properties</code>: list of properties to fetch, which are different for each object type</li>
+</ul>
+<p>The following parameters are not relevant to the System type and can be omitted from the requet:</p>
+<ul>
+<li><code>ids</code>: list of objects ids<br>
+or</li>
+<li><code>allIds</code>: with empty value</li>
+</ul>
+<p>The response contains a list of all requested types, the IDs, and properties, according to the request parameters.</p>
+<ul>
+<li>The System type does not contain an ID.</li>
+<li>Types for which the requested IDs do not exist in the cluster will appear with an empty {}. (See FaultSet in the example below. )</li>
+<li>Any ID (from the IDs parameters in the request) that does not exist in the cluster will not appear in the response. The following will appear in the scaleio.log file:<br>
+<code>Got no statistics for &lt;type&gt;::&lt;id&gt;.</code></li>
+</ul>
+<p>In the following example, <code>Sds::022beb2300000004</code> does not exist in the cluster, so it does not appear in the response.</p>
+<p>Example:</p>
+<p><code>POST https://localhost:8443/api/instances/querySelectedStatistics</code></p>
+<p>Body:</p>
+<pre><code class="language-json">{"selectedStatisticsList":[{"type":"Sds","ids":["df4bd899000000aa"],"properties":["capacityInUseInKb","rfcachePoolNumOfDriverTheads","snapCapacityInUseInKb","thickCapacityInUseInKb","numOfDevices"]}]}
+</code></pre>
+<p>Response:</p>
+<pre><code class="language-json">{
+    "Sds":
+        {
+    "62b2b5c700000002":
+            {
+            "snapCapacityInUseInKb": 1048576,
+            "rfcachePoolNumOfDriverTheads": 80,
+            "thickCapacityInUseInKb": 5595136,
+            "capacityInUseInKb": 5595136,
+            "numOfDevices": 1
+            }
+        }
+}
+</code></pre>
+</div>
+      <div class="markdown-sidebar">
+        <div class="markdown-toc-title">
+          <i class="icon dds__icon dds__icon--bookmark"></i>
+          On this page
+        </div>
+          <ul><li class="level-1"><a href="#query-selected-statistics-post" data-toc-link="">Query selected statistics (POST)</a></li></ul>
+      </div>
+    </div>
+  </div></div></body></html>
