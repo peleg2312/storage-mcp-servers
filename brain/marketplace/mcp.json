@@ -1,0 +1,94 @@
+{
+  "docs-local": {
+    "description": "Offline documentation library search (NetApp, Dell, VMware, Cisco, Kubernetes docs, KBs and bug trackers): search_docs, read_chunk, read_document, list_sources",
+    "server": {
+      "type": "stdio",
+      "command": "python3",
+      "args": [
+        "/opt/paas/library/mcp_stdio.py",
+        "--db",
+        "/opt/paas/library/docs.db"
+      ]
+    }
+  },
+  "databases": {
+    "description": "Read-only PostgreSQL / MongoDB for your own apps (connections in ~/.claude/brain/databases.json)",
+    "server": {
+      "type": "stdio",
+      "command": "/opt/paas/devtools-venv/bin/python",
+      "args": [
+        "/opt/paas/tools/db_mcp.py"
+      ]
+    }
+  },
+  "powermax": {
+    "description": "Dell PowerMax live state (Unisphere): arrays, volumes, storage groups, masking views, ports, SRDF / SnapVX, alerts, performance",
+    "server": {
+      "type": "http",
+      "url": "http://HOST:8000/mcp",
+      "headers": {
+        "Authorization": "Bearer TOKEN"
+      }
+    }
+  },
+  "ontap": {
+    "description": "NetApp ONTAP live state (NetApp's official server): SVMs, volumes, LUNs, igroups, LIFs, aggregates, EMS, SnapMirror",
+    "server": {
+      "type": "http",
+      "url": "http://HOST:8000/mcp",
+      "headers": {
+        "Authorization": "Bearer TOKEN"
+      }
+    }
+  },
+  "harvest": {
+    "description": "NetApp Harvest metrics: ONTAP performance and capacity history (latency, IOPS, throughput, CPU)",
+    "server": {
+      "type": "http",
+      "url": "http://HOST:8000/mcp",
+      "headers": {
+        "Authorization": "Bearer TOKEN"
+      }
+    }
+  },
+  "mds": {
+    "description": "Cisco MDS fabrics: zoning, device-alias, FLOGI / FCNS, ports, port-channels, errors",
+    "server": {
+      "type": "http",
+      "url": "http://HOST:8000/mcp",
+      "headers": {
+        "Authorization": "Bearer TOKEN"
+      }
+    }
+  },
+  "ucs-central": {
+    "description": "Cisco UCS Central: service profiles, vHBAs, FI FC uplinks, faults",
+    "server": {
+      "type": "http",
+      "url": "http://HOST:8000/mcp",
+      "headers": {
+        "Authorization": "Bearer TOKEN"
+      }
+    }
+  },
+  "kuparashit": {
+    "description": "VMware inventory map from every vCenter: ESX hosts, pWWNs, NAAs, datastores, RDMs, VMs - the join between layers",
+    "server": {
+      "type": "http",
+      "url": "http://HOST:8000/mcp",
+      "headers": {
+        "Authorization": "Bearer TOKEN"
+      }
+    }
+  },
+  "aria": {
+    "description": "VMware Aria Operations: VM, host and datastore metrics and alerts",
+    "server": {
+      "type": "http",
+      "url": "http://HOST:8000/mcp",
+      "headers": {
+        "Authorization": "Bearer TOKEN"
+      }
+    }
+  }
+}
