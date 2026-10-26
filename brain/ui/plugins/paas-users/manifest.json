@@ -1,0 +1,13 @@
+{
+  "name": "paas-users",
+  "displayName": "Users",
+  "version": "1.0.0",
+  "description": "Root only: add people to this VM, reset passwords, lock or remove accounts.",
+  "author": "Peleg As A Service",
+  "icon": "icon.svg",
+  "type": "module",
+  "slot": "tab",
+  "entry": "index.js",
+  "server": "server.js",
+  "permissions": []
+}

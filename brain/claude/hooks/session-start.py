@@ -59,14 +59,16 @@ TOPIC_CAP = 150          # a topic file is read whole when its topic comes up
 
 def memory_line():
     """The memory catalog: notes.md is always loaded; the topic files are listed here and read on demand."""
-    notes = read(os.path.join(HOME, "brain", "notes.md"))
+    # multi-user VM: hooks live in /opt/paas (no notes there), each person's notes in their own ~/.claude
+    mem = HOME if os.path.exists(os.path.join(HOME, "brain", "notes.md")) else USER_HOME
+    notes = read(os.path.join(mem, "brain", "notes.md"))
     n = len(notes.splitlines())
     line = f"notes.md: {sum(1 for l in notes.splitlines() if l.startswith('- '))} core facts, {n} lines"
     if n > NOTES_CAP:
         line += (f" - OVER the {NOTES_CAP}-line cap: move facts most sessions do not need into notes/<topic>.md "
                  "(it is loaded every session)")
     topics = []
-    for path in sorted(glob.glob(os.path.join(HOME, "brain", "notes", "*.md"))):
+    for path in sorted(glob.glob(os.path.join(mem, "brain", "notes", "*.md"))):
         text = read(path)
         title = text.split("\n", 1)[0].lstrip("# ").strip()[:70]
         facts = sum(1 for l in text.splitlines() if l.startswith("- "))
@@ -81,12 +83,13 @@ def memory_line():
 
 
 def hook_line():
-    s = read(os.path.join(HOME, "settings.json"))
-    try:
-        hooks = json.loads(s).get("hooks", {}) if s else {}
-    except ValueError:
-        hooks = {}
-    cmds = " ".join(h.get("command", "") for e in hooks.get("PreToolUse", []) for h in e.get("hooks", []))
+    cmds = ""
+    for f in (os.path.join(HOME, "settings.json"), "/etc/claude-code/managed-settings.json"):   # user / VM-wide
+        try:
+            hooks = json.loads(read(f) or "{}").get("hooks", {})
+        except ValueError:
+            hooks = {}
+        cmds += " ".join(h.get("command", "") for e in hooks.get("PreToolUse", []) for h in e.get("hooks", []))
     if "block-write-tools.py" in cmds and os.path.exists(os.path.join(HOME, "hooks", "block-write-tools.py")):
         return "Read-only guard: active (PreToolUse hook blocks write-looking MCP calls)."
     return f"Read-only guard: NOT configured in {HOME}/settings.json (re-run sh brain/install.sh)."

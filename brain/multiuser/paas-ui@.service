@@ -1,0 +1,14 @@
+[Unit]
+Description=Peleg As A Service web UI for %i
+After=network.target
+
+[Service]
+User=%i
+EnvironmentFile=/etc/paas/users/%i.env
+Environment=HOST=127.0.0.1 NODE_ENV=production
+WorkingDirectory=/opt/paas/ui/app
+ExecStart=/opt/paas/ui/node/bin/node /opt/paas/ui/app/dist-server/server/index.js
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target

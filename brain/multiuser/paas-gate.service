@@ -1,0 +1,12 @@
+[Unit]
+Description=Peleg As A Service sign-in gate (https port 3001)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+ExecStart=/opt/paas/ui/node/bin/node /opt/paas/gate/gate.js
+Restart=on-failure
+RestartSec=2
+
+[Install]
+WantedBy=multi-user.target

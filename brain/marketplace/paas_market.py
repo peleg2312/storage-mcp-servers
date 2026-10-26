@@ -10,6 +10,7 @@ they want to their own ~/.claude (names stay as they are: /morning-check, not /p
   paas-market defaults                   add the items every user starts with (new accounts get them at creation)
 root only:
   paas-market publish <brain/claude dir> [--mcp mcp.json]   (re)build the marketplace from the brain in this repo
+  paas-market setup-mcp <name> <url> [<token>]             set where an MCP server is (everyone can then add it)
 
 The marketplace is a folder (PAAS_MARKET, default /opt/paas/marketplace): items/skills/<name>/,
 items/agents/<name>.md, items/mcp/<name>.json, index.json (kind, name, description, version) and defaults.json.
@@ -94,7 +95,8 @@ def listing(words=None):
         if words and not all(w.lower() in f"{it['name']} {it['description']} {it['kind']}".lower() for w in words):
             continue
         have = state.get(key)
-        out.append({**it, "id": key, "added": bool(have), "update": bool(have and have != it["version"])})
+        out.append({**it, "id": key, "added": bool(have), "update": bool(have and have != it["version"]),
+                    "ready": it["kind"] != "mcp" or mcp_ready(json.load(open(item_path("mcp", it["name"]))))})
     return out
 
 
@@ -106,6 +108,26 @@ def parse_ids(args):
             sys.exit(f"paas-market: '{a}' is not <skill|agent|mcp>/<name>")
         ids.append((kind, name))
     return ids
+
+
+def mcp_ready(entry):
+    """An MCP item can be added once root replaced the HOST / TOKEN placeholders."""
+    cfg = entry.get("server", {})
+    return "HOST" not in cfg.get("url", "") and "TOKEN" not in json.dumps(cfg.get("headers", {}))
+
+
+def setup_mcp(name, url, token):
+    """root: set the address (and bearer token) of an MCP item, for everyone who adds it from now on."""
+    p = item_path("mcp", name)
+    if not os.path.exists(p):
+        sys.exit(f"paas-market: mcp/{name} is not in the marketplace")
+    if not re.match(r"^https?://[\w.-]+(:\d+)?(/\S*)?$", url):
+        sys.exit("paas-market: the address must look like http://host:8000/mcp")
+    entry = json.load(open(p))
+    entry["server"] = {"type": "http", "url": url, **({"headers": {"Authorization": f"Bearer {token}"}} if token else {})}
+    json.dump(entry, open(p, "w"), indent=2)
+    reindex()
+    print(f"mcp/{name} set up: {url}")
 
 
 def mcp_cmd(*args):
@@ -135,7 +157,7 @@ def add(ids, quiet=False):
             shutil.copy(src, dst)
         else:
             cfg = json.load(open(src))["server"]
-            if "HOST" in cfg.get("url", "") or "TOKEN" in json.dumps(cfg.get("headers", {})):
+            if not mcp_ready({"server": cfg}):
                 sys.exit(f"paas-market: mcp/{name} is not set up yet: root sets its address in the marketplace")
             mcp_cmd("remove", "-s", "user", name)
             r = mcp_cmd("add-json", "-s", "user", name, json.dumps(cfg))
@@ -252,6 +274,10 @@ def main(argv):
             sys.exit("usage: paas-market publish <brain/claude dir> [--mcp mcp.json]")
         mcp = args[args.index("--mcp") + 1] if "--mcp" in args else None
         publish(args[0], mcp)
+    elif cmd == "setup-mcp":
+        if len(args) < 2:
+            sys.exit("usage: paas-market setup-mcp <name> <url> [<bearer token>]   (root)")
+        setup_mcp(args[0], args[1], args[2] if len(args) > 2 else "")
     elif cmd == "reindex":
         reindex()
     else:

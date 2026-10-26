@@ -9,7 +9,7 @@
 set -eu
 HERE=$(cd "$(dirname "$0")" && pwd)
 B=$HERE/bundle
-DST=$HOME/.claude/paas-ui
+DST=${UI_DIR:-$HOME/.claude/paas-ui}        # multi-user VM: UI_DIR=/opt/paas/ui UI_SHARED=1 (files only, see brain/multiuser)
 PORT=${UI_PORT:-3001}
 [ -f "$B/VERSION" ] && ls "$B"/paas-ui-*.part-* >/dev/null 2>&1 || { echo "ui: no bundle in $B (build-bundle.sh)"; exit 0; }
 case "$(uname -s)-$(uname -m)" in
@@ -26,11 +26,14 @@ if [ "$V" != "$(cat "$DST/VERSION" 2>/dev/null || true)" ]; then
   find "$TMP/paas-ui" -name '._*' -type f -delete
   rm -rf "$DST"; mkdir -p "$(dirname "$DST")"; mv "$TMP/paas-ui" "$DST"; rm -rf "$TMP"
 fi
+[ "${UI_SHARED:-0}" = 1 ] && { chmod -R a+rX "$DST"; echo "ui: files in $DST (per-user services: brain/multiuser)"; exit 0; }
 # plugins (Brain, Reports, Schedule, Status): replaced on every run, other plugins you install are left alone
 mkdir -p "$HOME/.claude-code-ui/plugins"
 rm -rf "$HOME/.claude-code-ui/plugins/paas-usage"    # merged into Status
 for p in "$HERE"/plugins/*/; do
-  n=$(basename "$p"); rm -rf "$HOME/.claude-code-ui/plugins/$n"; cp -R "$p" "$HOME/.claude-code-ui/plugins/$n"
+  n=$(basename "$p")
+  case "$n" in paas-users|paas-market) [ -d /opt/paas/marketplace ] || continue ;; esac   # multi-user VM only
+  rm -rf "$HOME/.claude-code-ui/plugins/$n"; cp -R "$p" "$HOME/.claude-code-ui/plugins/$n"
 done
 # HTTPS: a self-signed certificate for this VM's names and addresses, made once
 TLS=$HOME/.claude/paas-ui-tls
