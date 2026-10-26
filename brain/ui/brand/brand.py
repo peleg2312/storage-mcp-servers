@@ -278,4 +278,137 @@ edit("src/modules/project-workspace/WorkspaceStateView.tsx",
       "              <button type=\"button\" onClick={() => handleNewSession(chats)} className=\"paas-newchat mb-4\">New chat</button>\n"
       "            )}\n"
       "            <p className=\"mb-5 text-sm leading-relaxed text-muted-foreground\">{t('mainContent.selectProjectDescription')}</p>\n"))
+# the app opens straight into a new chat (like Claude desktop), so the header with Brain / Usage is always there;
+# the sidebar "+" starts a new chat, the folder button next to it creates a project
+edit("src/modules/project-workspace/WorkspaceStateView.tsx",
+     ("import { useTranslation } from 'react-i18next';", "import { useEffect } from 'react';\nimport { useTranslation } from 'react-i18next';"),
+     ("  const chats = (sidebarSharedProps?.projects || []).find((p) => /[\\/]chats$/.test(p.fullPath));\n",
+      "  const chats = (sidebarSharedProps?.projects || []).find((p) => /[\\/]chats$/.test(p.fullPath));\n"
+      "  useEffect(() => {\n"
+      "    if (!isLoading && chats && window.location.pathname === '/') handleNewSession(chats);\n"
+      "  }, [isLoading, chats, handleNewSession]);\n"))
+for rel in ("src/modules/sidebar/SidebarContent.tsx", "src/modules/sidebar/SidebarHeader.tsx"):
+    edit(rel, ("  onCreateProject: () => void;\n", "  onCreateProject: () => void;\n  onNewChat: () => void;\n"),
+         ("  onCreateProject,\n", "  onCreateProject,\n  onNewChat,\n"))
+edit("src/modules/sidebar/SidebarContent.tsx",
+     ("        onCreateProject={onCreateProject}\n", "        onCreateProject={onCreateProject}\n        onNewChat={onNewChat}\n"))
+edit("src/modules/sidebar/Sidebar.tsx",
+     ("            onCreateProject={() => setShowNewProject(true)}\n",
+      "            onCreateProject={() => setShowNewProject(true)}\n"
+      "            onNewChat={() => {\n"
+      "              const chats = projects.find((p) => /[\\/]chats$/.test(p.fullPath));\n"
+      "              if (chats) onNewSession(chats); else setShowNewProject(true);\n"
+      "            }}\n"))
+edit("src/modules/sidebar/SidebarHeader.tsx",
+     ("              onClick={onCreateProject}\n              title={t('tooltips.createProject')}\n            >\n              <Plus className=\"h-3.5 w-3.5\" />\n",
+      "              onClick={onCreateProject}\n              title={t('tooltips.createProject')}\n            >\n              <FolderPlus className=\"h-3.5 w-3.5\" />\n"
+      "            </Button>\n"
+      "            <Button\n"
+      "              variant=\"ghost\"\n"
+      "              size=\"sm\"\n"
+      "              className=\"h-7 w-7 rounded-lg p-0 text-muted-foreground hover:bg-accent/80 hover:text-foreground\"\n"
+      "              onClick={onNewChat}\n"
+      "              title=\"New chat\"\n"
+      "            >\n"
+      "              <Plus className=\"h-3.5 w-3.5\" />\n"),
+     ("              onClick={onCreateProject}\n            >\n              <FolderPlus className=\"h-4 w-4\" />\n            </button>\n",
+      "              onClick={onNewChat}\n              title=\"New chat\"\n            >\n              <Plus className=\"h-4 w-4\" />\n            </button>\n"))
+# simpler, offline-only UI: no settings for things the air-gapped VM cannot use (OpenAI voice, TaskMaster, browser
+# automation, plugin installs from GitHub, web push, API tokens), no GitHub star badge / update check, a quieter
+# new-chat screen and composer (model and mode stay in the composer)
+edit("src/modules/settings/SettingsSidebar.tsx", *[(f"  {{ id: '{i}', labelKey: 'mainTabs.{k}', icon: {c} }},\n", "") for i, k, c in (
+    ("api", "apiTokens", "Key"), ("voice", "voice", "Mic"), ("tasks", "tasks", "ListChecks"),
+    ("browser", "browser", "MonitorPlay"), ("plugins", "plugins", "Puzzle"), ("notifications", "notifications", "Bell"))])
+edit("src/modules/sidebar/SidebarHeader.tsx", ("        <GitHubStarBadge />\n", ""))
+edit("src/shared/hooks/useVersionCheck.ts",
+     ("    const checkVersion = async () => {\n      try {\n",
+      "    const checkVersion = async () => {\n      return; // offline: no GitHub release check\n      try {\n"))
+edit("src/modules/chat/transcript/ProviderSelectionEmptyState.tsx",
+     ("className=\"group mx-auto max-w-xs cursor-pointer", "className=\"hidden group mx-auto max-w-xs cursor-pointer"),
+     ("<p className=\"mt-4 text-center text-sm text-muted-foreground/70\">", "<p className=\"hidden\">"),
+     ("<p className=\"mt-3 flex items-center justify-center gap-1.5 text-center text-xs text-muted-foreground/60\">", "<p className=\"hidden\">"))
+edit("src/modules/chat/composer/ChatComposer.tsx",
+     ("            <TokenUsageSummary usage={tokenBudget} onClick={onShowTokenUsage} />\n", ""),
+     ("            <ScheduleMessagePopover\n              disabled={!input.trim()}\n              onSchedule={onScheduleMessage}\n            />\n", ""))
+# projects can clone from the GitLab server; the GitHub token card is gone
+edit("src/modules/project-creation-wizard/StepConfiguration.tsx",
+     ("  const showGithubAuth = shouldShowGithubAuthentication(githubUrl);", "  const showGithubAuth = false && shouldShowGithubAuthentication(githubUrl);"),
+     ("placeholder=\"https://github.com/username/repository\"", "placeholder=\"https://gitlab.example.local/group/repository.git\""))
+strings("common.json", projectWizard__step2__githubUrl="Git URL (optional)",
+        projectWizard__step2__githubHelp="Optional: a GitLab repository URL to clone into the workspace")
+strings("settings.json", mainTabs__agents="Claude")
+# Claude's reasoning is shown (summaries), not only a "Thinking" spinner: the API omits it unless asked
+edit("server/modules/providers/list/claude/claude-runtime.provider.js",
+     ("  sdkOptions.systemPrompt = {\n    type: 'preset',\n",
+      "  // ponytail: Haiku has no adaptive thinking; other non-adaptive models would need { type: 'enabled' } here\n"
+      "  if (!/haiku/i.test(sdkOptions.model)) sdkOptions.thinking = { type: 'adaptive', display: 'summarized' };\n\n"
+      "  sdkOptions.systemPrompt = {\n    type: 'preset',\n"))
+# fonts shipped with the app (the VM has no Google Fonts): Inter for UI and replies, Source Serif for headings
+edit("index.html",
+     ("    <link rel=\"preconnect\" href=\"https://fonts.googleapis.com\" />\n    <link rel=\"preconnect\" href=\"https://fonts.gstatic.com\" crossorigin />\n"
+      "    <link\n      href=\"https://fonts.googleapis.com/css2?family=Encode+Sans:wght@400;500;600;700&family=Merriweather:ital,wght@0,400;0,700;1,400;1,700&display=swap\"\n      rel=\"stylesheet\"\n    />\n",
+      "    <link rel=\"preload\" href=\"/fonts/inter.woff2\" as=\"font\" type=\"font/woff2\" crossorigin />\n"))
+edit("tailwind.config.js",
+     ("sans: ['\"Encode Sans\"', ", "sans: ['Inter', "),
+     ("serif: ['Merriweather', ", "serif: ['\"Source Serif\"', "))
+edit("src/index.css", ('font-family: "Encode Sans", ', 'font-family: Inter, '))
+edit("src/modules/chat/transcript/MessageComponent.tsx",
+     ("max-w-none font-serif", "max-w-none paas-msg"), ("break-words font-serif text-sm", "break-words paas-msg"))
+# the sidebar opens on the recent-conversations list (like Claude desktop); Projects is the second tab
+edit("src/modules/sidebar/hooks/useSidebarController.ts",
+     ("useState<SidebarSearchMode>('projects')", "useState<SidebarSearchMode>('conversations')"))
+edit("src/modules/sidebar/SidebarModeTabs.tsx",
+     ("    { mode: 'projects', label: t('search.modeProjects'), icon: Folder, showLabel: true },\n"
+      "    { mode: 'conversations', label: t('search.modeConversations'), icon: MessageSquare, showLabel: true },\n",
+      "    { mode: 'conversations', label: t('search.modeConversations'), icon: MessageSquare, showLabel: true },\n"
+      "    { mode: 'projects', label: t('search.modeProjects'), icon: Folder, showLabel: true },\n"))
+# Claude's reasoning is shown open above each reply (it can still be collapsed)
+edit("src/modules/chat/transcript/MessageComponent.tsx",
+     ('<Reasoning className="mb-3" defaultOpen={false}>', '<Reasoning className="mb-3" defaultOpen>'),
+     ("<Reasoning defaultOpen={isExporting}>", "<Reasoning defaultOpen>"))
+# no pulsing "active" dot on sessions merely updated in the last 10 minutes: it read as "running" when nothing ran
+# (the dot stays for real background work and for sessions that need an answer)
+edit("src/modules/sidebar/SidebarSessionItem.tsx",
+     ("const showRecentIndicator = !showAttentionIndicator && !showBackgroundIndicator && !isProcessing && sessionView.isActive;",
+      "const showRecentIndicator = false;"))
+# offline VM: no "Pro" / hosted-service cards (the dead links themselves are hidden in paas.css)
+edit("src/modules/settings/tabs/AboutTab.tsx", ("{!IS_PLATFORM && (", "{false && ("))
+edit("src/modules/settings/PremiumFeatureCard.tsx",
+     ("  const { t } = useTranslation('settings');\n  const resolvedCta", "  return null;\n  const { t } = useTranslation('settings');\n  const resolvedCta"))
+edit("src/modules/mcp/McpServers.tsx",
+     ("function TeamMcpFeatureCard() {\n", "function TeamMcpFeatureCard() {\n  return null;\n"))
+# plain chats (~/chats) have no project to browse: only Chat and the brain's tabs there; projects keep all of them
+edit("src/modules/project-workspace/WorkspaceHeader.tsx",
+     ("                shouldShowBrowserTab={shouldShowBrowserTab}\n              />",
+      "                shouldShowBrowserTab={shouldShowBrowserTab}\n                isChats={/[\\/]chats$/.test(selectedProject.fullPath)}\n              />"))
+edit("src/modules/project-workspace/WorkspaceTabs.tsx",
+     ("  shouldShowBrowserTab: boolean;\n};", "  shouldShowBrowserTab: boolean;\n  isChats?: boolean;\n};"),
+     ("  shouldShowBrowserTab,\n}: WorkspaceTabsProps) {", "  shouldShowBrowserTab,\n  isChats,\n}: WorkspaceTabsProps) {"),
+     ("    ...BASE_TABS,\n", "    ...(isChats ? BASE_TABS.slice(0, 1) : BASE_TABS),\n"))
+# Conversations list: reloaded whenever the projects / sessions change (upstream loaded it only on opening the tab,
+# so a new chat did not appear); the refresh button in the sidebar header reloads it too
+edit("src/modules/sidebar/hooks/useSidebarController.ts",
+     ("    reloadRecentConversations();\n  }, [debouncedSearchQuery, reloadRecentConversations, searchMode]);",
+      "    reloadRecentConversations();\n  }, [debouncedSearchQuery, reloadRecentConversations, searchMode, projects]);"))
+# Projects tab, calmer: Chats is listed under Conversations only; the star shows on hover (or when starred) and starred
+# rows are not tinted yellow; the second line is "<n> sessions · ~/path"; a quiet "New chat" row instead of a big button
+edit("src/modules/sidebar/SidebarProjectList.tsx",
+     ("          : filteredProjects.map((project) => {", "          : filteredProjects.filter((p) => !/[\\/]chats$/.test(p.fullPath)).map((project) => {"))
+edit("src/modules/sidebar/SidebarProjectItem.tsx",
+     ("                  : 'opacity-40 hover:opacity-100 hover:bg-accent',", "                  : 'opacity-0 group-hover:opacity-50 hover:!opacity-100 hover:bg-accent',"),
+     ("            isStarred &&\n              !isSelected &&\n              'bg-yellow-50/50 dark:bg-yellow-900/10 hover:bg-yellow-100/50 dark:hover:bg-yellow-900/20',\n", ""),
+     ("                  <div className=\"text-xs text-muted-foreground\">\n                    {sessionCountDisplay}\n                    {project.fullPath !== project.displayName && (\n"
+      "                      <span className=\"ml-1 opacity-60\" title={project.fullPath}>\n                        {' - '}\n"
+      "                        {project.fullPath.length > 25 ? `...${project.fullPath.slice(-22)}` : project.fullPath}\n",
+      "                  <div className=\"truncate text-xs text-muted-foreground\">\n                    {sessionCountDisplay}\n                    {project.fullPath !== project.displayName && (\n"
+      "                      <span className=\"opacity-70\" title={project.fullPath}>\n                        {' · '}\n"
+      "                        {project.fullPath.replace(/^\\/(home|Users)\\/[^/]+|^\\/root/, '~')}\n"))
+edit("src/modules/sidebar/SidebarProjectSessions.tsx",
+     ("        <Button\n          variant=\"default\"\n          size=\"sm\"\n          className=\"flex h-8 w-full justify-start gap-2 bg-primary text-xs font-medium text-primary-foreground transition-colors hover:bg-primary/90\"\n"
+      "          onClick={() => onNewSession(project)}\n        >\n          <Plus className=\"h-3 w-3\" />\n          {t('sessions.newSession')}\n",
+      "        <Button\n          variant=\"ghost\"\n          size=\"sm\"\n          className=\"flex h-8 w-full justify-start gap-2 text-xs font-medium text-muted-foreground hover:bg-accent/60 hover:text-foreground\"\n"
+      "          onClick={() => onNewSession(project)}\n        >\n          <Plus className=\"h-3 w-3\" />\n          New chat\n"))
+# no "Select" (bulk delete) row under each project: one less control; sessions are deleted from their own menu
+edit("src/modules/sidebar/SidebarProjectSessions.tsx",
+     ("{(isSelecting || (initialSessionsLoaded && selectableSessionIds.length > 0)) && (", "{isSelecting && ("))
 print(f"branded {SRC} as {NAME}")

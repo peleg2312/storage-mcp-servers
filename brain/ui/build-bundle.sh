@@ -60,7 +60,7 @@ fi
 tar -xf "$CACHE" -C "$STAGE"
 
 echo "== packing"
-OUT=$HERE/bundle && rm -f "$OUT"/paas-ui-*.part-* && mkdir -p "$OUT"
+OUT=${OUT:-$HERE/bundle} && rm -f "$OUT"/paas-ui-*.part-* && mkdir -p "$OUT"
 if tar --version 2>/dev/null | grep -q bsdtar; then MACOPT="--no-mac-metadata --no-xattrs"; else MACOPT=""; fi
 # shellcheck disable=SC2086
 COPYFILE_DISABLE=1 tar $MACOPT -C "$STAGE" -cf - paas-ui | gzip -6 > "$W/paas-ui-$VERSION.tar.gz"

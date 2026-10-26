@@ -73,7 +73,7 @@ export function mount(container, api) {
     if (!data) return;
     if (tab === 'docs') return renderDocs();
     if (tab === 'skills') return renderSkills();
-    if (tab === 'agents') pane.innerHTML = `<div class="grid">${data.agents.map((a) => `<div class="item"><div class="t">${esc(a.name)}</div><div class="d">${esc(a.description)}</div><div class="row"><span class="tag">${esc(a.tools)}</span>${a.model ? `<span class="tag">${esc(a.model)}</span>` : ''}</div></div>`).join('')}</div>`;
+    if (tab === 'agents') return renderAgents();
     if (tab === 'mcp') {
       pane.innerHTML = `<div class="card"><h3>MCP servers</h3><table><tr><th>Name</th><th>Type</th><th>Runs</th></tr>${data.mcp.map((m) => `<tr><td><b>${esc(m.name)}</b></td><td>${esc(m.type)}</td><td><code>${esc(m.target)}</code></td></tr>`).join('')}</table>
         <div class="row"><button class="ghost chk">Check connections</button><span class="sub">runs <code>claude mcp list</code></span></div><pre class="st" style="display:none;margin-top:10px"></pre></div>
@@ -108,7 +108,7 @@ export function mount(container, api) {
     });
   }
 
-  // Skills: the brain's own (view) and yours (create / edit / delete; never touched by an install)
+  // Skills: edit any (whole file); create and delete yours (never touched by an install)
   function renderSkills(editing = null) {
     const mine = data.skills.filter((x) => x.mine);
     const form = editing ? `<div class="card"><h3>${editing.name ? `Edit /${esc(editing.name)}` : 'New skill'}</h3>
@@ -121,7 +121,7 @@ export function mount(container, api) {
       </div>
       <div class="row"><button class="go f-save">Save skill</button><button class="ghost f-cancel">Cancel</button><span class="sub f-st"></span></div></div>` : '';
     const card = (x) => `<div class="item" title="${esc(x.description)}"><div class="t">/${esc(x.name)}${x.mine ? ' <span class="tag">yours</span>' : ''}</div>
-      <div class="d">${esc(x.description)}</div>${x.mine ? `<div class="row"><button class="ghost sm" data-edit="${esc(x.name)}">Edit</button><button class="ghost sm danger" data-del="${esc(x.name)}">Delete</button></div>` : ''}</div>`;
+      <div class="d">${esc(x.description)}</div><div class="row"><button class="ghost sm" data-edit="${esc(x.dir)}">Edit</button>${x.mine ? `<button class="ghost sm danger" data-del="${esc(x.dir)}">Delete</button>` : ''}</div></div>`;
     pane.innerHTML = `<div class="row" style="margin:0 0 14px;justify-content:space-between"><span class="sub">${data.skills.length} skills · ${mine.length} of them yours</span>
       ${editing ? '' : '<button class="go new">+ New skill</button>'}</div>${form}
       ${mine.length ? `<h4 class="grp">Your skills</h4><div class="grid">${mine.map(card).join('')}</div><h4 class="grp">Built in</h4>` : ''}
@@ -136,13 +136,61 @@ export function mount(container, api) {
       if (!r.ok) { pane.querySelector('.f-st').textContent = r.out; return; }
       await refresh(); renderSkills();
     });
-    pane.querySelectorAll('[data-edit]').forEach((b) => b.addEventListener('click', () => renderSkills(data.skills.find((x) => x.name === b.dataset.edit))));
+    pane.querySelectorAll('[data-edit]').forEach((b) => b.addEventListener('click', () => editFile('skill', b.dataset.edit, false, renderSkills)));
     pane.querySelectorAll('[data-del]').forEach((b) => b.addEventListener('click', async () => {
       if (!window.confirm(`Delete your skill /${b.dataset.del}?`)) return;
       const r = await api.rpc('POST', 'skill-delete', { name: b.dataset.del }).catch((x) => ({ out: String(x) }));
       if (!r.ok) { window.alert(r.out); return; }
       await refresh(); renderSkills();
     }));
+  }
+
+  // Agents: the brain's own and yours; edit any of them, add and delete yours
+  function renderAgents() {
+    const card = (a) => `<div class="item"><div class="t">${esc(a.name)}${a.mine ? ' <span class="tag">yours</span>' : ''}</div><div class="d">${esc(a.description)}</div>
+      <div class="row"><span class="tag">${esc(a.tools)}</span>${a.model ? `<span class="tag">${esc(a.model)}</span>` : ''}</div>
+      <div class="row"><button class="ghost sm" data-edit="${esc(a.file)}">Edit</button>${a.mine ? `<button class="ghost sm danger" data-del="${esc(a.file)}">Delete</button>` : ''}</div></div>`;
+    pane.innerHTML = `<div class="row" style="margin:0 0 14px;justify-content:space-between"><span class="sub">${data.agents.length} agents: helpers Claude hands a task to (they run with their own instructions and tools)</span>
+      <button class="go new">+ New agent</button></div><div class="grid">${data.agents.map(card).join('')}</div>`;
+    pane.querySelector('.new').addEventListener('click', () => editFile('agent', '', true, renderAgents));
+    pane.querySelectorAll('[data-edit]').forEach((b) => b.addEventListener('click', () => editFile('agent', b.dataset.edit, false, renderAgents)));
+    pane.querySelectorAll('[data-del]').forEach((b) => b.addEventListener('click', async () => {
+      if (!window.confirm(`Delete your agent ${b.dataset.del}?`)) return;
+      const r = await api.rpc('POST', 'agent-delete', { name: b.dataset.del }).catch((x) => ({ out: String(x) }));
+      if (!r.ok) { window.alert(r.out); return; }
+      await refresh(); renderAgents();
+    }));
+  }
+
+  const AGENT_TEMPLATE = (name) => `---\nname: ${name || 'my-agent'}\ndescription: "What this agent does and when Claude should hand a task to it"\n`
+    + 'tools: Read, Grep, Glob, Bash\nmodel: sonnet\n---\nYou are ... Your job: ...\n\n## Steps\n1. ...\n\n## Report\nReturn a short summary with ...\n';
+
+  // the whole file of a skill or agent in an editor (header + instructions)
+  async function editFile(kind, name, create, back) {
+    let text = AGENT_TEMPLATE('');
+    let builtin = false;
+    if (!create) {
+      const r = await api.rpc('GET', `file?kind=${kind}&name=${encodeURIComponent(name)}`).catch((x) => ({ out: String(x) }));
+      if (!r.ok) { window.alert(r.out); return; }
+      ({ text, builtin } = r);
+    }
+    pane.innerHTML = `<div class="card"><h3>${create ? `New ${kind}` : `Edit ${kind === 'skill' ? '/' : ''}${esc(name)}`}</h3>
+      <div class="sub">The header between the --- lines needs <code>name:</code> and <code>description:</code> (Claude picks it by the description); below it, the instructions in Markdown.</div>
+      ${builtin ? '<div class="sub" style="margin-top:6px;color:#d97706">Built in: re-running brain/install.sh puts the original back. Your previous version is kept as a .bak file.</div>' : ''}
+      ${create ? '<div class="form"><label>Name <span class="sub">lower-case letters, digits and dashes</span><input class="f-name" placeholder="vm-patching"></label></div>' : ''}
+      <textarea class="mt" spellcheck="false" style="margin-top:12px">${esc(text)}</textarea>
+      <div class="row"><button class="go f-save">Save</button><button class="ghost f-cancel">Cancel</button><span class="sub f-st"></span></div></div>`;
+    const ta = pane.querySelector('.mt');
+    pane.querySelector('.f-name')?.addEventListener('input', (e) => { ta.value = ta.value.replace(/^name: .*$/m, `name: ${e.target.value.trim() || 'my-agent'}`); });
+    pane.querySelector('.f-cancel').addEventListener('click', () => back());
+    pane.querySelector('.f-save').addEventListener('click', async (e) => {
+      const n = create ? pane.querySelector('.f-name').value.trim() : name;
+      e.target.disabled = true;
+      const r = await api.rpc('POST', 'file', { kind, name: n, text: ta.value, create }).catch((x) => ({ out: String(x) }));
+      e.target.disabled = false;
+      if (!r.ok) { pane.querySelector('.f-st').textContent = r.out; return; }
+      await refresh(); back();
+    });
   }
 
   function renderDocs() {

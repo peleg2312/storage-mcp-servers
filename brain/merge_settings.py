@@ -63,6 +63,20 @@ for name in mcpjson:
     lst = s.setdefault("enabledMcpjsonServers", [])
     if name not in lst:
         lst.append(name)
+# auto mode: tell its classifier this is his own dev VM, so routine work there (files, scripts, builds, his own
+# services) is not denied; the built-in rules stay ("$defaults"). Read from ~/.claude/settings.json only.
+if not mcpjson:
+    env = s.setdefault("autoMode", {}).setdefault("environment", ["$defaults"])
+    for line in (
+        "Host containment: Claude Code runs on the user's own air-gapped RHEL 9 development VM (no internet). Editing "
+        "files in his home and projects, installing packages from the VM's local repositories, running scripts and "
+        "tests, and building and running his own apps, containers and local services on this VM is the intended work",
+        "Primary use: storage operations (read-only toward infrastructure) and developing his own FastAPI services",
+        "Source control: the offline GitLab server configured as the git remote(s) on this VM, and all repos on it",
+        "Sensitive remote targets: storage arrays (PowerMax, PowerFlex, PowerScale, NetApp ONTAP), SAN switches "
+        "(Cisco MDS / Nexus), UCS, vCenter / ESXi and OpenShift clusters: changes to them are made by the user"):
+        if line not in env:
+            env.append(line)
 # look and feel (UI only, no tokens): always the brain's, replacing earlier values (settings.json is backed up above)
 s["statusLine"] = {"type": "command", "command": f"python3 {banner_dir}/paas-statusline.py", "padding": 0}
 s["theme"] = "custom:paas"                                   # ~/.claude/themes/paas.json, banner colours; /theme to change
@@ -80,6 +94,6 @@ s["spinnerTipsOverride"] = {"label": "Brain tip", "tips": [
 os.makedirs(os.path.dirname(os.path.abspath(path)), exist_ok=True)
 with open(path, "w") as f:
     json.dump(s, f, indent=2)
-print(f"settings ({path}): read-only, docs-hints, docs-leads and session-start hooks installed, status line set, MCP servers allowed without prompts: "
+print(f"settings ({path}): read-only, auto-mode environment, docs-hints, docs-leads and session-start hooks installed, status line set, MCP servers allowed without prompts: "
       f"{', '.join(servers) or '(none found)'}{'; .mcp.json servers pre-approved: ' + ', '.join(mcpjson) if mcpjson else ''}; "
       f"theme {s['theme']}, notifications {s['preferredNotifChannel']}")

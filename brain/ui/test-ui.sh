@@ -30,7 +30,7 @@ check "wrong password"           "$(code login "{\"username\":\"root\",\"passwor
 check "root signs in"            "$(code login @/tmp/root.json)" 200
 check "valid but not allowed"    "$(code login @/tmp/peleg.json)" 401
 T=$(curl -ks -H "$J" -d @/tmp/root.json $U/login | python3 -c "import json,sys;print(json.load(sys.stdin)[\"token\"])")
-check "plugins Brain + Usage"    "$(curl -ks -H "Authorization: Bearer $T" https://127.0.0.1:3001/api/plugins | grep -o "paas-[a-z]*" | sort -u | tr "\n" " ")" "paas-brain paas-usage "
+check "plugins Brain, Reports, Schedule, Status" "$(curl -ks -H "Authorization: Bearer $T" https://127.0.0.1:3001/api/plugins | grep -o "paas-[a-z]*" | sort -u | tr "\n" " ")" "paas-brain paas-reports paas-schedule paas-status "
 check "api needs sign-in"        "$(curl -ks -o /dev/null -w %{http_code} https://127.0.0.1:3001/api/plugins)" 401
 check "Chats space for plain chats" "$(curl -ks -H "Authorization: Bearer $T" https://127.0.0.1:3001/api/projects | grep -c "\"Chats\"")" 1
 check "no git setup screen"      "$(curl -ks -H "Authorization: Bearer $T" https://127.0.0.1:3001/api/user/onboarding-status | grep -c "\"hasCompletedOnboarding\":true")" 1

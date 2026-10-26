@@ -65,3 +65,14 @@ button[aria-label="Open settings panel"] svg { width: 14px; height: 14px; }
 /* welcome screen: the main action */
 .paas-newchat { margin-top: 10px; display: inline-flex; align-items: center; gap: 8px; padding: 10px 26px; border-radius: 999px; border: 0; cursor: pointer; font: 600 15px/1.2 ui-sans-serif, system-ui, sans-serif; color: #0b0d1a; background-image: var(--paas-gradient); box-shadow: 0 10px 30px -12px rgba(167, 139, 250, .6); }
 .paas-newchat:hover { filter: brightness(1.08); }
+
+/* fonts shipped with the UI (offline): Inter (UI, replies), Source Serif 4 (headings); both SIL OFL */
+@font-face { font-family: Inter; src: url(/fonts/inter.woff2) format("woff2"); font-weight: 100 900; font-display: swap; }
+@font-face { font-family: "Source Serif"; src: url(/fonts/source-serif.woff2) format("woff2"); font-weight: 200 900; font-display: swap; }
+body { font-feature-settings: "cv11"; -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility; }
+.paas-msg, .paas-msg.prose :where(p, li, td, th, blockquote) { font-size: 15px; line-height: 1.7; }
+.paas-msg.prose :where(h1, h2, h3) { font-family: "Source Serif", Georgia, serif; font-weight: 600; letter-spacing: -0.01em; }
+.paas-msg.prose :where(code):not(pre code) { font-size: 0.88em; }
+
+/* offline VM: links that cannot open there (Discord, issue tracker, cloudcli.ai); the GitHub source link stays (AGPL) */
+a[href*="discord.gg"], a[href*="/issues/new"], a[href^="https://cloudcli.ai"] { display: none !important; }

@@ -1,0 +1,13 @@
+{
+  "name": "paas-status",
+  "displayName": "Status",
+  "version": "1.0.0",
+  "description": "Brain and VM health (MCP servers, docs library, read-only guard, disk, memory) and Claude Code usage (tokens, estimated cost).",
+  "author": "Peleg As A Service",
+  "icon": "icon.svg",
+  "type": "module",
+  "slot": "tab",
+  "entry": "index.js",
+  "server": "server.js",
+  "permissions": []
+}

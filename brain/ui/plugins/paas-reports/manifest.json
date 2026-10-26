@@ -1,8 +1,8 @@
 {
-  "name": "paas-usage",
-  "displayName": "Usage",
+  "name": "paas-reports",
+  "displayName": "Reports",
   "version": "1.0.0",
-  "description": "Tokens and estimated cost per day, project, model and session (from Claude Code's session logs).",
+  "description": "Files Claude saved in ~/storage-reports: browse, preview and download.",
   "author": "Peleg As A Service",
   "icon": "icon.svg",
   "type": "module",

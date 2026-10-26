@@ -1,6 +1,6 @@
 ---
 name: explain-error
-description: Explain an error, alert, event or log line (PowerMax, ONTAP EMS, PowerFlex, MDS, UCS, ESXi, Trident, CSM) from the docs and bug trackers, then check the live system for it.
+description: Explain an error, alert, event or log line (PowerMax, ONTAP EMS, PowerFlex, MDS, UCS, ESXi, Trident, CSM) and give its fix, from the docs and bug trackers; the live system is checked only when he asks.
 when_to_use: Trigger phrases - "what does this error mean", "explain EMS ...", "what is SIO02...", a pasted alert or log line
 ---
 # Explain an error
@@ -24,7 +24,10 @@ when_to_use: Trigger phrases - "what does this error mean", "explain EMS ...", "
    - ESXi: `vmware/kb`, `kb-ontap`. Harvest: `harvest`, `harvest-issues`. Pointers: `kb/kb`.
    - MDS / UCS: not in the library; explain from general knowledge and say so.
    Read the best 2-3 hits fully (read_chunk) before answering.
-3. Live check with the matching MCP: is it still happening, since when, on which objects, how often.
-4. Answer: meaning · likely causes in this environment · how to verify · fix (commands for him) · whether
+3. Live check only when he asked for one ("check", "is it still happening", "which volumes") or named the
+   object: then the matching MCP: is it still happening, since when, on which objects, how often. Otherwise
+   no MCP calls: the answer comes from the docs.
+4. Answer: meaning · likely causes · fix (commands for him, placeholders + the read-only command that finds each value) · whether
    a known bug / fixed version applies · sources with versions. If the docs don't cover it, say so and
    suggest saving the relevant vendor KB into the local library once found.
+   Without a live check, end with one line offering it (e.g. "Want me to check which volumes are close?").

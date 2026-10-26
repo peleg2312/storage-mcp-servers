@@ -47,7 +47,7 @@ function skills() {
     const text = read(path.join(dir, n, 'SKILL.md'), 60000) || '';
     const f = frontmatter(text);
     const mine = fs.existsSync(path.join(dir, n, '.user-skill'));
-    return { name: f.name || n, description: f.description || '', when: f.when_to_use || '', mine,
+    return { dir: n, name: f.name || n, description: f.description || '', when: f.when_to_use || '', mine,
       body: mine ? text.replace(/^---\n[\s\S]*?\n---\n?/, '').trim() : undefined };
   }).filter((s) => s.description).sort((a, b) => a.name.localeCompare(b.name));
 }
@@ -58,8 +58,28 @@ function agents() {
   try { names = fs.readdirSync(dir).filter((n) => n.endsWith('.md')); } catch { return []; }
   return names.map((n) => {
     const f = frontmatter(read(path.join(dir, n), 4000));
-    return { name: f.name || n.replace(/\.md$/, ''), description: f.description || '', tools: f.tools || f.disallowedTools ? `${f.tools ? `tools: ${f.tools}` : `not: ${f.disallowedTools}`}` : 'all tools', model: f.model || '' };
+    const file = n.replace(/\.md$/, '');
+    return { file, mine: isMine('agent', file), name: f.name || file, description: f.description || '', tools: f.tools || f.disallowedTools ? `${f.tools ? `tools: ${f.tools}` : `not: ${f.disallowedTools}`}` : 'all tools', model: f.model || '' };
   });
+}
+
+// the file behind a skill or agent name (null for anything else)
+function defFile(kind, name) {
+  if (!SKILL_NAME.test(String(name || ''))) return null;
+  if (kind === 'skill') return path.join(C, 'skills', name, 'SKILL.md');
+  if (kind === 'agent') return path.join(C, 'agents', `${name}.md`);
+  return null;
+}
+// yours = made in the web UI (skills: a .user-skill file; agents: a line in agents/.user-agents); install.sh only
+// rewrites the brain's own skills and agents, never these
+const USER_AGENTS = path.join(C, 'agents', '.user-agents');
+function isMine(kind, name) {
+  if (kind === 'skill') return fs.existsSync(path.join(C, 'skills', String(name), '.user-skill'));
+  return (read(USER_AGENTS) || '').split('\n').includes(String(name));
+}
+function markMine(kind, name) {
+  if (kind === 'skill') fs.writeFileSync(path.join(C, 'skills', name, '.user-skill'), 'created in the web UI\n');
+  else if (!isMine('agent', name)) fs.appendFileSync(USER_AGENTS, `${name}\n`);
 }
 
 function hooks() {
@@ -173,6 +193,35 @@ const routes = {
     const dir = path.join(C, 'skills', String(b.name || ''));
     if (!SKILL_NAME.test(String(b.name || '')) || !fs.existsSync(path.join(dir, '.user-skill'))) return { ok: false, out: 'Only your own skills can be deleted' };
     fs.rmSync(dir, { recursive: true, force: true });
+    return { ok: true };
+  },
+  // edit any skill or agent as its whole file (header + instructions). Built-in ones: brain/install.sh puts the
+  // original back when re-run; the previous version is kept as <file>.bak
+  'GET /file': async (q) => {
+    const p = defFile(q.get('kind'), q.get('name'));
+    if (!p) return { ok: false, out: 'Unknown skill or agent' };
+    return { ok: true, text: read(p) ?? '', builtin: !isMine(q.get('kind'), q.get('name')) };
+  },
+  'POST /file': async (_q, b) => {
+    const p = defFile(b.kind, b.name);
+    if (!p) return { ok: false, out: 'Name: lower-case letters, digits and dashes, e.g. vm-patching' };
+    const text = String(b.text ?? '');
+    const f = frontmatter(text);
+    if (!f.name || !f.description) return { ok: false, out: 'The file must start with a --- header holding name: and description:' };
+    if (text.length > 300000) return { ok: false, out: 'Too long' };
+    const isNew = !fs.existsSync(p);
+    if (isNew && !b.create) return { ok: false, out: 'Not found' };
+    if (!isNew && b.create) return { ok: false, out: `"${b.name}" already exists` };
+    fs.mkdirSync(path.dirname(p), { recursive: true });
+    if (!isNew) fs.copyFileSync(p, `${p}.bak`);
+    fs.writeFileSync(p, text.endsWith('\n') ? text : `${text}\n`);
+    if (isNew) markMine(b.kind, b.name);
+    return { ok: true };
+  },
+  'POST /agent-delete': async (_q, b) => {
+    const p = defFile('agent', b.name);
+    if (!p || !isMine('agent', b.name)) return { ok: false, out: 'Only your own agents can be deleted' };
+    fs.rmSync(p, { force: true });
     return { ok: true };
   },
   'GET /mcp-status': () => run('claude', ['mcp', 'list'], 90000),

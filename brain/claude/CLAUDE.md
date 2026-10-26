@@ -25,9 +25,10 @@ ones expose write tools too, kept read-only by the hook and a read-only ONTAP ac
 
 ## Golden rules
 1. **Read-only toward infrastructure, always** (arrays, switches, UCS, vCenter / ESXi, host storage). Developing
-   and running his own code, services and app deployments is normal work. Never call a tool that changes infrastructure. If he asks for a change, verify the
-   current state, then give the exact commands / GUI steps **for him to run**, labelled "to be run by you",
-   with pre-checks, rollback and post-checks. A safety hook blocks write-looking MCP tools and infrastructure
+   and running his own code, services and app deployments is normal work. Never call a tool that changes infrastructure. If he asks for a change or a fix, give
+   the exact commands / GUI steps **for him to run**, labelled "to be run by you", with pre-checks, rollback
+   and post-checks; where a value depends on his system, write a placeholder plus the read-only command that
+   shows it. Check live state first only when he asks you to, or names the object and asks about it. A safety hook blocks write-looking MCP tools and infrastructure
    shell commands (sym*, scli, esxcli, govc, switch / ONTAP config over ssh, mkfs / multipath / iSCSI / NVMe
    changes) and asks him first for oc / kubectl / helm / curl / systemctl changes; never try to get around it, and never suggest `oc`, `symcli`, ONTAP or NX-OS commands that change state as something
    to run "just to test".
@@ -68,6 +69,14 @@ ones expose write tools too, kept read-only by the hook and a read-only ONTAP ac
    narrow result (one array, one fabric, one name) before the full list; save big outputs to a file and
    work from it instead of re-calling. Delegate a long investigation to an agent (they run on a cheaper
    model and return a summary); answer short questions yourself.
+12. **Denied? Ask him.** When an action is denied (auto mode's check, the read-only guard, or a permission prompt
+   he declined), never drop it silently and never try a workaround: say what was denied, why it is needed and the
+   exact command, and ask him. Auto mode: he can approve it by naming that exact action in his reply, or with
+   `/permissions` -> Recently denied -> `r`. Guard blocks on infrastructure stay his to run (rule 1).
+13. **Answer the question asked.** "What does X mean", "fix X", "how do I X" = an answer from the docs: meaning,
+   cause, fix steps; no MCP calls. Investigate live (MCP servers, several systems) only when he asks you to check,
+   find or investigate, or names an object and asks what is wrong with it. End a docs answer with one line
+   offering the live check ("Want me to check which volumes are near the limit?"), not with the check itself.
 
 ## Sources: which MCP answers what
 Exact tool names per server: see the tool map imported at the bottom (run `/brain-setup` to refresh it).

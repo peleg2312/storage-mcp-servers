@@ -1,0 +1,13 @@
+{
+  "name": "paas-schedule",
+  "displayName": "Schedule",
+  "version": "1.0.0",
+  "description": "Run a prompt or skill on a schedule (daily, weekdays, weekly) on this VM; each run is saved as a report and a conversation.",
+  "author": "Peleg As A Service",
+  "icon": "icon.svg",
+  "type": "module",
+  "slot": "tab",
+  "entry": "index.js",
+  "server": "server.js",
+  "permissions": []
+}

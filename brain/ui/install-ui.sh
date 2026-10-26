@@ -5,7 +5,7 @@
 # others): the password is checked by the system (su), never stored, and there is no sign-up page. HTTPS uses a
 # certificate made here once (~/.claude/paas-ui-tls; import paas-ui.crt on your PC to drop the browser warning).
 # It runs the real `claude` of this user: same ~/.claude (skills, hooks, read-only guard, MCP servers, library),
-# plus the Brain (docs library, skills, agents, MCP, memory) and Usage (tokens, cost) tabs from ./plugins.
+# plus the Brain (docs library, skills, agents, MCP, memory), Reports (~/storage-reports), Schedule (timed prompts) and Status (health, usage) tabs from ./plugins.
 set -eu
 HERE=$(cd "$(dirname "$0")" && pwd)
 B=$HERE/bundle
@@ -26,8 +26,9 @@ if [ "$V" != "$(cat "$DST/VERSION" 2>/dev/null || true)" ]; then
   find "$TMP/paas-ui" -name '._*' -type f -delete
   rm -rf "$DST"; mkdir -p "$(dirname "$DST")"; mv "$TMP/paas-ui" "$DST"; rm -rf "$TMP"
 fi
-# plugins (Brain, Usage): replaced on every run, other plugins you install are left alone
+# plugins (Brain, Reports, Schedule, Status): replaced on every run, other plugins you install are left alone
 mkdir -p "$HOME/.claude-code-ui/plugins"
+rm -rf "$HOME/.claude-code-ui/plugins/paas-usage"    # merged into Status
 for p in "$HERE"/plugins/*/; do
   n=$(basename "$p"); rm -rf "$HOME/.claude-code-ui/plugins/$n"; cp -R "$p" "$HOME/.claude-code-ui/plugins/$n"
 done
