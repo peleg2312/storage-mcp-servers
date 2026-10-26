@@ -228,6 +228,8 @@ const routes = {
 };
 
 const server = http.createServer(async (req, res) => {
+  // only this user's UI may call (it sends the key it gave this process; other users on the VM cannot read it)
+  if (process.env.PAAS_PLUGIN_KEY && req.headers['x-paas-key'] !== process.env.PAAS_PLUGIN_KEY) { res.writeHead(403); res.end('{"error":"forbidden"}'); return; }
   res.setHeader('Content-Type', 'application/json');
   const url = new URL(req.url, 'http://x');
   const fn = routes[`${req.method} ${url.pathname}`];

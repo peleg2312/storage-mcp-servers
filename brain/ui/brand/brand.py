@@ -411,4 +411,12 @@ edit("src/modules/sidebar/SidebarProjectSessions.tsx",
 # no "Select" (bulk delete) row under each project: one less control; sessions are deleted from their own menu
 edit("src/modules/sidebar/SidebarProjectSessions.tsx",
      ("{(isSelecting || (initialSessionsLoaded && selectableSessionIds.length > 0)) && (", "{isSelecting && ("))
+# plugin servers listen on 127.0.0.1: on a VM shared by several Linux users they only answer this UI, which sends
+# a key made at start (other users' processes cannot read it); our plugins refuse requests without it
+edit("server/modules/plugins/plugin-process.service.ts",
+     ("const runningPlugins = new Map();", "process.env.PAAS_PLUGIN_KEY ||= globalThis.crypto.randomUUID();\nconst runningPlugins = new Map();"),
+     ("    PLUGIN_NAME: name,\n", "    PLUGIN_NAME: name,\n    PAAS_PLUGIN_KEY: process.env.PAAS_PLUGIN_KEY,\n"))
+edit("server/modules/plugins/plugins.routes.ts",
+     ("        'content-type': String(req.headers['content-type'] ?? 'application/json'),\n      };",
+      "        'content-type': String(req.headers['content-type'] ?? 'application/json'),\n        'x-paas-key': String(process.env.PAAS_PLUGIN_KEY || ''),\n      };"))
 print(f"branded {SRC} as {NAME}")

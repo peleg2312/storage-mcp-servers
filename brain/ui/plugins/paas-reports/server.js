@@ -34,6 +34,8 @@ function resolveReport(rel, root = ROOT) {
 function send(res, code, body) { res.writeHead(code); res.end(JSON.stringify(body)); }
 
 const server = http.createServer((req, res) => {
+  // only this user's UI may call (it sends the key it gave this process; other users on the VM cannot read it)
+  if (process.env.PAAS_PLUGIN_KEY && req.headers['x-paas-key'] !== process.env.PAAS_PLUGIN_KEY) { res.writeHead(403); res.end('{"error":"forbidden"}'); return; }
   res.setHeader('Content-Type', 'application/json');
   const url = new URL(req.url, 'http://x');
   if (req.method !== 'GET') return send(res, 405, { error: 'read-only' });
