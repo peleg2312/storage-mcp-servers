@@ -461,4 +461,7 @@ edit("src/modules/sidebar/SidebarFooter.tsx",
       "      <div className=\"hidden px-2 pb-1.5 md:block\">{signOutRow}</div>\n\n      {/* Desktop version brand line (OSS mode only) */}"),
      ("          <span className=\"text-sm font-normal text-foreground\">{t('actions.settings')}</span>\n        </button>\n      </div>\n    </div>\n  );\n}",
       "          <span className=\"text-sm font-normal text-foreground\">{t('actions.settings')}</span>\n        </button>\n      </div>\n      <div className=\"px-3 pb-3 md:hidden\">{signOutRow}</div>\n    </div>\n  );\n}"))
+# root's own home is a normal place for its chats and projects (upstream refused every path under /root, so root's
+# Chats space was never registered: no tab bar, and "+" had nowhere to go); other users cannot write there anyway
+edit("server/shared/utils.ts", ("  '/boot',\n  '/root',\n  '/lib',", "  '/boot',\n  '/lib',"))
 print(f"branded {SRC} as {NAME}")
