@@ -63,7 +63,7 @@ function checkPassword(user, password) {
       if (done) return;
       done = true;
       clearTimeout(timer);
-      try { proc.kill(); } catch { /* already gone */ }
+      try { process.kill(-proc.pid, 'SIGKILL'); } catch { /* already gone */ } // runuser and su too, not only the leader
       resolve(ok);
     };
     const timer = setTimeout(() => finish(false), 15000);
