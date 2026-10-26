@@ -297,7 +297,7 @@ edit("src/modules/sidebar/Sidebar.tsx",
       "            onCreateProject={() => setShowNewProject(true)}\n"
       "            onNewChat={() => {\n"
       "              const chats = projects.find((p) => /[\\/]chats$/.test(p.fullPath));\n"
-      "              if (chats) onNewSession(chats); else setShowNewProject(true);\n"
+      "              if (chats) onNewSession(chats); else { pendingChat.current = true; void refreshProjects(); }\n"
       "            }}\n"))
 edit("src/modules/sidebar/SidebarHeader.tsx",
      ("              onClick={onCreateProject}\n              title={t('tooltips.createProject')}\n            >\n              <Plus className=\"h-3.5 w-3.5\" />\n",
@@ -419,4 +419,21 @@ edit("server/modules/plugins/plugin-process.service.ts",
 edit("server/modules/plugins/plugins.routes.ts",
      ("        'content-type': String(req.headers['content-type'] ?? 'application/json'),\n      };",
       "        'content-type': String(req.headers['content-type'] ?? 'application/json'),\n        'x-paas-key': String(process.env.PAAS_PLUGIN_KEY || ''),\n      };"))
+# "+" pressed before the project list loaded: wait for the Chats space (never fall back to "new project", which asks
+# for a folder)
+edit("src/modules/sidebar/Sidebar.tsx",
+     ("import { memo, useCallback, useEffect } from 'react';", "import { memo, useCallback, useEffect, useRef } from 'react';"),
+     ("  const { t } = useTranslation(['sidebar', 'common']);\n",
+      "  const { t } = useTranslation(['sidebar', 'common']);\n"
+      "  const pendingChat = useRef(false);\n"
+      "  useEffect(() => {\n"
+      "    const chats = projects.find((p) => /[\\/]chats$/.test(p.fullPath));\n"
+      "    if (pendingChat.current && chats) { pendingChat.current = false; onNewSession(chats); }\n"
+      "  }, [projects, onNewSession]);\n"))
+# the plugin tabs (Brain, Marketplace, Reports, ...) were fetched once at page load, before signing in, and stayed empty
+# until a reload: fetch them again when the signed-in user changes
+edit("src/modules/plugins/context/PluginsContext.tsx",
+     ("import { api, readApiErrorMessage } from '@/shared/api';", "import { api, readApiErrorMessage } from '@/shared/api';\nimport { useAuth } from '@/modules/auth';"),
+     ("  useEffect(() => {\n    void refreshPlugins();\n  }, [refreshPlugins]);",
+      "  const { user } = useAuth();\n  useEffect(() => {\n    if (user) void refreshPlugins();\n  }, [refreshPlugins, user]);"))
 print(f"branded {SRC} as {NAME}")
