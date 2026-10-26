@@ -33,7 +33,10 @@ def library_line():
 
 
 def environment_line():
-    text = read(os.path.join(HOME, "brain", "environment.md"))
+    # multi-user VM: everyone has their own environment.md (started from root's default in /opt/paas/brain)
+    own = os.path.join(USER_HOME, "brain", "environment.md")
+    text = read(own if not os.path.exists(os.path.join(HOME, "brain", "notes.md")) and os.path.exists(own)
+                else os.path.join(HOME, "brain", "environment.md"))
     if not text:
         return "environment.md: MISSING (run /brain-setup)."
     filled = 0

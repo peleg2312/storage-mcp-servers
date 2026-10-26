@@ -45,6 +45,9 @@ ln -sfn "$P/bin/paas-market" /usr/local/bin/paas-market
 PAAS_MARKET="$P/marketplace" python3 "$P/bin/paas-market" publish "$BRAIN/claude" --mcp "$BRAIN/marketplace/mcp.json"
 chmod -R a+rX "$P/marketplace"
 
+# the single-user UI service (root's, on :3001) gives way to the gate and the per-user services
+systemctl --user disable --now paas-ui >/dev/null 2>&1 || true
+pkill -u root -f "paas-ui/app/dist-server/server/index.js" 2>/dev/null || true
 # the web UI files, the per-user plugins, the per-user service and the user tool
 UI_DIR="$P/ui" UI_SHARED=1 sh "$BRAIN/ui/install-ui.sh"
 rm -rf "$P/ui-plugins"; cp -R "$BRAIN/ui/plugins" "$P/ui-plugins"; chmod -R a+rX "$P/ui-plugins"

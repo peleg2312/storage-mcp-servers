@@ -75,9 +75,11 @@ export function mount(container, api) {
     if (tab === 'skills') return renderSkills();
     if (tab === 'agents') return renderAgents();
     if (tab === 'mcp') {
-      pane.innerHTML = `<div class="card"><h3>MCP servers</h3><table><tr><th>Name</th><th>Type</th><th>Runs</th></tr>${data.mcp.map((m) => `<tr><td><b>${esc(m.name)}</b></td><td>${esc(m.type)}</td><td><code>${esc(m.target)}</code></td></tr>`).join('')}</table>
+      pane.innerHTML = `<div class="card"><h3>MCP servers</h3><table><tr><th>Name</th><th>Type</th><th>Runs</th><th></th></tr>${data.mcp.map((m) => `<tr><td><b>${esc(m.name)}</b></td><td>${esc(m.type)}</td><td><code>${esc(m.target)}</code></td>
+        <td>${data.canShare ? `<button class="ghost sm" data-share="mcp:${esc(m.name)}:0">Share with everyone</button>` : ''}</td></tr>`).join('')}</table>
         <div class="row"><button class="ghost chk">Check connections</button><span class="sub">runs <code>claude mcp list</code></span></div><pre class="st" style="display:none;margin-top:10px"></pre></div>
         <div class="card"><h3>Hooks</h3><table><tr><th>When</th><th>Tools</th><th>Command</th></tr>${data.hooks.map((h) => `<tr><td>${esc(h.event)}</td><td><code>${esc(h.matcher)}</code></td><td><code>${esc(h.command)}</code></td></tr>`).join('')}</table></div>`;
+      wireShare(() => { tab = 'mcp'; render(); });
       pane.querySelector('.chk').addEventListener('click', async (e) => {
         const pre = pane.querySelector('.st');
         e.target.disabled = true; pre.style.display = 'block'; pre.textContent = 'Checking every server (can take a minute)…';
@@ -121,7 +123,7 @@ export function mount(container, api) {
       </div>
       <div class="row"><button class="go f-save">Save skill</button><button class="ghost f-cancel">Cancel</button><span class="sub f-st"></span></div></div>` : '';
     const card = (x) => `<div class="item" title="${esc(x.description)}"><div class="t">/${esc(x.name)}${x.mine ? ' <span class="tag">yours</span>' : ''}</div>
-      <div class="d">${esc(x.description)}</div><div class="row"><button class="ghost sm" data-edit="${esc(x.dir)}">Edit</button>${x.mine ? `<button class="ghost sm danger" data-del="${esc(x.dir)}">Delete</button>` : ''}</div></div>`;
+      <div class="d">${esc(x.description)}</div><div class="row"><button class="ghost sm" data-edit="${esc(x.dir)}">Edit</button>${x.mine && data.canShare ? `<button class="ghost sm" data-share="skill:${esc(x.dir)}:${x.shared ? 1 : 0}">${x.shared ? 'Unshare' : 'Share with everyone'}</button>` : ''}${x.mine ? `<button class="ghost sm danger" data-del="${esc(x.dir)}">Delete</button>` : ''}</div></div>`;
     pane.innerHTML = `<div class="row" style="margin:0 0 14px;justify-content:space-between"><span class="sub">${data.skills.length} skills · ${mine.length} of them yours</span>
       ${editing ? '' : '<button class="go new">+ New skill</button>'}</div>${form}
       ${mine.length ? `<h4 class="grp">Your skills</h4><div class="grid">${mine.map(card).join('')}</div><h4 class="grp">Built in</h4>` : ''}
@@ -137,6 +139,7 @@ export function mount(container, api) {
       await refresh(); renderSkills();
     });
     pane.querySelectorAll('[data-edit]').forEach((b) => b.addEventListener('click', () => editFile('skill', b.dataset.edit, false, renderSkills)));
+    wireShare(renderSkills);
     pane.querySelectorAll('[data-del]').forEach((b) => b.addEventListener('click', async () => {
       if (!window.confirm(`Delete your skill /${b.dataset.del}?`)) return;
       const r = await api.rpc('POST', 'skill-delete', { name: b.dataset.del }).catch((x) => ({ out: String(x) }));
@@ -149,16 +152,36 @@ export function mount(container, api) {
   function renderAgents() {
     const card = (a) => `<div class="item"><div class="t">${esc(a.name)}${a.mine ? ' <span class="tag">yours</span>' : ''}</div><div class="d">${esc(a.description)}</div>
       <div class="row"><span class="tag">${esc(a.tools)}</span>${a.model ? `<span class="tag">${esc(a.model)}</span>` : ''}</div>
-      <div class="row"><button class="ghost sm" data-edit="${esc(a.file)}">Edit</button>${a.mine ? `<button class="ghost sm danger" data-del="${esc(a.file)}">Delete</button>` : ''}</div></div>`;
+      <div class="row"><button class="ghost sm" data-edit="${esc(a.file)}">Edit</button>${a.mine && data.canShare ? `<button class="ghost sm" data-share="agent:${esc(a.file)}:${a.shared ? 1 : 0}">${a.shared ? 'Unshare' : 'Share with everyone'}</button>` : ''}${a.mine ? `<button class="ghost sm danger" data-del="${esc(a.file)}">Delete</button>` : ''}</div></div>`;
     pane.innerHTML = `<div class="row" style="margin:0 0 14px;justify-content:space-between"><span class="sub">${data.agents.length} agents: helpers Claude hands a task to (they run with their own instructions and tools)</span>
       <button class="go new">+ New agent</button></div><div class="grid">${data.agents.map(card).join('')}</div>`;
     pane.querySelector('.new').addEventListener('click', () => editFile('agent', '', true, renderAgents));
     pane.querySelectorAll('[data-edit]').forEach((b) => b.addEventListener('click', () => editFile('agent', b.dataset.edit, false, renderAgents)));
+    wireShare(renderAgents);
     pane.querySelectorAll('[data-del]').forEach((b) => b.addEventListener('click', async () => {
       if (!window.confirm(`Delete your agent ${b.dataset.del}?`)) return;
       const r = await api.rpc('POST', 'agent-delete', { name: b.dataset.del }).catch((x) => ({ out: String(x) }));
       if (!r.ok) { window.alert(r.out); return; }
       await refresh(); renderAgents();
+    }));
+  }
+
+  // Share with everyone / Unshare (the marketplace: others see it with your name and can add it)
+  function wireShare(rerender) {
+    pane.querySelectorAll('[data-share]').forEach((b) => b.addEventListener('click', async () => {
+      const [kind, name, on] = b.dataset.share.split(':');
+      const unshare = on === '1';
+      let description = '';
+      if (kind === 'mcp' && !unshare) {
+        description = window.prompt(`Describe ${name} for the marketplace (what it gives Claude):`, '') ?? null;
+        if (description === null) return;
+      }
+      if (unshare && !window.confirm(`Take ${kind} ${name} out of the marketplace? People who added it keep their copy.`)) return;
+      b.disabled = true;
+      const r = await api.rpc('POST', 'share', { kind, name, unshare, description }).catch((x) => ({ out: String(x) }));
+      b.disabled = false;
+      window.alert(r.out || (r.ok ? 'Done' : 'Failed'));
+      await refresh(); rerender();
     }));
   }
 

@@ -3,6 +3,7 @@
 import http from 'node:http';
 import fs from 'node:fs';
 import path from 'node:path';
+import os from 'node:os';
 import { execFile } from 'node:child_process';
 
 const HOME = process.env.HOME || '';
@@ -17,7 +18,13 @@ const MEMORY = {
   'notes.md': path.join(C, 'brain', 'notes.md'), 'environment.md': path.join(C, 'brain', 'environment.md'),
   'tool-map.md': path.join(C, 'brain', 'tool-map.md'), 'CLAUDE.md': path.join(C, 'CLAUDE.md'),
 };
+const MULTI = fs.existsSync('/etc/claude-code/CLAUDE.md');
 const writable = (p) => { try { fs.accessSync(p, fs.constants.W_OK); return true; } catch { return false; } };
+const MARKET = process.env.PAAS_MARKET || '/opt/paas/marketplace';
+const ME = os.userInfo().username;
+const MINE = path.join(MARKET, 'contrib', ME);
+const MARKET_BIN = ['/opt/paas/bin/paas-market', '/usr/local/bin/paas-market'].find((p) => fs.existsSync(p));
+const sharedNow = (kind, name) => fs.existsSync(path.join(MINE, `${kind}s`, kind === 'agent' ? `${name}.md` : name));
 const oneLine = (v, max) => String(v || '').replace(/\s+/g, ' ').trim().slice(0, max);
 
 const read = (p, max = 200000) => { try { return fs.readFileSync(p, 'utf8').slice(0, max); } catch { return null; } };
@@ -48,7 +55,7 @@ function skills() {
     const text = read(path.join(dir, n, 'SKILL.md'), 60000) || '';
     const f = frontmatter(text);
     const mine = fs.existsSync(path.join(dir, n, '.user-skill'));
-    return { dir: n, name: f.name || n, description: f.description || '', when: f.when_to_use || '', mine,
+    return { dir: n, shared: sharedNow('skill', n), name: f.name || n, description: f.description || '', when: f.when_to_use || '', mine,
       body: mine ? text.replace(/^---\n[\s\S]*?\n---\n?/, '').trim() : undefined };
   }).filter((s) => s.description).sort((a, b) => a.name.localeCompare(b.name));
 }
@@ -60,7 +67,7 @@ function agents() {
   return names.map((n) => {
     const f = frontmatter(read(path.join(dir, n), 4000));
     const file = n.replace(/\.md$/, '');
-    return { file, mine: isMine('agent', file), name: f.name || file, description: f.description || '', tools: f.tools || f.disallowedTools ? `${f.tools ? `tools: ${f.tools}` : `not: ${f.disallowedTools}`}` : 'all tools', model: f.model || '' };
+    return { file, mine: isMine('agent', file), shared: sharedNow('agent', file), name: f.name || file, description: f.description || '', tools: f.tools || f.disallowedTools ? `${f.tools ? `tools: ${f.tools}` : `not: ${f.disallowedTools}`}` : 'all tools', model: f.model || '' };
   });
 }
 
@@ -125,8 +132,11 @@ async function overview() {
     library: { version: read(path.join(LIB, 'VERSION'))?.trim() || null, sources: src.ok ? src.out : null },
     skills: skills(), agents: agents(), hooks: hooks(), mcp: mcpServers(), inbox: inbox(),
     // multi-user VM: environment.md / tool-map.md are shared and only root writes them; the library too
-    memory: [['notes.md', true], ['environment.md', true], ['tool-map.md', true], ['CLAUDE.md', false]]
-      .map(([name, editable]) => ({ name, editable: editable && writable(MEMORY[name]), text: read(MEMORY[name]) })).filter((m) => m.text !== null),
+    // multi-user VM: CLAUDE.md here is your own rules (the brain's rules are VM-wide, /etc/claude-code/CLAUDE.md)
+    memory: [['notes.md', true], ['environment.md', true], ['tool-map.md', true], ['CLAUDE.md', MULTI]]
+      .map(([name, editable]) => ({ name, editable: editable && (writable(MEMORY[name]) || (MULTI && name === 'CLAUDE.md')),
+        text: read(MEMORY[name]) ?? (MULTI && name === 'CLAUDE.md' ? '' : null) })).filter((m) => m.text !== null),
+    canShare: !!MARKET_BIN && writable(MINE),
     canAddDocs: writable(LIB),
   };
 }
@@ -168,8 +178,8 @@ const routes = {
   },
   'POST /index': () => run(ADD_DOCS, [], 600000),
   'POST /memory': async (_q, b) => {
-    if (!['notes.md', 'environment.md', 'tool-map.md'].includes(b.name)) return { ok: false, out: 'That file is not editable here' };
-    if (!writable(MEMORY[b.name])) return { ok: false, out: 'Shared file: only root changes it' };
+    if (!['notes.md', 'environment.md', 'tool-map.md', ...(MULTI ? ['CLAUDE.md'] : [])].includes(b.name)) return { ok: false, out: 'That file is not editable here' };
+    if (fs.existsSync(MEMORY[b.name]) && !writable(MEMORY[b.name])) return { ok: false, out: 'Shared file: only root changes it' };
     const text = String(b.text ?? '');
     if (text.length > 500000) return { ok: false, out: 'Too long' };
     const p = MEMORY[b.name];
@@ -227,6 +237,12 @@ const routes = {
     if (!p || !isMine('agent', b.name)) return { ok: false, out: 'Only your own agents can be deleted' };
     fs.rmSync(p, { force: true });
     return { ok: true };
+  },
+  'POST /share': async (_q, b) => {
+    if (!MARKET_BIN || !['skill', 'agent', 'mcp'].includes(b.kind) || !/^[a-z0-9][a-z0-9_.-]{0,60}$/.test(String(b.name || ''))) return { ok: false, out: 'Cannot share that' };
+    return new Promise((resolve) => execFile('python3', [MARKET_BIN, b.unshare ? 'unshare' : 'share', `${b.kind}/${b.name}`],
+      { timeout: 60000, env: { ...process.env, PAAS_DESCRIPTION: oneLine(b.description, 1000) } },
+      (err, stdout, stderr) => resolve({ ok: !err, out: `${stdout}${stderr}`.trim() })));
   },
   'GET /mcp-status': () => run('claude', ['mcp', 'list'], 90000),
 };

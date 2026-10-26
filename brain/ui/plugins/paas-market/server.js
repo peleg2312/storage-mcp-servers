@@ -2,13 +2,15 @@
 // their own ~/.claude. Root may also set where an MCP server is (setup-mcp).
 import http from 'node:http';
 import fs from 'node:fs';
+import os from 'node:os';
 import { execFile } from 'node:child_process';
 
 const BIN = process.env.PAAS_MARKET_BIN || ['/opt/paas/bin/paas-market', '/usr/local/bin/paas-market'].find((p) => fs.existsSync(p)) || 'paas-market';
 const ID = /^(skill|agent|mcp)\/[a-z0-9][a-z0-9_.-]{0,60}$/;
-const market = (args) => new Promise((resolve) => {
-  execFile('python3', [BIN, ...args], { timeout: 120000, maxBuffer: 8 << 20, env: { ...process.env, PATH: `${process.env.HOME}/.local/bin:/usr/local/bin:${process.env.PATH}` } },
+const market = (args, input) => new Promise((resolve) => {
+  const p = execFile('python3', [BIN, ...args], { timeout: 120000, maxBuffer: 8 << 20, env: { ...process.env, PATH: `${process.env.HOME}/.local/bin:/usr/local/bin:${process.env.PATH}` } },
     (err, stdout, stderr) => resolve({ ok: !err, out: `${stdout}${stderr}`.trim() }));
+  p.stdin.end(input || '');
 });
 const ids = (b) => (Array.isArray(b.ids) ? b.ids : []).filter((i) => ID.test(String(i))).slice(0, 50);
 
@@ -24,11 +26,18 @@ const routes = {
   'GET /list': async () => {
     const r = await market(['list', '--json']);
     if (!r.ok) return { ok: false, out: r.out };
-    return { ok: true, items: JSON.parse(r.out), root: process.getuid?.() === 0 };
+    return { ok: true, items: JSON.parse(r.out), root: process.getuid?.() === 0, me: os.userInfo().username };
   },
   'POST /add': async (b) => (ids(b).length ? market(['add', ...ids(b)]) : { ok: false, out: 'Nothing to add' }),
   'POST /remove': async (b) => (ids(b).length ? market(['remove', ...ids(b)]) : { ok: false, out: 'Nothing to remove' }),
   'POST /update': async () => market(['update']),
+  // create a skill / agent / MCP server of your own and share it with everyone (details go on stdin, not argv)
+  'POST /new': async (b) => {
+    if (!['skill', 'agent', 'mcp'].includes(b.kind) || !/^[a-z0-9][a-z0-9-]{1,40}$/.test(String(b.name || ''))) return { ok: false, out: 'Name: lower-case letters, digits and dashes, e.g. vm-patching' };
+    const keep = ['description', 'when', 'body', 'tools', 'model', 'url', 'token'];
+    return market(['new', b.kind, b.name], JSON.stringify(Object.fromEntries(keep.map((k) => [k, String(b[k] ?? '')]))));
+  },
+  'POST /unshare': async (b) => (ids(b).length ? market(['unshare', ...ids(b)]) : { ok: false, out: 'Nothing to unshare' }),
   'POST /setup-mcp': async (b) => {
     if (process.getuid?.() !== 0) return { ok: false, out: 'Only root sets up MCP servers' };
     if (!/^[a-z0-9][a-z0-9_.-]{0,60}$/.test(String(b.name || ''))) return { ok: false, out: 'Unknown server' };

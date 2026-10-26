@@ -28,10 +28,12 @@ const CSS = `
 export function mount(container, api) {
   let items = [];
   let root = false;
+  let me = '';
   let kind = 'all';
   container.innerHTML = `<style>${CSS}</style><div class="mk"><div class="row"><div><h2>Marketplace</h2>
     <div class="sub">Skills, agents and MCP servers on this VM. Add what you need: it goes into your own Claude only.</div></div>
-    <button class="ghost upd-all" style="display:none">Update all</button></div>
+    <div style="display:flex;gap:8px"><button class="ghost upd-all" style="display:none">Update all</button><button class="go new">+ New</button></div></div>
+    <div class="newform"></div>
     <div class="row bar"><input class="q" type="search" placeholder="Search: ontap, latency, zoning, capacity…">
     <div class="seg">${[['all', 'All'], ['skill', 'Skills'], ['agent', 'Agents'], ['mcp', 'MCP servers'], ['have', 'Added']].map(([v, l]) => `<button data-k="${v}" class="${v === kind ? 'on' : ''}">${l}</button>`).join('')}</div></div>
     <div class="grid"><div class="empty">Loading…</div></div></div>`;
@@ -42,7 +44,7 @@ export function mount(container, api) {
   async function load() {
     const r = await api.rpc('GET', 'list').catch((e) => ({ ok: false, out: String(e.message || e) }));
     if (!r.ok) { grid.innerHTML = `<div class="empty">${esc(r.out)}</div>`; return; }
-    items = r.items; root = r.root;
+    items = r.items; root = r.root; me = r.me;
     const n = items.filter((i) => i.update).length;
     updAll.style.display = n ? '' : 'none';
     updAll.textContent = `Update all (${n})`;
@@ -54,11 +56,12 @@ export function mount(container, api) {
     const shown = items.filter((i) => (kind === 'all' || (kind === 'have' ? i.added : i.kind === kind))
       && words.every((w) => `${i.name} ${i.description} ${KIND[i.kind]}`.toLowerCase().includes(w)));
     grid.innerHTML = shown.map((i) => `<div class="item${i.added ? ' have' : ''}" data-id="${esc(i.id)}">
-      <div><span class="tag">${KIND[i.kind]}</span>${i.added ? '<span class="tag have">added</span>' : ''}${i.update ? '<span class="tag upd">update</span>' : ''}${i.ready ? '' : '<span class="tag upd">not set up</span>'}</div>
+      <div><span class="tag">${KIND[i.kind]}</span>${i.author ? `<span class="tag">by ${esc(i.author)}</span>` : ''}${i.added ? '<span class="tag have">added</span>' : ''}${i.update ? '<span class="tag upd">update</span>' : ''}${i.ready ? '' : '<span class="tag upd">not set up</span>'}</div>
       <div class="t">${i.kind === 'skill' ? '/' : ''}${esc(i.name)}</div><div class="d" title="${esc(i.description)}">${esc(i.description)}</div>
       <div class="acts">${i.added ? `<button class="ghost" data-a="remove">Remove</button>${i.update ? '<button class="go" data-a="add">Update</button>' : ''}`
         : i.ready ? '<button class="go" data-a="add">Add</button>' : `<span class="sub">${root ? '' : 'Root sets its address first'}</span>`}
-        ${root && i.kind === 'mcp' ? '<button class="ghost" data-a="setup">Set up</button>' : ''}</div>
+        ${root && i.kind === 'mcp' && !i.author ? '<button class="ghost" data-a="setup">Set up</button>' : ''}
+        ${i.author && i.author === me ? '<button class="ghost" data-a="unshare">Unshare</button>' : ''}</div>
     </div>`).join('') || `<div class="empty">${items.length ? 'Nothing matches' : 'The marketplace is empty'}</div>`;
     grid.querySelectorAll('[data-a]').forEach((b) => b.addEventListener('click', () => act(b.closest('.item'), b.dataset.a, b)));
   }
@@ -77,11 +80,46 @@ export function mount(container, api) {
       });
       return;
     }
+    if (a === 'unshare' && !window.confirm(`Take ${id} out of the marketplace? People who added it keep their copy.`)) return;
     btn.disabled = true;
     const r = await api.rpc('POST', a, { ids: [id] }).catch((e) => ({ out: String(e.message || e) }));
     if (!r.ok) window.alert(r.out);
     await load();
   }
+
+  const slot = container.querySelector('.newform');
+  function newForm() {
+    slot.innerHTML = `<div class="item" style="margin:14px 0"><div class="t">New for everyone</div>
+      <div class="sub">It is added to your own Claude and shared in the marketplace, where everyone can add it.</div>
+      <div class="setup"><select class="nk"><option value="skill">Skill: a playbook Claude follows</option><option value="agent">Agent: a helper Claude hands tasks to</option><option value="mcp">MCP server: a live data source</option></select>
+        <input class="nn" placeholder="name, e.g. vm-patching">
+        <input class="nd" placeholder="Description: what it does and when to use it">
+        <div class="f-skill"><input class="nw" placeholder="Trigger phrases (optional), e.g. &quot;patch the vms&quot;"></div>
+        <div class="f-agent" style="display:none"><input class="nt" placeholder="Tools (optional), e.g. Read, Grep, Bash"><input class="nm" placeholder="Model (optional): sonnet, opus, haiku" style="margin-top:6px"></div>
+        <div class="f-mcp" style="display:none"><input class="nu" placeholder="http://host:8000/mcp"><input class="ntk" type="password" placeholder="Bearer token (optional)" style="margin-top:6px"></div>
+        <textarea class="nb" rows="7" placeholder="Instructions (Markdown): steps, commands, checks, what to report" style="background:hsl(var(--background));border:1px solid hsl(var(--border));border-radius:8px;padding:8px 10px;color:inherit;font:12.5px/1.5 ui-monospace,Menlo,monospace"></textarea></div>
+      <div class="acts"><button class="go ns">Create and share</button><button class="ghost nc">Cancel</button><span class="sub nst"></span></div></div>`;
+    const v = (c) => slot.querySelector(c).value;
+    const kindVis = () => {
+      const k = v('.nk');
+      slot.querySelector('.f-skill').style.display = k === 'skill' ? '' : 'none';
+      slot.querySelector('.f-agent').style.display = k === 'agent' ? '' : 'none';
+      slot.querySelector('.f-mcp').style.display = k === 'mcp' ? '' : 'none';
+      slot.querySelector('.nb').style.display = k === 'mcp' ? 'none' : '';
+    };
+    slot.querySelector('.nk').addEventListener('change', kindVis);
+    slot.querySelector('.nc').addEventListener('click', () => { slot.innerHTML = ''; });
+    slot.querySelector('.ns').addEventListener('click', async (e) => {
+      e.target.disabled = true;
+      const r = await api.rpc('POST', 'new', { kind: v('.nk'), name: v('.nn').trim(), description: v('.nd'), when: v('.nw'), tools: v('.nt'),
+        model: v('.nm').trim(), url: v('.nu').trim(), token: v('.ntk').trim(), body: v('.nb') }).catch((x) => ({ out: String(x.message || x) }));
+      e.target.disabled = false;
+      if (!r.ok) { slot.querySelector('.nst').textContent = r.out; return; }
+      slot.innerHTML = '';
+      load();
+    });
+  }
+  container.querySelector('.new').addEventListener('click', newForm);
 
   q.addEventListener('input', render);
   container.querySelectorAll('.seg button').forEach((b) => b.addEventListener('click', () => {

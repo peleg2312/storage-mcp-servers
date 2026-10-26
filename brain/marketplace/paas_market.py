@@ -8,6 +8,9 @@ they want to their own ~/.claude (names stay as they are: /morning-check, not /p
   paas-market remove <kind>/<name>...    only items added from the marketplace
   paas-market update                     re-copy items root changed since you added them
   paas-market defaults                   add the items every user starts with (new accounts get them at creation)
+  paas-market share <kind>/<name>...     put your own skill / agent into the marketplace for others (again = update)
+  paas-market unshare <kind>/<name>...   take it out again (people who added it keep their copy)
+  paas-market new <kind> <name>          create a skill / agent / MCP server (JSON on stdin) and share it
 root only:
   paas-market publish <brain/claude dir> [--mcp mcp.json]   (re)build the marketplace from the brain in this repo
   paas-market setup-mcp <name> <url> [<token>]             set where an MCP server is (everyone can then add it)
@@ -16,6 +19,7 @@ The marketplace is a folder (PAAS_MARKET, default /opt/paas/marketplace): items/
 items/agents/<name>.md, items/mcp/<name>.json, index.json (kind, name, description, version) and defaults.json.
 What you added is recorded in ~/.claude/paas-market.json; your own skills and agents are never touched.
 """
+import getpass
 import hashlib
 import json
 import os
@@ -67,10 +71,144 @@ def item_path(kind, name, market=MARKET):
 
 
 def load_index():
+    """root's items (index.json) plus the skills and agents people shared (contrib/<user>/), marked with their author"""
     try:
-        return json.load(open(os.path.join(MARKET, "index.json")))
+        items = json.load(open(os.path.join(MARKET, "index.json")))
     except (OSError, ValueError):
         sys.exit(f"paas-market: no marketplace at {MARKET} (root runs: paas-market publish)")
+    taken = {(i["kind"], i["name"]) for i in items}
+    for it in contrib_items():
+        if (it["kind"], it["name"]) not in taken:
+            taken.add((it["kind"], it["name"]))
+            items.append(it)
+    return items
+
+
+def contrib_items():
+    out = []
+    base = os.path.join(MARKET, "contrib")
+    for user in sorted(os.listdir(base)) if os.path.isdir(base) else []:
+        for kind, sub, ext in (("skill", "skills", ""), ("agent", "agents", ".md"), ("mcp", "mcp", ".json")):
+            d = os.path.join(base, user, sub)
+            for n in sorted(os.listdir(d)) if os.path.isdir(d) else []:
+                p = os.path.join(d, n)
+                f = os.path.join(p, "SKILL.md") if kind == "skill" else p
+                if not n.endswith(ext) or not os.path.isfile(f):
+                    continue
+                try:
+                    desc = json.load(open(f)).get("description", "") if kind == "mcp" else frontmatter(open(f).read()).get("description", "")
+                except ValueError:
+                    continue
+                out.append({"kind": kind, "name": n[:-len(ext)] if ext else n, "description": desc,
+                            "version": digest(p), "author": user, "path": p})
+    return out
+
+
+def own_path(kind, name):
+    return os.path.join(CLAUDE, "skills", name) if kind == "skill" else os.path.join(CLAUDE, "agents", name + ".md")
+
+
+def share(ids):
+    """put your own skills / agents into the marketplace (contrib/<you>/), so others can add them; re-share = update"""
+    me = getpass.getuser()
+    mine = os.path.join(MARKET, "contrib", me)
+    if not os.access(mine, os.W_OK):
+        sys.exit(f"paas-market: no sharing folder for {me} ({mine}); root runs: paas-user provision {me}")
+    others = {(i["kind"], i["name"]): i.get("author") for i in load_index()}
+    for kind, name in ids:
+        if kind == "mcp":
+            cfg = own_mcp(name)
+            if not cfg:
+                sys.exit(f"paas-market: you have no MCP server '{name}' (claude mcp list)")
+        else:
+            src = own_path(kind, name)
+            if not os.path.exists(src):
+                sys.exit(f"paas-market: you have no {kind} '{name}'")
+        if (kind, name) in others and others[(kind, name)] != me:
+            who = others[(kind, name)] or "root"
+            sys.exit(f"paas-market: {kind}/{name} is already in the marketplace (by {who}); rename yours to share it")
+        dst = os.path.join(mine, {"skill": "skills", "agent": "agents", "mcp": "mcp"}[kind],
+                           name + {"skill": "", "agent": ".md", "mcp": ".json"}[kind])
+        os.makedirs(os.path.dirname(dst), exist_ok=True)
+        if kind == "mcp":
+            old_desc = json.load(open(dst)).get("description", "") if os.path.exists(dst) else ""
+            json.dump({"description": os.environ.get("PAAS_DESCRIPTION", "").strip() or old_desc or f"MCP server {name}",
+                       "server": cfg}, open(dst, "w"), indent=2)
+        elif kind == "skill":
+            shutil.rmtree(dst, ignore_errors=True)
+            shutil.copytree(src, dst, ignore=shutil.ignore_patterns(".user-skill", "*.bak"))
+        else:
+            shutil.copy(src, dst)
+        print(f"shared {kind}/{name}")
+
+
+def own_mcp(name):
+    """the user-scope MCP server <name> from ~/.claude.json, or None"""
+    try:
+        return json.load(open(os.path.expanduser("~/.claude.json"))).get("mcpServers", {}).get(name)
+    except (OSError, ValueError):
+        return None
+
+
+def new_item(kind, name):
+    """create a skill / agent / MCP server of your own from JSON on stdin and share it with everyone:
+    skill {description, when, body} - agent {description, tools, model, body} - mcp {description, url, token}"""
+    if kind not in KINDS or not re.match(r"^[a-z0-9][a-z0-9-]{1,40}$", name):
+        sys.exit("paas-market: name: lower-case letters, digits and dashes, e.g. vm-patching")
+    try:
+        d = json.load(sys.stdin)
+    except ValueError:
+        sys.exit("paas-market: the details must be JSON on stdin")
+    desc = " ".join(str(d.get("description", "")).split())[:1000]
+    if not desc:
+        sys.exit("paas-market: a description is needed: it is how Claude (and people) know when to use it")
+    if any(i["kind"] == kind and i["name"] == name for i in load_index()):
+        sys.exit(f"paas-market: {kind}/{name} is already in the marketplace: pick another name")
+    q = json.dumps
+    if kind == "skill":
+        dst = own_path("skill", name)
+        if os.path.exists(dst):
+            sys.exit(f"paas-market: you already have a skill '{name}'")
+        os.makedirs(dst)
+        when = " ".join(str(d.get("when", "")).split())[:600]
+        open(os.path.join(dst, "SKILL.md"), "w").write(f"---\nname: {name}\ndescription: {q(desc)}\n"
+                                                        + (f"when_to_use: {q(when)}\n" if when else "")
+                                                        + f"---\n{str(d.get('body', '')).strip()}\n")
+        open(os.path.join(dst, ".user-skill"), "w").write("created in the marketplace\n")
+    elif kind == "agent":
+        dst = own_path("agent", name)
+        if os.path.exists(dst):
+            sys.exit(f"paas-market: you already have an agent '{name}'")
+        os.makedirs(os.path.dirname(dst), exist_ok=True)
+        tools = " ".join(str(d.get("tools", "")).split())
+        model = str(d.get("model", "")).strip()
+        open(dst, "w").write(f"---\nname: {name}\ndescription: {q(desc)}\n" + (f"tools: {tools}\n" if tools else "")
+                             + (f"model: {model}\n" if re.match(r"^[a-z0-9.-]+$", model) else "")
+                             + f"---\n{str(d.get('body', '')).strip()}\n")
+        with open(os.path.join(CLAUDE, "agents", ".user-agents"), "a") as f:
+            f.write(name + "\n")
+    else:
+        url = str(d.get("url", "")).strip()
+        if not re.match(r"^https?://[\w.-]+(:\d+)?(/\S*)?$", url):
+            sys.exit("paas-market: the address must look like http://host:8000/mcp")
+        token = str(d.get("token", "")).strip()
+        cfg = {"type": "http", "url": url, **({"headers": {"Authorization": f"Bearer {token}"}} if token else {})}
+        r = mcp_cmd("add-json", "-s", "user", name, json.dumps(cfg))
+        if r.returncode:
+            sys.exit(f"paas-market: could not add MCP server {name}: {(r.stderr or r.stdout).strip()}")
+    os.environ["PAAS_DESCRIPTION"] = desc
+    share([(kind, name)])
+
+
+def unshare(ids):
+    me = getpass.getuser()
+    for kind, name in ids:
+        dst = os.path.join(MARKET, "contrib", me, {"skill": "skills", "agent": "agents", "mcp": "mcp"}[kind],
+                           name + {"skill": "", "agent": ".md", "mcp": ".json"}[kind])
+        if not os.path.exists(dst):
+            sys.exit(f"paas-market: you did not share {kind}/{name}")
+        shutil.rmtree(dst) if os.path.isdir(dst) else os.remove(dst)
+        print(f"unshared {kind}/{name} (people who added it keep their copy)")
 
 
 def load_state():
@@ -96,7 +234,7 @@ def listing(words=None):
             continue
         have = state.get(key)
         out.append({**it, "id": key, "added": bool(have), "update": bool(have and have != it["version"]),
-                    "ready": it["kind"] != "mcp" or mcp_ready(json.load(open(item_path("mcp", it["name"]))))})
+                    "ready": it["kind"] != "mcp" or mcp_ready(json.load(open(it.get("path") or item_path("mcp", it["name"]))))})
     return out
 
 
@@ -142,7 +280,7 @@ def add(ids, quiet=False):
         it = index.get((kind, name))
         if not it:
             sys.exit(f"paas-market: {kind}/{name} is not in the marketplace")
-        src = item_path(kind, name)
+        src = it.get("path") or item_path(kind, name)
         if kind == "skill":
             dst = os.path.join(CLAUDE, "skills", name)
             if os.path.exists(dst) and f"skill/{name}" not in state["installed"]:
@@ -261,6 +399,14 @@ def main(argv):
             for r in rows:
                 mark = "update" if r["update"] else "added" if r["added"] else ""
                 print(f"{r['id']:<38} {mark:<7} {r['description'][:90]}")
+    elif cmd == "new":
+        if len(args) != 2:
+            sys.exit("usage: paas-market new <skill|agent|mcp> <name>   (details as JSON on stdin)")
+        new_item(args[0], args[1])
+    elif cmd == "share":
+        share(parse_ids(args))
+    elif cmd == "unshare":
+        unshare(parse_ids(args))
     elif cmd == "add":
         add(parse_ids(args))
     elif cmd == "remove":

@@ -12,6 +12,8 @@ B=$HERE/bundle
 DST=${UI_DIR:-$HOME/.claude/paas-ui}        # multi-user VM: UI_DIR=/opt/paas/ui UI_SHARED=1 (files only, see brain/multiuser)
 PORT=${UI_PORT:-3001}
 [ -f "$B/VERSION" ] && ls "$B"/paas-ui-*.part-* >/dev/null 2>&1 || { echo "ui: no bundle in $B (build-bundle.sh)"; exit 0; }
+# multi-user VM (the gate owns :3001): the UI is installed by brain/multiuser/install-shared.sh, not per account here
+[ -f /etc/paas/gate.key ] && [ "${UI_SHARED:-0}" != 1 ] && { echo "ui: multi-user VM: re-run sh brain/multiuser/install-shared.sh to update the UI"; exit 0; }
 case "$(uname -s)-$(uname -m)" in
   Linux-x86_64) ;;
   *) echo "ui: the bundle is for Linux x86_64, skipped on $(uname -s)-$(uname -m)"; exit 0 ;;
