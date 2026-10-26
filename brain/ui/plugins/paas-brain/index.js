@@ -197,7 +197,7 @@ export function mount(container, api) {
     pane.innerHTML = `
       <div class="card"><div class="search"><input class="q" placeholder="Search the docs: an error, an event, an API, a task…" />
         <input class="v" placeholder="vendor (optional)" style="max-width:170px" /><button class="go s">Search</button></div><div class="out"></div></div>
-      <div class="two">
+      ${data.canAddDocs === false ? '<div class="card"><h3>Add documents</h3><div class="sub">The docs library is shared by everyone on this VM: root adds documents to it (root\'s Brain tab).</div></div>' : `<div class="two">
         <div class="card"><h3>Add pages or PDFs by URL</h3><div class="sub">Any URL this VM can reach. Claude can do it too: “add this to your docs: …”</div>
           <textarea class="urls" rows="3" style="width:100%;margin-top:10px" placeholder="https://wiki.corp/san/zoning-standard"></textarea>
           <div class="row"><input class="to" placeholder="vendor/product, e.g. cisco/mds" style="flex:1" /><button class="go add">Add</button></div><pre class="addout" style="display:none;margin-top:10px"></pre></div>
@@ -205,7 +205,7 @@ export function mount(container, api) {
           <div class="drop" style="margin-top:10px">Drop files here or click to choose<input type="file" multiple hidden accept=".pdf,.html,.htm,.md,.markdown,.txt,.adoc,.rst" /></div>
           <div class="row"><input class="to2" placeholder="vendor/product (default local/uploads)" style="flex:1" /></div><pre class="upout" style="display:none;margin-top:10px"></pre></div>
       </div>
-      <div class="card"><h3>Your added documents</h3>${data.inbox.length ? `<table><tr><th>File</th><th>Size</th><th>Added</th></tr>${data.inbox.map((f) => `<tr><td><code>${esc(f.path)}</code></td><td>${kb(f.size)}</td><td>${new Date(f.mtime).toLocaleDateString()}</td></tr>`).join('')}</table>` : '<div class="sub">None yet</div>'}</div>`;
+      <div class="card"><h3>Your added documents</h3>${data.inbox.length ? `<table><tr><th>File</th><th>Size</th><th>Added</th></tr>${data.inbox.map((f) => `<tr><td><code>${esc(f.path)}</code></td><td>${kb(f.size)}</td><td>${new Date(f.mtime).toLocaleDateString()}</td></tr>`).join('')}</table>` : '<div class="sub">None yet</div>'}</div>`}`;
     const q = pane.querySelector('.q');
     const out = pane.querySelector('.out');
     const search = async () => {
@@ -221,6 +221,7 @@ export function mount(container, api) {
     };
     pane.querySelector('.s').addEventListener('click', search);
     q.addEventListener('keydown', (e) => { if (e.key === 'Enter') search(); });
+    if (data.canAddDocs === false) return;
 
     pane.querySelector('.add').addEventListener('click', async (e) => {
       const pre = pane.querySelector('.addout');

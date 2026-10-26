@@ -17,6 +17,7 @@ const MEMORY = {
   'notes.md': path.join(C, 'brain', 'notes.md'), 'environment.md': path.join(C, 'brain', 'environment.md'),
   'tool-map.md': path.join(C, 'brain', 'tool-map.md'), 'CLAUDE.md': path.join(C, 'CLAUDE.md'),
 };
+const writable = (p) => { try { fs.accessSync(p, fs.constants.W_OK); return true; } catch { return false; } };
 const oneLine = (v, max) => String(v || '').replace(/\s+/g, ' ').trim().slice(0, max);
 
 const read = (p, max = 200000) => { try { return fs.readFileSync(p, 'utf8').slice(0, max); } catch { return null; } };
@@ -123,8 +124,10 @@ async function overview() {
   return {
     library: { version: read(path.join(LIB, 'VERSION'))?.trim() || null, sources: src.ok ? src.out : null },
     skills: skills(), agents: agents(), hooks: hooks(), mcp: mcpServers(), inbox: inbox(),
+    // multi-user VM: environment.md / tool-map.md are shared and only root writes them; the library too
     memory: [['notes.md', true], ['environment.md', true], ['tool-map.md', true], ['CLAUDE.md', false]]
-      .map(([name, editable]) => ({ name, editable, text: read(MEMORY[name]) })).filter((m) => m.text !== null),
+      .map(([name, editable]) => ({ name, editable: editable && writable(MEMORY[name]), text: read(MEMORY[name]) })).filter((m) => m.text !== null),
+    canAddDocs: writable(LIB),
   };
 }
 
@@ -166,6 +169,7 @@ const routes = {
   'POST /index': () => run(ADD_DOCS, [], 600000),
   'POST /memory': async (_q, b) => {
     if (!['notes.md', 'environment.md', 'tool-map.md'].includes(b.name)) return { ok: false, out: 'That file is not editable here' };
+    if (!writable(MEMORY[b.name])) return { ok: false, out: 'Shared file: only root changes it' };
     const text = String(b.text ?? '');
     if (text.length > 500000) return { ok: false, out: 'Too long' };
     const p = MEMORY[b.name];
