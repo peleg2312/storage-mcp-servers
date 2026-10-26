@@ -1,0 +1,88 @@
+# CSI Driver for Dell PowerFlex
+
+[![Go Report Card](https://goreportcard.com/badge/github.com/dell/csi-powerflex?style=flat-square)](https://goreportcard.com/report/github.com/dell/csi-vxflexos)
+[![License](https://img.shields.io/github/license/dell/csi-vxflexos?style=flat-square&color=blue&label=License)](https://github.com/dell/csi-powerflex/blob/master/LICENSE)
+[![Docker](https://img.shields.io/docker/pulls/dellemc/csi-vxflexos.svg?logo=docker&style=flat-square&label=Pulls)](https://hub.docker.com/r/dellemc/csi-vxflexos)
+[![Last Release](https://img.shields.io/github/v/release/dell/csi-vxflexos?label=Latest&style=flat-square&logo=go)](https://github.com/dell/csi-powerflex/releases)
+
+**Repository for CSI Driver for Dell PowerFlex**
+
+## Description
+CSI Driver for PowerFlex is part of the [CSM (Container Storage Modules)](https://github.com/dell/csm) open-source suite of Kubernetes storage enablers for Dell products. CSI Driver for PowerFlex is a Container Storage Interface (CSI) driver that provides support for provisioning persistent storage using Dell PowerFlex storage array. 
+
+This project may be compiled as a stand-alone binary using Golang that, when run, provides a valid CSI endpoint. It also can be used as a precompiled container image.
+
+## Table of Contents
+
+* [Code of Conduct](https://github.com/dell/csm/blob/main/docs/CODE_OF_CONDUCT.md)
+* [Maintainer Guide](https://github.com/dell/csm/blob/main/docs/MAINTAINER_GUIDE.md)
+* [Committer Guide](https://github.com/dell/csm/blob/main/docs/COMMITTER_GUIDE.md)
+* [Contributing Guide](https://github.com/dell/csm/blob/main/docs/CONTRIBUTING.md)
+* [List of Adopters](https://github.com/dell/csm/blob/main/docs/ADOPTERS.md)
+* [Support](#support)
+* [Security](https://github.com/dell/csm/blob/main/docs/SECURITY.md)
+* [Building](#building)
+* [Runtime Dependecies](#runtime-dependencies)
+* [Documentation](#documentation)
+
+## Support
+For any issues, questions or feedback, please contact [Dell support](https://www.dell.com/support/incidents-online/en-us/contactus/product/container-storage-modules).
+
+## Building
+This project is a Go module (see golang.org Module information for explanation).
+The dependencies for this project are in the go.mod file.
+
+To build the source, execute `make clean build`.
+
+To run unit tests, execute `make unit-test`.
+
+To build an image, execute `make docker`.
+
+You can run an integration test on a Linux system by populating the file `env.sh`
+with values for your PowerFlex system and then run "make integration-test".
+
+## Runtime Dependencies
+The Node portion of the driver can only be run on nodes which have network connectivity to a "PowerFlex Cluster" via PowerFlex SDC Client (which is used by the driver). This means that the `scini` kernel module must be loaded. 
+
+Also, if the `X_CSI_VXFLEXOS_SDCGUID` environment variable is not set, the driver will attempt to query the SDC GUID automatically. If this fails, the driver will not run.
+
+## Volume Group Snapshots
+The driver supports Kubernetes Volume Group Snapshots (Beta, v1beta2) for
+crash-consistent snapshots of multiple PVCs at a single point in time. This
+maps to PowerFlex Snapshot Consistency Groups and implements the CSI spec v1.11
+GroupController RPCs (`CreateVolumeGroupSnapshot`, `DeleteVolumeGroupSnapshot`,
+`GetVolumeGroupSnapshot`).
+
+**Requirements:** Kubernetes ≥ v1.32, snapshot-controller ≥ v8.4+ with
+`--feature-gate=CSIVolumeGroupSnapshot=true`, and v1beta2 VolumeGroupSnapshot CRDs.
+
+See [docs/volume-group-snapshots.md](docs/volume-group-snapshots.md) for the
+full how-to guide, restore workflows, troubleshooting, and RBAC setup.
+
+Sample manifests:
+- [`samples/volumegroupsnapshotclass/`](samples/volumegroupsnapshotclass/) — VolumeGroupSnapshotClass
+- [`samples/volumegroupsnapshot/`](samples/volumegroupsnapshot/) — VolumeGroupSnapshot and restore examples
+- [`samples/rbac/`](samples/rbac/) — RBAC ClusterRole for VGS CRDs
+- [`samples/helm/`](samples/helm/) — Helm values for snapshot-controller / csi-snapshotter sidecars
+
+## Metrics Compatibility
+
+CSI operation metrics are published in two series for compatibility:
+
+- Legacy metrics retain the existing `system_id` label so current dashboards keep working.
+- New driver-level metrics are published with the `global_id` label for multi-array-friendly queries.
+
+Example legacy series:
+```
+dell_csi_operation_total{system_id="181417dd2057c40f", operation="CreateVolume", status="success"} 5
+```
+
+Example driver-level series:
+```
+dell_csi_operation_total_by_global_id{global_id="csi-vxflexos.dellemc.com", operation="CreateVolume", status="success"} 5
+```
+
+Other PowerFlex metrics (storage pools, volumes, arrays) continue to use `system_id`/`array_id` labels unchanged.
+
+## Documentation
+For more detailed information on the driver, please refer to [Container Storage Modules documentation](https://www.dell.com/support/product-details/en-us/product/container-storage-modules/resources/manuals).
