@@ -436,4 +436,29 @@ edit("src/modules/plugins/context/PluginsContext.tsx",
      ("import { api, readApiErrorMessage } from '@/shared/api';", "import { api, readApiErrorMessage } from '@/shared/api';\nimport { useAuth } from '@/modules/auth';"),
      ("  useEffect(() => {\n    void refreshPlugins();\n  }, [refreshPlugins]);",
       "  const { user } = useAuth();\n  useEffect(() => {\n    if (user) void refreshPlugins();\n  }, [refreshPlugins, user]);"))
+# Sign out (with who is signed in) under Settings: ends the gate session too (multi-user VM), then the sign-in page
+edit("src/modules/sidebar/SidebarFooter.tsx",
+     ("import { Settings, ArrowUpCircle, Bug, AlertTriangle } from 'lucide-react';",
+      "import { Settings, ArrowUpCircle, Bug, AlertTriangle, LogOut } from 'lucide-react';\nimport { useAuth } from '@/modules/auth';"),
+     ("}: SidebarFooterProps) {\n  return (\n",
+      "}: SidebarFooterProps) {\n"
+      "  const { user, logout } = useAuth();\n"
+      "  const signOut = async () => {\n"
+      "    const token = localStorage.getItem('auth-token');\n"
+      "    await fetch('/api/auth/logout', { method: 'POST', headers: token ? { Authorization: `Bearer ${token}` } : {} }).catch(() => undefined);\n"
+      "    logout();\n"
+      "    window.location.href = '/';\n"
+      "  };\n"
+      "  const signOutRow = (\n"
+      "    <button className=\"flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-muted-foreground transition-colors hover:bg-accent/60 hover:text-foreground\" onClick={signOut}>\n"
+      "      <LogOut className=\"h-3.5 w-3.5\" />\n"
+      "      <span className=\"text-sm\">Sign out</span>\n"
+      "      {user?.username && <span className=\"ml-auto truncate text-xs text-muted-foreground/70\">{user.username}</span>}\n"
+      "    </button>\n"
+      "  );\n"
+      "  return (\n"),
+     ("      {/* Desktop version brand line (OSS mode only) */}",
+      "      <div className=\"hidden px-2 pb-1.5 md:block\">{signOutRow}</div>\n\n      {/* Desktop version brand line (OSS mode only) */}"),
+     ("          <span className=\"text-sm font-normal text-foreground\">{t('actions.settings')}</span>\n        </button>\n      </div>\n    </div>\n  );\n}",
+      "          <span className=\"text-sm font-normal text-foreground\">{t('actions.settings')}</span>\n        </button>\n      </div>\n      <div className=\"px-3 pb-3 md:hidden\">{signOutRow}</div>\n    </div>\n  );\n}"))
 print(f"branded {SRC} as {NAME}")
