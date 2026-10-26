@@ -72,4 +72,4 @@ chmod 644 /etc/claude-code/managed-settings.json /etc/claude-code/CLAUDE.md
 
 # root as the first user (its UI on 127.0.0.1; the gate puts it on :3001)
 "$P/bin/paas-user" add root
-echo "multi-user base installed. Add people:  paas-user add <name>   (password asked; or root's Users tab in the UI)"
+echo "multi-user base installed. Next: sh brain/multiuser/install-gate.sh (https://<vm>:3001), then add people: paas-user add <name> (or root's Users tab)"
