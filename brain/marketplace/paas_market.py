@@ -19,6 +19,8 @@ they want to their own ~/.claude (names stay as they are: /morning-check, not /p
 root only:
   paas-market publish <brain/claude dir> [--mcp mcp.json]   (re)build the marketplace from the brain in this repo
   paas-market setup-mcp <name> <url> [<token>]             set where an MCP server is (everyone can then add it)
+  paas-market import-mcp [<item>=<your server>...]        set up the marketplace's MCP items from your own Claude's
+                                                           servers of the same name (or the names you map)
 
 The marketplace is a folder (PAAS_MARKET, default /opt/paas/marketplace): items/skills/<name>/,
 items/agents/<name>.md, items/mcp/<name>.json, index.json (kind, name, description, version) and defaults.json.
@@ -373,6 +375,34 @@ def setup_mcp(name, url, token):
     print(f"mcp/{name} set up: {url}")
 
 
+def import_mcp(pairs):
+    """root: copy root's own MCP servers (user or project scope in ~/.claude.json) into the marketplace items"""
+    try:
+        cfg = json.load(open(os.path.expanduser("~/.claude.json")))
+    except (OSError, ValueError):
+        sys.exit("paas-market: no ~/.claude.json: add the MCP servers to your own Claude first (claude mcp add ...)")
+    mine = dict(cfg.get("mcpServers", {}))
+    for proj in cfg.get("projects", {}).values():
+        for k, v in proj.get("mcpServers", {}).items():
+            mine.setdefault(k, v)
+    names = dict(p.split("=", 1) for p in pairs if "=" in p)
+    done = 0
+    for f in sorted(os.listdir(os.path.join(MARKET, "items", "mcp"))):
+        item = f[:-5]
+        src = names.get(item, item)
+        if src not in mine:
+            print(f"  mcp/{item}: you have no server '{src}'" + ("" if item in names else f" (map it: {item}=<your server name>)"))
+            continue
+        p = item_path("mcp", item)
+        entry = json.load(open(p))
+        entry["server"] = mine[src]
+        json.dump(entry, open(p, "w"), indent=2)
+        print(f"set up mcp/{item} from your '{src}'")
+        done += 1
+    reindex()
+    print(f"{done} MCP servers ready for everyone. Your servers: {', '.join(sorted(mine)) or 'none'}")
+
+
 def claude_cmd(*args):
     claude = shutil.which("claude") or os.path.expanduser("~/.local/bin/claude")
     try:
@@ -602,7 +632,7 @@ def main(argv):
         return print("back to this VM's own marketplace")
     if cmd == "pull":
         return pull() if REMOTE else sys.exit("paas-market: not connected to another VM (paas-market connect)")
-    if REMOTE and cmd in ("share", "unshare", "new", "edit", "publish", "setup-mcp", "reindex"):
+    if REMOTE and cmd in ("share", "unshare", "new", "edit", "publish", "setup-mcp", "import-mcp", "reindex"):
         sys.exit(f"paas-market: the marketplace here is {REMOTE['url']} (read-only): create and share there")
     fresh()
     as_json = "--json" in args
@@ -650,6 +680,10 @@ def main(argv):
         if len(args) < 2:
             sys.exit("usage: paas-market setup-mcp <name> <url> [<bearer token>]   (root)")
         setup_mcp(args[0], args[1], args[2] if len(args) > 2 else "")
+    elif cmd == "import-mcp":
+        if os.geteuid() != 0:
+            sys.exit("paas-market: import-mcp is for root")
+        import_mcp(args)
     elif cmd == "reindex":
         reindex()
     else:
