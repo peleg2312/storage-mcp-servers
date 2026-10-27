@@ -74,7 +74,7 @@ export function mount(container, api) {
       <div class="acts">${mine ? '<button class="ghost" data-a="edit">Edit</button><button class="ghost" data-a="unshare">Unshare</button>'
         : `${i.added && i.kind === 'plugin' ? `<button class="ghost" data-a="toggle" data-on="${i.enabled ? 0 : 1}">${i.enabled ? 'Turn off' : 'Turn on'}</button>` : ''}${i.added ? `<button class="ghost" data-a="remove">Remove</button>${i.update ? '<button class="go" data-a="add">Update</button>' : ''}`
         : i.ready ? '<button class="go" data-a="add">Add</button>' : `<span class="sub">${root ? '' : 'Root sets its address first'}</span>`}
-        ${root && i.kind === 'mcp' && !i.author ? '<button class="ghost" data-a="setup">Set up</button>' : ''}`}</div>
+        ${root && i.kind === 'mcp' && !i.author && !i.local ? '<button class="ghost" data-a="setup">Set up</button>' : ''}`}</div>
     </div>`; }).join('') || `<div class="empty">${items.length ? 'Nothing matches' : 'The marketplace is empty'}</div>`;
     grid.querySelectorAll('[data-a]').forEach((b) => b.addEventListener('click', () => act(b.closest('.item'), b.dataset.a, b)));
   }

@@ -325,6 +325,21 @@ def save_state(state):
     os.replace(tmp, STATE)
 
 
+def already_have(kind, name):
+    """you have it from before (an earlier install, by hand) under the marketplace's name, and did not create it here:
+    the marketplace counts it as added, so Remove / Add work on it. Skills and agents you created are never touched."""
+    if kind == "skill":
+        d = os.path.join(CLAUDE, "skills", name)
+        return os.path.isdir(d) and not os.path.exists(os.path.join(d, ".user-skill"))
+    if kind == "agent":
+        try:
+            mine = open(os.path.join(CLAUDE, "agents", ".user-agents")).read().split()
+        except OSError:
+            mine = []
+        return os.path.isfile(own_path("agent", name)) and name not in mine
+    return kind == "mcp" and own_mcp(name) is not None
+
+
 def listing(words=None):
     state = load_state()["installed"]
     plugins = installed_plugins() if os.path.isdir(PLUGINS) else {}
@@ -340,8 +355,11 @@ def listing(words=None):
         if words and not all(w.lower() in f"{it['name']} {it['description']} {it['kind']}".lower() for w in words):
             continue
         have = state.get(key)
-        out.append({**it, "id": key, "added": bool(have), "update": bool(have and have != it["version"]),
-                    "ready": it["kind"] != "mcp" or mcp_ready(json.load(open(it.get("path") or item_path("mcp", it["name"]))))})
+        mcp = json.load(open(it.get("path") or item_path("mcp", it["name"])))["server"] if it["kind"] == "mcp" else {}
+        out.append({**it, "id": key, "added": bool(have) or already_have(it["kind"], it["name"]),
+                    "update": bool(have and have != it["version"]),
+                    "ready": it["kind"] != "mcp" or mcp_ready({"server": mcp}),
+                    "local": it["kind"] == "mcp" and mcp.get("type", "stdio") == "stdio"})   # runs on this VM: no address
     return out
 
 
@@ -441,13 +459,13 @@ def add(ids, quiet=False):
         src = it.get("path") or item_path(kind, name)
         if kind == "skill":
             dst = os.path.join(CLAUDE, "skills", name)
-            if os.path.exists(dst) and f"skill/{name}" not in state["installed"]:
+            if os.path.exists(dst) and f"skill/{name}" not in state["installed"] and not already_have("skill", name):
                 sys.exit(f"paas-market: you already have your own skill '{name}'; rename it first")
             shutil.rmtree(dst, ignore_errors=True)
             shutil.copytree(src, dst)
         elif kind == "agent":
             dst = os.path.join(CLAUDE, "agents", name + ".md")
-            if os.path.exists(dst) and f"agent/{name}" not in state["installed"]:
+            if os.path.exists(dst) and f"agent/{name}" not in state["installed"] and not already_have("agent", name):
                 sys.exit(f"paas-market: you already have your own agent '{name}'; rename it first")
             os.makedirs(os.path.dirname(dst), exist_ok=True)
             shutil.copy(src, dst)
@@ -471,10 +489,16 @@ def remove(ids):
         if kind == "plugin":
             plugin_cmd("uninstall", name)
             continue
-        if f"{kind}/{name}" not in state["installed"]:
-            sys.exit(f"paas-market: {kind}/{name} was not added from the marketplace")
+        if f"{kind}/{name}" not in state["installed"] and not already_have(kind, name):
+            sys.exit(f"paas-market: you do not have {kind}/{name}, or you created it yourself (remove it in the Brain tab)")
         if kind == "skill":
-            shutil.rmtree(os.path.join(CLAUDE, "skills", name), ignore_errors=True)
+            d = os.path.join(CLAUDE, "skills", name)
+            try:
+                shutil.rmtree(d)
+            except FileNotFoundError:
+                pass
+            except OSError as e:
+                sys.exit(f"paas-market: could not remove {d}: {e.strerror}")
         elif kind == "agent":
             try:
                 os.remove(os.path.join(CLAUDE, "agents", name + ".md"))
@@ -482,7 +506,9 @@ def remove(ids):
                 pass
         else:
             mcp_cmd("remove", "-s", "user", name)
-        del state["installed"][f"{kind}/{name}"]
+            if own_mcp(name) is not None:
+                sys.exit(f"paas-market: could not remove MCP server {name}: claude mcp remove -s user {name}")
+        state["installed"].pop(f"{kind}/{name}", None)
         save_state(state)
         print(f"removed {kind}/{name}")
 
