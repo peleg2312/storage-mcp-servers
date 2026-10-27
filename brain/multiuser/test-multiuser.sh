@@ -44,6 +44,9 @@ check "dana did not get it"          "$([ -e /home/dana/.claude/skills/zoning-au
 check "peleg's UI runs as peleg"     "$(ps -o user= -p "$(systemctl show -p MainPID --value paas-ui@peleg)" | tr -d ' ')" peleg
 check "UIs only on 127.0.0.1"        "$(ss -ltnH | awk '{print $4}' | grep -E ':4100[0-9]$' | grep -vc '^127.0.0.1:')" 0
 check "peleg cannot read dana's home" "$(runuser -u peleg -- ls /home/dana >/dev/null 2>&1 && echo yes || echo no)" no
+D=/opt/paas/brain/CLAUDE.md; cp $D $D.test-bak; echo "# test default" >> $D; paas-user provision dana >/dev/null
+check "unedited CLAUDE.md follows the default" "$(tail -1 /home/dana/.claude/CLAUDE.md)" "# test default"
+mv $D.test-bak $D; paas-user provision dana >/dev/null
 systemctl stop paas-ui@peleg
 check "stopped UI restarts on use"   "$(code -H "Cookie: paas_gate=$PC" -H "Authorization: Bearer $PT" --max-time 90 $G/api/projects)" 200
 check "sign-out"                     "$(code -X POST -H "Cookie: paas_gate=$PC" -H "Authorization: Bearer $PT" $G/api/auth/logout)" 200

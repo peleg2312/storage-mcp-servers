@@ -63,11 +63,14 @@ for l in brain/library:library tools:tools banner:banner themes:themes; do
   [ -L "$dst" ] || [ ! -e "$dst" ] || continue      # never replace a real file the person made
   ln -sfn "$src" "$dst"
 done
-# their own environment.md / tool-map.md, started from root's default (root's are the default itself)
+# their own environment.md / tool-map.md / CLAUDE.md, started from root's default (root's are the default itself);
+# a copy they never edited follows the default on updates (.<file>.default = the default it was copied from)
 for f in environment.md tool-map.md CLAUDE.md; do
   [ "$2" = root ] && continue
-  dst=$C/brain/$f; [ $f = CLAUDE.md ] && dst=$C/CLAUDE.md
-  if [ -L "$dst" ] || [ ! -e "$dst" ]; then rm -f "$dst"; cp "$P/brain/$f" "$dst"; fi
+  dst=$C/brain/$f; [ $f = CLAUDE.md ] && dst=$C/CLAUDE.md; seed=$C/brain/.$f.default
+  if [ -L "$dst" ] || [ ! -e "$dst" ] || { [ -f "$seed" ] && [ "$(cat "$dst")" = "$(cat "$seed")" ]; }; then
+    rm -f "$dst"; cp "$P/brain/$f" "$dst"; cp "$P/brain/$f" "$seed"
+  fi
 done
 [ -f "$C/brain/notes.md" ] || printf '# Notes\n\nFacts learned in your sessions (one dated line each).\n' > "$C/brain/notes.md"
 for p in "$P"/ui-plugins/*/; do
