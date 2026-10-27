@@ -28,28 +28,30 @@ const routes = {
     if (!r.ok) return { ok: false, out: r.out };
     return { ok: true, items: JSON.parse(r.out), root: process.getuid?.() === 0, me: os.userInfo().username };
   },
-  'POST /add': async (b) => (ids(b).length ? market(['add', ...ids(b)]) : { ok: false, out: 'Nothing to add' }),
+  // a personal token (MCP servers where everyone uses their own) goes on stdin, never on the command line
+  'POST /add': async (b) => (ids(b).length ? market(['add', ...ids(b)], String(b.token ?? '')) : { ok: false, out: 'Nothing to add' }),
   'POST /remove': async (b) => (ids(b).length ? market(['remove', ...ids(b)]) : { ok: false, out: 'Nothing to remove' }),
   'POST /update': async () => market(['update']),
   'POST /toggle': async (b) => (ids(b).length ? market([b.on ? 'enable' : 'disable', ...ids(b)]) : { ok: false, out: 'Nothing to switch' }),
   // create a skill / agent / MCP server of your own and share it with everyone (details go on stdin, not argv)
   'POST /new': async (b) => {
     if (!['skill', 'agent', 'mcp'].includes(b.kind) || !/^[a-z0-9][a-z0-9-]{1,40}$/.test(String(b.name || ''))) return { ok: false, out: 'Name: lower-case letters, digits and dashes, e.g. vm-patching' };
-    const keep = ['description', 'when', 'body', 'tools', 'model', 'url', 'token'];
+    const keep = ['description', 'when', 'body', 'tools', 'model', 'url', 'token', 'token_mode'];
     return market(['new', b.kind, b.name], JSON.stringify(Object.fromEntries(keep.map((k) => [k, String(b[k] ?? '')]))));
   },
   // edit what you created: show gives the text (MCP: description + address, never the token), edit saves and re-shares it
   'POST /show': async (b) => (ID.test(String(b.id)) ? market(['show', b.id]) : { ok: false, out: 'Unknown item' }),
   'POST /edit': async (b) => {
     if (!ID.test(String(b.id))) return { ok: false, out: 'Unknown item' };
-    const input = b.id.startsWith('mcp/') ? JSON.stringify({ description: String(b.description ?? ''), url: String(b.url ?? ''), token: String(b.token ?? '') }) : String(b.text ?? '');
+    const input = b.id.startsWith('mcp/') ? JSON.stringify({ description: String(b.description ?? ''), url: String(b.url ?? ''), token: String(b.token ?? ''), token_mode: String(b.token_mode ?? '') }) : String(b.text ?? '');
     return market(['edit', b.id], input);
   },
   'POST /unshare': async (b) => (ids(b).length ? market(['unshare', ...ids(b)]) : { ok: false, out: 'Nothing to unshare' }),
   'POST /setup-mcp': async (b) => {
     if (process.getuid?.() !== 0) return { ok: false, out: 'Only root sets up MCP servers' };
     if (!/^[a-z0-9][a-z0-9_.-]{0,60}$/.test(String(b.name || ''))) return { ok: false, out: 'Unknown server' };
-    return market(['setup-mcp', b.name, String(b.url || ''), ...(b.token ? [String(b.token)] : [])]);
+    if (!['shared', 'personal', 'none'].includes(b.mode)) return { ok: false, out: 'Token: shared, personal or none' };
+    return market(['setup-mcp', b.name, String(b.url || ''), b.mode], String(b.token ?? ''));
   },
 };
 
