@@ -45,6 +45,9 @@ install -m 755 "$BRAIN/marketplace/paas_market.py" "$P/bin/paas-market"
 ln -sfn "$P/bin/paas-market" /usr/local/bin/paas-market
 PAAS_MARKET="$P/marketplace" python3 "$P/bin/paas-market" publish "$BRAIN/claude" --mcp "$BRAIN/marketplace/mcp.json"
 chmod -R a+rX "$P/marketplace"
+# shared MCP tokens are in there: only marketplace users (and the service for other VMs, below) may look inside
+getent group paas-users >/dev/null || groupadd paas-users
+chgrp paas-users "$P/marketplace"; chmod 750 "$P/marketplace"
 
 # the single-user UI service (root's, on :3001) gives way to the gate and the per-user services
 systemctl --user disable --now paas-ui >/dev/null 2>&1 || true
@@ -79,6 +82,7 @@ chmod 644 /etc/claude-code/managed-settings.json "$P/brain/CLAUDE.md"
 # the marketplace for other VMs: read-only HTTPS on 3443 with a token (paas-market connect https://<vm>:3443 <token> there)
 getent passwd paas-market >/dev/null || useradd -r -M -d / -s /sbin/nologin paas-market
 install -d -m 750 -o root -g paas-market "$ETC/market"
+setfacl -m u:paas-market:rx "$P/marketplace" 2>/dev/null || echo "note: setfacl missing: the marketplace for other VMs cannot read $P/marketplace (dnf install acl)"
 [ -s "$ETC/market/token" ] || { umask 077; head -c 24 /dev/urandom | base64 | tr -d '/+=' > "$ETC/market/token"; umask 022; }
 [ -f "$ETC/tls/paas-ui.crt" ] && cp "$ETC/tls/paas-ui.crt" "$ETC/tls/paas-ui.key" "$ETC/market/"
 chown root:paas-market "$ETC/market"/*; chmod 640 "$ETC/market"/*
