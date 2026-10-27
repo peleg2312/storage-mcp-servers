@@ -51,6 +51,7 @@ systemctl --user disable --now paas-ui >/dev/null 2>&1 || true
 pkill -u root -f "paas-ui/app/dist-server/server/index.js" 2>/dev/null || true
 # the web UI files, the per-user plugins, the per-user service and the user tool
 UI_DIR="$P/ui" UI_SHARED=1 sh "$BRAIN/ui/install-ui.sh"
+rm -rf "$BRAIN/ui/plugins/paas-usage"                            # merged into Status (left over from older tars)
 rm -rf "$P/ui-plugins"; cp -R "$BRAIN/ui/plugins" "$P/ui-plugins"; chmod -R a+rX "$P/ui-plugins"
 install -m 644 "$HERE/paas-ui@.service" /etc/systemd/system/paas-ui@.service
 install -m 755 "$HERE/paas-user" "$P/bin/paas-user"
