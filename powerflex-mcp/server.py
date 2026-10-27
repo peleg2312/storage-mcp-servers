@@ -4,7 +4,8 @@ the Gateway (3.x) or PowerFlex Manager (4.x / 5.x).
 
 Read-only is enforced at the HTTP layer: the session object refuses any request that is not a GET,
 except a short list of POSTs that only read (sign-in, querySelectedStatistics, queryMdmCluster,
-queryBySelectedIds / queryIdByKey, the 4.x metrics query). Every other POST, PUT, PATCH, DELETE and
+queryBySelectedIds / queryIdByKey, the SDS network latency / connectivity queries, the 4.x metrics
+query). Every other POST, PUT, PATCH, DELETE and
 any URL outside the REST API is blocked before it is sent. Use a Monitor (read-only) account as well.
 """
 
@@ -35,6 +36,8 @@ _READ_POSTS = re.compile(
     r"^(/rest/auth/(login|refresh)"
     r"|/api/instances/querySelectedStatistics"
     r"|/api/instances/System/action/queryMdmCluster"
+    r"|/api/instances/Sds::[0-9a-f]{16}/action/querySdsNetworkLatencyMeters"
+    r"|/api/instances/ProtectionDomain::[0-9a-f]{16}/action/querySdsConnectivityStatus"
     r"|/api/types/[A-Za-z]+/instances/action/(queryBySelectedIds|queryIdByKey)"
     r"|/dtapi/rest/v1/metrics/query)/?$")
 
@@ -294,7 +297,7 @@ def row(typ, o: dict, full=False) -> dict:
         r["creationTime_utc"] = ts_iso(r.pop("creationTime"))
     if r.get("mappedSdcInfo"):
         r["mappedSdcInfo"] = [{k: m.get(k) for k in ("sdcId", "sdcName", "sdcIp", "accessMode",
-                               "limitIops", "limitBwInMbps") if m.get(k) not in (None, "")}
+                               "limitIops", "limitBwInMbps", "hostType") if m.get(k) not in (None, "")}
                               for m in r["mappedSdcInfo"]]
     r.pop("links", None)
     return r
@@ -410,6 +413,7 @@ def stats_of(g, typ, oid):
 _IO_PROPS = {"Volume": ["userDataReadBwc", "userDataWriteBwc", "userDataSdcReadLatency", "userDataSdcWriteLatency"],
              "Sdc": ["userDataReadBwc", "userDataWriteBwc", "userDataSdcReadLatency", "userDataSdcWriteLatency"],
              "Sds": ["primaryReadBwc", "primaryWriteBwc", "totalReadBwc", "totalWriteBwc"]}
+_IO_PROPS["Host"] = _IO_PROPS["Sdc"]   # NVMe/TCP hosts report the same user-data counters
 
 
 def bulk_stats(g, typ, ids, props=None, workers=8):
@@ -472,8 +476,23 @@ Host mapping: get_sdc (its volumes), get_volume (its SDCs, snapshots in the same
   find_volume for an id the host shows.
 Rebuild / rebalance / degraded data: get_health, then get_storage_pool for the pool (rebuild and
   rebalance rates, pending capacity) and list_devices problems_only=True.
+Events / logs: get_events (4.x+ event log, since_hours) next to get_alerts (active alerts).
+SDS network: get_network_latency (SDS-to-SDS latency meters and connectivity) when writes are slow.
 Replication: get_replication (peer systems, RCGs with state and RPO; one RCG for its pairs).
 Anything else: powerflex_get(path) for any GET of the REST API; metrics_query for the 4.x+ metrics API.
+
+== OPENSHIFT / OPENSHIFT VIRTUALIZATION (CSI PowerFlex) ==
+- Each OpenShift worker is an SDC (or an NVMe/TCP host); its SDC name is the node name when the CSI
+  driver renames SDCs, otherwise find it by IP: get_sdc <node IP or name> lists its volumes and IO.
+- A PV's spec.csi.volumeHandle is <systemId>-<volumeId>: find_volume takes it directly. Volume names
+  start with the driver's prefix (default k8s-), so list_volumes name_contains="k8s-" lists CSI
+  volumes; with unmapped_only=True those are candidates for leftover PVs (check reclaimPolicy Retain
+  before calling anything orphaned).
+- VM disks (KubeVirt / OpenShift Virtualization) are block PVCs; live migration needs RWX, so a VM
+  disk is mapped to two SDCs (source and target node) while it migrates. CSI snapshots and clones
+  are snapshots in the same VTree (get_volume shows them).
+- The OpenShift side (PVC -> PV -> node -> pod / VM) comes from the OpenShift tools when connected;
+  otherwise ask for: oc get pv <pv> -o jsonpath='{.spec.csi.volumeHandle}'.
 
 == READING THE NUMBERS (rules of thumb, not SLAs) ==
 - Latency is ms seen by the SDCs (userDataSdc*Latency). All-flash PowerFlex is usually well under
@@ -772,21 +791,29 @@ def list_sdc(system_id: str = "", name_contains: str = "", disconnected_only: bo
 
 @mcp.tool(annotations=RO)
 def get_sdc(sdc: str, system_id: str = "") -> dict:
-    """One SDC (id, name or IP): details, mapped volumes (size, pool) and live IO with latency."""
+    """One SDC or NVMe/TCP host (id, name or IP), e.g. an OpenShift node: details, mapped volumes
+    (size, pool) and live IO with latency."""
     _, g = system(system_id)
+    typ = "Sdc"
     try:
         c = resolve(g, "Sdc", sdc)
     except LookupError:
         c = next((x for x in instances(g, "Sdc") if sdc in (x.get("sdcIp"), *(x.get("sdcIps") or []))), None)
         if not c:
-            raise
-    vols = related(g, "Sdc", c["id"], "Volume")
+            try:
+                c, typ = resolve(g, "Host", sdc), "Host"
+            except LookupError:
+                raise LookupError(f"No SDC or NVMe host {sdc!r} (id, name or IP); see list_sdc / list_nvme") from None
+    try:
+        vols = related(g, typ, c["id"], "Volume")
+    except LookupError:
+        vols = [v for v in instances(g, "Volume") if any(m.get("sdcId") == c["id"] for m in v.get("mappedSdcInfo") or [])]
     pools = {p["id"]: p.get("name") for p in instances(g, "StoragePool")}
-    out = {"sdc": row("Sdc", c),
+    out = {"type": "sdc" if typ == "Sdc" else "nvme_host", "sdc": row(typ, c),
            "volumes": [{"id": v["id"], "name": v.get("name"), "size_gb": round((v.get("sizeInKb") or 0) / 1048576, 2),
                         "pool": pools.get(v.get("storagePoolId")), "type": v.get("volumeType")} for v in vols]}
     try:
-        out["io"] = io_view(stats_of(g, "Sdc", c["id"]))
+        out["io"] = io_view(stats_of(g, typ, c["id"]))
     except Exception as e:
         out["io"] = {"error": str(e)}
     return out
@@ -848,15 +875,20 @@ def get_volume(volume: str, system_id: str = "", full: bool = False) -> dict:
 
 @mcp.tool(annotations=RO)
 def find_volume(key: str, system_id: str = "") -> dict:
-    """Find volumes from what a host shows: /dev/disk/by-id/emc-vol-<system>-<volume>, an eui. id
-    (ESXi / NVMe), a 16-hex volume id, or a name / name substring. Searches every system when
-    system_id is omitted."""
+    """Find volumes from what a host or OpenShift shows: a CSI PV volumeHandle <systemId>-<volumeId>
+    (oc get pv X -o jsonpath='{.spec.csi.volumeHandle}'), /dev/disk/by-id/emc-vol-<system>-<volume>,
+    an eui. id (ESXi / NVMe, also nvme-eui.<hex>), a 16-hex volume id, or a name / name substring
+    (CSI names start with the driver's prefix, default k8s-). Searches every system when system_id
+    is omitted."""
     k = key.strip().lower()
-    m = re.search(r"emc-vol-([0-9a-f]{16})-([0-9a-f]{16})", k)
-    hexes = re.sub(r"^eui\.", "", k)
+    m = re.search(r"(?:emc-vol-|^)([0-9a-f]{16})-([0-9a-f]{16})$", k)
+    e = re.search(r"eui\.([0-9a-f]{32}|[0-9a-f]{16})$", k)
+    hexes = e.group(1) if e else k
     candidates = []
     if m:
         candidates = [m.group(2)]
+        if not system_id and m.group(1) in REG.system_map():
+            system_id = m.group(1)
     elif re.fullmatch(r"[0-9a-f]{32}", hexes):
         candidates = [hexes[16:], hexes[:16]]
     elif re.fullmatch(r"[0-9a-f]{16}", hexes):
@@ -999,6 +1031,93 @@ def get_alerts(system_id: str = "", severity: str = "", text: str = "", limit: i
     return out
 
 
+def _when(a):
+    """Best-effort event time as an aware datetime (ISO string or epoch s / ms), else None."""
+    for f in ("timestamp", "time", "eventTime", "createdTime", "startTime", "lastObserved", "generated_timestamp"):
+        v = a.get(f)
+        if v in (None, ""):
+            continue
+        try:
+            if isinstance(v, (int, float)) or str(v).isdigit():
+                v = float(v)
+                return datetime.fromtimestamp(v / 1000 if v > 1e11 else v, timezone.utc)
+            return datetime.fromisoformat(str(v).replace("Z", "+00:00"))
+        except (ValueError, OSError):
+            continue
+    return None
+
+
+@mcp.tool(annotations=RO)
+def get_events(system_id: str = "", severity: str = "", text: str = "", since_hours: float = 24,
+               limit: int = 200) -> dict:
+    """Event log (PowerFlex Manager 4.x+): MDM / SDS / SDC / device events such as SDC or SDS
+    disconnects, rebuilds starting / ending, device errors, logins and configuration changes, newest
+    first. severity: substring, comma-separate several. text: match in any field. since_hours: 0 = all
+    returned. 3.x Gateways have no events API (the answer says where to look instead)."""
+    sid, g = system(system_id)
+    if g.api != "manager":
+        return {"system_id": sid, "events": [], "note": (
+            "This 3.x Gateway has no events REST API. Use get_alerts for active alerts; the MDM event log "
+            "is on the primary MDM (/opt/emc/scaleio/mdm/bin/showevents.py) or in the syslog / SNMP target "
+            "the MDM sends to.")}
+    r = g.get("/rest/v1/events")
+    rows = r if isinstance(r, list) else r.get("items") or r.get("events") or r.get("content") or []
+    rows = [{k: v for k, v in a.items() if k != "links"} for a in rows]
+    if since_hours and float(since_hours) > 0:
+        cut = datetime.now(timezone.utc).timestamp() - float(since_hours) * 3600
+        rows = [a for a in rows if (_when(a) is None or _when(a).timestamp() >= cut)]
+    sevs = [x.strip().lower() for x in severity.split(",") if x.strip()]
+    if sevs:
+        rows = [a for a in rows if any(x in str(a.get("severity", "")).lower() for x in sevs)]
+    if text:
+        rows = [a for a in rows if text.lower() in str(a).lower()]
+    rows.sort(key=lambda a: _when(a) or datetime.min.replace(tzinfo=timezone.utc), reverse=True)
+    by = {}
+    for a in rows:
+        by[a.get("severity")] = by.get(a.get("severity"), 0) + 1
+    return {"system_id": sid, "since_hours": since_hours, "total": len(rows), "by_severity": by,
+            "events": rows[:max(1, min(int(limit), 2000))]}
+
+
+def _us_to_ms(x):
+    """Recursively turn *InUsec / *InMicrosec / *Usec values into *_ms."""
+    if isinstance(x, list):
+        return [_us_to_ms(i) for i in x]
+    if not isinstance(x, dict):
+        return x
+    out = {}
+    for k, v in x.items():
+        m = re.match(r"(.*?)(InUsec|InMicrosec|Usec)$", k)
+        if m and isinstance(v, (int, float)):
+            out[m.group(1) + "_ms"] = round(v / 1000, 3)
+        else:
+            out[k] = _us_to_ms(v)
+    return out
+
+
+@mcp.tool(annotations=RO)
+def get_network_latency(system_id: str = "", protection_domain: str = "") -> dict:
+    """SDS-to-SDS network health: each SDS's network latency meters (average message wait to its
+    peers, ms) and each protection domain's SDS connectivity check. Use when write latency is high,
+    SDSs flap or a rebuild is slow; PowerFlex writes go SDS -> SDS, so this network is in every write."""
+    _, g = system(system_id)
+    pds = [resolve(g, "ProtectionDomain", protection_domain)] if protection_domain else instances(g, "ProtectionDomain")
+    pd_ids = {p["id"] for p in pds}
+
+    def ask(path):
+        try:
+            return _us_to_ms(g.post(path, {}))
+        except Exception as e:
+            return {"error": str(e)}
+    out = {"protection_domains": [{"name": p.get("name"), "connectivity": ask(
+        f"/api/instances/ProtectionDomain::{q(p['id'])}/action/querySdsConnectivityStatus")} for p in pds]}
+    sds = [s for s in instances(g, "Sds") if s.get("protectionDomainId") in pd_ids]
+    with ThreadPoolExecutor(max_workers=8) as ex:
+        meters = list(ex.map(lambda s: ask(f"/api/instances/Sds::{q(s['id'])}/action/querySdsNetworkLatencyMeters"), sds))
+    out["sds"] = [{"name": s.get("name"), "id": s["id"], "latency_meters": m} for s, m in zip(sds, meters)]
+    return out
+
+
 # ---------------------------------------------------------------------------
 # Performance / statistics
 # ---------------------------------------------------------------------------
@@ -1072,8 +1191,8 @@ def get_statistics(object_type: str, object: str = "", system_id: str = "", prop
 def get_performance_overview(system_id: str = "", top_n: int = 10, samples: int = 1,
                              interval_seconds: float = 10) -> dict:
     """System-wide performance snapshot: system IO and latency, every storage pool (IO, latency, used %,
-    rebuild / rebalance), the busiest volumes, SDCs and SDSs by IOPS, and the volumes and SDCs with
-    the worst latency. samples > 1 averages the system / pool numbers over samples * interval_seconds.
+    rebuild / rebalance), the busiest volumes, SDCs, SDSs and NVMe/TCP hosts by IOPS, and the
+    volumes, SDCs and NVMe hosts with the worst latency. samples > 1 averages the system / pool numbers over samples * interval_seconds.
     Start performance work here."""
     sid, g = system(system_id)
     n = max(1, min(int(top_n), 50))
@@ -1095,13 +1214,18 @@ def get_performance_overview(system_id: str = "", top_n: int = 10, samples: int 
     out["storage_pools"] = {name: summarise([p[name] for p in ps]) for name in ps[-1]}
 
     names = {}
-    for typ in ("Volume", "Sdc", "Sds"):
-        objs = instances(g, typ)
+    for typ in ("Volume", "Sdc", "Sds", "Host"):
+        try:
+            objs = instances(g, typ)
+        except LookupError:   # no NVMe/TCP hosts on 3.x
+            continue
+        if not objs:
+            continue
         names[typ] = {o["id"]: o.get("name") or o.get("sdcIp") or o["id"] for o in objs}
         st = bulk_stats(g, typ, list(names[typ]))
         rows = [{"id": i, "name": names[typ].get(i), **io_view(s)} for i, s in st.items()]
         rows = [r for r in rows if r.get("total_iops") is not None]
-        key = typ.lower() + ("s" if typ != "Sds" else "")
+        key = {"Volume": "volumes", "Sdc": "sdcs", "Sds": "sds", "Host": "nvme_hosts"}[typ]
         out[f"top_{key}_by_iops"] = sorted(rows, key=lambda r: r.get("total_iops") or 0, reverse=True)[:n]
         if typ != "Sds":
             busy = [r for r in rows if (r.get("total_iops") or 0) >= 50]
@@ -1167,6 +1291,20 @@ def troubleshoot_volume_latency(volume_or_sdc: str, system_id: str = "") -> str:
             "4) get_health: rebuild / rebalance running, degraded capacity, SDS or device problems in that PD. "
             "5) get_alerts for anything that coincides. 6) If vCenter / Aria tools are connected, check the "
             "host side for the same device. Conclude: host, pool / SDS / devices, rebuild, or network, with numbers.")
+
+
+@mcp.prompt()
+def openshift_volume_troubleshoot(pvc_pv_or_handle: str, system_id: str = "") -> str:
+    """Slow or stuck PVC / VM disk on OpenShift: from the PVC to the PowerFlex volume and back."""
+    return (f"Investigate the OpenShift volume {pvc_pv_or_handle} (system {system_id or 'any'}). "
+            "1) Get the PV volumeHandle (OpenShift tools if connected, else ask for "
+            "oc get pv <pv> -o jsonpath='{.spec.csi.volumeHandle}') and the node(s) using it. "
+            "2) find_volume with the handle, then get_volume: pool, mapped SDCs / NVMe hosts (two during VM "
+            "live migration), QoS limits, snapshots. 3) get_sdc for each node: is the SDC connected, what "
+            "else on that node is busy. 4) get_statistics for the volume and the node's SDC with samples=6 "
+            "interval_seconds=10; compare with its pool in get_performance_overview. 5) get_health, get_alerts, "
+            "get_events since_hours=24 for that node, SDS or pool. 6) If writes are slow but reads fine, "
+            "get_network_latency. Conclude: node, volume QoS, pool / SDS / devices, rebuild, or network.")
 
 
 @mcp.prompt()

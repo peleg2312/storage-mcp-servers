@@ -14,6 +14,7 @@ import server  # noqa: E402
 S3, S4 = "1a2b3c4d5e6f7081", "9f8e7d6c5b4a3921"
 PD, POOL, SDS1, SDS2, SDC1, SDC2 = "aa00000000000001", "bb00000000000001", "cc00000000000001", "cc00000000000002", "dd00000000000001", "dd00000000000002"
 V1, V2, SNAP, DEV1, DEV2 = "ee00000000000001", "ee00000000000002", "ee00000000000003", "ff00000000000001", "ff00000000000002"
+V4, HOST1 = "ee00000000000004", "de00000000000001"
 SENT, AUTH = [], []
 EXPIRE_ONCE = {"pfm4": True}
 
@@ -38,6 +39,16 @@ CAPA = {"maxCapacityInKb": 100 * KB, "spareCapacityInKb": 10 * KB, "capacityInUs
 
 
 def objects(system_id):
+    o = _objects(system_id)
+    if system_id == S4:   # 4.x: an OpenShift worker on NVMe/TCP with one CSI volume
+        o["Host"] = [{"id": HOST1, "name": "ocp-worker-1", "hostOsFullType": "Linux", "nqn": "nqn.2014-08.org:w1"}]
+        o["Volume"].append({"id": V4, "name": "k8s-1a2b3c4d5e", "sizeInKb": 20 * KB, "volumeType": "ThinProvisioned",
+                            "storagePoolId": POOL, "vtreeId": "1100000000000004",
+                            "mappedSdcInfo": [{"sdcId": HOST1, "sdcName": "ocp-worker-1", "hostType": "NVMeHost"}]})
+    return o
+
+
+def _objects(system_id):
     return {
         "System": [{"id": system_id, "name": "pf-" + system_id[:4], "systemVersionName": "DellEMC PowerFlex Version: R3_6.0.0"}],
         "ProtectionDomain": [{"id": PD, "name": "PD1", "protectionDomainState": "Active"}],
@@ -104,6 +115,14 @@ def route(host, method, path, body):
         return (200, {"resource_type": body["resource_type"], "resources": []})
     if path == "/rest/v1/alerts":
         return (404, {})
+    if path == "/rest/v1/events":
+        return (200, [{"id": "e1", "severity": "MAJOR", "message": "SDC ocp-worker-2 disconnected", "timestamp": "2026-10-27T10:00:00Z"},
+                      {"id": "e2", "severity": "INFO", "message": "Rebuild started", "timestamp": "2026-10-27T11:00:00Z"},
+                      {"id": "e0", "severity": "INFO", "message": "old", "timestamp": "2020-01-01T00:00:00Z"}])
+    if path.endswith("/action/querySdsNetworkLatencyMeters"):
+        return (200, [{"ipAddress": "10.0.0.12", "averageMessageWaitTimeInUsec": 350}])
+    if path.endswith("/action/querySdsConnectivityStatus"):
+        return (200, {"allSdssConnected": True})
     parts = path.strip("/").split("/")
     if parts[:2] == ["api", "types"] and parts[3:] == ["instances"]:
         return (200, obj[parts[2]]) if parts[2] in obj else (404, {"message": "unknown type"})
@@ -115,7 +134,7 @@ def route(host, method, path, body):
             rel = parts[4]
             if typ == "VTree":
                 return (200, [v for v in obj["Volume"] if v["vtreeId"] == oid])
-            if typ == "Sdc" and rel == "Volume":
+            if typ in ("Sdc", "Host") and rel == "Volume":
                 return (200, [v for v in obj["Volume"] if any(m["sdcId"] == oid for m in v.get("mappedSdcInfo", []))])
             if rel == "Device":
                 key = {"Sds": "sdsId", "StoragePool": "storagePoolId"}[typ]
@@ -152,7 +171,7 @@ async def main():
     tools = await server.mcp.list_tools()
     print(len(tools), "tools:", sorted(t.name for t in tools))
     print("prompts:", [p.name for p in await server.mcp.list_prompts()])
-    assert all(t.annotations.readOnlyHint for t in tools)
+    assert all(t.annotations.read_only_hint for t in tools)
 
     async def call(name, **a):
         return (await server.mcp.call_tool(name, a)).structured_content
@@ -206,7 +225,7 @@ async def main():
     assert gv["linux_device"] == f"/dev/disk/by-id/emc-vol-{S3}-{V1}"
     assert gv["volume"]["creationTime_utc"].startswith("2026-")
     fv = await call("find_volume", key=f"/dev/disk/by-id/emc-vol-{S3}-{V1}")
-    assert fv["found"] == 2 and {v["system_id"] for v in fv["volumes"]} == {S3, S4}   # same fake ids on both
+    assert fv["found"] == 1 and fv["volumes"][0]["system_id"] == S3     # the path names the system
     assert (await call("find_volume", key="eui." + S3 + V2, system_id=S3))["volumes"][0]["name"] == "ds_test02"
     assert (await call("find_volume", key="prod", system_id=S3))["found"] == 2
     ld = await call("list_devices", system_id=S3, problems_only=True)
@@ -216,6 +235,19 @@ async def main():
     assert rep["rcgs"][0]["rpoInSeconds"] == 60 and rep["pairs"] and rep["sdrs"] == []
     assert "note" in await call("list_snapshot_policies", system_id=S3)
     assert "note" in await call("list_nvme", system_id=S3)
+    hv = await call("get_sdc", system_id=S4, sdc="OCP-WORKER-1")     # NVMe/TCP host by name
+    assert hv["type"] == "nvme_host" and hv["volumes"][0]["name"] == "k8s-1a2b3c4d5e" and hv["io"]["read_latency_ms"] == 0.5, hv
+    fh = await call("find_volume", key=f"{S4}-{V4}")                  # CSI PV volumeHandle -> only that system
+    assert fh["found"] == 1 and fh["volumes"][0]["system_id"] == S4 and fh["volumes"][0]["mappedSdcInfo"][0]["hostType"] == "NVMeHost", fh
+    assert (await call("find_volume", key="nvme-eui." + S4 + V4, system_id=S4))["volumes"][0]["name"] == "k8s-1a2b3c4d5e"
+    assert (await call("list_volumes", system_id=S4, name_contains="k8s-", unmapped_only=False))["total"] == 1
+    ev = await call("get_events", system_id=S4, since_hours=0)
+    assert [e["id"] for e in ev["events"]] == ["e2", "e1", "e0"], ev
+    assert (await call("get_events", system_id=S4, since_hours=24 * 365 * 3, severity="major"))["total"] == 1
+    assert "showevents" in (await call("get_events", system_id=S3))["note"]
+    nl = await call("get_network_latency", system_id=S3)
+    assert nl["protection_domains"][0]["connectivity"]["allSdssConnected"] is True
+    assert nl["sds"][0]["latency_meters"][0]["averageMessageWaitTime_ms"] == 0.35, nl
     al = await call("get_alerts", system_id=S3, severity="critical")
     assert al["total"] == 1 and al["alerts"][0]["alertType"] == "SDS_DISCONNECTED"
     assert (await call("get_alerts", system_id=S3))["alerts"][0]["id"] == "2"           # newest first
@@ -242,6 +274,7 @@ async def main():
         assert ov["worst_latency_volumes"][0]["name"] == "ds_test02"
         assert ov["worst_latency_sdcs"][0]["name"] == "esx02" and ov["top_sds_by_iops"]
         assert ov["storage_pools"]["SP_SSD"]["rebuild_rebalance_mbps"] == 50.0
+        assert ("top_nvme_hosts_by_iops" in ov) == (sys_id == S4), list(ov)
     print("overview:", ov["system"], "| worst vol:", ov["worst_latency_volumes"][0])
     assert (await call("metrics_query", system_id=S4, resource_type="volume", metrics="host_read_iops"))["response"]
     await call("powerflex_get", system_id=S3, path="/api/types/FaultSet/instances")
@@ -260,6 +293,9 @@ async def main():
         ("DELETE", f"{b}/rest/v1/whatever"),
         ("POST", f"{b}/api/instances/querySelectedStatistics/../Volume::{V1}/action/removeVolume"),
         ("POST", f"{b}/rest/auth/logout"),
+        ("POST", f"{b}/api/instances/Sds::{SDS1}/action/setSdsNetworkLimits"),
+        ("POST", f"{b}/api/instances/Sds::x/action/querySdsNetworkLatencyMeters"),         # id must be 16 hex
+        ("POST", f"{b}/api/instances/ProtectionDomain::{PD}/action/setSdsNetworkLimits"),
         ("GET", f"{b}/../etc/passwd"),
         ("GET", "https://evil.example/other"),
     ]

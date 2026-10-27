@@ -6,7 +6,7 @@ config from one Secret, and built-in guidance so a connecting Claude knows how t
 | Server | Talks to | Tools | Image |
 |---|---|---|---|
 | [`powermax-mcp`](powermax-mcp/) | Dell PowerMax / VMAX via one or many Unisphere servers | 28 | `images/powermax-mcp-2.0.tar.gz` |
-| [`powerflex-mcp`](powerflex-mcp/) | Dell PowerFlex 3.x Gateway / 4.x-5.x PowerFlex Manager (one or many): health, capacity, inventory, replication, alerts, all statistics | 26 | `images/powerflex-mcp-1.0.tar.gz` |
+| [`powerflex-mcp`](powerflex-mcp/) | Dell PowerFlex 3.x Gateway / 4.x-5.x PowerFlex Manager (one or many): health, capacity, inventory, replication, alerts, events, SDS network latency, NVMe hosts, OpenShift CSI lookups, all statistics | 28 | `images/powerflex-mcp-1.0.tar.gz` |
 | [`ucsc-mcp`](ucsc-mcp/) | Cisco UCS Central (one or many): inventory, faults, service profiles, FI FC uplinks/port-channels/errors, vHBA pinning, per-host SAN trace | 26 | `images/ucsc-mcp-2.2.tar.gz` |
 | [`docs-search-mcp`](docs-search-mcp/) | Offline documentation + bug library: NetApp docs (ONTAP, SAN hosts, VMware tools, EMS...), Trident, Harvest, Dell CSM, PowerMax, PowerFlex, the Trident/Harvest/CSM bug trackers, KB pointers, your saved KBs and runbooks. Air-gapped mode: library baked into a dated image (`bundle/build-offline.sh`) | 4 | `images/docs-search-mcp-1.1.tar.gz` (base; build the offline image with the script) |
 | [`brain`](brain/) | **Not a server**: the Claude Code "brain" for the VM: CLAUDE.md (role, rules, ID decoding, path model), 17 SAN skills, 6 agents, read-only safety hook, `install.sh` | - | - |
