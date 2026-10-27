@@ -14,6 +14,8 @@ they want to their own ~/.claude (names stay as they are: /morning-check, not /p
   paas-market new <kind> <name>          create a skill / agent / MCP server (JSON on stdin) and share it
   paas-market show <kind>/<name>         print one you shared (skill / agent file; MCP: JSON without the token)
   paas-market edit <kind>/<name>         replace it from stdin (same forms as show; MCP: a blank token keeps it), re-shared
+  paas-market connect <https://vm:3443> <token>   use another VM's marketplace (read-only; refreshed every 10 min)
+  paas-market pull | disconnect          refresh it now / back to this VM's own marketplace
 root only:
   paas-market publish <brain/claude dir> [--mcp mcp.json]   (re)build the marketplace from the brain in this repo
   paas-market setup-mcp <name> <url> [<token>]             set where an MCP server is (everyone can then add it)
@@ -24,12 +26,17 @@ What you added is recorded in ~/.claude/paas-market.json; your own skills and ag
 """
 import getpass
 import hashlib
+import io
 import json
 import os
 import re
 import shutil
+import ssl
 import subprocess
 import sys
+import tarfile
+import time
+import urllib.request
 
 MARKET = os.environ.get("PAAS_MARKET", "/opt/paas/marketplace")
 CLAUDE = os.path.expanduser("~/.claude")
@@ -38,6 +45,14 @@ KINDS = ("skill", "agent", "mcp")
 # Claude Code plugins (commands, agents, skills, hooks together) from the brain's offline plugin marketplace
 PLUGINS = os.environ.get("PAAS_PLUGINS", os.path.join(os.path.dirname(MARKET.rstrip("/")), "plugins"))
 NAME = re.compile(r"^[a-z0-9][a-z0-9_.-]{0,60}$")
+# another VM's marketplace (paas-market connect): a local copy of it, which list / add / update read
+REMOTE_CFG = os.path.join(CLAUDE, "paas-market-remote.json")
+REMOTE_CRT = os.path.join(CLAUDE, "paas-market-remote.crt")     # its certificate, pinned at connect
+MIRROR = os.path.join(CLAUDE, "paas-market-mirror")
+REMOTE = None
+if "PAAS_MARKET" not in os.environ and os.path.exists(REMOTE_CFG):
+    REMOTE = json.load(open(REMOTE_CFG))
+    MARKET, PLUGINS = os.path.join(MIRROR, "marketplace"), os.path.join(MIRROR, "plugins")
 
 
 def frontmatter(text):
@@ -506,11 +521,90 @@ def reindex():
     os.replace(tmp, os.path.join(MARKET, "index.json"))
 
 
+def connect(url, token):
+    m = re.match(r"^https://([\w.-]+):(\d+)/?$", url)
+    if not m or not token.strip():
+        sys.exit("usage: paas-market connect https://<vm>:3443 <token>   (on that VM root reads it: cat /etc/paas/market/token)")
+    try:
+        pem = ssl.get_server_certificate((m.group(1), int(m.group(2))))
+    except OSError as e:
+        sys.exit(f"paas-market: cannot reach {url}: {e}")
+    old = os.umask(0o077)
+    try:
+        open(REMOTE_CRT, "w").write(pem)
+        json.dump({"url": url.rstrip("/"), "token": token.strip()}, open(REMOTE_CFG, "w"))
+    finally:
+        os.umask(old)
+    fp = hashlib.sha256(ssl.PEM_cert_to_DER_cert(pem)).hexdigest().upper()
+    print(f"certificate of {m.group(1)}: SHA256 {':'.join(fp[i:i + 2] for i in range(0, 64, 2))}")
+    print("  compare on that VM: openssl x509 -noout -fingerprint -sha256 -in /etc/paas/tls/paas-ui.crt")
+    global REMOTE
+    REMOTE = {"url": url.rstrip("/"), "token": token.strip()}
+    try:
+        pull()
+    except BaseException:                          # nothing kept when the first download fails (wrong token, ...)
+        for p in (REMOTE_CFG, REMOTE_CRT):
+            os.remove(p)
+        raise
+
+
+def pull():
+    """download the other VM's marketplace into MIRROR (whole copy, swapped in at the end)"""
+    ctx = ssl.create_default_context(cafile=REMOTE_CRT)
+    ctx.check_hostname = False                     # the certificate itself is pinned (connect), whatever name it carries
+    req = urllib.request.Request(REMOTE["url"] + "/snapshot.tar.gz", headers={"Authorization": f"Bearer {REMOTE['token']}"})
+    try:
+        data = urllib.request.urlopen(req, context=ctx, timeout=60).read()
+    except Exception as e:
+        sys.exit(f"paas-market: {REMOTE['url']}: {getattr(e, 'reason', e)}")
+    new = MIRROR + ".new"
+    shutil.rmtree(new, ignore_errors=True)
+    with tarfile.open(fileobj=io.BytesIO(data)) as t:
+        for ti in t.getmembers():                  # only plain files and folders, inside the copy
+            if not (ti.isfile() or ti.isdir()) or ti.name.startswith("/") or ".." in ti.name.split("/"):
+                sys.exit(f"paas-market: refused {REMOTE['url']}: unexpected entry {ti.name!r}")
+        t.extractall(new, **({"filter": "data"} if hasattr(tarfile, "data_filter") else {}))
+    open(os.path.join(new, ".pulled"), "w").write(REMOTE["url"] + "\n")
+    shutil.rmtree(MIRROR + ".old", ignore_errors=True)
+    if os.path.exists(MIRROR):
+        os.rename(MIRROR, MIRROR + ".old")
+    os.rename(new, MIRROR)
+    shutil.rmtree(MIRROR + ".old", ignore_errors=True)
+    n = len(json.load(open(os.path.join(MIRROR, "marketplace", "index.json"))))
+    print(f"marketplace of {REMOTE['url']}: {n} items (+ plugins and shared items)", file=sys.stderr)
+
+
+def fresh():
+    """with another VM's marketplace: refresh the copy when it is 10 min old; keep the old copy if that VM is down"""
+    stamp = os.path.join(MIRROR, ".pulled")
+    if not REMOTE or (os.path.exists(stamp) and time.time() - os.path.getmtime(stamp) < 600):
+        return
+    if not os.path.exists(stamp):
+        return pull()
+    try:
+        pull()
+    except SystemExit as e:
+        print(f"{e} (using the copy from {time.strftime('%Y-%m-%d %H:%M', time.localtime(os.path.getmtime(stamp)))})", file=sys.stderr)
+
+
 def main(argv):
     if not argv or argv[0] in ("-h", "--help"):
         print(__doc__)
         return
     cmd, args = argv[0], argv[1:]
+    if cmd == "connect":
+        return connect(*(args + ["", ""])[:2])
+    if cmd == "disconnect":
+        for p in (REMOTE_CFG, REMOTE_CRT):
+            if os.path.exists(p):
+                os.remove(p)
+        shutil.rmtree(MIRROR, ignore_errors=True)
+        return print("back to this VM's own marketplace")
+    if cmd == "pull":
+        return pull() if REMOTE else sys.exit("paas-market: not connected to another VM (paas-market connect)")
+    if REMOTE and cmd in ("share", "unshare", "new", "edit", "publish", "setup-mcp", "reindex"):
+        sys.exit(f"paas-market: the marketplace here is {REMOTE['url']} (read-only): create and share there")
+    fresh()
     as_json = "--json" in args
     args = [a for a in args if a != "--json"]
     if cmd in ("list", "search"):

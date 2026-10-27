@@ -1,0 +1,16 @@
+[Unit]
+Description=Marketplace for other VMs (read-only HTTPS, token)
+After=network-online.target
+
+[Service]
+ExecStart=/usr/bin/python3 /opt/paas/bin/paas-market-serve
+User=paas-market
+Group=paas-market
+ProtectSystem=strict
+ProtectHome=yes
+PrivateTmp=yes
+NoNewPrivileges=yes
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target

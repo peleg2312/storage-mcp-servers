@@ -76,6 +76,24 @@ rm -f /etc/claude-code/CLAUDE.md                                  # earlier vers
 [ -f "$RC/CLAUDE.md" ] || { [ -f "$RC/CLAUDE.md.single-user" ] && mv "$RC/CLAUDE.md.single-user" "$RC/CLAUDE.md"; }
 chmod 644 /etc/claude-code/managed-settings.json "$P/brain/CLAUDE.md"
 
+# the marketplace for other VMs: read-only HTTPS on 3443 with a token (paas-market connect https://<vm>:3443 <token> there)
+getent passwd paas-market >/dev/null || useradd -r -M -d / -s /sbin/nologin paas-market
+install -d -m 750 -o root -g paas-market "$ETC/market"
+[ -s "$ETC/market/token" ] || { umask 077; head -c 24 /dev/urandom | base64 | tr -d '/+=' > "$ETC/market/token"; umask 022; }
+[ -f "$ETC/tls/paas-ui.crt" ] && cp "$ETC/tls/paas-ui.crt" "$ETC/tls/paas-ui.key" "$ETC/market/"
+chown root:paas-market "$ETC/market"/*; chmod 640 "$ETC/market"/*
+install -m 755 "$HERE/paas-market-serve.py" "$P/bin/paas-market-serve"
+install -m 644 "$HERE/paas-market-serve.service" /etc/systemd/system/paas-market-serve.service
+if [ -f "$ETC/tls/paas-ui.crt" ]; then
+  systemctl daemon-reload; systemctl enable -q paas-market-serve; systemctl restart paas-market-serve
+  if command -v firewall-cmd >/dev/null 2>&1 && firewall-cmd --state >/dev/null 2>&1; then
+    firewall-cmd -q --permanent --add-port=3443/tcp && firewall-cmd -q --reload
+  fi
+  echo "marketplace for other VMs: https://$(hostname -f 2>/dev/null || hostname):3443 (token: cat $ETC/market/token)"
+else
+  echo "marketplace for other VMs: starts after install-gate.sh made the certificate (re-run this script then)"
+fi
+
 # root as the first user (its UI on 127.0.0.1; the gate puts it on :3001)
 "$P/bin/paas-user" add root
 # an update: everyone's UI plugins, rules they never edited and default items, then their running UIs restart on the new files
