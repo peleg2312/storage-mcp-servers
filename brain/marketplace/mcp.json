@@ -31,6 +31,16 @@
       }
     }
   },
+  "powerflex": {
+    "description": "Dell PowerFlex live state (Gateway / PowerFlex Manager): health, capacity, PD / pools / SDS / SDC / volumes / devices, replication, alerts, all statistics",
+    "server": {
+      "type": "http",
+      "url": "http://HOST:8000/mcp",
+      "headers": {
+        "Authorization": "Bearer TOKEN"
+      }
+    }
+  },
   "ontap": {
     "description": "NetApp ONTAP live state (NetApp's official server): SVMs, volumes, LUNs, igroups, LIFs, aggregates, EMS, SnapMirror",
     "server": {

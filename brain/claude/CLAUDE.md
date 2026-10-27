@@ -20,7 +20,7 @@ UCS docs, PowerMaxOS release notes. The `docs-lookup` skill has the product name
 The user's own documents: files in `~/.claude/brain/inbox/<vendor>/<product>/` go into the library with
 `add-docs` (seconds; kept across library updates); a url the VM can reach: `add-docs <url>... --to <vendor>/<product>`
 (fetched, the url becomes its link). When the user gives you a document or url to keep, add it that way.
-Live state comes from seven MCP servers: **powermax**, **ontap** and **harvest** (NetApp's official servers; ONTAP
+Live state comes from eight MCP servers: **powermax**, **powerflex**, **ontap** and **harvest** (NetApp's official servers; ONTAP
 ones expose write tools too, kept read-only by the hook and a read-only ONTAP account), **mds**,
 **ucsc** (UCS Central), **VMware Aria Operations**, and **kuparashit**, the map that joins them end to end.
 
@@ -91,7 +91,7 @@ Exact tool names per server: see the tool map imported at the bottom (run `/brai
 | MDS: flogi, fcns, zones/zonesets, device-alias, interfaces, counters, port-channels, slow drain, logs | **mds** MCP |
 | UCS Central: domains, FIs, service profiles, vHBAs + WWPNs, VSANs, FC uplinks / port-channels, pinning, faults | **ucsc** MCP |
 | Docs, error meanings, procedures, best practices, Trident / Harvest bugs and changelogs, NetApp / Dell / VMware KB articles, CSM docs | **docs MCP** = **docs-search** or **docs-local** (or `brain/library/search.py`) |
-| PowerFlex live state | no MCP: use vCenter-side data (kuparashit/Aria) + docs (`dell/powerflex`, `dell/kb`, REST objects in `powerflex-api`); say so |
+| PowerFlex: health, capacity, PDs / pools, SDS / SDC, volumes (emc-vol / eui ids), devices, rebuild, replication, alerts, live statistics (IOPS, MB/s, latency) | **powerflex** MCP (`get_health` first); when it is not connected: vCenter-side data + docs (`dell/powerflex`, `dell/kb`) and say so |
 | Development: the user's PostgreSQL / MongoDB schemas and data, FastAPI / Pydantic / fastmcp / MCP how-to | **databases** MCP (`db_list` first; writes only on connections marked writable, user-confirmed) + docs MCP (vendor `python`, `mcp`); conventions: `fastapi-service`; Terraform: `terraform` skill (plan yes, apply to infrastructure: the user); charts / Excel: `report-export` |
 
 ## Identifier rules
@@ -114,7 +114,7 @@ Exact tool names per server: see the tool map imported at the bottom (run `/brai
       return {"vendor": "unknown"}
   ```
 - **EUI** (`eui.`): PowerFlex volumes and NVMe namespaces. Match on the array's volume ID / NGUID
-  substring; confirm the exact format for the version with the docs MCP (vendor `dell`, product
+  substring (`powerflex` `find_volume` takes the eui. or emc-vol id as is); confirm the exact format for the version with the docs MCP (vendor `dell`, product
   `powerflex`: "device identifier eui") before relying on it.
 - Datastore and VM names are not unique across vCenters: always carry the vCenter name.
 - OpenShift volumes (Trident / CSM) never appear in vCenter: identify them by the prefixes and

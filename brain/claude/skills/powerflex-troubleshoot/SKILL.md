@@ -1,11 +1,18 @@
 ---
 name: powerflex-troubleshoot
-description: Troubleshoot Dell PowerFlex (SDC / SDS / MDM, rebuild, rebalance, pool capacity, data unavailable, ESXi access) from the PowerFlex docs, Dell KB and vCenter data - no live PowerFlex MCP.
+description: Troubleshoot Dell PowerFlex (SDC / SDS / MDM, rebuild, rebalance, pool capacity, data unavailable, ESXi access) live through the powerflex MCP, with the PowerFlex docs, Dell KB and vCenter data.
 when_to_use: Trigger phrases - "PowerFlex alert SIO...", "SDC disconnected", "rebuild is slow", "ESXi lost the eui devices"
 ---
 # PowerFlex troubleshooting
 
-No MCP reaches PowerFlex. Evidence comes from (a) what the user runs and pastes, (b) vCenter-side data
+**With the powerflex MCP connected** (read-only), collect live instead of asking: `get_health` (MDM
+cluster, SDS / SDC states, device errors, degraded / failed / pending capacity, rebuild / rebalance,
+alert counts), `get_alerts`, `get_capacity`, `get_performance_overview` and `get_statistics` with
+`samples` (live rates only: two `get_storage_pool` calls a few minutes apart show a rebuild trend),
+`get_sdc` / `get_volume` / `find_volume` for the `eui.` / `emc-vol-` ids, `get_replication`. Step 1 below
+is then only for what the API does not show (`drv_cfg` on the SDC, ESXi paths).
+
+Without it, evidence comes from (a) what the user runs and pastes, (b) vCenter-side data
 (kuparashit `locate` / `related` on the `eui.` ids: ESXi hosts, datastores, VMs; Aria: latency, APD/PDL alerts), (c) the library:
 `dell/powerflex` (Technical Overview, Administration Guide, CLI Reference Guide and release notes of the
 installed version: 3.6.x, 4.5.x, 4.6.x, 5.0.x, 5.1.x; PDF titles are "View": cite the file name + page)

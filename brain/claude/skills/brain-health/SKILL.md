@@ -10,7 +10,7 @@ Read-only and cheap: one list call per server, local files read with the shell. 
 tell him what to run.
 
 ## 1. MCP servers
-For each server in your tool list (`mcp__<server>__…`): one cheap call - powermax `list_unispheres` /
+For each server in your tool list (`mcp__<server>__…`): one cheap call - powermax `list_unispheres` / powerflex `list_systems` /
 `list_arrays`, ontap (cluster or SVM list), harvest (any list / metric-name call), mds `list_switches`,
 ucsc `list_centrals`, kuparashit `overview` (snapshot age and warnings), Aria (any list), docs `list_sources`. Record:
 reachable · answer time · tool count · the call that failed and its error. Servers named in the
