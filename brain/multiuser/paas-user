@@ -10,6 +10,7 @@
 #   paas-user provision <name>|--all          re-apply the shared links, UI plugins and default items (after updates)
 #   paas-user list [--json]       everyone, with port, locked and running
 set -eu
+export PATH="/usr/local/sbin:/usr/sbin:/sbin:$PATH"     # useradd / usermod / chpasswd live in sbin; the UI calls this with a short PATH
 [ "$(id -u)" = 0 ] || { echo "paas-user: run as root"; exit 1; }
 P=/opt/paas
 ETC=/etc/paas/users
@@ -48,7 +49,7 @@ SERVER_PORT=$(next_port "$1")
 JWT_SECRET=$(head -c 32 /dev/urandom | od -An -tx1 | tr -d ' \n')
 PAAS_LOGIN_USERS=$1
 CLAUDE_CLI_PATH=$(command -v claude || echo /usr/local/bin/claude)
-PATH=$P/ui/node/bin:/usr/local/bin:/usr/bin:/bin
+PATH=$P/ui/node/bin:/usr/local/bin:/usr/bin:/bin:/usr/local/sbin:/usr/sbin:/sbin
 EOF
 }
 
