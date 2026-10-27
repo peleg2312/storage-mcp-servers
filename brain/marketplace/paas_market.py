@@ -12,6 +12,8 @@ they want to their own ~/.claude (names stay as they are: /morning-check, not /p
   paas-market share <kind>/<name>...     put your own skill / agent into the marketplace for others (again = update)
   paas-market unshare <kind>/<name>...   take it out again (people who added it keep their copy)
   paas-market new <kind> <name>          create a skill / agent / MCP server (JSON on stdin) and share it
+  paas-market show <kind>/<name>         print one you shared (skill / agent file; MCP: JSON without the token)
+  paas-market edit <kind>/<name>         replace it from stdin (same forms as show; MCP: a blank token keeps it), re-shared
 root only:
   paas-market publish <brain/claude dir> [--mcp mcp.json]   (re)build the marketplace from the brain in this repo
   paas-market setup-mcp <name> <url> [<token>]             set where an MCP server is (everyone can then add it)
@@ -226,6 +228,58 @@ def new_item(kind, name):
         if r.returncode:
             sys.exit(f"paas-market: could not add MCP server {name}: {(r.stderr or r.stdout).strip()}")
     os.environ["PAAS_DESCRIPTION"] = desc
+    share([(kind, name)])
+
+
+def mine_shared(kind, name):
+    """(kind, name) must be an item you shared: others' items are edited by their author"""
+    if kind not in KINDS or not NAME.match(name):
+        sys.exit("paas-market: skill/<name>, agent/<name> or mcp/<name>")
+    if not any(i["kind"] == kind and i["name"] == name and i.get("author") == getpass.getuser() for i in load_index()):
+        sys.exit(f"paas-market: {kind}/{name} is not one you shared")
+
+
+def show(kind, name):
+    mine_shared(kind, name)
+    if kind == "mcp":
+        cfg = own_mcp(name) or {}
+        dst = os.path.join(MARKET, "contrib", getpass.getuser(), "mcp", name + ".json")
+        desc = json.load(open(dst)).get("description", "") if os.path.exists(dst) else ""
+        print(json.dumps({"description": desc, "url": cfg.get("url", ""),
+                          "has_token": "Authorization" in cfg.get("headers", {})}))
+    else:
+        print(open(os.path.join(own_path(kind, name), "SKILL.md") if kind == "skill" else own_path(kind, name)).read(), end="")
+
+
+def edit(kind, name):
+    """your copy gets the new text (or MCP address / token), then the marketplace copy is updated from it"""
+    mine_shared(kind, name)
+    text = sys.stdin.read()
+    if kind == "mcp":
+        try:
+            d = json.loads(text)
+        except ValueError:
+            sys.exit("paas-market: the details must be JSON on stdin")
+        url = str(d.get("url", "")).strip()
+        if not re.match(r"^https?://[\w.-]+(:\d+)?(/\S*)?$", url):
+            sys.exit("paas-market: the address must look like http://host:8000/mcp")
+        old = own_mcp(name) or {}
+        token = str(d.get("token", "")).strip()
+        headers = {"Authorization": f"Bearer {token}"} if token else old.get("headers", {})
+        cfg = {"type": "http", "url": url, **({"headers": headers} if headers else {})}
+        mcp_cmd("remove", "-s", "user", name)
+        r = mcp_cmd("add-json", "-s", "user", name, json.dumps(cfg))
+        if r.returncode:
+            sys.exit(f"paas-market: could not update MCP server {name}: {(r.stderr or r.stdout).strip()}")
+        os.environ["PAAS_DESCRIPTION"] = " ".join(str(d.get("description", "")).split())[:1000]
+    else:
+        m = re.match(r"^---\n(.*?)\n---\n", text, re.S)
+        if not m or not re.search(r"^description:\s*\S", m.group(1), re.M):
+            sys.exit("paas-market: keep the header: --- / name / description: ... / ---, then the instructions")
+        if not re.search(rf"^name:\s*{re.escape(name)}\s*$", m.group(1), re.M):
+            sys.exit(f"paas-market: keep 'name: {name}' in the header (to rename, create a new one)")
+        dst = os.path.join(own_path(kind, name), "SKILL.md") if kind == "skill" else own_path(kind, name)
+        open(dst, "w").write(text if text.endswith("\n") else text + "\n")
     share([(kind, name)])
 
 
@@ -476,6 +530,11 @@ def main(argv):
         if len(args) != 2:
             sys.exit("usage: paas-market new <skill|agent|mcp> <name>   (details as JSON on stdin)")
         new_item(args[0], args[1])
+    elif cmd in ("show", "edit"):
+        ids = parse_ids(args)
+        if len(ids) != 1:
+            sys.exit(f"usage: paas-market {cmd} <kind>/<name>")
+        (show if cmd == "show" else edit)(*ids[0])
     elif cmd == "share":
         share(parse_ids(args))
     elif cmd == "unshare":

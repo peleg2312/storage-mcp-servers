@@ -77,4 +77,7 @@ chmod 644 /etc/claude-code/managed-settings.json "$P/brain/CLAUDE.md"
 
 # root as the first user (its UI on 127.0.0.1; the gate puts it on :3001)
 "$P/bin/paas-user" add root
+# an update: everyone's UI plugins, rules they never edited and default items, then their running UIs restart on the new files
+"$P/bin/paas-user" provision --all >/dev/null
+systemctl try-restart 'paas-ui@*' 2>/dev/null || true
 echo "multi-user base installed. Next: sh brain/multiuser/install-gate.sh (https://<vm>:3001), then add people: paas-user add <name> (or root's Users tab)"

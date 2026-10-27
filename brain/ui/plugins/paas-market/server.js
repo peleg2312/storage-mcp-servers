@@ -38,6 +38,13 @@ const routes = {
     const keep = ['description', 'when', 'body', 'tools', 'model', 'url', 'token'];
     return market(['new', b.kind, b.name], JSON.stringify(Object.fromEntries(keep.map((k) => [k, String(b[k] ?? '')]))));
   },
+  // edit what you created: show gives the text (MCP: description + address, never the token), edit saves and re-shares it
+  'POST /show': async (b) => (ID.test(String(b.id)) ? market(['show', b.id]) : { ok: false, out: 'Unknown item' }),
+  'POST /edit': async (b) => {
+    if (!ID.test(String(b.id))) return { ok: false, out: 'Unknown item' };
+    const input = b.id.startsWith('mcp/') ? JSON.stringify({ description: String(b.description ?? ''), url: String(b.url ?? ''), token: String(b.token ?? '') }) : String(b.text ?? '');
+    return market(['edit', b.id], input);
+  },
   'POST /unshare': async (b) => (ids(b).length ? market(['unshare', ...ids(b)]) : { ok: false, out: 'Nothing to unshare' }),
   'POST /setup-mcp': async (b) => {
     if (process.getuid?.() !== 0) return { ok: false, out: 'Only root sets up MCP servers' };
