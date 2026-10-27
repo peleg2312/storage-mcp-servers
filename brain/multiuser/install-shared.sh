@@ -36,7 +36,8 @@ share brain/environment.md "$P/brain/environment.md" file
 share brain/tool-map.md "$P/brain/tool-map.md" file
 rm -rf "$P/tools" "$P/hooks" "$P/banner" "$P/themes"
 for d in tools hooks banner themes; do cp -R "$BRAIN/claude/$d" "$P/$d" 2>/dev/null || mkdir -p "$P/$d"; done
-chmod -R a+rX "$P/library" "$P/brain" "$P/tools" "$P/hooks" "$P/banner" "$P/themes"
+rm -rf "$P/plugins"; cp -R "$BRAIN/plugins" "$P/plugins"        # Claude Code plugins, offered in the marketplace
+chmod -R a+rX "$P/library" "$P/brain" "$P/tools" "$P/hooks" "$P/banner" "$P/themes" "$P/plugins"
 chmod 644 "$P/brain/environment.md" "$P/brain/tool-map.md"   # root edits them; everyone reads
 
 # marketplace: the brain's skills and agents (library paths pointed at the shared copy) + the MCP catalog
@@ -68,10 +69,11 @@ chmod 755 "$P/bin/paas-api-key"
 
 # VM-wide Claude Code settings and rules (users cannot switch these off)
 python3 "$HERE/managed_settings.py" /etc/claude-code/managed-settings.json "$P"
-sed -e "s#~/\.claude/brain/library#$P/library#g" "$BRAIN/claude/CLAUDE.md" > /etc/claude-code/CLAUDE.md
-# root's own copy would load the rules twice
-[ -f "$RC/CLAUDE.md" ] && mv "$RC/CLAUDE.md" "$RC/CLAUDE.md.single-user"
-chmod 644 /etc/claude-code/managed-settings.json /etc/claude-code/CLAUDE.md
+# the brain's rules: everyone gets their own editable ~/.claude/CLAUDE.md, started from this default (root's is its own)
+sed -e "s#~/\.claude/brain/library#$P/library#g" "$BRAIN/claude/CLAUDE.md" > "$P/brain/CLAUDE.md"
+rm -f /etc/claude-code/CLAUDE.md                                  # earlier versions put them VM-wide
+[ -f "$RC/CLAUDE.md" ] || { [ -f "$RC/CLAUDE.md.single-user" ] && mv "$RC/CLAUDE.md.single-user" "$RC/CLAUDE.md"; }
+chmod 644 /etc/claude-code/managed-settings.json "$P/brain/CLAUDE.md"
 
 # root as the first user (its UI on 127.0.0.1; the gate puts it on :3001)
 "$P/bin/paas-user" add root

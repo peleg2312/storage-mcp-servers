@@ -1,1 +1,2 @@
-copied 2026-10-24 from anthropics/claude-plugins-official (local marketplace clone)
+plugins: copied 2026-10-24 and 2026-10-27 (claude-plugins-official 41f619d) from anthropics/claude-plugins-official (Apache-2.0)
+marketplace/skills: anthropics/skills dbd4588 (Apache-2.0, LICENSE.txt in each)

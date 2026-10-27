@@ -7,6 +7,7 @@ they want to their own ~/.claude (names stay as they are: /morning-check, not /p
   paas-market add <kind>/<name>...       e.g. skill/morning-check agent/ontap-analyst mcp/harvest
   paas-market remove <kind>/<name>...    only items added from the marketplace
   paas-market update                     re-copy items root changed since you added them
+  paas-market enable|disable plugin/<n>  switch an added plugin on / off
   paas-market defaults                   add the items every user starts with (new accounts get them at creation)
   paas-market share <kind>/<name>...     put your own skill / agent into the marketplace for others (again = update)
   paas-market unshare <kind>/<name>...   take it out again (people who added it keep their copy)
@@ -32,6 +33,8 @@ MARKET = os.environ.get("PAAS_MARKET", "/opt/paas/marketplace")
 CLAUDE = os.path.expanduser("~/.claude")
 STATE = os.path.join(CLAUDE, "paas-market.json")
 KINDS = ("skill", "agent", "mcp")
+# Claude Code plugins (commands, agents, skills, hooks together) from the brain's offline plugin marketplace
+PLUGINS = os.environ.get("PAAS_PLUGINS", os.path.join(os.path.dirname(MARKET.rstrip("/")), "plugins"))
 NAME = re.compile(r"^[a-z0-9][a-z0-9_.-]{0,60}$")
 
 
@@ -76,12 +79,38 @@ def load_index():
         items = json.load(open(os.path.join(MARKET, "index.json")))
     except (OSError, ValueError):
         sys.exit(f"paas-market: no marketplace at {MARKET} (root runs: paas-market publish)")
+    items += plugin_items()
     taken = {(i["kind"], i["name"]) for i in items}
     for it in contrib_items():
         if (it["kind"], it["name"]) not in taken:
             taken.add((it["kind"], it["name"]))
             items.append(it)
     return items
+
+
+def plugin_market():
+    try:
+        return json.load(open(os.path.join(PLUGINS, ".claude-plugin", "marketplace.json")))
+    except (OSError, ValueError):
+        return {"name": "", "plugins": []}
+
+
+def plugin_items():
+    m = plugin_market()
+    return [{"kind": "plugin", "name": p["name"], "description": p.get("description", ""), "author": None,
+             "version": digest(os.path.join(PLUGINS, p["source"])), "path": os.path.join(PLUGINS, p["source"])}
+            for p in m["plugins"] if os.path.isdir(os.path.join(PLUGINS, p["source"]))]
+
+
+def installed_plugins():
+    """{plugin name: enabled} for this marketplace, from Claude Code itself"""
+    r = claude_cmd("plugin", "list", "--json")
+    try:
+        rows = json.loads(r.stdout) if r.returncode == 0 else []
+    except ValueError:
+        rows = []
+    suffix = "@" + plugin_market()["name"]
+    return {x["id"][:-len(suffix)]: bool(x.get("enabled")) for x in rows if str(x.get("id", "")).endswith(suffix)}
 
 
 def contrib_items():
@@ -227,8 +256,15 @@ def save_state(state):
 
 def listing(words=None):
     state = load_state()["installed"]
+    plugins = installed_plugins() if os.path.isdir(PLUGINS) else {}
     out = []
     for it in load_index():
+        if it["kind"] == "plugin":
+            if words and not all(w.lower() in f"{it['name']} {it['description']} plugin".lower() for w in words):
+                continue
+            out.append({**it, "id": f"plugin/{it['name']}", "added": it["name"] in plugins,
+                        "enabled": plugins.get(it["name"], False), "update": False, "ready": True})
+            continue
         key = f"{it['kind']}/{it['name']}"
         if words and not all(w.lower() in f"{it['name']} {it['description']} {it['kind']}".lower() for w in words):
             continue
@@ -242,8 +278,8 @@ def parse_ids(args):
     ids = []
     for a in args:
         kind, _, name = a.partition("/")
-        if kind not in KINDS or not NAME.match(name):
-            sys.exit(f"paas-market: '{a}' is not <skill|agent|mcp>/<name>")
+        if kind not in KINDS + ("plugin",) or not NAME.match(name):
+            sys.exit(f"paas-market: '{a}' is not <skill|agent|mcp|plugin>/<name>")
         ids.append((kind, name))
     return ids
 
@@ -268,9 +304,29 @@ def setup_mcp(name, url, token):
     print(f"mcp/{name} set up: {url}")
 
 
-def mcp_cmd(*args):
+def claude_cmd(*args):
     claude = shutil.which("claude") or os.path.expanduser("~/.local/bin/claude")
-    return subprocess.run([claude, "mcp", *args], capture_output=True, text=True, timeout=60)
+    try:
+        return subprocess.run([claude, *args], capture_output=True, text=True, timeout=120)
+    except (OSError, subprocess.TimeoutExpired) as e:
+        return subprocess.CompletedProcess(args, 1, "", str(e))
+
+
+def mcp_cmd(*args):
+    return claude_cmd("mcp", *args)
+
+
+def plugin_cmd(action, name):
+    """install / uninstall / enable / disable a plugin of the brain's offline plugin marketplace for this user"""
+    mk = plugin_market()["name"]
+    if not mk:
+        sys.exit(f"paas-market: no plugin marketplace at {PLUGINS}")
+    if action == "install":
+        claude_cmd("plugin", "marketplace", "add", PLUGINS)       # once per user; harmless when already there
+    r = claude_cmd("plugin", action, f"{name}@{mk}")
+    if r.returncode:
+        sys.exit(f"paas-market: plugin {action} {name}: {(r.stderr or r.stdout).strip()}")
+    print(f"{action} plugin/{name}: done")
 
 
 def add(ids, quiet=False):
@@ -280,6 +336,9 @@ def add(ids, quiet=False):
         it = index.get((kind, name))
         if not it:
             sys.exit(f"paas-market: {kind}/{name} is not in the marketplace")
+        if kind == "plugin":
+            plugin_cmd("install", name)
+            continue
         src = it.get("path") or item_path(kind, name)
         if kind == "skill":
             dst = os.path.join(CLAUDE, "skills", name)
@@ -310,6 +369,9 @@ def add(ids, quiet=False):
 def remove(ids):
     state = load_state()
     for kind, name in ids:
+        if kind == "plugin":
+            plugin_cmd("uninstall", name)
+            continue
         if f"{kind}/{name}" not in state["installed"]:
             sys.exit(f"paas-market: {kind}/{name} was not added from the marketplace")
         if kind == "skill":
@@ -352,6 +414,12 @@ def publish(brain, mcp_file=None):
             dst = item_path("skill", n)
             shutil.rmtree(dst, ignore_errors=True)
             shutil.copytree(os.path.join(brain, "skills", n), dst)
+    extra = os.path.join(brain, "..", "marketplace", "skills")       # popular skills from anthropics/skills
+    for n in sorted(os.listdir(extra)) if os.path.isdir(extra) else []:
+        if os.path.isfile(os.path.join(extra, n, "SKILL.md")):
+            dst = item_path("skill", n)
+            shutil.rmtree(dst, ignore_errors=True)
+            shutil.copytree(os.path.join(extra, n), dst)
     for n in sorted(os.listdir(os.path.join(brain, "agents"))):
         if n.endswith(".md"):
             shutil.copy(os.path.join(brain, "agents", n), item_path("agent", n[:-3]))
@@ -399,6 +467,11 @@ def main(argv):
             for r in rows:
                 mark = "update" if r["update"] else "added" if r["added"] else ""
                 print(f"{r['id']:<38} {mark:<7} {r['description'][:90]}")
+    elif cmd in ("enable", "disable"):
+        for kind, name in parse_ids(args):
+            if kind != "plugin":
+                sys.exit("paas-market: only plugins are switched on / off")
+            plugin_cmd(cmd, name)
     elif cmd == "new":
         if len(args) != 2:
             sys.exit("usage: paas-market new <skill|agent|mcp> <name>   (details as JSON on stdin)")

@@ -18,7 +18,7 @@ const MEMORY = {
   'notes.md': path.join(C, 'brain', 'notes.md'), 'environment.md': path.join(C, 'brain', 'environment.md'),
   'tool-map.md': path.join(C, 'brain', 'tool-map.md'), 'CLAUDE.md': path.join(C, 'CLAUDE.md'),
 };
-const MULTI = fs.existsSync('/etc/claude-code/CLAUDE.md');
+const MULTI = fs.existsSync('/opt/paas/marketplace');
 const writable = (p) => { try { fs.accessSync(p, fs.constants.W_OK); return true; } catch { return false; } };
 const MARKET = process.env.PAAS_MARKET || '/opt/paas/marketplace';
 const ME = os.userInfo().username;
@@ -132,7 +132,7 @@ async function overview() {
     library: { version: read(path.join(LIB, 'VERSION'))?.trim() || null, sources: src.ok ? src.out : null },
     skills: skills(), agents: agents(), hooks: hooks(), mcp: mcpServers(), inbox: inbox(),
     // multi-user VM: environment.md / tool-map.md are shared and only root writes them; the library too
-    // multi-user VM: CLAUDE.md here is your own rules (the brain's rules are VM-wide, /etc/claude-code/CLAUDE.md)
+    // multi-user VM: CLAUDE.md is your own copy of the brain's rules (started from root's default), yours to change
     memory: [['notes.md', true], ['environment.md', true], ['tool-map.md', true], ['CLAUDE.md', MULTI]]
       .map(([name, editable]) => ({ name, editable: editable && (writable(MEMORY[name]) || (MULTI && name === 'CLAUDE.md')),
         text: read(MEMORY[name]) ?? (MULTI && name === 'CLAUDE.md' ? '' : null) })).filter((m) => m.text !== null),

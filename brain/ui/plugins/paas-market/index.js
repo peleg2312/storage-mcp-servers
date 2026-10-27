@@ -1,6 +1,6 @@
 // Marketplace tab: search the VM's skills, agents and MCP servers; add / remove / update them for yourself (data: server.js).
 const esc = (s) => String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
-const KIND = { skill: 'Skill', agent: 'Agent', mcp: 'MCP server' };
+const KIND = { skill: 'Skill', agent: 'Agent', mcp: 'MCP server', plugin: 'Plugin' };
 
 const CSS = `
 .mk{font:14px/1.5 Inter,ui-sans-serif,system-ui,sans-serif;color:hsl(var(--foreground));padding:28px;max-width:1100px;margin:0 auto}
@@ -31,11 +31,11 @@ export function mount(container, api) {
   let me = '';
   let kind = 'all';
   container.innerHTML = `<style>${CSS}</style><div class="mk"><div class="row"><div><h2>Marketplace</h2>
-    <div class="sub">Skills, agents and MCP servers on this VM. Add what you need: it goes into your own Claude only.</div></div>
+    <div class="sub">Skills, agents, MCP servers and plugins on this VM. Add what you need: it goes into your own Claude only.</div></div>
     <div style="display:flex;gap:8px"><button class="ghost upd-all" style="display:none">Update all</button><button class="go new">+ New</button></div></div>
     <div class="newform"></div>
     <div class="row bar"><input class="q" type="search" placeholder="Search: ontap, latency, zoning, capacity…">
-    <div class="seg">${[['all', 'All'], ['skill', 'Skills'], ['agent', 'Agents'], ['mcp', 'MCP servers'], ['have', 'Added']].map(([v, l]) => `<button data-k="${v}" class="${v === kind ? 'on' : ''}">${l}</button>`).join('')}</div></div>
+    <div class="seg">${[['all', 'All'], ['skill', 'Skills'], ['agent', 'Agents'], ['mcp', 'MCP servers'], ['plugin', 'Plugins'], ['have', 'Added']].map(([v, l]) => `<button data-k="${v}" class="${v === kind ? 'on' : ''}">${l}</button>`).join('')}</div></div>
     <div class="grid"><div class="empty">Loading…</div></div></div>`;
   const grid = container.querySelector('.grid');
   const q = container.querySelector('.q');
@@ -56,9 +56,9 @@ export function mount(container, api) {
     const shown = items.filter((i) => (kind === 'all' || (kind === 'have' ? i.added : i.kind === kind))
       && words.every((w) => `${i.name} ${i.description} ${KIND[i.kind]}`.toLowerCase().includes(w)));
     grid.innerHTML = shown.map((i) => `<div class="item${i.added ? ' have' : ''}" data-id="${esc(i.id)}">
-      <div><span class="tag">${KIND[i.kind]}</span>${i.author ? `<span class="tag">by ${esc(i.author)}</span>` : ''}${i.added ? '<span class="tag have">added</span>' : ''}${i.update ? '<span class="tag upd">update</span>' : ''}${i.ready ? '' : '<span class="tag upd">not set up</span>'}</div>
+      <div><span class="tag">${KIND[i.kind]}</span>${i.author ? `<span class="tag">by ${esc(i.author)}</span>` : ''}${i.added ? '<span class="tag have">added</span>' : ''}${i.added && i.kind === 'plugin' && !i.enabled ? '<span class="tag upd">off</span>' : ''}${i.update ? '<span class="tag upd">update</span>' : ''}${i.ready ? '' : '<span class="tag upd">not set up</span>'}</div>
       <div class="t">${i.kind === 'skill' ? '/' : ''}${esc(i.name)}</div><div class="d" title="${esc(i.description)}">${esc(i.description)}</div>
-      <div class="acts">${i.added ? `<button class="ghost" data-a="remove">Remove</button>${i.update ? '<button class="go" data-a="add">Update</button>' : ''}`
+      <div class="acts">${i.added && i.kind === 'plugin' ? `<button class="ghost" data-a="toggle" data-on="${i.enabled ? 0 : 1}">${i.enabled ? 'Turn off' : 'Turn on'}</button>` : ''}${i.added ? `<button class="ghost" data-a="remove">Remove</button>${i.update ? '<button class="go" data-a="add">Update</button>' : ''}`
         : i.ready ? '<button class="go" data-a="add">Add</button>' : `<span class="sub">${root ? '' : 'Root sets its address first'}</span>`}
         ${root && i.kind === 'mcp' && !i.author ? '<button class="ghost" data-a="setup">Set up</button>' : ''}
         ${i.author && i.author === me ? '<button class="ghost" data-a="unshare">Unshare</button>' : ''}</div>
@@ -82,7 +82,7 @@ export function mount(container, api) {
     }
     if (a === 'unshare' && !window.confirm(`Take ${id} out of the marketplace? People who added it keep their copy.`)) return;
     btn.disabled = true;
-    const r = await api.rpc('POST', a, { ids: [id] }).catch((e) => ({ out: String(e.message || e) }));
+    const r = await api.rpc('POST', a, { ids: [id], on: btn.dataset.on === '1' }).catch((e) => ({ out: String(e.message || e) }));
     if (!r.ok) window.alert(r.out);
     await load();
   }

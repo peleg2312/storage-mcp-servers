@@ -64,9 +64,9 @@ for l in brain/library:library tools:tools banner:banner themes:themes; do
   ln -sfn "$src" "$dst"
 done
 # their own environment.md / tool-map.md, started from root's default (root's are the default itself)
-for f in environment.md tool-map.md; do
+for f in environment.md tool-map.md CLAUDE.md; do
   [ "$2" = root ] && continue
-  dst=$C/brain/$f
+  dst=$C/brain/$f; [ $f = CLAUDE.md ] && dst=$C/CLAUDE.md
   if [ -L "$dst" ] || [ ! -e "$dst" ]; then rm -f "$dst"; cp "$P/brain/$f" "$dst"; fi
 done
 [ -f "$C/brain/notes.md" ] || printf '# Notes\n\nFacts learned in your sessions (one dated line each).\n' > "$C/brain/notes.md"

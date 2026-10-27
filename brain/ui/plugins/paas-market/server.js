@@ -6,7 +6,7 @@ import os from 'node:os';
 import { execFile } from 'node:child_process';
 
 const BIN = process.env.PAAS_MARKET_BIN || ['/opt/paas/bin/paas-market', '/usr/local/bin/paas-market'].find((p) => fs.existsSync(p)) || 'paas-market';
-const ID = /^(skill|agent|mcp)\/[a-z0-9][a-z0-9_.-]{0,60}$/;
+const ID = /^(skill|agent|mcp|plugin)\/[a-z0-9][a-z0-9_.-]{0,60}$/;
 const market = (args, input) => new Promise((resolve) => {
   const p = execFile('python3', [BIN, ...args], { timeout: 120000, maxBuffer: 8 << 20, env: { ...process.env, PATH: `${process.env.HOME}/.local/bin:/usr/local/bin:${process.env.PATH}` } },
     (err, stdout, stderr) => resolve({ ok: !err, out: `${stdout}${stderr}`.trim() }));
@@ -31,6 +31,7 @@ const routes = {
   'POST /add': async (b) => (ids(b).length ? market(['add', ...ids(b)]) : { ok: false, out: 'Nothing to add' }),
   'POST /remove': async (b) => (ids(b).length ? market(['remove', ...ids(b)]) : { ok: false, out: 'Nothing to remove' }),
   'POST /update': async () => market(['update']),
+  'POST /toggle': async (b) => (ids(b).length ? market([b.on ? 'enable' : 'disable', ...ids(b)]) : { ok: false, out: 'Nothing to switch' }),
   // create a skill / agent / MCP server of your own and share it with everyone (details go on stdin, not argv)
   'POST /new': async (b) => {
     if (!['skill', 'agent', 'mcp'].includes(b.kind) || !/^[a-z0-9][a-z0-9-]{1,40}$/.test(String(b.name || ''))) return { ok: false, out: 'Name: lower-case letters, digits and dashes, e.g. vm-patching' };
