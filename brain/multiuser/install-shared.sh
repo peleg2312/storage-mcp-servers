@@ -78,6 +78,10 @@ sed -e "s#~/\.claude/brain/library#$P/library#g" "$BRAIN/claude/CLAUDE.md" > "$P
 rm -f /etc/claude-code/CLAUDE.md                                  # earlier versions put them VM-wide
 [ -f "$RC/CLAUDE.md" ] || { [ -f "$RC/CLAUDE.md.single-user" ] && mv "$RC/CLAUDE.md.single-user" "$RC/CLAUDE.md"; }
 chmod 644 /etc/claude-code/managed-settings.json "$P/brain/CLAUDE.md"
+# the banner inside `claude` for everyone: the same shell wrapper install.sh puts in root's ~/.bashrc
+# (RHEL's /etc/bashrc and /etc/profile read /etc/profile.d/*.sh; it finds ~/.claude/banner, linked by paas-user)
+sed -n '/^# >>> storage brain: Peleg As A Service banner/,/^# <<< storage brain <<</p' "$BRAIN/install.sh" > /etc/profile.d/zz-paas-claude.sh
+chmod 644 /etc/profile.d/zz-paas-claude.sh
 
 # the marketplace for other VMs: read-only HTTPS on 3443 with a token (paas-market connect https://<vm>:3443 <token> there)
 getent passwd paas-market >/dev/null || useradd -r -M -d / -s /sbin/nologin paas-market
