@@ -209,3 +209,9 @@ edit("server/modules/auth/auth.middleware.ts",
       "import { userDb, appConfigDb } from '../database/index.js';\nimport { previewCookie } from '../paas/preview.routes.js';"),
      ("    req.user = user;\n    next();\n  } catch (error) {",
       "    req.user = user;\n    previewCookie(req, res, user.id);\n    next();\n  } catch (error) {"))
+
+# plugin tabs in a fixed order (a folder listing on the VM's disk has none): by name, Help always the last tab
+edit("src/modules/project-workspace/WorkspaceTabs.tsx",
+     ("  const pluginTabs: PluginTab[] = plugins\n    .filter((p) => p.enabled)\n",
+      "  const pluginTabs: PluginTab[] = plugins\n    .filter((p) => p.enabled)\n"
+      "    .sort((a, b) => Number(a.name === 'paas-help') - Number(b.name === 'paas-help') || a.name.localeCompare(b.name))\n"))
