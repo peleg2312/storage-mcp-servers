@@ -6,7 +6,7 @@ import os from 'node:os';
 import { execFile } from 'node:child_process';
 
 const BIN = process.env.PAAS_MARKET_BIN || ['/opt/paas/bin/paas-market', '/usr/local/bin/paas-market'].find((p) => fs.existsSync(p)) || 'paas-market';
-const ID = /^(skill|agent|mcp|plugin)\/[a-z0-9][a-z0-9_.-]{0,60}$/;
+const ID = /^(skill|agent|mcp|plugin)\/[a-z0-9][a-z0-9_.-]{0,60}(@[a-z0-9][a-z0-9_.-]{0,40})?$/;   // @<source>: another marketplace
 const market = (args, input) => new Promise((resolve) => {
   const p = execFile('python3', [BIN, ...args], { timeout: 120000, maxBuffer: 8 << 20, env: { ...process.env, PATH: `${process.env.HOME}/.local/bin:/usr/local/bin:${process.env.PATH}` } },
     (err, stdout, stderr) => resolve({ ok: !err, out: `${stdout}${stderr}`.trim() }));

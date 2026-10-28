@@ -24,9 +24,14 @@ root only:
                                                            their own when they add it, none = no token
   paas-market import-mcp [<item>=<your server>...]        set up the marketplace's MCP items from your own Claude's
                                                            servers of the same name (or the names you map)
+  paas-market source add <git-url|folder> [<name>]        another marketplace (e.g. a copy of anthropics/skills or
+                                                           anthropics/claude-plugins-official): its skills, agents and
+                                                           plugins show as their own section, ids <kind>/<name>@<source>
+  paas-market source list | sync [<name>] | remove <name>  list them / fetch them again / take one away
 
 The marketplace is a folder (PAAS_MARKET, default /opt/paas/marketplace): items/skills/<name>/,
 items/agents/<name>.md, items/mcp/<name>.json, index.json (kind, name, description, version) and defaults.json.
+Other marketplaces (paas-market source add) are copied into PAAS_SOURCES (default /opt/paas/plugin-sources/<name>/).
 What you added is recorded in ~/.claude/paas-market.json; your own skills and agents are never touched.
 """
 import getpass
@@ -50,6 +55,7 @@ KINDS = ("skill", "agent", "mcp")
 # Claude Code plugins (commands, agents, skills, hooks together) from the brain's offline plugin marketplace
 PLUGINS = os.environ.get("PAAS_PLUGINS", os.path.join(os.path.dirname(MARKET.rstrip("/")), "plugins"))
 NAME = re.compile(r"^[a-z0-9][a-z0-9_.-]{0,60}$")
+SNAME = re.compile(r"^[a-z0-9][a-z0-9_.-]{0,60}(@[a-z0-9][a-z0-9_.-]{0,40})?$")    # name or name@source
 # another VM's marketplace (paas-market connect): a local copy of it, which list / add / update read
 REMOTE_CFG = os.path.join(CLAUDE, "paas-market-remote.json")
 REMOTE_CRT = os.path.join(CLAUDE, "paas-market-remote.crt")     # its certificate, pinned at connect
@@ -58,6 +64,9 @@ REMOTE = None
 if "PAAS_MARKET" not in os.environ and os.path.exists(REMOTE_CFG):
     REMOTE = json.load(open(REMOTE_CFG))
     MARKET, PLUGINS = os.path.join(MIRROR, "marketplace"), os.path.join(MIRROR, "plugins")
+# other marketplaces root added (paas-market source add); with another VM's marketplace, that VM's sources
+SOURCES = os.environ.get("PAAS_SOURCES") or (os.path.join(MIRROR, "plugin-sources") if REMOTE
+                                             else os.path.join(os.path.dirname(MARKET.rstrip("/")), "plugin-sources"))
 
 
 def frontmatter(text):
@@ -125,14 +134,157 @@ def plugin_items():
 
 
 def installed_plugins():
-    """{plugin name: enabled} for this marketplace, from Claude Code itself"""
+    """{plugin id: enabled}: '<name>' for this VM's plugin marketplace, '<name>@<source>' for a source's, from Claude Code"""
     r = claude_cmd("plugin", "list", "--json")
     try:
         rows = json.loads(r.stdout) if r.returncode == 0 else []
     except ValueError:
         rows = []
-    suffix = "@" + plugin_market()["name"]
-    return {x["id"][:-len(suffix)]: bool(x.get("enabled")) for x in rows if str(x.get("id", "")).endswith(suffix)}
+    to_id = {plugin_market()["name"]: ""} if plugin_market()["name"] else {}
+    for src in source_names():
+        mk = source_market(src)["name"]
+        if mk:
+            to_id.setdefault(mk, "@" + src)
+    out = {}
+    for x in rows:
+        name, _, mk = str(x.get("id", "")).rpartition("@")
+        if mk in to_id:
+            out[name + to_id[mk]] = bool(x.get("enabled"))
+    return out
+
+
+# ---------------------------------------------------------------------------
+# Other marketplaces (sources): a git repository or folder copied to SOURCES/<name>/; read-only for users
+# ---------------------------------------------------------------------------
+
+def source_names():
+    return sorted(n for n in os.listdir(SOURCES) if NAME.match(n) and os.path.isdir(os.path.join(SOURCES, n))) \
+        if os.path.isdir(SOURCES) else []
+
+
+def source_info():
+    try:
+        return json.load(open(os.path.join(SOURCES, "sources.json")))
+    except (OSError, ValueError):
+        return {}
+
+
+def source_market(src):
+    try:
+        return json.load(open(os.path.join(SOURCES, src, ".claude-plugin", "marketplace.json")))
+    except (OSError, ValueError):
+        return {"name": "", "plugins": []}
+
+
+def source_items():
+    """every source's plugins (from .claude-plugin/marketplace.json) and every SKILL.md / agents/*.md in it"""
+    out = []
+    info = source_info()
+    for src in source_names():
+        base = os.path.join(SOURCES, src)
+        mk = source_market(src)
+        title = info.get(src, {}).get("title") or mk.get("name") or src
+        common = {"author": None, "source": src, "source_title": title}
+        for p in mk.get("plugins", []):
+            if not NAME.match(str(p.get("name", ""))):
+                continue
+            local = isinstance(p.get("source"), str)          # {"source": "github", ...} needs the internet
+            path = os.path.normpath(os.path.join(base, p["source"])) if local else ""
+            ok = local and (path == base or path.startswith(base + os.sep)) and os.path.isdir(path)
+            out.append({**common, "kind": "plugin", "name": f"{p['name']}@{src}", "description": p.get("description", ""),
+                        "version": digest(path) if ok else "", "path": path, "offline": ok})
+        seen = set()
+        for root, dirs, files in sorted(os.walk(base)):
+            dirs[:] = sorted(d for d in dirs if not d.startswith(".") and d != "node_modules")
+            if "SKILL.md" in files:
+                fm = frontmatter(open(os.path.join(root, "SKILL.md"), errors="replace").read())
+                n = str(fm.get("name") or os.path.basename(root)).lower()
+                if NAME.match(n) and ("skill", n) not in seen:
+                    seen.add(("skill", n))
+                    out.append({**common, "kind": "skill", "name": f"{n}@{src}", "description": fm.get("description", ""),
+                                "version": digest(root), "path": root})
+            if os.path.basename(root) == "agents":
+                for f in sorted(files):
+                    fm = frontmatter(open(os.path.join(root, f), errors="replace").read()) if f.endswith(".md") else {}
+                    n = str(fm.get("name") or "").lower()
+                    if fm.get("description") and NAME.match(n) and ("agent", n) not in seen:
+                        seen.add(("agent", n))
+                        out.append({**common, "kind": "agent", "name": f"{n}@{src}", "description": fm["description"],
+                                    "version": digest(os.path.join(root, f)), "path": os.path.join(root, f)})
+    return out
+
+
+def _fetch(origin, dst):
+    """git clone (depth 1) or copy a folder into dst; nothing is run from it"""
+    if os.path.isdir(origin):
+        shutil.copytree(origin, dst, symlinks=True, ignore=shutil.ignore_patterns(".git"))
+    elif re.match(r"^(https?|ssh|git)://\S+$|^[\w.-]+@[\w.-]+:\S+$", origin):
+        r = subprocess.run(["git", "clone", "-q", "--depth", "1", "--", origin, dst], capture_output=True, text=True, timeout=600)
+        if r.returncode:
+            sys.exit(f"paas-market: git clone {origin}: {(r.stderr or r.stdout).strip()}")
+        shutil.rmtree(os.path.join(dst, ".git"), ignore_errors=True)
+    else:
+        sys.exit(f"paas-market: {origin} is not a folder or a git URL (https://, ssh://, git@host:repo)")
+    for root, dirs, files in os.walk(dst):                 # readable by everyone, writable by root only
+        for n in dirs + files:
+            p = os.path.join(root, n)
+            if os.path.islink(p):
+                os.remove(p)                                # no links out of the copy
+            else:
+                os.chmod(p, 0o755 if os.path.isdir(p) else 0o644)
+    os.chmod(dst, 0o755)
+
+
+def source_cmd(args):
+    sub, rest = (args[0], args[1:]) if args else ("list", [])
+    if sub == "list":
+        info = source_info()
+        items = source_items()
+        for src in source_names():
+            n = sum(1 for i in items if i["source"] == src)
+            print(f"{src:<24} {n:>4} items  {info.get(src, {}).get('origin', '')}")
+        return None if source_names() else print("no other marketplaces (root: paas-market source add <git-url|folder>)")
+    if os.geteuid() != 0:
+        sys.exit("paas-market: only root adds, syncs and removes other marketplaces")
+    info = source_info()
+    if sub == "add":
+        if not rest:
+            sys.exit("usage: paas-market source add <git-url|folder> [<name>]")
+        origin = rest[0].rstrip("/")
+        name = (rest[1] if len(rest) > 1 else re.sub(r"\.git$", "", re.split(r"[/:]", origin)[-1])).lower()
+        name = re.sub(r"[^a-z0-9_.-]", "-", name).strip("-.")
+        if not NAME.match(name) or name in info or os.path.exists(os.path.join(SOURCES, name)):
+            sys.exit(f"paas-market: source name '{name}' is taken or not valid; give one: paas-market source add {origin} <name>")
+        todo = {name: os.path.abspath(origin) if os.path.isdir(origin) else origin}
+    elif sub == "sync":
+        todo = {n: info[n]["origin"] for n in (rest or sorted(info)) if n in info}
+        if rest and set(rest) - set(todo):
+            sys.exit(f"paas-market: no source {', '.join(sorted(set(rest) - set(todo)))}")
+    elif sub == "remove":
+        if not rest or rest[0] not in info:
+            sys.exit("usage: paas-market source remove <name>   (paas-market source list)")
+        shutil.rmtree(os.path.join(SOURCES, rest[0]), ignore_errors=True)
+        info.pop(rest[0])
+        json.dump(info, open(os.path.join(SOURCES, "sources.json"), "w"), indent=2)
+        return print(f"removed source {rest[0]} (people who added its items keep their copy)")
+    else:
+        sys.exit("usage: paas-market source add <git-url|folder> [<name>] | list | sync [<name>] | remove <name>")
+    os.makedirs(SOURCES, mode=0o755, exist_ok=True)
+    for name, origin in todo.items():
+        new = os.path.join(SOURCES, f".{name}.new")
+        shutil.rmtree(new, ignore_errors=True)
+        _fetch(origin, new)
+        old = os.path.join(SOURCES, f".{name}.old")
+        shutil.rmtree(old, ignore_errors=True)
+        if os.path.exists(os.path.join(SOURCES, name)):
+            os.rename(os.path.join(SOURCES, name), old)
+        os.rename(new, os.path.join(SOURCES, name))
+        shutil.rmtree(old, ignore_errors=True)
+        info[name] = {**info.get(name, {}), "origin": origin, "synced": time.strftime("%Y-%m-%d %H:%M")}
+        json.dump(info, open(os.path.join(SOURCES, "sources.json"), "w"), indent=2)
+        os.chmod(os.path.join(SOURCES, "sources.json"), 0o644)
+        n = sum(1 for i in source_items() if i["source"] == name)
+        print(f"source {name}: {n} items from {origin}")
 
 
 def contrib_items():
@@ -380,7 +532,7 @@ def risky(it):
 
 def view(kind, name):
     """print any item, read-only (MCP: without its token)"""
-    it = next((i for i in load_index() if i["kind"] == kind and i["name"] == name), None)
+    it = next((i for i in load_index() + source_items() if i["kind"] == kind and i["name"] == name), None)
     if not it or kind == "plugin":
         sys.exit(f"paas-market: {kind}/{name} is not in the marketplace")
     p = it.get("path") or item_path(kind, name)
@@ -397,14 +549,15 @@ def view(kind, name):
 
 def listing(words=None):
     state = load_state()["installed"]
-    plugins = installed_plugins() if os.path.isdir(PLUGINS) else {}
+    plugins = installed_plugins() if os.path.isdir(PLUGINS) or source_names() else {}
     out = []
-    for it in load_index():
+    for it in load_index() + source_items():
+        it.setdefault("source", "")
         if it["kind"] == "plugin":
             if words and not all(w.lower() in f"{it['name']} {it['description']} plugin".lower() for w in words):
                 continue
             out.append({**it, "id": f"plugin/{it['name']}", "added": it["name"] in plugins,
-                        "enabled": plugins.get(it["name"], False), "update": False, "ready": True})
+                        "enabled": plugins.get(it["name"], False), "update": False, "ready": it.get("offline", True)})
             continue
         key = f"{it['kind']}/{it['name']}"
         if words and not all(w.lower() in f"{it['name']} {it['description']} {it['kind']}".lower() for w in words):
@@ -412,7 +565,7 @@ def listing(words=None):
         have = state.get(key)
         mcp_entry = json.load(open(it.get("path") or item_path("mcp", it["name"]))) if it["kind"] == "mcp" else {}
         mcp = mcp_entry.get("server", {})
-        out.append({**it, "id": key, "added": bool(have) or already_have(it["kind"], it["name"]),
+        out.append({**it, "id": key, "added": bool(have) or ("@" not in it["name"] and already_have(it["kind"], it["name"])),
                     "update": bool(have and have != it["version"]),
                     "ready": it["kind"] != "mcp" or mcp_ready(mcp_entry), "risky": risky(it),
                     "local": it["kind"] == "mcp" and mcp.get("type", "stdio") == "stdio",   # runs on this VM: no address
@@ -425,7 +578,7 @@ def parse_ids(args):
     ids = []
     for a in args:
         kind, _, name = a.partition("/")
-        if kind not in KINDS + ("plugin",) or not NAME.match(name):
+        if kind not in KINDS + ("plugin",) or not SNAME.match(name) or ("@" in name and kind == "mcp"):
             sys.exit(f"paas-market: '{a}' is not <skill|agent|mcp|plugin>/<name>")
         ids.append((kind, name))
     return ids
@@ -512,39 +665,54 @@ def mcp_cmd(*args):
 
 
 def plugin_cmd(action, name):
-    """install / uninstall / enable / disable a plugin of the brain's offline plugin marketplace for this user"""
-    mk = plugin_market()["name"]
+    """install / uninstall / enable / disable a plugin of the brain's offline plugin marketplace (or of a source:
+    <plugin>@<source>) for this user"""
+    name, _, src = name.partition("@")
+    where = os.path.join(SOURCES, src) if src else PLUGINS
+    mk = (source_market(src) if src else plugin_market())["name"]
     if not mk:
-        sys.exit(f"paas-market: no plugin marketplace at {PLUGINS}")
+        sys.exit(f"paas-market: no plugin marketplace at {where}")
     if action == "install":
-        claude_cmd("plugin", "marketplace", "add", PLUGINS)       # once per user; harmless when already there
+        claude_cmd("plugin", "marketplace", "add", where)         # once per user; harmless when already there
     r = claude_cmd("plugin", action, f"{name}@{mk}")
     if r.returncode:
         sys.exit(f"paas-market: plugin {action} {name}: {(r.stderr or r.stdout).strip()}")
     print(f"{action} plugin/{name}: done")
 
 
+def clash(state, kind, name):
+    """another marketplace's item with the same name you already added (they share ~/.claude/<kind>s/<name>)"""
+    real = name.split("@")[0]
+    return next((k for k in state["installed"] if k != f"{kind}/{name}" and k.split("@")[0] == f"{kind}/{real}"), None)
+
+
 def add(ids, quiet=False, token=None):
-    index = {(i["kind"], i["name"]): i for i in load_index()}
+    index = {(i["kind"], i["name"]): i for i in load_index() + source_items()}
     state = load_state()
     for kind, name in ids:
         it = index.get((kind, name))
         if not it:
             sys.exit(f"paas-market: {kind}/{name} is not in the marketplace")
         if kind == "plugin":
+            if it.get("offline") is False:
+                sys.exit(f"paas-market: plugin/{name} is fetched from the internet by Claude Code; it cannot be added here")
             plugin_cmd("install", name)
             continue
         src = it.get("path") or item_path(kind, name)
+        real, from_source = name.split("@")[0], "@" in name
+        other = clash(state, kind, name)
+        if other:
+            sys.exit(f"paas-market: you already added {other} with the same name; remove it first")
         if kind == "skill":
-            dst = os.path.join(CLAUDE, "skills", name)
-            if os.path.exists(dst) and f"skill/{name}" not in state["installed"] and not already_have("skill", name):
-                sys.exit(f"paas-market: you already have your own skill '{name}'; rename it first")
+            dst = os.path.join(CLAUDE, "skills", real)
+            if os.path.exists(dst) and f"skill/{name}" not in state["installed"] and (from_source or not already_have("skill", name)):
+                sys.exit(f"paas-market: you already have a skill '{real}'; remove or rename it first")
             shutil.rmtree(dst, ignore_errors=True)
             shutil.copytree(src, dst)
         elif kind == "agent":
-            dst = os.path.join(CLAUDE, "agents", name + ".md")
-            if os.path.exists(dst) and f"agent/{name}" not in state["installed"] and not already_have("agent", name):
-                sys.exit(f"paas-market: you already have your own agent '{name}'; rename it first")
+            dst = os.path.join(CLAUDE, "agents", real + ".md")
+            if os.path.exists(dst) and f"agent/{name}" not in state["installed"] and (from_source or not already_have("agent", name)):
+                sys.exit(f"paas-market: you already have an agent '{real}'; remove or rename it first")
             os.makedirs(os.path.dirname(dst), exist_ok=True)
             shutil.copy(src, dst)
         else:
@@ -573,8 +741,9 @@ def remove(ids):
         if kind == "plugin":
             plugin_cmd("uninstall", name)
             continue
-        if f"{kind}/{name}" not in state["installed"] and not already_have(kind, name):
+        if f"{kind}/{name}" not in state["installed"] and ("@" in name or not already_have(kind, name)):
             sys.exit(f"paas-market: you do not have {kind}/{name}, or you created it yourself (remove it in the Brain tab)")
+        name = name.split("@")[0]                          # a source's item lives under its own name
         if kind == "skill":
             d = os.path.join(CLAUDE, "skills", name)
             try:
@@ -595,9 +764,10 @@ def remove(ids):
             if own_mcp(name) is not None or mcp_folders(name):
                 where = ", ".join(["your user settings"] * (own_mcp(name) is not None) + mcp_folders(name))
                 sys.exit(f"paas-market: could not remove MCP server {name} ({where}): run claude mcp remove {name} there")
-        state["installed"].pop(f"{kind}/{name}", None)
+        key = next((k for k in state["installed"] if k.split("@")[0] == f"{kind}/{name}"), f"{kind}/{name}")
+        state["installed"].pop(key, None)
         save_state(state)
-        print(f"removed {kind}/{name}")
+        print(f"removed {key}")
 
 
 def update():
@@ -747,9 +917,11 @@ def main(argv):
                 os.remove(p)
         shutil.rmtree(MIRROR, ignore_errors=True)
         return print("back to this VM's own marketplace")
+    if cmd == "source" and not (REMOTE and args[:1] not in ([], ["list"])):
+        return source_cmd(args)
     if cmd == "pull":
         return pull() if REMOTE else sys.exit("paas-market: not connected to another VM (paas-market connect)")
-    if REMOTE and cmd in ("share", "unshare", "new", "edit", "publish", "setup-mcp", "import-mcp", "reindex"):
+    if REMOTE and cmd in ("share", "unshare", "new", "edit", "publish", "setup-mcp", "import-mcp", "reindex", "source"):
         sys.exit(f"paas-market: the marketplace here is {REMOTE['url']} (read-only): create and share there")
     fresh()
     as_json = "--json" in args

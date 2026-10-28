@@ -1,4 +1,5 @@
 // Marketplace tab: search the VM's skills, agents and MCP servers; add / remove / update them for yourself (data: server.js).
+// Other marketplaces root added (paas-market source add) are their own sections, closed until clicked.
 const esc = (s) => String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 const KIND = { skill: 'Skill', agent: 'Agent', mcp: 'MCP server', plugin: 'Plugin' };
 
@@ -37,6 +38,9 @@ const CSS = `
 .mk .nf .acts{padding-top:0}.mk .nst{color:#f87171}
 .mk .tm{display:flex;gap:6px;flex-wrap:wrap}.mk .tm button{border:1px solid hsl(var(--border));background:hsl(var(--background));color:inherit;border-radius:8px;padding:5px 10px;font:500 12.5px/1.4 inherit;cursor:pointer}
 .mk .tm button.on{border-color:#8b5cf6;background:rgba(124,58,237,.12)}
+.mk .sec{margin-bottom:10px}.mk .sec>.sh{display:flex;align-items:center;gap:10px;width:100%;text-align:left;background:none;border:0;border-bottom:1px solid hsl(var(--border));color:inherit;font:inherit;padding:10px 2px;cursor:pointer}
+.mk .sec>.sh b{font-size:15px}.mk .sec>.sh .car{display:inline-block;transition:transform .15s;color:hsl(var(--muted-foreground))}
+.mk .sec.open>.sh .car{transform:rotate(90deg)}.mk .sec>.grid{margin-top:12px}.mk .sec:not(.open)>.grid{display:none}
 .mk .empty{padding:36px;text-align:center;color:hsl(var(--muted-foreground))}
 @media (max-width:640px){.mk{padding:16px}.mk .grid,.mk .fields,.mk .types{grid-template-columns:1fr}}`;
 
@@ -51,8 +55,10 @@ export function mount(container, api) {
     <div class="newform"></div>
     <div class="row bar"><input class="q" type="search" placeholder="Search: ontap, latency, zoning, capacity…">
     <div class="seg">${[['all', 'All'], ['skill', 'Skills'], ['agent', 'Agents'], ['mcp', 'MCP servers'], ['plugin', 'Plugins'], ['have', 'Added']].map(([v, l]) => `<button data-k="${v}" class="${v === kind ? 'on' : ''}">${l}</button>`).join('')}</div></div>
-    <div class="grid"><div class="empty">Loading…</div></div></div>`;
-  const grid = container.querySelector('.grid');
+    <div class="groups"><div class="empty">Loading…</div></div></div>`;
+  const grid = container.querySelector('.groups');
+  // sections: this VM's marketplace open; each other marketplace (paas-market source add) closed until clicked
+  const opened = new Set(['']);
   const q = container.querySelector('.q');
   const updAll = container.querySelector('.upd-all');
 
@@ -68,17 +74,33 @@ export function mount(container, api) {
 
   function render() {
     const words = q.value.toLowerCase().split(/\s+/).filter(Boolean);
-    const shown = items.filter((i) => (kind === 'all' || (kind === 'have' ? i.added || (i.author && i.author === me) : i.kind === kind))
-      && words.every((w) => `${i.name} ${i.description} ${KIND[i.kind]}`.toLowerCase().includes(w)));
-    grid.innerHTML = shown.map((i) => { const mine = i.author && i.author === me; return `<div class="item${i.added || mine ? ' have' : ''}" data-id="${esc(i.id)}">
-      <div><span class="tag">${KIND[i.kind]}</span>${mine ? '<span class="tag have">yours</span>' : i.author ? `<span class="tag">by ${esc(i.author)}</span>` : ''}${i.added ? '<span class="tag have">added</span>' : ''}${i.added && i.kind === 'plugin' && !i.enabled ? '<span class="tag upd">off</span>' : ''}${i.update ? '<span class="tag upd">update</span>' : ''}${i.ready ? '' : '<span class="tag upd">not set up</span>'}${i.token_mode === 'personal' ? '<span class="tag">own token</span>' : ''}${i.risky ? `<span class="tag upd" title="${esc(i.risky)}">runs commands</span>` : ''}</div>
-      <div class="t">${i.kind === 'skill' ? '/' : ''}${esc(i.name)}</div><div class="d" title="${esc(i.description)}">${esc(i.description)}</div>
+    const shown0 = items.filter((i) => (kind === 'all' || (kind === 'have' ? i.added || (i.author && i.author === me) : i.kind === kind))
+      && words.every((w) => `${i.name} ${i.description} ${KIND[i.kind]} ${i.source_title || ''}`.toLowerCase().includes(w)));
+    const card = (i) => { const mine = i.author && i.author === me; return `<div class="item${i.added || mine ? ' have' : ''}" data-id="${esc(i.id)}">
+      <div><span class="tag">${KIND[i.kind]}</span>${mine ? '<span class="tag have">yours</span>' : i.author ? `<span class="tag">by ${esc(i.author)}</span>` : ''}${i.added ? '<span class="tag have">added</span>' : ''}${i.added && i.kind === 'plugin' && !i.enabled ? '<span class="tag upd">off</span>' : ''}${i.update ? '<span class="tag upd">update</span>' : ''}${i.ready ? '' : `<span class="tag upd">${i.kind === 'plugin' ? 'internet only' : 'not set up'}</span>`}${i.token_mode === 'personal' ? '<span class="tag">own token</span>' : ''}${i.risky ? `<span class="tag upd" title="${esc(i.risky)}">runs commands</span>` : ''}</div>
+      <div class="t">${i.kind === 'skill' ? '/' : ''}${esc(i.name.split('@')[0])}</div><div class="d" title="${esc(i.description)}">${esc(i.description)}</div>
       <div class="acts">${mine ? '<button class="ghost" data-a="edit">Edit</button><button class="ghost" data-a="unshare">Unshare</button>'
         : `${i.added && i.kind === 'plugin' ? `<button class="ghost" data-a="toggle" data-on="${i.enabled ? 0 : 1}">${i.enabled ? 'Turn off' : 'Turn on'}</button>` : ''}${i.added ? `<button class="ghost" data-a="remove">Remove</button>${i.update ? '<button class="go" data-a="add">Update</button>' : ''}`
-        : i.ready ? '<button class="go" data-a="add">Add</button>' : `<span class="sub">${root ? '' : 'Root sets its address first'}</span>`}
+        : i.ready ? '<button class="go" data-a="add">Add</button>' : `<span class="sub">${i.kind === 'plugin' ? 'Needs the internet' : root ? '' : 'Root sets its address first'}</span>`}
         ${root && i.kind === 'mcp' && !i.author && !i.local ? '<button class="ghost" data-a="setup">Set up</button>' : ''}
         ${i.kind !== 'plugin' ? '<button class="ghost" data-a="view">View</button>' : ''}`}</div>
-    </div>`; }).join('') || `<div class="empty">${items.length ? 'Nothing matches' : 'The marketplace is empty'}</div>`;
+    </div>`; };
+    const secs = [...new Set(['', ...items.map((i) => i.source || '')])];
+    const title = (s) => (s ? (items.find((i) => i.source === s) || {}).source_title || s : 'This VM');
+    grid.innerHTML = secs.map((s) => {
+      const shown = shown0.filter((i) => (i.source || '') === s);
+      const total = items.filter((i) => (i.source || '') === s).length;
+      if (!shown.length && (words.length || kind !== 'all') && s) return '';
+      const open = opened.has(s) || (words.length && shown.length);
+      const added = shown.filter((i) => i.added).length;
+      return `<div class="sec${open ? ' open' : ''}" data-s="${esc(s)}"><button class="sh"><span class="car">▸</span><b>${esc(title(s))}</b>
+        <span class="sub">${shown.length === total ? total : `${shown.length} of ${total}`} items${added ? ` · ${added} added` : ''}${s ? ` · ${esc(s)}` : ''}</span></button>
+        <div class="grid">${shown.map(card).join('') || `<div class="empty">${total ? 'Nothing matches' : 'The marketplace is empty'}</div>`}</div></div>`;
+    }).join('') || '<div class="empty">Nothing matches</div>';
+    grid.querySelectorAll('.sec>.sh').forEach((h) => h.addEventListener('click', () => {
+      const sec = h.parentElement; const s = sec.dataset.s;
+      if (sec.classList.toggle('open')) opened.add(s); else opened.delete(s);
+    }));
     grid.querySelectorAll('[data-a]').forEach((b) => b.addEventListener('click', () => act(b.closest('.item'), b.dataset.a, b)));
   }
 

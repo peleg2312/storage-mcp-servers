@@ -12,6 +12,7 @@ import hmac
 import io
 import json
 import os
+import re
 import ssl
 import tarfile
 import time
@@ -25,7 +26,7 @@ _cache = [0.0, b""]
 
 
 def snapshot():
-    """marketplace/ (no MCP items) + plugins/ as tar.gz; built at most every 30 s"""
+    """marketplace/ (no MCP items) + plugins/ + plugin-sources/ as tar.gz; built at most every 30 s"""
     if time.time() - _cache[0] < 30:   # ponytail: one shared 30 s cache, enough for a few VMs refreshing every 10 min
         return _cache[1]
     m = os.path.join(ROOT, "marketplace")
@@ -51,6 +52,9 @@ def snapshot():
                     t.add(p, f"marketplace/contrib/{user}/{sub}", filter=skip)
         if os.path.isdir(os.path.join(ROOT, "plugins")):
             t.add(os.path.join(ROOT, "plugins"), "plugins", filter=skip)
+        if os.path.isdir(os.path.join(ROOT, "plugin-sources")):     # other marketplaces root added (paas-market source add)
+            t.add(os.path.join(ROOT, "plugin-sources"), "plugin-sources",
+                  filter=lambda ti: None if re.search(r"(^|/)(\.git|\.[^/]+\.(new|old))(/|$)", ti.name) else skip(ti))
     _cache[:] = [time.time(), buf.getvalue()]
     return _cache[1]
 
