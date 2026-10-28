@@ -104,6 +104,26 @@ for p, seed in ((sys.argv[1], {"hasCompletedOnboarding": True}),
         json.dump(new, open(p, "w"), indent=2)
 EOP
 [ -f "$C/brain/notes.md" ] || printf '# Notes\n\nFacts learned in your sessions (one dated line each).\n' > "$C/brain/notes.md"
+# web UI chats made before the UI said "paas-ui": Claude Code hides sdk-* chats from `claude --resume`.
+# Only files idle for 10 minutes (none being written), replaced whole, dates kept.
+python3 - "$C/projects" <<'EOP'
+import os, sys, time
+for root, _, files in os.walk(sys.argv[1]):
+    for f in files:
+        p = os.path.join(root, f)
+        try:
+            st = os.stat(p)
+            if not f.endswith(".jsonl") or time.time() - st.st_mtime < 600:
+                continue
+            s = open(p, encoding="utf-8").read()
+            t = s.replace('"entrypoint":"sdk-ts"', '"entrypoint":"paas-ui"').replace('"entrypoint":"sdk-cli"', '"entrypoint":"paas-ui"')
+            if t != s:
+                open(p + ".paas", "w", encoding="utf-8").write(t)
+                os.utime(p + ".paas", (st.st_atime, st.st_mtime))
+                os.replace(p + ".paas", p)
+        except (OSError, UnicodeDecodeError):
+            pass
+EOP
 for p in "$P"/ui-plugins/*/; do
   n=$(basename "$p")
   [ "$n" = paas-users ] && [ "$2" != root ] && continue   # managing users: root only

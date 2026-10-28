@@ -464,4 +464,5 @@ edit("src/modules/sidebar/SidebarFooter.tsx",
 # root's own home is a normal place for its chats and projects (upstream refused every path under /root, so root's
 # Chats space was never registered: no tab bar, and "+" had nowhere to go); other users cannot write there anyway
 edit("server/shared/utils.ts", ("  '/boot',\n  '/root',\n  '/lib',", "  '/boot',\n  '/lib',"))
+exec(open(os.path.join(HERE, "chat.py"), encoding="utf-8").read())    # chat fixes, same edit()
 print(f"branded {SRC} as {NAME}")

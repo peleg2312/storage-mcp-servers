@@ -6,8 +6,11 @@ After=network.target
 User=%i
 EnvironmentFile=/etc/paas/users/%i.env
 Environment=HOST=127.0.0.1 NODE_ENV=production
-# UI chats as "cli", not the SDK's "sdk-ts": Claude Code hides sdk-* chats from `claude --resume`
-Environment=CLAUDE_CODE_ENTRYPOINT=cli
+# UI chats labelled "paas-ui", not the SDK's "sdk-ts": Claude Code hides sdk-* chats from `claude --resume`
+# ("cli" does not work: without a terminal Claude Code turns it into "sdk-cli")
+Environment=CLAUDE_CODE_ENTRYPOINT=paas-ui
+# chat files change -> UI at once (inotify), not on a 6 s poll of every file under ~/.claude/projects
+Environment=CHOKIDAR_USEPOLLING=false
 WorkingDirectory=/opt/paas/ui/app
 ExecStart=/opt/paas/ui/node/bin/node /opt/paas/ui/app/dist-server/server/index.js
 Restart=on-failure

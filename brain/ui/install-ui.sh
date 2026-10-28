@@ -64,7 +64,7 @@ mkdir -p "$HOME/.local/bin"
 cat > "$HOME/.local/bin/paas-ui" <<EOF
 #!/bin/sh
 # run the web UI in the foreground (the service runs this too)
-export HOST=0.0.0.0 SERVER_PORT=$PORT CLAUDE_CLI_PATH=$CLAUDE PATH="$HOME/.local/bin:$DST/node/bin:\$PATH"
+export HOST=0.0.0.0 SERVER_PORT=$PORT CLAUDE_CLI_PATH=$CLAUDE CLAUDE_CODE_ENTRYPOINT=paas-ui CHOKIDAR_USEPOLLING=false PATH="$HOME/.local/bin:$DST/node/bin:\$PATH"
 export PAAS_LOGIN_USERS="${UI_LOGIN_USERS:-root}" $TLSENV
 cd "$DST/app" && exec "$DST/node/bin/node" dist-server/server/index.js
 EOF
