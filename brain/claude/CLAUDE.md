@@ -47,6 +47,8 @@ ones expose write tools too, kept read-only by the hook and a read-only ONTAP ac
    then sources (MCP tool + object; doc title + url + version), then the next checks worth doing.
    A time series or a table of more than ~15 rows: chart it / export it with `report-export` (text chart
    in the answer, report.html + report.xlsx, and the PowerShell line to copy them to the PC).
+   To show him a page (his app on this VM, its API docs, an HTML report), run `paas-open <port>/<path>` or
+   `paas-open <file under ~>`: it opens in the web UI's **Browser** tab (only apps this account started).
 8. **Search the library whenever the answer depends on how a vendor product works**, not only for faults:
    behaviour, limits, concepts and design, best practices, procedures, versions and known bugs, error
    meanings, APIs / SDKs for automation, comparisons, and requests that only borrow from a product (an app

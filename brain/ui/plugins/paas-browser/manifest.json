@@ -1,0 +1,12 @@
+{
+  "name": "paas-browser",
+  "displayName": "Browser",
+  "version": "1.0.0",
+  "description": "Web apps and files on this VM, shown in the UI (FastAPI docs, Grafana, HTML reports). Claude opens pages here with paas-open.",
+  "author": "Peleg As A Service",
+  "icon": "icon.svg",
+  "type": "module",
+  "slot": "tab",
+  "entry": "index.js",
+  "permissions": []
+}

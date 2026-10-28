@@ -1,0 +1,39 @@
+#!/usr/bin/env python3
+"""Show a page in the web UI's Browser tab (Peleg As A Service): a web app running on this VM, or a file.
+
+    paas-open 8000/docs                       the app on port 8000 (also :8000/docs, http://localhost:8000/docs)
+    paas-open ~/storage-reports/x/report.html a file under your home folder (relative paths: from here)
+
+The Browser tab opens it within ~2 s when it is the open tab, else the next time the person opens the tab.
+Only apps this account started can be shown, and only files under the home folder (not hidden ones).
+"""
+import json
+import os
+import re
+import sys
+import time
+
+if len(sys.argv) != 2 or sys.argv[1] in ("-h", "--help"):
+    sys.exit(__doc__.strip())
+arg = sys.argv[1].strip()
+home = os.path.realpath(os.path.expanduser("~"))
+m = re.match(r"^(?:https?://)?(?:(?:localhost|127\.0\.0\.1|0\.0\.0\.0|\[::1\]):|:)?(\d{1,5})(/.*)?$", arg)
+if m:
+    url = f"/preview/{m.group(1)}{m.group(2) or '/'}"
+elif re.match(r"^https?://", arg):
+    sys.exit("paas-open: only pages on this VM (localhost:<port>) or files can be shown")
+else:
+    p = os.path.realpath(os.path.expanduser(arg))
+    rel = os.path.relpath(p, home)
+    if not os.path.exists(p):
+        sys.exit(f"paas-open: {arg}: no such file")
+    if rel.startswith("..") or any(s.startswith(".") for s in rel.split(os.sep)):
+        sys.exit("paas-open: only files under the home folder (not hidden ones)")
+    url = "/preview/~/" + rel.replace(os.sep, "/")
+d = os.path.join(home, ".claude-code-ui")
+os.makedirs(d, exist_ok=True)
+tmp = os.path.join(d, ".browser-open.tmp")
+with open(tmp, "w") as f:
+    json.dump({"url": url, "ts": int(time.time() * 1000)}, f)
+os.replace(tmp, os.path.join(d, "browser-open.json"))
+print(f"Opened in the Browser tab of the web UI: {url}")

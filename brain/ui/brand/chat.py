@@ -197,3 +197,15 @@ edit("server/modules/websocket/services/chat-run-registry.service.ts",
      ("  run.events.push(outbound);\n",
       "  if (message.kind === 'stream_end') run.events = run.events.filter((event) => event.kind !== 'stream_delta');\n"
       "  run.events.push(outbound);\n"))
+
+# --- Browser tab: /preview/<port>/... and /preview/~/... (overlay server/modules/paas/preview.routes.ts), mounted before
+# the body parsers so form posts reach the app untouched; signing in (any API call) also sets the preview cookie
+edit("server/index.ts",
+     ("import { paasRoutes } from './modules/paas/download.routes.js';",
+      "import { paasRoutes } from './modules/paas/download.routes.js';\nimport { paasPreview } from './modules/paas/preview.routes.js';"),
+     ("app.use(express.json({", "app.use('/preview', paasPreview);\napp.use(express.json({"))
+edit("server/modules/auth/auth.middleware.ts",
+     ("import { userDb, appConfigDb } from '../database/index.js';",
+      "import { userDb, appConfigDb } from '../database/index.js';\nimport { previewCookie } from '../paas/preview.routes.js';"),
+     ("    req.user = user;\n    next();\n  } catch (error) {",
+      "    req.user = user;\n    previewCookie(req, res, user.id);\n    next();\n  } catch (error) {"))

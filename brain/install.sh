@@ -62,7 +62,7 @@ for f in environment.md tool-map.md notes.md; do
   [ -f "$DST/brain/$f" ] || cp "$SRC/brain/$f" "$DST/brain/$f"
 done
 cp "$SRC/banner/paas-banner.py" "$SRC/banner/paas-statusline.py" "$DST/banner/"
-mkdir -p "$DST/tools/vendor" && cp "$SRC/tools/report.py" "$SRC/tools/get-reports.ps1" "$SRC/tools/db_mcp.py" "$SRC/tools/add-docs" "$DST/tools/"
+mkdir -p "$DST/tools/vendor" && cp "$SRC/tools/report.py" "$SRC/tools/get-reports.ps1" "$SRC/tools/db_mcp.py" "$SRC/tools/add-docs" "$SRC/tools/paas-open" "$DST/tools/"
 cp "$HERE/../docs-search-mcp/docs_index.py" "$DST/tools/"     # add-docs: your own documents into the library
 [ -f "$USER_DST/brain/databases.json" ] || cp "$SRC/tools/databases.example.json" "$USER_DST/brain/databases.example.json" && cp "$SRC/tools/vendor/"*.whl "$DST/tools/vendor/"   # charts + Excel (report-export skill); pure-Python wheels, no pip
 mkdir -p "$USER_DST/themes" && cp "$SRC/themes/paas.json" "$USER_DST/themes/"   # custom themes are read from ~/.claude/themes only
@@ -111,7 +111,7 @@ EOP
 fi
 # dev tools first (ruff, basedpyright, database drivers): the databases MCP below needs their Python
 sh "$HERE/devtools/install-devtools.sh" || echo "devtools: skipped (see the message above)"
-[ -n "$PROJECT" ] || { mkdir -p "$HOME/.local/bin" && ln -sf "$DST/tools/add-docs" "$HOME/.local/bin/add-docs"; }
+[ -n "$PROJECT" ] || { mkdir -p "$HOME/.local/bin" && ln -sf "$DST/tools/add-docs" "$HOME/.local/bin/add-docs"; ln -sf "$DST/tools/paas-open" "$HOME/.local/bin/paas-open"; }
 # a new library replaced docs.db: put the documents from your inbox back in (add-docs needs pypdf from the devtools)
 if [ "$NEW_LIB" = 1 ] && [ -n "$(find "$USER_DST/brain/inbox" -type f ! -name '._*' 2>/dev/null | head -1)" ]; then
   echo "re-adding your documents from $USER_DST/brain/inbox..."

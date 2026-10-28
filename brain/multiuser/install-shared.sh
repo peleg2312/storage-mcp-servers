@@ -39,6 +39,7 @@ for d in tools hooks banner themes; do cp -R "$BRAIN/claude/$d" "$P/$d" 2>/dev/n
 rm -rf "$P/plugins"; cp -R "$BRAIN/plugins" "$P/plugins"        # Claude Code plugins, offered in the marketplace
 chmod -R a+rX "$P/library" "$P/brain" "$P/tools" "$P/hooks" "$P/banner" "$P/themes" "$P/plugins"
 chmod 644 "$P/brain/environment.md" "$P/brain/tool-map.md"   # root edits them; everyone reads
+ln -sfn "$P/tools/paas-open" /usr/local/bin/paas-open       # shows a page in the web UI's Browser tab
 
 # marketplace: the brain's skills and agents (library paths pointed at the shared copy) + the MCP catalog
 install -m 755 "$BRAIN/marketplace/paas_market.py" "$P/bin/paas-market"
