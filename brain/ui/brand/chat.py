@@ -1,17 +1,19 @@
 """Chat fixes on top of the branding (run by brand.py with its edit()): follow the transcript while it streams,
 thinking starts collapsed, "Send now" on a queued message, and Claude Code's own slash commands in the / menu."""
 
-# --- auto-scroll: follow a message that grows in place (streamed text, tool output), not only new rows; and only
-# a scroll UP stops following (a fast stream used to leave the view >50 px short, which counted as "scrolled up")
+# --- auto-scroll: follow a message that grows in place (streamed text, tool output), not only new rows; and only the
+# person scrolling (wheel, touch, keys, scrollbar) stops following: a fast stream or a re-render that moved the view
+# used to count as "scrolled up" and the chat stopped following
 edit("src/modules/chat/hooks/useChatSessionState.ts",
      ("    const nearBottom = isNearBottom();\n    setIsUserScrolledUp(!nearBottom);\n",
       "    const nearBottom = isNearBottom();\n"
-      "    if (nearBottom || container.scrollTop < scrollPositionRef.current.top - 1) setIsUserScrolledUp(!nearBottom);\n"),
+      "    if (nearBottom || Date.now() - userScrollAtRef.current < 1000) setIsUserScrolledUp(!nearBottom);\n"),
+     ("  const handleScroll = useCallback(async () => {\n",
+      "  const userScrollAtRef = useRef(0);\n  const handleScroll = useCallback(async () => {\n"),
      ("  const wasChatActiveRef = useRef(isActive);\n",
-      "  const hasChatRows = chatMessages.length > 0;\n"
       "  useEffect(() => {\n"
-      "    const container = scrollContainerRef.current;\n"
-      "    if (!isActive || !container || typeof MutationObserver === 'undefined') return;\n"
+      "    if (!isActive || typeof MutationObserver === 'undefined') return;\n"
+      "    let el: HTMLDivElement | null = null;\n"
       "    let frame = 0;\n"
       "    const follow = () => {\n"
       "      if (frame) return;\n"
@@ -22,9 +24,28 @@ edit("src/modules/chat/hooks/useChatSessionState.ts",
       "      });\n"
       "    };\n"
       "    const observer = new MutationObserver(follow);\n"
-      "    observer.observe(container, { childList: true, subtree: true, characterData: true });\n"
-      "    return () => { observer.disconnect(); if (frame) cancelAnimationFrame(frame); };\n"
-      "  }, [isActive, hasChatRows, scrollToBottom]);\n\n"
+      "    const intent = () => { userScrollAtRef.current = Date.now(); };\n"
+      "    const kinds = ['wheel', 'touchmove', 'mousedown', 'keydown'];\n"
+      "    const attach = () => {\n"   # the pane is mounted again after a reload / session load: follow the live one
+      "      const c = scrollContainerRef.current;\n"
+      "      if (c === el) return;\n"
+      "      observer.disconnect();\n"
+      "      if (el) kinds.forEach((k) => el?.removeEventListener(k, intent));\n"
+      "      el = c;\n"
+      "      if (!el) return;\n"
+      "      observer.observe(el, { childList: true, subtree: true, characterData: true });\n"
+      "      kinds.forEach((k) => el?.addEventListener(k, intent, { passive: true }));\n"
+      "      follow();\n"
+      "    };\n"
+      "    attach();\n"
+      "    const timer = setInterval(attach, 500);\n"
+      "    return () => {\n"
+      "      clearInterval(timer);\n"
+      "      observer.disconnect();\n"
+      "      if (el) kinds.forEach((k) => el?.removeEventListener(k, intent));\n"
+      "      if (frame) cancelAnimationFrame(frame);\n"
+      "    };\n"
+      "  }, [isActive, scrollToBottom]);\n\n"
       "  const wasChatActiveRef = useRef(isActive);\n"))
 
 # --- thinking: collapsed ("Thought for 4s"), one click to read it
@@ -133,3 +154,46 @@ edit("src/modules/chat/composer/CommandMenu.tsx",
      ("  builtin: 'border-sky-200", "  claude: 'border-violet-200 bg-violet-50 text-violet-700 dark:border-violet-400/20 dark:bg-violet-400/10 dark:text-violet-200',\n  builtin: 'border-sky-200"),
      ("    ? ['frequent', 'builtin', 'skill', 'project', 'user', 'other']\n    : ['builtin', 'skill', 'project', 'user', 'other'];",
       "    ? ['frequent', 'builtin', 'claude', 'skill', 'project', 'user', 'other']\n    : ['builtin', 'claude', 'skill', 'project', 'user', 'other'];"))
+
+# --- a queued message goes about 2 s after its turn ends, not on the next 30 s poll (scheduled messages keep 30 s)
+edit("server/modules/scheduled-messages/services/scheduled-message-dispatcher.service.ts",
+     ("let dispatchInFlight = false;\n",
+      "let dispatchInFlight = false;\nlet queuedTimer: ReturnType<typeof setInterval> | null = null;\n"),
+     ("  pollTimer = setInterval(poll, POLL_INTERVAL_MS);\n",
+      "  pollTimer = setInterval(poll, POLL_INTERVAL_MS);\n"
+      "  queuedTimer = setInterval(() => {\n"
+      "    if (dispatchInFlight) return;\n"
+      "    dispatchInFlight = true;\n"
+      "    void dispatchQueuedMessages(runtime)\n"
+      "      .catch((error: unknown) => console.error('[QueuedMessages] Dispatch failed', { error: String(error) }))\n"
+      "      .finally(() => { dispatchInFlight = false; });\n"
+      "  }, 2_000);\n"
+      "  queuedTimer.unref?.();\n"),
+     ("export function closeScheduledMessageDispatcher(): void {\n",
+      "export function closeScheduledMessageDispatcher(): void {\n"
+      "  if (queuedTimer) {\n    clearInterval(queuedTimer);\n    queuedTimer = null;\n  }\n"))
+
+# --- live text: the reply appears as Claude writes it (SDK partial messages), not only when a whole block is done.
+# The client already buffers stream_delta / stream_end and swaps in the final text; subagents' text stays out, and the
+# pieces stay in a run's replay buffer only until their block ends (a page reloaded mid-reply gets the whole block;
+# afterwards the final text stands in for them), so a long turn cannot push real events out of it.
+edit("server/modules/providers/list/claude/claude-runtime.provider.js",
+     ("  sdkOptions.tools = { type: 'preset', preset: 'claude_code' };\n",
+      "  sdkOptions.tools = { type: 'preset', preset: 'claude_code' };\n  sdkOptions.includePartialMessages = true;\n"),
+     ("      // Transform and normalize message via adapter\n      const transformedMessage = transformMessage(message);",
+      "      if (message.type === 'stream_event') {\n"
+      "        const ev = message.event || {};\n"
+      "        const liveSid = capturedSessionId || sessionId || null;\n"
+      "        if (message.parent_tool_use_id) continue;\n"
+      "        if (ev.type === 'content_block_delta' && ev.delta?.type === 'text_delta' && ev.delta.text) {\n"
+      "          ws.send(createNormalizedMessage({ kind: 'stream_delta', content: ev.delta.text, sessionId: liveSid, provider: 'claude' }));\n"
+      "        } else if (ev.type === 'content_block_stop') {\n"
+      "          ws.send(createNormalizedMessage({ kind: 'stream_end', sessionId: liveSid, provider: 'claude' }));\n"
+      "        }\n"
+      "        continue;\n"
+      "      }\n\n"
+      "      // Transform and normalize message via adapter\n      const transformedMessage = transformMessage(message);"))
+edit("server/modules/websocket/services/chat-run-registry.service.ts",
+     ("  run.events.push(outbound);\n",
+      "  if (message.kind === 'stream_end') run.events = run.events.filter((event) => event.kind !== 'stream_delta');\n"
+      "  run.events.push(outbound);\n"))
