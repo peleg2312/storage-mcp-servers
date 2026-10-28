@@ -1,0 +1,12 @@
+{
+  "name": "paas-help",
+  "displayName": "Help",
+  "version": "1.0.0",
+  "description": "How to use this UI: chats, commands, modes, every tab, the terminal, safety rules and fixes for common problems.",
+  "author": "Peleg As A Service",
+  "icon": "icon.svg",
+  "type": "module",
+  "slot": "tab",
+  "entry": "index.js",
+  "permissions": []
+}
