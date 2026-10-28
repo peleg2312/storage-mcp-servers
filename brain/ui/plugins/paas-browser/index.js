@@ -34,7 +34,7 @@ const CSS = `
 .pb .frame{flex:1;min-height:0;border:1px solid hsl(var(--border));border-radius:12px;overflow:hidden;background:#fff}
 .pb iframe{width:100%;height:100%;border:0;display:block}
 .pb .empty{padding:40px 24px;color:hsl(var(--muted-foreground));background:hsl(var(--card));height:100%;box-sizing:border-box}
-.pb .empty code{background:hsl(var(--muted));border-radius:6px;padding:1px 6px}
+.pb .empty{line-height:1.8;overflow:auto}.pb .empty code{background:hsl(var(--muted));border-radius:6px;padding:1px 6px}
 @media (max-width:760px){.pb{padding:10px}}`;
 
 export function mount(container) {
@@ -44,9 +44,11 @@ export function mount(container) {
       <input spellcheck="false" placeholder="8000/docs  ·  ~/storage-reports/…/report.html">
       <button class="btn" data-go>Open</button><button class="ic" data-w title="Open in a new browser tab">↗</button></div>
     <div class="chips"></div>
-    <div class="frame"><div class="empty">Type a port and path of an app running on this VM (e.g. <code>8000/docs</code>
-      for a FastAPI app on port 8000) or a file under your home folder (<code>~/storage-reports/</code>).<br><br>
-      Claude can open pages here too: ask it to "show me the API docs in the Browser tab".</div></div></div>`;
+    <div class="frame"><div class="empty"><b>Shows web pages running on this VM</b>, inside the UI:<br>
+      · apps <b>your account</b> runs: a FastAPI service (<code>8000/docs</code>), a React / Vite dev server, a dashboard you started<br>
+      · files under your home folder: <code>~/storage-reports/</code> (HTML reports with their charts)<br><br>
+      It does not open internet sites (the VM is offline), other people's apps, or the storage / vCenter web pages.<br><br>
+      Type a port (<code>8000</code>) or a path (<code>~/</code>) above, or ask Claude: "show me the API docs in the Browser tab".</div></div></div>`;
   const input = container.querySelector('input');
   const frameBox = container.querySelector('.frame');
   const chips = container.querySelector('.chips');
