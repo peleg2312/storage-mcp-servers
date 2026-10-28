@@ -4,8 +4,8 @@ the Gateway (3.x) or PowerFlex Manager (4.x / 5.x).
 
 Read-only is enforced at the HTTP layer: the session object refuses any request that is not a GET,
 except a short list of POSTs that only read (sign-in, querySelectedStatistics, queryMdmCluster,
-queryBySelectedIds / queryIdByKey, the SDS network latency / connectivity queries, the 4.x metrics
-query). Every other POST, PUT, PATCH, DELETE and
+queryBySelectedIds / queryIdByKey, the SDS network latency / connectivity queries, the per-SDC
+volume counters (queryVolumeSdcBwc), the 4.x metrics query). Every other POST, PUT, PATCH, DELETE and
 any URL outside the REST API is blocked before it is sent. Use a Monitor (read-only) account as well.
 """
 
@@ -38,6 +38,7 @@ _READ_POSTS = re.compile(
     r"|/api/instances/System/action/queryMdmCluster"
     r"|/api/instances/Sds::[0-9a-f]{16}/action/querySdsNetworkLatencyMeters"
     r"|/api/instances/ProtectionDomain::[0-9a-f]{16}/action/querySdsConnectivityStatus"
+    r"|/api/instances/Sdc::[0-9a-f]{16}/action/queryVolumeSdcBwc"
     r"|/api/types/[A-Za-z]+/instances/action/(queryBySelectedIds|queryIdByKey)"
     r"|/dtapi/rest/v1/metrics/query)/?$")
 
@@ -474,6 +475,8 @@ Performance: get_performance_overview (system IO, pools, top volumes / SDCs / SD
   raw names from list_statistics_properties).
 Host mapping: get_sdc (its volumes), get_volume (its SDCs, snapshots in the same VTree, pool, PD),
   find_volume for an id the host shows.
+Per host per volume: get_sdc_volume_stats (IOPS, MB/s, latency of each volume on each SDC: which
+  node drives a volume, which volume is busy / slow on a node; no arguments = busiest pairs).
 Rebuild / rebalance / degraded data: get_health, then get_storage_pool for the pool (rebuild and
   rebalance rates, pending capacity) and list_devices problems_only=True.
 Events / logs: get_events (4.x+ event log, since_hours) next to get_alerts (active alerts).
@@ -1118,6 +1121,64 @@ def get_network_latency(system_id: str = "", protection_domain: str = "") -> dic
     return out
 
 
+def _sdc_volume_io(m: dict) -> dict:
+    """One queryVolumeSdcBwc entry ({read,write,trim}Bwc and {..}LatencyBwc) -> IOPS, MB/s, latency ms."""
+    out = {}
+    for side in ("read", "write", "trim"):
+        b, lat = m.get(f"{side}Bwc") or {}, m.get(f"{side}LatencyBwc") or {}
+        secs, n = b.get("numSeconds") or 0, b.get("numOccured") or 0
+        out[f"{side}_iops"] = round(n / secs, 1) if secs else 0.0
+        if side != "trim":
+            out[f"{side}_mbps"] = round((b.get("totalWeightInKb") or 0) / secs / 1024, 2) if secs else 0.0
+        ln = lat.get("numOccured") or 0
+        out[f"{side}_latency_ms"] = round((lat.get("totalWeightInKb") or 0) / ln / 1000, 3) if ln else 0.0
+    out["total_iops"] = round(out["read_iops"] + out["write_iops"], 1)
+    out["total_mbps"] = round(out["read_mbps"] + out["write_mbps"], 2)
+    return out
+
+
+@mcp.tool(annotations=RO)
+def get_sdc_volume_stats(sdc: str = "", volume: str = "", system_id: str = "", limit: int = 50) -> dict:
+    """Live IO of each volume AS SEEN BY EACH SDC (host): IOPS, MB/s, read / write / trim latency ms
+    per (SDC, volume) pair. sdc -> every volume on that host; volume -> every host using it (e.g. both
+    nodes during a KubeVirt live migration); neither -> the busiest pairs in the system (top `limit`).
+    SDCs only (NVMe/TCP hosts: get_statistics object_type=Host). Same counters the CSI driver uses."""
+    _, g = system(system_id)
+    if sdc:
+        sdcs = [resolve(g, "Sdc", sdc)]
+    elif volume:
+        v = resolve(g, "Volume", volume)
+        ids = {m.get("sdcId") for m in v.get("mappedSdcInfo") or []}
+        sdcs = [c for c in instances(g, "Sdc") if c["id"] in ids]
+    else:
+        sdcs = instances(g, "Sdc")
+    vid = resolve(g, "Volume", volume)["id"] if volume else None
+    names = {x["id"]: x.get("name") for x in instances(g, "Volume")}
+
+    def ask(c):
+        try:
+            return c, g.post(f"/api/instances/Sdc::{q(c['id'])}/action/queryVolumeSdcBwc", {}) or [], None
+        except Exception as e:
+            return c, [], str(e)
+    with ThreadPoolExecutor(max_workers=8) as ex:
+        answers = list(ex.map(ask, sdcs))
+    rows, errors = [], []
+    for c, metrics, err in answers:
+        if err:
+            errors.append({"sdc": c.get("name") or c["id"], "error": err})
+        for m in metrics if isinstance(metrics, list) else []:
+            if vid and m.get("volumeId") != vid:
+                continue
+            rows.append({"sdc": c.get("name") or c.get("sdcIp") or c["id"], "sdc_id": c["id"],
+                         "volume": names.get(m.get("volumeId"), m.get("volumeId")), "volume_id": m.get("volumeId"),
+                         **_sdc_volume_io(m)})
+    rows.sort(key=lambda r: (r["total_iops"], r["total_mbps"]), reverse=True)
+    out = cap(rows, limit)
+    if errors:
+        out["errors"] = errors
+    return out
+
+
 # ---------------------------------------------------------------------------
 # Performance / statistics
 # ---------------------------------------------------------------------------
@@ -1300,8 +1361,8 @@ def openshift_volume_troubleshoot(pvc_pv_or_handle: str, system_id: str = "") ->
             "1) Get the PV volumeHandle (OpenShift tools if connected, else ask for "
             "oc get pv <pv> -o jsonpath='{.spec.csi.volumeHandle}') and the node(s) using it. "
             "2) find_volume with the handle, then get_volume: pool, mapped SDCs / NVMe hosts (two during VM "
-            "live migration), QoS limits, snapshots. 3) get_sdc for each node: is the SDC connected, what "
-            "else on that node is busy. 4) get_statistics for the volume and the node's SDC with samples=6 "
+            "live migration), QoS limits, snapshots. 3) get_sdc for each node: is the SDC connected; get_sdc_volume_stats "
+            "volume=<it> for its IO and latency as each node sees it, sdc=<node> for what else is busy there. 4) get_statistics for the volume and the node's SDC with samples=6 "
             "interval_seconds=10; compare with its pool in get_performance_overview. 5) get_health, get_alerts, "
             "get_events since_hours=24 for that node, SDS or pool. 6) If writes are slow but reads fine, "
             "get_network_latency. Conclude: node, volume QoS, pool / SDS / devices, rebuild, or network.")

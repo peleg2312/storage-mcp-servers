@@ -3,7 +3,7 @@
 MCP server for Dell PowerFlex (ScaleIO / VxFlex OS) through its REST API: the **Gateway (3.x)** or
 **PowerFlex Manager (4.x / 5.x)**, detected at sign-in. Covers the whole system: health in one call,
 capacity, inventory (PD, pools, SDS, SDC, volumes, devices, fault sets), replication, NVMe/TCP, alerts,
-the event log, SDS network latency and **all statistics**, converted to IOPS, MB/s, latency ms and GB.
+the event log, SDS network latency, per-SDC-per-volume IO and **all statistics**, converted to IOPS, MB/s, latency ms and GB.
 
 ## Read-only enforcement
 
@@ -11,7 +11,7 @@ Every HTTP request goes through one session object that refuses anything except:
 - `GET` under `/api/`, `/rest/`, `/dtapi/`
 - the `POST`s that only read: sign-in (`/rest/auth/login|refresh`), `/api/instances/querySelectedStatistics`,
   `/api/instances/System/action/queryMdmCluster`, `Sds::<id>/action/querySdsNetworkLatencyMeters`,
-  `ProtectionDomain::<id>/action/querySdsConnectivityStatus`, `.../instances/action/queryBySelectedIds|queryIdByKey`,
+  `ProtectionDomain::<id>/action/querySdsConnectivityStatus`, `Sdc::<id>/action/queryVolumeSdcBwc`, `.../instances/action/queryBySelectedIds|queryIdByKey`,
   and the 4.x metrics query `/dtapi/rest/v1/metrics/query`
 
 Every other `POST` (all PowerFlex changes are `POST .../action/...`), `PUT`, `PATCH`, `DELETE`, any
@@ -19,7 +19,7 @@ Every other `POST` (all PowerFlex changes are `POST .../action/...`), `PUT`, `PA
 **Monitor** (read-only) role. `python3 test_readonly.py` runs every tool against a fake 3.x Gateway and
 a fake 4.x Manager and proves writes never leave the process.
 
-## Tools (28)
+## Tools (29)
 
 | Area | Tools |
 |---|---|
@@ -29,6 +29,7 @@ a fake 4.x Manager and proves writes never leave the process.
 | Protection | `get_replication` (peer systems, RCGs, SDRs, pairs), `list_snapshot_policies`, `list_nvme` (hosts, SDTs) |
 | Events | `get_alerts` (active alerts), `get_events` (4.x+ event log, `since_hours`; 3.x: says where the MDM log is) |
 | Network | `get_network_latency` (SDS-to-SDS latency meters, PD connectivity check) |
+| Per host per volume | `get_sdc_volume_stats` (IOPS, MB/s, read / write / trim latency of each volume on each SDC: by SDC, by volume, or the busiest pairs) |
 | Performance | `get_performance_overview` (system, pools, top / worst-latency volumes, SDCs, SDSs, NVMe hosts), `get_statistics` (any object, KPI / ALL / names, with sampling), `list_statistics_properties`, `metrics_query` (4.x metrics API) |
 | Other | `powerflex_get` (any GET endpoint) |
 

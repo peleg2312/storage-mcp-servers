@@ -121,6 +121,13 @@ def route(host, method, path, body):
                       {"id": "e0", "severity": "INFO", "message": "old", "timestamp": "2020-01-01T00:00:00Z"}])
     if path.endswith("/action/querySdsNetworkLatencyMeters"):
         return (200, [{"ipAddress": "10.0.0.12", "averageMessageWaitTimeInUsec": 350}])
+    if path.endswith("/action/queryVolumeSdcBwc"):                 # per SDC: each mapped volume's counters
+        sdc = path.split("::")[1].split("/")[0]
+        bwc = lambda n, kb: {"numSeconds": 5, "numOccured": n, "totalWeightInKb": kb}
+        return (200, [{"sdcId": sdc, "volumeId": v["id"], "readBwc": bwc(500, 4000), "writeBwc": bwc(1000, 10240),
+                       "trimBwc": bwc(0, 0), "readLatencyBwc": bwc(100, 50000), "writeLatencyBwc": bwc(200, 300000),
+                       "trimLatencyBwc": bwc(0, 0)}
+                      for v in obj["Volume"] if any(m.get("sdcId") == sdc for m in v.get("mappedSdcInfo") or [])])
     if path.endswith("/action/querySdsConnectivityStatus"):
         return (200, {"allSdssConnected": True})
     parts = path.strip("/").split("/")
@@ -248,6 +255,13 @@ async def main():
     nl = await call("get_network_latency", system_id=S3)
     assert nl["protection_domains"][0]["connectivity"]["allSdssConnected"] is True
     assert nl["sds"][0]["latency_meters"][0]["averageMessageWaitTime_ms"] == 0.35, nl
+    sv = await call("get_sdc_volume_stats", sdc="esx01", system_id=S3)
+    assert sv["total"] == 1 and sv["items"][0]["volume"] == "ds_prod01", sv
+    r = sv["items"][0]
+    assert (r["read_iops"], r["write_iops"], r["total_iops"], r["write_mbps"]) == (100.0, 200.0, 300.0, 2.0), r
+    assert (r["read_latency_ms"], r["write_latency_ms"]) == (0.5, 1.5), r
+    assert (await call("get_sdc_volume_stats", volume="ds_test02", system_id=S3))["items"][0]["sdc"] == "esx02"
+    assert (await call("get_sdc_volume_stats", system_id=S3))["total"] == 2
     al = await call("get_alerts", system_id=S3, severity="critical")
     assert al["total"] == 1 and al["alerts"][0]["alertType"] == "SDS_DISCONNECTED"
     assert (await call("get_alerts", system_id=S3))["alerts"][0]["id"] == "2"           # newest first
@@ -295,6 +309,8 @@ async def main():
         ("POST", f"{b}/rest/auth/logout"),
         ("POST", f"{b}/api/instances/Sds::{SDS1}/action/setSdsNetworkLimits"),
         ("POST", f"{b}/api/instances/Sds::x/action/querySdsNetworkLatencyMeters"),         # id must be 16 hex
+        ("POST", f"{b}/api/instances/Sdc::{SDC1}/action/removeMappedVolume"),
+        ("POST", f"{b}/api/instances/Sdc::x/action/queryVolumeSdcBwc"),                     # id must be 16 hex
         ("POST", f"{b}/api/instances/ProtectionDomain::{PD}/action/setSdsNetworkLimits"),
         ("GET", f"{b}/../etc/passwd"),
         ("GET", "https://evil.example/other"),
