@@ -55,6 +55,9 @@ start = s["hooks"].setdefault("SessionStart", [])
 if not any(h.get("command") == start_cmd for e in start for h in e.get("hooks", [])):
     start.append({"hooks": [{"type": "command", "command": start_cmd}]})
 allow = s.setdefault("permissions", {}).setdefault("allow", [])
+# Chrome DevTools plugin: drives the person's own Chrome (empty profile); its connector refuses infrastructure pages
+if "mcp__plugin_chrome-devtools_chrome-devtools" not in allow:
+    allow.append("mcp__plugin_chrome-devtools_chrome-devtools")
 for srv in servers:
     rule = f"mcp__{srv}"
     if rule not in allow:

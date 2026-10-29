@@ -170,7 +170,7 @@
     },
     {
       "name": "chrome-devtools",
-      "description": "Chrome DevTools: Claude drives the Chrome on your Windows PC (own empty profile, through an SSH tunnel) to open your app, click, type, take screenshots, read console and network, check performance and accessibility. Each chat uses its own PC; only this server's pages. Connect with: paas-chrome windows",
+      "description": "Chrome DevTools: Claude drives the Chrome on your Windows PC (own empty profile, through an SSH tunnel) to open your app, click, type, take screenshots, read console and network, check performance and accessibility. Each chat uses its own PC; any site except storage, switch, UCS and vCenter pages. Connect with: paas-chrome windows",
       "author": {
         "name": "ChromeDevTools (Google)"
       },

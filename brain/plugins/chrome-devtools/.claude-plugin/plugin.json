@@ -1,7 +1,9 @@
 {
   "name": "chrome-devtools",
-  "description": "Chrome DevTools for your apps: Claude drives the Chrome on your Windows PC (its own empty profile) to open your app, click, type, take screenshots, read the console and network, check performance and accessibility. Several people on one account: each chat uses its own PC's Chrome. Only this server's own pages.",
+  "description": "Chrome DevTools for your apps: Claude drives the Chrome on your Windows PC (its own empty profile) to open your app, click, type, take screenshots, read the console and network, check performance and accessibility. Several people on one account: each chat uses its own PC's Chrome. Any site except storage, switch, UCS and vCenter pages.",
   "version": "1.12.0",
-  "author": { "name": "ChromeDevTools (Google), offline packaging by storage-mcp-servers" },
+  "author": {
+    "name": "ChromeDevTools (Google), offline packaging by storage-mcp-servers"
+  },
   "license": "Apache-2.0"
 }

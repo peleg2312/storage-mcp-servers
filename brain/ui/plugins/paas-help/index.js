@@ -120,7 +120,8 @@ const SECTIONS = [
     <li>Paste it into PowerShell on your PC and sign in. A separate Chrome window opens (its own empty profile, not your everyday Chrome). Keep the PowerShell window open; close it to disconnect.</li>
     <li>Ask: "open my app on port 8000 in Chrome and check the console", "test the login form", "why is this page slow?".</li></ol>
     <p class="note">Several people on the same account: each chat uses its own PC. If more than one PC is connected, Claude asks which one is yours.
-    Chrome opens only this server's own pages, never storage, switch or vCenter pages.</p>` },
+    Switch a chat to another PC in the <b>Browser</b> tab ("Chrome on your PC") or just tell Claude.
+    Claude may open any site, except storage, switch, UCS and vCenter pages: those stay read-only.</p>` },
 
   { id: 'uiux', title: 'UI design (UI UX Pro Max)', body: `
     <p>The <b>ui-ux-pro-max</b> plugin (Marketplace → Add) gives Claude a design library: 79 styles, 192 color palettes,

@@ -7,7 +7,9 @@ import express from 'express';
 // @ts-expect-error -- no type declarations for jsonwebtoken in this checkout (auth.middleware.ts uses @ts-nocheck)
 import jwt from 'jsonwebtoken';
 
-import { appConfigDb } from '../database/index.js';
+import { execFile } from 'node:child_process';
+
+import { appConfigDb, sessionsDb } from '../database/index.js';
 
 /**
  * Peleg As A Service: the Browser tab. Pages served on this VM, shown inside the UI:
@@ -132,6 +134,43 @@ paasPreview.use((req, res, next) => {
 paasPreview.get('/_open', (_req, res) => {
   res.setHeader('Cache-Control', 'no-store');
   try { res.json(JSON.parse(fs.readFileSync(OPEN_FILE, 'utf8'))); } catch { res.json({}); }
+});
+
+// Chrome DevTools plugin: the Windows PCs connected (each a Chrome of its own), the one this chat uses, the PowerShell
+// line to connect another; POST switches the chat (Claude's own session id: what the plugin's connector reads)
+const CHROME_BIN = [process.env.PAAS_CHROME_BIN, '/usr/local/bin/paas-chrome', path.join(os.homedir(), '.local', 'bin', 'paas-chrome')]
+  .find((f) => f && fs.existsSync(f));
+const chrome = (args: string[]) => new Promise<string>((resolve, reject) => {
+  if (!CHROME_BIN) { reject(new Error('the chrome-devtools plugin is not installed on this server')); return; }
+  execFile('sh', [CHROME_BIN, ...args], { timeout: 15000 }, (err, out, errOut) => (err ? reject(new Error(String(errOut || err.message).trim())) : resolve(out)));
+});
+const claudeSession = (appId: string) => sessionsDb.getSessionById(appId)?.provider_session_id || appId;
+
+paasPreview.get('/_chrome', async (req, res) => {
+  res.setHeader('Cache-Control', 'no-store');
+  if (!CHROME_BIN) { res.json({ installed: false }); return; }
+  try {
+    const session = String(req.query.session || '').replace(/[^\w-]/g, '');
+    const [pcs, chosen, line] = await Promise.all([
+      chrome(['list', '--json']).then((o) => JSON.parse(o)),
+      session ? chrome(['chosen', claudeSession(session)]).then((o) => JSON.parse(o).port) : Promise.resolve(null),
+      chrome(['windows']).then((o) => o.trim().split('\n').pop()),
+    ]);
+    res.json({ installed: true, pcs, chosen, line });
+  } catch (e) { res.status(500).json({ installed: true, error: (e as Error).message }); }
+});
+
+paasPreview.post('/_chrome', (req, res) => {
+  let body = '';
+  req.on('data', (d) => { body += d; if (body.length > 4000) req.destroy(); });
+  req.on('end', async () => {
+    try {
+      const { session, pc } = JSON.parse(body || '{}');
+      const id = String(session || '').replace(/[^\w-]/g, '');
+      if (!id || !pc) { res.status(400).json({ error: 'session and pc are needed' }); return; }
+      res.json(JSON.parse(await chrome(['choose', claudeSession(id), String(pc)])));
+    } catch (e) { res.status(400).json({ error: (e as Error).message }); }
+  });
 });
 
 // this account's listening ports (the Browser tab's shortcuts), without the UI's own

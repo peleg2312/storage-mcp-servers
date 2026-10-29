@@ -41,7 +41,7 @@ chmod -R a+rX "$P/library" "$P/brain" "$P/tools" "$P/hooks" "$P/banner" "$P/them
 chmod 644 "$P/brain/environment.md" "$P/brain/tool-map.md"   # root edits them; everyone reads
 ln -sfn "$P/tools/paas-open" /usr/local/bin/paas-open       # shows a page in the web UI's Browser tab
 ln -sfn "$P/plugins/chrome-devtools/bin/run.sh" /usr/local/bin/paas-chrome   # Chrome DevTools plugin: the Windows line, connected PCs
-[ -f "$ETC/chrome-allowed-hosts" ] || printf '# hosts the Chrome DevTools plugin may open besides this server itself (one per line, *.example.local allowed)\n# never storage arrays, switches, UCS or vCenter\n' > "$ETC/chrome-allowed-hosts"
+[ -f "$ETC/chrome-blocked-hosts" ] || printf '# web pages Claude must never open in Chrome (Chrome DevTools plugin), one host per line, *.example.local allowed:\n# your storage arrays, Unisphere, System Manager, switches, UCS, vCenter / ESXi (names like vcenter*, esx*, unisphere*,\n# ontap*, mds*, ucs* are blocked already)\n' > "$ETC/chrome-blocked-hosts"
 
 # marketplace: the brain's skills and agents (library paths pointed at the shared copy) + the MCP catalog
 install -m 755 "$BRAIN/marketplace/paas_market.py" "$P/bin/paas-market"

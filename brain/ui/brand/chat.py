@@ -263,3 +263,70 @@ edit("src/modules/chat/hooks/useChatComposerState.ts",
       "          return;\n"
       "        }\n"
       "        const matchedCommand =\n          slashCommands.find((cmd: SlashCommand) => cmd.name === commandName) ||"))
+
+# images in MCP tool results (Chrome DevTools screenshots): the 40 000-character cap cut the base64 mid-string, so the
+# result stopped parsing and the chat showed raw JSON. Keep the text and up to 4 images of up to 1.5 MB each whole (a
+# larger one becomes a note), and draw them under the text.
+edit("server/shared/message-unification.ts",
+     ("function capToolResult(message: NormalizedMessage): void {",
+      "const MAX_KEPT_IMAGES = 4;\n"
+      "const MAX_IMAGE_DATA = 1_500_000;\n\n"
+      "/** An MCP result (text and image blocks) with its images kept whole and its text capped; null for anything else. */\n"
+      "function capMcpBlocks(value: unknown): unknown[] | null {\n"
+      "  let blocks: unknown = value;\n"
+      "  if (typeof value === 'string') {\n"
+      "    if (!value.startsWith('[') || !value.includes('\"image\"')) return null;\n"
+      "    try { blocks = JSON.parse(value); } catch { return null; }\n"
+      "  }\n"
+      "  if (!Array.isArray(blocks) || !blocks.some((b) => readObjectRecord(b)?.type === 'image')) return null;\n"
+      "  let kept = 0;\n"
+      "  return blocks.map((b) => {\n"
+      "    const block = readObjectRecord(b);\n"
+      "    if (block?.type === 'text' && typeof block.text === 'string') return { type: 'text', text: truncateOutput(block.text) };\n"
+      "    const data = readObjectRecord(block?.source)?.data ?? block?.data;\n"
+      "    if (block?.type === 'image' && typeof data === 'string' && data.length <= MAX_IMAGE_DATA && kept < MAX_KEPT_IMAGES) {\n"
+      "      kept += 1;\n"
+      "      return block;\n"
+      "    }\n"
+      "    return { type: 'text', text: '[image left out: too large]' };\n"
+      "  });\n"
+      "}\n\n"
+      "function capToolResult(message: NormalizedMessage): void {"),
+     ("  if (typeof result.content === 'string') {\n    result.content = truncateOutput(result.content);\n  }\n",
+      "  const mcpBlocks = capMcpBlocks(result.content);\n"
+      "  if (mcpBlocks) {\n"
+      "    result.content = JSON.stringify(mcpBlocks);\n"
+      "  } else if (typeof result.content === 'string') {\n    result.content = truncateOutput(result.content);\n  }\n"))
+edit("src/modules/chat/tools/configs/toolConfigs.ts",
+     ("        return {\n          content: String(content),\n          format: 'plain'\n        };\n      }\n    }\n  }\n};",
+      "        // images an MCP tool returned (Chrome DevTools screenshots): drawn under the text\n"
+      "        const raw = result?.content;\n"
+      "        let blocks: any = raw;\n"
+      "        if (typeof raw === 'string' && raw.startsWith('[')) { try { blocks = JSON.parse(raw); } catch { blocks = null; } }\n"
+      "        const images = Array.isArray(blocks)\n"
+      "          ? blocks.filter((p: any) => p?.type === 'image' && (p.source?.data || p.data))\n"
+      "              .map((p: any) => `data:${p.source?.media_type || p.mimeType || 'image/png'};base64,${p.source?.data || p.data}`)\n"
+      "          : [];\n"
+      "        return {\n          content: images.length ? String(content).replace(/^\\[Image: source: [^\\]]*\\]\\s*$/gm, '').trim() : String(content),\n"
+      "          format: 'plain',\n          images\n        };\n      }\n    }\n  }\n};"))
+edit("src/modules/chat/tools/ToolRenderer.tsx",
+     ("          <TextContent\n            content={contentProps.content || ''}\n            format={contentProps.format || 'plain'}\n          />",
+      "          <TextContent\n            content={contentProps.content || ''}\n            format={contentProps.format || 'plain'}\n            images={contentProps.images}\n          />"))
+edit("src/modules/chat/tools/ContentRenderers/TextContent.tsx",
+     ("  format?: 'plain' | 'json' | 'code';\n  className?: string;\n};",
+      "  format?: 'plain' | 'json' | 'code';\n  className?: string;\n  images?: string[];\n};"),
+     ("  format = 'plain',\n  className = ''\n}) => {",
+      "  format = 'plain',\n  className = '',\n  images = []\n}) => {\n"
+      "  if (images.length && format === 'plain') {\n"
+      "    return (\n"
+      "      <div className={`mt-1 space-y-2 ${className}`}>\n"
+      "        {content && <div className=\"whitespace-pre-wrap text-sm text-gray-700 dark:text-gray-300\">{content}</div>}\n"
+      "        {images.map((src, i) => (\n"
+      "          <a key={i} href={src} target=\"_blank\" rel=\"noreferrer\" title=\"Open full size\">\n"
+      "            <img src={src} alt={`Screenshot ${i + 1}`} loading=\"lazy\"\n"
+      "              className=\"max-h-[480px] max-w-full rounded-lg border border-gray-200 object-contain dark:border-gray-700\" />\n"
+      "          </a>\n"
+      "        ))}\n"
+      "      </div>\n"
+      "    );\n"
+      "  }\n"))

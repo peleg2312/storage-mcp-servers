@@ -35,20 +35,91 @@ const CSS = `
 .pb iframe{width:100%;height:100%;border:0;display:block}
 .pb .empty{padding:40px 24px;color:hsl(var(--muted-foreground));background:hsl(var(--card));height:100%;box-sizing:border-box}
 .pb .empty{line-height:1.8;overflow:auto}.pb .empty code{background:hsl(var(--muted));border-radius:6px;padding:1px 6px}
-@media (max-width:760px){.pb{padding:10px}}`;
+.pb .cr{display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-size:12.5px;border:1px solid hsl(var(--border));background:hsl(var(--card));border-radius:12px;padding:7px 10px}
+.pb .cr[hidden]{display:none}.pb .cr .dot{width:8px;height:8px;border-radius:50%;background:hsl(var(--muted-foreground));flex:none}
+.pb .cr .dot.on{background:#22c55e;box-shadow:0 0 0 3px #22c55e33}.pb .cr b{font-weight:600}.pb .cr .sub{color:hsl(var(--muted-foreground))}
+.pb .cr select{background:hsl(var(--background));border:1px solid hsl(var(--border));border-radius:8px;padding:4px 8px;color:inherit;font:inherit;max-width:260px}
+.pb .cr .ghost{border:1px solid hsl(var(--border));background:none;color:inherit;border-radius:999px;padding:3px 12px;cursor:pointer;font:600 12px Inter,ui-sans-serif,system-ui,sans-serif;margin-left:auto}
+.pb .cr .ghost:hover{background:hsl(var(--accent))}
+.pb .howto{border:1px solid hsl(var(--border));background:hsl(var(--card));border-radius:12px;padding:14px 16px;font-size:13px;line-height:1.6}
+.pb .howto[hidden]{display:none}.pb .howto ol{margin:6px 0 10px;padding-left:20px;list-style:decimal}
+.pb .howto pre{margin:0;white-space:pre-wrap;word-break:break-all;font:12px/1.5 ui-monospace,SFMono-Regular,Menlo,monospace;background:hsl(var(--muted));border-radius:8px;padding:10px 12px;max-height:120px;overflow:auto}
+.pb .howto .row{display:flex;gap:8px;align-items:center;margin-top:8px}
+@media (max-width:760px){.pb{padding:10px}.pb .cr select{max-width:100%}}`;
 
-export function mount(container) {
+// Chrome DevTools plugin: which PC's Chrome this chat drives, a switch between the connected PCs, how to connect one
+function chromeBar(box, howto, api) {
+  let stopped = false;
+  let data = null;
+  const esc = (v) => String(v ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  const session = () => api?.context?.session?.id || '';
+  function render() {
+    if (!data || !data.installed) { box.hidden = true; howto.hidden = true; return; }
+    box.hidden = false;
+    const pcs = data.pcs || [];
+    const cur = pcs.find((p) => p.port === data.chosen);
+    const label = (p) => `${p.pc}${p.user ? ` (${p.user})` : ''}`;
+    let status;
+    if (data.error) status = `<span class="sub">Chrome: ${esc(data.error)}</span>`;
+    else if (!pcs.length) status = '<span class="dot"></span><span><b>Chrome on your PC:</b> <span class="sub">no PC connected</span></span>';
+    else if (!session()) status = `<span class="dot on"></span><span><b>Chrome on your PC:</b> ${pcs.length} connected <span class="sub">· open a chat to choose its PC</span></span>`;
+    else {
+      status = `<span class="dot ${cur ? 'on' : ''}"></span><b>This chat's Chrome:</b>
+        <select aria-label="PC whose Chrome this chat uses">${cur ? '' : `<option value="">${pcs.length > 1 ? 'Choose your PC…' : 'Not chosen yet'}</option>`}
+        ${pcs.map((p) => `<option value="${p.port}" ${p.port === data.chosen ? 'selected' : ''}>${esc(label(p))}</option>`).join('')}</select>
+        ${pcs.length === 1 && !cur ? '<span class="sub">(used automatically)</span>' : ''}`;
+    }
+    box.innerHTML = `${status}<button class="ghost" data-connect>${howto.hidden ? 'Connect a PC' : 'Close'}</button>`;
+    box.querySelector('select')?.addEventListener('change', async (e) => {
+      const pc = e.target.value;
+      if (!pc) return;
+      e.target.disabled = true;
+      try {
+        const r = await fetch('/preview/_chrome', { method: 'POST', credentials: 'same-origin', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ session: session(), pc }) });
+        if (!r.ok) throw new Error((await r.json()).error || r.status);
+        data.chosen = Number(pc);
+      } catch (err) { alert(`Could not switch: ${err.message || err}`); }
+      render();
+    });
+    box.querySelector('[data-connect]').addEventListener('click', () => { howto.hidden = !howto.hidden; render(); });
+    howto.innerHTML = `<b>Connect the Chrome on your Windows PC</b>
+      <ol><li>Copy the line below and paste it into <b>PowerShell</b> on your PC.</li>
+      <li>Sign in with your server password. A separate Chrome window opens (its own empty profile, not your everyday Chrome).</li>
+      <li>Keep that PowerShell window open while you work; close it to disconnect. Your PC then appears above.</li></ol>
+      <pre>${esc(data.line || '')}</pre><div class="row"><button class="btn" data-copy>Copy</button>
+      <span class="sub">Claude may open any site in that Chrome, except storage, switch, UCS and vCenter pages.</span></div>`;
+    howto.querySelector('[data-copy]').addEventListener('click', async (e) => {
+      try { await navigator.clipboard.writeText(data.line || ''); e.target.textContent = 'Copied'; } catch {
+        const range = document.createRange(); range.selectNodeContents(howto.querySelector('pre'));
+        const sel = window.getSelection(); sel.removeAllRanges(); sel.addRange(range); e.target.textContent = 'Press Ctrl+C';
+      }
+      setTimeout(() => { e.target.textContent = 'Copy'; }, 2000);
+    });
+  }
+  async function refresh() {
+    try { data = await (await fetch(`/preview/_chrome?session=${encodeURIComponent(session())}`, { credentials: 'same-origin', cache: 'no-store' })).json(); } catch { /* signed out: keep the last view */ }
+    if (!stopped && !box.querySelector('select:focus')) render();
+  }
+  let timer = 0;
+  const tick = () => refresh().finally(() => { if (!stopped) timer = setTimeout(tick, 5000); });
+  const off = api?.onContextChange?.(() => { refresh(); });
+  tick();
+  return () => { stopped = true; clearTimeout(timer); off?.(); };
+}
+
+export function mount(container, api) {
   container.innerHTML = `<style>${CSS}</style><div class="pb">
     <div class="bar"><button class="ic" data-b title="Back">←</button><button class="ic" data-f title="Forward">→</button>
       <button class="ic" data-r title="Reload">⟳</button>
       <input spellcheck="false" placeholder="8000/docs  ·  ~/storage-reports/…/report.html">
       <button class="btn" data-go>Open</button><button class="ic" data-w title="Open in a new browser tab">↗</button></div>
     <div class="chips"></div>
-    <div class="frame"><div class="empty"><b>Shows web pages running on this VM</b>, inside the UI:<br>
-      · apps <b>your account</b> runs: a FastAPI service (<code>8000/docs</code>), a React / Vite dev server, a dashboard you started<br>
+    <div class="cr" hidden></div><div class="howto" hidden></div>
+    <div class="frame"><div class="empty"><b>Your own pages, inside the UI:</b><br>
+      · apps you run: a FastAPI service (<code>8000/docs</code>), a React / Vite dev server, a dashboard you started<br>
       · files under your home folder: <code>~/storage-reports/</code> (HTML reports with their charts)<br><br>
-      It does not open internet sites (the VM is offline), other people's apps, or the storage / vCenter web pages.<br><br>
-      Type a port (<code>8000</code>) or a path (<code>~/</code>) above, or ask Claude: "show me the API docs in the Browser tab".</div></div></div>`;
+      Type a port (<code>8000</code>) or a path (<code>~/</code>) above, or ask Claude: "show me the API docs in the Browser tab".<br><br>
+      Want Claude to click through your app in a real Chrome? Use <b>Connect a PC</b> above (chrome-devtools plugin).</div></div></div>`;
   const input = container.querySelector('input');
   const frameBox = container.querySelector('.frame');
   const chips = container.querySelector('.chips');
@@ -99,7 +170,8 @@ export function mount(container) {
   container.querySelector('[data-f]').addEventListener('click', () => frame?.contentWindow.history.forward());
   container.querySelector('[data-r]').addEventListener('click', () => { if (frame) frame.contentWindow.location.reload(); ports(); });
   container.querySelector('[data-w]').addEventListener('click', () => { const p = toPreview(input.value); if (p) window.open(p, '_blank', 'noopener'); });
-  container._paasStop = () => { stopped = true; };
+  const stopChrome = chromeBar(container.querySelector('.cr'), container.querySelector('.howto'), api);
+  container._paasStop = () => { stopped = true; stopChrome(); };
 
   ports();
   const last = store.get(LAST);
