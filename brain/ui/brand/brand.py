@@ -182,18 +182,19 @@ edit("src/modules/chat/transcript/Markdown.tsx",
       "            </>\n          );\n        }\n"),
      ("    [openFileInEditor, openDirectory],\n", "    [openFileInEditor, openDirectory, paasProjectId],\n"))
 # the read-only guard's "ask" (cluster changes, database writes) must reach the user in every permission mode: the
-# allowed-tools shortcut must not answer it, "bypass" is emulated in canUseTool (all else allowed) and the classifier
-# mode runs as default (the SDK documents neither for a hook's ask)
+# allowed-tools shortcut must not answer it. Auto and bypass run as themselves (tested: a hook's ask still reaches
+# canUseTool in both); only root's bypass is emulated in canUseTool, since Claude Code refuses bypass as root
 P = "server/modules/providers/list/claude/claude-runtime.provider.js"
 edit(P,
      ("function mapCliOptionsToSDK(options = {}) {",
-      "// sessions started in bypass mode: emulated in canUseTool so the read-only guard's asks still reach the user\n"
+      "// root's sessions in bypass mode: emulated in canUseTool (Claude Code refuses bypass as root)\n"
       "const PAAS_BYPASS = new WeakSet();\n\nfunction mapCliOptionsToSDK(options = {}) {"),
      ("  if (settings.skipPermissions && permissionMode !== 'plan') {\n    sdkOptions.permissionMode = 'bypassPermissions';\n  }\n",
       "  if (settings.skipPermissions && permissionMode !== 'plan') {\n    sdkOptions.permissionMode = 'bypassPermissions';\n  }\n"
-      "  if (sdkOptions.permissionMode === 'bypassPermissions') PAAS_BYPASS.add(sdkOptions);\n"
-      "  if (sdkOptions.permissionMode === 'bypassPermissions' || sdkOptions.permissionMode === 'auto') {\n"
-      "    sdkOptions.permissionMode = 'default';\n  }\n"),
+      "  if (sdkOptions.permissionMode === 'bypassPermissions' && process.getuid?.() === 0) {\n"
+      "    PAAS_BYPASS.add(sdkOptions);\n    sdkOptions.permissionMode = 'default';\n"
+      "  } else if (sdkOptions.permissionMode === 'bypassPermissions') {\n"
+      "    sdkOptions.allowDangerouslySkipPermissions = true;\n  }\n"),
      ("      const requiresInteraction = TOOLS_REQUIRING_INTERACTION.has(toolName);\n\n"
       "      if (!requiresInteraction) {\n"
       "        if (sdkOptions.permissionMode === 'bypassPermissions') {",

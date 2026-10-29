@@ -215,3 +215,10 @@ edit("src/modules/project-workspace/WorkspaceTabs.tsx",
      ("  const pluginTabs: PluginTab[] = plugins\n    .filter((p) => p.enabled)\n",
       "  const pluginTabs: PluginTab[] = plugins\n    .filter((p) => p.enabled)\n"
       "    .sort((a, b) => Number(a.name === 'paas-help') - Number(b.name === 'paas-help') || a.name.localeCompare(b.name))\n"))
+
+# a chat busy in a terminal: count from when this reply started (statusUpdatedAt, set when it turned busy), not from
+# when that claude process started days ago ("Running in the Claude CLI… 9093m")
+edit("server/modules/providers/services/claude-cli-liveness.service.ts",
+     ("  const startedAt = typeof record.startedAt === 'number' ? record.startedAt : Date.now();",
+      "  const startedAt = typeof record.statusUpdatedAt === 'number' ? record.statusUpdatedAt\n"
+      "    : typeof record.startedAt === 'number' ? record.startedAt : Date.now();"))

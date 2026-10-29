@@ -92,7 +92,7 @@ const SECTIONS = [
     <p>Next to the send button: the <b>model</b> and the <b>approval mode</b>. ${k('Tab')} in the message box switches mode.</p>
     <table><tr><th>Mode</th><th>Claude does on its own</th><th>Good for</th></tr>
     <tr><td><b>Default</b></td><td>Reading and looking things up; asks before anything else</td><td>Everyday use</td></tr>
-    <tr><td><b>Auto</b></td><td>Each step is checked and allowed or refused for you</td><td>Long investigations without clicking "allow"</td></tr>
+    <tr><td><b>Auto</b></td><td>Each step is checked and allowed or refused for you, no questions</td><td>Long investigations without clicking "allow"</td></tr>
     <tr><td><b>Accept edits</b></td><td>Edits and commands inside your project</td><td>Coding</td></tr>
     <tr><td><b>Plan</b></td><td>Nothing: it only plans</td><td>Thinking a change through first</td></tr>
     <tr><td><b>Bypass</b></td><td>Everything</td><td>Best avoided</td></tr></table>
@@ -116,7 +116,8 @@ const SECTIONS = [
     <ul><li><b>Search</b> the vendor docs and KBs yourself.</li>
     <li><b>Add documents</b>: upload PDFs or pages, or paste links to your wiki. Claude can search them a few seconds later.</li>
     <li><b>Skills and agents</b>: read, adjust or create your own routines. <b>Share with everyone</b> offers one to your colleagues.</li>
-    <li><b>Systems</b> Claude can query, with <b>Check connections</b>, and your <b>memory</b> (the facts it remembers for you).</li></ul>` },
+    <li><b>Systems</b> Claude can query, with <b>Check connections</b>, and your <b>memory</b> (the facts it remembers for you).</li>
+    <li><b>Hooks</b> (under MCP & hooks): small helpers around Claude's steps, like docs hints or the Python check. Switch any helper off or on for your own chats. The read-only guard always stays on.</li></ul>` },
 
   { id: 'schedule', title: 'Schedule', body: `
     <p>${tab('Schedule')} runs a question or routine for you, <b>daily</b>, on <b>weekdays</b> or <b>weekly</b>.</p>

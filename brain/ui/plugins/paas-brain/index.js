@@ -5,7 +5,14 @@ const kb = (n) => (n > 1048576 ? `${(n / 1048576).toFixed(1)} MB` : `${Math.max(
 
 const CSS = `
 .pb{font:14px/1.55 ui-sans-serif,system-ui,sans-serif;color:hsl(var(--foreground));padding:28px;max-width:1100px;margin:0 auto}
-.pb h2{font-size:22px;font-weight:700;margin:0}.pb .sub{color:hsl(var(--muted-foreground));font-size:13px}
+.pb h2{font-size:22px;font-weight:700;margin:0}
+.pb .hk{display:flex;gap:14px;align-items:center;justify-content:space-between;padding:10px 0;border-top:1px solid hsl(var(--border)/.6)}
+.pb .hk-t{min-width:0}.pb .hk .badge{font-size:10px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;border-radius:6px;padding:1px 6px;background:hsl(var(--muted));color:hsl(var(--muted-foreground))}
+.pb .sw{position:relative;width:40px;height:22px;flex:none;cursor:pointer}.pb .sw input{opacity:0;width:0;height:0;position:absolute}
+.pb .sw span{position:absolute;inset:0;border-radius:999px;background:hsl(var(--muted));border:1px solid hsl(var(--border));transition:.15s}
+.pb .sw span:before{content:'';position:absolute;width:16px;height:16px;left:2px;top:2px;border-radius:50%;background:hsl(var(--background));box-shadow:0 1px 2px #0003;transition:.15s}
+.pb .sw input:checked+span{background:linear-gradient(90deg,#a78bfa,#60a5fa);border-color:transparent}.pb .sw input:checked+span:before{transform:translateX(18px);background:#fff}
+.pb .sw input:focus-visible+span{outline:2px solid #a78bfa;outline-offset:2px}.pb .sub{color:hsl(var(--muted-foreground));font-size:13px}
 .pb .head{display:flex;justify-content:space-between;align-items:flex-end;gap:12px;flex-wrap:wrap;margin-bottom:18px}
 .pb .tabs{display:flex;gap:4px;border-bottom:1px solid hsl(var(--border));margin-bottom:20px;overflow-x:auto}
 .pb .tabs button{background:none;border:0;padding:9px 14px;color:hsl(var(--muted-foreground));cursor:pointer;font:inherit;border-bottom:2px solid transparent;white-space:nowrap}
@@ -78,8 +85,19 @@ export function mount(container, api) {
       pane.innerHTML = `<div class="card"><h3>MCP servers</h3><table><tr><th>Name</th><th>Type</th><th>Runs</th><th></th></tr>${data.mcp.map((m) => `<tr><td><b>${esc(m.name)}</b></td><td>${esc(m.type)}</td><td><code>${esc(m.target)}</code></td>
         <td>${data.canShare ? `<button class="ghost sm" data-share="mcp:${esc(m.name)}:0">Share with everyone</button>` : ''}</td></tr>`).join('')}</table>
         <div class="row"><button class="ghost chk">Check connections</button><span class="sub">runs <code>claude mcp list</code></span></div><pre class="st" style="display:none;margin-top:10px"></pre></div>
-        <div class="card"><h3>Hooks</h3><table><tr><th>When</th><th>Tools</th><th>Command</th></tr>${data.hooks.map((h) => `<tr><td>${esc(h.event)}</td><td><code>${esc(h.matcher)}</code></td><td><code>${esc(h.command)}</code></td></tr>`).join('')}</table></div>`;
+        <div class="card"><h3>Hooks</h3><div class="sub" style="margin-bottom:10px">Small helpers that run around Claude's steps.
+        Switching one off applies to your chats only.</div>${data.hooks.length ? data.hooks.map((h) => `<div class="hk">
+          <div class="hk-t"><b>${esc(h.title)}</b> <span class="badge">${h.source === 'shared' ? 'shared' : 'yours'}</span>
+          <div class="sub">${esc(h.about || h.command)}</div><div class="sub">${esc(h.when)}${h.matcher !== '*' ? ` · <code>${esc(h.matcher)}</code>` : ''}</div></div>
+          ${h.canToggle ? `<label class="sw" title="${h.on ? 'On: click to switch off' : 'Off: click to switch on'}"><input type="checkbox" data-hk="${esc(h.id)}" ${h.on ? 'checked' : ''}><span></span></label>`
+            : `<span class="sub" title="Keeps your storage safe">${h.id === 'block-write-tools' ? 'always on' : ''}</span>`}</div>`).join('')
+          : '<div class="sub">No hooks set up.</div>'}</div>`;
       wireShare(() => { tab = 'mcp'; render(); });
+      pane.querySelectorAll('[data-hk]').forEach((cb) => cb.addEventListener('change', async () => {
+        cb.disabled = true;
+        try { data.hooks = (await api.rpc('POST', 'hooks', { id: cb.dataset.hk, on: cb.checked })).hooks; } catch (e) { cb.checked = !cb.checked; alert(`Could not change it: ${e.message || e}`); }
+        tab = 'mcp'; render();
+      }));
       pane.querySelector('.chk').addEventListener('click', async (e) => {
         const pre = pane.querySelector('.st');
         e.target.disabled = true; pre.style.display = 'block'; pre.textContent = 'Checking every server (can take a minute)…';

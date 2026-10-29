@@ -208,6 +208,11 @@ def main():
 
 
 if __name__ == "__main__":
+    try:   # switched off by this person in the web UI (Brain tab, MCP & hooks)
+        if "docs-hints" in open(os.path.expanduser("~/.claude/brain/hooks-off")).read().split():
+            sys.exit(0)
+    except OSError:
+        pass
     try:
         sys.exit(main())
     except Exception:

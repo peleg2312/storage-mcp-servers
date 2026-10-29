@@ -117,4 +117,9 @@ def main():
 
 
 if __name__ == "__main__":
+    try:   # switched off by this person in the web UI (Brain tab, MCP & hooks)
+        if "session-start" in open(os.path.expanduser("~/.claude/brain/hooks-off")).read().split():
+            sys.exit(0)
+    except OSError:
+        pass
     sys.exit(main())

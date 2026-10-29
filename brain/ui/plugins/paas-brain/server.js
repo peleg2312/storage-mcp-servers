@@ -90,12 +90,34 @@ function markMine(kind, name) {
   else if (!isMine('agent', name)) fs.appendFileSync(USER_AGENTS, `${name}\n`);
 }
 
+// the brain's hooks, in plain words; the guard cannot be switched off, the helpers can (each person for themselves:
+// a helper whose name is in ~/.claude/brain/hooks-off returns at once)
+const HOOK_INFO = {
+  'block-write-tools': ['Read-only guard', 'Blocks anything that would change storage, switches, UCS or VMware, and asks you before cluster changes, service restarts and database writes.', false],
+  'docs-leads': ['Docs leads', 'Before each request, finds the docs that match your question and hands them to Claude.', true],
+  'docs-hints': ['Docs hints', 'When a live result shows an alert, event or error code, adds what the docs say about it.', true],
+  'py-lint': ['Python check', 'Checks every Python file Claude edits (ruff) and shows it the problems to fix.', true],
+  'session-start': ['Chat start status', 'At the start of each chat, tells Claude what is available (docs library, guard, your notes).', true],
+};
+const HOOKS_OFF = path.join(C, 'brain', 'hooks-off');
+const MANAGED = process.platform === 'darwin' ? '/Library/Application Support/ClaudeCode/managed-settings.json' : '/etc/claude-code/managed-settings.json';
+const hooksOff = () => new Set((read(HOOKS_OFF) || '').split(/\s+/).filter(Boolean));
+const WHEN = { PreToolUse: 'Before a tool runs', PostToolUse: 'After a tool runs', UserPromptSubmit: 'When you send a message', SessionStart: 'When a chat starts' };
+
 function hooks() {
-  const s = json(path.join(C, 'settings.json')) || {};
+  const off = hooksOff();
   const out = [];
-  for (const [event, groups] of Object.entries(s.hooks || {})) {
-    for (const g of groups || []) {
-      for (const h of g.hooks || []) out.push({ event, matcher: g.matcher || '*', command: String(h.command || '').replace(HOME, '~') });
+  for (const [source, file] of [['shared', MANAGED], ['yours', path.join(C, 'settings.json')]]) {
+    const s = json(file) || {};
+    for (const [event, groups] of Object.entries(s.hooks || {})) {
+      for (const g of groups || []) {
+        for (const h of g.hooks || []) {
+          const command = String(h.command || '').replace(HOME, '~');
+          const id = (/([\w-]+)\.py\b/.exec(command) || [])[1] || '';
+          const [title, about, canToggle] = HOOK_INFO[id] || [command.length > 70 ? `${command.slice(0, 69)}…` : command, '', false];
+          out.push({ id, title, about, canToggle, on: !off.has(id), source, when: WHEN[event] || event, matcher: g.matcher || '*', command });
+        }
+      }
     }
   }
   return out;
@@ -245,6 +267,15 @@ const routes = {
       (err, stdout, stderr) => resolve({ ok: !err, out: `${stdout}${stderr}`.trim() })));
   },
   'GET /mcp-status': () => run('claude', ['mcp', 'list'], 90000),
+};
+
+routes['POST /hooks'] = async (_q, b) => {
+  const id = String(b.id || '');
+  if (!HOOK_INFO[id]?.[2]) throw new Error('this hook cannot be switched off');
+  const off = hooksOff();
+  if (b.on) off.delete(id); else off.add(id);
+  fs.writeFileSync(HOOKS_OFF, [...off].sort().join('\n') + (off.size ? '\n' : ''));
+  return { hooks: hooks() };
 };
 
 const server = http.createServer(async (req, res) => {
