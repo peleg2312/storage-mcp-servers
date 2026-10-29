@@ -222,3 +222,44 @@ edit("server/modules/providers/services/claude-cli-liveness.service.ts",
      ("  const startedAt = typeof record.startedAt === 'number' ? record.startedAt : Date.now();",
       "  const startedAt = typeof record.statusUpdatedAt === 'number' ? record.statusUpdatedAt\n"
       "    : typeof record.startedAt === 'number' ? record.startedAt : Date.now();"))
+
+# /clear, /new, /reset: a fresh chat in the same project, like the New chat button (sent to Claude, /clear made a new
+# session holding only the text "/clear"); /clear also deletes (archives) the chat it leaves
+edit("src/modules/project-workspace/context/ProjectsStateContext.tsx",
+     ("export function useProjectCommandState(): ProjectCommandState {",
+      "/** The same as useProjectCommandState, or null outside the workspace (the chat composer in tests). */\n"
+      "export function useOptionalProjectCommandState(): ProjectCommandState | null {\n"
+      "  return useContext(ProjectCommandContext);\n}\n\n"
+      "export function useProjectCommandState(): ProjectCommandState {"))
+edit("src/modules/chat/hooks/useChatComposerState.ts",
+     ("import { useSlashCommands } from '@/modules/chat/hooks/useSlashCommands';",
+      "import { useSlashCommands } from '@/modules/chat/hooks/useSlashCommands';\n"
+      "import { useOptionalProjectCommandState } from '@/modules/project-workspace/context/ProjectsStateContext';"),
+     ("}: UseChatComposerStateArgs) {\n  const { t } = useTranslation('chat');\n",
+      "}: UseChatComposerStateArgs) {\n  const { t } = useTranslation('chat');\n  const paasProjectCommands = useOptionalProjectCommandState();\n"
+      "  // /clear, /new, /reset: a fresh chat in the same project; /clear also deletes the chat it leaves, the way the\n"
+      "  // sidebar's Delete does (archived: restorable from the archive), unless that chat is still answering\n"
+      "  const paasNewChat = (project: Project, deletePrevious: boolean) => {\n"
+      "    const previous = currentSessionId || selectedSession?.id;\n"
+      "    setTimeout(() => {   // after this submit settles\n"
+      "      paasProjectCommands?.handleNewSession(project);\n"
+      "      if (deletePrevious && previous && !isLoading) void api.deleteSession(previous).catch(() => undefined);\n"
+      "    }, 0);\n"
+      "  };\n"),
+     ("      if (!command || !selectedProject) {\n        return;\n      }\n\n      try {\n        const effectiveInput = rawInput ?? input;\n",
+      "      if (!command || !selectedProject) {\n        return;\n      }\n"
+      "      if (/^\\/(clear|new|reset)$/.test(command.name) && paasProjectCommands) {   // picked from the / menu\n"
+      "        paasNewChat(selectedProject, command.name === '/clear');\n"
+      "        setInput('');\n"
+      "        inputValueRef.current = '';\n"
+      "        return;\n"
+      "      }\n\n      try {\n        const effectiveInput = rawInput ?? input;\n"),
+     ("        const matchedCommand =\n          slashCommands.find((cmd: SlashCommand) => cmd.name === commandName) ||",
+      "        if (/^\\/(clear|new|reset)$/.test(commandName) && paasProjectCommands && selectedProject) {\n"
+      "          paasNewChat(selectedProject, commandName === '/clear');\n"
+      "          setInput('');\n"
+      "          inputValueRef.current = '';\n"
+      "          resetCommandMenuState();\n"
+      "          return;\n"
+      "        }\n"
+      "        const matchedCommand =\n          slashCommands.find((cmd: SlashCommand) => cmd.name === commandName) ||"))

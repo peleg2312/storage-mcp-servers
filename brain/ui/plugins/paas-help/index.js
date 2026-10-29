@@ -54,6 +54,7 @@ const SECTIONS = [
     <li><code>/decommission-check</code> before anything is removed · <code>/report-export</code> Excel, CSV, charts</li></ul>
     <p>You rarely have to type them: Claude picks the right one from your question.</p>
     <h4>Handy commands</h4>
+    <ul><li><code>/clear</code> starts a fresh chat and deletes the one you were in (it goes to the archive, where you can still restore it). <code>/new</code> starts a fresh chat and keeps the old one.</li>
     <ul><li><code>/compact</code> a long chat: Claude summarises it and carries on, quicker and cheaper.</li>
     <li><code>/context</code> how full the chat is · <code>/cost</code> what it has used so far.</li>
     <li><code>/review</code> looks over code changes in a project.</li></ul>` },
@@ -95,8 +96,9 @@ const SECTIONS = [
     <tr><td><b>Auto</b></td><td>Each step is checked and allowed or refused for you, no questions</td><td>Long investigations without clicking "allow"</td></tr>
     <tr><td><b>Accept edits</b></td><td>Edits and commands inside your project</td><td>Coding</td></tr>
     <tr><td><b>Plan</b></td><td>Nothing: it only plans</td><td>Thinking a change through first</td></tr>
-    <tr><td><b>Bypass</b></td><td>Everything</td><td>Best avoided</td></tr></table>
-    <p class="note">Whatever the mode, changes to storage, switches, UCS and VMware stay blocked. When Claude asks to run something, read it, then <b>Allow</b> or <b>Deny</b> (and say why).</p>` },
+    <tr><td><b>Bypass</b></td><td>Everything on the server with no questions: files, installs, service restarts, cluster changes (oc / kubectl / helm), database writes, terraform</td><td>When you trust the task and want no interruptions</td></tr></table>
+    <p class="note">Whatever the mode, changes to storage arrays, SAN switches, UCS and VMware stay blocked: Claude gives you those steps to run yourself.
+    In the other modes, when Claude asks to run something, read it, then <b>Allow</b> or <b>Deny</b> (and say why).</p>` },
 
   { id: 'reports', title: 'Reports', body: `
     <p>${tab('Reports')} holds everything Claude saved for you: Excel, CSV, charts, write-ups. Newest first.</p>
@@ -147,7 +149,7 @@ const SECTIONS = [
 
   { id: 'safety', title: 'What Claude will and will not do', body: `
     <ul><li><b>Storage, switches, UCS and VMware: read only, always.</b> For a change you get the steps to run yourself.</li>
-    <li>Kubernetes / OpenShift changes and service restarts: it asks you first.</li>
+    <li>Kubernetes / OpenShift changes, service restarts and database writes: it asks you first, except in <b>Bypass</b> mode.</li>
     <li>Your own code and apps: it builds, runs and tests them with you.</li>
     <li>Nothing is called "safe to delete" until <code>/decommission-check</code> passed every check.</li>
     <li>Passwords and tokens never go into notes, reports or shared items.</li></ul>` },
@@ -158,7 +160,7 @@ const SECTIONS = [
     <dt>You are back at the sign-in page</dt><dd>The 12 hours ended. Sign in again: nothing is lost.</dd>
     <dt>"System unavailable"</dt><dd>Check ${tab('Status')}. If a system is red, tell your admin.</dd>
     <dt>The chat got slow or forgets things</dt><dd>Run <code>/compact</code>, or start a new chat for a new topic.</dd>
-    <dt>Too many "allow?" questions</dt><dd>Switch to <b>Auto</b> mode. A blocked storage change cannot be allowed: run that step yourself.</dd>
+    <dt>Too many "allow?" questions</dt><dd>Switch to <b>Auto</b>, or <b>Bypass</b> for no questions at all. A blocked storage change cannot be allowed in any mode: run that step yourself.</dd>
     <dt>Browser tab: "Nothing of yours on port..."</dt><dd>The app is not running yet. Start it and press reload.</dd>
     </dl>
     <p>Anything else: ask Claude in a chat, e.g. "how do I schedule a daily report?"</p>` },

@@ -62,3 +62,16 @@ assert rc == 0 and '"ask"' in out, out
 assert run_hook({"tool_name": "mcp__databases__pg_query", "tool_input": {"sql": "SELECT 1"}}) == (0, "")
 assert h.reason_for("mcp__databases__pg_query", {"sql": "DROP TABLE t"})
 print("databases guard ok")
+
+# Bypass mode: the guard's questions are skipped (the user approved changes on the server); the blocks stay
+BP = {"permission_mode": "bypassPermissions"}
+assert run_hook({"tool_name": "Bash", "tool_input": {"command": "kubectl delete pod x"}, **BP}) == (0, "")
+assert run_hook({"tool_name": "mcp__databases__pg_execute", "tool_input": {"connection": "dev", "sql": "DELETE FROM t"}, **BP}) == (0, "")
+_s.stderr, _err = io.StringIO(), _s.stderr
+try:
+    assert run_hook({"tool_name": "Bash", "tool_input": {"command": "symconfigure -sid 1 commit"}, **BP})[0] == 2
+    assert run_hook({"tool_name": "mcp__ontap__create_volume", "tool_input": {}, **BP})[0] == 2
+finally:
+    _s.stderr = _err
+assert '"ask"' in run_hook({"tool_name": "Bash", "tool_input": {"command": "kubectl delete pod x"}})[1]
+print("bypass guard ok")

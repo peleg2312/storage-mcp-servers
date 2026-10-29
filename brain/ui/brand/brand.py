@@ -181,9 +181,10 @@ edit("src/modules/chat/transcript/Markdown.tsx",
       "            )}\n"
       "            </>\n          );\n        }\n"),
      ("    [openFileInEditor, openDirectory],\n", "    [openFileInEditor, openDirectory, paasProjectId],\n"))
-# the read-only guard's "ask" (cluster changes, database writes) must reach the user in every permission mode: the
-# allowed-tools shortcut must not answer it. Auto and bypass run as themselves (tested: a hook's ask still reaches
-# canUseTool in both); only root's bypass is emulated in canUseTool, since Claude Code refuses bypass as root
+# the read-only guard's "ask" (cluster changes, database writes) must reach the user, except in bypass (the user
+# approved every change on the server; the guard's blocks on storage stay): the allowed-tools shortcut must not
+# answer it. Auto and bypass run as themselves; only root's bypass is emulated in canUseTool (Claude Code refuses
+# bypass as root, and the guard then sees "default" and asks, so the emulation answers that too)
 P = "server/modules/providers/list/claude/claude-runtime.provider.js"
 edit(P,
      ("function mapCliOptionsToSDK(options = {}) {",
@@ -199,7 +200,8 @@ edit(P,
       "      if (!requiresInteraction) {\n"
       "        if (sdkOptions.permissionMode === 'bypassPermissions') {",
       "      const guardAsk = /^Read-only guard:/.test(String(context?.decisionReason || ''));\n"
-      "      const requiresInteraction = TOOLS_REQUIRING_INTERACTION.has(toolName) || guardAsk;\n\n"
+      "      const bypass = PAAS_BYPASS.has(sdkOptions) || sdkOptions.permissionMode === 'bypassPermissions';\n"
+      "      const requiresInteraction = TOOLS_REQUIRING_INTERACTION.has(toolName) || (guardAsk && !bypass);\n\n"
       "      if (!requiresInteraction) {\n"
       "        if (PAAS_BYPASS.has(sdkOptions)) {"))
 # prompt bar like Claude desktop: a clear "/" commands button instead of a speech bubble with a count badge

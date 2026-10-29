@@ -238,6 +238,9 @@ def main():
     except Exception:
         return 0
     name = data.get("tool_name", "")
+    # Bypass mode: the user has approved every change on this server, so the questions below are skipped; the blocks
+    # (storage, switches, UCS, VMware) stay in every mode
+    bypass = data.get("permission_mode") == "bypassPermissions"
     if name == "Bash":
         cmd = str((data.get("tool_input") or {}).get("command", ""))
         if allowed("Bash:" + cmd):
@@ -248,7 +251,7 @@ def main():
                   f"read-only here; give the command for the user to run, labelled 'to be run by you'.",
                   file=sys.stderr)
             return 2
-        if level == "ask":
+        if level == "ask" and not bypass:
             print(json.dumps({"hookSpecificOutput": {"hookEventName": "PreToolUse", "permissionDecision": "ask",
                                                      "permissionDecisionReason": f"Read-only guard: changes something: {why}. Allow?"}}))
         return 0
@@ -257,6 +260,8 @@ def main():
     tool_input = data.get("tool_input") or {}
     if re.fullmatch(r"mcp__databases__(pg_execute|mongo_write)", name):
         # the user's own application databases (writable connections only, the server checks): confirm each write
+        if bypass:
+            return 0
         what = tool_input.get("sql") or " ".join(str(tool_input.get(k, "")) for k in ("op", "database", "collection"))
         print(json.dumps({"hookSpecificOutput": {"hookEventName": "PreToolUse", "permissionDecision": "ask",
                                                  "permissionDecisionReason": f"Read-only guard: database write on {tool_input.get('connection')}: "

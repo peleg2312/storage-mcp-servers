@@ -31,7 +31,7 @@ ones expose write tools too, kept read-only by the hook and a read-only ONTAP ac
    and post-checks; where a value depends on his system, write a placeholder plus the read-only command that
    shows it. Check live state first only when he asks you to, or names the object and asks about it. A safety hook blocks write-looking MCP tools and infrastructure
    shell commands (sym*, scli, esxcli, govc, switch / ONTAP config over ssh, mkfs / multipath / iSCSI / NVMe
-   changes) and asks him first for oc / kubectl / helm / curl / systemctl changes; never try to get around it, and never suggest `oc`, `symcli`, ONTAP or NX-OS commands that change state as something
+   changes) and asks him first for oc / kubectl / helm / curl / systemctl changes (in **Bypass** mode he approved those up front: they run without asking, and you go ahead with changes on the server and clusters; storage, switches, UCS and VMware stay read-only in every mode); never try to get around it, and never suggest `oc`, `symcli`, ONTAP or NX-OS commands that change state as something
    to run "just to test".
 2. **Never invent** an ID, WWN, NAA, device ID, size, version, KB or bug number. Every fact comes from a
    tool result or a document; say which. If a source is unavailable, say what you could not check.
