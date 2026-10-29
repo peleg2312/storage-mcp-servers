@@ -257,6 +257,10 @@ def main():
         return 0
     if not name.startswith("mcp__") or allowed(name):
         return 0
+    # Chrome DevTools: drives the person's own Chrome (its own empty profile), not infrastructure; the plugin's connector
+    # only lets it open this server's own pages
+    if re.match(r"mcp__(plugin_[\w-]+_)?chrome-devtools__", name):
+        return 0
     tool_input = data.get("tool_input") or {}
     if re.fullmatch(r"mcp__databases__(pg_execute|mongo_write)", name):
         # the user's own application databases (writable connections only, the server checks): confirm each write

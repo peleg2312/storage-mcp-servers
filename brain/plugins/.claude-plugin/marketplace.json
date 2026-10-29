@@ -157,6 +157,26 @@
       "source": "./learning-output-style",
       "category": "learning",
       "homepage": "https://github.com/anthropics/claude-plugins-public/tree/main/plugins/learning-output-style"
+    },
+    {
+      "name": "ui-ux-pro-max",
+      "description": "UI/UX Pro Max (7 skills): 79 styles, 192 palettes, 74 font pairs, 119 UX rules, 25 chart types, 22 stacks; design systems, brand, slides, banners, Tailwind / shadcn. Offline: local fonts and packages from the offline npm.",
+      "author": {
+        "name": "nextlevelbuilder"
+      },
+      "source": "./ui-ux-pro-max",
+      "category": "design",
+      "homepage": "https://github.com/nextlevelbuilder/ui-ux-pro-max-skill"
+    },
+    {
+      "name": "chrome-devtools",
+      "description": "Chrome DevTools: Claude drives the Chrome on your Windows PC (own empty profile, through an SSH tunnel) to open your app, click, type, take screenshots, read console and network, check performance and accessibility. Each chat uses its own PC; only this server's pages. Connect with: paas-chrome windows",
+      "author": {
+        "name": "ChromeDevTools (Google)"
+      },
+      "source": "./chrome-devtools",
+      "category": "development",
+      "homepage": "https://github.com/ChromeDevTools/chrome-devtools-mcp"
     }
   ]
 }

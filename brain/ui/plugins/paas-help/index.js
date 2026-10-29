@@ -113,6 +113,23 @@ const SECTIONS = [
     <li>Or ask: "show it to me in the Browser tab".</li></ul>
     <p class="note">It shows your own apps and files only, not internet sites or other people's apps.</p>` },
 
+  { id: 'chrome', title: 'Chrome on your PC (DevTools)', body: `
+    <p>With the <b>chrome-devtools</b> plugin (Marketplace → Add), Claude drives a Chrome window on <b>your</b> Windows PC:
+    opens your app, clicks, types, takes screenshots, reads the console and network, checks speed and accessibility.</p>
+    <ol><li>Ask Claude "connect my Chrome" (or run <code>paas-chrome windows</code>): it gives you one PowerShell line.</li>
+    <li>Paste it into PowerShell on your PC and sign in. A separate Chrome window opens (its own empty profile, not your everyday Chrome). Keep the PowerShell window open; close it to disconnect.</li>
+    <li>Ask: "open my app on port 8000 in Chrome and check the console", "test the login form", "why is this page slow?".</li></ol>
+    <p class="note">Several people on the same account: each chat uses its own PC. If more than one PC is connected, Claude asks which one is yours.
+    Chrome opens only this server's own pages, never storage, switch or vCenter pages.</p>` },
+
+  { id: 'uiux', title: 'UI design (UI UX Pro Max)', body: `
+    <p>The <b>ui-ux-pro-max</b> plugin (Marketplace → Add) gives Claude a design library: 79 styles, 192 color palettes,
+    74 font pairs, 119 UX rules, 25 chart types and guidance for 22 stacks (React, Next.js, Vue, Tailwind, shadcn/ui, Flutter...),
+    plus skills for design systems, brand, slides and banners.</p>
+    <ul><li>Ask: "design a dashboard for storage capacity", "make this page look professional", "review this form's UX".</li>
+    <li>Fonts are installed locally from your npm (<code>@fontsource/…</code>), nothing loads from the internet.</li>
+    <li>AI image generation (logos from Gemini) is not available here: Claude draws logos and icons as SVG instead.</li></ul>` },
+
   { id: 'brain', title: 'Brain', body: `
     <p>${tab('Brain')} is what Claude knows and can use:</p>
     <ul><li><b>Search</b> the vendor docs and KBs yourself.</li>

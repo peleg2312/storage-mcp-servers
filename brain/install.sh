@@ -111,7 +111,7 @@ EOP
 fi
 # dev tools first (ruff, basedpyright, database drivers): the databases MCP below needs their Python
 sh "$HERE/devtools/install-devtools.sh" || echo "devtools: skipped (see the message above)"
-[ -n "$PROJECT" ] || { mkdir -p "$HOME/.local/bin" && ln -sf "$DST/tools/add-docs" "$HOME/.local/bin/add-docs"; ln -sf "$DST/tools/paas-open" "$HOME/.local/bin/paas-open"; }
+[ -n "$PROJECT" ] || { mkdir -p "$HOME/.local/bin" && ln -sf "$DST/tools/add-docs" "$HOME/.local/bin/add-docs"; ln -sf "$DST/tools/paas-open" "$HOME/.local/bin/paas-open"; ln -sf "$USER_DST/brain/plugins/chrome-devtools/bin/run.sh" "$HOME/.local/bin/paas-chrome"; }
 # a new library replaced docs.db: put the documents from your inbox back in (add-docs needs pypdf from the devtools)
 if [ "$NEW_LIB" = 1 ] && [ -n "$(find "$USER_DST/brain/inbox" -type f ! -name '._*' 2>/dev/null | head -1)" ]; then
   echo "re-adding your documents from $USER_DST/brain/inbox..."
