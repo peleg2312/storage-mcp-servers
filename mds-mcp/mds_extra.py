@@ -5,7 +5,7 @@ Extra read-only tools for the MDS MCP server (registered on the upstream `main.m
                       (NX-API `cli_ascii`), with grep / tail filtering and a size cap
   show_logging_onboard  OBFL (onboard failure logging): error-stats, txwait, rxwait, credit-loss,
                       datarate, ... per switch and optionally per module
-  get_log_events      syslog parsed into structured events (time, severity, facility, mnemonic,
+  get_log_events      syslog parsed into structured events (time, severity, event code,
                       interface) with filters and a summary, across one or all switches
   slow_drain_check    one-call congestion bundle: OBFL txwait/rxwait/credit-loss/error-stats,
                       port-monitor policy, and a parsed error/warning log summary
@@ -14,6 +14,7 @@ All commands go through the same strict validator as the upstream tools (a singl
 command, no ; | > ` or newlines). NX-API errors are translated into plain explanations.
 """
 
+import json
 import re
 from collections import Counter
 from concurrent.futures import ThreadPoolExecutor
@@ -22,10 +23,15 @@ from datetime import datetime, timedelta
 import main
 
 TIMEOUT = 60
-MAX_CHARS_DEFAULT = 60000
+MAX_CHARS_DEFAULT = 24000
 
-# Commands that are slow or huge on a production switch; refuse with an explanation.
-_HEAVY = re.compile(r"^show\s+(tech-?support|techsupport)\b", re.I)
+# Refused: slow/huge commands, and full configs / secrets (SNMP communities, TACACS/RADIUS keys, user hashes).
+# `show run[ning-config]` / `show start[up-config]` are allowed only with a section (abbreviations included).
+_HEAVY = re.compile(
+    r"^show\s+(tech-?support|techsupport"
+    r"|(run(n(i(n(g(-config)?)?)?)?)?|start(up(-config)?)?)(?!\S)"
+    r"(?!\s+(interface|zone|zoneset|vsan|device-alias|fcalias|port-channel|fcdomain|fspf)\b)"
+    r"|snmp\b|tacacs|radius|aaa|user-account|crypto|ssh\s+key)", re.I)
 
 
 class NxapiError(Exception):
@@ -76,8 +82,9 @@ def nxapi(switch, cmd: str, output: str = "auto"):
     name, cfg = main._resolve_switch(switch or None)
     cmd = main._validate_command(cmd)
     if _HEAVY.match(cmd):
-        raise ValueError("show tech-support is too heavy to run through MCP (minutes of CPU and MBs of "
-                         "output). Use specific show commands, or collect it from the CLI.")
+        raise ValueError("refused: show tech-support is too heavy, and full configs or secrets (running/startup-config "
+                         "without a section, snmp, tacacs, radius, aaa, user-account, crypto) are not served. "
+                         "Ask for a section, e.g. `show running-config interface fc1/1`, or use the CLI.")
     if output == "text":
         res = _post(name, cfg, cmd, "cli_ascii")
         return name, "text", res.get("msg", "") if isinstance(res, dict) else str(res)
@@ -222,13 +229,22 @@ def register(mcp, RO):
             raise ValueError("output must be auto, json or text")
         name, kind, payload = nxapi(switch, command, output)
         if kind == "json":
-            return {"switch": name, "command": command, "format": "json", "body": payload}
+            n = len(json.dumps(payload, separators=(",", ":")))
+            if n <= max_chars:
+                return {"switch": name, "command": command, "format": "json", "body": payload}
+            if output == "json":
+                raise ValueError(f"JSON body is {n} chars (> max_chars {max_chars}); use output='text' with "
+                                 "grep / tail_lines, or raise max_chars")
+            name, kind, payload = nxapi(switch, command, "text")  # too big as JSON: text can be grepped and tailed
+            text, stats = _filter_text(payload, grep, tail_lines, max_chars)
+            return {"switch": name, "command": command, "format": "text", **stats, "text": text,
+                    "note": f"JSON body of {n} chars exceeded max_chars; returned as text (use grep / tail_lines)"}
         text, stats = _filter_text(payload, grep, tail_lines, max_chars)
         return {"switch": name, "command": command, "format": "text", **stats, "text": text}
 
     @mcp.tool(annotations=RO)
     def show_logging_onboard(section: str, switch: str = "", module: int = 0, grep: str = "",
-                             tail_lines: int = 300, max_chars: int = MAX_CHARS_DEFAULT) -> dict:
+                             tail_lines: int = 100, max_chars: int = MAX_CHARS_DEFAULT) -> dict:
         """Onboard Failure Logging (OBFL): persistent per-module history that survives reboots and log
         rotation. Common sections: error-stats (port/ASIC error counters over time), txwait and rxwait
         (time ports waited on B2B credits - slow drain / congestion), credit-loss, datarate
@@ -255,11 +271,11 @@ def register(mcp, RO):
 
     @mcp.tool(annotations=RO)
     def get_log_events(switch: str = "", last: int = 2000, max_severity: int = 7, since_hours: float = 0,
-                       facility: str = "", text: str = "", interface: str = "", limit: int = 200) -> dict:
+                       facility: str = "", text: str = "", interface: str = "", limit: int = 50) -> dict:
         """Syslog parsed into structured events, newest first, with a summary - across all switches or one.
 
-        Each event: time (switch clock), severity (0 emergency .. 7 debug) and name, facility, mnemonic,
-        event code (e.g. PORT-5-IF_DOWN_LINK_FAILURE), interfaces and VSAN mentioned, message.
+        Each event: time (switch clock), severity (0 emergency .. 7 debug), event code
+        (e.g. PORT-5-IF_DOWN_LINK_FAILURE), interfaces and VSAN mentioned, message, switch.
         Filters: max_severity (4 = warnings and worse, 3 = errors and worse), since_hours (relative to
         the switch's own clock), facility (e.g. PORT, ZONE, FCNS, PLATFORM), text (regex on message),
         interface (e.g. fc1/5). last = how many log lines to read per switch (max 9999).
@@ -307,22 +323,26 @@ def register(mcp, RO):
             summary["newest"] = events[0]["time"]
             summary["oldest"] = events[-1]["time"]
         lim = max(1, min(int(limit), 2000))
-        for e in events:
-            e.pop("_dt", None)
+        for e in events[:lim]:
+            for k in ("_dt", "severity_name", "facility", "mnemonic", "slot"):
+                e.pop(k, None)
         out = {"filters": {"max_severity": sev_max, "since_hours": since_hours, "facility": facility,
                            "text": text, "interface": interface, "lines_read_per_switch": n},
                "total_matching": len(events), "returned": min(lim, len(events)),
                "summary": summary, "events": events[:lim]}
+        if len(events) > lim:
+            out["note"] = "more events match: raise limit or narrow the filters"
         if errors:
             out["errors"] = errors
         return out
 
     @mcp.tool(annotations=RO)
-    def slow_drain_check(switch: str = "", module: int = 0, tail_lines: int = 80) -> dict:
+    def slow_drain_check(switch: str = "", module: int = 0, tail_lines: int = 30) -> dict:
         """One-call congestion / slow-drain evidence for one or all switches: OBFL txwait, rxwait,
         credit-loss and error-stats (most relevant lines), the port-monitor policy, and a summary of
         warning-or-worse syslog events by interface. Follow up on the interfaces it names with
         show_interface_counters_detailed_for, show_interface_bbcredit_for and the FLOGI database.
+        tail_lines per OBFL section (raise for history; 0 = all).
         """
         sections = ["txwait", "rxwait", "credit-loss", "error-stats"]
 

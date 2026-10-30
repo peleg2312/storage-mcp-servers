@@ -294,15 +294,16 @@ def register(mcp, RO):
                 db = {k: v for k, v in db.items() if k == int(port_channel)}
                 if not db:
                     raise ValueError(f"port-channel {port_channel} not found on {sw}")
+            allif = parse_interfaces(_txt(sw, "show interface")) if db else {}  # one dump, not one call per member
             pcs = {}
             for pc, d in sorted(db.items()):
                 name = f"port-channel{pc}"
-                pinfo = parse_interfaces(_txt(sw, f"show interface {name}")).get(name, {})
+                pinfo = allif.get(name, {})
                 members, problems = [], []
                 speeds = set()
                 for mem in d["members"]:
                     ifc = mem["interface"]
-                    mi = parse_interfaces(_txt(sw, f"show interface {ifc}")).get(ifc, {})
+                    mi = allif.get(ifc, {})
                     nz = _nonzero(mi.get("counters", {}))
                     sp = mi.get("info", {}).get("speed")
                     speeds.add(sp)

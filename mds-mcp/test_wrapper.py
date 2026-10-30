@@ -71,7 +71,9 @@ def fake_post(url, json=None, **kw):
         if method == "cli":
             return ok({"body": {}})  # empty JSON body -> auto falls back to text
         return ok({"msg": "Policy Name  : fabricmon_edge_policy\nAdmin status : Active\n"})
-    if cmd == "show running-config":
+    if cmd == "show big-json":
+        return ok({"body": {"rows": ["x" * 40] * 800}}) if method == "cli" else ok({"msg": "line\n" * 5 + "needle\n"})
+    if cmd == "show license usage":
         return err("Input CLI command error", "% Permission denied for the role")
     if cmd == "show flogi database":
         return ok({"body": {"TABLE_flogi_entry": {"ROW_flogi_entry": [
@@ -91,6 +93,14 @@ async def m():
     for t in ("run_show", "show_logging_onboard", "get_log_events", "slow_drain_check"):
         assert t in names, t
     assert "get_log_events" in main.mcp.instructions
+    assert "show_users" not in names and "show_flogi_database_for" not in names and len(tools) == 27, len(tools)
+    # no hidden tool is still named in the instructions or prompts
+    texts = [main.mcp.instructions]
+    for pr in await main.mcp.list_prompts():
+        texts.append((await main.mcp.render_prompt(pr.name, {a.name: "x" for a in (pr.arguments or []) if a.required})).messages[0].content.text)
+    import re as _re
+    used = set(_re.findall(r"\bshow_\w+", " ".join(texts)))
+    assert not used & entry.HIDDEN, used & entry.HIDDEN
 
     async def call(n, **a):
         return (await main.mcp.call_tool(n, a)).structured_content
@@ -113,15 +123,18 @@ async def m():
     assert ev["events"][0]["switch"] == "mds-fab-b"  # newest first across switches
     assert "PMON-3-RISING_THRESHOLD_REACHED" in codes and "ZONE-2-ZS_MERGE_FAILED" in codes
     assert "AUTHPRIV-3-SYSTEM_MSG" in codes  # line with extra process token parsed
-    pm = next(e for e in ev["events"] if e["mnemonic"] == "RISING_THRESHOLD_REACHED")
+    assert not {"severity_name", "facility", "mnemonic", "slot", "_dt"} & set(ev["events"][0])
+    pm = next(e for e in ev["events"] if e["event"].endswith("RISING_THRESHOLD_REACHED"))
     assert pm["interfaces"] == ["fc1/7"]
-    zm = next(e for e in ev["events"] if e["facility"] == "ZONE")
+    zm = next(e for e in ev["events"] if e["event"].startswith("ZONE-"))
     assert zm["vsan"] == "200" and zm["interfaces"] == ["port-channel10"]
     print("summary:", ev["summary"]["by_severity"], ev["summary"]["top_interfaces"][:3])
     e24 = await call("get_log_events", switch="mds-fab-a", since_hours=24, max_severity=7)
     assert all("Oct 20" not in e["time"] for e in e24["events"]) and e24["total_matching"] == 5
     one = await call("get_log_events", interface="fc1/5", max_severity=7)
-    assert {e["mnemonic"] for e in one["events"]} == {"IF_DOWN_LINK_FAILURE", "IF_UP"}
+    assert {e["event"].split("-", 2)[2] for e in one["events"]} == {"IF_DOWN_LINK_FAILURE", "IF_UP"}
+    fz = await call("get_log_events", facility="zone", max_severity=7)  # facility filter runs before the output fields are dropped
+    assert fz["total_matching"] == 1
 
     # OBFL (text only) and errors
     ob = await call("show_logging_onboard", section="txwait", switch="mds-fab-a")
@@ -131,7 +144,7 @@ async def m():
     e1 = await call_err("show_logging_onboard", section="bogus", switch="mds-fab-a")
     print("invalid section ->", e1[:110])
     assert "not valid on this switch" in e1
-    e2 = await call_err("run_show", command="show running-config", switch="mds-fab-a")
+    e2 = await call_err("run_show", command="show license usage", switch="mds-fab-a")
     print("permission ->", e2[:110])
     assert "role is not allowed" in e2
 
@@ -143,6 +156,10 @@ async def m():
     rs3 = await call("run_show", command="show logging onboard txwait", switch="mds-fab-a", grep="52%")
     assert rs3["format"] == "text" and rs3["returned_lines"] == 1
 
+    # big JSON falls back to text (cap), explicit json errors, small JSON unchanged
+    big = await call("run_show", command="show big-json", switch="mds-fab-a")
+    assert big["format"] == "text" and "note" in big and "needle" in big["text"], big
+    assert "output='text'" in await call_err("run_show", command="show big-json", switch="mds-fab-a", output="json")
     # slow drain bundle
     sd = await call("slow_drain_check", switch="mds-fab-a")
     a = sd["switches"]["mds-fab-a"]
@@ -150,9 +167,12 @@ async def m():
     print("slow drain:", a["log_warnings_by_interface"], list(a))
 
     # guard: never send anything but one plain show
+    for ok_cmd in ("show running-config interface fc1/1", "show run zone"):  # sections stay allowed
+        await call("run_show", command=ok_cmd, switch="mds-fab-a")
     n = len(SENT)
     for bad in ("show version ; configure terminal", "show run | include x", "show version\nreload",
-                "configure terminal", "clear counters", "show logging > bootflash:x", "show tech-support"):
+                "configure terminal", "clear counters", "show running-config", "show run", "show startup-config",
+                "show snmp community", "show tacacs-server", "show aaa authentication", "show logging > bootflash:x", "show tech-support"):
         await call_err("run_show", command=bad, switch="mds-fab-a")
     await call_err("show_logging_onboard", section="txwait ; reload", switch="mds-fab-a")
     await call_err("show_logging_onboard", section="txwait | x", switch="mds-fab-a")

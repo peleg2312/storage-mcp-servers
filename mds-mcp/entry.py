@@ -9,7 +9,10 @@ Wrapper around the upstream mds-mcp server (alecharn/mds-mcp, main.py unchanged)
 
 import re
 
+import requests
 from mcp.types import ToolAnnotations
+from requests.adapters import HTTPAdapter
+from urllib3.util.retry import Retry
 
 import main  # upstream server: reads MDS_<N>_* at import and builds `main.mcp`
 import mcp_auth
@@ -29,13 +32,30 @@ def _strict_validate(cmd: str) -> str:
 
 
 main._validate_command = _strict_validate
+# one pooled session: keep-alive instead of a TLS handshake per command; retry once on a stale kept-alive socket
+main.requests = requests.Session()
+for _p in ("https://", "http://"):
+    main.requests.mount(_p, HTTPAdapter(pool_maxsize=8, max_retries=Retry(total=1, allowed_methods=None)))
 
 _RO = ToolAnnotations(readOnlyHint=True, destructiveHint=False, idempotentHint=True, openWorldHint=True)
 mds_extra.register(main.mcp, _RO)
 mds_san.register(main.mcp, _RO)
-# upstream's generative-UI tools (Prefab): ~1.3k tokens of tool descriptions in every session, and Claude Code shows no
-# Prefab UI; hidden here so upstream main.py stays as it is
-main.mcp.disable(names={"generate_prefab_ui", "search_prefab_components"}, components={"tool"})
+# Upstream tools hidden to save ~36 KB of tools/list per session: each is `show ...` and so reachable through
+# run_show (mapping in README). Also the generative-UI (Prefab) tools: Claude Code shows no Prefab UI.
+HIDDEN = {
+    "show_zone", "show_zone_active", "show_zone_name", "show_zone_vsan", "show_zone_name_vsan", "show_zoneset",
+    "show_zoneset_active_vsan", "show_zoneset_name", "show_zoneset_vsan", "show_zoneset_name_vsan",
+    "show_device_alias_name", "show_device_alias_pwwn", "show_hardware", "show_inventory", "show_module_uptime",
+    "show_boot", "show_switchname", "show_cdp_neighbors", "show_hosts", "show_interface_bbcredit",
+    "show_interface_transceiver", "show_interface_transceiver_detail", "show_interface_description",
+    "show_interface_mgmt", "show_port_channel_usage", "show_running_config_interface_for",
+    "show_interface_brief_for", "show_interface_transceiver_for", "show_interface_description_for",
+    "show_flogi_database_for", "show_flogi_database_vsan", "show_fcns_database_vsan",
+    "show_fcns_database_detail", "show_vsan_id", "show_vsan_usage", "show_vsan_membership",
+    "show_vsan_membership_for", "show_interface_counters", "show_interface_counters_for",
+    "show_interface_counters_brief_for", "show_interface_aggregate_counters_for", "show_users", "show_logging"
+}
+main.mcp.disable(names=HIDDEN | {"generate_prefab_ui", "search_prefab_components"}, components={"tool"})
 
 INSTRUCTIONS = """\
 READ-ONLY gateway to Cisco MDS Fibre Channel switches (NX-OS via NX-API): every tool runs one `show`
@@ -57,8 +77,8 @@ command, nothing can change the fabric. Never say you changed, cleared or fixed 
   credit counters, plus ports down or errDisabled. flogi_summary: logins per interface / VSAN (many = NPV
   uplink, e.g. a UCS FI port-channel: where each UCS fabric attaches).
 - slow_drain_check: OBFL txwait / rxwait / credit-loss / error-stats, port-monitor policy and warning log
-  events per interface. get_log_events: syslog parsed into events (severity, facility, code, interface,
-  VSAN), newest first, with a summary; prefer it to show_logging (max_severity=4 since_hours=24, or
+  events per interface. get_log_events: syslog parsed into events (time, severity, code, interface,
+  VSAN, message), newest first, with a summary; prefer it to `show logging` (max_severity=4 since_hours=24, or
   interface="fc1/5"). show_logging_onboard(section): OBFL history that survives reboots (error-stats,
   txwait, rxwait, credit-loss, datarate, environmental-history, exception-log; module=).
 - run_show(command): ANY single show command (port-monitor, rdp, fcs ie, topology, counters detailed...);
@@ -68,9 +88,10 @@ command, nothing can change the fabric. Never say you changed, cleared or fixed 
 
 == WORKFLOWS (check both fabrics) ==
 Health: list_switches -> show_version / show_module / show_environment -> show_interface_brief ->
-  get_log_events. Zoning: show_zoneset_active_vsan (enforced) vs show_zoneset_vsan (configured),
-  show_zone_name_vsan; devices talk only when both WWPNs (or aliases) share a zone of the ACTIVE zoneset
-  in the same VSAN. One port: show_interface_for -> show_interface_counters_detailed_for,
+  get_log_events. Zoning: show_zoneset_active (enforced) vs run_show "show zoneset vsan N" (configured),
+  run_show "show zone name X vsan N"; devices talk only when both WWPNs (or aliases) share a zone of the
+  ACTIVE zoneset in the same VSAN. Other show variants (vsan N, name X, detail, users, accounting,
+  running-config interface ...) go through run_show. One port: show_interface_for -> show_interface_counters_detailed_for,
   show_interface_bbcredit_for -> show_interface_transceiver_detail_for -> OBFL -> get_log_events
   interface=; compare the ports of the same path. UCS FIs run NPV: server vHBAs log in on the MDS
   F-port(-channel) of that FI (FI A -> fabric A MDS).
@@ -132,7 +153,7 @@ def port_history(interface: str, switch: str = "") -> str:
             "(show_interface_transceiver_detail_for), get_log_events interface=<port> last=9999, and OBFL "
             "error-stats, txwait and credit-loss filtered with grep on the port. Build a timeline, say whether the "
             "problem is physical (CRC/optics), congestion (txwait/credit loss) or the attached device, and "
-            "who is logged in on it (show_flogi_database_for).")
+            "who is logged in on it (run_show \"show flogi database interface <port>\").")
 
 
 if __name__ == "__main__":
