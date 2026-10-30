@@ -146,7 +146,7 @@ const chrome = (args: string[]) => new Promise<string>((resolve, reject) => {
 });
 const claudeSession = (appId: string) => sessionsDb.getSessionById(appId)?.provider_session_id || appId;
 
-let chromeSeen: { at: number; pcs: unknown; line: string } | null = null;
+let chromeSeen: { at: number; pcs: unknown; line: string | undefined } | null = null;
 paasPreview.get('/_chrome', async (req, res) => {
   res.setHeader('Cache-Control', 'no-store');
   if (!CHROME_BIN) { res.json({ installed: false }); return; }
