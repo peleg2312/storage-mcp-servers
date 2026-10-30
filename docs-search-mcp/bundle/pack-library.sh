@@ -37,7 +37,7 @@ for v in "$STAGE/docs-library"/*; do
 done
 cp "$DB" "$STAGE/docs-library/docs.db"
 cp "$HERE/search_cli.py" "$STAGE/docs-library/search.py"
-cp "$HERE/mcp_stdio.py" "$STAGE/docs-library/"                     # stdio MCP server, no dependencies
+cp "$HERE/mcp_stdio.py" "$HERE/docs_text.py" "$STAGE/docs-library/"                     # stdio MCP server, no dependencies
 mkdir -p "$STAGE/docs-library/tests"                                # search-quality check: python3 eval_search.py
 cp "$HERE/eval_search.py" "$STAGE/docs-library/"
 cp "$HERE"/tests/retrieval_*.json "$STAGE/docs-library/tests/"

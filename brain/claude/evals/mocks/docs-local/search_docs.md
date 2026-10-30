@@ -1,1 +1,1 @@
-{"query": "{{input.query}}", "match_mode": "all words", "results": [{"chunk_id": 1, "vendor": "netapp", "product": "kb-ontap", "title": "Example article", "section": "Cause", "url": "https://kb.netapp.com/example", "path": "netapp/kb-ontap/example.html", "snippet": "example «match»", "score": 10.0, "matched": "2/2", "also_in": []}]}
+{"results": [{"chunk_id": 1, "vendor": "netapp", "product": "kb-ontap", "title": "Example article", "section": "Cause", "url": "https://kb.netapp.com/example", "snippet": "example «match»"}]}

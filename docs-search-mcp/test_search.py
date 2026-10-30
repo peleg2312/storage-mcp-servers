@@ -72,9 +72,12 @@ async def main():
 
     src = await call("list_sources")
     assert src["libraries"][0]["documents"] == 7 and src["libraries"][0]["library"] == "main", src
+    assert src["libraries"][0]["by_vendor"]["netapp"].endswith("ontap 1") and len(json.dumps(src)) < 4000, src
+    assert (await call("list_sources", vendor="runbooks"))["libraries"][0]["by_vendor"] == {"runbooks": "team 1"}
     s = await call("search_docs", query="lun mapping create igroup")
     top = s["results"][0]
     assert top["url"] == "https://docs.netapp.com/us-en/ontap/san-admin/map-lun.html" and top["vendor"] == "netapp", top
+    assert "matched" not in top and "library" not in top and s.get("partial") is None, s   # lean reply: only partial hits say matched
     s = await call("search_docs", query="naa.600a0980 serial")
     assert s["results"] and s["results"][0]["section"] == "Find a LUN by NAA", s
     s = await call("search_docs", query="XCOPY transfer size", vendor="dell")
@@ -88,7 +91,7 @@ async def main():
     rd = await call("read_document", path="netapp/ontap-ems-9161/callhome-hm-events.adoc")  # alias path -> canonical
     assert rd["path"] == "netapp/ontap-ems-9181/callhome-hm-events.adoc" and rd["sections"], rd
     s = await call("search_docs", query="callhome.hm.alarm")  # near miss -> partial match, still found
-    assert s["match_mode"].startswith("partial") and s["results"]
+    assert s["partial"] is True and s["results"] and "query" not in s and "matched" in s["results"][0], s
     s = await call("search_docs", query="symmetrix XCOPY")          # synonym: VMAX / Symmetrix = PowerMax
     assert s["results"] and s["results"][0]["title"] == "VAAI with PowerMax", s
     s = await call("search_docs", query="detach unzone", vendor="runbooks")
@@ -132,6 +135,12 @@ async def main():
     assert s["results"][0]["library"] == "main"
     libs = (await call("list_sources"))["libraries"]
     assert [x["library"] for x in libs] == ["main", "local"]
+    for bad in (-1, 10 ** 10 * 5):
+        try:
+            await call("read_chunk", chunk_id=bad)
+            raise SystemExit("bad chunk id accepted")
+        except Exception as e:
+            assert "not found" in str(e), e
     print("ALL TESTS PASSED", r, r2)
 
 

@@ -15,12 +15,14 @@ Index file: --db, else $INDEX_DB, else docs.db next to this script, else ~/.clau
 """
 
 import argparse
+import functools
 import json
 import os
 import math
 import re
 import sqlite3
 import sys
+from pathlib import Path
 
 
 def find_db(arg):
@@ -33,47 +35,18 @@ def find_db(arg):
     sys.exit("no index found: give --db <docs.db> (built by docs_index.py or extracted from library/)")
 
 
-def connect(path):
-    c = sqlite3.connect(f"file:{path}?mode=ro", uri=True)
+class _Conn(sqlite3.Connection):
+    """Holds the idf counts of its own index (another index, or a swapped file, has other counts)."""
+    def __init__(self, *a, **k):
+        super().__init__(*a, **k)
+        self.df = {}
+
+
+def connect(path, shared=False):
+    """Read-only connection; shared=True for a connection used from several threads (server.py)."""
+    c = sqlite3.connect(Path(path).resolve().as_uri() + "?mode=ro", uri=True, check_same_thread=not shared, factory=_Conn)
     c.row_factory = sqlite3.Row
     return c
-
-
-def fts_query(q, mode="and"):
-    if mode == "or":
-        words = list(dict.fromkeys(w.lower() for w in re.findall(r"\w+", q) if len(w) > 1))
-        if not words:
-            raise ValueError("empty query")
-        return " OR ".join('"' + w + '"' for w in words)
-    parts = []
-    for m in re.finditer(r'"([^"]+)"|(\S+)', q):
-        raw = m.group(1) or m.group(2)
-        words = re.findall(r"\w+", raw)
-        if words:
-            parts.append('"' + " ".join(words) + '"')
-    if not parts:
-        raise ValueError("empty query")
-    return " ".join(parts)
-
-
-def search(c, q, vendor="", product="", limit=10, mode="and"):
-    sql = ("SELECT c.id AS chunk_id, d.vendor, d.product, d.title, chunks_fts.heading AS section, d.url, d.path, "
-           "snippet(chunks_fts, 2, '«', '»', ' … ', 40) AS snippet, bm25(chunks_fts, 6.0, 3.0, 1.0) AS score "
-           "FROM chunks_fts JOIN chunks c ON c.id = chunks_fts.rowid JOIN docs d ON d.id = c.doc_id "
-           "WHERE chunks_fts MATCH ?")
-    args = [fts_query(q, mode)]
-    if vendor:
-        sql += " AND d.vendor = ?"
-        args.append(vendor.lower())
-    if product:   # the document itself or any identical copy (alias) in a matching product
-        sql += (" AND (d.product LIKE ? OR EXISTS (SELECT 1 FROM docs a WHERE a.dup_of = d.id AND a.product LIKE ?))")
-        args += [f"%{product}%", f"%{product}%"]
-    sql += " ORDER BY score LIMIT ?"
-    args.append(max(1, min(int(limit), 50)))
-    rows = [dict(r) for r in c.execute(sql, args)]
-    for r in rows:
-        r["also_in"] = also_in(c, r["path"])
-    return rows
 
 
 # Storage-domain synonyms: a query word matches any member of its group (old product names, acronyms).
@@ -160,13 +133,18 @@ def _stem(w):
     return w[:-1] if len(w) == 4 and w.endswith("s") and not w.endswith("ss") else w   # logs -> log, LUNs -> lun
 
 
+@functools.lru_cache(maxsize=None)
+def _pat(w):
+    return re.compile(r"\b" + re.escape(_stem(w)))
+
+
 def _proximity(text, groups, found):
     """1 when the matched query words sit together (a window of their count), falling to 0 when spread out."""
     pos = []
     for g, f in zip(groups, found):
         if not f:
             continue
-        p = [m.start() for a in g for m in re.finditer(r"\b" + re.escape(_stem(a.split()[0])), text)]
+        p = [m.start() for a in g for m in _pat(a.split()[0]).finditer(text)]
         if p:
             pos.append(sorted(p))
     if len(pos) < 2:
@@ -184,24 +162,23 @@ def _proximity(text, groups, found):
 
 
 def _has(text, alt):
-    return all(re.search(r"\b" + re.escape(_stem(w)), text) for w in alt.split())
+    return all(_pat(w).search(text) for w in alt.split())
 
 
-_DF = {}
 
 
 def _idf(c, group):
-    """BM25-style inverse document frequency of a word group over all chunks (cached per process)."""
-    key = tuple(group)
-    if key not in _DF:
-        if "N" not in _DF:
-            _DF["N"] = c.execute("SELECT count(*) FROM chunks").fetchone()[0] or 1
+    """BM25-style inverse document frequency of a word group over all chunks (cached per connection)."""
+    d, key = c.df, tuple(group)
+    if key not in d:
+        if "N" not in d:
+            d["N"] = c.execute("SELECT count(*) FROM chunks").fetchone()[0] or 1
         match = " OR ".join('"' + a + '"' for a in group)
         try:
-            _DF[key] = c.execute("SELECT count(*) FROM chunks_fts WHERE chunks_fts MATCH ?", (match,)).fetchone()[0]
+            d[key] = c.execute("SELECT count(*) FROM chunks_fts WHERE chunks_fts MATCH ?", (match,)).fetchone()[0]
         except sqlite3.OperationalError:
-            _DF[key] = 0
-    n, df = _DF["N"], _DF[key]
+            d[key] = 0
+    n, df = d["N"], d[key]
     return math.log((n - df + 0.5) / (df + 0.5) + 1)
 
 
@@ -216,7 +193,7 @@ def search_docs(c, q, vendor="", product="", limit=8):
         raise ValueError("empty query")
     phrase = lambda s: '"' + s + '"'  # noqa: E731
     sql = ("SELECT c.id AS chunk_id, d.id AS doc_id, d.vendor, d.product, d.title, chunks_fts.heading AS section, "
-           "d.url, d.path, snippet(chunks_fts, 2, '«', '»', ' … ', 40) AS snippet, "
+           "d.url, d.path, "
            f"bm25(chunks_fts, {W_TITLE}, {W_SECTION}, 1.0) AS score, chunks_fts.title AS ctx, chunks_fts.text AS body "
            "FROM chunks_fts JOIN chunks c ON c.id = chunks_fts.rowid JOIN docs d ON d.id = c.doc_id "
            "WHERE chunks_fts MATCH ?")
@@ -229,13 +206,16 @@ def search_docs(c, q, vendor="", product="", limit=8):
         filters += [f"%{product}%", f"%{product}%"]
     sql += " ORDER BY score LIMIT ?"
 
+    def any_match(groups):
+        return " AND ".join([phrase(r) for r in req] +
+                            (["(" + " OR ".join(phrase(a) for g in groups for a in g) + ")"] if groups else []))
+
     def candidates(groups):
         # chunks holding every word group (a short page with all words is never crowded out by long pages
         # repeating common words), plus the best chunks holding any of them
-        anyg = [phrase(r) for r in req] + (["(" + " OR ".join(phrase(a) for g in groups for a in g) + ")"] if groups else [])
         every = [phrase(r) for r in req] + ["(" + " OR ".join(phrase(a) for a in g) + ")" for g in groups]
         found = {}
-        for match, n in ((" AND ".join(every), POOL[0]), (" AND ".join(anyg), POOL[1])):
+        for match, n in ((" AND ".join(every), POOL[0]), (any_match(groups), POOL[1])):
             for r in c.execute(sql, [match] + filters + [n]):
                 found.setdefault(r["chunk_id"], dict(r))
         return found
@@ -312,15 +292,20 @@ def search_docs(c, q, vendor="", product="", limit=8):
         rows.append(r)
         if len(rows) >= lim:
             break
+    if rows:                                            # the snippet is cut only for the rows returned
+        ids = [r["chunk_id"] for r in rows]
+        snip = dict(c.execute("SELECT rowid, snippet(chunks_fts, 2, '«', '»', ' … ', 40) FROM chunks_fts WHERE chunks_fts "
+                              f"MATCH ? AND rowid IN ({','.join('?' * len(ids))})", [any_match(groups)] + ids))
     for r in rows:
         r.pop("doc_id", None)
+        r["snippet"] = snip[r["chunk_id"]]
     facet = {}
     for _, _, r in scored[:60]:                         # where the strong candidates live: the next product filter
         facet[r["product"]] = facet.get(r["product"], 0) + 1
     full = bool(scored) and scored[0][1] == 1.0
     mode = "all words" if full else "partial: no chunk contains every word; best coverage first (see matched)"
-    out = {"query": q, "match_mode": mode, "results": rows}
-    if not product and len(facet) > 1:
+    out = {"match_mode": mode, "results": rows}
+    if not product and len(facet) > 1 and max(facet.values()) < 0.9 * sum(facet.values()):
         out["by_product"] = dict(sorted(facet.items(), key=lambda kv: -kv[1])[:6])
     # words no returned hit holds: the agent's cue to rephrase exactly those with the vendor's term
     missing = [g[0] for i, g in enumerate(groups) if rows and not any(f[i] for f in found_in)]
@@ -331,9 +316,15 @@ def search_docs(c, q, vendor="", product="", limit=8):
 
 def for_agent(out):
     """The search answer as an agent reads it: no internal score, the path only when there is no url (read_document
-    takes either; citations use the url), no title repeated at the start of the snippet. ~15% fewer tokens."""
+    takes either; citations use the url), no title repeated at the start of the snippet, `matched` only on partial
+    hits, `partial: true` instead of the match_mode text. ~25% fewer tokens."""
+    if out.pop("match_mode", "all words") != "all words":
+        out["partial"] = True
     for r in out.get("results", []):
         r.pop("score", None)
+        h, _, n = (r.get("matched") or "").partition("/")
+        if h == n or h == "phrases":
+            r.pop("matched", None)
         if r.get("url"):
             r.pop("path", None)
         sn, t = r.get("snippet") or "", re.sub(r"\s+", " ", r.get("title") or "").strip()
@@ -367,26 +358,28 @@ def also_in(c, path):
         return []
 
 
-def read_chunk(c, chunk_id, context=1):
+def read_chunk(c, chunk_id, context=1, id_base=0):
+    """id_base: server.py makes chunk ids unique across indexes (index number x ID_BASE + id)."""
     row = c.execute("SELECT doc_id, seq FROM chunks WHERE id = ?", (chunk_id,)).fetchone()
     if not row:
-        sys.exit(f"chunk {chunk_id} not found")
+        raise LookupError(f"chunk {chunk_id} not found (the index may have been rebuilt; search again)")
     ctx = max(0, min(int(context), 3))
     doc = dict(c.execute("SELECT title, url, path, vendor, product, chunks FROM docs WHERE id = ?",
                          (row["doc_id"],)).fetchone())
     parts = c.execute("SELECT c.id, c.seq, f.heading, f.text FROM chunks c JOIN chunks_fts f ON f.rowid = c.id "
                       "WHERE c.doc_id = ? AND c.seq BETWEEN ? AND ? ORDER BY c.seq",
                       (row["doc_id"], row["seq"] - ctx, row["seq"] + ctx)).fetchall()
-    doc["sections"] = [{"chunk_id": p["id"], "seq": p["seq"], "section": p["heading"], "text": p["text"],
+    doc["sections"] = [{"chunk_id": id_base + p["id"], "seq": p["seq"], "section": p["heading"], "text": p["text"],
                         "is_hit": p["id"] == chunk_id} for p in parts]
     return doc
 
 
-def read_doc(c, path="", url="", start=0, max_sections=15):
+def read_doc(c, path="", url="", start=0, max_sections=15, id_base=0):
+    start = max(0, int(start))
     d = c.execute("SELECT * FROM docs WHERE path = ?", (path,)).fetchone() if path else \
-        c.execute("SELECT * FROM docs WHERE url = ?", (url,)).fetchone()
+        c.execute("SELECT * FROM docs WHERE url = ? ORDER BY dup_of IS NOT NULL", (url,)).fetchone()   # a url can repeat: canonical copy first
     if not d:
-        sys.exit("document not found in the index")
+        raise LookupError("document not found in the index")
     try:
         if d["dup_of"] is not None:
             d = c.execute("SELECT * FROM docs WHERE id = ?", (d["dup_of"],)).fetchone()
@@ -394,21 +387,25 @@ def read_doc(c, path="", url="", start=0, max_sections=15):
         pass
     n = max(1, min(int(max_sections), 40))
     parts = c.execute("SELECT c.id, c.seq, f.heading, f.text FROM chunks c JOIN chunks_fts f ON f.rowid = c.id "
-                      "WHERE c.doc_id = ? AND c.seq >= ? ORDER BY c.seq LIMIT ?", (d["id"], int(start), n)).fetchall()
-    nxt = int(start) + len(parts)
+                      "WHERE c.doc_id = ? AND c.seq >= ? ORDER BY c.seq LIMIT ?", (d["id"], start, n)).fetchall()
+    nxt = start + len(parts)
     return {"title": d["title"], "url": d["url"], "path": d["path"], "also_in": also_in(c, d["path"]),
-            "total_sections": d["chunks"], "start": int(start), "next_start": nxt if nxt < d["chunks"] else None,
-            "sections": [{"chunk_id": p["id"], "seq": p["seq"], "section": p["heading"], "text": p["text"]}
+            "total_sections": d["chunks"], "start": start, "next_start": nxt if nxt < d["chunks"] else None,
+            "sections": [{"chunk_id": id_base + p["id"], "seq": p["seq"], "section": p["heading"], "text": p["text"]}
                          for p in parts]}
 
 
-def sources(c):
-    rows = [dict(r) for r in c.execute("SELECT vendor, product, count(*) AS documents, sum(chunks) AS sections "
-                                       "FROM docs GROUP BY vendor, product ORDER BY vendor, documents DESC")]
+def sources(c, vendor=""):
+    """What is in the index: {vendor: "product documents, ..."} (products by size), optionally one vendor."""
+    rows = c.execute("SELECT vendor, product, count(*) AS n FROM docs" + (" WHERE vendor = ?" if vendor else "") +
+                     " GROUP BY vendor, product ORDER BY vendor, n DESC", [vendor.lower()] if vendor else [])
+    by, total = {}, 0
+    for v, p, n in rows:
+        by.setdefault(v, []).append(f"{p} {n}")
+        total += n
     meta = dict(c.execute("SELECT key, value FROM meta").fetchall())
-    return {"indexed_at": meta.get("indexed_at"), "bundle": meta.get("bundle"),
-            "documents": sum(r["documents"] for r in rows), "sections": sum(r["sections"] or 0 for r in rows),
-            "sources": rows}
+    return {"indexed_at": meta.get("indexed_at"), "bundle": meta.get("bundle"), "documents": total,
+            "by_vendor": {v: ", ".join(p) for v, p in by.items()}}
 
 
 def main():
@@ -434,10 +431,16 @@ def main():
     d.add_argument("--url", default="")
     d.add_argument("--start", type=int, default=0)
     d.add_argument("--max", type=int, default=15)
-    sub.add_parser("sources", help="what is in the library")
+    sub.add_parser("sources", help="what is in the library").add_argument("--vendor", default="")
     a = ap.parse_args()
 
-    c = connect(find_db(a.db))
+    try:
+        run(a, connect(find_db(a.db)))
+    except LookupError as e:
+        sys.exit(str(e))
+
+
+def run(a, c):
     if a.cmd == "search":
         out = search_docs(c, a.query, a.vendor, a.product, a.limit)
         rows, mode = out["results"], out["match_mode"]
@@ -474,14 +477,13 @@ def main():
         if out["next_start"] is not None:
             print(f"\n... continue with --start {out['next_start']}")
     else:
-        out = sources(c)
+        out = sources(c, a.vendor)
         if a.json:
             print(json.dumps(out, ensure_ascii=False, indent=1))
             return
-        print(f"library bundle {out['bundle']} indexed {out['indexed_at']}: {out['documents']} documents, "
-              f"{out['sections']} sections")
-        for r_ in out["sources"]:
-            print(f"  {r_['vendor']:8} {r_['product']:34} {r_['documents']:7} docs {r_['sections'] or 0:8} sections")
+        print(f"library bundle {out['bundle']} indexed {out['indexed_at']}: {out['documents']} documents")
+        for v, p in out["by_vendor"].items():
+            print(f"  {v}: {p}")
 
 
 if __name__ == "__main__":

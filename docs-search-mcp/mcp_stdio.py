@@ -22,35 +22,11 @@ try:
     import search_cli as lib  # noqa: E402  (in the repo: search_cli.py; in the library folder: search.py)
 except ImportError:
     import search as lib  # noqa: E402
-
-INSTRUCTIONS = """\
-Read-only, fully OFFLINE search over the team's storage documentation library: NetApp ONTAP / EMS /
-SAN hosts / Trident docs and KB, Dell PowerMax / PowerFlex (incl. the REST API) / PowerScale / CSM docs and
-KB, Kubernetes / OpenShift storage, the CSI driver and sidecar source code, Dell CSM pull requests (the
-fixes), the Trident / Harvest issue trackers, and the backend stack (FastAPI, Pydantic, httpx, pytest,
-SQLAlchemy, fastmcp, MCP SDK and spec). Nothing here needs internet; the urls are for the humans.
-1. search_docs with the exact technical terms (error text in "quotes", EMS / event names, commands,
-   KB / CONTAP / DSA numbers). Old and new product names and common acronyms match each other.
-   Filter by vendor / product when the platform is known (list_sources gives the names; by_product in a
-   reply shows where the hits are). No good hit: send 2-3 rephrasings in parallel in the vendor's words
-   (as a KB title would say it; the concept name; "best practices" / "overview") and replace `unmatched` words.
-2. read_chunk the best 2-3 hits before answering; read_document for a whole page or PDF.
-3. Cite title + url + version for every statement; never invent commands, settings or bug numbers.
-   "matched" shows how many query words a hit contains: a partial match is weak evidence."""
+from docs_text import INSTRUCTIONS, SEARCH_DOC  # noqa: E402
 
 TOOLS = [
     {"name": "search_docs",
-     "description": "Search all indexed documentation, KB articles, bug trackers, pull requests and source "
-                    "code. query: technical words; \"quoted text\" must appear verbatim (use it for error "
-                    "messages); other words are ranked by how many a section contains, with synonyms (Isilon = "
-                    "PowerScale, ScaleIO = PowerFlex, VMAX = PowerMax, RDP, SRDF, CSM...). vendor: netapp | dell | "
-                    "kubernetes | openshift | vmware | python | mcp. product: substring of the product "
-                    "(ontap-ems-9151, kb-ontap, trident-2510, csm, csi-powermax, csm-prs, powerflex-api, fastapi...). "
-                    "Returns up to `limit` hits (max 2 per document) with chunk_id for read_chunk, title, section, "
-                    "snippet (matches in «»), url (or path), matched (query words found / total), also_in (the same "
-                    "page in other versions / copies: open the one for the installed version); by_product = where "
-                    "the strong candidates are (the next product filter); unmatched = query words no hit holds "
-                    "(rephrase those).",
+     "description": SEARCH_DOC,
      "inputSchema": {"type": "object", "properties": {
          "query": {"type": "string"}, "vendor": {"type": "string", "default": ""},
          "product": {"type": "string", "default": ""}, "limit": {"type": "integer", "default": 8}},
@@ -70,8 +46,9 @@ TOOLS = [
          "start": {"type": "integer", "default": 0}, "max_sections": {"type": "integer", "default": 15}}},
      "annotations": {"readOnlyHint": True, "destructiveHint": False, "idempotentHint": True, "openWorldHint": False}},
     {"name": "list_sources",
-     "description": "What is in the library: documents and sections per vendor/product, and when it was indexed.",
-     "inputSchema": {"type": "object", "properties": {}},
+     "description": "What is in the library: documents per vendor and product (\"product documents, ...\"), and "
+                    "when it was indexed. vendor: list one vendor only.",
+     "inputSchema": {"type": "object", "properties": {"vendor": {"type": "string", "default": ""}}},
      "annotations": {"readOnlyHint": True, "destructiveHint": False, "idempotentHint": True, "openWorldHint": False}},
 ]
 
@@ -92,8 +69,7 @@ class Server:
             return lib.read_doc(self.con, args.get("path", ""), args.get("url", ""), args.get("start", 0),
                                 args.get("max_sections", 15))
         if name == "list_sources":
-            s = lib.sources(self.con)
-            return {"libraries": [{"library": "main", **s}]}
+            return {"libraries": [{"library": "main", **lib.sources(self.con, args.get("vendor", ""))}]}
         raise ValueError(f"unknown tool {name}")
 
     def handle(self, msg):
@@ -114,8 +90,6 @@ class Server:
                 out = self.call(params.get("name"), params.get("arguments") or {})
                 return {"content": [{"type": "text", "text": json.dumps(out, ensure_ascii=False, separators=(",", ":"))}],
                         "isError": False}
-            except SystemExit as e:          # search_cli uses sys.exit for "not found"
-                return {"content": [{"type": "text", "text": str(e)}], "isError": True}
             except Exception as e:
                 return {"content": [{"type": "text", "text": f"{e.__class__.__name__}: {e}"}], "isError": True}
         if mid is None:

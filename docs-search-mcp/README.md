@@ -102,12 +102,12 @@ Tip: save a vendor KB as PDF/HTML ("Print → Save as PDF") whenever you open on
 
 | Tool | Purpose |
 |---|---|
-| `search_docs(query, vendor, product, limit)` | BM25 search over all libraries; all words first, any-word fallback; snippet with matches marked « » |
+| `search_docs(query, vendor, product, limit)` | BM25 search over all libraries; all words first, any-word fallback; snippet with matches marked « ». Lean reply: `matched` only on partial hits, `partial: true` when no section holds every word, `library` only with two libraries |
 | `read_chunk(chunk_id, context)` | the hit in full plus neighbouring sections |
 | `read_document(path or url, start, max_sections)` | read a whole document in order (PDFs page by page) |
-| `list_sources()` | per library: bundle date, documents per vendor/product |
+| `list_sources(vendor)` | per library: bundle date, documents per vendor as `product count, ...` (~3 KB; `vendor` lists one) |
 
-Prompts: `explain_error`, `how_to`. The server instructions tell Claude it is offline, to search with exact
+Prompts: `explain_error`, `how_to`. The instructions and the `search_docs` text live in `docs_text.py`, shared by `server.py` and `mcp_stdio.py` (copy it with them). The server instructions tell Claude it is offline, to search with exact
 terms, read before answering, cite title + URL and the version, and to check the bug trackers for errors.
 
 ## Connected cluster
@@ -132,7 +132,7 @@ MCP_AUTH_TOKENS=$(openssl rand -hex 32) INDEX_DB=./data/index/docs.db python3 se
 
 ## Tests
 
-`test_search.py` (indexer, all tools, incremental update, two libraries), `test_stdio.py` (the stdio MCP
+`eval_search.py` (hit@1/5/10 + MRR over every `tests/retrieval_*.json` set; `--dump` to diff replies before/after a change), `test_search.py` (indexer, all tools, incremental update, two libraries), `test_stdio.py` (the stdio MCP
 server handshake + all tools, the CLI, NetApp KB extraction incl. login-gated articles), `test_sync_dell.py`
 (hub parsing, allowed hosts, login pages rejected, incremental), `test_sync_issues.py` (pagination, comments,
 PRs skipped, incremental). Verified: offline image with `--network none` answers searches; 21,540 documents / 74,055
