@@ -130,7 +130,7 @@ def shell_check(cmd, depth=0):
         return "block", "PowerCLI / PowerShell command that changes something"
     if depth < 2:     # bash -c "..." / eval "...": check the quoted command (the splitter below would cut inside the quotes)
         for m in SHELL_C.finditer(cmd):
-            r = shell_check(_words(m.group(1))[0] if m.group(1)[0] in "\"'" else m.group(1), depth + 1)
+            r = shell_check((_words(m.group(1)) or [""])[0] if m.group(1)[0] in "\"'" else m.group(1), depth + 1)
             if r[0] == "block":
                 return r
             worst = worst if worst[0] else r

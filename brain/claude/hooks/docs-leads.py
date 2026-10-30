@@ -194,7 +194,7 @@ def main():
             pass
         lines += leads
     if note and not lines:
-        note = ""         # nothing matched (a k8s yaml, a gzip flag): no storage.md pointer, no mark: no storage.md pointer, no mark
+        note = ""         # nothing matched (a k8s yaml, a gzip flag): no storage.md pointer, no mark
     elif note:
         try:
             open(mark, "w").close()
