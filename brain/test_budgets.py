@@ -22,6 +22,7 @@ def check(label, got, cap):
 
 
 check("CLAUDE.md + notes.md", size(C, "CLAUDE.md") + size(C, "brain", "notes.md"), 8 * 1024)
+check("coding.md (read on demand by code work)", size(C, "brain", "coding.md"), 2 * 1024)
 check("storage.md + environment.md + tool-map.md",
       sum(size(C, "brain", f) for f in ("storage.md", "environment.md", "tool-map.md")), 12 * 1024)
 check("skill frontmatter total", sum(front(f) for f in glob.glob(C + "/skills/*/SKILL.md")), 10500)

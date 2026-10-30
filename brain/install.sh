@@ -45,6 +45,7 @@ fi
 cp "$TMP_MD" "$CLAUDE_MD"; rm -f "$TMP_MD"
 # the storage rules: loaded in plain chats (~/chats, see below) and in a project install; code projects read them on demand
 sed "s#@~/\.claude/brain/#$IMPORT_PREFIX#" "$SRC/brain/storage.md" > "$DST/brain/storage.md"
+cp "$SRC/brain/coding.md" "$DST/brain/coding.md"      # coding rules, read on demand by code work only
 [ -z "$PROJECT" ] || grep -q "^@.*storage\.md" "$CLAUDE_MD" || printf '\n## Storage rules\n%sstorage.md\n' "$IMPORT_PREFIX" >> "$CLAUDE_MD"
 cp -R "$SRC/skills/." "$DST/skills/"
 cp -R "$SRC/agents/." "$DST/agents/"

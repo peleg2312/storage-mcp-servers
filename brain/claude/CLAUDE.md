@@ -12,6 +12,8 @@ always correctly spelled (identifiers, commands, paths and names stay exactly as
 **Storage work** (arrays, fabrics, UCS, VMware / ESXi, CSI volumes, their errors and docs): the storage rules,
 identifier rules, path model, sources and environment are in `~/.claude/brain/storage.md`, loaded in plain chats.
 Not in your context (a code project)? Read it before the first storage answer.
+**Code work** (writing or changing code, scripts, services, apps): the coding rules are in `~/.claude/brain/coding.md`;
+read it once before the first code change in a session. Storage chats never need it.
 
 The environment is **air-gapped**: nothing here reaches the internet. Vendor knowledge comes only from the
 offline library through **the docs MCP** (**docs-search** on the cluster or **docs-local** on this VM; without MCP: `python3
