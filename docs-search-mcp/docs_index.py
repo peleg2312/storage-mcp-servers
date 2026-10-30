@@ -38,6 +38,7 @@ CREATE TABLE IF NOT EXISTS docs(id INTEGER PRIMARY KEY, path TEXT UNIQUE, vendor
   title TEXT, url TEXT, mtime REAL, size INTEGER, chunks INTEGER, hash TEXT, dup_of INTEGER);
 CREATE INDEX IF NOT EXISTS docs_hash ON docs(hash);
 CREATE INDEX IF NOT EXISTS docs_dup ON docs(dup_of);
+CREATE INDEX IF NOT EXISTS docs_url ON docs(url);
 CREATE TABLE IF NOT EXISTS chunks(id INTEGER PRIMARY KEY, doc_id INTEGER, seq INTEGER);
 CREATE INDEX IF NOT EXISTS chunks_doc ON chunks(doc_id, seq);
 CREATE VIRTUAL TABLE IF NOT EXISTS chunks_fts USING fts5(title, heading, text,
@@ -510,8 +511,9 @@ def build(docs_root, db_path, full=False, log=print, prefix=""):
         con.execute("VACUUM")                 # give freed pages back: smaller file to ship
     con.close()
     os.replace(tmp, db_path)
-    docs, chunks = sqlite3.connect(db_path).execute(
-        "SELECT (SELECT count(*) FROM docs), (SELECT count(*) FROM chunks)").fetchone()
+    k = sqlite3.connect(db_path)
+    docs, chunks = k.execute("SELECT (SELECT count(*) FROM docs), (SELECT count(*) FROM chunks)").fetchone()
+    k.close()
     log(f"index {db_path}: {docs} documents ({deduped} identical copies folded), {chunks} chunks (+{added} new, "
         f"{updated} updated, -{removed} removed, {errors} errors) in {time.time() - t0:.0f}s")
     return {"documents": docs, "chunks": chunks, "added": added, "updated": updated,

@@ -40,6 +40,8 @@ assert json.loads(out[5]["result"]["content"][0]["text"])["total_sections"] == 1
 assert json.loads(out[6]["result"]["content"][0]["text"])["libraries"][0]["documents"] == 1
 assert out[7]["result"]["isError"] is True
 assert out[8]["error"]["code"] == -32601
+assert len(out[1]["result"]["instructions"].encode()) < 1500
+assert json.loads(out[6]["result"]["content"][0]["text"])["libraries"][0]["by_vendor"] == {"netapp": "ontap-ems-9171 1"}
 assert len(out) == 8, "notification must not be answered"
 
 c = subprocess.run([sys.executable, os.path.join(here, "search_cli.py"), "--db", db, "search", "san active"],
