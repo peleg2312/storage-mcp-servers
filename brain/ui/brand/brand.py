@@ -340,12 +340,15 @@ edit("src/modules/project-creation-wizard/StepConfiguration.tsx",
 strings("common.json", projectWizard__step2__githubUrl="Git URL (optional)",
         projectWizard__step2__githubHelp="Optional: a GitLab repository URL to clone into the workspace")
 strings("settings.json", mainTabs__agents="Claude")
+# the plugin key stays out of Claude's environment (its Bash tool could print it into the transcript)
+edit("server/modules/providers/list/claude/claude-runtime.provider.js",
+     ("  sdkOptions.env = buildClaudeSdkEnv();\n", "  sdkOptions.env = buildClaudeSdkEnv();\n  delete sdkOptions.env.PAAS_PLUGIN_KEY;\n"))
 # Claude's reasoning is shown (summaries), not only a "Thinking" spinner: the API omits it unless asked
 edit("server/modules/providers/list/claude/claude-runtime.provider.js",
      ("  sdkOptions.systemPrompt = {\n    type: 'preset',\n",
       "  // ponytail: Haiku has no adaptive thinking; other non-adaptive models would need { type: 'enabled' } here\n"
       "  if (!/haiku/i.test(sdkOptions.model)) sdkOptions.thinking = { type: 'adaptive', display: 'summarized' };\n\n"
-      "  sdkOptions.systemPrompt = {\n    type: 'preset',\n"))
+      "  sdkOptions.systemPrompt = {\n    type: 'preset',\n    excludeDynamicSections: true,\n"))
 # fonts shipped with the app (the VM has no Google Fonts): Inter for UI and replies, Source Serif for headings
 edit("index.html",
      ("    <link rel=\"preconnect\" href=\"https://fonts.googleapis.com\" />\n    <link rel=\"preconnect\" href=\"https://fonts.gstatic.com\" crossorigin />\n"

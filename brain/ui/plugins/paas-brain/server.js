@@ -212,13 +212,13 @@ const routes = {
   // your own skills (marked .user-skill; install.sh never touches them): create / update / delete
   'POST /skill': async (_q, b) => {
     const name = String(b.name || '').trim();
-    const description = oneLine(b.description, 1000);
+    const description = oneLine(b.description, 250);
     if (!SKILL_NAME.test(name)) return { ok: false, out: 'Name: lower-case letters, digits and dashes, e.g. vm-patching' };
     if (!description) return { ok: false, out: 'A description is needed: it is how Claude knows when to use the skill' };
     const dir = path.join(C, 'skills', name);
     if (fs.existsSync(dir) && !fs.existsSync(path.join(dir, '.user-skill'))) return { ok: false, out: `"${name}" is a built-in skill` };
     fs.mkdirSync(dir, { recursive: true });
-    const when = oneLine(b.when, 600);
+    const when = oneLine(b.when, 200);
     // JSON strings are valid YAML: a colon or quotes in the text cannot break the header
     fs.writeFileSync(path.join(dir, 'SKILL.md'), `---\nname: ${name}\ndescription: ${JSON.stringify(description)}\n`
       + `${when ? `when_to_use: ${JSON.stringify(when)}\n` : ''}---\n${String(b.body || '').trim()}\n`);
@@ -244,6 +244,7 @@ const routes = {
     const text = String(b.text ?? '');
     const f = frontmatter(text);
     if (!f.name || !f.description) return { ok: false, out: 'The file must start with a --- header holding name: and description:' };
+    if ((f.description || '').length + (f.when_to_use || '').length > 450) return { ok: false, out: 'Keep the description under ~450 characters: it is shown to Claude on every turn; put details in the body.' };
     if (text.length > 300000) return { ok: false, out: 'Too long' };
     const isNew = !fs.existsSync(p);
     if (isNew && !b.create) return { ok: false, out: 'Not found' };

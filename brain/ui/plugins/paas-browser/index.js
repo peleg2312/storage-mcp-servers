@@ -97,6 +97,7 @@ function chromeBar(box, howto, api) {
     });
   }
   async function refresh() {
+    if (document.hidden) return;
     try { data = await (await fetch(`/preview/_chrome?session=${encodeURIComponent(session())}`, { credentials: 'same-origin', cache: 'no-store' })).json(); } catch { /* signed out: keep the last view */ }
     if (!stopped && !box.querySelector('select:focus')) render();
   }
@@ -156,6 +157,7 @@ export function mount(container, api) {
   // paas-open (Claude or the person in a terminal) writes the page to open; take each one once
   async function poll() {
     if (stopped) return;
+    if (document.hidden) { setTimeout(poll, 5000); return; }
     try {
       const d = await (await fetch('/preview/_open', { credentials: 'same-origin', cache: 'no-store' })).json();
       if (d.url && d.ts > Number(store.get(SEEN) || 0)) { store.set(SEEN, String(d.ts)); open(d.url); }
