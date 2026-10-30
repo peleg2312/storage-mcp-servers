@@ -26,12 +26,12 @@ instances** from one pod; nothing it does can change configuration.
 | Area | Tools |
 |---|---|
 | Connection | `test_connection`, `list_centrals` |
-| Inventory | `list_domains`, `list_fabric_interconnects`, `list_chassis`, `list_servers`, `get_server`, `list_firmware` |
-| Health / events / logs | `get_domain_health`, `list_faults`, `get_events`, `get_audit_log` |
+| Inventory | `list_domains`, `list_fabric_interconnects`, `list_chassis`, `list_servers`, `get_server`, `list_firmware` (grouped; `limit>0` adds raw rows) |
+| Health / events / logs | `get_domain_health`, `list_faults`, `get_events`, `get_audit_log` (`since=7d` default, `30d` or `all`) |
 | Service profiles | `list_service_profiles`, `get_service_profile`, `get_service_profile_vhbas` |
 | SAN troubleshooting | `trace_service_profile_san` (one call: every vHBA's WWPN/fabric/VSAN/pinning, adapter FC link and bad frames, FI FC uplinks and port-channels with current errors, problems list, next hops for MDS/PowerMax), `get_domain_fc_health`, `list_fc_port_channels`, `get_fc_port_errors`, `get_vhba_pinning` |
 | SAN | `find_wwpn`, `list_wwn_pools`, `list_vsans`, `list_fc_uplinks` |
-| Generic | `get_object` (any DN), `query_class` (any class) |
+| Generic | `get_object` (any DN), `query_class` (any class); both take `props=` to return only named properties |
 
 List tools query every central in parallel and tag rows with `central`; DN tools find the central
 that owns the object. Unreachable centrals are reported, not fatal.
@@ -44,7 +44,6 @@ that owns the object. Unreachable centrals are reported, not fatal.
 | `UCSC_<N>_HOST` / `_USERNAME` / `_PASSWORD` | yes, per instance | N = 1, 2, 3 ... |
 | `UCSC_<N>_NAME` | | the host |
 | `UCSC_<N>_PORT` | | `443` |
-
 | `UCSC_SESSIONS` / `UCSC_<N>_SESSIONS` | | `3` parallel logged-in sessions per UCS Central |
 | `UCSC_CACHE_TTL` | | `120` seconds; identical queries inside this window are served from memory (`0` = off) |
 
@@ -61,11 +60,16 @@ Note: `ucscsdk` does not verify the UCS Central TLS certificate.
   lock; this server replaces it with a per-session lock and keeps a small session pool, so
   parallel questions and multiple UCS Centrals run at the same time.
 - **Short cache** for repeated identical queries, and list results are capped (default 200) with
-  totals and counts, so Claude doesn't receive tens of thousands of rows.
+  totals and counts (`list_faults` and `query_class` 50; `list_faults` adds `by_code`), so Claude doesn't receive tens of thousands of rows.
 - If a UCS Central version rejects a filter, the server automatically falls back to an unfiltered
   query and filters in the pod (slower, still correct).
 
 ## Run
+
+The marketplace package registers this server as `ucsc`; the examples below use `ucs-central`, any name works.
+
+Local / stdio (no token): `MCP_TRANSPORT=stdio python3.12 server.py` (fastmcp needs Python >= 3.10, so
+not the VM's system Python 3.9; use the container there).
 
 ```bash
 docker load -i ucsc-mcp-2.2.tar.gz     # or: docker build -t ucsc-mcp:2.2 .
