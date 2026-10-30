@@ -6,15 +6,15 @@ best-practices) recommend, and where this brain stands. Re-check with `/brain-he
 
 | Doc guidance | This brain |
 |---|---|
-| CLAUDE.md under 200 lines, imports do not save context | CLAUDE.md 107 lines + 3 imports (environment, notes, tool map), ~3,300 tokens; no inventories or lists Claude already sees (skills, tool schemas, library contents live in docs-lookup / MANIFEST.md); `/brain-health` warns above ~200 lines total |
-| Rules, not prose: enforce with hooks, CLAUDE.md is only context | PreToolUse hook `block-write-tools.py` (matcher `mcp__.*`, exit 2) blocks every write-looking MCP call; allow-list file for false positives |
+| CLAUDE.md under 200 lines, imports do not save context | core CLAUDE.md 77 lines + `notes.md` import (7.5 KB, ~1,900 tokens every session); storage rules + environment + tool map (~2,500 tokens, environment left out while it is the blank template) only in plain chats, via the generated `~/chats/CLAUDE.md`; no inventories or lists Claude already sees (skills, tool schemas, library contents live in docs-lookup / MANIFEST.md); `/brain-health` checks two line budgets (core, plain chat) |
+| Rules, not prose: enforce with hooks, CLAUDE.md is only context | PreToolUse hook `block-write-tools.py` (matcher `mcp__.*|Bash`, exit 2) blocks write-looking MCP calls and infrastructure shell commands, and asks before oc / kubectl / helm / curl / systemctl changes; allow-list file for false positives |
 | PostToolUse hooks add context next to a tool result (`additionalContext`) | `docs-hints.py` (matcher `mcp__.*`): an EMS name, PowerMax SYMAPI alert, PowerFlex SIO code, CONTAP bug or DSA advisory in a live result gets its documented meaning + chunk id beside it, so errors are explained from the docs without a search round trip; only names the library documents (exact EMS heading match, cached name set), at most 4 lines + names per result, each once per session; 0.05 s on a 3,000-line result; 40 / 40 sampled EMS names explained, 0 false hits on 3,000 decoy names. Free-text errors (`desc = ...`, `error: ...`, `failed: ...`): the longest fixed run of words, shortened until found, points at the doc / KB or the CSI function raising it (`brain/test_docs_hints.py`) |
 | UserPromptSubmit hooks add context for a request | `docs-leads.py`: every request that names the library's world (vendor, product or storage term - the product names are read from the library - or a pasted identifier) gets up to 4 matching documents (title :: section, chunk id) before Claude answers; silent otherwise. Measured: fires on 215 / 241 test questions with the right document among the leads in 189 of them (88 %); fires on 0 / 25 unrelated requests ("yes", "center a div", "summarize this meeting for my manager"); ~150 tokens when it fires, 0.14 s |
-| SessionStart hooks inject fresh facts | `session-start.py` prints library version / document count, hook state, read-only mode at every start, resume and compaction |
-| Skills: description + `when_to_use` drive auto-triggering (1,536-char cap) | one sentence + 3-4 trigger phrases each; all model-visible descriptions together ~1,600 tokens per turn (was ~2,800); verified by `claude plugin eval` (9/9) |
+| SessionStart hooks inject fresh facts | `session-start.py` prints library version / document count, environment and memory state at every start, resume and compaction; the guard line only when the guard is not configured |
+| Skills: description + `when_to_use` drive auto-triggering (1,536-char cap) | one sentence + 3-4 trigger phrases each; 27 skills, 11.6 KB of frontmatter together (~2,900 tokens per turn); verified by `claude plugin eval` (9/9) |
 | `disable-model-invocation` for user-run workflows | brain-setup, brain-health, morning-check, capacity-report, change-review, code-version-check |
 | `context: fork` for long, self-contained work | unused-luns, zoning-audit, fabric-health, rdm-inventory (foreground, result returns to the chat) |
-| Subagents: short descriptions, `memory`, preload `skills`, least privilege | 8 agents; 7 keep persistent memory (`memory: user`); research agents preload docs-lookup; each agent has only its own MCP servers (`tools` / `disallowedTools`); infra writes are blocked by the hook (agents still write reports and their memory) |
+| Subagents: short descriptions, `memory`, preload `skills`, least privilege | 9 agents (8 storage + `Explore`, haiku); 7 keep persistent memory (`memory: user`); research agents preload docs-lookup; each agent has only its own MCP servers (`tools` / `disallowedTools`); infra writes are blocked by the hook (agents still write reports and their memory) |
 | Memory: auto memory + versioned project memory; MEMORY.md as an index, topic files read on demand | a catalog: `notes.md` (imported, ≤ 60 lines: names, thresholds, owners) + `notes/<topic>.md` read only when a question touches it; the SessionStart hook lists the topic files with fact counts, so cost per session stays flat as memory grows; auto memory may exist beside it |
 | MCP: project `.mcp.json` for a folder-scoped setup, pre-approved with `enabledMcpjsonServers` | `install-vm.sh --project <dir>` writes `.mcp.json` + `.claude/settings.json`; hooks via `$CLAUDE_PROJECT_DIR`; user install registers `docs-local` with `claude mcp add -s user` |
 | Permissions: allow the MCP servers you trust to avoid prompts | `permissions.allow: mcp__<server>` for every server found by `claude mcp list` |
@@ -106,12 +106,15 @@ Code; few high-signal tools) and measured with `docs-search-mcp/eval_search.py`:
   (`/zoning-audit` -> `/storage-brain:zoning-audit`). `brain/claude/.claude-plugin/plugin.json` + `.mcp.json`
   only let the same folder load with `--plugin-dir` for `claude plugin validate` and `claude plugin eval`
   (`brain/claude/evals/`: skill-triggering cases, docs-local mocked).
-- **Third-party plugins: curated, not "everything".** Every enabled plugin's skill / agent descriptions sit
-  in the context on every turn. Included: `skill-creator` (Anthropic, Apache-2.0, bundled in
-  `skills/skill-creator` with pure-Python PyYAML so every script runs offline; ~80 tokens per turn). Worth adding:
-  `grafana-mcp` only if Harvest feeds an internal Grafana (live ONTAP performance). Not useful here: dev
-  workflow plugins (code-review, feature-dev, commit-commands...), anything needing internet (context7).
-  Offline install: clone the marketplace repo on the PC, copy it over, `/plugin marketplace add <path>`.
+- **Third-party plugins: curated.** Every enabled plugin's skill / agent / command descriptions sit in the
+  context on every turn. Included: `skill-creator` (bundled in `skills/skill-creator` with pure-Python PyYAML
+  so every script runs offline; ~80 tokens per turn) and the 7 plugins `install.sh` installs from
+  `brain/plugins` (marketplace `brain-dev`): pr-review-toolkit, feature-dev, commit-commands, security-guidance,
+  pyright-lsp, mcp-server-dev, dev-discipline. The other 8 in `brain/plugins` (chrome-devtools, hookify,
+  plugin-dev, session-report, frontend-design, ui-ux-pro-max, explanatory-output-style, learning-output-style)
+  are available, not enabled. Not useful here: anything needing internet (context7), code-review (needs gh).
+  Worth adding: `grafana-mcp` only if Harvest feeds an internal Grafana. Offline install: clone the
+  marketplace repo on the PC, copy it over, `/plugin marketplace add <path>`.
 
 ## Deliberate trade-offs
 

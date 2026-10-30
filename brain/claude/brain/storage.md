@@ -1,6 +1,5 @@
 # Storage rules (SAN / storage operations)
-Loaded with every plain chat (Chats); in a code project read it before the first storage / SAN / infrastructure
-answer. Read this way (not loaded), also read `~/.claude/brain/environment.md` and `~/.claude/brain/tool-map.md`.
+In a code project, also read `~/.claude/brain/environment.md` and `tool-map.md` before the first storage answer.
 
 Live state comes from eight MCP servers: **powermax**, **powerflex**, **ontap** and **harvest** (NetApp's official
 servers; ONTAP ones expose write tools too, kept read-only by the hook and a read-only ONTAP account), **mds**,
@@ -28,8 +27,6 @@ S7. **Answer the question asked.** "What does X mean", "fix X", "how do I X" = a
    cause, fix steps; no MCP calls. Investigate live (MCP servers, several systems) only when he asks you to check,
    find or investigate, or names an object and asks what is wrong with it. End a docs answer with one line
    offering the live check ("Want me to check which volumes are near the limit?"), not with the check itself.
-   Live calls: the filtered, narrow result (one array, one fabric, one name) before the full list; independent
-   read-only calls (several arrays, both fabrics, all layers) together in one turn.
 
 ## Sources: which MCP answers what
 Exact tool names per server: see the tool map (run `/brain-setup` to refresh it).
@@ -74,18 +71,13 @@ VM → datastore (VMFS) or RDM → NAA → ESXi host → vmhba (WWPN, from kupar
 profile vHBA (fabric A/B, VSAN, WWPN) → Fabric Interconnect (NPV; FC uplink / SAN port-channel) →
 MDS (FLOGI on the port-channel/interface, VSAN, FCNS, zone + device-alias) → array target port
 (PowerMax FA dir:port / ONTAP FC LIF WWPN) → masking view or igroup/LUN map → device/LUN.
-**End to end from any identifier** (pWWN, NAA, ESX, VM, datastore): kuparashit `locate`, then `related`, gives
-the other layers (host, its pWWNs and FI, NAAs, datastore / RDM, VMs); then confirm each layer live in its own
-MCP: mds (flogi / zones of the pWWNs), ucsc (vHBA on that FI), ontap (igroup with those pWWNs, LUN serial
-from the NAA, LIFs) or powermax (initiator → masking view, device ID from the NAA), Aria / harvest for
-performance. State kuparashit's snapshot time; a link no live MCP confirms may be stale.
+**End to end from any identifier**: the `trace-path` skill (kuparashit `locate` / `related`, then confirm each layer live).
 A healthy host: every vmhba logged in, zoned on its fabric to the array ports in its masking view /
 igroup, same number of paths on both fabrics, all paths active (ALUA: optimized + non-optimized).
 
 ## Agents
-For a cross-layer problem give each agent (fabric-investigator, powermax-analyst, ontap-analyst,
-powerflex-analyst, k8s-storage-analyst, vmware-mapper, capacity-planner, docs-researcher) its layer and the
-identifiers, run them in parallel, and join their findings yourself by NAA / WWPN.
+For a cross-layer problem give each storage agent its layer and the identifiers, run them in parallel, and join
+their findings yourself by NAA / WWPN. Where is X in the files / repo: Explore (haiku).
 
 ## My environment and tool map
 @~/.claude/brain/environment.md

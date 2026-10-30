@@ -32,13 +32,15 @@ def library_line():
     return f"Library: {version or 'version unknown'}{counts} in ~/.claude/brain/library (MCP docs-local / docs-search, or search.py)."
 
 
-def environment_line():
+def env_path():
     # multi-user VM: everyone has their own environment.md (started from root's default in /opt/paas/brain)
     own = os.path.join(USER_HOME, "brain", "environment.md")
-    text = read(own if not os.path.exists(os.path.join(HOME, "brain", "notes.md")) and os.path.exists(own)
-                else os.path.join(HOME, "brain", "environment.md"))
-    if not text:
-        return "environment.md: MISSING (run /brain-setup)."
+    if not os.path.exists(os.path.join(HOME, "brain", "notes.md")) and os.path.exists(own):
+        return own
+    return os.path.join(HOME, "brain", "environment.md")
+
+
+def env_filled(text):
     filled = 0
     for line in text.splitlines():
         if not line.startswith("|"):
@@ -48,6 +50,14 @@ def environment_line():
             continue
         if cells[0] and any(cells[1:]):  # a label alone (template rows "| A | | | |") is not filled
             filled += 1
+    return filled
+
+
+def environment_line():
+    text = read(env_path())
+    if not text:
+        return "environment.md: MISSING (run /brain-setup)."
+    filled = env_filled(text)
     blanks = len(re.findall(r"\b__\b", text))
     if filled == 0:
         state = "still the template (run /brain-setup or fill it in)"
@@ -94,9 +104,11 @@ def hook_line():
             hooks = {}
         cmds += " ".join(h.get("command", "") for e in hooks.get("PreToolUse", []) for h in e.get("hooks", []))
     # the script the settings run (~/.claude/hooks for one user, /opt/paas/hooks on the shared server) must exist
-    scripts = [os.path.expanduser(p) for p in re.findall(r"(\S*block-write-tools\.py)", cmds)]
+    # a project install writes "$CLAUDE_PROJECT_DIR"/.claude/hooks/...: expand it to the project dir
+    scripts = [os.path.expanduser(re.sub(r'"?\$\{?CLAUDE_PROJECT_DIR\}?"?', lambda m: os.path.dirname(HOME), p))
+               for p in re.findall(r"(\S*block-write-tools\.py)", cmds)]
     if any(os.path.exists(p) for p in scripts):
-        return "Read-only guard: active (PreToolUse hook blocks write-looking MCP calls)."
+        return ""                                # healthy: say nothing
     return f"Read-only guard: NOT configured in {HOME}/settings.json (re-run sh brain/install.sh)."
 
 
@@ -111,14 +123,17 @@ def chats_rules():
     dst = os.path.join(chats, "CLAUDE.md")
     storage = next((p for p in (os.path.join(USER_HOME, "brain", "storage.md"), os.path.join(HOME, "brain", "storage.md"))
                     if os.path.exists(p)), None)
+    if HOME != USER_HOME and os.path.exists(os.path.join(HOME, "brain", "notes.md")):
+        return                                   # a project install never owns ~/chats
     if not storage or not os.path.isdir(chats) or (os.path.exists(dst) and not read(dst, 200).startswith(CHATS_MARK)):
         return                                   # no brain storage rules, no Chats folder, or a CLAUDE.md of his own
-    srcs = [storage] + [os.path.join(USER_HOME, "brain", f) for f in ("environment.md", "tool-map.md")]
+    srcs = [storage, env_path(), os.path.join(USER_HOME, "brain", "tool-map.md")]
     if os.path.exists(dst) and all(os.path.getmtime(p) <= os.path.getmtime(dst) for p in srcs if os.path.exists(p)):
         return
     text = re.sub(r"^@\S+\s*$\n?", "", read(storage), flags=re.M)
     parts = [f"{CHATS_MARK} from ~/.claude/brain/storage.md, environment.md and tool-map.md: edit those) -->", text]
-    parts += [read(p) for p in srcs[1:] if os.path.exists(p)]
+    # the blank environment.md template is not worth its bytes; the hook line already says to fill it in
+    parts += [read(p) for p in srcs[1:] if os.path.exists(p) and (p != srcs[1] or env_filled(read(p)))]
     tmp = dst + ".tmp"
     with open(tmp, "w", encoding="utf-8") as f:
         f.write("\n\n".join(x.strip() for x in parts if x.strip()) + "\n")
@@ -140,10 +155,7 @@ def main():
             lines.append(fn())
         except Exception:
             pass
-    lines.append("Mode: read-only toward infrastructure (arrays, fabrics, UCS, vCenter, host storage): give the user "
-                 "the exact commands to run; the user's own code and app deployments are normal work. "
-                 "New facts: core ones in notes.md, the rest in notes/<topic>.md.")
-    print("Storage brain: " + "\n".join(lines))
+    print("Storage brain: " + "\n".join(l for l in lines if l))
     return 0
 
 

@@ -50,23 +50,22 @@ filled (arrays, versions, fabrics, thresholds - count empty table rows and `__` 
 `brain/tool-map.md` generated (not the "Not generated yet" stub); `brain/notes.md` present;
 `skills/*/SKILL.md` and `agents/*.md` counts equal the repo's; the banner / status line files exist.
 
-## Output
 ## 5. Prompt audit (built-in)
-Run `/doctor prompt-audit` (Claude Code >= 2.1.283; audits CLAUDE.md, the imported brain files, skills
+Run `/doctor prompt-audit` if this Claude Code has it (audits CLAUDE.md, the imported brain files, skills
 and agents under `~/.claude/`). Report its findings - contradictions between files, references to tools,
 files or commands that do not exist, instructions written for older models - as WARN rows with the
 proposed edit; apply nothing (he decides). If the command is unavailable, say so and compare by hand the
 rules in CLAUDE.md and brain/storage.md with the skills that cite them (read-only rule, answer format, notes.md as memory).
 
 ## 6. Context size
-Every session loads `~/.claude/CLAUDE.md` + `notes.md`; plain chats (~/chats/CLAUDE.md, generated) add
-`storage.md`, `environment.md` and `tool-map.md`: `wc -l ~/.claude/CLAUDE.md ~/.claude/brain/storage.md
-~/.claude/brain/environment.md ~/.claude/brain/notes.md ~/.claude/brain/tool-map.md` must stay around 200 lines in total (the docs
-recommend < 200 lines per file; `tool-map.md` is the usual offender), notes.md ≤ 60. Over that: WARN with the
+Two budgets: `wc -l ~/.claude/CLAUDE.md ~/.claude/brain/notes.md` (every session) <= 120 lines; plus
+`storage.md environment.md tool-map.md` (plain chats, generated ~/chats/CLAUDE.md) <= 250 lines in total; notes.md <= 60.
+Over that: WARN with the
 file to trim (move notes.md facts most sessions do not need into `notes/<topic>.md`, which is read on demand;
 shorten tool-map.md to the tools actually used). A topic file over ~150 lines: split it or drop stale facts.
 Project install (`install-vm.sh --project <dir>`): the same files live in `<dir>/.claude/` and `<dir>/CLAUDE.md`;
 only the library stays in `~/.claude/brain/library`.
 
+## Output
 Table: component | status (OK / WARN / FAIL) | detail | fix (command or skill for him: `/brain-setup`,
 `sh brain/install.sh`, `claude mcp add …`, edit environment.md). Then the three most useful fixes first.
