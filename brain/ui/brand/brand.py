@@ -110,14 +110,6 @@ edit("src/modules/sidebar/SidebarFooter.tsx",
       '        </div>',
       '        <div className="hidden px-3 py-2 text-center md:block">\n'
       f'          <span className="block text-xs text-muted-foreground">{NAME} · v{{currentVersion}}</span>\n'
-      '          <a\n'
-      '            href={GITHUB_REPO_URL}\n'
-      '            target="_blank"\n'
-      '            rel="noopener noreferrer"\n'
-      '            className="text-xs text-muted-foreground underline-offset-2 transition-colors hover:text-foreground hover:underline"\n'
-      '          >\n'
-      '            Source (open source)\n'
-      '          </a>\n'
       '        </div>'))
 edit("src/shared/utils.ts", ("const DEFAULT_PAGE_TITLE = 'CloudCLI UI';", f"const DEFAULT_PAGE_TITLE = '{NAME}';"))
 # offline VM: no GitHub stars badge (it calls api.github.com), no Discord / issue links; the repo link stays (AGPL)
@@ -392,7 +384,8 @@ edit("src/modules/sidebar/SidebarHeader.tsx",
 # new-chat screen and composer (model and mode stay in the composer)
 edit("src/modules/settings/SettingsSidebar.tsx", *[(f"  {{ id: '{i}', labelKey: 'mainTabs.{k}', icon: {c} }},\n", "") for i, k, c in (
     ("api", "apiTokens", "Key"), ("voice", "voice", "Mic"), ("tasks", "tasks", "ListChecks"),
-    ("browser", "browser", "MonitorPlay"), ("plugins", "plugins", "Puzzle"), ("notifications", "notifications", "Bell"))])
+    ("browser", "browser", "MonitorPlay"), ("plugins", "plugins", "Puzzle"), ("notifications", "notifications", "Bell"),
+    ("about", "about", "Info"))])
 edit("src/modules/sidebar/SidebarHeader.tsx", ("        <GitHubStarBadge />\n", ""))
 edit("src/shared/hooks/useVersionCheck.ts",
      ("    const checkVersion = async () => {\n      try {\n",
@@ -450,6 +443,15 @@ edit("src/modules/sidebar/SidebarSessionItem.tsx",
       "const showRecentIndicator = false;"))
 # offline VM: no "Pro" / hosted-service cards (the dead links themselves are hidden in paas.css)
 edit("src/modules/settings/tabs/AboutTab.tsx", ("{!IS_PLATFORM && (", "{false && ("))
+# Settings > Git: sign in to the git server with a username and token / password (name and email alone cannot push)
+edit("src/modules/settings/tabs/git-settings/GitSettingsTab.tsx",
+     ("import SettingsSection from '@/modules/settings/SettingsSection';\n",
+      "import SettingsSection from '@/modules/settings/SettingsSection';\nimport PaasGitSignIn from '@/modules/settings/tabs/git-settings/PaasGitSignIn';\n"),
+     ("        </SettingsCard>\n      </SettingsSection>\n    </div>\n  );\n}", "        </SettingsCard>\n      </SettingsSection>\n      <PaasGitSignIn />\n    </div>\n  );\n}"))
+edit("server/index.ts",
+     ("import { paasRoutes } from './modules/paas/download.routes.js';",
+      "import { paasRoutes } from './modules/paas/download.routes.js';\nimport { paasGitCredentials } from './modules/paas/git-credentials.routes.js';"),
+     ("app.use('/api/paas', authenticateToken, paasRoutes);", "app.use('/api/paas', authenticateToken, paasRoutes);\napp.use('/api/paas', authenticateToken, paasGitCredentials);"))
 edit("src/modules/settings/PremiumFeatureCard.tsx",
      ("  const { t } = useTranslation('settings');\n  const resolvedCta", "  return null;\n  const { t } = useTranslation('settings');\n  const resolvedCta"))
 edit("src/modules/mcp/McpServers.tsx",
@@ -497,7 +499,17 @@ edit("src/modules/sidebar/SidebarProjectItem.tsx",
       "                        {project.fullPath.length > 25 ? `...${project.fullPath.slice(-22)}` : project.fullPath}\n",
       "                  <div className=\"truncate text-xs text-muted-foreground\">\n                    {sessionCountDisplay}\n                    {project.fullPath !== project.displayName && (\n"
       "                      <span className=\"opacity-70\" title={project.fullPath}>\n                        {' · '}\n"
-      "                        {project.fullPath.replace(/^\\/(home|Users)\\/[^/]+|^\\/root/, '~')}\n"))
+      "                        {project.fullPath.replace(/^\\/(home|Users)\\/[^/]+|^\\/root/, '~').split('/').slice(-3).join('/')}\n"),
+     ("                {isExpanded ? (\n                  <ChevronDown className=\"h-4 w-4 text-muted-foreground transition-colors group-hover:text-foreground\" />\n"
+      "                ) : (\n                  <ChevronRight className=\"h-4 w-4 text-muted-foreground transition-colors group-hover:text-foreground\" />\n                )}",
+      "                <ChevronRight className={cn('h-4 w-4 text-muted-foreground transition-all duration-200 group-hover:text-foreground', isExpanded && 'rotate-90')} />"),
+     ("            'sticky top-0 z-10 flex w-full justify-between p-2 h-auto font-normal hover:bg-accent/50',",
+      "            'sticky top-0 z-10 flex w-full justify-between rounded-lg px-2 py-2 h-auto font-normal hover:bg-accent/50',"))
+edit("src/modules/sidebar/SidebarProjectItem.tsx",
+     ("const getSessionCountDisplay = (project: Project, sessions: SessionWithProvider[]): string => {\n  const total = Number(project.sessionMeta?.total ?? sessions.length);\n  return String(total);",
+      "const getSessionCountDisplay = (project: Project, sessions: SessionWithProvider[]): string => {\n  const total = Number(project.sessionMeta?.total ?? sessions.length);\n  return `${total} chat${total === 1 ? '' : 's'}`;"))
+edit("src/modules/sidebar/SidebarProjectSessions.tsx",
+     ('    <div className="ml-3 space-y-1 border-l border-border pl-3">', '    <div className="mb-2 ml-[18px] space-y-0.5 border-l-2 border-border/70 pl-2">'))
 edit("src/modules/sidebar/SidebarProjectSessions.tsx",
      ("        <Button\n          variant=\"default\"\n          size=\"sm\"\n          className=\"flex h-8 w-full justify-start gap-2 bg-primary text-xs font-medium text-primary-foreground transition-colors hover:bg-primary/90\"\n"
       "          onClick={() => onNewSession(project)}\n        >\n          <Plus className=\"h-3 w-3\" />\n          {t('sessions.newSession')}\n",

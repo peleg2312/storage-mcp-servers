@@ -341,15 +341,15 @@ export function mount(container, api) {
     });
   }
 
-  // Memory: notes.md / environment.md / tool-map.md are yours (kept by every install); CLAUDE.md is shown only
+  // Memory: notes.md / environment.md / tool-map.md are yours (kept by every install); CLAUDE.md is your own copy too
   function renderMemory(i = 0) {
     const m = data.memory[i];
     if (!m) { pane.replaceChildren(emptyBlock('Claude creates them the first time it saves a note.', '', null, { icon: 'file', title: 'No memory files found' })); return; }
     dirty = false;
     pane.innerHTML = `<div class="seg" role="group" aria-label="Memory file">${data.memory.map((x, k) => `<button data-i="${k}" aria-pressed="${k === i}">${esc(x.name)}</button>`).join('')}</div>
       <div class="sub" style="margin:12px 0 8px">${m.editable
-        ? 'What Claude reads at the start of every session. Edit and save; the previous version is kept as a .bak file.'
-        : 'The brain\'s main instructions. Rewritten by every install, so it is read-only here: put your own facts in notes.md or environment.md.'}</div>
+        ? `What Claude reads at the start of every session. Edit and save; the previous version is kept as a .bak file.${m.name === 'CLAUDE.md' ? ' A brain update replaces this file: keep lasting facts in notes.md.' : ''}`
+        : 'Shared file: only root changes it.'}</div>
       ${m.editable ? `${field(`${esc(m.name)}`, `<textarea class="mt" spellcheck="false">${esc(m.text)}</textarea>`)}
         <div class="row sticky"><button class="btn save">Save</button><span class="stbox"></span></div>` : `<pre>${esc(m.text)}</pre>`}`;
     pane.querySelectorAll('.seg button').forEach((b) => b.addEventListener('click', () => renderMemory(Number(b.dataset.i))));

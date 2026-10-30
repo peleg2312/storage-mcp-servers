@@ -154,9 +154,9 @@ async function overview() {
     library: { version: read(path.join(LIB, 'VERSION'))?.trim() || null, sources: src.ok ? src.out : null },
     skills: skills(), agents: agents(), hooks: hooks(), mcp: mcpServers(), inbox: inbox(),
     // multi-user VM: environment.md / tool-map.md are shared and only root writes them; the library too
-    // multi-user VM: CLAUDE.md is your own copy of the brain's rules (started from root's default), yours to change
-    memory: [['notes.md', true], ['environment.md', true], ['tool-map.md', true], ['CLAUDE.md', MULTI]]
-      .map(([name, editable]) => ({ name, editable: editable && (writable(MEMORY[name]) || (MULTI && name === 'CLAUDE.md')),
+    // CLAUDE.md is this account's own copy of the brain's rules, yours to change (a brain update replaces it)
+    memory: ['notes.md', 'environment.md', 'tool-map.md', 'CLAUDE.md']
+      .map((name) => ({ name, editable: writable(MEMORY[name]) || (MULTI && name === 'CLAUDE.md'),
         text: read(MEMORY[name]) ?? (MULTI && name === 'CLAUDE.md' ? '' : null) })).filter((m) => m.text !== null),
     canShare: !!MARKET_BIN && writable(MINE),
     canAddDocs: writable(LIB),
@@ -200,7 +200,7 @@ const routes = {
   },
   'POST /index': () => run(ADD_DOCS, [], 600000),
   'POST /memory': async (_q, b) => {
-    if (!['notes.md', 'environment.md', 'tool-map.md', ...(MULTI ? ['CLAUDE.md'] : [])].includes(b.name)) return { ok: false, out: 'That file is not editable here' };
+    if (!Object.hasOwn(MEMORY, b.name)) return { ok: false, out: 'That file is not editable here' };
     if (fs.existsSync(MEMORY[b.name]) && !writable(MEMORY[b.name])) return { ok: false, out: 'Shared file: only root changes it' };
     const text = String(b.text ?? '');
     if (text.length > 500000) return { ok: false, out: 'Too long' };
