@@ -172,36 +172,38 @@ export function toPreview(s) {
 const toShort = (p) => (p.startsWith('/preview/~/') ? `~/${p.slice(11)}` : p.replace(/^\/preview\/(\d+)/, 'localhost:$1'));
 
 const CSS = `
-.pb{font:14px/1.5 Inter,ui-sans-serif,system-ui,sans-serif;color:hsl(var(--foreground));height:100%;display:flex;flex-direction:column;box-sizing:border-box;padding:12px 16px 16px;gap:10px}
-.pb .bar{display:flex;gap:6px;align-items:center}
-.pb input{flex:1;min-width:0;background:hsl(var(--background));border:1px solid hsl(var(--border));border-radius:10px;padding:7px 12px;color:inherit;font:13px ui-monospace,SFMono-Regular,Menlo,monospace}
-.pb .ic{border:1px solid hsl(var(--border));background:none;color:inherit;border-radius:8px;width:32px;height:32px;cursor:pointer;font-size:15px;flex:none}
-.pb .ic:hover{background:hsl(var(--accent))}
-.pb .btn{border:0;border-radius:999px;padding:6px 16px;font:600 13px/1.4 Inter,ui-sans-serif,system-ui,sans-serif;cursor:pointer;color:#0b0d1a;background:linear-gradient(90deg,#a78bfa,#60a5fa,#22d3ee);white-space:nowrap}
-.pb .chips{display:flex;gap:6px;flex-wrap:wrap;align-items:center;font-size:12px;color:hsl(var(--muted-foreground))}
-.pb .chip{border:1px solid hsl(var(--border));background:hsl(var(--card));color:hsl(var(--foreground));border-radius:999px;padding:2px 10px;cursor:pointer;font:12px ui-monospace,SFMono-Regular,Menlo,monospace}
-.pb .chip:hover{background:hsl(var(--accent))}
-.pb .frame{flex:1;min-height:0;border:1px solid hsl(var(--border));border-radius:12px;overflow:hidden;background:#fff}
+.paas.pb{max-width:none;margin:0;height:100%;display:flex;flex-direction:column;padding:12px 16px 16px;gap:10px}
+.pb .bar{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.pb .bar label{font-weight:600;font-size:13px;flex:none}
+.pb .bar input{flex:1;min-width:0;min-height:36px;background:hsl(var(--background));border:1px solid hsl(var(--input));border-radius:10px;padding:7px 12px;color:inherit;font:13px ui-monospace,SFMono-Regular,Menlo,monospace}
+.pb .ic{width:36px;height:36px;padding:0;flex:none}
+.pb .ic:disabled{opacity:.4;cursor:default}
+.pb [data-b] svg{transform:scaleX(-1)}
+.pb .chips{display:flex;gap:8px;flex-wrap:wrap;align-items:center;font-size:13px;color:hsl(var(--muted-foreground))}
+.pb .chip{min-height:32px;padding:4px 12px;font:12px ui-monospace,SFMono-Regular,Menlo,monospace}
+.pb .st{margin:0}
+.pb .frame{flex:1;min-height:200px;border:1px solid hsl(var(--border));border-radius:12px;overflow:hidden;background:hsl(var(--card))}
 .pb iframe{width:100%;height:100%;border:0;display:block}
-.pb .empty{padding:40px 24px;color:hsl(var(--muted-foreground));background:hsl(var(--card));height:100%;box-sizing:border-box}
-.pb .empty{line-height:1.8;overflow:auto}.pb .empty code{background:hsl(var(--muted));border-radius:6px;padding:1px 6px}
-.pb .cr{display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-size:12.5px;border:1px solid hsl(var(--border));background:hsl(var(--card));border-radius:12px;padding:7px 10px}
-.pb .cr[hidden]{display:none}.pb .cr .dot{width:8px;height:8px;border-radius:50%;background:hsl(var(--muted-foreground));flex:none}
-.pb .cr .dot.on{background:#22c55e;box-shadow:0 0 0 3px #22c55e33}.pb .cr b{font-weight:600}.pb .cr .sub{color:hsl(var(--muted-foreground))}
-.pb .cr select{background:hsl(var(--background));border:1px solid hsl(var(--border));border-radius:8px;padding:4px 8px;color:inherit;font:inherit;max-width:260px}
-.pb .cr .ghost{border:1px solid hsl(var(--border));background:none;color:inherit;border-radius:999px;padding:3px 12px;cursor:pointer;font:600 12px Inter,ui-sans-serif,system-ui,sans-serif;margin-left:auto}
-.pb .cr .ghost:hover{background:hsl(var(--accent))}
+.pb .intro{padding:40px 24px;color:hsl(var(--muted-foreground));height:100%;line-height:1.8;overflow:auto}
+.pb .intro code{background:hsl(var(--muted));border-radius:6px;padding:1px 6px}
+.pb .cr{display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-size:13px;border:1px solid hsl(var(--border));background:hsl(var(--card));border-radius:12px;padding:7px 10px}
+.pb .cr[hidden],.pb .howto[hidden]{display:none}
+.pb .cr .dot{width:8px;height:8px;border-radius:50%;background:hsl(var(--muted-foreground));flex:none}
+.pb .cr .dot.on{background:hsl(var(--primary));box-shadow:0 0 0 3px hsl(var(--primary)/.25)}
+.pb .cr b{font-weight:600}
+.pb .cr select{min-height:36px;background:hsl(var(--background));border:1px solid hsl(var(--input));border-radius:8px;padding:4px 8px;color:inherit;font:inherit;max-width:260px}
+.pb .cr [data-connect]{margin-left:auto}
 .pb .howto{border:1px solid hsl(var(--border));background:hsl(var(--card));border-radius:12px;padding:14px 16px;font-size:13px;line-height:1.6}
-.pb .howto[hidden]{display:none}.pb .howto ol{margin:6px 0 10px;padding-left:20px;list-style:decimal}
+.pb .howto ol{margin:6px 0 10px;padding-left:20px;list-style:decimal}
 .pb .howto pre{margin:0;white-space:pre-wrap;word-break:break-all;font:12px/1.5 ui-monospace,SFMono-Regular,Menlo,monospace;background:hsl(var(--muted));border-radius:8px;padding:10px 12px;max-height:120px;overflow:auto}
-.pb .howto .row{display:flex;gap:8px;align-items:center;margin-top:8px}
-@media (max-width:760px){.pb{padding:10px}.pb .cr select{max-width:100%}}`;
+@media (pointer:coarse){.pb .ic{width:44px;height:44px}.pb .bar input,.pb .cr select,.pb .chip{min-height:44px}}
+@media (max-width:760px){.paas.pb{padding:10px}.pb .cr select{max-width:100%}}
+@media (max-width:560px){.pb .bar input{flex:1 1 100%;order:-1}.pb .bar label{order:-2;flex:1 1 100%}}`;
 
 // Chrome DevTools plugin: which PC's Chrome this chat drives, a switch between the connected PCs, how to connect one
-function chromeBar(box, howto, api) {
+function chromeBar(box, howto, api, status) {
   let stopped = false;
   let data = null;
-  const esc = (v) => String(v ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
   const session = () => api?.context?.session?.id || '';
   function render() {
     if (!data || !data.installed) { box.hidden = true; howto.hidden = true; return; }
@@ -209,17 +211,17 @@ function chromeBar(box, howto, api) {
     const pcs = data.pcs || [];
     const cur = pcs.find((p) => p.port === data.chosen);
     const label = (p) => `${p.pc}${p.user ? ` (${p.user})` : ''}`;
-    let status;
-    if (data.error) status = `<span class="sub">Chrome: ${esc(data.error)}</span>`;
-    else if (!pcs.length) status = '<span class="dot"></span><span><b>Chrome on your PC:</b> <span class="sub">no PC connected</span></span>';
-    else if (!session()) status = `<span class="dot on"></span><span><b>Chrome on your PC:</b> ${pcs.length} connected <span class="sub">· open a chat to choose its PC</span></span>`;
+    let line;
+    if (data.error) line = `<span class="sub">Chrome: ${esc(data.error)}</span>`;
+    else if (!pcs.length) line = '<span class="dot"></span><span><b>Chrome on your PC:</b> <span class="sub">no PC connected</span></span>';
+    else if (!session()) line = `<span class="dot on"></span><span><b>Chrome on your PC:</b> ${pcs.length} connected <span class="sub">· open a chat to choose its PC</span></span>`;
     else {
-      status = `<span class="dot ${cur ? 'on' : ''}"></span><b>This chat's Chrome:</b>
-        <select aria-label="PC whose Chrome this chat uses">${cur ? '' : `<option value="">${pcs.length > 1 ? 'Choose your PC…' : 'Not chosen yet'}</option>`}
+      line = `<span class="dot ${cur ? 'on' : ''}"></span><label for="pb-pc"><b>Chrome on your PC:</b></label>
+        <select id="pb-pc">${cur ? '' : `<option value="">${pcs.length > 1 ? 'Choose your PC…' : 'Not chosen yet'}</option>`}
         ${pcs.map((p) => `<option value="${p.port}" ${p.port === data.chosen ? 'selected' : ''}>${esc(label(p))}</option>`).join('')}</select>
         ${pcs.length === 1 && !cur ? '<span class="sub">(used automatically)</span>' : ''}`;
     }
-    box.innerHTML = `${status}<button class="ghost" data-connect>${howto.hidden ? 'Connect a PC' : 'Close'}</button>`;
+    box.innerHTML = `${line}<button class="btn ghost sm" data-connect aria-expanded="${!howto.hidden}">${howto.hidden ? 'Connect a PC' : 'Close'}</button>`;
     box.querySelector('select')?.addEventListener('change', async (e) => {
       const pc = e.target.value;
       if (!pc) return;
@@ -228,7 +230,7 @@ function chromeBar(box, howto, api) {
         const r = await fetch('/preview/_chrome', { method: 'POST', credentials: 'same-origin', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ session: session(), pc }) });
         if (!r.ok) throw new Error((await r.json()).error || r.status);
         data.chosen = Number(pc);
-      } catch (err) { alert(`Could not switch: ${err.message || err}`); }
+      } catch (err) { status.error(`Could not switch PC: ${err.message || err}`); }
       render();
     });
     box.querySelector('[data-connect]').addEventListener('click', () => { howto.hidden = !howto.hidden; render(); });
@@ -236,14 +238,13 @@ function chromeBar(box, howto, api) {
       <ol><li>Copy the line below and paste it into <b>PowerShell</b> on your PC.</li>
       <li>Sign in with your server password. A separate Chrome window opens (its own empty profile, not your everyday Chrome).</li>
       <li>Keep that PowerShell window open while you work; close it to disconnect. Your PC then appears above.</li></ol>
-      <pre>${esc(data.line || '')}</pre><div class="row"><button class="btn" data-copy>Copy</button>
+      <pre>${esc(data.line || '')}</pre><div class="row"><button class="btn ghost sm" data-copy>Copy</button>
       <span class="sub">Claude may open any site in that Chrome, except storage, switch, UCS and vCenter pages.</span></div>`;
     howto.querySelector('[data-copy]').addEventListener('click', async (e) => {
-      try { await navigator.clipboard.writeText(data.line || ''); e.target.textContent = 'Copied'; } catch {
+      try { await navigator.clipboard.writeText(data.line || ''); status.say('Command copied: paste it into PowerShell'); } catch {
         const range = document.createRange(); range.selectNodeContents(howto.querySelector('pre'));
-        const sel = window.getSelection(); sel.removeAllRanges(); sel.addRange(range); e.target.textContent = 'Press Ctrl+C';
+        const sel = window.getSelection(); sel.removeAllRanges(); sel.addRange(range); status.say('Select the command and copy it (Ctrl+C or Cmd+C)');
       }
-      setTimeout(() => { e.target.textContent = 'Copy'; }, 2000);
     });
   }
   async function refresh() {
@@ -259,19 +260,23 @@ function chromeBar(box, howto, api) {
 }
 
 export function mount(container, api) {
-  container.innerHTML = `<style>${CSS}</style><div class="pb">
-    <div class="bar"><button class="ic" data-b title="Back">←</button><button class="ic" data-f title="Forward">→</button>
-      <button class="ic" data-r title="Reload">⟳</button>
-      <input spellcheck="false" placeholder="8000/docs  ·  ~/storage-reports/…/report.html">
-      <button class="btn" data-go>Open</button><button class="ic" data-w title="Open in a new browser tab">↗</button></div>
-    <div class="chips"></div>
+  container.innerHTML = `<style>${PAAS_CSS}${CSS}</style><div class="paas pb">
+    <div class="bar"><button class="btn ghost ic" data-b disabled title="Back" aria-label="Back">${icon('chevron')}</button><button class="btn ghost ic" data-f disabled title="Forward" aria-label="Forward">${icon('chevron')}</button>
+      <button class="btn ghost ic" data-r disabled title="Reload" aria-label="Reload">${icon('refresh')}</button>
+      <label for="pb-addr">Address</label>
+      <input id="pb-addr" type="text" inputmode="url" enterkeyhint="go" autocapitalize="off" autocomplete="off" spellcheck="false" placeholder="8000/docs  ·  ~/storage-reports/…/report.html">
+      <button class="btn" data-go>Open</button><button class="btn ghost ic" data-w title="Open in a new browser tab" aria-label="Open in a new browser tab">${icon('external')}</button></div>
+    <div class="stwrap"></div>
+    <div class="chips" role="group" aria-label="Your apps"></div>
     <div class="cr" hidden></div><div class="howto" hidden></div>
-    <div class="frame"><div class="empty"><b>Your own pages, inside the UI:</b><br>
+    <div class="frame"><div class="intro"><b>Your own pages, inside the UI:</b><br>
       · apps you run: a FastAPI service (<code>8000/docs</code>), a React / Vite dev server, a dashboard you started<br>
       · files under your home folder: <code>~/storage-reports/</code> (HTML reports with their charts)<br><br>
       Type a port (<code>8000</code>) or a path (<code>~/</code>) above, or ask Claude: "show me the API docs in the Browser tab".<br><br>
       Want Claude to click through your app in a real Chrome? Use <b>Connect a PC</b> above (chrome-devtools plugin).</div></div></div>`;
-  const input = container.querySelector('input');
+  const input = container.querySelector('#pb-addr');
+  const status = statusLine(container.querySelector('.stwrap'));
+  const nav = ['[data-b]', '[data-f]', '[data-r]'].map((q) => container.querySelector(q));
   const frameBox = container.querySelector('.frame');
   const chips = container.querySelector('.chips');
   let frame = null;
@@ -279,12 +284,14 @@ export function mount(container, api) {
 
   function open(url) {
     const p = toPreview(url);
-    if (!p) { input.setCustomValidity('Use a port (8000/docs) or a path under ~'); input.reportValidity(); return; }
-    input.setCustomValidity('');
+    if (!p) { status.error('Type a port such as 8000/docs, or a path such as ~/storage-reports/'); return; }
+    status.say(`Opening ${toShort(p)}…`);
     if (!frame) {
       frameBox.innerHTML = '<iframe title="Browser"></iframe>';
       frame = frameBox.querySelector('iframe');
+      nav.forEach((b) => { b.disabled = false; });
       frame.addEventListener('load', () => {     // same origin: follow the page's own navigation in the address bar
+        status.say('');
         try {
           const l = frame.contentWindow.location;
           if (l.pathname.startsWith('/preview/')) { input.value = toShort(l.pathname + l.search + l.hash); store.set(LAST, l.pathname + l.search + l.hash); }
@@ -299,15 +306,17 @@ export function mount(container, api) {
   async function ports() {
     let d = {};
     try { d = await (await fetch('/preview/_ports', { credentials: 'same-origin' })).json(); } catch { /* signed out */ }
-    const list = (d.ports || []).map((p) => `<button class="chip" data-u="${p}/">localhost:${p}</button>`).join('');
-    chips.innerHTML = `Your apps: ${list || '<span>none listening</span>'}<button class="chip" data-u="~/storage-reports/">~/storage-reports</button>`;
+    const list = (d.ports || []).map((p) => `<button class="btn ghost chip" data-u="${p}/">App on port ${p}</button>`).join('');
+    chips.innerHTML = `<span>Your apps:</span> ${list || '<span>No app is running yet. Start one in the Shell tab, then press Reload.</span>'}<button class="btn ghost chip" data-u="~/storage-reports/">~/storage-reports</button>`;
     chips.querySelectorAll('[data-u]').forEach((b) => b.addEventListener('click', () => open(b.dataset.u)));
   }
 
   // paas-open (Claude or the person in a terminal) writes the page to open; take each one once
+  let ticks = 0;
   async function poll() {
     if (stopped) return;
     if (document.hidden) { setTimeout(poll, 5000); return; }
+    if (++ticks % 8 === 0) ports();
     try {
       const d = await (await fetch('/preview/_open', { credentials: 'same-origin', cache: 'no-store' })).json();
       if (d.url && d.ts > Number(store.get(SEEN) || 0)) { store.set(SEEN, String(d.ts)); open(d.url); }
@@ -322,7 +331,7 @@ export function mount(container, api) {
   container.querySelector('[data-f]').addEventListener('click', () => frame?.contentWindow.history.forward());
   container.querySelector('[data-r]').addEventListener('click', () => { if (frame) frame.contentWindow.location.reload(); ports(); });
   container.querySelector('[data-w]').addEventListener('click', () => { const p = toPreview(input.value); if (p) window.open(p, '_blank', 'noopener'); });
-  const stopChrome = chromeBar(container.querySelector('.cr'), container.querySelector('.howto'), api);
+  const stopChrome = chromeBar(container.querySelector('.cr'), container.querySelector('.howto'), api, status);
   container._paasStop = () => { stopped = true; stopChrome(); };
 
   ports();
