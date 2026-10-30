@@ -3,8 +3,7 @@ Read-only MCP server for Dell PowerFlex (ScaleIO / VxFlex OS) through the PowerF
 the Gateway (3.x) or PowerFlex Manager (4.x / 5.x).
 
 Read-only is enforced at the HTTP layer: the session object refuses any request that is not a GET,
-except a short list of POSTs that only read (sign-in, querySelectedStatistics, queryMdmCluster,
-queryBySelectedIds / queryIdByKey, the SDS network latency / connectivity queries, the per-SDC
+except a short list of POSTs that only read (sign-in, querySelectedStatistics, queryMdmCluster, the SDS network latency / connectivity queries, the per-SDC
 volume counters (queryVolumeSdcBwc), the 4.x metrics query). Every other POST, PUT, PATCH, DELETE and
 any URL outside the REST API is blocked before it is sent. Use a Monitor (read-only) account as well.
 """
@@ -33,13 +32,12 @@ logging.basicConfig(level=os.getenv("LOG_LEVEL", "INFO"))
 
 _PREFIXES = ("/api/", "/rest/", "/dtapi/")
 _READ_POSTS = re.compile(
-    r"^(/rest/auth/(login|refresh)"
+    r"^(/rest/auth/login"
     r"|/api/instances/querySelectedStatistics"
     r"|/api/instances/System/action/queryMdmCluster"
     r"|/api/instances/Sds::[0-9a-f]{16}/action/querySdsNetworkLatencyMeters"
     r"|/api/instances/ProtectionDomain::[0-9a-f]{16}/action/querySdsConnectivityStatus"
     r"|/api/instances/Sdc::[0-9a-f]{16}/action/queryVolumeSdcBwc"
-    r"|/api/types/[A-Za-z]+/instances/action/(queryBySelectedIds|queryIdByKey)"
     r"|/dtapi/rest/v1/metrics/query)/?$")
 
 
@@ -61,9 +59,10 @@ def check_read_only(method: str, url: str) -> None:
 
 
 class ReadOnlySession(requests.Session):
-    def request(self, method, url, *args, **kwargs):
-        check_read_only(method, url)
-        return super().request(method, url, *args, **kwargs)
+    def send(self, prep, **kw):
+        check_read_only(prep.method, prep.url)
+        kw["allow_redirects"] = False   # a followed redirect would skip the check
+        return super().send(prep, **kw)
 
 
 class Gateway:
@@ -82,7 +81,8 @@ class Gateway:
             urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
         elif verify.lower() not in ("true", "1", "yes"):
             self.s.verify = verify  # path to a CA bundle
-        self.timeout = float(timeout or 60)
+        self.timeout = (float(os.getenv("POWERFLEX_CONNECT_TIMEOUT", "5")), float(timeout or 60))  # connect, read
+        self._gen = 0            # sign-in generation: one re-login per expiry
         self.api = None          # "manager" (4.x+) or "gateway" (3.x), found at first sign-in
         self._lock = threading.Lock()
 
@@ -94,6 +94,7 @@ class Gateway:
         if r.status_code == 200 and "access_token" in (r.json() if r.content else {}):
             self.s.headers["Authorization"] = "Bearer " + r.json()["access_token"]
             self.api = "manager"
+            self._gen += 1
             return
         if r.status_code in (401, 403):
             raise PermissionError(f"PowerFlex Manager {self.name} refused the sign-in ({r.status_code})")
@@ -104,16 +105,19 @@ class Gateway:
             raise RuntimeError(f"PowerFlex sign-in failed on {self.name}: {r.status_code} {r.text[:200]}")
         self.s.auth = (self._user, r.json())   # 3.x: the token is the password from now on
         self.api = "gateway"
+        self._gen += 1
 
     def _do(self, method, path, params=None, body=None):
         with self._lock:
             if self.api is None:
                 self._login()
         for attempt in (1, 2):
+            gen = self._gen
             r = self.s.request(method, self.base + path, params=params, json=body, timeout=self.timeout)
             if r.status_code == 401 and attempt == 1:
                 with self._lock:
-                    self._login()
+                    if self._gen == gen:
+                        self._login()
                 continue
             break
         if r.status_code == 404:
@@ -283,10 +287,21 @@ _FIELDS = {
                "mediaType", "capacityLimitInKb", "maxCapacityInKb", "ssdEndOfLifeState", "temperatureState",
                "mediaFailureState", "deviceOriginalPathName", "aggregatedState", "accelerationPoolId"],
     "FaultSet": ["id", "name", "protectionDomainId"],
+    "System": ["id", "name", "systemVersionName", "mdmManagementPort", "capacityAlertHighThresholdPercent",
+               "capacityAlertCriticalThresholdPercent", "restrictedSdcModeEnabled", "installId", "mdmCluster"],
+    "ReplicationConsistencyGroup": ["id", "name", "protectionDomainId", "remoteId", "peerMdmId", "currConsistMode",
+                                    "replicationDirection", "rpoInSeconds", "localActivityState",
+                                    "remoteActivityState", "error", "lastSnapCreationRc", "abstractState"],
+    "PeerMdm": ["id", "name", "peerSystemId", "couplingRc", "membershipState", "ipList", "softwareVersionInfo"],
+    "Host": ["id", "name", "nqn", "hostOsFullType", "maxNumPaths", "maxNumSysPorts"],
+    "Sdt": ["id", "name", "sdtState", "mdmConnectionState", "membershipState", "maintenanceState", "ipList",
+            "protectionDomainId", "softwareVersionInfo"],
+    "SnapshotPolicy": ["id", "name", "snapshotPolicyState", "autoSnapshotCreationCadenceInMin",
+                       "numOfRetainedSnapshotsPerLevel", "numOfSourceVolumes", "isLastAutoSnapshotDataTimeAccurate"],
 }
 
 
-def row(typ, o: dict, full=False) -> dict:
+def row(typ, o: dict, full=False, compact=False) -> dict:
     if full:
         r = dict(o)
     else:
@@ -296,7 +311,11 @@ def row(typ, o: dict, full=False) -> dict:
             r[k[:-4] + "_gb"] = round(r.pop(k) / 1048576, 2)
     if isinstance(r.get("creationTime"), (int, float)):
         r["creationTime_utc"] = ts_iso(r.pop("creationTime"))
-    if r.get("mappedSdcInfo"):
+    if compact and r.get("mappedSdcInfo"):   # lists: names only, get_volume has the detail
+        m = r.pop("mappedSdcInfo")
+        r["mapped_sdcs"] = [x.get("sdcName") or x.get("sdcIp") or x.get("sdcId") for x in m]
+        r["mapped_sdc_count"] = len(m)
+    elif r.get("mappedSdcInfo"):
         r["mappedSdcInfo"] = [{k: m.get(k) for k in ("sdcId", "sdcName", "sdcIp", "accessMode",
                                "limitIops", "limitBwInMbps", "hostType") if m.get(k) not in (None, "")}
                               for m in r["mappedSdcInfo"]]
@@ -305,8 +324,11 @@ def row(typ, o: dict, full=False) -> dict:
 
 
 def cap(items, limit):
-    limit = max(1, min(int(limit), 5000))
-    return {"total": len(items), "returned": min(len(items), limit), "items": items[:limit]}
+    limit = max(1, min(int(limit), 1000))
+    out = {"total": len(items), "returned": min(len(items), limit), "items": items[:limit]}
+    if len(items) > limit:
+        out["note"] = "Not all rows shown: narrow with name_contains / storage_pool / sdc / problems_only, or raise limit."
+    return out
 
 
 # ---------------------------------------------------------------------------
@@ -454,8 +476,7 @@ System (MDM cluster) > Protection Domain (PD) > Storage Pool (SP) > Volumes, bui
 and their Devices (disks); Fault Sets group SDSs that may fail together. SDC = host client driver (ESXi,
 Linux, Windows); volumes are mapped to SDCs. SDR / RCG = replication; SDT / Host = NVMe over TCP (4.x+).
 - Ids are 16 hex; every tool also takes the name (case-insensitive). system_id (id or name) may be omitted
-  with one system. Linux: /dev/disk/by-id/emc-vol-<systemId>-<volumeId>; ESXi: eui.; find_volume takes
-  any of these, a name or an id.
+  with one system.
 - Statistics are LIVE (last few seconds, no history in the API): for average and peak use samples (e.g.
   samples=6 interval_seconds=10 = one minute) and say so; hours/days live in PowerFlex Manager / CloudIQ /
   Grafana. Times are UTC.
@@ -476,9 +497,8 @@ Rebuild / degraded: get_health, get_storage_pool (rebuild / rebalance rates, pen
 == OPENSHIFT / CSI POWERFLEX ==
 - Each worker is an SDC (or NVMe/TCP host), named after the node when the driver renames SDCs, else find
   it by IP: get_sdc <node IP or name>.
-- PV spec.csi.volumeHandle = <systemId>-<volumeId> (find_volume takes it). CSI volume names start with the
-  driver prefix (default k8s-): list_volumes name_contains="k8s-" unmapped_only=True = leftover candidates
-  (check reclaimPolicy Retain before calling anything orphaned).
+- PV volumeHandle / emc-vol / eui ids: find_volume. Leftover CSI volumes: list_volumes name_contains="k8s-"
+  unmapped_only=True (check reclaimPolicy Retain first).
 - KubeVirt VM disks are block PVCs; live migration (RWX) maps a disk to two SDCs while it runs. CSI
   snapshots / clones are in the same VTree. PVC -> PV -> node comes from the OpenShift tools, or ask for
   oc get pv <pv> -o jsonpath='{.spec.csi.volumeHandle}'.
@@ -538,8 +558,7 @@ def get_system(system_id: str = "") -> dict:
     """System details: version, MDM cluster (mode, state, primary / secondary / tie-breaker nodes),
     capacity alert thresholds, restricted SDC mode, install id, and object counts."""
     sid, g = system(system_id)
-    s = g.get(f"/api/instances/System::{sid}")
-    s.pop("links", None)
+    s = row("System", g.get(f"/api/instances/System::{sid}"))
     try:
         s["mdmCluster"] = g.post("/api/instances/System/action/queryMdmCluster", {})
     except Exception as e:
@@ -758,7 +777,7 @@ def get_sds(sds: str, system_id: str = "", full: bool = False) -> dict:
 
 @mcp.tool(annotations=RO)
 def list_sdc(system_id: str = "", name_contains: str = "", disconnected_only: bool = False,
-             limit: int = 1000) -> dict:
+             limit: int = 200) -> dict:
     """SDC (clients: ESXi / Linux / Windows hosts): name, IP, GUID, MDM connection, approved, OS,
     version, performance profile. Filter by name or IP substring, or only disconnected ones."""
     _, g = system(system_id)
@@ -803,7 +822,7 @@ def get_sdc(sdc: str, system_id: str = "") -> dict:
 
 @mcp.tool(annotations=RO)
 def list_volumes(system_id: str = "", name_contains: str = "", storage_pool: str = "", sdc: str = "",
-                 unmapped_only: bool = False, snapshots: bool = True, limit: int = 500) -> dict:
+                 unmapped_only: bool = False, snapshots: bool = True, limit: int = 100) -> dict:
     """Volumes and snapshots: name, size, type (thin / thick / snapshot), pool, mapped SDCs, created.
     Filter by name substring, storage pool, SDC (id / name), unmapped_only, or snapshots=False."""
     _, g = system(system_id)
@@ -821,7 +840,7 @@ def list_volumes(system_id: str = "", name_contains: str = "", storage_pool: str
     if not snapshots:
         vols = [v for v in vols if v.get("volumeType") != "Snapshot" and not v.get("ancestorVolumeId")]
     vols.sort(key=lambda v: str(v.get("name") or ""))
-    return cap([row("Volume", v) for v in vols], limit)
+    return cap([row("Volume", v, compact=True) for v in vols], limit)
 
 
 @mcp.tool(annotations=RO)
@@ -857,11 +876,9 @@ def get_volume(volume: str, system_id: str = "", full: bool = False) -> dict:
 
 @mcp.tool(annotations=RO)
 def find_volume(key: str, system_id: str = "") -> dict:
-    """Find volumes from what a host or OpenShift shows: a CSI PV volumeHandle <systemId>-<volumeId>
-    (oc get pv X -o jsonpath='{.spec.csi.volumeHandle}'), /dev/disk/by-id/emc-vol-<system>-<volume>,
-    an eui. id (ESXi / NVMe, also nvme-eui.<hex>), a 16-hex volume id, or a name / name substring
-    (CSI names start with the driver's prefix, default k8s-). Searches every system when system_id
-    is omitted."""
+    """Find volumes by CSI PV volumeHandle <systemId>-<volumeId>, /dev/disk/by-id/emc-vol-<system>-<volume>,
+    eui. / nvme-eui. id (ESXi / NVMe), 16-hex volume id, or name / substring (CSI prefix default k8s-).
+    Searches every system when system_id is omitted."""
     k = key.strip().lower()
     m = re.search(r"(?:emc-vol-|^)([0-9a-f]{16})-([0-9a-f]{16})$", k)
     e = re.search(r"eui\.([0-9a-f]{32}|[0-9a-f]{16})$", k)
@@ -881,19 +898,19 @@ def find_volume(key: str, system_id: str = "") -> dict:
         for c in candidates:
             try:
                 v = g.get(f"/api/instances/Volume::{c}")
-                found.append({"system_id": sid, **row("Volume", v)})
+                found.append({"system_id": sid, **row("Volume", v, compact=True)})
             except LookupError:
                 pass
         if not candidates:
             for v in instances(g, "Volume"):
                 if k == str(v.get("name") or "").lower() or k in str(v.get("name") or "").lower():
-                    found.append({"system_id": sid, **row("Volume", v)})
+                    found.append({"system_id": sid, **row("Volume", v, compact=True)})
     return {"key": key, "found": len(found), "volumes": found[:100]}
 
 
 @mcp.tool(annotations=RO)
 def list_devices(system_id: str = "", sds: str = "", storage_pool: str = "", problems_only: bool = False,
-                 limit: int = 2000) -> dict:
+                 limit: int = 200) -> dict:
     """Devices (disks) with path, SDS, pool, state, error state, media, capacity, SSD wear and
     temperature. Filter by SDS or pool (id / name); problems_only=True keeps state != Normal or errors."""
     _, g = system(system_id)
@@ -927,7 +944,7 @@ def get_replication(system_id: str = "", rcg: str = "") -> dict:
     out = {}
     for key, typ in (("peer_systems", "PeerMdm"), ("rcgs", "ReplicationConsistencyGroup"), ("sdrs", "Sdr")):
         try:
-            out[key] = [{k: v for k, v in o.items() if k != "links"} for o in instances(g, typ)]
+            out[key] = [row(typ, o) for o in instances(g, typ)]
         except LookupError:
             out[key] = []
     if rcg:
@@ -948,8 +965,7 @@ def list_snapshot_policies(system_id: str = "") -> dict:
     """Snapshot policies: schedule (auto snapshot creation cadence, retention levels), state, source volumes."""
     _, g = system(system_id)
     try:
-        return {"snapshot_policies": [{k: v for k, v in o.items() if k != "links"}
-                                      for o in instances(g, "SnapshotPolicy")]}
+        return {"snapshot_policies": [row("SnapshotPolicy", o) for o in instances(g, "SnapshotPolicy")]}
     except LookupError:
         return {"snapshot_policies": [], "note": "Snapshot policies need PowerFlex 3.5 or later."}
 
@@ -961,7 +977,7 @@ def list_nvme(system_id: str = "") -> dict:
     out = {}
     for key, typ in (("hosts", "Host"), ("sdt_targets", "Sdt")):
         try:
-            out[key] = [{k: v for k, v in o.items() if k != "links"} for o in instances(g, typ)]
+            out[key] = [row(typ, o) for o in instances(g, typ)]
         except LookupError:
             out[key] = []
     if not out["hosts"] and not out["sdt_targets"]:
@@ -973,6 +989,19 @@ def list_nvme(system_id: str = "") -> dict:
 # Alerts
 # ---------------------------------------------------------------------------
 
+_NOISE = {"links", "service_version", "service_instance_id", "service_name", "domain", "_source"}
+
+
+def _slim(a):
+    return {k: v for k, v in a.items() if v not in (None, "", [], {}) and k not in _NOISE}
+
+
+def _items(r):
+    if isinstance(r, list):
+        return r
+    return next((r[k] for k in ("results", "items", "events", "alerts", "content") if isinstance(r.get(k), list)), [])
+
+
 def _alerts(g):
     rows = []
     for path in ("/api/types/Alert/instances",) + (("/rest/v1/alerts",) if g.api == "manager" else ()):
@@ -980,8 +1009,7 @@ def _alerts(g):
             r = g.get(path)
         except LookupError:
             continue
-        items = r if isinstance(r, list) else r.get("items") or r.get("alerts") or r.get("content") or []
-        for a in items:
+        for a in _items(r):
             a = {k: v for k, v in a.items() if k != "links"}
             a["_source"] = path
             rows.append(a)
@@ -991,10 +1019,10 @@ def _alerts(g):
 
 
 @mcp.tool(annotations=RO)
-def get_alerts(system_id: str = "", severity: str = "", text: str = "", limit: int = 100) -> dict:
-    """Active PowerFlex alerts, newest first: type / name, severity, start time, affected object.
-    severity: substring match, comma-separate several (e.g. "CRITICAL,HIGH"). text: match in any field.
-    Explain SIO / dial-home codes from the docs library when it is connected."""
+def get_alerts(system_id: str = "", severity: str = "", text: str = "", limit: int = 50,
+               full: bool = False) -> dict:
+    """Active alerts, newest first. severity: substring, comma-separate several ("CRITICAL,HIGH").
+    text: match in any field. full=True keeps empty / repeated fields. Explain SIO codes from the docs library."""
     sid, g = system(system_id)
     rows = _alerts(g)
     sevs = [s.strip().lower() for s in severity.split(",") if s.strip()]
@@ -1007,7 +1035,9 @@ def get_alerts(system_id: str = "", severity: str = "", text: str = "", limit: i
     by = {}
     for a in rows:
         by[a.get("severity")] = by.get(a.get("severity"), 0) + 1
-    out = {"system_id": sid, "total": len(rows), "by_severity": by, "alerts": rows[:max(1, min(int(limit), 1000))]}
+    out = {"system_id": sid, "total": len(rows), "by_severity": by, "alerts": [a if full else _slim(a) for a in rows[:max(1, min(int(limit), 1000))]]}
+    if len(rows) > len(out["alerts"]):
+        out["note"] = "Older alerts not shown: narrow with severity / text or raise limit."
     if not rows:
         out["note"] = "No active alerts returned by the API."
     return out
@@ -1031,11 +1061,10 @@ def _when(a):
 
 @mcp.tool(annotations=RO)
 def get_events(system_id: str = "", severity: str = "", text: str = "", since_hours: float = 24,
-               limit: int = 200) -> dict:
-    """Event log (PowerFlex Manager 4.x+): MDM / SDS / SDC / device events such as SDC or SDS
-    disconnects, rebuilds starting / ending, device errors, logins and configuration changes, newest
-    first. severity: substring, comma-separate several. text: match in any field. since_hours: 0 = all
-    returned. 3.x Gateways have no events API (the answer says where to look instead)."""
+               limit: int = 50, full: bool = False) -> dict:
+    """Event log (Manager 4.x+), newest first: disconnects, rebuilds, device errors, logins, config changes.
+    severity: substring, comma-separate several. text = match in any field. since_hours 0 = all.
+    full=True keeps empty / repeated fields. 3.x has no events API (the answer says where to look)."""
     sid, g = system(system_id)
     if g.api != "manager":
         return {"system_id": sid, "events": [], "note": (
@@ -1043,8 +1072,7 @@ def get_events(system_id: str = "", severity: str = "", text: str = "", since_ho
             "is on the primary MDM (/opt/emc/scaleio/mdm/bin/showevents.py) or in the syslog / SNMP target "
             "the MDM sends to.")}
     r = g.get("/rest/v1/events")
-    rows = r if isinstance(r, list) else r.get("items") or r.get("events") or r.get("content") or []
-    rows = [{k: v for k, v in a.items() if k != "links"} for a in rows]
+    rows = _items(r)
     if since_hours and float(since_hours) > 0:
         cut = datetime.now(timezone.utc).timestamp() - float(since_hours) * 3600
         rows = [a for a in rows if (_when(a) is None or _when(a).timestamp() >= cut)]
@@ -1057,8 +1085,11 @@ def get_events(system_id: str = "", severity: str = "", text: str = "", since_ho
     by = {}
     for a in rows:
         by[a.get("severity")] = by.get(a.get("severity"), 0) + 1
-    return {"system_id": sid, "since_hours": since_hours, "total": len(rows), "by_severity": by,
-            "events": rows[:max(1, min(int(limit), 2000))]}
+    out = {"system_id": sid, "since_hours": since_hours, "total": len(rows), "by_severity": by,
+           "events": [a if full else _slim(a) for a in rows[:max(1, min(int(limit), 2000))]]}
+    if len(rows) > len(out["events"]):
+        out["note"] = "Older events not shown: narrow with severity / text / since_hours or raise limit."
+    return out
 
 
 def _us_to_ms(x):
@@ -1079,9 +1110,8 @@ def _us_to_ms(x):
 
 @mcp.tool(annotations=RO)
 def get_network_latency(system_id: str = "", protection_domain: str = "") -> dict:
-    """SDS-to-SDS network health: each SDS's network latency meters (average message wait to its
-    peers, ms) and each protection domain's SDS connectivity check. Use when write latency is high,
-    SDSs flap or a rebuild is slow; PowerFlex writes go SDS -> SDS, so this network is in every write."""
+    """SDS-to-SDS network health: per-SDS latency meters (ms) and each PD's connectivity check. Use for
+    high write latency, flapping SDSs or slow rebuilds (every write crosses this network)."""
     _, g = system(system_id)
     pds = [resolve(g, "ProtectionDomain", protection_domain)] if protection_domain else instances(g, "ProtectionDomain")
     pd_ids = {p["id"] for p in pds}
@@ -1118,10 +1148,9 @@ def _sdc_volume_io(m: dict) -> dict:
 
 @mcp.tool(annotations=RO)
 def get_sdc_volume_stats(sdc: str = "", volume: str = "", system_id: str = "", limit: int = 50) -> dict:
-    """Live IO of each volume AS SEEN BY EACH SDC (host): IOPS, MB/s, read / write / trim latency ms
-    per (SDC, volume) pair. sdc -> every volume on that host; volume -> every host using it (e.g. both
-    nodes during a KubeVirt live migration); neither -> the busiest pairs in the system (top `limit`).
-    SDCs only (NVMe/TCP hosts: get_statistics object_type=Host). Same counters the CSI driver uses."""
+    """Live IO per (SDC, volume) pair: IOPS, MB/s, read / write / trim latency ms. sdc -> its volumes;
+    volume -> its hosts (both nodes in a live migration); neither -> busiest pairs (top `limit`).
+    SDCs only (NVMe/TCP: get_statistics object_type=Host)."""
     _, g = system(system_id)
     if sdc:
         sdcs = [resolve(g, "Sdc", sdc)]
@@ -1184,17 +1213,14 @@ def list_statistics_properties(object_type: str = "System", system_id: str = "")
     return {"object_type": object_type, "sample_object": oid, "properties": kinds}
 
 
-@mcp.tool(annotations=RO)
+@mcp.tool(annotations=RO, description=(
+    "Live statistics of one object, converted to IOPS, MB/s, latency ms and GB. "
+    "object_type: " + ", ".join(_STAT_TYPES) + ". object: id or name (not needed for System). "
+    'properties: "KPI" (IO, latency, rebuild / rebalance, capacity, counts), "ALL", or comma-separated raw names '
+    'from list_statistics_properties (e.g. "userDataReadBwc,userDataSdcReadLatency"). '
+    "samples / interval_seconds: several samples (<= 300 s in total) for avg / max / min / last."))
 def get_statistics(object_type: str, object: str = "", system_id: str = "", properties: str = "KPI",
                    samples: int = 1, interval_seconds: float = 10) -> dict:
-    """Live statistics of one object, converted to IOPS, MB/s, latency ms and GB.
-
-    object_type: System, ProtectionDomain, StoragePool, Sds, Sdc, Volume, Device, FaultSet,
-                 ReplicationConsistencyGroup, VTree, Sdr. object: id or name (not needed for System).
-    properties: "KPI" (IO, latency, rebuild / rebalance, capacity, counts), "ALL", or comma-separated
-                raw names from list_statistics_properties (e.g. "userDataReadBwc,userDataSdcReadLatency").
-    samples / interval_seconds: take several samples (<= 300 s in total) for avg / max / min / last.
-    """
     sid, g = system(system_id)
     if object_type not in _STAT_TYPES:
         raise ValueError(f"object_type must be one of {list(_STAT_TYPES)}")
@@ -1230,9 +1256,8 @@ def get_statistics(object_type: str, object: str = "", system_id: str = "", prop
 @mcp.tool(annotations=RO)
 def get_performance_overview(system_id: str = "", top_n: int = 10, samples: int = 1,
                              interval_seconds: float = 10) -> dict:
-    """System-wide performance snapshot: system IO and latency, every storage pool (IO, latency, used %,
-    rebuild / rebalance), the busiest volumes, SDCs, SDSs and NVMe/TCP hosts by IOPS, and the
-    volumes, SDCs and NVMe hosts with the worst latency. samples > 1 averages the system / pool numbers over samples * interval_seconds.
+    """System IO and latency, every pool (IO, latency, used %, rebuild / rebalance), the busiest and the
+    worst-latency volumes, SDCs, SDSs and NVMe hosts. samples > 1 averages system / pool numbers.
     Start performance work here."""
     sid, g = system(system_id)
     n = max(1, min(int(top_n), 50))
@@ -1278,15 +1303,18 @@ def get_performance_overview(system_id: str = "", top_n: int = 10, samples: int 
 
 
 @mcp.tool(annotations=RO)
-def metrics_query(resource_type: str, metrics: str, ids: str = "", system_id: str = "") -> dict:
-    """PowerFlex 4.x+ metrics API (POST /dtapi/rest/v1/metrics/query), passed through as is.
-    resource_type e.g. volume, sdc, sds, storage_pool, protection_domain, system, device.
-    metrics: comma-separated names (an unknown name returns PowerFlex's error with the valid names).
-    ids: comma-separated object ids (empty = all). Not available on 3.x gateways."""
+def metrics_query(resource_type: str, metrics: str, ids: str = "", system_id: str = "", limit: int = 100) -> dict:
+    """4.x+ metrics API (/dtapi/rest/v1/metrics/query). resource_type: volume, sdc, sds, storage_pool,
+    protection_domain, system, device. metrics: comma-separated (an unknown name returns the valid ones).
+    ids: comma-separated (empty = all, capped by limit). Not on 3.x."""
     _, g = system(system_id)
     body = {"resource_type": resource_type, "metrics": [m.strip() for m in metrics.split(",") if m.strip()],
             "ids": [i.strip() for i in ids.split(",") if i.strip()]}
-    return {"request": body, "response": g.post("/dtapi/rest/v1/metrics/query", body)}
+    resp = g.post("/dtapi/rest/v1/metrics/query", body)
+    res = resp.get("resources") if isinstance(resp, dict) else None
+    if isinstance(res, list):
+        resp["resources"], resp["total_resources"] = res[:limit], len(res)
+    return {"request": body, "response": resp}
 
 
 # ---------------------------------------------------------------------------
@@ -1295,10 +1323,8 @@ def metrics_query(resource_type: str, metrics: str, ids: str = "", system_id: st
 
 @mcp.tool(annotations=RO)
 def powerflex_get(path: str, params: dict | None = None, system_id: str = "") -> dict:
-    """GET any PowerFlex REST endpoint not covered by another tool, e.g.
-    "/api/types/AccelerationPool/instances", "/api/instances/Volume::<id>/relationships/Statistics",
-    "/api/types/User/instances", or on PowerFlex Manager "/rest/v1/events", "/Api/V1/ManagedDevice".
-    path must start with /api/, /rest/ or /dtapi/. GET only."""
+    """GET any REST endpoint no other tool covers, e.g. "/api/types/AccelerationPool/instances",
+    "/api/types/User/instances", "/rest/v1/events". path must start with /api/, /rest/ or /dtapi/."""
     if ".." in path or not path.startswith(_PREFIXES):
         raise ValueError(f"path must start with one of {_PREFIXES} and not contain ..")
     _, g = system(system_id)

@@ -116,9 +116,9 @@ def route(host, method, path, body):
     if path == "/rest/v1/alerts":
         return (404, {})
     if path == "/rest/v1/events":
-        return (200, [{"id": "e1", "severity": "MAJOR", "message": "SDC ocp-worker-2 disconnected", "timestamp": "2026-10-27T10:00:00Z"},
-                      {"id": "e2", "severity": "INFO", "message": "Rebuild started", "timestamp": "2026-10-27T11:00:00Z"},
-                      {"id": "e0", "severity": "INFO", "message": "old", "timestamp": "2020-01-01T00:00:00Z"}])
+        return (200, {"results": [{"id": "e1", "severity": "MAJOR", "message": "SDC ocp-worker-2 disconnected", "timestamp": "2026-10-27T10:00:00Z", "domain": ""},
+                                  {"id": "e2", "severity": "INFO", "message": "Rebuild started", "timestamp": "2026-10-27T11:00:00Z"},
+                                  {"id": "e0", "severity": "INFO", "message": "old", "timestamp": "2020-01-01T00:00:00Z"}]})
     if path.endswith("/action/querySdsNetworkLatencyMeters"):
         return (200, [{"ipAddress": "10.0.0.12", "averageMessageWaitTimeInUsec": 350}])
     if path.endswith("/action/queryVolumeSdcBwc"):                 # per SDC: each mapped volume's counters
@@ -171,6 +171,7 @@ def fake_send(self, prep, **kw):
     return r
 
 
+_real_send = requests.Session.send
 requests.Session.send = fake_send
 
 
@@ -245,7 +246,7 @@ async def main():
     hv = await call("get_sdc", system_id=S4, sdc="OCP-WORKER-1")     # NVMe/TCP host by name
     assert hv["type"] == "nvme_host" and hv["volumes"][0]["name"] == "k8s-1a2b3c4d5e" and hv["io"]["read_latency_ms"] == 0.5, hv
     fh = await call("find_volume", key=f"{S4}-{V4}")                  # CSI PV volumeHandle -> only that system
-    assert fh["found"] == 1 and fh["volumes"][0]["system_id"] == S4 and fh["volumes"][0]["mappedSdcInfo"][0]["hostType"] == "NVMeHost", fh
+    assert fh["found"] == 1 and fh["volumes"][0]["system_id"] == S4 and fh["volumes"][0]["mapped_sdcs"] == ["ocp-worker-1"], fh
     assert (await call("find_volume", key="nvme-eui." + S4 + V4, system_id=S4))["volumes"][0]["name"] == "k8s-1a2b3c4d5e"
     assert (await call("list_volumes", system_id=S4, name_contains="k8s-", unmapped_only=False))["total"] == 1
     ev = await call("get_events", system_id=S4, since_hours=0)
@@ -328,6 +329,31 @@ async def main():
         except Exception:
             pass
     assert len(SENT) == n_before, "a blocked request reached the network"
+    # a redirect must not be followed (it would skip the check): real send, stub adapter answering 307
+    hits = []
+
+    class Redirect(requests.adapters.BaseAdapter):
+        def send(self, prep, **kw):
+            hits.append((prep.method, prep.url))
+            resp = requests.Response()
+            resp.status_code, resp.url, resp._content = 307, prep.url, b""
+            resp.headers["Location"] = f"{b}/api/instances/Volume::{V1}/action/removeVolume"
+            resp.request = prep
+            return resp
+        def close(self):
+            pass
+    rs = server.ReadOnlySession()
+    rs.mount("https://", Redirect())
+    requests.Session.send = _real_send
+    try:
+        rs.post(f"{b}/api/instances/querySelectedStatistics", json={})
+    finally:
+        requests.Session.send = fake_send
+    assert len(hits) == 1, hits
+    d = [t for t in await server.mcp.list_tools() if t.name == "get_statistics"][0].description
+    assert "KPI" in d and "samples" in d, d
+    ev = await call("get_events", system_id=S4, since_hours=0)
+    assert ev["total"] == 3 and "domain" not in ev["events"][-1], ev
     posts = sorted({p for m, _, p in SENT if m != "GET"})
     assert all(server._READ_POSTS.match(p) for p in posts), posts
     print("POSTs sent (all read-only queries):", posts, "| requests:", len(SENT))
