@@ -80,16 +80,15 @@ director ports summarized.
 6. Budgets are tested: `brain/test_budgets.py` fails when a core file or a skill/agent listing grows past its cap.
 7. Measure before trusting: `brain/claude/tools/token-report.py` shows where a VM's tokens went per tool and per hook.
 
-## Left for the owner (policy decisions, not code)
+## Owner decisions (done after the pass, on the owner's go-ahead)
 
-- 6,614 scraped Dell HTML files are force-tracked under `docs-search-mcp/work/docs` (also inside the library parts);
-  the web UI bundle tarballs are half of the branch history (~2.4 GB, +180 MB per rebuild); 98 MB of wheels. Git LFS or
-  GitHub Releases for the parts/images/bundles would keep clones small; the shared `.git` also has 276 MB of
-  tmp_pack garbage a `git gc` would remove.
-- `vmware-mapper` could run on haiku (mechanical join); needs an eval run on both models on the VM.
-- `~/.claude/agent-memory/*/MEMORY.md` on the VM: copy useful lines into `~/.claude/brain/notes/` before the agents
-  stop using it.
-- Re-pack the library (`docs-search-mcp/bundle/pack-library.sh`) at the next release so the parts carry `docs_text.py`;
-  until then `install.sh` copies the current server code over the extracted library.
-- The repository has no root LICENSE file although it is public; `brain/plugins/LICENSE` covers the vendored plugins
-  only.
+- Root `LICENSE` added (Apache-2.0, matching the vendored Anthropic plugins); README says what it covers.
+- `git gc` run on the shared `.git` to drop the 276 MB of tmp_pack garbage and 18 packs.
+- Not done, on purpose: moving library parts, images and UI bundles out of git (LFS / Releases) would change the
+  air-gapped flow (`git clone` then `install-vm.sh` on the VM) and needs a history rewrite to shrink the clone; keep
+  the current flow until the next planned history reset, and then start the new history without the bundle tarballs
+  (build them on the PC, copy the tarball to the VM). The 6,614 force-tracked Dell HTML files stay (they travel through
+  git by design, HANDOFF.md).
+- Still needs the VM: `vmware-mapper` on haiku (run the evals on both models), and copying useful lines from
+  `~/.claude/agent-memory/*/MEMORY.md` into `~/.claude/brain/notes/`. The library parts get `docs_text.py` at the next
+  re-pack; `install.sh` copies the current server code over the extracted library until then.

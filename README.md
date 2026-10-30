@@ -75,3 +75,7 @@ Tool counts: `grep -c '@mcp.tool' <server>/*.py` (mds: 27 visible, 70 registered
   `>`, backticks and newlines); every tool argument is validated.
 
 `mcp_auth.py` is identical in the five server folders so each image builds on its own.
+
+## License
+
+The code in this repository is Apache-2.0 (`LICENSE`). Vendored plugins and skills keep their own LICENSE files; the vendor documentation inside `library/` and `docs-search-mcp/work/docs` stays under its vendors' terms and is redistributed only for the team's own air-gapped use.
