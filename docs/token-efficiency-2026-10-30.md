@@ -115,6 +115,20 @@ tokens and wordmark contrast, preview and signed-out cards that follow the app t
 Verified in a local harness (`scratchpad/ui-harness`, mock data) on desktop and phone, dark and light, normal,
 empty and error states; node syntax checks on every file; the suite passes (25 pass).
 
+## Web UI, visual polish and "Report ready" (same day)
+
+Plugin tabs (ship now): header band with the actions on the right, content at 1,120 px, stat tiles (Status, Brain
+counts), skeleton loading instead of "Loading…", empty states with an icon and a first action (Schedule offers two
+example schedules), flat cards that light their border on hover, quiet outline tags with a "+n" overflow, status
+pills with a dot, link-style tertiary buttons, uppercase table headers with right-aligned numbers, section labels,
+and a light theme built only from tokens.
+Chat (bundle side, next build): when a reply creates a file (storage-reports or a project file it says it created),
+a "Report ready" card appears under the reply with the file name, size, a Download button (same code path as the inline
+chip) and "Open in Reports"; a browser notification when the UI tab is in the background and the person turned
+"Notify me when a report is ready" on in the quick-settings drawer; a dot on the Reports tab until it is opened.
+The anchors of the new chat patches were checked against the branded 1.37.5 checkout; the real test is the next
+`build-bundle.sh`.
+
 ## Owner decisions (done after the pass, on the owner's go-ahead)
 
 - Root `LICENSE` added (Apache-2.0, matching the vendored Anthropic plugins); README says what it covers.
