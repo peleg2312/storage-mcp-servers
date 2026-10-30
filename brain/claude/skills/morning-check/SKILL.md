@@ -22,6 +22,7 @@ that is not OK. Window: last 24 h (or since the last check).
 Output (one page):
 1. Status line per layer: OK / WARNING / CRITICAL.
 2. Findings table sorted by severity: layer | object | finding | since | evidence | action / owner.
-3. "Changed since yesterday" list.
+3. "Changed since yesterday": read the newest earlier `~/storage-reports/*-morning-check.md` (Grep its findings table)
+   and list what is new, what is gone and what got worse against it (capacity numbers: the delta); none yet → say so.
 4. Checks that could not run.
 Save as `~/storage-reports/<date>-morning-check.md`.

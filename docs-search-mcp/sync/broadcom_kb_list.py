@@ -7,7 +7,7 @@ List the Broadcom (VMware) knowledge base articles about storage from the site's
 The sitemap lists ~180,000 articles of every Broadcom product; the article slug is the only hint of the subject,
 so this keeps the slugs that name a vSphere storage object (VMFS, NFS, datastore, LUN, naa, APD / PDL, multipath,
 iSCSI, FC / HBA, vVols, VAAI, NVMe, SATP / PSA / NMP, esxcli, UNMAP, VMDK, RDM, WWN, zoning, VASA, vSAN) in
-English. Standard library only.
+English, and drops the slugs of Broadcom's non-VMware products. Standard library only.
 """
 import re
 import sys
@@ -15,9 +15,14 @@ import urllib.request
 
 SITE = "https://knowledge.broadcom.com"
 UA = "docs-search-mcp/1.1 (internal documentation index)"
-STORAGE = re.compile(r"(vmfs|nfs|datastore|lun\b|luns|naa|apd|pdl|multipath|iscsi|fibre|fiber|hba|scsi|vvol|vaai|nvme|"
-                     r"satp|psa\b|nmp|esxcli|unmap|vmdk|rdm\b|wwn|zoning|vasa|dead-?path|all-?paths|lost-?access|vsan|"
-                     r"storage-?(array|device|path|adapter|controller|policy|io|dr|vmotion))", re.I)
+STORAGE = re.compile(r"\b(vmfs|nfs|nfsv?[34]|datastores?|luns?|naa|apd|pdl|multipath\w*|iscsi|fibre|fiber|hba|hbas|scsi|vvols?|vaai|"
+                     r"nvme\w*|satp|psa|nmp|hpp|esxcli|unmap|vmdks?|rdm|rdms|wwn|wwpn|zoning|vasa|dead-paths?|all-paths-down|"
+                     r"permanent-device-loss|vsan|vmkernel|storage-(array|device|path|paths|adapter|controller|policy|policies|io|dr|"
+                     r"vmotion|provider|container|pod)|esxi-storage|san-storage|nas-storage)\b")
+# Broadcom's other products share the KB (CA UIM, Spectrum, mainframe, Symantec...): their slugs are left out
+OTHER = re.compile(r"\b(snmp\w*|uim|spectrum|netops|nfa|ca|clarity|automic|autosys|xcom|librarian|mainframe|ims|cics|db2|datacom|"
+                   r"idms|endevor|sysview|top-secret|acf2|siteminder|api-gateway|rally|agile|symantec|dlp|sep|edr|layer7|apm|dx|"
+                   r"oneclick|tdm|arcot|pam|identity|ppm|ssl-visibility)\b")
 
 
 def get(url):
@@ -29,7 +34,7 @@ def main():
     urls = []
     for sub in re.findall(r"<loc>([^<]+)</loc>", get(SITE + "/sitemap.xml")):
         urls += re.findall(r"<loc>([^<]+)</loc>", get(sub))
-    keep = [u for u in urls if u.isascii() and STORAGE.search(u.rsplit("/", 1)[-1])]
+    keep = [u for u in urls if u.isascii() and STORAGE.search(u.rsplit("/", 1)[-1]) and not OTHER.search(u.rsplit("/", 1)[-1])]
     print(f"{len(urls)} articles, {len(keep)} about storage", file=sys.stderr)
     print("\n".join(sorted(set(keep))))
 

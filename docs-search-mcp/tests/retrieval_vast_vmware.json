@@ -1,0 +1,22 @@
+[
+{"q": "vast nfs client multipathing, spread a client over several cnodes", "expect": ["7-vast-client-nfs-multipathing"]},
+{"q": "vast smb3 multichannel best practices", "expect": ["smb3-multichannel-best-practices"]},
+{"q": "what is a view policy on vast and how do views expose nfs smb s3", "expect": ["views-and-view-policies", "overview-of-multi-protocol-storage-access"]},
+{"q": "vast quota grace period reset", "expect": ["resetting-quota-grace-period"]},
+{"q": "vast async replication best practices", "expect": ["async-replication-best-practices"]},
+{"q": "vast recovery after failure when sync and async replication are combined", "expect": ["recovery-scenarios-for-combined-sync-and-async-replication"]},
+{"q": "vast encryption key expired, data loss risk", "expect": ["avoiding-accidential-data-loss-through-encryption-key-expiration"]},
+{"q": "vast kerberos authentication for nfsv4", "expect": ["kerberos-authentication-for-nfsv4"]},
+{"q": "vast what is in each support bundle preset", "expect": ["what-is-collected-in-each-support-bundle-preset"]},
+{"q": "vast monthly health check for a dark site cluster", "expect": ["monthly-health-checks-for-dark-sites"]},
+{"q": "vast replace a failed cnode", "expect": ["replacing-a-cnode"]},
+{"q": "vast replace a dnode", "expect": ["replacing-a-dnode"]},
+{"q": "vast cluster capacity alerts, available capacity", "expect": ["cluster-available-capacity-alerts", "capacity-alerts"]},
+{"q": "vast send alarms to a syslog server", "expect": ["sending-alarms-to-a-syslog-server"]},
+{"q": "vast qos policy create", "expect": ["creating-a-qos-policy", "4-qos-best-practices"]},
+{"q": "vast nfs and smb share limits and constraints per policy", "expect": ["nfs-smb-share-and-policy-limits-and-constraints"]},
+{"q": "vast load balancing cnodes best practice", "expect": ["best-practice-on-load-balancing-cnodes"]},
+{"q": "vast cluster upgrade procedure", "expect": ["cluster-upgrade"]},
+{"q": "vast s3 synchronous versus asynchronous replication", "expect": ["s3-synchronous-and-asynchronous-replication-intro"]},
+{"q": "vast understanding usable capacity reporting", "expect": ["understanding-vast-capacity", "capacity-overview"]}
+]
