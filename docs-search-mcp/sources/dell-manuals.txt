@@ -30,3 +30,15 @@ powerflex  https://www.dell.com/support/manuals/en-us/powerflex-appliance-hw/fle
 powerflex  https://www.dell.com/support/manuals/en-us/powerflex-appliance-r660/mgmt_cluster_replacement_5x/Introduction?lang=en-us
 powerflex  https://www.dell.com/support/manuals/en-us/powerflex-appliance-hw/flex-app-upgrade-guide-5x/Introduction?lang=en-us
 powerflex  https://www.dell.com/support/manuals/powerflex-appliance-r660/flex-app-5x-50x-ic-rn/Introduction?lang=en-us
+# PowerScale OneFS 9.10 (Isilon): PDFs need a Dell login, the HTML manuals are public (from KB 000256095, the OneFS 9.10 info hub)
+powerscale https://www.dell.com/support/manuals/en-us/isilon-onefs/ifs-pub-91000-administration-guide-cli/introduction-to-this-guide?guid=guid-34c2cc0d-79ba-42da-b630-4c2a59014102&lang=en-us
+powerscale https://www.dell.com/support/manuals/en-us/isilon-onefs/ifs-pub-91000-administration-guide-gui/introduction-to-this-guide?guid=guid-e82497c7-582f-49f7-972a-d7a2f314fffa&lang=en-us
+powerscale https://www.dell.com/support/manuals/en-us/isilon-onefs/ifs-pub-91000-cli-command-reference/introduction-to-this-guide?guid=guid-2393ba25-f02b-4184-a06d-77d6289aaee0&lang=en-us
+powerscale https://www.dell.com/support/manuals/en-us/isilon-onefs/ifs_pub_event_reference/introduction-to-this-guide?guid=guid-ca67756e-6f67-4581-adb7-b7d881c4039b&lang=en-us
+powerscale https://www.dell.com/support/manuals/en-us/isilon-onefs/ifs-pub-91000-scg/preface?guid=guid-e04b7446-9563-4c67-826f-da977f3d16ae&lang=en-us
+powerscale https://www.dell.com/support/manuals/en-us/isilon-onefs/ifs_pub_upgrade_planning_and_process_guide/introduction-to-this-guide?guid=guid-e82497c7-582f-49f7-972a-d7a2f314fffa&lang=en-us
+powerscale https://www.dell.com/support/manuals/en-us/isilon-onefs/ifs_pub_software_hardware_compatibility_guide/introduction?guid=guid-1e3f57bf-d4c2-401f-b904-2ab08c95dc17&lang=en-us
+powerscale https://www.dell.com/support/manuals/en-us/isilon-onefs/ifs_pub_backup_and_recovery_guide_9.10.0.0/introduction-to-this-guide?guid=guid-e82497c7-582f-49f7-972a-d7a2f314fffa&lang=en-us
+powerscale https://www.dell.com/support/manuals/en-us/isilon-onefs/ifs_pub_cloudpools_admin_guide_9100/introduction-to-this-guide?guid=guid-26bb949e-c8a5-46ee-af6e-fcff4a43b9eb&lang=en-us
+powerscale https://www.dell.com/support/manuals/en-us/isilon-onefs/ifs_pub_onefs_tech_spec_guide_9.10.0.0/introduction?guid=guid-fe0b80a6-660d-4746-a62c-e523b20d0080&lang=en-us
+powerscale https://www.dell.com/support/manuals/en-us/isilon-onefs/ifs-pub-onefs-release-notes-91000/revision-history?guid=guid-55d4fb27-edf8-4131-9555-bb2b65f8b04b&lang=en-us

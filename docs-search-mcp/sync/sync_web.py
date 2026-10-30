@@ -148,12 +148,29 @@ def main():
     rows = load(a)
     stats = {"saved": 0, "skipped": 0, "login_or_empty": 0, "robots": 0, "failed": 0}
     manifests = {}
+
+    def dump(mf, man):
+        """Merge with what another run (a shard of the same list) wrote meanwhile, then write."""
+        try:
+            on_disk = json.load(open(mf))
+        except (OSError, ValueError):
+            on_disk = {}
+        on_disk.update(man)
+        man.update(on_disk)
+        json.dump(man, open(mf, "w"), indent=1)
+
     for vendor, product, url in rows:
         d = os.path.join(a.dest, vendor, product)
         os.makedirs(d, exist_ok=True)
         mf = os.path.join(d, "manifest.json")
         man = manifests.setdefault(mf, json.load(open(mf)) if os.path.exists(mf) else {})
         if not a.refresh and any(v.get("url") == url for v in man.values()):
+            stats["skipped"] += 1
+            continue
+        existing = next((n for n in (file_name(url, False), file_name(url, True)) if os.path.exists(os.path.join(d, n))), None)
+        if existing and not a.refresh:          # saved by a run that ended before writing its manifest
+            body = open(os.path.join(d, existing), "rb").read()
+            man[existing] = {"url": url, "title": title_of(body) if existing.endswith(".html") else existing}
             stats["skipped"] += 1
             continue
         if not robots_ok(url):
@@ -178,9 +195,11 @@ def main():
             f.write(body)
         man[name] = {"url": url, "title": title_of(body) if not is_pdf else name}
         stats["saved"] += 1
-        print(f"saved {vendor}/{product}/{name}")
+        print(f"saved {vendor}/{product}/{name}", flush=True)
+        if stats["saved"] % 25 == 0:
+            dump(mf, man)
     for mf, man in manifests.items():
-        json.dump(man, open(mf, "w"), indent=1)
+        dump(mf, man)
     print("web pages:", json.dumps(stats))
     return 1 if stats["failed"] and not stats["saved"] else 0
 

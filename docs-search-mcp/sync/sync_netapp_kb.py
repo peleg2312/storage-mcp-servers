@@ -45,6 +45,8 @@ SITEMAP = "https://kb.netapp.com/sitemap.xml"
 # sitemap path prefix -> product folder (order = priority)
 DEFAULT_AREAS = [
     ("on-prem/ontap/da/SAN/", "kb-ontap"),            # SAN: FC / iSCSI / NVMe, LUNs, igroups, multipath
+    ("on-prem/ontap/da/NAS/", "kb-ontap"),            # NAS: NFS / SMB / CIFS, exports, shares, name services, locks
+    ("on-prem/ontap/da/S3/", "kb-ontap"),
     ("on-prem/ontap/da/Host-Utilities/", "kb-ontap"),
     ("on-prem/ontap/Perf/", "kb-ontap"),
     ("on-prem/ontap/DP/", "kb-ontap"),                # SnapMirror, snapshots, NDMP

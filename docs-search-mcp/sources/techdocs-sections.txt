@@ -1,0 +1,11 @@
+# VMware guides from techdocs.broadcom.com kept offline (sync/sync_techdocs.py): every topic of the guide.
+# Format:  <product-folder>  <url prefix>        (files land in work/docs/vmware/<product-folder>/)
+# vSphere Storage: datastores (VMFS, NFS, vVols), multipathing (PSA, NMP, SATP, HPP), FC / iSCSI / NVMe, APD / PDL,
+# device identifiers (naa, eui, t10), VAAI, UNMAP, RDMs, queue depths, storage policies, troubleshooting.
+vsphere-9  https://techdocs.broadcom.com/us/en/vmware-cis/vsphere/vsphere/9-0/vsphere-storage/
+vsphere-8  https://techdocs.broadcom.com/us/en/vmware-cis/vsphere/vsphere/8-0/vsphere-storage/
+vsphere-7  https://techdocs.broadcom.com/us/en/vmware-cis/vsphere/vsphere/7-0/vsphere-storage/
+# Monitoring and performance (disk / datastore / storage path charts, esxtop storage counters)
+vsphere-8  https://techdocs.broadcom.com/us/en/vmware-cis/vsphere/vsphere/8-0/vsphere-monitoring-and-performance/
+# Windows Server Failover Clustering on vSphere (shared RDMs / clustered VMDKs on FC)
+vsphere-8  https://techdocs.broadcom.com/us/en/vmware-cis/vsphere/vsphere/8-0/setup-for-windows-server-failover-clustering/

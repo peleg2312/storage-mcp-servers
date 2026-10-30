@@ -21,3 +21,10 @@ dell    kb  https://www.dell.com/support/kbdoc/en-us/000228219/list-of-symdev-co
 dell    kb  https://www.dell.com/support/kbdoc/en-us/000204697/how-to-view-and-modify-powermax-vmax-host-lun-id-hlu
 dell    kb  https://www.dell.com/support/kbdoc/en-us/000264404/how-to-locate-the-device-identifier-eui-in-a-volume-powerflex-3-6-x
 dell    kb  https://www.dell.com/support/kbdoc/en-sg/000437810/powerflex-esxi-sdc-stop-responding-in-vcenter-apd
+
+# ---- Red Hat Enterprise Linux 9 (the VM's and the hosts' OS): storage, multipath, iSCSI / FC / NVMe, NFS and SMB clients (single-page HTML guides) ----
+redhat  rhel9  https://docs.redhat.com/en/documentation/red_hat_enterprise_linux/9/html-single/managing_storage_devices/index
+redhat  rhel9  https://docs.redhat.com/en/documentation/red_hat_enterprise_linux/9/html-single/configuring_device_mapper_multipath/index
+redhat  rhel9  https://docs.redhat.com/en/documentation/red_hat_enterprise_linux/9/html-single/managing_file_systems/index
+redhat  rhel9  https://docs.redhat.com/en/documentation/red_hat_enterprise_linux/9/html-single/configuring_and_using_network_file_services/index
+redhat  rhel9  https://docs.redhat.com/en/documentation/red_hat_enterprise_linux/9/html-single/monitoring_and_managing_system_status_and_performance/index

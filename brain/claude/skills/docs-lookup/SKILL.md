@@ -19,10 +19,13 @@ Nexus / NDFC, Terraform providers, SDKs, Kubernetes storage, concepts and best p
 | ONTAP behaviour, commands, REST | `ontap`, `ontap-sanhost`, `ontap-metrocluster`, `ontap-restapi`; symptom or CONTAP-* bug: `kb-ontap` |
 | Trident | `trident-<yymm>` of the installed release, `trident-issues`, `trident-changelog` |
 | PowerMax, SRDF, SnapVX, Unisphere | `dell` / `powermax`, `kb` |
+| PowerScale / Isilon / OneFS | `dell` / `powerscale` (OneFS 9.10 manuals), `kb`, `infohub-powerscale` |
 | PowerFlex | `dell` / `powerflex`, `kb`, `powerflex-api` |
 | CSM / CSI drivers on OpenShift | `dell` / `csm` (url `content/docs/` = current, `content/v1..v3/` = older: match the installed CSM), `csm-repo`, `csi-powermax`, `csi-powerflex`, `kb`; fixes: the `*-prs` products (`csm-prs`, `csi-powermax-prs`, ...: every merged / open pull request with the `dell/csm#<n>` issues it fixes) |
 | MDS / NDFC / Nexus | `cisco` / `mds`, `ndfc`, `nexus` |
-| ESXi storage | `vmware` / `kb`, `netapp` / `kb-ontap` |
+| ESXi / vSphere storage | `vmware` / `vsphere-8` (the Storage guide, one topic per page; `vsphere-7` / `-9`), `kb` |
+| VAST | `vast` / `docs`, `kb`, `api-5-5` |
+| NAS (ONTAP NFS / SMB), RHEL 9 host storage | `netapp` / `ontap`, `kb-ontap`; `redhat` / `rhel9` |
 | UCS, PowerMaxOS release notes, CSM issue texts | **not in the library**: say so; explain from general knowledge, labelled |
 
 ## 2. Search: exact first, then wider

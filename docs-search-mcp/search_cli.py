@@ -74,6 +74,13 @@ SYNONYMS = [
     ["spread", "distribute", "distributed"], ["per node", "node scoped"], ["ots", "ontap select"],
     ["slow", "latency", "performance degradation"], ["error", "failure", "fault"], ["alert", "alarm", "event"],
     ["ip", "ip address"], ["certificate", "cert"],
+    # VAST, VMware storage, NAS (added with the 2026.10.31 library; the retrieval sets gate them like the rest)
+    ["vast", "vast data", "vastos", "vast cluster"], ["cnode", "cnodes", "compute node"], ["dnode", "dnodes", "data node"],
+    ["vip pool", "virtual ip pool"], ["vmfs", "virtual machine file system"], ["vvol", "vvols", "virtual volumes"],
+    ["apd", "all paths down"], ["pdl", "permanent device loss"], ["nmp", "native multipathing"],
+    ["psa", "pluggable storage architecture"], ["rdm", "raw device mapping"], ["vaai", "storage apis for array integration"],
+    ["unmap", "space reclamation"], ["datastore", "data store"], ["esxi", "esx"], ["smb", "cifs"], ["nfs", "network file system"],
+    ["smartconnect", "smart connect"], ["dm-multipath", "device mapper multipath", "multipathd"],
 ]
 
 _SYN = {w: g for g in SYNONYMS for w in g}

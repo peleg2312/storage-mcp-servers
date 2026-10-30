@@ -255,11 +255,43 @@ def reason_for(tool_name, tool_input):
     return None
 
 
+def audit(data, decision, why=""):
+    """Append-only record of every MCP / shell call this guard saw: who, when, which tool, what the guard decided.
+    ~/.claude/brain/audit/tool-calls.jsonl (one file per VM account; rotated at 20 MB). Arguments are never
+    written, only their names and a hash, so no password or query text lands in the log."""
+    try:
+        import getpass
+        import hashlib
+        import time
+        d = os.path.join(os.path.expanduser("~"), ".claude", "brain", "audit")
+        os.makedirs(d, exist_ok=True)
+        f = os.path.join(d, "tool-calls.jsonl")
+        if os.path.exists(f) and os.path.getsize(f) > 20 * 1024 * 1024:
+            os.replace(f, f + ".1")
+        args = data.get("tool_input") or {}
+        row = {"ts": time.strftime("%Y-%m-%dT%H:%M:%S"), "user": getpass.getuser(), "session": str(data.get("session_id", ""))[:8],
+               "tool": data.get("tool_name", ""), "decision": decision, "args": sorted(args)[:8],
+               "hash": hashlib.sha256(json.dumps(args, sort_keys=True, default=str).encode()).hexdigest()[:12]}
+        if why:
+            row["why"] = why[:200]
+        with open(f, "a") as out:
+            out.write(json.dumps(row) + "\n")
+    except Exception:
+        pass                                            # the log never blocks a call
+
+
 def main():
     try:
         data = json.load(sys.stdin)
     except Exception:
         return 0
+    rc = decide(data)
+    audit(data, {0: "allow", 2: "block"}.get(rc, str(rc)) if not decide.asked else "ask", decide.why)
+    return rc
+
+
+def decide(data):
+    decide.asked, decide.why = False, ""
     name = data.get("tool_name", "")
     # Bypass mode: the user has approved every change on this server, so the questions below are skipped; the blocks
     # (storage, switches, UCS, VMware) stay in every mode
@@ -270,11 +302,13 @@ def main():
             return 0
         level, why = shell_check(cmd)
         if level == "block":
+            decide.why = why
             print(f"BLOCKED by the read-only policy: {why}. Storage / fabric / virtualization infrastructure is "
                   f"read-only here; give the command for the user to run, labelled 'to be run by you'.",
                   file=sys.stderr)
             return 2
         if level == "ask" and not bypass:
+            decide.asked, decide.why = True, why
             print(json.dumps({"hookSpecificOutput": {"hookEventName": "PreToolUse", "permissionDecision": "ask",
                                                      "permissionDecisionReason": f"Read-only guard: changes something: {why}. Allow?"}}))
         return 0
@@ -295,6 +329,7 @@ def main():
         s = str(what)     # show what will run, so nothing past the cut is approved unseen
         shown = s[:1500] + (f" ...[+{len(s) - 1500} more chars not shown]" if len(s) > 1500 else "")
         warn = "LONG/DESTRUCTIVE: " if len(s) > 1500 or re.search(r"(?i)\b(drop|truncate|delete\s+from|alter)\b", s) else ""
+        decide.asked, decide.why = True, "database write"
         print(json.dumps({"hookSpecificOutput": {"hookEventName": "PreToolUse", "permissionDecision": "ask",
                                                  "permissionDecisionReason": f"Read-only guard: database write on "
                                                                              f"{tool_input.get('connection')}: {warn}{shown}"}}))
@@ -303,6 +338,7 @@ def main():
     if r and name.startswith("mcp__databases__"):
         r += " (pg_query / mongo_* are the reading tools: use pg_execute or mongo_write on a writable connection)"
     if r:
+        decide.why = r
         print(f"BLOCKED by the read-only policy: {name}: {r}. This environment is read-only; give the user "
               f"the steps to run instead. (False positive? the user can add the tool name to "
               f"{os.path.join(os.path.dirname(os.path.abspath(__file__)), 'allowed-tools.txt')})", file=sys.stderr)
