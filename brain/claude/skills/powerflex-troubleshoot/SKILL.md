@@ -12,11 +12,8 @@ alert counts), `get_alerts`, `get_capacity`, `get_performance_overview` and `get
 is then only for what the API does not show (`drv_cfg` on the SDC, ESXi paths).
 
 Without it, evidence comes from (a) what the user runs and pastes, (b) vCenter-side data
-(kuparashit `locate` / `related` on the `eui.` ids: ESXi hosts, datastores, VMs; Aria: latency, APD/PDL alerts), (c) the library:
-`dell/powerflex` (Technical Overview, Administration Guide, CLI Reference Guide and release notes of the
-installed version: 3.6.x, 4.5.x, 4.6.x, 5.0.x, 5.1.x; PDF titles are "View": cite the file name + page)
-and `dell/kb` (PowerFlex articles: "Top Dial Home Events and Alert with Recommended Action", one article
-per `SIOxx.xx.xxxxxxx` code, ESXi SDC / APD, PowerFlex Manager). Everything is read-only: only
+(kuparashit `locate` / `related` on the `eui.` ids: ESXi hosts, datastores, VMs; Aria: latency, APD/PDL alerts), (c) the library per docs-lookup (dell/powerflex, dell/powerflex-api, dell/kb; release notes only for 3.6.x / 4.0.x); PDF titles are 'View': cite file + page.
+Everything is read-only: only
 `--query_*` commands, never `--set`, `--remove`, `--add` or anything in PowerFlex Manager that changes state.
 
 ## 1. Collect (commands for him; PowerFlex 3.x: on the primary MDM; 4.x / 5.x: `scli` on the MDM or

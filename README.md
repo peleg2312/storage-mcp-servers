@@ -5,13 +5,13 @@ config from one Secret, and built-in guidance so a connecting Claude knows how t
 
 | Server | Talks to | Tools | Image |
 |---|---|---|---|
-| [`powermax-mcp`](powermax-mcp/) | Dell PowerMax / VMAX via one or many Unisphere servers | 28 | `images/powermax-mcp-2.0.tar.gz` |
+| [`powermax-mcp`](powermax-mcp/) | Dell PowerMax / VMAX via one or many Unisphere servers | 26 | `images/powermax-mcp-2.0.tar.gz` |
 | [`powerflex-mcp`](powerflex-mcp/) | Dell PowerFlex 3.x Gateway / 4.x-5.x PowerFlex Manager (one or many): health, capacity, inventory, replication, alerts, events, SDS network latency, NVMe hosts, OpenShift CSI lookups, all statistics | 29 | `images/powerflex-mcp-1.0.tar.gz` |
 | [`ucsc-mcp`](ucsc-mcp/) | Cisco UCS Central (one or many): inventory, faults, service profiles, FI FC uplinks/port-channels/errors, vHBA pinning, per-host SAN trace | 26 | `images/ucsc-mcp-2.2.tar.gz` |
 | [`docs-search-mcp`](docs-search-mcp/) | Offline documentation + bug library: NetApp docs (ONTAP, SAN hosts, VMware tools, EMS...), Trident, Harvest, Dell CSM, PowerMax, PowerFlex, the Trident/Harvest/CSM bug trackers, KB pointers, your saved KBs and runbooks. Air-gapped mode: library baked into a dated image (`bundle/build-offline.sh`) | 4 | `images/docs-search-mcp-1.1.tar.gz` (base; build the offline image with the script) |
 | [`brain`](brain/) | **Not a server**: the Claude Code "brain" for the VM: CLAUDE.md (role, rules, ID decoding, path model), skills (`ls brain/claude/skills`), agents (`ls brain/claude/agents`), read-only safety hook, `install.sh` | - | - |
 | [`library`](library/) | **Not a server**: the prebuilt documentation library (NetApp ONTAP + Trident docs and KB, EMS references, Dell CSM / CSI / PowerMax / PowerFlex docs, VMware KB pages) as 45 MB git parts + `MANIFEST.md`. `install-vm.sh` installs it with the brain and a dependency-free MCP server `docs-local`; `build-offline.sh --from-library` bakes it into the docs-search image | - | `library/docs-library-<date>.tar.gz.part-*` |
-| [`mds-mcp`](mds-mcp/) | Cisco MDS switches via NX-API (wraps [alecharn/mds-mcp](https://github.com/alecharn/mds-mcp)): all show commands incl. text-only ones, parsed syslog, OBFL, WWPN trace, zone check, port-channel health, error scan | 70 | `images/mds-mcp-2.2.tar.gz` |
+| [`mds-mcp`](mds-mcp/) | Cisco MDS switches via NX-API (wraps [alecharn/mds-mcp](https://github.com/alecharn/mds-mcp)): all show commands incl. text-only ones, parsed syslog, OBFL, WWPN trace, zone check, port-channel health, error scan | 27 (70 registered, 43 hidden: use `run_show`) | `images/mds-mcp-2.2.tar.gz` |
 
 The three share one WWPN-based workflow, so Claude can trace a host's SAN paths end to end:
 
@@ -60,7 +60,7 @@ Use a separate token per server, a read-only account on every backend (Unisphere
 UCS Central **read-only**, MDS **network-operator**), and a TLS edge Route if you expose them.
 
 Each server's README has the full tool list, configuration and client setup. Tests: `sh scripts/run_tests.sh` (all of them; the mds ones need fastmcp 3.x + prefab-ui, else SKIP).
-Tool counts: `grep -c '@mcp.tool' <server>/*.py` (mds: 70 at runtime, recount after changes).
+Tool counts: `grep -c '@mcp.tool' <server>/*.py` (mds: 27 visible, 70 registered; see mds-mcp/README.md).
 
 ## Read-only guarantees
 

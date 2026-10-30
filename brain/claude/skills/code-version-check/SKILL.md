@@ -10,8 +10,8 @@ The library is a snapshot (version in `~/.claude/brain/library/VERSION`): "lates
 
 ## 1. Running versions
 From `~/.claude/brain/environment.md` first, then live where a tool exists (prefer live, note
-disagreements): PowerMax `list_arrays` / `get_array` (PowerMaxOS / microcode), `list_unispheres`
-(Unisphere); ONTAP cluster version (ontap MCP); Harvest (harvest MCP); MDS `run_show "show version"`;
+disagreements): PowerMax `list_arrays` / `get_array` (PowerMaxOS / microcode), `test_connection`
+(Unisphere version); ONTAP cluster version (ontap MCP); Harvest (harvest MCP); MDS `run_show "show version"`;
 UCS `list_centrals` / `list_domains`; ESXi / vCenter from Aria (kuparashit has no versions). Ask him for what no tool
 shows: Solutions Enabler (`symcli -def`), Trident (`tridentctl -n trident version`), CSM
 (`oc get csm -A`, driver image tags), PowerFlex (`scli --version`, `scli --query_all` header).

@@ -6,6 +6,8 @@ import json
 import os
 import re
 import sys
+import tempfile
+import time
 
 # the .claude directory this hook was installed into: ~/.claude (user install) or <project>/.claude
 # (install-vm.sh --project <dir>); the documentation library is always shared in ~/.claude/brain/library
@@ -140,9 +142,22 @@ def chats_rules():
     os.replace(tmp, dst)
 
 
+def prune_tmp():
+    """Delete files older than 7 days in the private dir docs-leads / docs-hints use for seen files and caches."""
+    d = os.path.join(tempfile.gettempdir(), f"claude-brain-{os.getuid()}")
+    for name in os.listdir(d):
+        p = os.path.join(d, name)
+        if os.path.isfile(p) and time.time() - os.lstat(p).st_mtime > 7 * 86400:
+            os.remove(p)
+
+
 def main():
     try:
         sys.stdin.read()  # the hook input (session id, source) is not needed
+    except Exception:
+        pass
+    try:
+        prune_tmp()
     except Exception:
         pass
     try:

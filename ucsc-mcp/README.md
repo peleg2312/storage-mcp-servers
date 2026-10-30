@@ -66,7 +66,7 @@ Note: `ucscsdk` does not verify the UCS Central TLS certificate.
 
 ## Run
 
-The marketplace package registers this server as `ucsc`; the examples below use `ucs-central`, any name works.
+The marketplace package registers this server as `ucsc`; the examples below use `ucsc`, any name works.
 
 Local / stdio (no token): `MCP_TRANSPORT=stdio python3.12 server.py` (fastmcp needs Python >= 3.10, so
 not the VM's system Python 3.9; use the container there).
@@ -91,13 +91,13 @@ refuses to start (set `MCP_AUTH_DISABLED=true` only for a lab).
 
 Claude Code:
 ```bash
-claude mcp add --transport http ucs-central http://HOST:8000/mcp --header "Authorization: Bearer $TOKEN"
+claude mcp add --transport http ucsc http://HOST:8000/mcp --header "Authorization: Bearer $TOKEN"
 ```
 VS Code / Copilot (`mcp.json`):
 ```json
-{ "servers": { "ucs-central": { "type": "http", "url": "http://HOST:8000/mcp",
-  "headers": { "Authorization": "Bearer ${input:ucs-central_token}" } } },
-  "inputs": [ { "id": "ucs-central_token", "type": "promptString", "password": true, "description": "ucs-central MCP token" } ] }
+{ "servers": { "ucsc": { "type": "http", "url": "http://HOST:8000/mcp",
+  "headers": { "Authorization": "Bearer ${input:ucsc_token}" } } },
+  "inputs": [ { "id": "ucsc_token", "type": "promptString", "password": true, "description": "ucsc MCP token" } ] }
 ```
 
 Rotate a token: put old and new in `MCP_AUTH_TOKENS=new,old`, update clients, then remove the old one

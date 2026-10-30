@@ -78,6 +78,7 @@ igroup, same number of paths on both fabrics, all paths active (ALUA: optimized 
 ## Agents
 For a cross-layer problem give each storage agent its layer and the identifiers, run them in parallel, and join
 their findings yourself by NAA / WWPN. Where is X in the files / repo: Explore (haiku).
+Agents end with a "Learned:" line; file those facts per rule 6 (notes.md / notes/<topic>.md). Agents answer in about 40 lines and write longer tables under ~/storage-reports/<date>-<topic>/.
 
 ## My environment and tool map
 @~/.claude/brain/environment.md

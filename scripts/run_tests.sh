@@ -3,10 +3,13 @@
 # A suite that cannot import its deps (container-only, e.g. mds needs fastmcp 3.x + prefab-ui) prints SKIP.
 cd "$(dirname "$0")/.." || exit 1
 PY=${PY:-python3}; MDS_PY=${MDS_PY:-$PY}
+case $PY in */*) PY=$(cd "$(dirname "$PY")" && pwd)/$(basename "$PY") ;; esac   # absolute: run() cds
+case $MDS_PY in */*) MDS_PY=$(cd "$(dirname "$MDS_PY")" && pwd)/$(basename "$MDS_PY") ;; esac
 P=0; F=0; S=0
 run() { # dir script interpreter
   out=$(cd "$1" && "$3" $2 2>&1); rc=$?
   if [ $rc = 0 ] && ! echo "$out" | grep -q "skipped"; then echo "PASS  $1/$2"; P=$((P+1))
+  elif [ $rc = 77 ]; then echo "SKIP  $1/$2 ($(echo "$out" | tail -1 | cut -c1-90))"; S=$((S+1))
   elif [ $rc = 0 ] || echo "$out" | grep -q -E "ModuleNotFoundError|ImportError"; then
     echo "SKIP  $1/$2 ($(echo "$out" | tail -1 | cut -c1-90))"; S=$((S+1))
   else echo "FAIL  $1/$2"; echo "$out" | tail -15; F=$((F+1)); fi

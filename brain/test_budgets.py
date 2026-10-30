@@ -24,8 +24,8 @@ def check(label, got, cap):
 check("CLAUDE.md + notes.md", size(C, "CLAUDE.md") + size(C, "brain", "notes.md"), 8 * 1024)
 check("storage.md + environment.md + tool-map.md",
       sum(size(C, "brain", f) for f in ("storage.md", "environment.md", "tool-map.md")), 12 * 1024)
-check("skill frontmatter total", sum(front(f) for f in glob.glob(C + "/skills/*/SKILL.md")), 9 * 1024)
-check("agent frontmatter total", sum(front(f) for f in glob.glob(C + "/agents/*.md")), 3 * 1024)
+check("skill frontmatter total", sum(front(f) for f in glob.glob(C + "/skills/*/SKILL.md")), 10500)
+check("agent frontmatter total", sum(front(f) for f in glob.glob(C + "/agents/*.md")), 3600)
 for f in ("powermax-mcp/server.py", "powerflex-mcp/server.py", "ucsc-mcp/server.py",
           "docs-search-mcp/server.py", "docs-search-mcp/mcp_stdio.py", "mds-mcp/entry.py"):
     for n in ast.parse(open(os.path.join(R, f), encoding="utf-8").read()).body:

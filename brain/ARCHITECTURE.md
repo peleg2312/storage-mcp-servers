@@ -11,10 +11,10 @@ best-practices) recommend, and where this brain stands. Re-check with `/brain-he
 | PostToolUse hooks add context next to a tool result (`additionalContext`) | `docs-hints.py` (matcher `mcp__.*`): an EMS name, PowerMax SYMAPI alert, PowerFlex SIO code, CONTAP bug or DSA advisory in a live result gets its documented meaning + chunk id beside it, so errors are explained from the docs without a search round trip; only names the library documents (exact EMS heading match, cached name set), at most 4 lines + names per result, each once per session; 0.05 s on a 3,000-line result; 40 / 40 sampled EMS names explained, 0 false hits on 3,000 decoy names. Free-text errors (`desc = ...`, `error: ...`, `failed: ...`): the longest fixed run of words, shortened until found, points at the doc / KB or the CSI function raising it (`brain/test_docs_hints.py`) |
 | UserPromptSubmit hooks add context for a request | `docs-leads.py`: every request that names the library's world (vendor, product or storage term - the product names are read from the library - or a pasted identifier) gets up to 4 matching documents (title :: section, chunk id) before Claude answers; silent otherwise. Measured: fires on 215 / 241 test questions with the right document among the leads in 189 of them (88 %); fires on 0 / 25 unrelated requests ("yes", "center a div", "summarize this meeting for my manager"); ~150 tokens when it fires, 0.14 s |
 | SessionStart hooks inject fresh facts | `session-start.py` prints library version / document count, environment and memory state at every start, resume and compaction; the guard line only when the guard is not configured |
-| Skills: description + `when_to_use` drive auto-triggering (1,536-char cap) | one sentence + 3-4 trigger phrases each; 27 skills, 11.6 KB of frontmatter together (~2,900 tokens per turn); verified by `claude plugin eval` (9/9) |
+| Skills: `description` (with its trigger phrases) drives auto-triggering (1,536-char cap) | one sentence + 3-4 trigger phrases inside `description`; 27 skills, 11.6 KB of frontmatter together (~2,900 tokens per turn); verified by `claude plugin eval` (9/9) |
 | `disable-model-invocation` for user-run workflows | brain-setup, brain-health, morning-check, capacity-report, change-review, code-version-check |
 | `context: fork` for long, self-contained work | unused-luns, zoning-audit, fabric-health, rdm-inventory (foreground, result returns to the chat) |
-| Subagents: short descriptions, `memory`, preload `skills`, least privilege | 9 agents (8 storage + `Explore`, haiku); 7 keep persistent memory (`memory: user`); research agents preload docs-lookup; each agent has only its own MCP servers (`tools` / `disallowedTools`); infra writes are blocked by the hook (agents still write reports and their memory) |
+| Subagents: short descriptions, preload `skills`, least privilege | 9 agents (8 storage + `Explore`, haiku); the 8 storage agents have `omitClaudeMd` (3-line read-only block; needs Claude Code >= 2.1.271) and end with a Learned line the parent files per rule 6; research agents preload docs-lookup; each agent has only its own MCP servers (`tools` / `disallowedTools`); infra writes are blocked by the hook (agents still write reports) |
 | Memory: auto memory + versioned project memory; MEMORY.md as an index, topic files read on demand | a catalog: `notes.md` (imported, ≤ 60 lines: names, thresholds, owners) + `notes/<topic>.md` read only when a question touches it; the SessionStart hook lists the topic files with fact counts, so cost per session stays flat as memory grows; auto memory may exist beside it |
 | MCP: project `.mcp.json` for a folder-scoped setup, pre-approved with `enabledMcpjsonServers` | `install-vm.sh --project <dir>` writes `.mcp.json` + `.claude/settings.json`; hooks via `$CLAUDE_PROJECT_DIR`; user install registers `docs-local` with `claude mcp add -s user` |
 | Permissions: allow the MCP servers you trust to avoid prompts | `permissions.allow: mcp__<server>` for every server found by `claude mcp list` |
@@ -107,12 +107,11 @@ Code; few high-signal tools) and measured with `docs-search-mcp/eval_search.py`:
   only let the same folder load with `--plugin-dir` for `claude plugin validate` and `claude plugin eval`
   (`brain/claude/evals/`: skill-triggering cases, docs-local mocked).
 - **Third-party plugins: curated.** Every enabled plugin's skill / agent / command descriptions sit in the
-  context on every turn. Included: `skill-creator` (bundled in `skills/skill-creator` with pure-Python PyYAML
-  so every script runs offline; ~80 tokens per turn) and the 7 plugins `install.sh` installs from
+  context on every turn. Included: the 7 plugins `install.sh` installs from
   `brain/plugins` (marketplace `brain-dev`): pr-review-toolkit, feature-dev, commit-commands, security-guidance,
   pyright-lsp, mcp-server-dev, dev-discipline. The other 8 in `brain/plugins` (chrome-devtools, hookify,
   plugin-dev, session-report, frontend-design, ui-ux-pro-max, explanatory-output-style, learning-output-style)
-  are available, not enabled. Not useful here: anything needing internet (context7), code-review (needs gh).
+  are available, not enabled; `skill-creator` is opt-in from `brain/marketplace/skills`. Not useful here: anything needing internet (context7), code-review (needs gh).
   Worth adding: `grafana-mcp` only if Harvest feeds an internal Grafana. Offline install: clone the
   marketplace repo on the PC, copy it over, `/plugin marketplace add <path>`.
 
@@ -129,6 +128,5 @@ Code; few high-signal tools) and measured with `docs-search-mcp/eval_search.py`:
 
 - `enabledMcpjsonServers` is honoured only after the folder is trusted: the first `claude` start in a
   `--project` folder shows the one-time trust dialog.
-- `memory: user` agents write under `~/.claude/agent-memory/<name>/` even in project mode (Claude Code
-  decides that location).
+- `omitClaudeMd` on the storage agents needs Claude Code >= 2.1.271; agents do not keep their own memory.
 - The Cisco MDS / UCS documentation is not in the library (not published in a crawlable form).

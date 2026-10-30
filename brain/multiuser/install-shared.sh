@@ -41,7 +41,8 @@ swap() {   # swap <source dir> <name>: copy beside, then rename in, so the read-
 }
 for d in tools hooks banner themes; do swap "$BRAIN/claude/$d" "$d"; done
 swap "$BRAIN/plugins" plugins                                   # Claude Code plugins, offered in the marketplace
-chmod -R a+rX "$P/library" "$P/brain" "$P/tools" "$P/hooks" "$P/banner" "$P/themes" "$P/plugins"
+DEVTOOLS_VENV=$P/devtools-venv sh "$BRAIN/devtools/install-devtools.sh" || echo "devtools: skipped (see above)"
+chmod -R a+rX "$P/library" "$P/brain" "$P/tools" "$P/hooks" "$P/banner" "$P/themes" "$P/plugins" "$P/devtools-venv"
 chmod 644 "$P/brain/environment.md" "$P/brain/tool-map.md"   # root edits them; everyone reads
 ln -sfn "$P/tools/paas-open" /usr/local/bin/paas-open       # shows a page in the web UI's Browser tab
 ln -sfn "$P/plugins/chrome-devtools/bin/run.sh" /usr/local/bin/paas-chrome   # Chrome DevTools plugin: the Windows line, connected PCs

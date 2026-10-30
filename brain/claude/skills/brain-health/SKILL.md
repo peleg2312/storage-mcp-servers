@@ -10,7 +10,7 @@ Read-only and cheap: one list call per server, local files read with the shell. 
 tell him what to run.
 
 ## 1. MCP servers
-For each server in your tool list (`mcp__<server>__…`): one cheap call - powermax `list_unispheres` / powerflex `list_systems` /
+For each server in your tool list (`mcp__<server>__…`): one cheap call - powermax `test_connection` / powerflex `list_systems` /
 `list_arrays`, ontap (cluster or SVM list), harvest (any list / metric-name call), mds `list_switches`,
 ucsc `list_centrals`, kuparashit `overview` (snapshot age and warnings), Aria (any list), docs `list_sources`. Record:
 reachable · answer time · tool count · the call that failed and its error. Servers named in the
@@ -21,8 +21,8 @@ Note which docs server answered (docs-search or docs-local); if neither, test th
 ## 2. Library
 - `cat ~/.claude/brain/library/VERSION`; compare with the version line at the top of
   `~/.claude/brain/library/MANIFEST.md` and (if the repo is on this VM) `library/VERSION`.
-- Compare `list_sources` (or `search.py sources --json`) with the MANIFEST table in code: every
-  vendor/product present on both sides with the same document count; list the differences.
+- `list_sources` (or `search.py sources --json`; takes a vendor filter) returns `by_vendor: {vendor: "product (docs), ..."}`:
+  compare it with the MANIFEST table: every vendor/product on both sides with the same document count; list the differences.
 - One real search as a smoke test, e.g. `search_docs("scsiblade.san.config.active", vendor="netapp",
   product="ontap-ems")` must return hits with a chunk id you can `read_chunk`.
 - Search quality: `python3 ~/.claude/brain/library/eval_search.py` and `... eval_search.py --cases

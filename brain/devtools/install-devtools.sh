@@ -6,10 +6,10 @@
 #   psycopg, pymongo     drivers of the read-only "databases" MCP server (brain/claude/tools/db_mcp.py)
 # Wheels in ./wheels (Linux x86_64; drivers for Python 3.9 and 3.12; node.js comes as a wheel too). Uses python3.12
 # when installed (RHEL 9: dnf install python3.12), else python3. Into ~/.claude/devtools-venv,
-# commands linked into ~/.local/bin.
+# commands linked into ~/.local/bin (not when DEVTOOLS_VENV picks another venv).
 set -eu
 HERE=$(cd "$(dirname "$0")" && pwd)
-VENV=$HOME/.claude/devtools-venv
+VENV=${DEVTOOLS_VENV:-$HOME/.claude/devtools-venv}
 BIN=$HOME/.local/bin
 case "$(uname -s)-$(uname -m)" in
   Linux-x86_64) ;;
@@ -21,6 +21,7 @@ PY=$(command -v python3.12 || command -v python3)
 "$VENV/bin/python" -m pip install -q --no-index --find-links "$HERE/wheels" --upgrade pypdf   # add-docs: PDFs
 "$VENV/bin/python" -m pip install -q --no-index --find-links "$HERE/wheels" --upgrade "psycopg[binary]" pymongo \
   || echo "devtools: database drivers not installed for $("$VENV/bin/python" --version) (wheels: Python 3.9 / 3.12)"
+[ -n "${DEVTOOLS_VENV:-}" ] && { echo "devtools: installed in $VENV"; exit 0; }
 mkdir -p "$BIN"
 ln -sf "$VENV/bin/ruff" "$BIN/ruff"
 ln -sf "$VENV/bin/basedpyright" "$BIN/basedpyright"

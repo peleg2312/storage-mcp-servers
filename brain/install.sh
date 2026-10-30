@@ -92,6 +92,11 @@ if [ "$NO_LIBRARY" = 0 ] && [ -f "$LIB/VERSION" ] && ls "$LIB"/docs-library-*.pa
   fi
 fi
 [ -f "$LIBDST/docs.db" ] && HAVE_LIB=1
+# run this repo's server code over the library without repacking its parts
+if [ -d "$LIBDST" ]; then
+  cp "$HERE/../docs-search-mcp/search_cli.py" "$LIBDST/search.py"
+  cp "$HERE/../docs-search-mcp/mcp_stdio.py" "$HERE/../docs-search-mcp/docs_text.py" "$LIBDST/"
+fi
 if [ "$HAVE_LIB" = 1 ]; then
   echo "library $(cat "$LIBDST/VERSION" 2>/dev/null || echo '?'): python3 $LIBDST/search.py sources"
 fi

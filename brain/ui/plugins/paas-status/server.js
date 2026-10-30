@@ -111,7 +111,7 @@ function addLine(rows, line, file) {   // message id -> row (streamed messages r
   const c5m = (u.cache_creation_input_tokens ?? 0) - c1h;
   const [pin, pout, pread] = price(m.model);
   rows.set(m.id || `${d.uuid}`, {
-    day: (d.timestamp || '').slice(0, 10), model: m.model, project: d.cwd || path.basename(path.dirname(file)),
+    id: m.id || d.uuid, day: (d.timestamp || '').slice(0, 10), model: m.model, project: d.cwd || path.basename(path.dirname(file)),
     session: d.sessionId, input: u.input_tokens ?? 0, output: u.output_tokens ?? 0,
     cacheRead: u.cache_read_input_tokens ?? 0, cacheWrite: u.cache_creation_input_tokens ?? 0,
     cost: ((u.input_tokens ?? 0) * pin + (u.output_tokens ?? 0) * pout + (u.cache_read_input_tokens ?? 0) * pread
@@ -139,8 +139,11 @@ function summary(days) {
   };
   const byDay = new Map(), byModel = new Map(), byProject = new Map(), bySession = new Map();
   const total = { input: 0, output: 0, cacheRead: 0, cacheWrite: 0, cost: 0, messages: 0 };
+  const seen = new Set();   // one API response is logged once per content block and can appear in several files
   for (const f of files(ROOT)) {
     for (const r of rowsOf(f)) {
+      if (seen.has(r.id)) continue;
+      seen.add(r.id);
       if (r.day < since) continue;
       for (const k of ['input', 'output', 'cacheRead', 'cacheWrite', 'cost']) total[k] += r[k];
       total.messages += 1;

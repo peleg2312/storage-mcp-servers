@@ -56,7 +56,7 @@ Data from saved MCP output only (rule 3); numbers as numbers (not text), dates a
 `python3 ~/.claude/tools/report.py --send <file>`.
 
 ## 4. Answer
-Answer first; then each text chart in a code block exactly as printed, min / avg / max (time of max) / last, what
+Answer first; then paste the sparkline lines (one per series) in one code block, do not re-draw charts; min / avg / max (time of max) / last, what
 it shows (peaks, daily pattern, trend toward a limit); the files as Markdown links to their full paths (web UI:
-Download button); the final "to the PC" line of report.py in its own code block. Name source, object, step and
+Download button); the "to the PC" line in its own code block only if report.py printed it. Name source, object, step and
 gaps. First run for a user: point to the setup comment at the top of `~/.claude/tools/get-reports.ps1`.
