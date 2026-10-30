@@ -152,76 +152,94 @@ function busy(button, label) {
 // Users tab (root only): the people on this VM, add / password / lock / remove (data: server.js -> paas-user).
 
 const CSS = `
-.us{font:14px/1.5 Inter,ui-sans-serif,system-ui,sans-serif;color:hsl(var(--foreground));padding:28px;max-width:1000px;margin:0 auto}
-.us h2{font-size:22px;font-weight:700;margin:0}.us .sub{color:hsl(var(--muted-foreground));font-size:13px}
-.us .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center;justify-content:space-between}
-.us .card{border:1px solid hsl(var(--border));background:hsl(var(--card));border-radius:14px;padding:6px 18px;margin-top:18px}
-.us table{width:100%;border-collapse:collapse;font-size:13.5px}.us td,.us th{padding:10px 6px;text-align:left;border-bottom:1px solid hsl(var(--border)/.6)}
-.us tr:last-child td{border-bottom:0}.us th{color:hsl(var(--muted-foreground));font-weight:500;font-size:12px}
-.us .pill{display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:600;border-radius:999px;padding:1px 9px}
-.us .pill::before{content:'';width:7px;height:7px;border-radius:50%;background:currentColor}
-.us .ok{color:#16a34a;background:rgba(22,163,74,.12)}.us .off{color:#6b7280;background:rgba(107,114,128,.14)}.us .bad{color:#dc2626;background:rgba(220,38,38,.13)}
-.us .go{border:0;border-radius:999px;padding:7px 18px;font:600 13px/1.4 inherit;cursor:pointer;color:#0b0d1a;background:linear-gradient(90deg,#a78bfa,#60a5fa,#22d3ee)}
-.us .ghost{border:1px solid hsl(var(--border));background:none;color:inherit;border-radius:999px;padding:4px 12px;font:500 12px/1.4 inherit;cursor:pointer;margin:2px}
-.us .ghost.danger{color:hsl(var(--destructive))}
-.us .form{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;padding:14px 0}
-.us label{font-weight:600;font-size:13px}.us input{display:block;width:100%;box-sizing:border-box;margin-top:4px;background:hsl(var(--background));border:1px solid hsl(var(--border));border-radius:10px;padding:8px 12px;color:inherit;font:inherit;font-weight:400}
-@media (max-width:640px){.us{padding:16px}}`;
+.paas .us-form{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:0 12px;padding:14px 0}
+.paas .us-form .field{margin:0 0 8px}
+.paas .us-acts{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
+.paas .us-acts .danger{margin-left:8px}
+.paas .us-legend{padding:10px 0 4px}
+.paas .us-show{display:flex;align-items:center;gap:8px;font-size:13px;margin-bottom:8px}`;
+
+const NAME_RULE = 'Lower-case letters, digits, . _ - ; up to 32, starting with a letter or _';
+const STATE = { Locked: ['fail', 'Cannot sign in'], Active: ['ok', 'Their chat is running now'], Idle: ['warn', 'Idle; starts at their next sign-in'] };
 
 export function mount(container, api) {
-  container.innerHTML = `<style>${CSS}</style><div class="us"><div class="row"><div><h2>Users</h2>
-    <div class="sub">Each person signs in with their own VM account and gets their own chats, files, notes and marketplace items. You (root) can see everything.</div></div>
-    <button class="go add">+ Add person</button></div><div class="form-slot"></div><div class="card"><div class="list sub" style="padding:14px 0">Loading…</div></div></div>`;
+  container.innerHTML = `<style>${PAAS_CSS}${CSS}</style><div class="paas">${header('Users', 'Each person signs in with their own VM account and gets their own chats, files, notes and marketplace items. You (root) can see everything.')}
+    <div class="form-slot"></div><div class="card"><div class="list"><div class="sub" style="padding:14px 0">Loading…</div></div></div></div>`;
+  const head = container.querySelector('.head');
+  const addBtn = el('<button class="btn add">' + icon('edit') + ' Add person</button>');
+  head.appendChild(addBtn);
   const list = container.querySelector('.list');
   const slot = container.querySelector('.form-slot');
+  const status = statusLine(container.querySelector('.paas'));
+  const say = (t) => status.say(t);
 
   async function load() {
     const r = await api.rpc('GET', 'list').catch((e) => ({ out: String(e.message || e) }));
-    if (!r.ok) { list.textContent = r.out; return; }
-    list.className = 'list';
-    list.innerHTML = `<table><tr><th>Name</th><th>Home</th><th>Status</th><th></th></tr>${r.users.map((u) => `<tr data-n="${esc(u.name)}">
-      <td><b>${esc(u.name)}</b></td><td class="sub">${esc(u.home)}</td>
-      <td>${u.locked ? '<span class="pill bad">Locked</span>' : u.running ? '<span class="pill ok">Active</span>' : '<span class="pill off">Stopped</span>'}</td>
-      <td style="text-align:right">${u.name === 'root' ? '' : `<button class="ghost" data-a="passwd">Password</button>
-        <button class="ghost" data-a="${u.locked ? 'unlock' : 'lock'}">${u.locked ? 'Unlock' : 'Lock'}</button>
-        <button class="ghost danger" data-a="remove">Remove</button>`}</td></tr>`).join('')}</table>`;
+    if (!r.ok) { list.replaceChildren(errorBlock(r.out, load)); return; }
+    const rows = r.users.map((u) => {
+      const [cls, tip] = STATE[u.locked ? 'Locked' : u.running ? 'Active' : 'Idle'];
+      const label = u.locked ? 'Locked' : u.running ? 'Active' : 'Idle';
+      return `<tr data-n="${esc(u.name)}"><td><b>${esc(u.name)}</b></td><td class="sub">${esc(u.home)}</td>
+      <td><span class="pill ${cls}" title="${esc(tip)}">${label}</span></td>
+      <td>${u.name === 'root' ? '' : `<div class="us-acts"><button class="btn ghost sm" data-a="passwd">Password</button>
+        <button class="btn ghost sm" data-a="${u.locked ? 'unlock' : 'lock'}">${u.locked ? 'Unlock' : 'Lock'}</button>
+        <button class="btn danger sm" data-a="remove">Remove</button></div>`}</td></tr>`;
+    }).join('');
+    list.innerHTML = `<div class="table-wrap"><table><thead><tr><th>Name</th><th>Home folder</th><th>Status</th><th><span class="sr">Actions</span></th></tr></thead><tbody>${rows}</tbody></table></div>
+      <div class="sub us-legend">Active = chat running now. Idle = starts at next sign-in. Locked = cannot sign in.</div>`;
+    if (r.users.length <= 1) list.appendChild(el('<div class="sub" style="padding:8px 0">Nobody else yet. Add a person so they can sign in with their own chats and files.</div>'));
     list.querySelectorAll('[data-a]').forEach((b) => b.addEventListener('click', () => act(b.closest('tr').dataset.n, b.dataset.a, b)));
   }
 
-  function passwordForm(title, name, onSave) {
-    slot.innerHTML = `<div class="card"><div class="row" style="padding-top:12px"><b>${esc(title)}</b></div><div class="form">
-      <label>Name<input class="f-n" value="${esc(name || '')}" ${name ? 'readonly' : 'placeholder="dana"'} autocomplete="off"></label>
-      <label>Password<input class="f-p" type="password" autocomplete="new-password"></label>
-      <label>Again<input class="f-p2" type="password" autocomplete="new-password"></label></div>
-      <div class="row" style="padding-bottom:14px;justify-content:flex-start"><button class="go f-s">Save</button><button class="ghost f-c">Cancel</button><span class="sub f-st"></span></div></div>`;
-    slot.querySelector('.f-c').addEventListener('click', () => { slot.innerHTML = ''; });
-    slot.querySelector('.f-s').addEventListener('click', async (e) => {
-      const n = slot.querySelector('.f-n').value.trim();
-      const p = slot.querySelector('.f-p').value;
-      if (p !== slot.querySelector('.f-p2').value) { slot.querySelector('.f-st').textContent = 'The two passwords differ'; return; }
-      e.target.disabled = true;
-      const r = await onSave(n, p).catch((x) => ({ out: String(x.message || x) }));
-      e.target.disabled = false;
-      if (!r.ok) { slot.querySelector('.f-st').textContent = r.out; return; }
+  function passwordForm(title, name) {
+    const adding = !name;
+    slot.innerHTML = `<form class="card" novalidate><h3 style="margin:12px 0 0">${esc(title)}</h3><div class="us-form">
+      <div class="field"><label for="f-n">Name</label><input id="f-n" class="f-n" value="${esc(name || '')}" ${adding ? '' : 'readonly'} autocomplete="off">${adding ? `<span class="hint">${NAME_RULE}</span>` : ''}</div>
+      <div class="field"><label for="f-p">Password</label><input id="f-p" class="f-p" type="password" autocomplete="new-password"><span class="hint">At least 8 characters, no colons</span></div>
+      <div class="field"><label for="f-p2">Password again</label><input id="f-p2" class="f-p2" type="password" autocomplete="new-password"></div></div>
+      <label class="us-show"><input type="checkbox" class="f-show"> Show passwords</label>
+      <div class="row" style="padding-bottom:14px;justify-content:flex-start"><button type="submit" class="btn f-s">Save</button><button type="button" class="btn ghost f-c">Cancel</button><span class="sub f-st" role="alert" style="color:hsl(var(--destructive))"></span></div></form>`;
+    const q = (s) => slot.querySelector(s);
+    const err = (t) => { q('.f-st').textContent = t; };
+    q('.f-c').addEventListener('click', () => { slot.innerHTML = ''; addBtn.focus(); });
+    q('.f-show').addEventListener('change', (e) => { q('.f-p').type = q('.f-p2').type = e.target.checked ? 'text' : 'password'; });
+    q('form').addEventListener('input', () => err(''));
+    q('form').addEventListener('submit', async (ev) => {
+      ev.preventDefault();
+      const n = q('.f-n').value.trim();
+      const p = q('.f-p').value;
+      if (adding && !n) return err('Enter a name');
+      if (adding && !/^[a-z_][a-z0-9_.-]{0,31}$/.test(n)) return err(`Name: ${NAME_RULE}`);
+      if (p.length < 8 || /[\r\n:]/.test(p)) return err('Password: at least 8 characters, no colons');
+      if (p !== q('.f-p2').value) return err('The two passwords differ');
+      const restore = busy(q('.f-s'), 'Saving…');
+      const r = await api.rpc('POST', adding ? 'add' : 'passwd', { name: n, password: p }).catch((x) => ({ out: String(x.message || x) }));
+      restore();
+      if (!r.ok) return err(r.out);
       slot.innerHTML = '';
+      say(adding ? `Added ${n}` : `Password changed for ${n}`);
       load();
     });
+    q(adding ? '.f-n' : '.f-p').focus();
   }
 
   async function act(n, a, btn) {
-    if (a === 'passwd') return passwordForm(`New password for ${n}`, n, (name, password) => api.rpc('POST', 'passwd', { name, password }));
+    say('');
+    if (a === 'passwd') return passwordForm(`New password for ${n}`, n);
     let deleteHome = false;
     if (a === 'remove') {
-      if (!window.confirm(`Remove ${n}? Their account and web UI are removed.`)) return;
-      deleteHome = window.confirm(`Also delete ${n}'s home folder (chats, files, notes)? Cancel keeps it.`);
+      const c = await confirmInline(btn, { title: `Remove ${n}?`, text: 'Their account and web UI are removed.', confirmLabel: 'Remove person', danger: true, checkbox: 'Also permanently delete their home folder (chats, files, notes). Cannot be undone.' });
+      if (!c.ok) return;
+      deleteHome = c.checked;
     }
-    btn.disabled = true;
+    const restore = busy(btn, a === 'remove' ? 'Removing…' : 'Working…');
     const r = await api.rpc('POST', a, { name: n, deleteHome }).catch((x) => ({ out: String(x.message || x) }));
-    if (!r.ok) window.alert(r.out);
+    restore();
+    if (r.ok) say(`${n} ${{ lock: 'locked', unlock: 'unlocked', remove: 'removed' }[a]}`); else status.error(r.out);
     load();
   }
 
-  container.querySelector('.add').addEventListener('click', () => passwordForm('Add a person', '', (name, password) => api.rpc('POST', 'add', { name, password })));
+  addBtn.addEventListener('click', () => passwordForm('Add a person', ''));
   load();
 }
 
