@@ -1,6 +1,7 @@
 ---
 name: brain-health
 description: Self-check of the storage brain installation on this VM - which MCP servers answer, docs MCP list_sources versus MANIFEST.md, library version, read-only hook and session-start hook present in settings.json, environment.md and tool-map.md filled, notes.md present, skills and agents installed - as a table with what to fix. Use for "is the brain healthy", after install.sh or git pull, when a tool is missing or an answer looks stale, or when the docs MCP does not respond.
+when_to_use: Trigger phrases - "is the brain healthy", "/brain-health", "the docs MCP does not answer", "check the brain installation", "why does the read-only hook not run"
 disable-model-invocation: true
 ---
 # Brain health
