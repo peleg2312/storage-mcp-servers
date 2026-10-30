@@ -14,6 +14,7 @@ import re
 import statistics
 import threading
 import time
+from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timezone
 from urllib.parse import quote
 
@@ -51,9 +52,9 @@ def check_read_only(method: str, url: str) -> None:
 
 
 class ReadOnlySession(requests.Session):
-    def request(self, method, url, *args, **kwargs):
-        check_read_only(method, url)
-        return super().request(method, url, *args, **kwargs)
+    def send(self, request, **kw):  # every path (request(), prepared requests) ends here
+        check_read_only(request.method, request.url)
+        return super().send(request, **kw)
 
 
 class Unisphere:
@@ -77,7 +78,7 @@ class Unisphere:
 
     # -- low level --
     def _do(self, method, path, params=None, body=None):
-        r = self.s.request(method, self.base + path, params=params, json=body, timeout=self.timeout)
+        r = self.s.request(method, self.base + path, params=params, json=body, timeout=(min(10, self.timeout), self.timeout))
         if r.status_code == 404:
             raise LookupError(f"Not found: {path}")
         if r.status_code in (401, 403):
@@ -113,17 +114,19 @@ class Unisphere:
     def vget(self, path, params=None):
         return self.get(f"/{self.version}{path}", params=params)
 
-    def iterate(self, resp, limit=None):
-        """Return all rows of a paged (iterator) response, up to limit."""
+    def iterate(self, resp, limit=None, tail=False):
+        """Return all rows of a paged (iterator) response, up to limit (the last `limit` if tail)."""
         rows = list(resp.get("resultList", {}).get("result", []))
         count, page = int(resp.get("count") or 0), int(resp.get("maxPageSize") or 0)
         it = resp.get("id")
         start = len(rows) + 1
+        if tail and limit and count > limit:
+            rows, start = [], count - limit + 1  # skip the head; page from the end
         while it and page and start <= count and (limit is None or len(rows) < limit):
             end = min(start + page - 1, count)
             rows += self.get(f"/common/Iterator/{it}/page", {"from": start, "to": end}).get("result", [])
             start = end + 1
-        return rows if limit is None else rows[:limit]
+        return rows if limit is None else rows[-limit:] if tail else rows[:limit]
 
 
 # ---------------------------------------------------------------------------
@@ -223,15 +226,13 @@ class Registry:
 
 
 REG = Registry()
-_PIN: dict = {}  # array -> unisphere name forced by caller
+WORKERS = int(os.getenv("PERF_WORKERS", "8"))
 
 
 def U(a: str = "", unisphere: str = "") -> Unisphere:
     if unisphere:
         return REG.get(unisphere)
     if a:
-        if a in _PIN:
-            return REG.get(_PIN[a])
         return REG.for_array(a)
     return REG.get("")
 
@@ -309,19 +310,18 @@ No tool can change an array: explore freely, never say you changed, fixed, ackno
 
 == WORKFLOWS ==
 "How is the array": list_arrays -> get_array -> get_array_health -> list_srps -> get_alert_summary.
-Alerts: get_alerts (newest first, last 24h); narrow with severity="FATAL,CRITICAL", state="NEW", text=
-  or object_type. Group repeats with counts and first/last time.
+Alerts: get_alerts (newest first, last 24h). Group repeats with counts and first/last time.
 "Who changed what": get_audit_log for <= 24h windows (larger are slow); filter user_name, host_name or
-  message; summarise by user and action, then the notable entries.
+  message (newest records first); summarise by user and action, then the notable entries.
 Host / SAN mapping:
   find_wwpn(wwpn) -> host, masking views, storage groups, port groups, login state.
-  get_masking_view -> array ports + volumes + host LUN ids. get_storage_group -> capacity,
+  get_masking_view -> volumes with host LUN id, array ports, initiators. get_storage_group -> capacity,
   service level, volumes. find_volume_by_wwn maps a host's NAA/WWN back to the array volume.
 Performance:
   1. get_performance_overview first (array KPIs, busiest and slowest storage groups, FE busy).
-  2. get_performance(category + id): Array | StorageGroup (storage_group) | FEDirector, BEDirector,
-     RDFDirector (director) | FEPort (director + port) | Host | Initiator | PortGroup | SRP | RDFS / RDFA
-     (rdf_group) | Volume (volume). list_performance_categories / list_performance_keys show what exists.
+  2. get_performance(category, object_id): Array (no id) | StorageGroup | FEDirector, BEDirector,
+     RDFDirector | FEPort ("FA-1D:4") | Host | Initiator | PortGroup | SRP | RDFS / RDFA | Volume.
+     list_performance_metrics() lists categories; list_performance_keys shows exact ids.
   3. metrics="KPI" (default) to start, "ALL", or names (HostIOs,HostMBs,ResponseTime,ReadResponseTime,
      WriteResponseTime); a wrong name returns the valid ones. Each: avg / max (+ time) / min / last.
   4. data_format="Average" (5-min interval averages, default) or "Maximum" (interval peaks: true spikes);
@@ -360,23 +360,19 @@ mcp = FastMCP("powermax-readonly", instructions=INSTRUCTIONS)
 def test_connection() -> dict:
     """Check every configured Unisphere: reachable, credentials OK, Unisphere and REST API version,
     and which arrays it manages (local or remote/SRDF). Run this first when something fails."""
+    m = REG.array_map(refresh=True)
     out = []
     for name, u in REG.unispheres.items():
+        if name in REG.map_errors:
+            out.append({"unisphere": name, "host": u.host, "ok": False, "error": REG.map_errors[name]})
+            continue
         try:
-            info = u.get("/version")
-            arrays = u.vget("/system/symmetrix").get("symmetrixId", [])
-            out.append({"unisphere": name, "host": u.host, "ok": True, "version": info.get("version"),
-                        "api_version_used": u.version, "arrays": arrays})
+            out.append({"unisphere": name, "host": u.host, "ok": True, "version": u.get("/version").get("version"),
+                        "api_version_used": u.version,
+                        "arrays": sorted(a for a, seen in m.items() if any(x["unisphere"] == name for x in seen))})
         except Exception as e:
             out.append({"unisphere": name, "host": u.host, "ok": False, "error": str(e)})
-    REG.array_map(refresh=True)
     return {"unispheres": out}
-
-
-@mcp.tool(annotations=RO)
-def list_unispheres() -> dict:
-    """List configured Unisphere servers (name and host)."""
-    return {"unispheres": [{"name": n, "host": u.host} for n, u in REG.unispheres.items()]}
 
 
 @mcp.tool(annotations=RO)
@@ -396,9 +392,12 @@ def list_arrays(refresh: bool = False) -> dict:
 
 @mcp.tool(annotations=RO)
 def get_array(array_id: str = "") -> dict:
-    """Array details: model, PowerMaxOS/ucode version, local/remote, capacity and system settings."""
+    """Array details: model, PowerMaxOS/ucode version, local/remote, capacity, device counts (unisphere_get for the rest)."""
     a = sid(array_id)
-    return U(a).vget(f"/system/symmetrix/{a}")
+    d = U(a).vget(f"/system/symmetrix/{a}")
+    return {k: d[k] for k in ("symmetrixId", "model", "ucode", "ucode_date", "display_name", "local", "all_flash",
+            "device_count", "disk_count", "cache_size_mb", "host_visible_device_count", "physicalCapacity",
+            "system_sized_property") if k in d}
 
 
 @mcp.tool(annotations=RO)
@@ -438,12 +437,10 @@ def get_storage_group(storage_group: str, array_id: str = "", include_volumes: b
     if include_volumes:
         resp = u.vget(f"/sloprovisioning/symmetrix/{a}/volume", {"storageGroupId": storage_group})
         vols = [r.get("volumeId") for r in u.iterate(resp, limit=volume_limit)]
-        details = []
-        for v in vols:
-            d = u.vget(f"/sloprovisioning/symmetrix/{a}/volume/{q(v)}")
-            details.append({k: d.get(k) for k in ("volumeId", "volume_identifier", "cap_gb",
-                            "allocated_percent", "wwn", "type", "status", "emulation")})
-        sg["volumes"] = details
+        with ThreadPoolExecutor(max_workers=WORKERS) as ex:
+            ds = list(ex.map(lambda v: u.vget(f"/sloprovisioning/symmetrix/{a}/volume/{q(v)}"), vols))
+        sg["volumes"] = [{k: d.get(k) for k in ("volumeId", "volume_identifier", "cap_gb",
+                          "allocated_percent", "wwn", "type", "status", "emulation")} for d in ds]
         sg["volumes_total"] = int(resp.get("count") or len(vols))
     return sg
 
@@ -467,7 +464,8 @@ def find_volume_by_wwn(wwn: str, array_id: str = "") -> dict:
 
 
 @mcp.tool(annotations=RO)
-def list_hosts(array_id: str = "", name_contains: str = "", include_host_groups: bool = True) -> dict:
+def list_hosts(array_id: str = "", name_contains: str = "", include_host_groups: bool = True,
+               limit: int = 500) -> dict:
     """List hosts (initiator groups) and host groups."""
     a = sid(array_id)
     u = U(a)
@@ -477,7 +475,7 @@ def list_hosts(array_id: str = "", name_contains: str = "", include_host_groups:
         out["host_groups"] = u.vget(f"/sloprovisioning/symmetrix/{a}/hostgroup").get("hostGroupId", [])
     if name_contains:
         out = {k: [n for n in v if name_contains.lower() in n.lower()] for k, v in out.items()}
-    return out
+    return {k: cap(v, limit) for k, v in out.items()}
 
 
 @mcp.tool(annotations=RO)
@@ -496,8 +494,10 @@ def find_wwpn(wwpn: str, array_id: str = "") -> dict:
     w = norm_wwn(wwpn)
     if len(w) != 16:
         raise ValueError("WWPN must have 16 hex digits")
-    ids = u.vget(f"/sloprovisioning/symmetrix/{a}/initiator").get("initiatorId", [])
-    matches = [i for i in ids if w in norm_wwn(i.split(":")[-1])]
+    base = f"/sloprovisioning/symmetrix/{a}/initiator"
+    matches = u.vget(base, {"initiator_hba": w}).get("initiatorId", [])
+    if not matches:  # older Unisphere may ignore/lack the filter: match client-side
+        matches = [i for i in u.vget(base).get("initiatorId", []) if w in norm_wwn(i.split(":")[-1])]
     out = []
     for i in matches:
         d = u.vget(f"/sloprovisioning/symmetrix/{a}/initiator/{q(i)}")
@@ -517,26 +517,41 @@ def find_wwpn(wwpn: str, array_id: str = "") -> dict:
 
 
 @mcp.tool(annotations=RO)
-def list_masking_views(array_id: str = "", name_contains: str = "") -> dict:
+def list_masking_views(array_id: str = "", name_contains: str = "", limit: int = 500) -> dict:
     """List masking view names."""
     a = sid(array_id)
     mvs = U(a).vget(f"/sloprovisioning/symmetrix/{a}/maskingview").get("maskingViewId", [])
-    return {"masking_views": [m for m in mvs if name_contains.lower() in m.lower()]}
+    return cap([m for m in mvs if name_contains.lower() in m.lower()], limit)
 
 
 @mcp.tool(annotations=RO)
 def get_masking_view(masking_view: str, array_id: str = "", include_connections: bool = True,
-                     limit: int = 500) -> dict:
-    """Masking view: host, port group, storage group, and connections (initiator, array port,
-    volume, host LUN id, logged in)."""
+                     limit: int = 100, raw: bool = False) -> dict:
+    """Masking view: host, port group, storage group, and volumes with host LUN id, paths, array ports
+    and initiators (grouped per volume; raw=True returns every initiator x port x volume row)."""
     a = sid(array_id)
     u = U(a)
     mv = u.vget(f"/sloprovisioning/symmetrix/{a}/maskingview/{q(masking_view)}")
     if include_connections:
         c = u.vget(f"/sloprovisioning/symmetrix/{a}/maskingview/{q(masking_view)}/connections")
         conns = c.get("maskingViewConnection", [])
-        mv["connections"] = conns[:limit]
         mv["connections_total"] = len(conns)
+        if raw:
+            mv["connections"] = conns[:limit]
+        else:
+            g = {}
+            for r in conns:
+                v = g.setdefault(r.get("volumeId"), {"volumeId": r.get("volumeId"),
+                                 "host_lun_address": r.get("host_lun_address"), "cap_gb": r.get("cap_gb"),
+                                 "paths": 0, "logged_in_paths": 0, "dir_ports": set(), "initiators": set()})
+                v["paths"] += 1
+                v["logged_in_paths"] += bool(r.get("logged_in"))
+                for k, f in (("dir_ports", "dir_port"), ("initiators", "initiator_id")):
+                    if r.get(f):
+                        v[k].add(r[f])
+            vols = [dict(v, dir_ports=sorted(v["dir_ports"]), initiators=sorted(v["initiators"])) for v in g.values()]
+            mv["volumes_total"] = len(vols)
+            mv["volumes"] = vols[:limit]
     return mv
 
 
@@ -550,7 +565,7 @@ def get_port_group(port_group: str, array_id: str = "") -> dict:
 @mcp.tool(annotations=RO)
 def list_directors(array_id: str = "", include_ports: bool = False) -> dict:
     """List directors (FA front-end, OR/RF replication, DS/DF back-end, EM...) with status;
-    optionally their ports with WWN, speed and status."""
+    optionally their ports with WWN, speed and status (get_port for full port detail)."""
     a = sid(array_id)
     u = U(a)
     base = f"/system/symmetrix/{a}/director"
@@ -559,13 +574,22 @@ def list_directors(array_id: str = "", include_ports: bool = False) -> dict:
     except LookupError:  # older Unisphere: directors under sloprovisioning
         base = f"/sloprovisioning/symmetrix/{a}/director"
         ids = u.vget(base).get("directorId", [])
+    def port(d, k):
+        try:
+            p = u.vget(f"{base}/{q(d)}/port/{q(k['portId'])}")
+            p = p.get("symmetrixPort", p)
+            return {x: y for x, y in p.items() if x not in ("maskingview", "ip_addresses")}
+        except Exception as e:
+            return {"portId": k.get("portId"), "error": str(e)}
+
     out = []
-    for d in ids:
-        info = u.vget(f"{base}/{q(d)}")
-        if include_ports:
-            keys = u.vget(f"{base}/{q(d)}/port").get("symmetrixPortKey", [])
-            info["ports"] = [u.vget(f"{base}/{q(d)}/port/{q(k['portId'])}") for k in keys]
-        out.append(info)
+    with ThreadPoolExecutor(max_workers=WORKERS) as ex:
+        for d in ids:
+            info = u.vget(f"{base}/{q(d)}")
+            if include_ports:
+                keys = u.vget(f"{base}/{q(d)}/port").get("symmetrixPortKey", [])
+                info["ports"] = list(ex.map(lambda k: port(d, k), keys))
+            out.append(info)
     return {"directors": out}
 
 
@@ -639,16 +663,10 @@ def get_alert_summary(unisphere: str = "") -> dict:
 
 @mcp.tool(annotations=RO)
 def get_alerts(array_id: str = "", severity: str = "", state: str = "", since_hours: float = 24,
-               alert_type: str = "", object_type: str = "", text: str = "",
-               include_acknowledged: bool = True, unisphere: str = "", limit: int = 50) -> dict:
-    """Unisphere alerts (array events), newest first, merged across all Unisphere servers.
-
-    array_id: only alerts for that array (asks the Unisphere that manages it).
-    severity: FATAL, CRITICAL, WARNING, MINOR, INFORMATION, NORMAL (comma-separate several).
-    state: NEW, ACKNOWLEDGED, CLEARED. alert_type: ARRAY, PERFORMANCE, SERVER.
-    since_hours: look-back window (0 = no time filter). object_type e.g. Director, Port, SRP.
-    text: match in the alert description. unisphere: limit to one Unisphere by name.
-    """
+               object_type: str = "", text: str = "", unisphere: str = "", limit: int = 50) -> dict:
+    """Alerts, newest first, merged across Unispheres. severity: FATAL,CRITICAL,WARNING,MINOR,
+    INFORMATION (comma list). state: NEW|ACKNOWLEDGED|CLEARED. since_hours=0 disables the time
+    filter. object_type e.g. Director, Port, SRP. text: substring of the description."""
     base = {}
     if array_id:
         a = sid(array_id)
@@ -658,14 +676,10 @@ def get_alerts(array_id: str = "", severity: str = "", state: str = "", since_ho
         unis = [REG.get(unisphere)] if unisphere else list(REG.unispheres.values())
     if state:
         base["state"] = state.upper()
-    if alert_type:
-        base["type"] = alert_type.upper()
     if object_type:
         base["object_type"] = object_type
     if text:
         base["description"] = text
-    if not include_acknowledged:
-        base["acknowledged"] = "false"
     if since_hours and since_hours > 0:
         t = datetime.fromtimestamp(time.time() - since_hours * 3600, timezone.utc)
         base["created_date"] = ">" + t.strftime("%b-%d-%Y %H:%M:%S.000")
@@ -679,25 +693,35 @@ def get_alerts(array_id: str = "", severity: str = "", state: str = "", since_ho
                 p = dict(base, **({"severity": sv} if sv else {}))
                 ids += u.vget("/system/alert", p).get("alertId", [])
             ids = list(dict.fromkeys(ids))
-            ids.sort(key=lambda x: int(x) if str(x).isdigit() else 0, reverse=True)  # ids grow over time
+            ids.sort(key=lambda x: int(x) if str(x).isdigit() else 0, reverse=True)  # ids usually grow over time
             found.append((u, ids))
         except Exception as e:
             errors[u.name] = str(e)
     total = sum(len(ids) for _, ids in found)
-    alerts = []
-    for u, ids in found:
-        for i in ids[:lim]:
+    fetch = max(lim, 200)  # ids may not be numeric: look at more than `lim` before sorting by time
+
+    def detail(ui):
+        u, i = ui
+        try:
             d = u.vget(f"/system/alert/{q(i)}")
-            row = {k: d.get(k) for k in ("alertId", "created_date", "severity", "state", "type",
-                   "array", "object", "object_type", "description", "acknowledged")}
-            row["unisphere"] = u.name
-            row["_ts"] = d.get("created_date_milliseconds") or _alert_ts(d.get("created_date"))
-            alerts.append(row)
+        except Exception as e:
+            log.debug("alert %s: %s", i, e)
+            return None
+        row = {k: d.get(k) for k in ("alertId", "created_date", "severity", "state", "type",
+               "array", "object", "object_type", "description", "acknowledged")}
+        row["unisphere"] = u.name
+        row["_ts"] = d.get("created_date_milliseconds") or _alert_ts(d.get("created_date"))
+        return row
+
+    with ThreadPoolExecutor(max_workers=WORKERS) as ex:
+        alerts = [r for r in ex.map(detail, [(u, i) for u, ids in found for i in ids[:fetch]]) if r]
     alerts.sort(key=lambda x: x["_ts"] or 0, reverse=True)
     alerts = alerts[:lim]
     for r in alerts:
         r["created_utc"] = ms_to_iso(r.pop("_ts")) if r.get("_ts") else None
     out = {"total_matching": total, "returned": len(alerts), "filters": base, "alerts": alerts}
+    if total > len(alerts):
+        out["note"] = f"{total} matched; showing the newest {len(alerts)}"
     if errors:
         out["unreachable_unispheres"] = errors
     return out
@@ -715,24 +739,28 @@ def get_audit_log(array_id: str = "", hours_back: float = 24, start: str = "", e
                   user_name: str = "", host_name: str = "", message: str = "",
                   limit: int = 200) -> dict:
     """Array audit log: configuration changes, logins and API/CLI activity with user, host and
-    application. Window = last hours_back hours, or start/end ISO-8601 (UTC). Keep it <= 24h."""
+    application. Newest `limit` records of the window (hours_back, or start/end ISO-8601 UTC). Keep it <= 24h."""
     a = sid(array_id)
     end_s = parse_time(end) // 1000 if end else int(time.time())
     start_s = parse_time(start) // 1000 if start else int(end_s - hours_back * 3600)
     if end_s - start_s > 7 * 86400:
         raise ValueError("Audit log window is limited to 7 days; narrow the range")
     params = [("entry_date", f">{start_s}"), ("entry_date", f"<{end_s}")]
-    for k, v in (("user_name", user_name), ("host_name", host_name), ("message", message)):
+    for k, v in (("username", user_name), ("hostname", host_name), ("message", message)):
         if v:
             params.append((k, v))
     u = U(a)
     resp = u.vget(f"/system/symmetrix/{a}/audit_log_record", params)
-    rows = u.iterate(resp, limit=max(1, min(int(limit), 5000))) if resp.get("count") else []
+    rows = u.iterate(resp, limit=max(1, min(int(limit), 5000)), tail=True) if resp.get("count") else []
     rows.sort(key=lambda r: r.get("entry_date", 0), reverse=True)
-    for r in rows:
-        if isinstance(r.get("entry_date"), (int, float)):
-            ed = r["entry_date"]
-            r["entry_date_utc"] = ms_to_iso(ed if ed > 1e11 else ed * 1000)
+    keep = ("record_id", "username", "hostname", "application_id", "audit_class", "function_class", "action_code")
+    for i, r in enumerate(rows):
+        o = {k: r[k] for k in keep if r.get(k) is not None}
+        ed = r.get("entry_date")
+        if isinstance(ed, (int, float)):
+            o["entry_date_utc"] = ms_to_iso(ed if ed > 1e11 else ed * 1000)
+        o["message"] = str(r.get("message", ""))[:300]
+        rows[i] = o
     return {"array_id": a, "window_utc": [ms_to_iso(start_s * 1000), ms_to_iso(end_s * 1000)],
             "total": int(resp.get("count") or 0), "returned": len(rows), "records": rows}
 
@@ -743,10 +771,10 @@ def get_audit_log(array_id: str = "", hours_back: float = 24, start: str = "", e
 
 _NEW_KEY_CATEGORIES = {"Volume", "EMDirector", "Endpoint", "SDNASFileSystem", "SDNASInterface",
                        "SDNASNode", "SDNASServer"}
-_ID_FIELDS = {
-    "storage_group": "storageGroupId", "director": "directorId", "port": "portId",
-    "host": "hostId", "initiator": "initiatorId", "port_group": "portGroupId",
-    "srp": "srpId", "rdf_group": "rdfGroupId", "volume": "volumeId",
+_CAT_FIELD = {
+    "StorageGroup": "storageGroupId", "FEDirector": "directorId", "BEDirector": "directorId",
+    "RDFDirector": "directorId", "Host": "hostId", "Initiator": "initiatorId", "PortGroup": "portGroupId",
+    "SRP": "srpId", "RDFS": "rdfGroupId", "RDFA": "rdfGroupId", "Volume": "volumeId",
 }
 
 
@@ -787,25 +815,18 @@ def _summarise(rows, metrics):
 
 
 @mcp.tool(annotations=RO)
-def list_performance_categories(array_id: str = "") -> dict:
-    """Performance categories this array supports (Array, StorageGroup, FEDirector, FEPort, Host,
-    Initiator, PortGroup, SRP, RDFDirector, RDFS, BEDirector, Board, DiskGroup, Volume, ...)."""
+def list_performance_metrics(category: str = "", array_id: str = "", kpi_only: bool = False) -> dict:
+    """Metric names available for a category (kpi_only=True: key indicators). Without category: the
+    performance categories this array supports (Array, StorageGroup, FEDirector, FEPort, Host, ...)."""
     a = sid(array_id)
-    return {"categories": U(a).get(f"/performance/Array/help/{a}/categories").get("categoryName", [])}
-
-
-@mcp.tool(annotations=RO)
-def list_performance_metrics(category: str, array_id: str = "", kpi_only: bool = False) -> dict:
-    """Metric names available for a category. kpi_only=True returns the key performance indicators."""
-    a = sid(array_id)
-    mode = "Kpi" if kpi_only else "All"
-    r = U(a).get(f"/performance/Array/help/{a}/{q(category)}/metrics/{mode}")
-    return {"category": category, "metrics": r.get("metricName", [])}
+    if not category:
+        return {"categories": U(a).get(f"/performance/Array/help/{a}/categories").get("categoryName", [])}
+    return {"category": category, "metrics": sorted(_metric_names(a, category, "Kpi" if kpi_only else "All"))}
 
 
 @mcp.tool(annotations=RO)
 def list_performance_keys(category: str, array_id: str = "", director: str = "",
-                          storage_group: str = "", limit: int = 500) -> dict:
+                          storage_group: str = "", name_contains: str = "", limit: int = 200) -> dict:
     """Object ids that have performance data in a category, with first/last available sample time.
     FEPort/BEPort/RDFPort need director. Use this to get exact ids for get_performance."""
     a = sid(array_id)
@@ -820,39 +841,31 @@ def list_performance_keys(category: str, array_id: str = "", director: str = "",
             body["storageGroupId"] = storage_group
         r = u.perf_post(category, "keys", body)
     items = first_list(r)
+    if name_contains:
+        items = [it for it in items if name_contains.lower() in str(next((v for v in it.values() if isinstance(v, str)), "")).lower()]
     for it in items:
         for k in ("firstAvailableDate", "lastAvailableDate"):
             if k in it:
-                it[k + "_utc"] = ms_to_iso(it[k])
+                it[k] = ms_to_iso(it[k])
     return cap(items, limit)
 
 
 @mcp.tool(annotations=RO)
-def get_performance(category: str, array_id: str = "", storage_group: str = "", director: str = "",
-                    port: str = "", host: str = "", initiator: str = "", port_group: str = "",
-                    srp: str = "", rdf_group: str = "", volume: str = "", metrics: str = "KPI",
+def get_performance(category: str, array_id: str = "", object_id: str = "", metrics: str = "KPI",
                     minutes_back: int = 60, start: str = "", end: str = "",
                     data_format: str = "Average", raw: bool = False, max_points: int = 60) -> dict:
-    """Performance statistics for any category/object.
-
-    category: e.g. Array, StorageGroup, FEDirector, FEPort, Host, Initiator, PortGroup, SRP,
-              RDFDirector, RDFS, BEDirector, Volume.
-    Object id params by category: StorageGroup->storage_group, FEDirector/RDFDirector/BEDirector->director,
-              FEPort->director+port, Host->host, Initiator->initiator, PortGroup->port_group,
-              SRP->srp, RDFS/RDFA->rdf_group, Volume->volume. Array needs none.
-    metrics: "KPI" (default), "ALL", or comma-separated names (e.g. "HostIOs,ResponseTime,HostMBs").
-    Window: last minutes_back minutes up to the newest sample, or start/end ISO-8601 UTC.
-    data_format: Average or Maximum. Returns per-metric avg/max/min/last; raw=True adds the series
-    (downsampled to max_points).
-    """
+    """Performance statistics. category: Array (no object_id), StorageGroup, FEDirector, BEDirector,
+    RDFDirector, FEPort/BEPort/RDFPort (object_id "FA-1D:4"), Host, Initiator, PortGroup, SRP,
+    RDFS/RDFA (rdf group number), Volume. object_id: that object's id (exact: list_performance_keys).
+    metrics: KPI, ALL or comma list. Window: minutes_back to the newest sample, or start/end ISO UTC.
+    data_format Average|Maximum. Returns avg/max/min/last per metric; raw=True adds the series."""
     a = sid(array_id)
     u = U(a)
     if data_format.capitalize() not in ("Average", "Maximum"):
         raise ValueError("data_format must be Average or Maximum")
     mup = metrics.strip().upper()
     if mup in ("KPI", "ALL"):
-        mode = "Kpi" if mup == "KPI" else "All"
-        mlist = u.get(f"/performance/Array/help/{a}/{q(category)}/metrics/{mode}").get("metricName", [])
+        mlist = list(_metric_names(a, category, "Kpi" if mup == "KPI" else "All"))
     else:
         mlist = [m.strip() for m in metrics.split(",") if m.strip()]
         avail = _available_metrics(a, category)
@@ -865,17 +878,24 @@ def get_performance(category: str, array_id: str = "", storage_group: str = "", 
     s, e = _window(a, minutes_back, start, end)
     body = {"startDate": s, "endDate": e, "dataFormat": data_format.capitalize(), "metrics": mlist,
             _array_key(category): a}
-    ids = {"storage_group": storage_group, "director": director.upper(), "port": port, "host": host,
-           "initiator": initiator, "port_group": port_group, "srp": srp, "rdf_group": rdf_group,
-           "volume": volume.upper()}
-    for k, v in ids.items():
-        if v:
-            body[_ID_FIELDS[k]] = v
+    ids = {}
+    if object_id:
+        if category in ("FEPort", "BEPort", "RDFPort"):
+            if ":" not in object_id:
+                raise ValueError(f'{category} object_id must be "director:port", e.g. "FA-1D:4"')
+            d, p = object_id.rsplit(":", 1)
+            ids = {"directorId": d.upper(), "portId": p}
+        elif category in _CAT_FIELD:
+            f = _CAT_FIELD[category]
+            ids = {f: object_id.upper() if f in ("directorId", "volumeId") else object_id}
+        else:
+            raise ValueError(f"object_id is not used for category {category}")
+        body.update(ids)
     resp = u.perf_post(category, "metrics", body)
     rows = u.iterate(resp) if resp.get("resultList") else first_list(resp)
     rows.sort(key=lambda r: r.get("timestamp", 0))
     out = {"array_id": a, "category": category,
-           "object": {k: v for k, v in ids.items() if v},
+           "object": ids,
            "window_utc": [ms_to_iso(s), ms_to_iso(e)], "data_format": data_format.capitalize(),
            "samples": len(rows), "summary": _summarise(rows, mlist)}
     if not rows:
@@ -889,12 +909,16 @@ def get_performance(category: str, array_id: str = "", storage_group: str = "", 
 _METRIC_CACHE: dict = {}
 
 
-def _available_metrics(a, category):
-    key = (a, category)
+def _metric_names(a, category, mode):
+    key = (a, category, mode)
     if key not in _METRIC_CACHE:
-        _METRIC_CACHE[key] = set(U(a).get(
-            f"/performance/Array/help/{a}/{q(category)}/metrics/All").get("metricName", []))
+        _METRIC_CACHE[key] = tuple(U(a).get(
+            f"/performance/Array/help/{a}/{q(category)}/metrics/{mode}").get("metricName", []))
     return _METRIC_CACHE[key]
+
+
+def _available_metrics(a, category):
+    return set(_metric_names(a, category, "All"))
 
 
 def _pick(a, category, wanted):
@@ -907,8 +931,6 @@ def get_performance_overview(array_id: str = "", minutes_back: int = 60, top_n: 
                              max_storage_groups: int = 300) -> dict:
     """Array-wide performance snapshot: array KPIs, the busiest storage groups (IOPS, MB/s), storage
     groups with the worst response time, and front-end director busy %. Start performance work here."""
-    from concurrent.futures import ThreadPoolExecutor
-
     a = sid(array_id)
     u = U(a)
     s, e = _window(a, minutes_back, "", "")
@@ -921,7 +943,7 @@ def get_performance_overview(array_id: str = "", minutes_back: int = 60, top_n: 
         return _summarise(rows, metrics)
 
     out = {"array_id": a, "window_utc": [ms_to_iso(s), ms_to_iso(e)]}
-    arr_m = u.get(f"/performance/Array/help/{a}/Array/metrics/Kpi").get("metricName", []) or \
+    arr_m = list(_metric_names(a, "Array", "Kpi")) or \
         _pick(a, "Array", ["HostIOs", "HostMBs", "HostReads", "HostWrites", "PercentCacheWP",
                             "ReadResponseTime", "WriteResponseTime"])
     out["array"] = stats("Array", {}, arr_m)
@@ -941,7 +963,7 @@ def get_performance_overview(array_id: str = "", minutes_back: int = 60, top_n: 
         row["ResponseTime_max"] = sm.get("ResponseTime", {}).get("max")
         return row
 
-    with ThreadPoolExecutor(max_workers=int(os.getenv("PERF_WORKERS", "8"))) as ex:
+    with ThreadPoolExecutor(max_workers=WORKERS) as ex:
         sg_rows = [r for r in ex.map(sg_row, sgs[:limit_sg]) if r]
     n = max(1, min(int(top_n), 50))
     out["top_storage_groups_by_iops"] = sorted(sg_rows, key=lambda r: r.get("HostIOs") or 0, reverse=True)[:n]
@@ -965,7 +987,7 @@ def get_performance_overview(array_id: str = "", minutes_back: int = 60, top_n: 
         return row
 
     dirs = [k.get("directorId") for k in first_list(u.perf_post("FEDirector", "keys", {"symmetrixId": a}))]
-    with ThreadPoolExecutor(max_workers=int(os.getenv("PERF_WORKERS", "8"))) as ex:
+    with ThreadPoolExecutor(max_workers=WORKERS) as ex:
         fe = [r for r in ex.map(fe_row, dirs) if r]
     out["fe_directors"] = sorted(fe, key=lambda r: r.get("PercentBusy") or 0, reverse=True)
     return out

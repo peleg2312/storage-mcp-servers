@@ -93,4 +93,4 @@ def run(mcp) -> None:
     log.info("MCP endpoint http://%s:%s/mcp (auth: %s)", host, port,
              f"{len(tokens)} bearer token(s)" if tokens else "DISABLED")
     uvicorn.run(app, host=host, port=port, log_level=os.getenv("LOG_LEVEL", "info").lower(),
-                proxy_headers=True, forwarded_allow_ips="*")
+                proxy_headers=True, forwarded_allow_ips=os.getenv("FORWARDED_ALLOW_IPS", "127.0.0.1"))
