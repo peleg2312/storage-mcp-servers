@@ -49,7 +49,7 @@ def hook(groups, script, timeout, matcher=None):
     groups.append({"matcher": matcher, **e} if matcher else e)
 
 
-hook(pre, "block-write-tools.py", 5, "mcp__.*|Bash")
+hook(pre, "block-write-tools.py", 10, "mcp__.*|Bash")   # a timed-out hook lets the call through: keep slack
 hook(post, "docs-hints.py", 5, "mcp__.*")                # meaning of EMS / alerts / codes seen in live results
 hook(post, "py-lint.py", 5, "Edit|Write|MultiEdit")      # ruff findings on every .py file Claude edits
 hook(ups, "docs-leads.py", 5)                            # library leads for each request (silent when unrelated)
