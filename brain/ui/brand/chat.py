@@ -410,3 +410,25 @@ edit("src/modules/chat/tools/ContentRenderers/TextContent.tsx",
       "      </div>\n"
       "    );\n"
       "  }\n"))
+
+# --- "Report ready": card under a finished reply that names a file, a notification when the tab is hidden, a 'new' dot
+# on the Reports tab, and the notification switch in quick settings (overlay paasReportReady.ts)
+edit("src/modules/chat/transcript/MessageComponent.tsx",
+     ("import { MemoryCitations } from '@/modules/chat/transcript/MemoryCitations';\n",
+      "import { MemoryCitations } from '@/modules/chat/transcript/MemoryCitations';\n"
+      "import { PaasReportReady } from '@/modules/chat/transcript/paasReportReady';\n"),
+     ("            {/* Outside the branches on purpose: a provider can cite memory on a\n",
+      "            {message.type === 'assistant' && !message.isToolUse && !message.isThinking && !isExporting && (\n"
+      "              <PaasReportReady content={formattedMessageContent} isStreaming={Boolean(message.isStreaming)} />\n"
+      "            )}\n\n"
+      "            {/* Outside the branches on purpose: a provider can cite memory on a\n"))
+edit("src/modules/project-workspace/WorkspaceTabs.tsx",
+     ("import { usePlugins,PluginIcon } from '@/modules/plugins';\n",
+      "import { usePlugins,PluginIcon } from '@/modules/plugins';\nimport { PaasNewDot } from '@/modules/chat/transcript/paasReportReady';\n"),
+     ("                  {displayLabel}\n                </span>\n              </Pill>",
+      "                  {displayLabel}\n                </span>\n                <PaasNewDot tabId={tab.id} active={isActive} />\n              </Pill>"))
+edit("src/modules/quick-settings-panel/QuickSettingsContent.tsx",
+     ("import QuickSettingsSection from '@/modules/quick-settings-panel/QuickSettingsSection';\n",
+      "import QuickSettingsSection from '@/modules/quick-settings-panel/QuickSettingsSection';\nimport { PaasNotifySwitch } from '@/modules/chat/transcript/paasReportReady';\n"),
+     ("      <QuickSettingsSection title={t('quickSettings.sections.inputSettings')}>\n",
+      "      <PaasNotifySwitch />\n\n      <QuickSettingsSection title={t('quickSettings.sections.inputSettings')}>\n"))
