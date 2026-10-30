@@ -8,6 +8,7 @@ results as the docs-search MCP server (search_docs / read_chunk / read_document 
     python3 search_cli.py read-chunk 12345 [--context 1]
     python3 search_cli.py read-doc --path netapp/ontap/san-admin/map-lun-task.adoc [--start 0] [--max 15]
     python3 search_cli.py read-doc --url https://docs.netapp.com/us-en/ontap/san-admin/map-lun-task.html
+    python3 search_cli.py explain-code wafl.vol.full        (EMS event, SYMAPI_AEVENT2_*, SIO.., CONTAP-*, DSA-*, KB 000xxxxxx)
     python3 search_cli.py sources
     python3 search_cli.py search "..." --json          (machine-readable output)
 
@@ -15,6 +16,8 @@ Index file: --db, else $INDEX_DB, else docs.db next to this script, else ~/.clau
 """
 
 import argparse
+import collections
+import copy
 import functools
 import json
 import os
@@ -40,12 +43,15 @@ class _Conn(sqlite3.Connection):
     def __init__(self, *a, **k):
         super().__init__(*a, **k)
         self.df = {}
+        self.lru = collections.OrderedDict()      # last LRU_SIZE search_docs answers
 
 
 def connect(path, shared=False):
     """Read-only connection; shared=True for a connection used from several threads (server.py)."""
     c = sqlite3.connect(Path(path).resolve().as_uri() + "?mode=ro", uri=True, check_same_thread=not shared, factory=_Conn)
     c.row_factory = sqlite3.Row
+    c.execute("PRAGMA mmap_size=268435456")       # the index is read-only: map it, fewer syscalls
+    c.execute("PRAGMA cache_size=-65536")         # 64 MB of pages
     return c
 
 
@@ -182,7 +188,28 @@ def _idf(c, group):
     return math.log((n - df + 0.5) / (df + 0.5) + 1)
 
 
+LRU_SIZE = 64
+
+
 def search_docs(c, q, vendor="", product="", limit=8):
+    """_search_docs with a per-connection LRU of the last LRU_SIZE answers (a copy: callers edit the result)."""
+    lru = getattr(c, "lru", None)
+    if lru is None:
+        return _search_docs(c, q, vendor, product, limit)
+    key = (q, vendor, product, limit)
+    try:
+        lru.move_to_end(key)
+        return copy.deepcopy(lru[key])
+    except KeyError:
+        pass
+    out = _search_docs(c, q, vendor, product, limit)
+    lru[key] = copy.deepcopy(out)
+    if len(lru) > LRU_SIZE:
+        lru.popitem(last=False)
+    return out
+
+
+def _search_docs(c, q, vendor="", product="", limit=8):
     """The search_docs tool. Candidates: chunks containing the quoted phrases and any query word (or a
     synonym); ranking: BM25 (title incl. folder context x6, section x3, text x1) x the squared share of
     query words the chunk covers (all-word matches lead, a strong near-miss still shows) x (1 + 1.5 x share of
@@ -340,6 +367,188 @@ def for_agent(out):
     return out
 
 
+MAX_QUERIES = 5
+
+
+def query_list(query="", queries=None):
+    """The queries to run: the `queries` list when given (it wins), else the single query."""
+    qs = [q.strip() for q in (queries or []) if isinstance(q, str) and q.strip()][:MAX_QUERIES]
+    return qs or [query]
+
+
+def merge_queries(outs, limit=8):
+    """Answers of several queries [(query, search_docs answer)] as one: best score per chunk, at most two chunks per
+    document, best first; partial / unmatched stay per query (by_query: hits = results this query contributed)."""
+    best = {}
+    for q, out in outs:
+        for r in out["results"]:
+            r["_q"] = q
+            if r["chunk_id"] not in best or r["score"] > best[r["chunk_id"]]["score"]:
+                best[r["chunk_id"]] = r
+    rows, per_doc = [], {}
+    for r in sorted(best.values(), key=lambda r: -r["score"]):
+        d = r["path"]
+        if per_doc.get(d, 0) < 2:
+            per_doc[d] = per_doc.get(d, 0) + 1
+            rows.append(r)
+    rows = rows[:max(1, min(int(limit), 50))]
+    by_q = []
+    for q, out in outs:
+        e = {"q": q, "hits": sum(r["_q"] == q for r in rows)}
+        if out.get("match_mode", "all words") != "all words":
+            e["partial"] = True
+        if out.get("unmatched"):
+            e["unmatched"] = out["unmatched"]
+        by_q.append(e)
+    for r in rows:
+        r.pop("_q")
+    facet = {}
+    for _, out in outs:
+        for k, v in out.get("by_product", {}).items():
+            facet[k] = facet.get(k, 0) + v
+    mode = "all words" if any(o.get("match_mode") == "all words" for _, o in outs) else "partial"
+    res = {"match_mode": mode, "results": rows, "by_query": by_q}
+    if len(facet) > 1 and max(facet.values()) < 0.9 * sum(facet.values()):
+        res["by_product"] = dict(sorted(facet.items(), key=lambda kv: -kv[1])[:6])
+    return res
+
+
+def finish_search(out, read_top, fetch):
+    """The answer an agent reads: the full text of the best read_top hits (fetch(chunk_id) -> text; no snippet
+    then) and the lean for_agent shape."""
+    for r in out["results"][:max(0, min(int(read_top or 0), 3))]:
+        r["text"] = fetch(r["chunk_id"])
+        r.pop("snippet", None)
+    return for_agent(out)
+
+
+def search(c, query="", vendor="", product="", limit=8, read_top=0, queries=None):
+    """The search_docs tool on one index: one query or a list, optional inline text of the best hits."""
+    qs = query_list(query, queries)
+    outs = [(q, search_docs(c, q, vendor, product, limit)) for q in qs]
+    out = outs[0][1] if len(outs) == 1 else merge_queries(outs, limit)
+    return finish_search(out, read_top, lambda cid: read_chunk(c, cid, 0)["sections"][0]["text"])
+
+
+# Identifiers the library documents (shared with the docs-hints hook).
+CODE_RX = {"powermax-alert": re.compile(r"\bSYMAPI_AEVENT2_UID_[A-Z0-9_]{4,}\b"),
+           "powerflex-dialhome": re.compile(r"\bSIO\d{2}\.\d{2}\.\d{7}\b"),
+           "ontap-bug": re.compile(r"\bCONTAP-\d{5,7}\b"),
+           "dell-advisory": re.compile(r"\bDSA-\d{4}-\d{2,4}\b")}
+EMS_NAME = re.compile(r"[a-z][a-z0-9_]{1,30}(?:\.[A-Za-z][A-Za-z0-9_]{0,40}){1,5}")
+KB_NUM = re.compile(r"(?:KB\s*)?(0\d{8})", re.I)
+ARTICLE_PARTS = ("summary", "symptoms", "symptom", "issue", "cause", "resolution", "solution", "workaround", "fix")
+
+
+def _words(ident):
+    return " ".join(re.findall(r"[A-Za-z0-9]+", ident))
+
+
+def ems_lookup(c, name):
+    """The documented EMS event whose section heading is exactly this name (general ontap-ems reference first, else
+    the newest version): {chunk_id, doc_id, product, heading, text, severity, description, corrective_action}."""
+    try:
+        rows = c.execute("SELECT f.rowid, f.heading, f.text, d.product, d.id FROM chunks_fts f JOIN chunks ch ON ch.id = f.rowid "
+                         "JOIN docs d ON d.id = ch.doc_id WHERE chunks_fts MATCH ? LIMIT 40",
+                         ('heading : "' + _words(name) + '"',)).fetchall()
+    except sqlite3.OperationalError:
+        return None
+    rows = [r for r in rows if (r[1] or "").strip().lower() == name.lower()]
+    if not rows:
+        return None
+    rows.sort(key=lambda r: (r[3] == "ontap-ems", r[3]), reverse=True)
+    rowid, heading, text, product, doc_id = rows[0]
+    t = re.sub(r"\s+", " ", text)
+    field = lambda n: re.search(r"\*" + n + r"\*::\s*(.*?)(?=\*\w[\w ]*\*::|$)", t)  # noqa: E731
+    sev, desc, fix = field("Severity"), field("Description"), field("Corrective Action")
+    return {"chunk_id": rowid, "doc_id": doc_id, "product": product, "heading": heading, "text": t,
+            "severity": sev.group(1).split()[0] if sev else None,
+            "description": desc.group(1).strip() if desc else None,
+            "corrective_action": fix.group(1).strip() if fix and fix.group(1).strip() not in ("(None).", "(None)", "") else None}
+
+
+def code_lookup(c, code):
+    """Best section quoting this alert / dial-home code / bug / advisory (title or heading first): {chunk_id,
+    doc_id, vendor, product, title, heading, text, first_id}; first_id = first content section of an article
+    whose title carries the code (KB, CONTAP), else None."""
+    try:
+        rows = c.execute("SELECT f.rowid, d.vendor, d.product, d.title, f.heading, f.text, d.id, "
+                         "bm25(chunks_fts, 6.0, 3.0, 1.0) FROM chunks_fts f JOIN chunks ch ON ch.id = f.rowid "
+                         "JOIN docs d ON d.id = ch.doc_id WHERE chunks_fts MATCH ? ORDER BY 8 LIMIT 5",
+                         ('"' + _words(code) + '"',)).fetchall()
+    except sqlite3.OperationalError:
+        return None
+    if not rows:
+        return None
+    rowid, vendor, product, title, heading, text, doc_id, _ = rows[0]
+    out = {"chunk_id": rowid, "doc_id": doc_id, "vendor": vendor, "product": product, "title": title,
+           "heading": heading, "text": text, "first_id": None}
+    if code in (title or ""):
+        first = c.execute("SELECT ch.id FROM chunks ch JOIN chunks_fts f ON f.rowid = ch.id WHERE ch.doc_id = ? AND "
+                          "f.heading IN ('Summary', 'Symptoms', 'Symptom', 'Issue', 'Description', 'Cause') "
+                          "ORDER BY ch.seq LIMIT 1", (doc_id,)).fetchone()
+        out["first_id"] = first[0] if first else rowid
+    return out
+
+
+def explain_code(c, code, id_base=0):
+    """The explain_code tool: exact lookup of an identifier the library documents (EMS event name, PowerMax
+    SYMAPI_AEVENT2_* alert, PowerFlex SIO dial-home code, CONTAP bug, DSA advisory, KB number). Not found: a short
+    "not documented" answer."""
+    code = (code or "").strip()
+    if not code:
+        raise ValueError("empty code")
+    no = {"code": code, "documented": False}
+    kind = next((k for k, rx in CODE_RX.items() if rx.fullmatch(code.upper())), None)
+    kb = KB_NUM.fullmatch(code)
+    if kind:
+        code = code.upper()
+    if not kind and not kb and EMS_NAME.fullmatch(code):
+        e = ems_lookup(c, code)
+        if not e:
+            return no
+        d = c.execute("SELECT title, url, path FROM docs WHERE id = ?", (e["doc_id"],)).fetchone()
+        out = {"code": e["heading"].strip(), "kind": "ontap-ems", "severity": e["severity"],
+               "description": e["description"] or e["text"][:400], "corrective_action": e["corrective_action"],
+               "title": d["title"], "url": d["url"] or d["path"], "product": e["product"], "chunk_id": id_base + e["chunk_id"]}
+        return {k: v for k, v in out.items() if v}
+    if kb:
+        d = c.execute("SELECT id FROM docs WHERE path LIKE ? ESCAPE '\\' ORDER BY dup_of IS NOT NULL LIMIT 1",
+                      (f"%/{kb.group(1)}\\_%",)).fetchone()
+        if not d:
+            return no
+        first = c.execute("SELECT id FROM chunks WHERE doc_id = ? ORDER BY seq LIMIT 1", (d["id"],)).fetchone()
+        hit = {"doc_id": d["id"], "first_id": first[0], "chunk_id": first[0]}
+        kind, code = "kb", kb.group(1)
+    elif kind:
+        hit = code_lookup(c, code)
+        if not hit:
+            return no
+    else:
+        return no
+    doc = c.execute("SELECT vendor, product, title, url, path FROM docs WHERE id = ?", (hit["doc_id"],)).fetchone()
+    out = {"code": code, "kind": kind, "title": re.sub(r"\s*\|\s*Dell.*$", "", doc["title"] or ""),
+           "url": doc["url"] or doc["path"], "product": f"{doc['vendor']}/{doc['product']}"}
+    if hit["first_id"]:      # an article about this code: Symptoms / Cause / Resolution from the same document
+        out["chunk_id"] = id_base + hit["first_id"]
+        parts = {}
+        for h, t in c.execute("SELECT f.heading, f.text FROM chunks ch JOIN chunks_fts f ON f.rowid = ch.id "
+                              "WHERE ch.doc_id = ? ORDER BY ch.seq", (hit["doc_id"],)):
+            if (h or "").strip().lower() in ARTICLE_PARTS:
+                parts[h.strip()] = t.strip()[:2500]
+        out["sections"] = parts
+    else:                    # a section that quotes the code: the text right after it
+        out["chunk_id"] = id_base + hit["chunk_id"]
+        t = re.sub(r"\s+", " ", hit["text"])
+        i = t.find(code)
+        near = t[i:i + 900].replace(code, "")            # the code often repeats (caption, heading)
+        near = near[:400] if i >= 0 else t[:400]
+        nxt = CODE_RX[kind].search(near)                 # stop where the next code's entry starts
+        near = near[:nxt.start()] if nxt else near
+        out["description"] = re.sub(r"[\s\d]*(Table\s*\d*\.?)?[\s\d]*$", "", near).strip()
+    return out
+
+
 def _norm_title(t):
     """Title without version / product decoration: "PowerFlex API 5.1.0: Map a volume" = "... 4.5.5-...: Map a volume"."""
     t = re.sub(r"\s*\|\s*dell.*$", "", (t or "").lower())
@@ -431,6 +640,7 @@ def main():
     d.add_argument("--url", default="")
     d.add_argument("--start", type=int, default=0)
     d.add_argument("--max", type=int, default=15)
+    sub.add_parser("explain-code", help="exact lookup: EMS event, SYMAPI / SIO code, CONTAP, DSA, KB number").add_argument("code")
     sub.add_parser("sources", help="what is in the library").add_argument("--vendor", default="")
     a = ap.parse_args()
 
@@ -476,6 +686,8 @@ def run(a, c):
             print(f"\n## {s_['section']}  [seq {s_['seq']}]\n\n{s_['text']}")
         if out["next_start"] is not None:
             print(f"\n... continue with --start {out['next_start']}")
+    elif a.cmd == "explain-code":
+        print(json.dumps(explain_code(c, a.code), ensure_ascii=False, indent=1))
     else:
         out = sources(c, a.vendor)
         if a.json:

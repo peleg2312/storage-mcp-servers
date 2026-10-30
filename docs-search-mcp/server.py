@@ -8,6 +8,7 @@ import logging
 import os
 import sys
 import threading
+from typing import List, Optional
 
 from fastmcp import FastMCP
 from mcp.types import ToolAnnotations
@@ -81,21 +82,39 @@ def _search(q, vendor, product, limit):
         h, _, n = r["matched"].partition("/")
         return int(h) / int(n) if n else 1.0
     rows.sort(key=lambda r: (-cover(r), -r["score"]))
-    return rows[:max(1, min(int(limit), 50))], full, unmatched or [], facet
+    out = {"match_mode": "all words" if full else "partial", "results": rows[:max(1, min(int(limit), 50))]}
+    if len(facet) > 1 and max(facet.values()) < 0.9 * sum(facet.values()):
+        out["by_product"] = dict(sorted(facet.items(), key=lambda kv: -kv[1])[:6])
+    if unmatched:
+        out["unmatched"] = unmatched
+    return out
+
+
+def _text(gid):
+    i, c, local = split_id(gid)
+    return lib.read_chunk(c, local, 0, i * ID_BASE)["sections"][0]["text"]
 
 
 mcp = FastMCP("docs-search", instructions=docs_text.INSTRUCTIONS)
 
 
 @mcp.tool(annotations=RO, description=docs_text.SEARCH_DOC)
-def search_docs(query: str, vendor: str = "", product: str = "", limit: int = 8) -> dict:
-    rows, full, unmatched, facet = _search(query, vendor, product, limit)
-    out = {"match_mode": "all words" if full else "partial", "results": rows}
-    if len(facet) > 1 and max(facet.values()) < 0.9 * sum(facet.values()):
-        out["by_product"] = dict(sorted(facet.items(), key=lambda kv: -kv[1])[:6])
-    if unmatched:
-        out["unmatched"] = unmatched
-    return lib.for_agent(out)
+def search_docs(query: str = "", vendor: str = "", product: str = "", limit: int = 8, read_top: int = 0,
+                queries: Optional[List[str]] = None) -> dict:
+    qs = lib.query_list(query, queries)
+    if not qs[0]:
+        raise ValueError("give query or queries")
+    outs = [(q, _search(q, vendor, product, limit)) for q in qs]
+    return lib.finish_search(outs[0][1] if len(outs) == 1 else lib.merge_queries(outs, limit), read_top, _text)
+
+
+@mcp.tool(annotations=RO, description=docs_text.EXPLAIN_DOC)
+def explain_code(code: str) -> dict:
+    for i, c in all_cons():
+        out = lib.explain_code(c, code, i * ID_BASE)
+        if out.get("kind"):
+            return out
+    return {"code": code.strip(), "documented": False}
 
 
 @mcp.tool(annotations=RO)

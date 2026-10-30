@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 docs-search as a **stdio MCP server with no dependencies** (Python 3 standard library only): the same
-four tools as server.py (search_docs, read_chunk, read_document, list_sources) over the library index,
+tools as server.py (search_docs, explain_code, read_chunk, read_document, list_sources) over the library index,
 for a VM that runs Claude Code but has no pip, no containers and no internet.
 
     claude mcp add docs-local -s user -- python3 ~/.claude/brain/library/mcp_stdio.py
@@ -22,15 +22,19 @@ try:
     import search_cli as lib  # noqa: E402  (in the repo: search_cli.py; in the library folder: search.py)
 except ImportError:
     import search as lib  # noqa: E402
-from docs_text import INSTRUCTIONS, SEARCH_DOC  # noqa: E402
+from docs_text import EXPLAIN_DOC, INSTRUCTIONS, SEARCH_DOC  # noqa: E402
 
 TOOLS = [
     {"name": "search_docs",
      "description": SEARCH_DOC,
      "inputSchema": {"type": "object", "properties": {
-         "query": {"type": "string"}, "vendor": {"type": "string", "default": ""},
-         "product": {"type": "string", "default": ""}, "limit": {"type": "integer", "default": 8}},
-         "required": ["query"]},
+         "query": {"type": "string"}, "queries": {"type": "array", "items": {"type": "string"}},
+         "vendor": {"type": "string", "default": ""}, "product": {"type": "string", "default": ""},
+         "limit": {"type": "integer", "default": 8}, "read_top": {"type": "integer", "default": 0}}},
+     "annotations": {"readOnlyHint": True, "destructiveHint": False, "idempotentHint": True, "openWorldHint": False}},
+    {"name": "explain_code",
+     "description": EXPLAIN_DOC,
+     "inputSchema": {"type": "object", "properties": {"code": {"type": "string"}}, "required": ["code"]},
      "annotations": {"readOnlyHint": True, "destructiveHint": False, "idempotentHint": True, "openWorldHint": False}},
     {"name": "read_chunk",
      "description": "Read a search hit in full, plus `context` neighbouring sections before and after (0-3) "
@@ -59,8 +63,12 @@ class Server:
 
     def call(self, name, args):
         if name == "search_docs":
-            return lib.for_agent(lib.search_docs(self.con, args["query"], args.get("vendor", ""),
-                                                 args.get("product", ""), args.get("limit", 8)))
+            if not (args.get("query") or args.get("queries")):
+                raise ValueError("give query or queries")
+            return lib.search(self.con, args.get("query", ""), args.get("vendor", ""), args.get("product", ""),
+                              args.get("limit", 8), args.get("read_top", 0), args.get("queries"))
+        if name == "explain_code":
+            return lib.explain_code(self.con, args["code"])
         if name == "read_chunk":
             return lib.read_chunk(self.con, int(args["chunk_id"]), args.get("context", 1))
         if name == "read_document":

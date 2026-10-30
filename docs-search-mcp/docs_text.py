@@ -9,6 +9,8 @@ bug trackers, and library "local" (the team's own runbooks, when present). The u
 DSA numbers). Old and new product names and acronyms match each other. Filter by vendor / product when the platform \
 is known (list_sources(vendor) gives the names; by_product shows where the hits are). No good hit: send 2-3 \
 rephrasings in parallel in the vendor's words and replace the `unmatched` words.
+1b. An exact event / alert / bug / KB number: explain_code(code) answers in one call. search_docs read_top=2 or \
+queries=[...] saves round trips.
 2. read_chunk the best 2-3 hits before answering; read_document for a whole page or PDF. also_in = the same page \
 in other versions: open the installed one.
 3. Cite title + url + version for every statement; never invent commands, settings or bug numbers. `matched` \
@@ -19,4 +21,11 @@ SEARCH_DOC = ('Search the docs, KB, bug trackers, pull requests and source code.
               '"quoted text" must match verbatim (error messages); synonyms apply (Isilon=PowerScale, VMAX=PowerMax...). '
               'vendor: netapp|dell|cisco|kubernetes|openshift|vmware|python|mcp|hashicorp|kb. product: substring '
               '(ontap-ems-9151, trident-2510, csm, csm-prs, powerflex-api...). Up to `limit` hits, max 2 per '
-              'document; chunk_id feeds read_chunk.')
+              'document; chunk_id feeds read_chunk. read_top (0-3): the full text of the best hits comes inline (field text), '
+              'so one call answers. queries: several phrasings at once (wins over query); merged, with partial / '
+              'unmatched reported per query in by_query.')
+
+EXPLAIN_DOC = ('Exact lookup of an identifier the library documents: ONTAP EMS event name (wafl.vol.full), PowerMax '
+               'SYMAPI_AEVENT2_* alert, PowerFlex SIO dial-home code, CONTAP-* bug, DSA-* advisory, Dell / NetApp KB '
+               'number (000xxxxxx). Returns severity, description, corrective action, title, url, product, chunk_id; '
+               'a KB / bug adds its Symptoms / Cause / Resolution sections. Not documented: documented=false.')

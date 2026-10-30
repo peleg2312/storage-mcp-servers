@@ -24,9 +24,17 @@ ERR = re.compile(r"(?:desc = |\b(?:error|Error|ERROR|failed|Failed|FAILED)(?: to
 MAX_CANDIDATES = 60
 DB = os.environ.get("DOCS_HINTS_DB") or os.path.expanduser("~/.claude/brain/library/docs.db")
 
+try:   # the shared lookups live in the library's search engine (search.py next to docs.db; search_cli.py in the repo)
+    sys.path[:0] = [os.path.dirname(os.path.abspath(DB)), os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "..", "docs-search-mcp")]
+    try:
+        import search as lib
+    except ImportError:
+        import search_cli as lib
+except ImportError:
+    lib = None
+
 EMS = re.compile(r"(?<![\w.\-/@:])([a-z][a-z0-9_]{1,30}(?:\.[A-Za-z][A-Za-z0-9_]{0,40}){1,5})(?![\w\-/@]|\.\w)")
-CODES = [re.compile(p) for p in (r"\bSYMAPI_AEVENT2_UID_[A-Z0-9_]{4,}\b", r"\bSIO\d{2}\.\d{2}\.\d{7}\b",
-                                  r"\bCONTAP-\d{5,7}\b", r"\bDSA-\d{4}-\d{2,4}\b")]
+CODES = list(lib.CODE_RX.values()) if lib else []
 
 
 def tmpdir():
@@ -55,10 +63,6 @@ def strings(x, out):
     return out
 
 
-def words(ident):
-    return " ".join(re.findall(r"[A-Za-z0-9]+", ident))
-
-
 def ems_names(c):
     """Every documented EMS event name (lowercase), cached per library build: checking a dotted name in a big
     result is then a set lookup, not a query."""
@@ -84,26 +88,15 @@ def ems_names(c):
 
 def ems_hint(c, name):
     """The documented EMS event whose section heading is exactly this name (newest EMS reference first)."""
-    try:
-        rows = c.execute("SELECT f.rowid, f.heading, f.text, d.product FROM chunks_fts f JOIN chunks ch ON ch.id = f.rowid "
-                         "JOIN docs d ON d.id = ch.doc_id WHERE chunks_fts MATCH ? LIMIT 40",
-                         ('heading : "' + words(name) + '"',)).fetchall()
-    except sqlite3.OperationalError:
+    e = lib.ems_lookup(c, name)
+    if not e:
         return None
-    rows = [r for r in rows if (r[1] or "").strip().lower() == name.lower()]
-    if not rows:
-        return None
-    rows.sort(key=lambda r: (r[3] == "ontap-ems", r[3]), reverse=True)   # general reference, else newest version
-    rowid, heading, text, product = rows[0]
-    t = re.sub(r"\s+", " ", text)
-    sev = re.search(r"\*Severity\*::\s*(\w+)", t)
-    desc = re.search(r"\*Description\*::\s*(.*?)(?=\*\w[\w ]*\*::|$)", t)
-    fix = re.search(r"\*Corrective Action\*::\s*(.*?)(?=\*\w[\w ]*\*::|$)", t)
-    s = f"{heading} [{product}, chunk {rowid}]: {sev.group(1) + '. ' if sev else ''}"
-    d = re.sub(r"^This message occurs when\s+", "", desc.group(1).strip() if desc else t)
+    sev, fix = e["severity"], e["corrective_action"]
+    s = f"{e['heading']} [{e['product']}, chunk {e['chunk_id']}]: {sev + '. ' if sev else ''}"
+    d = re.sub(r"^This message occurs when\s+", "", e["description"] or e["text"])
     s += first_sentence(d[:1].upper() + d[1:], 160)
-    if fix and fix.group(1).strip() not in ("(None).", "(None)", ""):
-        s += " Fix: " + first_sentence(fix.group(1).strip(), 140)
+    if fix:
+        s += " Fix: " + first_sentence(fix, 140)
     return s
 
 
@@ -118,26 +111,17 @@ def first_sentence(text, limit):
 
 def code_hint(c, code):
     """Best section quoting this alert / dial-home code / bug / advisory: title or heading first."""
-    try:
-        rows = c.execute("SELECT f.rowid, d.vendor, d.product, d.title, f.heading, f.text, "
-                         "bm25(chunks_fts, 6.0, 3.0, 1.0) FROM chunks_fts f JOIN chunks ch ON ch.id = f.rowid "
-                         "JOIN docs d ON d.id = ch.doc_id WHERE chunks_fts MATCH ? ORDER BY 7 LIMIT 5",
-                         ('"' + words(code) + '"',)).fetchall()
-    except sqlite3.OperationalError:
+    h = lib.code_lookup(c, code)
+    if not h:
         return None
-    if not rows:
-        return None
-    rowid, vendor, product, title, heading, text, _ = rows[0]
-    title = re.sub(r"\s*\|\s*Dell.*$", "", title or "")
-    if code in title:      # an article about this code (KB, CONTAP): its title says it; point at its first content section
-        first = c.execute("SELECT ch.id FROM chunks ch JOIN chunks_fts f ON f.rowid = ch.id WHERE ch.doc_id = "
-                          "(SELECT doc_id FROM chunks WHERE id = ?) AND f.heading IN ('Summary', 'Symptoms', 'Symptom', "
-                          "'Issue', 'Description', 'Cause') ORDER BY ch.seq LIMIT 1", (rowid,)).fetchone()
-        return f"{code} [{vendor}/{product}, chunk {first[0] if first else rowid}]: {title[:150]}"
-    t = re.sub(r"\s+", " ", text)
+    title = re.sub(r"\s*\|\s*Dell.*$", "", h["title"] or "")
+    where = f"{code} [{h['vendor']}/{h['product']}, chunk "
+    if h["first_id"]:      # an article about this code (KB, CONTAP): its title says it; point at its first content section
+        return f"{where}{h['first_id']}]: {title[:150]}"
+    t = re.sub(r"\s+", " ", h["text"])
     i = t.find(code)
     near = t[i + len(code):i + len(code) + 120].strip() if i >= 0 else t[:120]
-    return f"{code} [{vendor}/{product}, chunk {rowid}]: {title[:110]}" + (f" :: {near}" if near else "")
+    return f"{where}{h['chunk_id']}]: {title[:110]}" + (f" :: {near}" if near else "")
 
 
 def err_phrase(msg):
@@ -183,7 +167,7 @@ def main():
     except Exception:
         return 0
     tool = data.get("tool_name", "")
-    if not tool.startswith("mcp__") or "docs" in tool.split("__")[1].lower() or not os.path.exists(DB):
+    if not tool.startswith("mcp__") or "docs" in tool.split("__")[1].lower() or not os.path.exists(DB) or lib is None:
         return 0
     text = "\n".join(strings(data.get("tool_response"), []))[:300_000]
     seen_file = os.path.join(tmpdir(), f"claude-docs-hints-{re.sub(r'[^A-Za-z0-9-]', '', str(data.get('session_id', 'x')))}")

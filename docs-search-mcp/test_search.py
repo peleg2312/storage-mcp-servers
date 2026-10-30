@@ -96,6 +96,13 @@ async def main():
     assert s["results"] and s["results"][0]["title"] == "VAAI with PowerMax", s
     s = await call("search_docs", query="detach unzone", vendor="runbooks")
     assert s["results"][0]["product"] == "team"
+    s = await call("search_docs", query="lun mapping create igroup", read_top=1)      # read_top: text inline
+    assert "lun mapping create" in s["results"][0]["text"] and "text" not in s["results"][1], s
+    s = await call("search_docs", queries=["detach unzone", "vmkfstools"], vendor="runbooks")   # queries: merged
+    assert s["results"][0]["product"] == "team" and [q["q"] for q in s["by_query"]] == ["detach unzone", "vmkfstools"], s
+    e = await call("explain_code", code="callhome.hm.alert.critical")
+    assert e["kind"] == "ontap-ems" and e["severity"] == "ALERT" and e["chunk_id"], e
+    assert await call("explain_code", code="foo.bar.baz") == {"code": "foo.bar.baz", "documented": False}
     rc = await call("read_chunk", chunk_id=top["chunk_id"], context=2)
     assert any(x["is_hit"] for x in rc["sections"]) and len(rc["sections"]) >= 2
     rd = await call("read_document", url="https://example.dell/h8115.pdf", max_sections=1)
