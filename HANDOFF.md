@@ -1,7 +1,6 @@
 # Handoff: continuing this project with Claude Code on the PC
 
-Paste this to Claude Code running on the PC (it is also committed as `HANDOFF.md`; say "read HANDOFF.md").
-It replaces the cloud session, which could not reach Dell (bot check) nor push to GitHub.
+Paste this to Claude Code running on the PC (say "read HANDOFF.md").
 
 ## What this repository is
 
@@ -13,69 +12,30 @@ Dell PowerFlex, NetApp ONTAP, NetApp Trident, Dell CSM / CSI, Cisco MDS / UCS, V
    by `docs-search-mcp/docs_index.py`, packed by `docs-search-mcp/bundle/pack-library.sh`. Served offline by
    `mcp_stdio.py` (stdio MCP server, standard library only) or `server.py` (HTTP, fastmcp) with four tools:
    search_docs, read_chunk, read_document, list_sources. Also `search.py` from the shell.
-2. **The brain** (`brain/claude/`): CLAUDE.md (107 lines, imports environment.md / notes.md / tool-map.md),
-   26 skills (incl. Anthropic's skill-creator), 8 agents (sonnet, scoped tools), a PreToolUse hook that blocks write-looking MCP calls (read-only policy), a SessionStart
+2. **The brain** (`brain/claude/`): CLAUDE.md (core rules) + `brain/storage.md` (storage rules; imports environment.md / notes.md / tool-map.md),
+   skills and agents (count: `ls brain/claude/skills | wc -l`, `ls brain/claude/agents/*.md | wc -l`), scoped tools, a PreToolUse hook that blocks write-looking MCP calls (read-only policy), a SessionStart
    hook, the "Peleg As A Service" banner and status line. Installed by `install-vm.sh` (user scope) or
    `install-vm.sh --project <dir>` (one folder only). Reviewed against the Claude Code docs: `brain/ARCHITECTURE.md`.
 
 `RUNBOOK.md` has every command for the PC and the VM. `README.md` is the overview. The GitHub repository is
-public by the user's decision (2026-10-23), although it carries vendor content. Tests: `cd docs-search-mcp &&
-python3 test_search.py && python3 test_stdio.py && python3 test_sync_dell.py && python3 test_sync_issues.py && python3 ../brain/test_hook.py && python3 ../brain/test_docs_hints.py && python3 ../brain/test_docs_leads.py`;
-search quality: `python3 eval_search.py` and `--cases tests/retrieval_heldout.json` (hit@5 >= 0.9).
+public by the user's decision (2026-10-23), although it carries vendor content. All tests: `sh scripts/run_tests.sh` (PY=venv python; skips container-only suites
+and prints SKIP; runs the search evals when `docs-search-mcp/work/index/docs.db` exists).
 
-## Where things stand (2026-10-24, night)
+## Where things stand
 
-- Library 2026.10.25: 64,988 files indexed (18,535 identical copies folded). New since 23f: PowerFlex REST API
-  docs from developer.dell.com (`sync/sync_dell_devportal.py`: 5.1.0 complete, 1,508 pages; 4.5.5 / Manager 4.8
-  813 of 908, the rest 404 at Dell; guides 3.6 - 5.0), 59 PowerFlex KBs (SIO alerts, 5.x), public PowerFlex 5.x PDFs (appliance
-  Architecture Overview + Admin Guide, Manager 5.x compatibility matrix, 5.0 spec sheet, solution brief), and the
-  backend stack (vendor `python`: fastapi, pydantic, pydantic-settings, starlette, uvicorn, httpx, pytest,
-  pytest-asyncio, sqlalchemy, fastmcp; vendor `mcp`: python-sdk, specification). `.mdx` is indexed.
-- developer.dell.com had an outage 00:40-01:00 on Oct 24; the pull resumed and finished. Re-run
-  `sync_dell_devportal.py` any time: it only fetches what is missing.
-- Search ranking: question type -> page type (concept / task), title weight 1.5, word proximity (all sets mean
-  hit@1 0.72 -> 0.75, MRR 0.80 -> 0.83; brain/ARCHITECTURE.md).
-- Brain: read-only hook now also guards shell commands (infrastructure changes blocked; oc / kubectl / helm /
-  curl to other hosts / systemctl / terraform / ansible ask first; localhost writes pass: the user also
-  develops on the VM). Agents have scoped tools. New skills: `report-export` (charts + Excel; `tools/report.py`,
-  `get-reports.ps1` delivers reports to the Windows PC) and `fastapi-service` (house conventions from the MCP
-  repos). The start banner shows inside Claude Code (companyAnnouncements, sized per start).
-- The user develops FastAPI backends on the VM (RHEL 9) with PostgreSQL and MongoDB: MCP `databases` (reads always read-only; writes on connections marked write, user-confirmed)
-  (brain/claude/tools/db_mcp.py), dev plugins in brain/plugins, ruff / basedpyright / drivers in brain/devtools.
-- The user runs NetApp's official ONTAP and Harvest MCP servers (the ONTAP one has write tools: the hook blocks them).
-- NetApp KB export finished (Oct 25): 12,653 saved, 0 partial, 150 failed (network; re-run the same command to retry
-  only those). Library: kb-ontap 11,303, kb-switches 1,289, kb-ontap-tools-vmware 1,110, kb-trident 821, kb-asar2 59.
-  Sign out of kb.netapp.com in the browser whose cookie was used.
-
-## Earlier (2026-10-23, night)
-
-- Library 2026.10.23f: 53,111 files indexed. Recovered 786 pages the indexer used to skip (`_index.md` = the CSM
-  install guides; KBs named after a quoted title). CODEMAP.md per code repository (`sync/codemap.py`, run by
-  sync-git.sh: host tools / commands per function, host paths, functions). Added Kubernetes storage concepts,
-  OpenShift storage docs, newer CSI sidecars, goiscsi / gonvme / csmlog / csm-metrics-common / csm-dr, and the
-  Unisphere 10.3 HTML manual. Retrieval rebuilt and measured on blind test
-  sets (brain/ARCHITECTURE.md): Dell KB sections fixed (Symptoms / Cause / Resolution), page chrome removed,
-  PDF outline headings, version matching, `unmatched` hint. Six eval sets in `docs-search-mcp/tests/`
-  (`retrieval_fresh_heldout` and `retrieval_general_heldout` are the blind ones); gate: hit@5 >= 0.9 on the
-  first two. Bake-off against QMD (local BM25 + vectors + LLM rerank): this search wins on every set;
-  no embeddings for now (`docs-search-mcp/bakeoff/` to re-run).
-- Docs found unasked: `docs-leads.py` (library leads for every request that names the storage world, incl.
-  design / best practice / automation questions) and `docs-hints.py` (meaning of EMS, alerts, codes and free-text
-  errors in live MCP results); CLAUDE.md rule 8 says when to search. Seven eval sets incl. a blind best-practice set.
-- Brain: memory catalog (notes.md + notes/<topic>.md), kuparashit documented as the snapshot inventory /
-  join hub, installer always applies the look and feel, read-only hook catches SQL writes anywhere.
-- Dell (done this evening): 1,654 KB articles, 234 Info Hub papers (PowerScale 90, CSM 58, PowerFlex 51,
-  PowerMax 39), PowerFlex Rack HTML manual (64 pages; 17 retired "Sorry" pages removed, backup in
-  work/backup-2026-10-23/sorry-pages). Unisphere 10.3 HTML manual: overview only (the PDF is in the library).
-- **Dell PDFs of NEEDED.md**: refused for entitlement (account level 10 < 30) until the user's Dell account is
-  linked to the company's PowerFlex site (the user asked for it); then `dell_browser.py needed --wait-login`.
-  The PowerFlex HTML manuals are gated the same way (signed in, the page holds no content): their links
-  (5.x release notes, Alerts and Events, security, 5.0 CLI) are in sources/dell-manuals.txt, from KB 000314729;
-  after linking run `dell_browser.py manuals --wait-login` too. PowerMax alerts guide link: retired (commented out).
-  PowerFlex 5.2 is not released (newest 5.1.0.2, Aug 2026; KB 000461757 in the library).
-- **NetApp KB export is unfinished** (5,809 of 14,751 checked at 20:42, ~535 / hour, terminal tab; about
-  17 hours left). Resumable; full articles need the kb.netapp.com cookie (NETAPP_KB_COOKIE, never in files).
-  When it ends: re-index, eval gates, `LABEL=2026.10.24 sh bundle/pack-library.sh`, commit, push.
+- Library: version and counts are in `library/VERSION` and `library/MANIFEST.md` (do not copy numbers here).
+  Dell (KB, Info Hub, PowerFlex REST API, PDFs), NetApp (docs, 12k+ KB articles), Cisco MDS / NX-OS / NDFC,
+  Kubernetes / OpenShift storage, the Python backend stack. Search: `brain/ARCHITECTURE.md`; seven eval sets in
+  `docs-search-mcp/tests/` (gates in `scripts/run_tests.sh`).
+- Five MCP servers (PowerMax, PowerFlex, UCS Central, docs-search, MDS), all read-only; the PreToolUse hook also
+  blocks write-looking calls of other MCP servers and shell changes.
+- Web UI (port 3001), multi-user gate (`brain/multiuser/install-gate.sh`) and marketplace are installed by
+  `install-vm.sh` (`NO_UI=1` skips the UI).
+- Dell PDFs of `NEEDED.md` and the PowerFlex HTML manuals stay refused until the Dell account is linked to the
+  company's site (entitlement level 30); then `dell_browser.py needed --wait-login` and `manuals --wait-login`.
+- `docs-search-mcp/work/docs` is also tracked in git (Dell collections, force-added). Dropping it from git is the
+  owner's decision (not done); binaries in the tree were likewise left alone.
+- NetApp KB: re-run the export command in step 4 to retry failed articles; sign out of kb.netapp.com afterwards.
 
 ## Rules the user set
 
@@ -145,7 +105,6 @@ search quality: `python3 eval_search.py` and `--cases tests/retrieval_heldout.js
 
 ## Ideas not done yet
 
-- A read-only PowerFlex MCP (the full 5.1 REST API is in the library; build it with the `fastapi-service` skill).
 - Red Hat's kubernetes-mcp-server with `--read-only` and a cluster-reader account (live CSI / CSM data).
 - A read-only vSphere MCP for live per-LUN path state (kuparashit is a snapshot, Aria has metrics only).
 - Claude Code's built-in sandbox for shell commands on the VM (needs bubblewrap; settings `sandbox.enabled`).
@@ -153,4 +112,4 @@ search quality: `python3 eval_search.py` and `--cases tests/retrieval_heldout.js
 - Hybrid retrieval (a local embedding model shipped in the library) behind the same four tools.
 - A `dell-alerts` skill that walks the PowerMaxOS 10.x alert ID tables and the PowerFlex SIO/PFX codes once
   the PowerFlex guides are in.
-- Cisco MDS / UCS documentation (not published in a crawlable form).
+- UCS documentation (not published in a crawlable form).

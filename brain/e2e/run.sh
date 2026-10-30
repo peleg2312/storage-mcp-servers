@@ -7,7 +7,9 @@ set -eu
 ROOT=$(cd "$(dirname "$0")/../.." && pwd)
 W=$(mktemp -d)
 cp "$ROOT/brain/e2e/e2e.sh" "$ROOT/brain/e2e/setup.sh" "$W/"
-git -C "$ROOT" archive --format=tar HEAD -- . ':!docs-search-mcp/work' ':!images' ':!docs-search-mcp/bakeoff' | gzip > "$W/repo.tar.gz"
+# tracked working-tree changes included (stash create); untracked files are not
+REF=$(git -C "$ROOT" stash create); REF=${REF:-HEAD}
+git -C "$ROOT" archive --format=tar "$REF" -- . ':!docs-search-mcp/work' ':!images' ':!docs-search-mcp/bakeoff' | gzip > "$W/repo.tar.gz"
 for a in amd64 arm64; do
   c=0; [ "$a" = arm64 ] && c=1
   echo "######## linux/$a (Claude Code: $c)"

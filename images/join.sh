@@ -2,7 +2,7 @@
 # Rebuild the image tarballs from their 45 MB parts and verify checksums.
 set -e
 cd "$(dirname "$0")"
-for img in powermax-mcp-2.0 powerflex-mcp-1.0 ucsc-mcp-2.2 mds-mcp-2.2 docs-search-mcp-1.1; do
+for img in $(awk '{print $2}' SHA256SUMS | sed 's/\.tar\.gz$//'); do
   cat "$img.tar.gz.part-"* > "$img.tar.gz"
 done
 sha256sum -c SHA256SUMS

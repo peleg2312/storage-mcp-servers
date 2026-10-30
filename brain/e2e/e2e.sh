@@ -20,8 +20,8 @@ cd ~
 echo "== 2. files"
 C=~/.claude
 chk "CLAUDE.md"                        "test -s $C/CLAUDE.md"
-chk "26 skills"                        "[ \$(ls $C/skills | wc -l) -ge 26 ]"
-chk "8 agents"                         "[ \$(ls $C/agents/*.md | wc -l) -eq 8 ]"
+chk "skills"                           "[ \$(ls $C/skills | wc -l) -ge 26 ]"
+chk "agents"                           "[ \$(ls $C/agents/*.md | wc -l) -ge 8 ]"
 chk "5 hooks"                          "ls $C/hooks/block-write-tools.py $C/hooks/docs-hints.py $C/hooks/docs-leads.py $C/hooks/session-start.py $C/hooks/py-lint.py"
 chk "environment / notes / tool-map"   "ls $C/brain/environment.md $C/brain/notes.md $C/brain/tool-map.md"
 chk "library docs.db"                  "[ \$(stat -c %s $C/brain/library/docs.db) -gt 300000000 ]"
