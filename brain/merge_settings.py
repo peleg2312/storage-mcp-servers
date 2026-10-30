@@ -5,11 +5,11 @@ usage: merge_settings.py <settings.json> [--hooks-dir DIR] [--banner-dir DIR] [-
   --hooks-dir / --banner-dir  where the hook and banner scripts live (default ~/.claude/hooks, ~/.claude/banner;
                               a project install passes <dir>/.claude/hooks etc. as absolute paths)
   --mcpjson NAME              pre-approve the .mcp.json server NAME (enabledMcpjsonServers; project install)"""
+import copy
 import json
 import os
 import shutil
 import sys
-import time
 
 args = sys.argv[1:]
 path = args.pop(0)
@@ -26,34 +26,41 @@ while args:
         servers.append(a)
 s = {}
 if os.path.exists(path):
-    shutil.copy(path, f"{path}.bak.{time.strftime('%Y%m%d%H%M%S')}")
     with open(path) as f:
         s = json.load(f)
-cmd = f"python3 {hooks_dir}/block-write-tools.py"
+old = copy.deepcopy(s)
 pre = s.setdefault("hooks", {}).setdefault("PreToolUse", [])
-for e in pre:                                            # earlier installs guarded MCP tools only
-    if any(h.get("command") == cmd for h in e.get("hooks", [])):
-        e["matcher"] = "mcp__.*|Bash"
-if not any(h.get("command") == cmd for e in pre for h in e.get("hooks", [])):
-    pre.append({"matcher": "mcp__.*|Bash", "hooks": [{"type": "command", "command": cmd}]})
-hint_cmd = f"python3 {hooks_dir}/docs-hints.py"         # meaning of EMS / alerts / codes seen in live results
 post = s["hooks"].setdefault("PostToolUse", [])
-if not any(h.get("command") == hint_cmd for e in post for h in e.get("hooks", [])):
-    post.append({"matcher": "mcp__.*", "hooks": [{"type": "command", "command": hint_cmd, "timeout": 10}]})
-lint_cmd = f"python3 {hooks_dir}/py-lint.py"           # ruff findings on every .py file Claude edits
-if not any(h.get("command") == lint_cmd for e in post for h in e.get("hooks", [])):
-    post.append({"matcher": "Edit|Write|MultiEdit", "hooks": [{"type": "command", "command": lint_cmd, "timeout": 10}]})
-# security-guidance plugin: pattern warnings only (its LLM reviews would send every diff to Opus and pip-install
-# an SDK the air-gapped VM cannot fetch); set it to 1 in settings.json "env" to turn the reviews on
-s.setdefault("env", {}).setdefault("ENABLE_CODE_SECURITY_REVIEW", "0")
-lead_cmd = f"python3 {hooks_dir}/docs-leads.py"         # library leads for each request (silent when unrelated)
 ups = s["hooks"].setdefault("UserPromptSubmit", [])
-if not any(h.get("command") == lead_cmd for e in ups for h in e.get("hooks", [])):
-    ups.append({"hooks": [{"type": "command", "command": lead_cmd, "timeout": 10}]})
-start_cmd = f"python3 {hooks_dir}/session-start.py"
 start = s["hooks"].setdefault("SessionStart", [])
-if not any(h.get("command") == start_cmd for e in start for h in e.get("hooks", [])):
-    start.append({"hooks": [{"type": "command", "command": start_cmd}]})
+
+
+def hook(groups, script, timeout, matcher=None):
+    """add the hook, or bring an existing entry (same command) up to the current matcher and timeout"""
+    cmd = f"python3 {hooks_dir}/{script}"
+    for e in groups:
+        for h in e.get("hooks", []):
+            if h.get("command") == cmd:
+                h["timeout"] = timeout
+                if matcher:
+                    e["matcher"] = matcher
+                return
+    e = {"hooks": [{"type": "command", "command": cmd, "timeout": timeout}]}
+    groups.append({"matcher": matcher, **e} if matcher else e)
+
+
+hook(pre, "block-write-tools.py", 10, "mcp__.*|Bash")   # a timed-out hook lets the call through: keep slack
+hook(post, "docs-hints.py", 5, "mcp__.*")                # meaning of EMS / alerts / codes seen in live results
+hook(post, "py-lint.py", 5, "Edit|Write|MultiEdit")      # ruff findings on every .py file Claude edits
+hook(ups, "docs-leads.py", 5)                            # library leads for each request (silent when unrelated)
+hook(start, "session-start.py", 10)
+# security-guidance plugin: pattern warnings only (its LLM reviews would send every diff to Opus and pip-install
+# an SDK the air-gapped VM cannot fetch); set it to 1 in settings.json "env" to turn the reviews on.
+# No internet on the VM: no auto-update, telemetry or other background traffic.
+env = s.setdefault("env", {})
+env.setdefault("ENABLE_CODE_SECURITY_REVIEW", "0")
+for k in ("CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC", "DISABLE_AUTOUPDATER"):
+    env.setdefault(k, "1")
 allow = s.setdefault("permissions", {}).setdefault("allow", [])
 # Chrome DevTools plugin: drives the person's own Chrome (empty profile); its connector refuses infrastructure pages
 if "mcp__plugin_chrome-devtools_chrome-devtools" not in allow:
@@ -67,9 +74,9 @@ for name in mcpjson:
     if name not in lst:
         lst.append(name)
 # auto mode: tell its classifier this is his own dev VM, so routine work there (files, scripts, builds, his own
-# services) is not denied; the built-in rules stay ("$defaults"). Read from ~/.claude/settings.json only.
+# services) is not denied; the built-in rules stay ("$defaults").
 if not mcpjson:
-    env = s.setdefault("autoMode", {}).setdefault("environment", ["$defaults"])
+    amenv = s.setdefault("autoMode", {}).setdefault("environment", ["$defaults"])
     for line in (
         "Host containment: Claude Code runs on the user's own air-gapped RHEL 9 development VM (no internet). Editing "
         "files in his home and projects, installing packages from the VM's local repositories, running scripts and "
@@ -78,11 +85,11 @@ if not mcpjson:
         "Source control: the offline GitLab server configured as the git remote(s) on this VM, and all repos on it",
         "Sensitive remote targets: storage arrays (PowerMax, PowerFlex, PowerScale, NetApp ONTAP), SAN switches "
         "(Cisco MDS / Nexus), UCS, vCenter / ESXi and OpenShift clusters: changes to them are made by the user"):
-        if line not in env:
-            env.append(line)
+        if line not in amenv:
+            amenv.append(line)
 # no "suggested next message" model call after every reply (tokens, no effect on answers); a person may turn it on
 s.setdefault("promptSuggestionEnabled", False)
-# look and feel (UI only, no tokens): always the brain's, replacing earlier values (settings.json is backed up above)
+# look and feel (UI only, no tokens): always the brain's, replacing earlier values (one backup, settings.json.bak, when the file changes)
 s["statusLine"] = {"type": "command", "command": f"python3 {banner_dir}/paas-statusline.py", "padding": 0}
 s["theme"] = "custom:paas"                                   # ~/.claude/themes/paas.json, banner colours; /theme to change
 s["preferredNotifChannel"] = "terminal_bell"                 # bell when Claude finishes while you look away
@@ -97,6 +104,8 @@ s["spinnerTipsOverride"] = {"label": "Brain tip", "tips": [
     "Quote an error message in your question: quoted text is matched exactly in the library",
     "Teach it a fact once (\"our SGs start with SG_\"): it is kept in notes.md for every session"]}
 os.makedirs(os.path.dirname(os.path.abspath(path)), exist_ok=True)
+if os.path.exists(path) and s != old:
+    shutil.copy(path, f"{path}.bak")
 with open(path, "w") as f:
     json.dump(s, f, indent=2)
 print(f"settings ({path}): read-only, auto-mode environment, docs-hints, docs-leads and session-start hooks installed, status line set, MCP servers allowed without prompts: "

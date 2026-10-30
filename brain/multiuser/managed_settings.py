@@ -9,20 +9,31 @@ the brain's hook entries, so they do not run twice for root (everything else in 
 """
 import json
 import os
+import shutil
 import subprocess
 import sys
 
 path, paas = sys.argv[1], sys.argv[2]
 here = os.path.dirname(os.path.abspath(__file__))
 catalog = json.load(open(os.path.join(here, "..", "marketplace", "mcp.json")))
-subprocess.run([sys.executable, os.path.join(here, "..", "merge_settings.py"), path,
+tmp = path + ".new"                                          # built beside the target, then swapped in whole
+for f in (tmp, tmp + ".bak"):
+    if os.path.exists(f):
+        os.remove(f)
+if os.path.exists(path):
+    shutil.copy(path, tmp)
+subprocess.run([sys.executable, os.path.join(here, "..", "merge_settings.py"), tmp,
                 "--hooks-dir", f"{paas}/hooks", "--banner-dir", f"{paas}/banner", *catalog], check=True,
                stdout=subprocess.DEVNULL)
-s = json.load(open(path))
+s = json.load(open(tmp))
 s["apiKeyHelper"] = f"{paas}/bin/paas-api-key"
-json.dump(s, open(path, "w"), indent=2)
-for bak in [f for f in os.listdir(os.path.dirname(path)) if f.startswith(os.path.basename(path) + ".bak.")]:
-    os.remove(os.path.join(os.path.dirname(path), bak))      # merge_settings' backups do not belong in /etc
+with open(tmp, "w") as f:
+    json.dump(s, f, indent=2)
+    f.flush()
+    os.fsync(f.fileno())
+os.replace(tmp, path)
+if os.path.exists(tmp + ".bak"):
+    os.remove(tmp + ".bak")                                  # merge_settings' backup does not belong in /etc
 
 root = "/root/.claude/settings.json"
 BRAIN_HOOKS = ("block-write-tools.py", "docs-hints.py", "docs-leads.py", "session-start.py", "py-lint.py")
