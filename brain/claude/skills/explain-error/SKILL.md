@@ -6,7 +6,8 @@ description: Explain an error, alert, event or log line (PowerMax, ONTAP EMS, Po
 
 1. Extract the exact identifiers: event / EMS name (e.g. `callhome.*`, `scsiblade.*`), alert ID, error
    code, CSI error string, SCSI sense codes, log message text.
-2. Docs MCP (docs-search or docs-local): first the exact name / quoted string, filtered by vendor/product
+2. Docs MCP (docs-search or docs-local): an EMS name, SYMAPI / SIO code, CONTAP / DSA / KB number: `explain_code`
+   first (severity, corrective action, KB sections in one call). Otherwise, or when not documented, the exact name / quoted string, filtered by vendor/product
    when known (names in `~/.claude/brain/library/MANIFEST.md`):
    - ONTAP EMS: product `ontap-ems-<version>` matching the cluster version (9.15.1 → `ontap-ems-9151`,
      `ontap-ems-9111` … `ontap-ems-9181`; `ontap-ems` when unknown); the symptom: `kb-ontap`

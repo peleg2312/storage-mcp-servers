@@ -102,10 +102,13 @@ Tip: save a vendor KB as PDF/HTML ("Print → Save as PDF") whenever you open on
 
 | Tool | Purpose |
 |---|---|
-| `search_docs(query, vendor, product, limit)` | BM25 search over all libraries; all words first, any-word fallback; snippet with matches marked « ». Lean reply: `matched` only on partial hits, `partial: true` when no section holds every word, `library` only with two libraries |
+| `search_docs(query, queries, vendor, product, limit, read_top)` | BM25 search over all libraries; all words first, any-word fallback; snippet with matches marked « ». Lean reply: `matched` only on partial hits, `partial: true` when no section holds every word, `library` only with two libraries |
+| `explain_code(code)` | exact lookup of an ONTAP EMS event, PowerMax `SYMAPI_*` alert, PowerFlex `SIO*` code, `CONTAP-*` bug, `DSA-*` advisory or KB number: severity, description, corrective action, url, and the KB's Symptoms / Cause / Resolution; `documented: false` when absent |
 | `read_chunk(chunk_id, context)` | the hit in full plus neighbouring sections |
 | `read_document(path or url, start, max_sections)` | read a whole document in order (PDFs page by page) |
 | `list_sources(vendor)` | per library: bundle date, documents per vendor as `product count, ...` (~3 KB; `vendor` lists one) |
+
+`read_top` (0-3) returns the full text of the best hits inline, so one call answers. `queries` (up to 5 phrasings, wins over `query`) are merged, with `by_query` showing which found what. Mutual synonyms cover plain-language words as well as product names.
 
 Prompts: `explain_error`, `how_to`. The instructions and the `search_docs` text live in `docs_text.py`, shared by `server.py` and `mcp_stdio.py` (copy it with them). The server instructions tell Claude it is offline, to search with exact
 terms, read before answering, cite title + URL and the version, and to check the bug trackers for errors.

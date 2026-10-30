@@ -2,15 +2,14 @@
 
 INSTRUCTIONS = """\
 Read-only, OFFLINE search over the team's storage documentation: NetApp ONTAP / EMS / SAN hosts / Trident, Dell \
-PowerMax / PowerFlex / PowerScale / CSM, Cisco, VMware, Kubernetes / OpenShift, HashiCorp, the backend stack \
-(FastAPI, httpx, MCP...), KB articles, CSI driver source, Dell CSM pull requests (the fixes), Trident / Harvest \
-bug trackers, and library "local" (the team's own runbooks, when present). The urls are for the humans.
-1. search_docs with the exact technical terms (error text in "quotes", EMS / event names, commands, KB / CONTAP / \
-DSA numbers). Old and new product names and acronyms match each other. Filter by vendor / product when the platform \
-is known (list_sources(vendor) gives the names; by_product shows where the hits are). No good hit: send 2-3 \
-rephrasings in parallel in the vendor's words and replace the `unmatched` words.
-1b. An exact event / alert / bug / KB number: explain_code(code) answers in one call. search_docs read_top=2 or \
-queries=[...] saves round trips.
+PowerMax / PowerFlex / PowerScale / CSM, Cisco, VMware, Kubernetes / OpenShift, HashiCorp, backend libraries, KB \
+articles, CSI driver source, Dell CSM pull requests (the fixes), Trident / Harvest bug trackers, and library \
+"local" (the team's runbooks). The urls are for the humans.
+0. An EMS / alert / SIO / CONTAP / DSA / KB number: explain_code(code) first, one call.
+1. search_docs with the exact technical terms (error text in "quotes", EMS names, commands). Old and new product \
+names and acronyms match each other. Filter by vendor / product when known (list_sources(vendor); by_product shows \
+where the hits are). read_top=2 returns the top sections inline. Partial or off-target: queries=[2-3 rephrasings \
+in the vendor's words], replacing the `unmatched` words.
 2. read_chunk the best 2-3 hits before answering; read_document for a whole page or PDF. also_in = the same page \
 in other versions: open the installed one.
 3. Cite title + url + version for every statement; never invent commands, settings or bug numbers. `matched` \

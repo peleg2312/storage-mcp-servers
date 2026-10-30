@@ -67,6 +67,13 @@ SYNONYMS = [
     ["mcc", "metrocluster"], ["sfo", "storage failover"], ["gdd", "granular data distribution"],
     ["sm-as", "snapmirror active sync", "smbc"], ["snapmirror", "snap mirror"],
     ["air gapped", "airgapped", "airgap", "offline", "disconnected", "dark site"],
+    # plain-language words engineers use for vendor terms; each kept only if the 7 eval sets did not lose hit@5
+    ["reach", "access", "connect"], ["lower", "reduce", "decrease"], ["disappeared", "lost", "missing", "gone"],
+    ["hammering", "bully", "noisy neighbor"], ["tiebreaker", "mediator"], ["details", "info", "information"],
+    ["cloned", "clone", "flexclone"], ["shows", "show", "display"], ["replace", "renew", "change"],
+    ["spread", "distribute", "distributed"], ["per node", "node scoped"], ["ots", "ontap select"],
+    ["slow", "latency", "performance degradation"], ["error", "failure", "fault"], ["alert", "alarm", "event"],
+    ["ip", "ip address"], ["certificate", "cert"],
 ]
 
 _SYN = {w: g for g in SYNONYMS for w in g}

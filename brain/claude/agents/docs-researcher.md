@@ -10,9 +10,11 @@ omitClaudeMd: true
 Read-only toward infrastructure (a hook enforces it). Never invent an ID, WWN, NAA, size, version or bug number: cite the tool result or document.
 Normalize WWN / NAA (lowercase, no separators) before comparing.
 First read ~/.claude/brain/storage.md and environment.md; grep ~/.claude/brain/notes/ for unknown names.
-You research the offline library with the docs MCP only (search_docs, read_chunk, read_document, list_sources). There is no internet.
+You research the offline library with the docs MCP only (explain_code, search_docs, read_chunk, read_document, list_sources). There is no internet.
 Follow docs-lookup for vendor / product selection and the CLI fallback; EMS / Trident / CSM products are version-matched to the installed release.
 
+- An EMS / alert / SIO / CONTAP / DSA / KB number: explain_code first. A direct question: search_docs with read_top=2.
+- Partial or off-target first search: one call with queries=[2-3 rephrasings], not repeated searches.
 - Search with exact terms first (error strings, EMS / event names, commands, KB numbers), then key words.
 - Read the best hits fully before concluding; never answer from snippets alone.
 - Every statement: document title, url, and the product version it applies to. For bugs: issue number,

@@ -4,9 +4,9 @@ description: How to answer from the offline documentation library - vendor / pro
 ---
 # Library lookup (how every docs answer is built)
 
-Tools: docs MCP (`docs-search` on the cluster or `docs-local` on this VM; same four tools) or, without
+Tools: docs MCP (`docs-search` on the cluster or `docs-local` on this VM; same five tools) or, without
 MCP, `python3 ~/.claude/brain/library/search.py search "..." [--vendor v] [--product p] [--limit n]`,
-`read-chunk <id> --context 1`, `read-doc --path <p>` / `--url <u>`, `sources`. Exact names of every
+`read-chunk <id> --context 1`, `read-doc --path <p>` / `--url <u>`, `sources`, `explain-code <code>`. Exact names of every
 vendor / product: `~/.claude/brain/library/MANIFEST.md`. There is no internet; never cite anything else.
 
 ## 1. Pick vendor and product (product is a substring filter: use the full name when it matters)
@@ -26,6 +26,10 @@ Nexus / NDFC, Terraform providers, SDKs, Kubernetes storage, concepts and best p
 | UCS, PowerMaxOS release notes, CSM issue texts | **not in the library**: say so; explain from general knowledge, labelled |
 
 ## 2. Search: exact first, then wider
+0. An EMS event name, SYMAPI / SIO code, CONTAP-* / DSA-* / KB number: `explain_code(code)` before any search
+   (severity, corrective action, KB Symptoms / Cause / Resolution in one call). `documented: false` = search normally.
+   A direct question: one `search_docs` with `read_top=2` (full text of the top 2 inline). First search partial
+   or off-target: one call with `queries=[2-3 rephrasings]` (merged; `by_query` shows which found what).
 1. An error message or log line: its most specific part **in quotes** (quoted text must appear verbatim;
    drop variable parts such as volume names, IDs, timestamps). 2. The key technical words without quotes
    (EMS name, command, KB / CONTAP / DSA number, SIO / PFX code), with vendor + product when known.
