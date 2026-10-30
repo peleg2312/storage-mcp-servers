@@ -94,6 +94,9 @@ def main():
                 failed += 1
                 print(f"  fail {url}: {err}", flush=True)
                 continue
+            if re.search(r'^type: "index"', body[:600], re.M):     # a table of contents: its articles are fetched on their own
+                skipped += 1
+                continue
             m = re.search(r'^title:\s*"?(.*?)"?\s*$', body, re.M)
             with open(path, "w", encoding="utf-8") as f:
                 f.write(body)
