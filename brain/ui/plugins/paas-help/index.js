@@ -131,6 +131,17 @@ const icon = (name) => `<svg class="ico" viewBox="0 0 24 24" aria-hidden="true" 
 // header('Reports', 'Files your agents made', '<button class="btn">..</button>') -> markup: title + subtitle left, actions (optional) right, hairline under
 const header = (title, subtitle, actions) => `<div class="head"><div><h2>${esc(title)}</h2>${subtitle ? `<div class="sub">${esc(subtitle)}</div>` : ''}</div>${actions ? `<div class="actions">${actions}</div>` : ''}</div>`;
 
+// errorBlock(message, onRetry) -> element: plain-words error with Try again
+function errorBlock(message, onRetry) {
+  const b = el(`<div class="alert" role="alert"><span>The UI server did not answer (${esc(message)})</span></div>`);
+  if (onRetry) {
+    const r = el(`<button type="button" class="btn ghost">${icon('refresh')}Try again</button>`);
+    r.addEventListener('click', onRetry);
+    b.append(r);
+  }
+  return b;
+}
+
 // skeleton('cards'|'table'|'list') -> markup: shimmering blocks shaped like the content (static under reduced motion)
 function skeleton(kind = 'cards') {
   const rows = (n, c) => Array.from({ length: n }, () => `<i class="${c}"></i>`).join('');
