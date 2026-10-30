@@ -151,72 +151,89 @@ function busy(button, label) {
 
 // Schedule tab: jobs that run a prompt or skill at set times, their next run and run history (data: server.js).
 const DAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-const when = (j) => (j.repeat === 'weekly' ? `Every ${DAYS[j.day]} at ${j.time}` : j.repeat === 'weekdays' ? `Weekdays at ${j.time}` : `Every day at ${j.time}`);
-const fmt = (iso) => (iso ? new Date(iso).toLocaleString([], { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) : '—');
+const WHY = { scheduled: 'Scheduled', 'run now': 'Run by you' };
+const dur = (s) => (s >= 60 ? `${Math.floor(s / 60)} min ${s % 60} s` : `${s} s`);
 
 const CSS = `
-.sc{font:14px/1.5 Inter,ui-sans-serif,system-ui,sans-serif;color:hsl(var(--foreground));padding:28px;max-width:1000px;margin:0 auto}
-.sc h2{font-size:22px;font-weight:700;margin:0}.sc .sub{color:hsl(var(--muted-foreground));font-size:13px}
-.sc .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center;justify-content:space-between}
-.sc .top{margin-bottom:20px}
-.sc .go{border:0;border-radius:999px;padding:7px 18px;font:600 13px/1.4 inherit;cursor:pointer;color:#0b0d1a;background:linear-gradient(90deg,#a78bfa,#60a5fa,#22d3ee)}
-.sc .ghost{border:1px solid hsl(var(--border));background:none;color:inherit;border-radius:999px;padding:5px 14px;font:500 12.5px/1.4 inherit;cursor:pointer}
-.sc .ghost.danger{color:hsl(var(--destructive))}
-.sc .card{border:1px solid hsl(var(--border));background:hsl(var(--card));border-radius:14px;padding:16px 18px;margin-bottom:12px}
-.sc .card.off{opacity:.6}
-.sc .t{font-weight:600;font-size:15px}.sc .p{font:12.5px/1.5 ui-monospace,SFMono-Regular,Menlo,monospace;color:hsl(var(--muted-foreground));margin-top:4px;white-space:pre-wrap;max-height:60px;overflow:hidden}
-.sc .meta{display:flex;gap:18px;flex-wrap:wrap;margin-top:10px;font-size:13px}.sc .meta b{font-weight:600}
-.sc .pill{display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:600;border-radius:999px;padding:1px 9px}
-.sc .pill::before{content:'';width:7px;height:7px;border-radius:50%;background:currentColor}
-.sc .ok{color:#16a34a;background:rgba(22,163,74,.12)}.sc .fail{color:#dc2626;background:rgba(220,38,38,.13)}.sc .run{color:#7c3aed;background:rgba(124,58,237,.13)}
-.sc .acts{display:flex;gap:6px;flex-wrap:wrap;margin-top:12px}
-.sc .form{display:grid;gap:14px;margin-top:12px}.sc label{display:block;font-weight:600;font-size:13px}.sc label .sub{font-weight:400;margin-left:6px;font-size:12px}
-.sc input,.sc select,.sc textarea{width:100%;box-sizing:border-box;margin-top:4px;background:hsl(var(--background));border:1px solid hsl(var(--border));border-radius:10px;padding:8px 12px;color:inherit;font:inherit;font-weight:400}
-.sc textarea{font:12.5px/1.55 ui-monospace,Menlo,monospace;min-height:110px}
-.sc .three{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px}
-.sc table{width:100%;border-collapse:collapse;font-size:13px;margin-top:10px}.sc td{padding:6px;border-top:1px solid hsl(var(--border)/.6)}
-.sc pre{white-space:pre-wrap;font:12.5px/1.55 ui-monospace,Menlo,monospace;background:hsl(var(--background));border:1px solid hsl(var(--border));border-radius:10px;padding:12px;max-height:420px;overflow:auto;margin-top:10px}
-.sc .empty{padding:36px 16px;text-align:center;color:hsl(var(--muted-foreground))}
-@media (max-width:640px){.sc{padding:16px}}`;
+.paas .p{font:12.5px/1.5 ui-monospace,SFMono-Regular,Menlo,monospace;color:hsl(var(--muted-foreground));margin-top:4px;white-space:pre-wrap;max-height:60px;overflow:hidden;cursor:pointer}
+.paas .p.open{max-height:none}
+.paas .t{font-weight:600;font-size:15px}
+.paas .meta{display:flex;gap:18px;flex-wrap:wrap;margin-top:10px;font-size:13px}
+.paas .acts{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+.paas .form{display:grid;gap:14px;margin-top:12px}
+.paas .three{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px}
+.paas textarea{font:12.5px/1.55 ui-monospace,Menlo,monospace;min-height:110px}
+.paas pre{white-space:pre-wrap;font:12.5px/1.55 ui-monospace,Menlo,monospace;background:hsl(var(--background));border:1px solid hsl(var(--border));border-radius:10px;padding:12px;max-height:420px;overflow:auto;margin-top:10px}
+.paas .f-st.fail{color:hsl(var(--destructive))}
+@media (pointer:coarse){.paas .acts .btn.danger{margin-left:auto}}`;
 
 export function mount(container, api) {
   let jobs = [];
+  let tz = '';
   let open = null;        // job id whose history is shown
-  container.innerHTML = `<style>${CSS}</style><div class="sc"><div class="row top"><div><h2>Schedule</h2>
-    <div class="sub">Run a question or a skill at set times on this VM. Each run is saved in Reports and appears under Conversations.</div></div>
-    <button class="go new">+ New schedule</button></div><div class="body"><div class="empty">Loading…</div></div></div>`;
-  const body = container.querySelector('.body');
-  container.querySelector('.new').addEventListener('click', () => form({}));
+  const fmt = (iso) => (iso ? new Date(iso).toLocaleString([], { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit', ...(tz ? { timeZone: tz } : {}) }) : '—');
+  const when = (j) => (j.repeat === 'weekly' ? `Every ${DAYS[j.day]} at ${j.time}` : j.repeat === 'weekdays' ? `Weekdays at ${j.time}` : `Every day at ${j.time}`);
+  container.innerHTML = `<style>${PAAS_CSS}${CSS}</style><div class="paas">
+    ${header('Schedule', 'Run a question or a skill at set times on this VM. Each run is saved in Reports and appears under Conversations.')}
+    <div class="body"><div class="empty">Loading…</div></div></div>`;
+  const root = container.querySelector('.paas');
+  const body = root.querySelector('.body');
+  const st = statusLine(root);
+  const newBtn = el(`<button class="btn new">${icon('edit')} New schedule</button>`);
+  root.querySelector('.head').appendChild(newBtn);
+  newBtn.addEventListener('click', () => form({}));
 
   async function load() {
-    try { jobs = (await api.rpc('GET', 'jobs')).jobs; } catch (e) { body.innerHTML = `<div class="empty">Could not load: ${esc(e.message || e)}</div>`; return; }
+    try { const r = await api.rpc('GET', 'jobs'); jobs = r.jobs; tz = r.tz || ''; } catch (e) {
+      body.innerHTML = ''; body.appendChild(errorBlock(e.message || e, load)); return;
+    }
     list();
   }
 
   function list() {
     if (!jobs.length) {
-      body.innerHTML = `<div class="empty">Nothing scheduled yet.<br>For example: <b>/morning-check</b> every weekday at 07:00, or <b>/capacity-report</b> every Monday.</div>`;
+      body.innerHTML = '';
+      const e = emptyBlock('Nothing scheduled yet. Try one of these:', 'Create your first schedule', () => form({}));
+      const ex = el(`<div class="acts"><button class="btn ghost" data-ex="0">/morning-check every weekday at 07:00</button>
+        <button class="btn ghost" data-ex="1">/capacity-report every Monday at 07:00</button></div>`);
+      const ps = [{ name: 'Morning check', prompt: '/morning-check', repeat: 'weekdays', time: '07:00' }, { name: 'Weekly capacity', prompt: '/capacity-report', repeat: 'weekly', day: 1, time: '07:00' }];
+      ex.querySelectorAll('[data-ex]').forEach((b) => b.addEventListener('click', () => form(ps[b.dataset.ex])));
+      e.appendChild(ex);
+      body.appendChild(e);
       return;
     }
     body.innerHTML = jobs.map((j) => {
       const last = j.runs?.[0];
-      const status = j.running ? '<span class="pill run">Running</span>' : last ? `<span class="pill ${last.ok ? 'ok' : 'fail'}">${last.ok ? 'OK' : 'Failed'}</span>` : '<span class="sub">never ran</span>';
-      return `<div class="card${j.enabled ? '' : ' off'}" data-id="${esc(j.id)}">
-        <div class="row"><div class="t">${esc(j.name)}</div>${status}</div>
-        <div class="p">${esc(j.prompt)}</div>
-        <div class="meta"><span><b>${esc(when(j))}</b>${j.enabled ? '' : ' · paused'}</span><span>Next: ${esc(fmt(j.next))}</span>
-          <span>Last: ${esc(fmt(last?.at))}</span><span class="sub">in ${esc(j.folder)}</span></div>
-        <div class="acts"><button class="ghost" data-a="run">Run now</button><button class="ghost" data-a="toggle">${j.enabled ? 'Pause' : 'Resume'}</button>
-          <button class="ghost" data-a="edit">Edit</button><button class="ghost" data-a="hist">${open === j.id ? 'Hide runs' : `Runs (${j.runs?.length || 0})`}</button>
-          <button class="ghost danger" data-a="del">Delete</button></div>
-        ${open === j.id ? `<table>${(j.runs || []).map((r) => `<tr><td>${esc(fmt(r.at))}</td><td>${r.ok ? '<span class="pill ok">OK</span>' : '<span class="pill fail">Failed</span>'}</td>
-          <td class="sub">${esc(r.why)} · ${r.seconds} s</td><td><button class="ghost" data-rep="${esc(r.report)}">View</button></td></tr>`).join('') || '<tr><td class="sub">No runs yet</td></tr>'}</table><div class="rep"></div>` : ''}
+      const paused = !j.enabled;
+      const status = j.running ? '<span class="pill warn">Running</span>' : paused ? '<span class="tag">Paused</span>'
+        : last ? `<span class="pill ${last.ok ? 'ok' : 'fail'}">${last.ok ? 'OK' : 'Failed'}</span>` : '<span class="tag">Not run yet</span>';
+      return `<div class="card" data-id="${esc(j.id)}">
+        <div class="spread"><div class="t">${esc(j.name)}</div>${status}</div>
+        <div class="p" tabindex="0" role="button" aria-expanded="false" title="Click to show the full prompt">${esc(j.prompt)}</div>
+        <div class="meta"><span><b>${esc(when(j))}</b>${tz ? ` <span class="sub">(${esc(tz)})</span>` : ''}</span><span>Next: ${paused ? 'paused' : esc(fmt(j.next))}</span>
+          <span>Last: ${last ? esc(fmt(last.at)) : 'never'}</span><span class="sub">in ${esc(j.folder)}</span></div>
+        ${last && !last.ok && !j.running ? `<div class="sub" style="color:hsl(var(--destructive))">Last run failed. Open the runs list and View the report to see why.</div>` : ''}
+        <div class="acts"><button class="btn ghost" data-a="run">${icon('play')} Run now</button><button class="btn ghost" data-a="toggle">${paused ? `${icon('play')} Resume` : `${icon('pause')} Pause`}</button>
+          <button class="btn ghost" data-a="edit">${icon('edit')} Edit</button><button class="btn ghost" data-a="hist">${open === j.id ? 'Hide runs' : `Runs (${j.runs?.length || 0})`}</button>
+          <button class="btn danger" data-a="del">${icon('trash')} Delete</button></div>
+        ${open === j.id ? `<div class="table-wrap"><table>${(j.runs || []).map((r) => `<tr><td>${esc(fmt(r.at))}</td><td>${r.ok ? '<span class="pill ok">OK</span>' : '<span class="pill fail">Failed</span>'}</td>
+          <td class="sub">${esc(WHY[r.why] || r.why)} · ${esc(dur(r.seconds))}</td><td><button class="btn ghost sm" data-rep="${esc(r.report)}">View</button></td></tr>`).join('') || '<tr><td class="sub">No runs yet</td></tr>'}</table></div><div class="rep" aria-live="polite"></div>` : ''}
       </div>`;
     }).join('');
+    body.querySelectorAll('.p').forEach((p) => {
+      const tog = () => { p.classList.toggle('open'); p.setAttribute('aria-expanded', p.classList.contains('open')); };
+      p.addEventListener('click', tog);
+      p.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); tog(); } });
+    });
     body.querySelectorAll('[data-a]').forEach((b) => b.addEventListener('click', () => act(b.closest('.card').dataset.id, b.dataset.a, b)));
     body.querySelectorAll('[data-rep]').forEach((b) => b.addEventListener('click', async () => {
-      const r = await api.rpc('GET', `report?file=${encodeURIComponent(b.dataset.rep)}`).catch((x) => ({ out: String(x) }));
-      b.closest('.card').querySelector('.rep').innerHTML = `<pre>${esc(r.ok ? r.text : r.out)}</pre>`;
+      const rep = b.closest('.card').querySelector('.rep');
+      rep.innerHTML = '<div class="sub">Loading…</div>';
+      rep.scrollIntoView({ block: 'nearest' });
+      const r = await api.rpc('GET', `report?file=${encodeURIComponent(b.dataset.rep)}`).catch((x) => ({ out: String(x.message || x) }));
+      if (!r.ok) { rep.innerHTML = `<div class="empty">Could not load this report: ${esc(r.out)}</div>`; return; }
+      rep.innerHTML = `<pre>${esc(r.text)}</pre><div class="acts"><button class="btn ghost sm" data-x>Close</button></div>`;
+      rep.querySelector('[data-x]').addEventListener('click', () => { rep.innerHTML = ''; });
     }));
   }
 
@@ -224,47 +241,59 @@ export function mount(container, api) {
     const j = jobs.find((x) => x.id === id);
     if (a === 'edit') return form(j);
     if (a === 'hist') { open = open === id ? null : id; return list(); }
-    if (a === 'del' && !window.confirm(`Delete the schedule "${j.name}"? Its reports stay in Reports.`)) return;
-    btn.disabled = true;
-    const r = a === 'run' ? await api.rpc('POST', 'run', { id })
-      : a === 'del' ? await api.rpc('POST', 'job-delete', { id })
-        : await api.rpc('POST', 'job', { ...j, enabled: !j.enabled });
-    if (!r.ok) window.alert(r.out);
+    if (a === 'del') {
+      const c = await confirmInline(btn, { title: `Delete "${j.name}"?`, text: 'Past reports stay in Reports.', confirmLabel: 'Delete', danger: true });
+      if (!c.ok) return;
+    }
+    st.say('');
+    const restore = busy(btn, a === 'run' ? 'Starting…' : '…');
+    let r;
+    try {
+      r = await (a === 'run' ? api.rpc('POST', 'run', { id }) : a === 'del' ? api.rpc('POST', 'job-delete', { id }) : api.rpc('POST', 'job', { ...j, enabled: !j.enabled }));
+    } catch (x) { r = { ok: false, out: String(x.message || x) }; } finally { restore(); }
     await load();
+    if (!r.ok) st.error(r.out);
+    else if (a === 'run') st.say(`Started "${j.name}". The result appears under Runs in about a minute.`);
   }
 
   function form(j) {
     body.innerHTML = `<div class="card"><div class="t">${j.id ? 'Edit schedule' : 'New schedule'}</div>
-      <div class="form">
-        <label>Name<input class="f-name" value="${esc(j.name || '')}" placeholder="Morning check"></label>
-        <label>Prompt <span class="sub">what Claude should do: a question, or a skill like /morning-check</span>
-          <textarea class="f-prompt" placeholder="/morning-check fabric A and B, all arrays">${esc(j.prompt || '')}</textarea></label>
+      <form class="form">
+        <div class="field"><label for="f-name">Name *</label><input id="f-name" class="f-name" required value="${esc(j.name || '')}" placeholder="Morning check"></div>
+        <div class="field"><label for="f-prompt">Prompt *</label><small class="sub" id="h-prompt">What Claude should do: a question, or a skill like /morning-check</small>
+          <textarea id="f-prompt" class="f-prompt" required aria-describedby="h-prompt" placeholder="/morning-check fabric A and B, all arrays">${esc(j.prompt || '')}</textarea></div>
         <div class="three">
-          <label>Repeat<select class="f-repeat">${[['daily', 'Every day'], ['weekdays', 'Weekdays (Mon–Fri)'], ['weekly', 'Once a week']].map(([v, l]) => `<option value="${v}"${(j.repeat || 'weekdays') === v ? ' selected' : ''}>${l}</option>`).join('')}</select></label>
-          <label class="day">Day<select class="f-day">${DAYS.map((d, i) => `<option value="${i}"${Number(j.day ?? 1) === i ? ' selected' : ''}>${d}</option>`).join('')}</select></label>
-          <label>Time <span class="sub">VM clock</span><input class="f-time" type="time" value="${esc(j.time || '07:00')}"></label>
+          <div class="field"><label for="f-repeat">Repeat</label><select id="f-repeat" class="f-repeat">${[['daily', 'Every day'], ['weekdays', 'Weekdays (Mon–Fri)'], ['weekly', 'Once a week']].map(([v, l]) => `<option value="${v}"${(j.repeat || 'weekdays') === v ? ' selected' : ''}>${l}</option>`).join('')}</select></div>
+          <div class="field day"><label for="f-day">Day</label><select id="f-day" class="f-day">${DAYS.map((d, i) => `<option value="${i}"${Number(j.day ?? 1) === i ? ' selected' : ''}>${d}</option>`).join('')}</select></div>
+          <div class="field"><label for="f-time">Time</label><input id="f-time" class="f-time" type="time" aria-describedby="h-time" value="${esc(j.time || '07:00')}"><small class="sub" id="h-time">VM clock${tz ? ` (${esc(tz)})` : ''}</small></div>
         </div>
-        <label>Folder <span class="sub">~/chats for a plain chat, or a project folder</span><input class="f-folder" value="${esc(j.folder || '~/chats')}"></label>
-        <div class="sub">Runs without anyone watching: anything that would ask for permission is skipped, so keep scheduled prompts to checks and reports.</div>
-      </div>
-      <div class="acts"><button class="go f-save">Save</button><button class="ghost f-cancel">Cancel</button><span class="sub f-st"></span></div></div>`;
+        <div class="field"><label for="f-folder">Folder</label><input id="f-folder" class="f-folder" aria-describedby="h-folder" value="${esc(j.folder || '~/chats')}"><small class="sub" id="h-folder">~/chats for a plain chat, or a project folder</small></div>
+        <div class="sub">Runs without anyone watching: anything that would ask for permission is skipped, so keep scheduled prompts to checks and reports. Each run uses the Sonnet model, stops after 30 minutes or about $2, and the last 20 runs are kept.</div>
+        <div class="acts"><button type="submit" class="btn f-save">Save</button><button type="button" class="btn ghost f-cancel">Cancel</button><span class="f-st" role="status" aria-live="polite"></span></div>
+      </form></div>`;
     const v = (c) => body.querySelector(c).value;
     const dayVis = () => { body.querySelector('.day').style.display = v('.f-repeat') === 'weekly' ? '' : 'none'; };
     body.querySelector('.f-repeat').addEventListener('change', dayVis);
     dayVis();
+    body.querySelector('.f-name').focus();
     body.querySelector('.f-cancel').addEventListener('click', list);
-    body.querySelector('.f-save').addEventListener('click', async (e) => {
-      e.target.disabled = true;
-      const r = await api.rpc('POST', 'job', { id: j.id, enabled: j.enabled !== false, name: v('.f-name'), prompt: v('.f-prompt'),
-        repeat: v('.f-repeat'), day: Number(v('.f-day')), time: v('.f-time'), folder: v('.f-folder') }).catch((x) => ({ out: String(x) }));
-      e.target.disabled = false;
-      if (!r.ok) { body.querySelector('.f-st').textContent = r.out; return; }
+    body.querySelector('form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const fst = body.querySelector('.f-st');
+      const restore = busy(body.querySelector('.f-save'), 'Saving…');
+      let r;
+      try {
+        r = await api.rpc('POST', 'job', { id: j.id, enabled: j.enabled !== false, name: v('.f-name'), prompt: v('.f-prompt'),
+          repeat: v('.f-repeat'), day: Number(v('.f-day')), time: v('.f-time'), folder: v('.f-folder') });
+      } catch (x) { r = { out: String(x.message || x) }; } finally { restore(); }
+      if (!r.ok) { fst.className = 'f-st fail'; fst.textContent = r.out; return; }
+      fst.className = 'f-st';
       await load();
     });
   }
 
   load();
-  const poll = setInterval(() => { if (!body.querySelector('.f-save') && jobs.some((j) => j.running)) load(); }, 10000);   // until running jobs finish
+  const poll = setInterval(() => { if (!body.querySelector('.f-save') && jobs.some((j) => j.running)) load(); }, 3000);   // until running jobs finish
   container.addEventListener('paas-unmount', () => clearInterval(poll), { once: true });
 }
 

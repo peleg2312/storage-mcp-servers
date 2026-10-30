@@ -105,10 +105,10 @@ function clean(b) {
     folder: String(b.folder || '~/chats').trim() || '~/chats', repeat: ['daily', 'weekdays', 'weekly'].includes(b.repeat) ? b.repeat : 'daily',
     time: String(b.time || ''), day: Math.min(Math.max(Number(b.day) || 0, 0), 6), enabled: b.enabled !== false,
   };
-  if (!job.name) return 'Give the job a name';
-  if (!job.prompt) return 'Write the prompt (a question, or a skill such as /morning-check)';
-  if (!TIME.test(job.time)) return 'Time as HH:MM, e.g. 07:00';
-  if (!/^(~|\/)[\w./ -]*$/.test(job.folder) || job.folder.includes('..')) return 'Folder: a path like ~/chats or /home/peleg/storage-api';
+  if (!job.name) return 'Give the schedule a name.';
+  if (!job.prompt) return 'Write what Claude should do: a question, or a skill such as /morning-check.';
+  if (!TIME.test(job.time)) return 'Pick a time, for example 07:00.';
+  if (!/^(~|\/)[\w./ -]*$/.test(job.folder) || job.folder.includes('..')) return 'Folder must start with ~ or /, for example ~/chats.';
   return job;
 }
 
@@ -122,7 +122,7 @@ function body(req) {
 
 const view = (j) => ({ ...j, running: running.has(j.id), next: j.enabled ? nextSlot(j)?.toISOString() || null : null });
 const routes = {
-  'GET /jobs': () => ({ jobs: jobs.map(view), now: new Date().toISOString() }),
+  'GET /jobs': () => ({ jobs: jobs.map(view), now: new Date().toISOString(), tz: Intl.DateTimeFormat().resolvedOptions().timeZone }),
   'POST /job': (b) => {
     const job = clean(b);
     if (typeof job === 'string') return { ok: false, out: job };
