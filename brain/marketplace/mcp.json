@@ -71,7 +71,7 @@
       }
     }
   },
-  "ucs-central": {
+  "ucsc": {
     "description": "Cisco UCS Central: service profiles, vHBAs, FI FC uplinks, faults",
     "server": {
       "type": "http",
