@@ -3,17 +3,7 @@
 Three places: **your PC** (has internet; pushes to GitHub), **GitHub**, **the offline VM** (runs Claude
 Code). Every command you need, in order.
 
-## 1. PC: push what Claude built (git bundle)
-
-```bash
-cd storage-mcp-servers                              # your clone, branch main, up to date (git pull)
-git pull /path/to/storage-brain-<date>.bundle main  # the bundle file you downloaded from the session
-git push origin main
-```
-If git refuses because the branches diverged: `git fetch /path/to/<file>.bundle main && git merge FETCH_HEAD`
-then push. A later "incremental" bundle applies the same way, on top of the previous one.
-
-## 2. PC: complete the library (Dell PDFs, Dell KB, bug trackers, the rest of the NetApp KB)
+## 1. PC: complete the library (Dell PDFs, Dell KB, bug trackers, the rest of the NetApp KB)
 
 Needs: `git`, `python3` (3.10+), a venv with `pip install pypdf cryptography fonttools` (macOS: `python3 -m venv work/venv && source work/venv/bin/activate` first), and for the bug trackers any read-only GitHub token.
 Dell's site blocks cloud IPs, so this step has to run from a normal office/home PC.
@@ -80,9 +70,9 @@ sh bundle/build-offline.sh --from-library     # needs podman or docker; no inter
 # -> work/docs-search-offline-<date>.tar.gz : import into the internal registry, deploy openshift-offline.yaml
 ```
 
-## 3. VM (offline): install everything
+## 2. VM (offline): install everything
 
-Needs: `python3` (any 3.8+ from the OS), `git`, Claude Code installed (`claude` in PATH).
+Needs: `python3` (3.9+, the OS one: RHEL 9 ships 3.9), `git`, Claude Code installed (`claude` in PATH).
 
 ```bash
 git clone https://github.com/peleg2312/storage-mcp-servers.git     # or copy the folder in
@@ -113,7 +103,8 @@ re-extracted only when `library/VERSION` changed).
 Try: `python3 ~/.claude/brain/library/search.py search "scsiblade.san.config.active"` or, inside Claude,
 `explain EMS scsiblade.san.config.active`, `/zoning-audit fabric A`, `which KB covers FC link down after a switch reboot`.
 
-## 4. Afterwards
+## 3. Afterwards
 
 - Sign out of kb.netapp.com once the KB export is done (invalidates the token you used).
-- Keep the repo private: the library is vendor content licensed to your support contracts.
+- Vendor content remains the vendors' copyright, kept for internal reference.
+- The web UI is installed by `install-vm.sh` (`NO_UI=1` skips it); multi-user setup: `sh brain/multiuser/install-gate.sh`.
