@@ -1,7 +1,6 @@
 ---
 name: identify-lun
-description: Resolve a LUN identifier (naa, eui, PowerMax device ID, ONTAP serial or path, datastore, RDM, VM) into array, device, size, masking / igroup, hosts, datastore and VMs.
-when_to_use: Trigger phrases - "what is naa.xxx", "decode this eui", "where does datastore X live", "which LUN is VM Y on"
+description: Resolve a LUN identifier (naa, eui, PowerMax device ID, ONTAP serial or path, datastore, RDM, VM) into array, device, size, masking / igroup, hosts, datastore and VMs. Triggers - "what is naa.xxx", "decode this eui", "where does datastore X live", "which LUN is VM Y on"
 ---
 # Identify a LUN
 
@@ -24,8 +23,9 @@ when_to_use: Trigger phrases - "what is naa.xxx", "decode this eui", "where does
   replication (SRDF / SnapVX) state.
 - **ONTAP**: LUN by serial → SVM, path, size, space reservation, igroup maps (LUN ID), igroup initiators
   (WWPNs), OS type, FC LIFs of the SVM.
-- **PowerFlex**: no live MCP: report what VMware shows and say the array side was not checked (EUI ↔
-  volume ID format: docs MCP `dell/powerflex`, "device identifier eui").
+- **PowerFlex**: powerflex MCP (`get_health` first) `find_volume(key=<eui. or emc-vol id>)` → volume, size, pool,
+  mapped SDCs (`get_sdc` for the ESXi host). Not connected: report what VMware shows and say the array side was
+  not checked (EUI format: docs MCP `dell/powerflex`, "device identifier eui").
 
 ## 4. Consistency checks (report each as OK / finding)
 - every ESX host that sees the LUN is in the array's host group / igroup and vice versa

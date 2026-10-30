@@ -1,7 +1,6 @@
 ---
 name: powerflex-troubleshoot
-description: Troubleshoot Dell PowerFlex (SDC / SDS / MDM, rebuild, rebalance, pool capacity, data unavailable, ESXi access) live through the powerflex MCP, with the PowerFlex docs, Dell KB and vCenter data.
-when_to_use: Trigger phrases - "PowerFlex alert SIO...", "SDC disconnected", "rebuild is slow", "ESXi lost the eui devices"
+description: Troubleshoot Dell PowerFlex (SDC / SDS / MDM, rebuild, rebalance, pool capacity, data unavailable, ESXi access) live through the powerflex MCP, with the PowerFlex docs, Dell KB and vCenter data. Triggers - "PowerFlex alert SIO...", "SDC disconnected", "rebuild is slow", "ESXi lost the eui devices"
 ---
 # PowerFlex troubleshooting
 

@@ -1,7 +1,6 @@
 ---
 name: terraform
-description: Write, review or plan Terraform for the user's platforms - PowerMax, PowerFlex, PowerScale, ONTAP, vSphere, Kubernetes / OpenShift, Cisco NDFC and NX-OS - and general HCL (modules, variables, state, backends, imports). Infrastructure is applied by the user, never by Claude.
-when_to_use: Trigger phrases - "terraform", "HCL", ".tf", "provider", "module", "terraform plan", "import existing ... into terraform", "infrastructure as code", "IaC"
+description: Write, review or plan Terraform for the user's platforms - PowerMax, PowerFlex, PowerScale, ONTAP, vSphere, Kubernetes / OpenShift, Cisco NDFC and NX-OS - and general HCL (modules, variables, state, backends, imports). Infrastructure is applied by the user, never by Claude. Triggers - "terraform", "HCL", ".tf", "provider", "module", "terraform plan", "import existing ... into terraform", "infrastructure as code", "IaC"
 ---
 # Terraform (offline, read-only toward infrastructure)
 

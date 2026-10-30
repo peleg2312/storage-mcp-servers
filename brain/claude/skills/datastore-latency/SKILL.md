@@ -1,7 +1,6 @@
 ---
 name: datastore-latency
-description: Find which layer (VMware, fabric, PowerMax or ONTAP) causes latency on a datastore, VM disk or RDM.
-when_to_use: Trigger phrases - "datastore X is slow", "VM latency since 14:00", "high storage latency alert", "RDM slow"
+description: Find which layer (VMware, fabric, PowerMax or ONTAP) causes latency on a datastore, VM disk or RDM. Triggers - "datastore X is slow", "VM latency since 14:00", "high storage latency alert", "RDM slow"
 ---
 # Datastore / VM storage latency
 
@@ -18,7 +17,8 @@ Ask (or infer) the time window. Use the same window on every layer; use max **an
 `identify-lun` → array, device/LUN, storage group / volume, the hosts' paths.
 
 ## 3. Array
-- **PowerMax**: `troubleshoot_host_latency` or `get_performance` on the storage group: response time
+- **PowerMax**: `get_performance(category="StorageGroup", storage_group=<sg>, minutes_back=<window>)`, then
+  `category="FEPort"` (director + port) for the port group's ports: response time
   read/write, IOPS, MB/s, I/O size; FA ports / directors used by the port group (utilization, queue);
   SRDF/Metro write latency if replicated (synchronous replication adds the link round trip).
 - **ONTAP** (Harvest): LUN and volume latency (read/write/other), IOPS; node CPU / utilization;
@@ -32,8 +32,5 @@ checks, only for the involved ports).
 
 ## Output
 Answer first: "latency is in <layer> because <evidence>". Then a table per layer (metric, avg, max, time
-of max, normal/abnormal), the top contributing VMs, and next steps. Search the docs MCP for any array
-event or bug matching the symptoms and versions: ONTAP → `ontap-ems-<cluster version>`, `kb-ontap`,
-`kb-ontap`; PowerMax → `dell/powermax` (Events and Alerts guide), `dell/kb`; ESXi path / APD symptoms →
-`vmware/kb`, `kb-ontap`.
+of max, normal/abnormal), the top contributing VMs, and next steps. Explain every event or alert seen with the docs (storage.md S6; products: docs-lookup).
 Charts: latency over the window per datastore with `report-export` (one file per measure).

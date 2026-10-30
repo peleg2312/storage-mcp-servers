@@ -1,7 +1,6 @@
 ---
 name: decommission-check
-description: Prove whether a LUN, datastore or RDM is safe to remove (pass/fail checklist across VMware, arrays, replication, OpenShift, fabrics) and give the removal order. Use before any unmap, delete or reclaim.
-when_to_use: Trigger phrases - "is naa.xxx safe to remove", "can I delete datastore X", "before I unmap this LUN"
+description: Prove whether a LUN, datastore or RDM is safe to remove (pass/fail checklist across VMware, arrays, replication, OpenShift, fabrics) and give the removal order. Use before any unmap, delete or reclaim. Triggers - "is naa.xxx safe to remove", "can I delete datastore X", "before I unmap this LUN"
 ---
 # Decommission check
 
@@ -14,7 +13,7 @@ Input: one or more NAAs / devices / datastores. Run `identify-lun` first for eac
    templates, ISOs, logs (Aria; not in kuparashit)
 3. No I/O for ≥ 30 days on the array (PowerMax perf on device/SG, Harvest for ONTAP LUN)
 4. Not mapped to non-ESX hosts; not a Trident / CSM (OpenShift) volume
-5. No replication: SRDF / Metro / SnapVX (PowerMax), SnapMirror / active sync (ONTAP); no snapshots
+5. No replication: SRDF / Metro / SnapVX (PowerMax), SnapMirror / active sync (ONTAP), PowerFlex RCG (`get_replication`) and snapshot policies (`list_snapshot_policies`, `get_volume`); no snapshots
    or clones depending on it
 6. Not an ESXi boot LUN, not a vVols PE, not a gatekeeper
 7. No recent changes or open work on it (PowerMax `get_audit_log`; ONTAP events)

@@ -1,7 +1,6 @@
 ---
 name: new-lun-checklist
-description: Prepare a new LUN / datastore / RDM or host addition read-only - verify hosts, WWPNs, zoning, masking, headroom, naming - and produce the commands and post-checks for him to run.
-when_to_use: Trigger phrases - "I need a new 2TB datastore for cluster X", "add a host to the cluster", "new RDM for VM Y"
+description: Prepare a new LUN / datastore / RDM or host addition read-only - verify hosts, WWPNs, zoning, masking, headroom, naming - and produce the commands and post-checks for him to run. Triggers - "I need a new 2TB datastore for cluster X", "add a host to the cluster", "new RDM for VM Y"
 ---
 # New LUN checklist (preparation only)
 

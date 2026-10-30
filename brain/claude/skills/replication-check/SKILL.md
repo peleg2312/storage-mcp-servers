@@ -1,7 +1,6 @@
 ---
 name: replication-check
-description: Replication health - PowerMax SRDF, ONTAP SnapMirror, PowerFlex replication consistency groups - states, lag, links, and what each state means.
-when_to_use: Trigger phrases - "is replication healthy", "SRDF pair state", "SnapMirror lag", "DR readiness"
+description: Replication health - PowerMax SRDF, ONTAP SnapMirror, PowerFlex replication consistency groups - states, lag, links, and what each state means. Triggers - "is replication healthy", "SRDF pair state", "SnapMirror lag", "DR readiness"
 ---
 # Replication check
 
@@ -39,10 +38,9 @@ suspend, swap, failover, quiesce, break or resync anything.
   cluster; MetroCluster: `ontap-metrocluster`.
 
 ## PowerFlex replication
-- No MCP: he runs (read-only) the RCG queries from the CLI Reference Guide of his version (search
-  `dell/powerflex` "replication consistency group" / "RPO"), or reads PowerFlex Manager › Protection:
-  per RCG the state (active / paused / failover / error), RPO and RPO compliance, journal capacity use,
-  peer system connectivity, pairs. Dial-home codes from `dell/kb`.
+- Live: powerflex MCP `get_replication` (peer systems, RCGs: state, direction, RPO, activity, errors; `rcg=` for
+  pairs), `get_alerts` text='replication'. Not connected: he runs the RCG queries from the CLI Reference Guide of
+  his version (`dell/powerflex`) or reads PowerFlex Manager › Protection. Dial-home codes from `dell/kb`.
 - OpenShift volumes replicated through CSM: `oc get dellcsireplicationgroup -A` and the `dell/csm`
   `replication/` pages for the group states (`csm-health`).
 

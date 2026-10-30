@@ -1,17 +1,16 @@
 ---
 name: fabric-health
-description: Health check of the MDS fabrics and UCS FC uplinks - down ports, error counters, flaps, slow drain, port-channels, optics, recent zoning changes.
-when_to_use: Trigger phrases - "is the fabric OK", "slow drain on fabric B", "flapping port", "after the switch maintenance"
+description: Health check of the MDS fabrics and UCS FC uplinks - down ports, error counters, flaps, slow drain, port-channels, optics, recent zoning changes. Triggers - "is the fabric OK", "slow drain on fabric B", "flapping port", "after the switch maintenance"
 context: fork
 agent: fabric-investigator
 background: false
 ---
-You run in a forked context: gather everything, then return a complete answer (answer first, evidence table, findings, sources, next checks); the user cannot answer questions mid-way.
+Forked: the user cannot answer mid-way; finish with a complete answer (storage.md S4).
 
 # Fabric health
 
 Run per switch, both fabrics. Prefer the summary tools (`scan_port_errors`, `slow_drain_check`,
-`port_channel_health`, `show_logging_onboard`, `get_log_events`) and drill down with the `show_*` tools only for the
+`port_channel_health`, `show_logging_onboard`, `get_log_events`) and drill down with `run_show` only for the
 ports they flag.
 
 ## Checks
