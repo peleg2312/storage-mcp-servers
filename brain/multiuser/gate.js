@@ -26,7 +26,9 @@ const MAX_IP_FAILURES = 30; // all names from one address (NAT users share it, s
 const MAX_IP_BUSY = 4; // password checks running at once per address
 const FAIL_MS = 3500; // every failed sign-in answers after at least this long: unknown user looks like a wrong password
 const BAD = 'Wrong username or password';
-const LOCKED = 'Too many wrong passwords. Try again in 10 minutes.';
+const lockedUser = (min) => `Too many wrong passwords for this username from this computer. Try again in ${min} minute${min === 1 ? '' : 's'}.`;
+const lockedIp = (min) => `Too many sign-in attempts from this computer or network. Wait ${min} minute${min === 1 ? '' : 's'} and try again.`;
+const minutesLeft = (list) => Math.max(1, Math.ceil(((list[0] || Date.now()) + WINDOW_MS - Date.now()) / 60000));
 const LOGO = (() => { try { return fs.readFileSync(`${APP}/dist/logo.svg`, 'utf8'); } catch { return ''; } })();
 
 const log = (msg) => console.log(`${new Date().toISOString()} ${msg}`);
@@ -69,7 +71,7 @@ function checkPassword(user, password) {
       try { process.kill(-proc.pid, 'SIGKILL'); } catch { /* already gone */ } // runuser and su too, not only the leader
       resolve(ok);
     };
-    const timer = setTimeout(() => finish(false), 15000);
+    const timer = setTimeout(() => finish('timeout'), 15000); // slow, not wrong: the caller does not count it
     proc.onData((data) => {
       if (!sent && /password/i.test(data)) {
         sent = true;
@@ -215,40 +217,68 @@ function sessionUser(req) {
 // ---- pages -----------------------------------------------------------------------------------------------------
 
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`);
-const signInPage = (error) => `<!doctype html><html lang="en" class="dark"><head><meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1"><title>Peleg As A Service</title><style>
-:root{--g:linear-gradient(120deg,#a78bfa 0%,#818cf8 30%,#60a5fa 55%,#22d3ee 80%,#34d399 100%)}
+const signInPage = (error, username = '') => `<!doctype html><html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="dark light">
+<title>Sign in - Peleg As A Service</title><style>
+:root{--g:linear-gradient(120deg,#a78bfa 0%,#818cf8 30%,#60a5fa 55%,#22d3ee 80%,#34d399 100%);--bg:#0d0f1a;--card:#141725;
+--fg:#eceff8;--muted:#9aa1b8;--line:#23273a;--input:#0f1120;--inline:#2c3148;--errfg:#fca5a5;--errbg:rgba(248,113,113,.12);
+--foot:#9aa1b8;--warn:#fbbf24;--ring:#c4b5fd;--btnfg:#0b0d1a}
+@media(prefers-color-scheme:light){:root{--g:linear-gradient(120deg,#6d28d9,#4f46e5 30%,#1d4ed8 55%,#0e7490 80%,#047857);--bg:#f6f7fb;--card:#fff;
+--fg:#14172a;--muted:#555c74;--line:#d9dcea;--input:#fff;--inline:#9aa1b8;--errfg:#b42318;--errbg:rgba(180,35,24,.08);--foot:#555c74;
+--warn:#92400e;--ring:#6d28d9;--btnfg:#fff}}
 *{box-sizing:border-box}body{margin:0;min-height:100vh;display:flex;align-items:center;justify-content:center;
-padding:16px;font:15px/1.5 Inter,ui-sans-serif,system-ui,sans-serif;color:#eceff8;background:#0d0f1a;
+padding:16px;font:15px/1.5 Inter,ui-sans-serif,system-ui,sans-serif;color:var(--fg);background:var(--bg);
 background-image:radial-gradient(40rem 28rem at 50% -8rem,rgba(167,139,250,.22),transparent 70%),
 radial-gradient(30rem 22rem at 100% 110%,rgba(34,211,238,.14),transparent 70%),
 radial-gradient(26rem 20rem at 0% 100%,rgba(52,211,153,.10),transparent 70%)}
-.card{width:100%;max-width:400px;padding:32px;border-radius:16px;background:#141725;border:1px solid #23273a;
-box-shadow:0 20px 60px -20px rgba(0,0,0,.6)}.logo{display:flex;justify-content:center}.logo svg{width:64px;height:64px}
+.card{width:100%;max-width:400px;padding:32px;border-radius:16px;background:var(--card);border:1px solid var(--line);
+box-shadow:0 20px 60px -20px rgba(0,0,0,.35)}.logo{display:flex;justify-content:center}.logo svg{width:64px;height:64px}
 h1{margin:16px 0 4px;text-align:center;font-size:26px;background:var(--g);-webkit-background-clip:text;
-background-clip:text;color:transparent}p.sub{margin:0 0 24px;text-align:center;color:#9aa1b8}
+background-clip:text;color:transparent}p.sub{margin:0 0 24px;text-align:center;color:var(--muted)}
 label{display:block;margin:14px 0 6px;font-weight:600;font-size:14px}input{width:100%;padding:10px 12px;
-border-radius:10px;border:1px solid #2c3148;background:#0f1120;color:inherit;font:inherit}
-input:focus{outline:none;border-color:#a78bfa}button{width:100%;margin-top:22px;padding:11px;border:0;border-radius:10px;
-background:var(--g);color:#0b0d1a;font:600 15px/1.2 inherit;cursor:pointer}button:hover{filter:brightness(1.08)}
-.err{margin:0 0 8px;padding:10px 12px;border-radius:10px;background:rgba(248,113,113,.12);color:#fca5a5;font-size:14px}
-.foot{margin-top:22px;text-align:center;color:#6b7290;font-size:12px}</style></head><body>
-<form class="card" method="post" action="/paas-gate/login"><div class="logo">${LOGO}</div><h1>Peleg As A Service</h1>
-<p class="sub">Sign in with this VM's account</p>${error ? `<p class="err" role="alert">${esc(error)}</p>` : ''}
-<label for="u">Username</label><input id="u" name="username" autocomplete="username" autocapitalize="none" required autofocus>
-<label for="p">Password</label><input id="p" name="password" type="password" autocomplete="current-password" required>
-<button type="submit">Sign In</button><div class="foot">Runs on this VM · read-only toward infrastructure</div></form>
-<script>try{localStorage.removeItem('auth-token')}catch(e){}</script></body></html>`;
+border-radius:10px;border:1px solid var(--inline);background:var(--input);color:inherit;font:inherit;font-size:16px}
+input:focus{border-color:#a78bfa}input:focus-visible,button:focus-visible{outline:3px solid var(--ring);outline-offset:2px}
+.pw{position:relative}.pw input{padding-right:72px}
+button{width:100%;margin-top:22px;padding:11px;min-height:44px;border:0;border-radius:10px;touch-action:manipulation;
+background:var(--g);color:var(--btnfg);font-family:inherit;font-weight:600;font-size:16px;line-height:1.2;cursor:pointer}
+button:hover{filter:brightness(1.08)}button:disabled{opacity:.7;cursor:wait;filter:none}
+button.eye{position:absolute;right:4px;top:50%;transform:translateY(-50%);width:auto;margin:0;padding:4px 10px;min-height:36px;
+background:none;color:var(--muted);font-size:13px}button.eye:hover{filter:none;color:var(--fg)}
+small{display:block;margin-top:6px;color:var(--warn);font-size:13px}
+.err{margin:0 0 8px;padding:10px 12px;border-radius:10px;background:var(--errbg);color:var(--errfg);font-size:14px}
+.slow{margin:12px 0 0;text-align:center;color:var(--muted);font-size:13px}
+.foot{margin-top:22px;text-align:center;color:var(--foot);font-size:13px}
+@media(prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}</style></head><body><main>
+<form class="card" method="post" action="/paas-gate/login" aria-labelledby="t"><div class="logo" aria-hidden="true">${LOGO}</div><h1 id="t">Peleg As A Service</h1>
+<p class="sub">Sign in with this VM's account</p>${error ? `<p class="err" id="err" role="alert">${esc(error)}</p>` : ''}
+<label for="u">Username</label><input id="u" name="username" value="${esc(username)}" autocomplete="username" autocapitalize="none" required ${username ? '' : 'autofocus'} ${error ? 'aria-describedby="err"' : ''}>
+<label for="p">Password</label><div class="pw"><input id="p" name="password" type="password" autocomplete="current-password" required ${username ? 'autofocus' : ''} ${error ? 'aria-describedby="err"' : ''}>
+<button type="button" class="eye" id="eye" aria-label="Show password" aria-pressed="false">Show</button></div>
+<small id="caps" role="status" hidden>Caps Lock is on</small>
+<button type="submit" id="go">Sign In</button><p class="slow" id="slow" role="status" hidden>Still working. A first sign-in can take up to a minute while your workspace starts.</p>
+<div class="foot">Runs on this VM · read-only toward infrastructure</div></form></main>
+<noscript><style>.pw button,#caps{display:none}</style></noscript>
+<script>try{localStorage.removeItem('auth-token')}catch(e){}
+var f=document.querySelector('form'),b=document.getElementById('go'),p=document.getElementById('p'),e=document.getElementById('eye'),
+c=document.getElementById('caps'),w=document.getElementById('slow'),t;
+f.addEventListener('submit',function(){p.type='password';b.disabled=true;b.textContent='Signing in…';b.setAttribute('aria-busy','true');
+t=setTimeout(function(){w.hidden=false},4000)});
+addEventListener('pageshow',function(v){if(v.persisted){clearTimeout(t);b.disabled=false;b.textContent='Sign In';b.removeAttribute('aria-busy');w.hidden=true}});
+e.onclick=function(){var s=p.type==='password';p.type=s?'text':'password';e.textContent=s?'Hide':'Show';e.setAttribute('aria-pressed',s);
+e.setAttribute('aria-label',(s?'Hide':'Show')+' password')};
+p.onkeyup=p.onkeydown=function(k){c.hidden=!(k.getModifierState&&k.getModifierState('CapsLock'))};p.onblur=function(){c.hidden=true};
+</script></body></html>`;
 
-const signedInPage = (token) => '<!doctype html><meta charset="utf-8"><title>Peleg As A Service</title><script>'
-  + `localStorage.setItem('auth-token', ${JSON.stringify(token).replace(/</g, '\\u003c')});location.replace('/');</script>`;
+const signedInPage = (token) => '<!doctype html><meta charset="utf-8"><title>Signing in - Peleg As A Service</title><script>'
+  + `localStorage.setItem('auth-token', ${JSON.stringify(token).replace(/</g, '\\u003c')});location.replace('/');</script>`
+  + '<noscript><meta http-equiv="refresh" content="0;url=/"></noscript><p style="font:16px system-ui;padding:24px">Signing you in\u2026</p>';
 
 function send(res, status, type, body) {
   res.writeHead(status, { 'content-type': type, 'cache-control': 'no-store', 'x-frame-options': 'DENY' });
   res.end(body);
 }
 const sendJson = (res, status, obj) => send(res, status, 'application/json', typeof obj === 'string' ? obj : JSON.stringify(obj));
-const sendPage = (res, status, error) => send(res, status, 'text/html; charset=utf-8', signInPage(error));
+const sendPage = (res, status, error, username) => send(res, status, 'text/html; charset=utf-8', signInPage(error, username));
 
 // ---- sign-in / sign-out ----------------------------------------------------------------------------------------
 
@@ -277,17 +307,21 @@ async function login(req, res, asJson) {
   const ip = clientIp(req);
   const [username, password] = credentials(req, (await readBody(req, 8192)) || '');
   const valid = USER_RE.test(username);
-  const fail = async (status, msg, why) => {
+  const fail = async (status, msg, why, retryMin) => {
     log(`sign-in failed user=${valid ? username : '(invalid)'} ip=${ip}${why ? ` (${why})` : ''}`);
     if (status === 401) await sleep(Math.max(0, FAIL_MS - (Date.now() - started)));
-    if (asJson) sendJson(res, status, { error: msg }); else sendPage(res, status, msg);
+    if (retryMin) res.setHeader('retry-after', String(retryMin * 60));
+    if (asJson) sendJson(res, status, { error: msg }); else sendPage(res, status, msg, valid ? username : '');
   };
   if (!valid || !password) return fail(401, BAD);
   const key = `${username}|${ip}`;
   const attempts = recent(key);
-  if (attempts.length >= MAX_FAILURES) return fail(429, LOCKED, 'locked');
+  if (attempts.length >= MAX_FAILURES) return fail(429, lockedUser(minutesLeft(attempts)), 'locked', minutesLeft(attempts));
   const perIp = recent(ip);
-  if (perIp.length >= MAX_IP_FAILURES || (busy.get(ip) || 0) >= MAX_IP_BUSY) return fail(429, LOCKED, 'address limit');
+  if (perIp.length >= MAX_IP_FAILURES || (busy.get(ip) || 0) >= MAX_IP_BUSY) {
+    const m = minutesLeft(perIp);
+    return fail(429, lockedIp(m), 'address limit', m);
+  }
   attempts.push(Date.now()); // counted while it runs, so parallel guesses cannot get around the limit
   perIp.push(Date.now());
   busy.set(ip, (busy.get(ip) || 0) + 1);
@@ -295,11 +329,16 @@ async function login(req, res, asJson) {
   try { ok = (await allowed(username)) && (await checkPassword(username, password)); } finally {
     if (busy.get(ip) > 1) busy.set(ip, busy.get(ip) - 1); else busy.delete(ip);
   }
+  if (ok === 'timeout') { // the VM was slow, the password was not judged: no strike against the user
+    recent(key).pop();
+    recent(ip).pop();
+    return fail(503, 'The VM did not answer in time. Try again in a moment.', 'password check timed out');
+  }
   if (!ok) return fail(401, BAD);
   const port = await ensureInstance(username);
   const r = port ? await instanceLogin(port, username, password) : { status: 502, token: null };
   if (!r.token) {
-    return r.status === 429 ? fail(429, LOCKED, 'instance locked')
+    return r.status === 429 ? fail(429, lockedUser(10), 'instance locked', 10)
       : fail(502, 'Your workspace did not start. Try again in a minute.', `instance answered ${r.status}`);
   }
   recent(key).pop(); // the right password does not count against the limit

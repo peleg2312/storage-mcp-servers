@@ -4,8 +4,12 @@
   --primary: 258 70% 60%;
   --primary-foreground: 0 0% 100%;
   --ring: 258 70% 60%;
+  --muted-foreground: 40 5% 38%;   /* 5:1 on the beige muted surfaces (the stock 44% measured 4.0) */
+  /* status colours as r g b, for rgb(var(--ok)) / rgb(var(--ok) / .14): each reads at 4.5:1 on its theme's surface */
+  --ok: 21 128 61; --warn: 180 83 9; --bad: 185 28 28; --info: 109 40 217; --off: 75 85 99;
 }
 .dark {
+  --ok: 74 222 128; --warn: 251 191 36; --bad: 248 113 113; --info: 196 181 253; --off: 156 163 175;
   --background: 232 28% 7%;
   --foreground: 225 30% 94%;
   --card: 232 24% 10%;
@@ -30,24 +34,44 @@
   background-clip: text;
   color: transparent !important;
 }
+/* darker stops on the light theme: the pastel gradient measured about 2:1 on near-white */
+:root:not(.dark) .paas-wordmark { background-image: linear-gradient(120deg, #6d28d9 0%, #4f46e5 35%, #0369a1 65%, #047857 100%); }
 .paas-tagline { letter-spacing: .14em; text-transform: uppercase; }
 button.bg-primary, a.bg-primary { background-image: var(--paas-gradient); color: #0b0d1a; }
-button.bg-primary:hover, a.bg-primary:hover { filter: brightness(1.08); }
+button.bg-primary:hover:not(:disabled), a.bg-primary:hover { filter: brightness(1.08); }
+/* a disabled primary button looks disabled (not a faded gradient) */
+button.bg-primary:disabled { background-image: none; background-color: hsl(var(--muted)); color: hsl(var(--muted-foreground)); filter: none; }
+/* every control shows where the keyboard is; disabled ones look it; motion stops for people who ask */
+button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible, a:focus-visible, [role="button"]:focus-visible { outline: 2px solid hsl(var(--ring)); outline-offset: 2px; }
+button:disabled { opacity: .5; cursor: not-allowed; }
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; } }
+/* tab plugins: bigger targets on touch screens (their own CSS keeps the desktop sizes) */
+@media (pointer: coarse) { .pr .btn, .sc .go, .us .go, .pb .btn, .mk .go, .ps .btn, .p-btn { min-height: 44px; } }
+/* sidebar icon buttons (add project, new chat, refresh, hide) and the star: finger-sized on touch screens */
+@media (pointer: coarse) { button[aria-label="New chat"], button[aria-label="Add project"], button[aria-label="Refresh"], button[aria-label="Hide sidebar"], [role="button"][aria-pressed] { min-width: 44px; min-height: 44px; } }
+/* shared plugin button: plugins move to it one by one (replacing their own .go / .btn rules) */
+.p-btn { font: 600 13px/1.4 Inter, ui-sans-serif, system-ui, sans-serif; padding: 6px 16px; border: 0; border-radius: 10px; background-image: var(--paas-gradient); color: #0b0d1a; cursor: pointer; }
+.p-btn.ghost { background: none; border: 1px solid hsl(var(--border)); color: hsl(var(--foreground)); }
+.p-btn:focus-visible { outline: 3px solid hsl(var(--ring)); outline-offset: 2px; }
 .paas-login-glow {
   background: radial-gradient(40rem 28rem at 50% -8rem, rgba(167, 139, 250, .22), transparent 70%),
               radial-gradient(30rem 22rem at 100% 110%, rgba(34, 211, 238, .14), transparent 70%),
               radial-gradient(26rem 20rem at 0% 100%, rgba(52, 211, 153, .10), transparent 70%);
 }
-a[href*="discord.gg/"], a[href*="claudecodeui/issues"] { display: none !important; }
 /* Claude-desktop composer: one floating rounded box, soft shadow, gradient glow when typing */
 form[data-slot="prompt-input"] { border-radius: 22px; background: hsl(var(--card)); box-shadow: 0 0 0 1px hsl(var(--border)), 0 14px 40px -18px rgba(0, 0, 0, .55); }
 form[data-slot="prompt-input"]:focus-within { box-shadow: 0 0 0 1px rgba(167, 139, 250, .55), 0 14px 44px -14px rgba(167, 139, 250, .35); }
 form[data-slot="prompt-input"].rounded-t-none { border-top-left-radius: 0; border-top-right-radius: 0; }
 /* Download chip next to files Claude hands over */
-.paas-dl { display: inline-flex; align-items: center; gap: 4px; margin-left: 6px; padding: 1px 10px; border-radius: 999px; font: 600 12px/20px ui-sans-serif, system-ui, sans-serif; color: #0b0d1a; background-image: var(--paas-gradient); border: 0; cursor: pointer; vertical-align: middle; }
-.paas-dl:hover { filter: brightness(1.08); }
+.paas-dl { display: inline-flex; align-items: center; gap: 4px; margin-left: 6px; padding: 3px 12px; min-height: 28px; border-radius: 999px; font: 600 13px/20px ui-sans-serif, system-ui, sans-serif; color: #0b0d1a; background-image: var(--paas-gradient); border: 0; cursor: pointer; vertical-align: middle; transition: filter .15s, transform .1s; }
+.paas-dl:hover:not(:disabled) { filter: brightness(1.08); }
+.paas-dl:active:not(:disabled) { transform: scale(.97); }
+.paas-dl:focus-visible { outline: 2px solid hsl(var(--ring)); outline-offset: 2px; }
+.paas-dl:disabled { opacity: .6; cursor: progress; }
+.paas-dl-note { margin-left: 8px; font-size: 13px; color: hsl(var(--destructive)); }
+@media (pointer: coarse) { .paas-dl { min-height: 44px; padding: 0 16px; font-size: 14px; } }
 /* prompt bar: no hint row or divider inside the box (Claude desktop has neither) */
-form[data-slot="prompt-input"] .order-last.basis-full { display: none !important; }
+@media (pointer: coarse) { form[data-slot="prompt-input"] .order-last.basis-full { display: none !important; } }   /* phones have no Shift+Enter; desktop keeps the key hints */
 form[data-slot="prompt-input"] .border-t { border-top-color: transparent; }
 /* brand colours instead of stock blue: file links in answers, the user's avatar */
 a.text-blue-600.hover\:underline { color: hsl(var(--primary)); }
@@ -59,8 +83,10 @@ a.text-blue-600.hover\:underline { color: hsl(var(--primary)); }
 .dark .dark\:bg-blue-900\/20, .bg-blue-50 { background-color: hsl(var(--primary) / .08) !important; }
 .text-blue-600, .dark .dark\:text-blue-400 { color: hsl(var(--primary)) !important; }
 /* quick-settings handle on the right edge: a slim quiet tab instead of a grey box over the content */
-button[aria-label="Open settings panel"] { padding: 10px 2px !important; background: hsl(var(--card)) !important; border-color: hsl(var(--border)) !important; opacity: .55; box-shadow: none !important; }
-button[aria-label="Open settings panel"]:hover { opacity: 1; }
+button[aria-label="Open settings panel"] { padding: 14px 6px !important; min-height: 44px; background: hsl(var(--card)) !important; border-color: hsl(var(--border)) !important; opacity: .8; box-shadow: none !important; }
+button[aria-label="Open settings panel"]:hover, button[aria-label="Open settings panel"]:focus-visible { opacity: 1; }
+button[aria-label="Open settings panel"]:focus-visible { outline: 2px solid hsl(var(--ring)); outline-offset: -2px; }
+@media (max-width: 767px) { button[aria-label="Open settings panel"] { display: none !important; } }   /* it floated over the answer text; Settings is in the sidebar menu */
 button[aria-label="Open settings panel"] svg { width: 14px; height: 14px; }
 /* welcome screen: the main action */
 .paas-newchat { margin-top: 10px; display: inline-flex; align-items: center; gap: 8px; padding: 10px 26px; border-radius: 999px; border: 0; cursor: pointer; font: 600 15px/1.2 ui-sans-serif, system-ui, sans-serif; color: #0b0d1a; background-image: var(--paas-gradient); box-shadow: 0 10px 30px -12px rgba(167, 139, 250, .6); }
@@ -75,4 +101,4 @@ body { font-feature-settings: "cv11"; -webkit-font-smoothing: antialiased; text-
 .paas-msg.prose :where(code):not(pre code) { font-size: 0.88em; }
 
 /* offline VM: links that cannot open there (Discord, issue tracker, cloudcli.ai); the GitHub source link stays (AGPL) */
-a[href*="discord.gg"], a[href*="/issues/new"], a[href^="https://cloudcli.ai"] { display: none !important; }
+a[href^="https://discord.gg/"], a[href^="https://github.com/siteboon/claudecodeui/issues"], a[href^="https://cloudcli.ai"] { display: none !important; }

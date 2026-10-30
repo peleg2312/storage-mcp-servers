@@ -101,7 +101,9 @@ const ICONS: Record<string, string> = {
 };
 const icon = (n: string, size = 22) => `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${ICONS[n]}</svg>`;
 const PAGE_CSS = `:root{color-scheme:light dark;--bg:#f6f7fb;--card:#fff;--fg:#14162b;--muted:#5d6280;--line:#e3e5ef;--chip:#eef0f7;--accent:#6d5df6}
-@media (prefers-color-scheme:dark){:root{--bg:#0d0f1c;--card:#151829;--fg:#e8eaf6;--muted:#9aa0bf;--line:#262a42;--chip:#1e2238;--accent:#a78bfa}}
+@media (prefers-color-scheme:dark){:root:not([data-theme=light]){color-scheme:dark;--bg:#0d0f1c;--card:#151829;--fg:#e8eaf6;--muted:#9aa0bf;--line:#262a42;--chip:#1e2238;--accent:#a78bfa}}
+:root[data-theme=dark]{color-scheme:dark;--bg:#0d0f1c;--card:#151829;--fg:#e8eaf6;--muted:#9aa0bf;--line:#262a42;--chip:#1e2238;--accent:#a78bfa}
+:root[data-theme=light]{color-scheme:light}
 *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--fg);font:14px/1.55 Inter,ui-sans-serif,system-ui,-apple-system,sans-serif}
 .wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px 16px}
 .card{width:100%;max-width:520px;background:var(--card);border:1px solid var(--line);border-radius:16px;padding:28px 26px}
@@ -115,9 +117,15 @@ code{font:12.5px ui-monospace,SFMono-Regular,Menlo,monospace;background:var(--ch
 .row{display:flex;align-items:center;gap:10px;padding:9px 14px;border-bottom:1px solid var(--line);text-decoration:none;color:var(--fg);border-left:2px solid transparent}
 .row:last-child{border-bottom:0}.row .n{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.row .m{color:var(--muted);font-size:12px;white-space:nowrap}
 .row svg{color:var(--muted);flex:none}.row.d svg{color:var(--accent)}.empty{padding:28px;text-align:center;color:var(--muted)}
-@media (max-width:560px){.row .m.t{display:none}}`;
+@media (max-width:560px){.row .m.t{display:none}}
+a:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.btn{display:inline-block;padding:9px 20px;border-radius:10px;font-weight:600;text-decoration:none;color:#0b0d1a;background:linear-gradient(120deg,#a78bfa,#818cf8 30%,#60a5fa 55%,#22d3ee 80%,#34d399)}
+@media (pointer:coarse){.row{min-height:44px}.chips a{padding:10px 14px}.btn{padding:12px 22px}}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}`;
+// the app's theme choice (saved by the web UI in the same browser) wins over the system theme
+const THEME_JS = `try{var t=JSON.parse(localStorage.getItem('user-preferences')||'{}').theme;if(t==='dark'||t==='light')document.documentElement.dataset.theme=t}catch(e){}`;
 const page = (title: string, body: string) =>
-  `<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${escHtml(title)}</title><style>${PAGE_CSS}</style></head><body>${body}</body></html>`;
+  `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${escHtml(title)}</title><script>${THEME_JS}</script><style>${PAGE_CSS}</style></head><body>${body}</body></html>`;
 function sendCard(res: express.Response, status: number, ic: string, title: string, html: string) {
   res.status(status).type('html').send(page(title, `<div class="wrap"><div class="card"><div class="ic">${icon(ic)}</div><h1>${escHtml(title)}</h1>${html}</div></div>`));
 }
@@ -128,7 +136,7 @@ const portChips = () => {
 
 paasPreview.use((req, res, next) => {
   if (valid(req)) return next();
-  sendCard(res, 401, 'lock', 'Signed out', '<p>Your sign-in ended (it lasts 12 hours). Reload the web UI, sign in, and open this page again.</p>');
+  sendCard(res, 401, 'lock', 'Signed out', '<p>Your sign-in ended after 12 hours. Sign in again, then open this page again.</p><p><a class="btn" href="/" target="_top">Sign in again</a></p>');
 });
 
 paasPreview.get('/_open', (_req, res) => {

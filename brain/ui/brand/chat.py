@@ -56,21 +56,38 @@ edit("src/modules/chat/transcript/MessageComponent.tsx",
 # --- queued message: "Send now" stops the running turn and sends it at once
 edit("src/modules/chat/hooks/useChatComposerState.ts",
      ("  const handleGrantToolPermission = useCallback(",
+      "  // The message leaves the server's queue at once (its dispatcher must not send it as well), is held here until the\n"
+      "  // answer has stopped, then sent. If the answer does not stop within 10 s the text goes back into the box.\n"
       "  const sendNowRef = useRef<QueuedDraft | null>(null);\n"
+      "  const sendNowTimerRef = useRef<number | null>(null);\n"
       "  const sendQueuedDraftNow = useCallback(() => {\n"
       "    if (!queuedDraft) return;\n"
       "    if (queuedDraftSessionRef.current) clearQueuedMessage(queuedDraftSessionRef.current);\n"
       "    sendNowRef.current = queuedDraft;\n"
       "    setQueuedDraft(null);\n"
+      "    if (sendNowTimerRef.current) window.clearTimeout(sendNowTimerRef.current);\n"
+      "    sendNowTimerRef.current = window.setTimeout(() => {\n"
+      "      const draft = sendNowRef.current;\n"
+      "      sendNowRef.current = null;\n"
+      "      if (!draft) return;\n"
+      "      setInput(draft.content);\n"
+      "      inputValueRef.current = draft.content;\n"
+      "      setAttachedFiles(draft.attachments);\n"
+      "      paasNotice('Could not stop the answer. Your message is back in the box: send it again when ready.');\n"
+      "    }, 10000);\n"
       "    handleAbortSession();\n"
       "  }, [handleAbortSession, queuedDraft]);\n"
       "  useEffect(() => {\n"
       "    if (isLoading || !sendNowRef.current) return;\n"
       "    const draft = sendNowRef.current;\n"
       "    sendNowRef.current = null;\n"
+      "    if (sendNowTimerRef.current) window.clearTimeout(sendNowTimerRef.current);\n"
       "    void handleSubmitRef.current?.(createFakeSubmitEvent(), draft);\n"
       "  }, [isLoading, queuedDraft]);\n\n"
       "  const handleGrantToolPermission = useCallback("),
+     ("import { useSlashCommands } from '@/modules/chat/hooks/useSlashCommands';",
+      "import { useSlashCommands } from '@/modules/chat/hooks/useSlashCommands';\n"
+      "import { paasNotice } from '@/modules/chat/composer/PaasNotice';"),
      ("    deleteQueuedDraft,\n", "    deleteQueuedDraft,\n    sendQueuedDraftNow,\n"))
 edit("src/modules/chat/ChatInterface.tsx",
      ("    deleteQueuedDraft,\n", "    deleteQueuedDraft,\n    sendQueuedDraftNow,\n"),
@@ -79,7 +96,10 @@ edit("src/modules/chat/ChatInterface.tsx",
 edit("src/modules/chat/composer/ChatComposer.tsx",
      ("  onDeleteQueuedDraft: () => void;", "  onDeleteQueuedDraft: () => void;\n  onSendQueuedDraftNow: () => void;"),
      ("  onDeleteQueuedDraft,\n", "  onDeleteQueuedDraft,\n  onSendQueuedDraftNow,\n"),
-     ("          onDelete={onDeleteQueuedDraft}", "          onDelete={onDeleteQueuedDraft}\n          onSendNow={onSendQueuedDraftNow}"))
+     ("          onDelete={onDeleteQueuedDraft}", "          onDelete={onDeleteQueuedDraft}\n          onSendNow={onSendQueuedDraftNow}"),
+     ("import CommandMenu from '@/modules/chat/composer/CommandMenu';",
+      "import CommandMenu from '@/modules/chat/composer/CommandMenu';\nimport PaasNotice from '@/modules/chat/composer/PaasNotice';"),
+     ("        <CommandMenu\n          commands={filteredCommands}", "        <PaasNotice />\n\n        <CommandMenu\n          commands={filteredCommands}"))
 edit("src/modules/chat/composer/QueuedMessageCard.tsx",
      ("  onDelete: () => void;\n};", "  onDelete: () => void;\n  onSendNow?: () => void;\n};"),
      ("  onDelete,\n}: QueuedMessageCardProps)", "  onDelete,\n  onSendNow,\n}: QueuedMessageCardProps)"),
@@ -89,10 +109,11 @@ edit("src/modules/chat/composer/QueuedMessageCard.tsx",
       "            <button\n"
       "              type=\"button\"\n"
       "              onClick={onSendNow}\n"
-      "              title=\"Stop the running turn and send this now\"\n"
-      "              className=\"mr-1 rounded-md bg-primary/10 px-2 py-1 text-xs font-medium text-primary transition-colors hover:bg-primary/20\"\n"
+      "              title=\"Stop the running answer and send this message now\"\n"
+      "              aria-label=\"Stop the running answer and send this message now\"\n"
+      "              className=\"mr-2 min-h-[36px] rounded-md bg-primary/10 px-3 py-1.5 text-sm font-medium text-primary transition-colors hover:bg-primary/20 md:min-h-0\"\n"
       "            >\n"
-      "              Send now\n"
+      "              Stop and send\n"
       "            </button>\n"
       "          )}\n"))
 
@@ -106,34 +127,50 @@ edit("server/modules/commands/commands.routes.ts",
       'import { resolveClaudeCodeExecutablePath } from "../../shared/claude-cli-path.js";\n'),
      ("/**\n * Built-in commands that are always available\n */",
       "const claudeCommandCache = new Map();\n"
-      "function claudeCliCommands(cwd) {\n"
+      "// The list is asked for in the background: a request answers at once with what is known ('loading' while the\n"
+      "// Claude Code CLI starts, 'error' for a minute after a failure) so the built-in and custom commands never wait.\n"
+      "const FRESH_CHAT = /^(clear|new|reset)$/;\n"
+      "function claudeCliCommands(cwd, refresh = false) {\n"
       "  const hit = claudeCommandCache.get(cwd);\n"
-      "  if (hit && Date.now() - hit.at < 3_600_000) return hit.list;\n"
-      "  const list = (async () => {\n"
+      "  if (hit && !refresh && Date.now() - hit.at < (hit.failed ? 60_000 : 3_600_000)) return hit;\n"
+      "  const entry = { at: Date.now(), done: null, failed: false };\n"
+      "  claudeCommandCache.set(cwd, entry);\n"
+      "  void (async () => {\n"
       "    const idle = { async *[Symbol.asyncIterator]() { await new Promise(() => {}); } };\n"
       "    const q = claudeQuery({ prompt: idle, options: { cwd, env: { ...globalThis.process.env }, strictMcpConfig: true, mcpServers: {},\n"
       "      pathToClaudeCodeExecutable: resolveClaudeCodeExecutablePath(globalThis.process.env.CLAUDE_CLI_PATH) } });\n"
       "    try {\n"
       "      const cmds = await Promise.race([q.supportedCommands(),\n"
       "        new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 20_000))]);\n"
-      "      return cmds.filter((c) => /^[\\w:.-]+$/.test(c.name)).map((c) => ({\n"
-      "        name: `/${c.name}`, description: [c.description, c.argumentHint].filter(Boolean).join(' '),\n"
+      "      // /clear, /new and /reset all start a fresh chat here (the web UI handles them): one entry, in plain words\n"
+      "      const fresh = cmds.filter((c) => FRESH_CHAT.test(c.name));\n"
+      "      const keep = (fresh.find((c) => c.name === 'new') || fresh[0])?.name;\n"
+      "      entry.done = cmds.filter((c) => /^[\\w:.-]+$/.test(c.name) && (!FRESH_CHAT.test(c.name) || c.name === keep)).map((c) => ({\n"
+      "        name: `/${c.name}`,\n"
+      "        description: FRESH_CHAT.test(c.name) ? 'Start a fresh chat (the current one is kept in the sidebar)'\n"
+      "          : [c.description, c.argumentHint].filter(Boolean).join(' '),\n"
       "        namespace: 'claude', type: 'skill', metadata: { type: 'claude', argumentHint: c.argumentHint } }));\n"
       "    } catch (error) {\n"
       "      console.error('Claude Code commands:', error.message);\n"
-      "      claudeCommandCache.delete(cwd);\n"
-      "      return [];\n"
+      "      entry.failed = true;\n"
       "    } finally {\n"
       "      q.close();\n"
       "    }\n"
       "  })();\n"
-      "  claudeCommandCache.set(cwd, { at: Date.now(), list });\n"
-      "  return list;\n"
+      "  return entry;\n"
       "}\n\n"
       "/**\n * Built-in commands that are always available\n */"),
+     ("    const { projectPath } = req.body;\n    const allCommands = [...builtInCommands];\n",
+      "    const { projectPath, refresh } = req.body;\n    const allCommands = [...builtInCommands];\n"),
      ("      builtIn: builtInCommands,\n      custom: customCommands,\n",
       "      builtIn: builtInCommands,\n      custom: customCommands,\n"
-      "      claude: projectPath ? await claudeCliCommands(projectPath) : [],\n"))
+      "      ...(() => {\n"
+      "        const entry = projectPath ? claudeCliCommands(projectPath, refresh === true) : null;\n"
+      "        return { claude: entry?.done || [], claudeStatus: !entry || entry.done ? 'ready' : entry.failed ? 'error' : 'loading' };\n"
+      "      })(),\n"))
+edit("src/shared/api.ts",
+     ("    list: (projectPath: string | undefined) => post('/api/commands/list', { projectPath }),",
+      "    list: (projectPath: string | undefined, refresh?: boolean) => post('/api/commands/list', { projectPath, refresh }),"))
 edit("src/shared/hooks/useProjectSlashCommands.ts",
      ("        const allCommands: SlashCommand[] = [\n"
       "          ...((data.builtIn || []) as SlashCommand[]).map((command) => ({\n"
@@ -148,6 +185,48 @@ edit("src/shared/hooks/useProjectSlashCommands.ts",
       "            type: 'built-in',\n"
       "          })),\n"
       "          ...((data.claude || []) as SlashCommand[]).filter((command) => !known.has(command.name)),\n"))
+# Claude Code's own commands load in the background (the server answers at once with 'loading'): ask again every 1.5 s
+# (at most 8 times) and tell the menu how it stands, so it shows "Loading..." / "unavailable" + Retry, not an empty gap.
+edit("src/shared/hooks/useProjectSlashCommands.ts",
+     ("    let cancelled = false;\n\n    const fetchCommands = async () => {\n",
+      "    let cancelled = false;\n    let pollTimer: number | undefined;\n    let polls = 0;\n\n    const fetchCommands = async (refresh = false) => {\n"),
+     ("        const response = await api.commands.list(workspacePath || selectedProject.path);",
+      "        const response = await api.commands.list(workspacePath || selectedProject.path, refresh);"),
+     ("        if (!cancelled) {\n          setCommands(allCommands);\n          setIsLoading(false);\n        }",
+      "        if (!cancelled) {\n          setCommands(allCommands);\n          setIsLoading(false);\n"
+      "          const claudeStatus = data.claudeStatus || 'ready';\n"
+      "          window.dispatchEvent(new CustomEvent('paas-claude-commands', { detail: claudeStatus }));\n"
+      "          window.clearTimeout(pollTimer);\n"
+      "          if (claudeStatus === 'loading' && polls++ < 8) pollTimer = window.setTimeout(() => void fetchCommands(), 1500);\n"
+      "        }"),
+     ("    fetchCommands();\n    return () => {\n      cancelled = true;\n    };",
+      "    const retry = () => { polls = 0; window.dispatchEvent(new CustomEvent('paas-claude-commands', { detail: 'loading' })); void fetchCommands(true); };\n"
+      "    window.addEventListener('paas-claude-retry', retry);\n"
+      "    fetchCommands();\n    return () => {\n      cancelled = true;\n      window.clearTimeout(pollTimer);\n      window.removeEventListener('paas-claude-retry', retry);\n    };"))
+edit("src/modules/chat/composer/CommandMenu.tsx",
+     ("import { useEffect, useRef } from 'react';\n", "import { useEffect, useRef, useState } from 'react';\n"),
+     ("  const menuPosition = getMenuPosition(position);\n",
+      "  const menuPosition = getMenuPosition(position);\n"
+      "  const [claudeStatus, setClaudeStatus] = useState('ready');\n"
+      "  useEffect(() => {\n"
+      "    const onStatus = (event: Event) => setClaudeStatus(String((event as CustomEvent).detail || 'ready'));\n"
+      "    window.addEventListener('paas-claude-commands', onStatus);\n"
+      "    return () => window.removeEventListener('paas-claude-commands', onStatus);\n"
+      "  }, []);\n"),
+     ("      ))}\n    </div>\n  );\n}",
+      "      ))}\n"
+      "      {claudeStatus === 'loading' && (\n"
+      "        <div aria-live=\"polite\" className=\"px-2.5 py-2 text-[12px] text-muted-foreground\">Loading Claude Code commands…</div>\n"
+      "      )}\n"
+      "      {claudeStatus === 'error' && (\n"
+      "        <div className=\"flex items-center justify-between gap-2 px-2.5 py-2 text-[12px] text-muted-foreground\">\n"
+      "          <span>Claude Code commands unavailable</span>\n"
+      "          <button type=\"button\" className=\"min-h-[32px] rounded-md border border-border px-2.5 text-foreground hover:bg-accent\"\n"
+      "            onMouseDown={(event) => event.preventDefault()}\n"
+      "            onClick={() => window.dispatchEvent(new CustomEvent('paas-claude-retry'))}>Retry</button>\n"
+      "        </div>\n"
+      "      )}\n"
+      "    </div>\n  );\n}"))
 edit("src/modules/chat/composer/CommandMenu.tsx",
      ("  builtin: 'Built-in Commands',\n", "  builtin: 'Built-in Commands',\n  claude: 'Claude Code',\n"),
      ("  builtin: Terminal,\n", "  builtin: Terminal,\n  claude: Terminal,\n"),
@@ -224,7 +303,8 @@ edit("server/modules/providers/services/claude-cli-liveness.service.ts",
       "    : typeof record.startedAt === 'number' ? record.startedAt : Date.now();"))
 
 # /clear, /new, /reset: a fresh chat in the same project, like the New chat button (sent to Claude, /clear made a new
-# session holding only the text "/clear"); /clear also deletes (archives) the chat it leaves
+# session holding only the text "/clear"). The chat it leaves stays in the sidebar (nothing is deleted behind the
+# user's back) and a status line says so.
 edit("src/modules/project-workspace/context/ProjectsStateContext.tsx",
      ("export function useProjectCommandState(): ProjectCommandState {",
       "/** The same as useProjectCommandState, or null outside the workspace (the chat composer in tests). */\n"
@@ -237,26 +317,24 @@ edit("src/modules/chat/hooks/useChatComposerState.ts",
       "import { useOptionalProjectCommandState } from '@/modules/project-workspace/context/ProjectsStateContext';"),
      ("}: UseChatComposerStateArgs) {\n  const { t } = useTranslation('chat');\n",
       "}: UseChatComposerStateArgs) {\n  const { t } = useTranslation('chat');\n  const paasProjectCommands = useOptionalProjectCommandState();\n"
-      "  // /clear, /new, /reset: a fresh chat in the same project; /clear also deletes the chat it leaves, the way the\n"
-      "  // sidebar's Delete does (archived: restorable from the archive), unless that chat is still answering\n"
-      "  const paasNewChat = (project: Project, deletePrevious: boolean) => {\n"
-      "    const previous = currentSessionId || selectedSession?.id;\n"
+      "  // /clear, /new, /reset: a fresh chat in the same project; the chat it leaves stays in the sidebar\n"
+      "  const paasNewChat = (project: Project) => {\n"
       "    setTimeout(() => {   // after this submit settles\n"
       "      paasProjectCommands?.handleNewSession(project);\n"
-      "      if (deletePrevious && previous && !isLoading) void api.deleteSession(previous).catch(() => undefined);\n"
+      "      setTimeout(() => paasNotice('Started a new chat. The previous one is still in the sidebar.'), 300);\n"
       "    }, 0);\n"
       "  };\n"),
      ("      if (!command || !selectedProject) {\n        return;\n      }\n\n      try {\n        const effectiveInput = rawInput ?? input;\n",
       "      if (!command || !selectedProject) {\n        return;\n      }\n"
       "      if (/^\\/(clear|new|reset)$/.test(command.name) && paasProjectCommands) {   // picked from the / menu\n"
-      "        paasNewChat(selectedProject, command.name === '/clear');\n"
+      "        paasNewChat(selectedProject);\n"
       "        setInput('');\n"
       "        inputValueRef.current = '';\n"
       "        return;\n"
       "      }\n\n      try {\n        const effectiveInput = rawInput ?? input;\n"),
      ("        const matchedCommand =\n          slashCommands.find((cmd: SlashCommand) => cmd.name === commandName) ||",
       "        if (/^\\/(clear|new|reset)$/.test(commandName) && paasProjectCommands && selectedProject) {\n"
-      "          paasNewChat(selectedProject, commandName === '/clear');\n"
+      "          paasNewChat(selectedProject);\n"
       "          setInput('');\n"
       "          inputValueRef.current = '';\n"
       "          resetCommandMenuState();\n"
@@ -320,11 +398,13 @@ edit("src/modules/chat/tools/ContentRenderers/TextContent.tsx",
       "  if (images.length && format === 'plain') {\n"
       "    return (\n"
       "      <div className={`mt-1 space-y-2 ${className}`}>\n"
-      "        {content && <div className=\"whitespace-pre-wrap text-sm text-gray-700 dark:text-gray-300\">{content}</div>}\n"
+      "        {content && <div className=\"whitespace-pre-wrap text-sm text-foreground\">{content}</div>}\n"
       "        {images.map((src, i) => (\n"
-      "          <a key={i} href={src} target=\"_blank\" rel=\"noreferrer\" title=\"Open full size\">\n"
-      "            <img src={src} alt={`Screenshot ${i + 1}`} loading=\"lazy\"\n"
-      "              className=\"max-h-[480px] max-w-full rounded-lg border border-gray-200 object-contain dark:border-gray-700\" />\n"
+      "          <a key={i} href={src} target=\"_blank\" rel=\"noreferrer\" title=\"Open full size\"\n"
+      "            className=\"block min-h-[120px] animate-pulse rounded-lg bg-muted\" style={{ aspectRatio: '16/10' }}>\n"
+      "            <img src={src} alt={`Screenshot ${i + 1} of ${images.length} from the tool`} loading=\"lazy\"\n"
+      "              onLoad={(event) => { const box = event.currentTarget.parentElement; if (box) { box.style.aspectRatio = ''; box.classList.remove('animate-pulse', 'bg-muted', 'min-h-[120px]'); } }}\n"
+      "              className=\"max-h-[480px] max-w-full rounded-lg border border-border object-contain\" />\n"
       "          </a>\n"
       "        ))}\n"
       "      </div>\n"
