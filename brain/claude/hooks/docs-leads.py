@@ -13,12 +13,13 @@ import importlib.util
 import json
 import os
 import re
+import stat
 import sys
 import tempfile
 
 LIB = os.environ.get("DOCS_LEADS_LIB") or os.path.expanduser("~/.claude/brain/library")
 DB = os.environ.get("DOCS_LEADS_DB") or os.path.join(LIB, "docs.db")
-MAX_LEADS, MIN_WORDS, MIN_COVER, MAX_QUERY_WORDS = 4, 2, 0.6, 60
+MAX_LEADS, MIN_WORDS, MIN_COVER, MAX_QUERY_WORDS = 4, 2, 0.6, 30
 # the library's world: a request gets leads only when it names one of these (plus every product name in the
 # library, read from it) or pastes an identifier; "ok continue" or "center a div in css" never does
 DOMAIN = set("""netapp ontap dell emc powermax vmax symmetrix powerflex scaleio vxflex powerscale isilon onefs powerstore
@@ -36,6 +37,20 @@ CODE_ASK = re.compile(r"\b(bug|bugs|test|tests|pytest|refactor|commit|code|funct
 IN_CODE = re.compile(r"\b(folder|file|files|repo|codebase|module|script|endpoint|api|implement\w*)\b", re.I)  # no storage.md
 NOISE = re.compile(r"^(changelog|release notes?|release \d|reference)\b|\bPR #?\d", re.I)   # changelog / PR pages
 WANTS_NOISE = re.compile(r"\b(release|version|changelog|upgrade|fixed|fix(es)? in|pr|pull request)\b", re.I)
+
+
+def tmpdir():
+    """Private per-user dir for the session and cache files (a shared /tmp name can be a planted symlink); an
+    unusable dir comes back as a path that does not exist, so every open() below just fails with OSError."""
+    d = os.path.join(tempfile.gettempdir(), f"claude-brain-{os.getuid()}")
+    try:
+        os.makedirs(d, mode=0o700, exist_ok=True)
+        st = os.lstat(d)
+        if st.st_uid == os.getuid() and stat.S_ISDIR(st.st_mode):
+            return d
+    except OSError:
+        pass
+    return os.path.join(os.devnull, "x")
 
 
 def load(name, path):
@@ -118,7 +133,7 @@ def main():
     except Exception:
         pass
     # 2. the best documents for the request itself, when it is about the library's world at all
-    words = re.findall(r"\S+", prompt)[:MAX_QUERY_WORDS]
+    words = re.findall(r"\S+", re.sub(r"[^\x00-\x7f]+", " ", prompt))[:MAX_QUERY_WORDS]   # Hebrew words would count against MIN_COVER
     about, vendors = in_domain(words)
     if not lines and not about:
         return 0
@@ -127,7 +142,7 @@ def main():
         return 0          # a coding request (bug, test, refactor) naming no storage product: changelogs do not help
     sid = re.sub(r"[^A-Za-z0-9-]", "", str(data.get("session_id", "x")))
     note = ""                 # a storage question in a code project: the storage rules once per chat
-    mark = os.path.join(tempfile.gettempdir(), f"claude-storage-rules-{sid}")
+    mark = os.path.join(tmpdir(), f"claude-storage-rules-{sid}")
     if not os.path.exists(mark) and not CODE_ASK.search(prompt) and not IN_CODE.search(prompt) \
             and not storage_loaded(data.get("cwd")):
         rules = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "brain", "storage.md")
@@ -136,10 +151,6 @@ def main():
         rules = rules.replace(os.path.expanduser("~"), "~", 1)
         note = (f"Storage question outside Chats: read {rules} (storage rules, identifiers, sources, environment) "
                 "before answering.\n")
-        try:
-            open(mark, "w").close()
-        except OSError:
-            pass
     try:
         mod = os.path.join(LIB, "search.py")
         lib = load("search", mod if os.path.exists(mod) else os.path.join(LIB, "search_cli.py"))
@@ -169,7 +180,7 @@ def main():
         if len(leads) >= MAX_LEADS:
             break
     # once per session: the same leads twice add nothing
-    seen_file = os.path.join(tempfile.gettempdir(), f"claude-docs-leads-{sid}")
+    seen_file = os.path.join(tmpdir(), f"claude-docs-leads-{sid}")
     try:
         shown = set(open(seen_file).read().splitlines())
     except OSError:
@@ -182,6 +193,13 @@ def main():
         except OSError:
             pass
         lines += leads
+    if note and not lines:
+        note = ""         # nothing matched (a k8s yaml, a gzip flag): no storage.md pointer, no mark: no storage.md pointer, no mark
+    elif note:
+        try:
+            open(mark, "w").close()
+        except OSError:
+            pass
     if lines:
         note += ("Docs leads (verify with read_chunk before relying on them; ignore if unrelated):\n"
                  + "\n".join("- " + x.lstrip("- ") for x in lines))

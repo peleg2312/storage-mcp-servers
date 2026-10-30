@@ -8,15 +8,17 @@ Only identifiers the library really documents are reported (an EMS name must equ
 most MAX_HINTS per result, each once per session; nothing is printed otherwise. Standard library only;
 never fails the tool call (always exit 0). Library: ~/.claude/brain/library/docs.db (DOCS_HINTS_DB overrides).
 """
+import glob
 import json
 import os
 import re
 import sqlite3
+import stat
 import sys
 import tempfile
 import zlib
 
-MAX_HINTS = 4
+MAX_HINTS = 3
 MAX_ERR_HINTS = 2      # free-text error messages (CSI / Kubernetes / driver logs) looked up by their fixed words
 ERR = re.compile(r"(?:desc = |\b(?:error|Error|ERROR|failed|Failed|FAILED)(?: to [a-z]+)?: )([^\n\"]{12,240})")
 MAX_CANDIDATES = 60
@@ -25,6 +27,20 @@ DB = os.environ.get("DOCS_HINTS_DB") or os.path.expanduser("~/.claude/brain/libr
 EMS = re.compile(r"(?<![\w.\-/@:])([a-z][a-z0-9_]{1,30}(?:\.[A-Za-z][A-Za-z0-9_]{0,40}){1,5})(?![\w\-/@]|\.\w)")
 CODES = [re.compile(p) for p in (r"\bSYMAPI_AEVENT2_UID_[A-Z0-9_]{4,}\b", r"\bSIO\d{2}\.\d{2}\.\d{7}\b",
                                   r"\bCONTAP-\d{5,7}\b", r"\bDSA-\d{4}-\d{2,4}\b")]
+
+
+def tmpdir():
+    """Private per-user dir for the session and cache files (a shared /tmp name can be a planted symlink); an
+    unusable dir comes back as a path that does not exist, so every open() below just fails with OSError."""
+    d = os.path.join(tempfile.gettempdir(), f"claude-brain-{os.getuid()}")
+    try:
+        os.makedirs(d, mode=0o700, exist_ok=True)
+        st = os.lstat(d)
+        if st.st_uid == os.getuid() and stat.S_ISDIR(st.st_mode):
+            return d
+    except OSError:
+        pass
+    return os.path.join(os.devnull, "x")
 
 
 def strings(x, out):
@@ -47,7 +63,7 @@ def ems_names(c):
     """Every documented EMS event name (lowercase), cached per library build: checking a dotted name in a big
     result is then a set lookup, not a query."""
     key = f"{zlib.crc32(DB.encode())}-{int(os.path.getmtime(DB))}"          # this library build
-    cache = os.path.join(tempfile.gettempdir(), f"claude-docs-hints-ems-{key}.json")
+    cache = os.path.join(tmpdir(), f"claude-docs-hints-ems-{key}.json")
     try:
         return set(json.load(open(cache)))
     except (OSError, ValueError):
@@ -58,6 +74,9 @@ def ems_names(c):
     try:
         with open(cache, "w") as f:
             json.dump(sorted(names), f)
+        for old in glob.glob(os.path.join(os.path.dirname(cache), "claude-docs-hints-ems-*.json")):   # older library builds
+            if old != cache:
+                os.remove(old)
     except OSError:
         pass
     return names
@@ -167,7 +186,7 @@ def main():
     if not tool.startswith("mcp__") or "docs" in tool.split("__")[1].lower() or not os.path.exists(DB):
         return 0
     text = "\n".join(strings(data.get("tool_response"), []))[:300_000]
-    seen_file = os.path.join(tempfile.gettempdir(), f"claude-docs-hints-{re.sub(r'[^A-Za-z0-9-]', '', str(data.get('session_id', 'x')))}")
+    seen_file = os.path.join(tmpdir(), f"claude-docs-hints-{re.sub(r'[^A-Za-z0-9-]', '', str(data.get('session_id', 'x')))}")
     try:
         seen = set(filter(None, open(seen_file).read().splitlines()))   # one entry per line: error phrases have spaces
     except OSError:
@@ -191,7 +210,7 @@ def main():
         else:
             more.append(x)                                     # named only: search_docs gives the detail
     if more:
-        hints.append("also documented: " + ", ".join(more[:12]))
+        hints.append("also documented: " + ", ".join(more[:5]))
     errs = 0
     for m in ERR.finditer(text):
         phrase = err_phrase(m.group(1))
