@@ -1,7 +1,6 @@
 ---
 name: k8s-volume-troubleshoot
-description: Troubleshoot an OpenShift / Kubernetes volume on Trident or Dell CSM - PVC pending, attach / mount / resize failures, multipath - from the error text, bugs, docs and the array and fabric state.
-when_to_use: Trigger phrases - "PVC stuck pending", "pod cannot mount the volume", "CSI error", "map this PV to the array"
+description: Troubleshoot an OpenShift / Kubernetes volume on Trident or Dell CSM - PVC pending, attach / mount / resize failures, multipath - from the error text, bugs, docs and the array and fabric state. Triggers - "PVC stuck pending", "pod cannot mount the volume", "CSI error", "map this PV to the array"
 ---
 # Kubernetes volume troubleshooting (Trident / CSM)
 
@@ -14,9 +13,8 @@ node pod logs); CSM: the driver controller + node pod logs; the node: `oc debug 
 1. Take the **exact error string** and search the docs MCP: Trident → `trident-issues` (bug reports with
    workarounds and fixed versions), `trident-changelog`, then the `trident-<release>` docs of the installed
    version (`trident-2307` … `trident-2510`; `trident` = latest) and `kb-ontap`; CSM → `dell/kb` (CSM /
-   CSI articles), `dell/csm` (use the page whose url version matches the installed CSM: `content/docs/` =
-   current, `content/v1..v3/` = older), `csi-powermax` / `csi-powerflex`, `csm-replication`, `csm-operator`
-   fixes in the `*-prs` products (`csm-prs`, `csi-powermax-prs`, `csi-powerflex-prs`, `csi-powerscale-prs`, `csm-operator-prs`, `csm-replication-prs`...: every merged / open pull request with the `dell/csm#<n>` issues it fixes), `csi-powerscale` for PowerScale. Sidecar messages
+   CSI articles), `dell/csm` (use the page whose url version matches the installed CSM, see docs-lookup), `csi-powermax` / `csi-powerflex`, `csm-replication`, `csm-operator`
+   fixes in the `*-prs` products (see docs-lookup), `csi-powerscale` for PowerScale. Sidecar messages
    (external-attacher / provisioner / resizer / snapshotter, node-driver-registrar): vendor `kubernetes`
    (code + CHANGELOG of each sidecar, `csi-spec`). Still unexplained: search the exact string over the driver
    and client source code (`csi-*`, `goscaleio`, `gopowermax`, `gobrick`) to see which check

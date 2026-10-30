@@ -1,12 +1,11 @@
 ---
 name: rdm-inventory
-description: Inventory and check all RDMs - mode, NAA, array device, size, sharing across VMs, consistent LUN IDs on all hosts, orphan pointers.
-when_to_use: Trigger phrases - "list all RDMs", "which VMs share a LUN", "WSFC cluster disks", "orphan RDM pointers"
+description: Inventory and check all RDMs - mode, NAA, array device, size, sharing across VMs, consistent LUN IDs on all hosts, orphan pointers. Triggers - "list all RDMs", "which VMs share a LUN", "WSFC cluster disks", "orphan RDM pointers"
 context: fork
 agent: vmware-mapper
 background: false
 ---
-You run in a forked context: gather everything, then return a complete answer (answer first, evidence table, findings, sources, next checks); the user cannot answer questions mid-way.
+Forked: the user cannot answer mid-way; finish with a complete answer (storage.md S4).
 
 # RDM inventory
 

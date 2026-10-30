@@ -1,7 +1,6 @@
 ---
 name: report-export
-description: Charts, graphs and Excel files from any storage data - throughput / IOPS / latency over time, capacity per array / aggregate / pool, top talkers, any table (unused LUNs, zoning audit, paths) as a formatted .xlsx. Draws a text chart in the answer and writes an HTML report (hover for values) and an Excel workbook with native charts.
-when_to_use: Trigger phrases - "graph", "chart", "plot", "trend", "over the last N days", "excel", "xlsx", "spreadsheet", "export", "report I can send", "show me visually"; also offer it after any answer with a time series or a table of more than ~15 rows
+description: Charts, graphs and Excel files from any storage data - throughput / IOPS / latency over time, capacity per array / aggregate / pool, top talkers, any table (unused LUNs, zoning audit, paths) as a formatted .xlsx. Draws a text chart in the answer and writes an HTML report (hover for values) and an Excel workbook with native charts. Triggers - "graph", "chart", "plot", "trend", "over the last N days", "excel", "xlsx", "export", "report I can send"
 ---
 # Charts and Excel (`~/.claude/tools/report.py`)
 
@@ -57,14 +56,7 @@ Data from saved MCP output only (rule 3); numbers as numbers (not text), dates a
 `python3 ~/.claude/tools/report.py --send <file>`.
 
 ## 4. Answer
-Answer first, then each text chart **in a code block exactly as printed**, then its min / avg / max (with the
-time of max) / last line, then what the chart shows (peaks, daily pattern, step changes, a trend toward a
-limit) and the files, each as a Markdown link to its full path, e.g.
-`[report.xlsx](~/storage-reports/2026-10-25-volumes/report.xlsx)`: in the web UI that link gets a Download button.
-The user works from a Windows PC over SSH or in the web UI. Every run (and `--send`) queues the folder for `get-reports.ps1`: if it runs on the PC, the report opens
-there by itself (Downloads\storage-reports). **End with the "to the PC" line exactly as printed**, in its own
-code block: pasted into PowerShell it copies the folder into Downloads and opens the report. First time: say
-`get-reports.ps1` can do this automatically and give its one-time setup (the comment at the top of
-`~/.claude/tools/get-reports.ps1`, with the user and VM address filled in).
-Name the source and the time range of the data (MCP + object + step), and anything missing (gaps, an
-array that did not answer).
+Answer first; then each text chart in a code block exactly as printed, min / avg / max (time of max) / last, what
+it shows (peaks, daily pattern, trend toward a limit); the files as Markdown links to their full paths (web UI:
+Download button); the final "to the PC" line of report.py in its own code block. Name source, object, step and
+gaps. First run for a user: point to the setup comment at the top of `~/.claude/tools/get-reports.ps1`.

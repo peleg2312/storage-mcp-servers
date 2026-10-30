@@ -1,7 +1,6 @@
 ---
 name: fastapi-service
-description: Build or change a backend service the way the storage-mcp-servers repos do - a FastAPI REST service or an MCP server (fastmcp) in front of a storage / infrastructure API. Config from an OpenShift Secret, bearer-token auth that fails closed, read-only enforced in the HTTP client, offline tests with a faked backend, a non-root image and an OpenShift Deployment with probes, shipped to the air-gapped cluster as an image tarball.
-when_to_use: Trigger phrases - "build an API / service / backend", "FastAPI", "endpoint", "new MCP server", "add a tool to the powermax / ucsc / mds MCP", "pydantic model", "deploy it to OpenShift", "write tests for the service"
+description: Build or change a FastAPI REST service or an MCP server (fastmcp) the way the storage-mcp-servers repos do - env config, fail-closed bearer auth, read-only HTTP client, offline tests, non-root image, OpenShift Deployment. Triggers - "build an API / service / backend", "FastAPI", "endpoint", "new MCP server", "add a tool to the powermax / ucsc / mds MCP", "pydantic model", "deploy it to OpenShift", "write tests for the service"
 ---
 # Backend services (FastAPI / fastmcp), house style
 
@@ -61,17 +60,8 @@ different major version (Pydantic v1 vs v2, SQLAlchemy 1.x vs 2.0, fastmcp 2 vs 
   `Field(...)`), `response_model` on every route; exceptions from `_do()` mapped once (exception handlers)
   to 404 / 403 / 502; no business logic in the route function.
 
-## 5b. Databases (PostgreSQL / MongoDB)
-- Read the real schema before writing models or queries: MCP server `databases` - `db_list`, then
-  `pg_schema` (tables; one table's columns, constraints, indexes) or `mongo_schema` (collections; fields and
-  types from a sample, indexes). Check a query with `pg_query` / `pg_explain` or `mongo_find` / `mongo_aggregate`.
-- Writing: `pg_execute` (any SQL, committed) / `mongo_write` (insert / update / delete / indexes) work only on
-  connections marked `"write": true`, and the user confirms each call. Say what you will change first; seed and
-  test data are fine; lasting schema changes belong in the app's migrations (Alembic for SQLAlchemy) - write the
-  migration, run it on the dev database, check with pg_schema. Never write to a connection the user calls production.
-  Connections: `~/.claude/brain/databases.json` (passwords in ~/.pgpass or an env variable).
-- Postgres from FastAPI: SQLAlchemy 2 (async engine + asyncpg, or psycopg 3); Mongo: pymongo / motor; one
-  client per app in the lifespan, never per request.
+## 5b. Databases
+PostgreSQL / MongoDB (`databases` MCP): read `~/.claude/skills/fastapi-service/references/databases.md` before touching a schema or query.
 
 ## 6. Tests (offline, plain asserts, no pytest plugins required)
 - Fake the backend at the transport: replace `requests.Session.send` (or `httpx.MockTransport`) with a
@@ -83,17 +73,7 @@ different major version (Pydantic v1 vs v2, SQLAlchemy 1.x vs 2.0, fastmcp 2 vs 
 - `python3 test_readonly.py` must print `ALL TESTS PASSED`; run it before every commit.
 
 ## 7. Image and OpenShift
-- Dockerfile: `python:3.13-slim`, `PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1`, `pip install
-  --no-cache-dir -r requirements.txt`, copy only the service files, `chgrp -R 0 /app && chmod -R g=u /app`,
-  `USER 1001`, `EXPOSE 8000`. No secrets, no test files in the image.
-- `openshift.yaml`: Deployment (`envFrom: secretRef`), readiness + liveness on `/healthz`,
-  `securityContext: {allowPrivilegeEscalation: false, readOnlyRootFilesystem: true, runAsNonRoot: true,
-  capabilities: {drop: [ALL]}}`, requests + memory limit, Service on 8000; header comments with the exact
-  `oc create secret generic <name> --from-env-file=.env` and `oc apply` commands.
-- Air-gapped delivery: build with podman on a connected machine, `podman save | gzip`, split into 45 MB
-  parts under `images/` with `SHA256SUMS` (see `images/join.sh`), or an OpenShift `BuildConfig` from the
-  repo (`openshift/buildconfigs.yaml`). Python dependencies on the VM come from bundled wheels, never pip.
-- Version the image tag in the Deployment, the BuildConfig and the tarball name together.
+Before writing a Dockerfile or openshift.yaml, or planning air-gapped image delivery: read `~/.claude/skills/fastapi-service/references/deploy.md`.
 
 ## Quality loop (tools installed on the VM)
 - Work test-first and debug by root cause (dev-discipline skills: test-driven-development,

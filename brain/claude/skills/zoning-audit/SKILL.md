@@ -1,12 +1,11 @@
 ---
 name: zoning-audit
-description: Audit MDS zoning against logins and array masking - stale members, unzoned initiators, zoned but not masked, single-fabric hosts, alias mismatches, unactivated changes.
-when_to_use: Trigger phrases - "audit the zoning", "stale zone members", "which initiators are not zoned"
+description: Audit MDS zoning against logins and array masking - stale members, unzoned initiators, zoned but not masked, single-fabric hosts, alias mismatches, unactivated changes. Triggers - "audit the zoning", "stale zone members", "which initiators are not zoned"
 context: fork
 agent: fabric-investigator
 background: false
 ---
-You run in a forked context: gather everything, then return a complete answer (answer first, evidence table, findings, sources, next checks); the user cannot answer questions mid-way.
+Forked: the user cannot answer mid-way; finish with a complete answer (storage.md S4).
 
 # Zoning audit
 

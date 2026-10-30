@@ -1,7 +1,6 @@
 ---
 name: csm-health
-description: Health, support and known-issue check of Dell CSM / CSI on OpenShift (driver and operator versions vs the CSM docs and support matrix, replication / authorization / resiliency, DSA advisories). One broken PVC is k8s-volume-troubleshoot.
-when_to_use: Trigger phrases - "is our CSM healthy", "is csi-powermax X supported", "CSM security advisory", "before the OpenShift upgrade"
+description: Health, support and known-issue check of Dell CSM / CSI on OpenShift (driver and operator versions vs the CSM docs and support matrix, replication / authorization / resiliency, DSA advisories). One broken PVC is k8s-volume-troubleshoot. Triggers - "is our CSM healthy", "is csi-powermax X supported", "CSM security advisory", "before the OpenShift upgrade"
 ---
 # CSM / CSI health check (Dell on OpenShift)
 
@@ -23,16 +22,14 @@ back here only for the version / known-issue part. No Kubernetes MCP: the user r
   (PowerMaxOS, Unisphere) or the PowerFlex query output.
 
 ## 2. Compare with the library (vendor `dell`)
-- `csm`: use the url version matching the installed CSM (`content/docs/` = current, `content/v1..v3/` =
-  older). Pages: `csidriver/release/powermax/` and `csidriver/release/powerflex/` (new features, fixed and
+- `csm`: use the url version matching the installed CSM (docs-lookup). Pages: `csidriver/release/powermax/` and `csidriver/release/powerflex/` (new features, fixed and
   known issues per driver release), the driver's "Prerequisites" / "Supported" sections (OpenShift and
   array OS / Unisphere versions, sidecar images), `replication/`, `authorization/`, `resiliency/`,
   `getting-started/installation/operator/operatorinstallation_openshift/` (certified vs community operator).
 - `csm-repo`: `CHANGELOG-<version>.md` (what changed, bugs fixed); `csm-operator`, `csi-powermax`,
   `csi-powerflex`, `csm-replication`, `csm-authorization`, `csm-resiliency`: READMEs with version tables.
 - `kb`: search `"Container Storage Modules"`, `CSM`, `csi-powermax`, the driver error text; **DSA-\***
-  articles for CSM ("DSA-2026-259", "DSA-2026-234", "DSA-2023-285", "DSA-2022-328" ...): affected CSM
-  versions and the fixed version. Fixes and the issues they close: the `*-prs` products (`csm-prs`, `csi-powermax-prs`, `csi-powerflex-prs`, `csi-powerscale-prs`, `csm-operator-prs`, `csm-replication-prs`...: every merged / open pull request with the `dell/csm#<n>` issues it fixes).
+  articles for CSM (search `DSA "Container Storage Modules"`): affected CSM versions and the fixed version. Fixes and the issues they close: the `*-prs` products (see docs-lookup).
 - Trident on the same cluster is `k8s-volume-troubleshoot` / `code-version-check` territory
   (`trident-<yymm>`, `trident-issues`).
 

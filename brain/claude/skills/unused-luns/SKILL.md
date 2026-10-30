@@ -1,11 +1,10 @@
 ---
 name: unused-luns
-description: Find array LUNs (PowerMax, ONTAP) not used in vCenter - unmapped, mapped but unseen, not a datastore or RDM, empty datastores - excluding OpenShift, non-VMware hosts, gatekeepers and replicas.
-when_to_use: Trigger phrases - "which LUNs are not used", "find unused LUNs on the PowerMax", "what can we reclaim"
+description: Find array LUNs (PowerMax, ONTAP) not used in vCenter - unmapped, mapped but unseen, not a datastore or RDM, empty datastores - excluding OpenShift, non-VMware hosts, gatekeepers and replicas. Triggers - "which LUNs are not used", "find unused LUNs on the PowerMax", "what can we reclaim"
 context: fork
 background: false
 ---
-You run in a forked context: gather everything, then return a complete answer (answer first, evidence table, findings, sources, next checks); the user cannot answer questions mid-way.
+Forked: the user cannot answer mid-way; finish with a complete answer (storage.md S4).
 
 # Unused LUNs
 

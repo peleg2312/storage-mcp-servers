@@ -1,7 +1,6 @@
 ---
 name: trace-path
-description: Trace the SAN path end to end (VM / datastore / NAA / host, UCS vHBA, FI, MDS flogi / zone / port-channel, array port, masking or igroup) on both fabrics and flag broken or asymmetric hops.
-when_to_use: Trigger phrases - "trace naa.xxx end to end", "is host X zoned to the array", "why does host Y have only 2 paths"
+description: Trace the SAN path end to end (VM / datastore / NAA / host, UCS vHBA, FI, MDS flogi / zone / port-channel, array port, masking or igroup) on both fabrics and flag broken or asymmetric hops. Triggers - "trace naa.xxx end to end", "is host X zoned to the array", "why does host Y have only 2 paths"
 ---
 # Trace the SAN path
 
