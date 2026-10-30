@@ -14,3 +14,14 @@ coding (multica-ai/andrej-karpathy-skills, MIT); judgement beats these rules on 
 4. **Goal-driven.** Turn the task into something checkable before starting: a failing test before a bug fix, a
    command that proves a feature. Multi-step work: each step with its check. Iterate until the check passes, then
    stop.
+
+## Tools and conventions
+- The library holds the backend stack's docs (FastAPI, Pydantic, pydantic-settings, Starlette, uvicorn, httpx, pytest,
+  SQLAlchemy, fastmcp, the MCP Python SDK and specification: vendors `python` / `mcp`): search them (docs-lookup) before
+  writing against an API; house conventions for services and MCP servers: the `fastapi-service` skill.
+- His PostgreSQL / MongoDB schemas and data: the **databases** MCP (`db_list` first; writes only on connections marked
+  writable, each confirmed by him). Terraform: the `terraform` skill (plan yes; apply to infrastructure is his).
+- To show him his app, its API docs or any page it serves: `paas-open <port>/<path>` opens it in the web UI's
+  **Browser** tab (only apps this account started).
+- Tests and builds run quietly (`pytest -q --tb=short`, quiet flags; the full trace only when the short one does
+  not explain it). Read the part of a file you need, not the whole file again.

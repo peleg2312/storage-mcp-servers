@@ -18,14 +18,10 @@ read it once before the first code change in a session. Storage chats never need
 The environment is **air-gapped**: nothing here reaches the internet. Vendor knowledge comes only from the
 offline library through **the docs MCP** (**docs-search** on the cluster or **docs-local** on this VM; without MCP: `python3
 ~/.claude/brain/library/search.py search "..."`): storage vendors' docs, KB and bugs, and the backend stack
-(FastAPI, Pydantic, httpx, pytest, SQLAlchemy, fastmcp, MCP SDK and specification; `fastapi-service` skill).
-The `docs-lookup` skill has the product names and the search method.
+(coding.md). The `docs-lookup` skill has the product names and the search method.
 The user's own documents: files in `~/.claude/brain/inbox/<vendor>/<product>/` go into the library with
 `add-docs` (seconds; kept across library updates); a url the VM can reach: `add-docs <url>... --to <vendor>/<product>`
 (fetched, the url becomes its link). When the user gives you a document or url to keep, add it that way.
-Development: the user's PostgreSQL / MongoDB schemas and data through the **databases** MCP (`db_list` first; writes
-only on connections marked writable, user-confirmed); conventions: `fastapi-service`; Terraform: `terraform` skill
-(plan yes, apply to infrastructure: the user); charts / Excel: `report-export`.
 
 ## Golden rules
 1. **Read-only toward infrastructure, always** (arrays, switches, UCS, vCenter / ESXi, host storage). Developing
@@ -44,9 +40,8 @@ only on connections marked writable, user-confirmed); conventions: `fastapi-serv
    file; shell / `search.py` output you will reuse: redirect it to `~/storage-reports/<date>-<topic>/`. Never copy
    a result that is already in the conversation into a file (it is paid for twice).
 4. A time series or a table of more than ~15 rows: chart it / export it with `report-export` (text chart
-   in the answer, report.html + report.xlsx, and the PowerShell line to copy them to the PC).
-   To show him a page (his app on this VM, its API docs, an HTML report), run `paas-open <port>/<path>` or
-   `paas-open <file under ~>`: it opens in the web UI's **Browser** tab (only apps this account started).
+   in the answer, report.html + report.xlsx, and the PowerShell line to copy them to the PC). To show him an
+   HTML report: `paas-open <file under ~>` opens it in the web UI's **Browser** tab.
 5. **Search the library whenever the answer depends on how a vendor product or library works**, not only for faults:
    behaviour, limits, concepts and design, best practices, procedures, versions and known bugs, error
    meanings, APIs / SDKs for automation, comparisons, and requests that only borrow from a product (an app
@@ -68,8 +63,7 @@ only on connections marked writable, user-confirmed); conventions: `fastapi-serv
    result before the full list; never re-call for data you already have. Independent read-only calls go out
    together in one turn, and the tools a task needs load with one ToolSearch (`select:a,b,c`). Delegate a long
    investigation to an agent (own context, returns a summary); file / code sweeps go to the Explore agent (haiku);
-   answer short questions yourself. Code work: tests and builds quietly (`pytest -q --tb=short`, quiet flags; the full trace only when
-   the short one does not explain it), and read the part of a file you need, not the whole file again.
+   answer short questions yourself.
 8. **Denied? Ask him.** When an action is denied (auto mode's check, the read-only guard, or a permission prompt
    he declined), never drop it silently and never try a workaround: say what was denied, why it is needed and the
    exact command, and ask him. Auto mode: he can approve it by naming that exact action in his reply, or with
