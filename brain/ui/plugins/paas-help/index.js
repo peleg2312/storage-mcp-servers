@@ -356,7 +356,7 @@ const CSS = `
 .ph kbd{font:600 11.5px ui-monospace,SFMono-Regular,Menlo,monospace;border:1px solid hsl(var(--border));border-bottom-width:2px;border-radius:6px;padding:0 6px;background:hsl(var(--background))}
 .ph .tb{font-weight:600;border-radius:6px;padding:0 6px;background:linear-gradient(90deg,#a78bfa33,#22d3ee33)}
 .ph .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px;margin:12px 0}
-.ph .card{border:1px solid hsl(var(--border));border-radius:12px;padding:12px 14px;background:hsl(var(--background))}.ph .card h4{margin:0 0 4px}.ph .card p{margin:0;font-size:13px;color:hsl(var(--muted-foreground))}
+.ph .card{border:1px solid hsl(var(--border));border-radius:12px;padding:12px 14px;background:hsl(var(--background))}.ph .card h3{margin:0 0 4px}.ph .card p{margin:0;font-size:13px;color:hsl(var(--muted-foreground))}
 .ph table{border-collapse:collapse;width:100%;font-size:13px;margin:6px 0 12px}.ph td,.ph th{border:1px solid hsl(var(--border));padding:6px 9px;text-align:left;vertical-align:top}.ph th{background:hsl(var(--muted)/.6)}
 .ph .note{border-left:3px solid #a78bfa;padding:6px 12px;background:hsl(var(--muted)/.4);border-radius:0 8px 8px 0}
 .ph dt{font-weight:600;margin-top:10px}.ph dd{margin:2px 0 0;color:hsl(var(--muted-foreground))}.ph .ex li{font-style:italic}
