@@ -87,6 +87,9 @@ def route(method, path, qs, body):
         return {"alertId": m.group(1), "severity": "CRITICAL" if m.group(1) == "105" else "WARNING",
                 "created_date": f"Oct-21-2026 10:{m.group(1)[-2:]}:00.000", "description": "Port FA-1D:4 link down",
                 "array": A, "state": "NEW", "acknowledged": False}
+    if path.endswith("/initiator") and "initiator_hba=" in qs:  # server-side filter
+        h = qs.split("initiator_hba=")[1].split("&")[0]
+        return {"initiatorId": [i for i in table[path]["initiatorId"] if h in i]}
     if path in table:
         return table[path]
     return None
@@ -152,7 +155,7 @@ async def main():
     assert w["initiators"][0]["masking_views"][0]["storage_group"] == "SG_ESX01", w
     print("find_wwpn:", w["initiators"][0]["masking_views"])
     mv = await call("get_masking_view", array_id=A, masking_view="esx01_MV")
-    assert mv["connections_total"] == 1
+    assert mv["connections_total"] == 1 and mv["volumes"][0]["dir_ports"] == ["FA-1D:4"], mv
     await call("get_port_group", array_id=A, port_group="PG_FA1D"); await call("get_host", array_id=A, host="esx01")
     await call("list_hosts", array_id=A); await call("list_masking_views", array_id=A); await call("list_storage_groups", array_id=A)
     d = await call("list_directors", array_id=A, include_ports=True)
@@ -172,17 +175,30 @@ async def main():
     assert au["returned"] == 1
     aq = [q for m, p, q in SENT if p.endswith("audit_log_record")][0]
     assert [k for k, _ in aq].count("entry_date") == 2, aq
+    assert set(au["records"][0]) <= {"record_id", "username", "hostname", "application_id", "audit_class",
+                                     "function_class", "action_code", "entry_date_utc", "message"}
+    await call("get_audit_log", array_id=A, user_name="u", host_name="h")
+    aq = [q for m, p, q in SENT if p.endswith("audit_log_record")][-1]
+    assert ("username", "u") in aq and ("hostname", "h") in aq, aq
+    # iterate(tail=True) returns the newest rows
+    pages = {"a": [{"n": 1}, {"n": 2}, {"n": 3}, {"n": 4}, {"n": 5}]}
+    u0 = server.U(A)
+    u0.get = lambda path, params=None: {"result": pages["a"][params["from"] - 1:params["to"]]}
+    r0 = {"resultList": {"result": pages["a"][:2]}, "count": 5, "maxPageSize": 2, "id": "x"}
+    assert [r["n"] for r in u0.iterate(r0, limit=3, tail=True)] == [3, 4, 5]
+    assert [r["n"] for r in u0.iterate(r0, limit=3)] == [1, 2, 3]
+    del u0.get
     print("audit:", au["records"][0]["entry_date_utc"], au["records"][0]["message"])
-    await call("list_performance_categories", array_id=A)
+    assert (await call("list_performance_metrics", array_id=A))["categories"]
     await call("list_performance_metrics", array_id=A, category="StorageGroup", kpi_only=True)
     k = await call("list_performance_keys", array_id=A, category="StorageGroup")
     assert k["total"] == 2
-    p = await call("get_performance", array_id=A, category="StorageGroup", storage_group="SG_ESX01",
+    p = await call("get_performance", array_id=A, category="StorageGroup", object_id="SG_ESX01",
                    metrics="HostIOs,ResponseTime", minutes_back=60, raw=True, max_points=5)
     assert p["samples"] == 12 and p["summary"]["ResponseTime"]["max"] == 24.0, p["summary"]
     print("perf summary:", p["summary"]["ResponseTime"], "series pts:", len(p["series"]))
     try:
-        await call("get_performance", array_id=A, category="StorageGroup", storage_group="SG_ESX01", metrics="Bogus")
+        await call("get_performance", array_id=A, category="StorageGroup", object_id="SG_ESX01", metrics="Bogus")
         raise SystemExit("bad metric accepted")
     except Exception as e:
         assert "Unknown metrics" in str(e)

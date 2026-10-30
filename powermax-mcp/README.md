@@ -5,7 +5,7 @@ host mapping, replication, **all performance metrics**, **alerts (events)** and 
 
 ## Read-only enforcement
 
-Every HTTP request goes through one session object that refuses anything except:
+Every HTTP request goes through one session object per Unisphere (guarded in `Session.send`) that refuses anything except:
 - `GET` under `/univmax/restapi`
 - `POST` to `/univmax/restapi/performance/<Category>/keys|metrics` (Unisphere uses POST for metric queries)
 
@@ -22,18 +22,18 @@ they are sent. Also give the Unisphere user only the **Monitor** role.
 - Performance results come back **summarised** (avg/max/min/last, time of peak) so the model can
   reason over them; `raw=True` adds the time series.
 
-## Tools (28)
+## Tools (26)
 
 | Area | Tools |
 |---|---|
-| Connection | `test_connection` (all Unispheres), `list_unispheres`, `list_arrays` |
+| Connection | `test_connection` (all Unispheres), `list_arrays` |
 | Array | `get_array`, `get_array_health`, `list_srps` |
 | Storage | `list_storage_groups`, `get_storage_group`, `get_volume`, `find_volume_by_wwn` |
 | Hosts/SAN | `list_hosts`, `get_host`, `find_wwpn`, `list_masking_views`, `get_masking_view`, `get_port_group`, `list_directors`, `get_port` |
 | Replication | `get_replication` (SRDF groups, SnapVX snapshots) |
 | Events | `get_alert_summary`, `get_alerts` |
 | Logs | `get_audit_log` |
-| Performance | `get_performance_overview`, `get_performance`, `list_performance_categories`, `list_performance_metrics`, `list_performance_keys` |
+| Performance | `get_performance_overview`, `get_performance`, `list_performance_metrics` (no category: lists categories), `list_performance_keys` |
 | Other | `unisphere_get` (any GET endpoint) |
 
 `find_wwpn` traces WWPN → initiator → host → masking view → storage group / port group, so it pairs
@@ -49,8 +49,11 @@ with the MDS and UCS Central MCP servers for an end-to-end SAN path.
 | `UNISPHERE_<N>_PORT` | | `8443` |
 | `UNISPHERE_<N>_VERIFY_SSL` | | `false` (`true`, or a CA bundle path) |
 | `UNISPHERE_<N>_API_VERSION` | | auto-detected (`92`, `100`, `101` ...) |
+| `UNISPHERE_<N>_TIMEOUT` | | `120` s read timeout (connect is capped at 10 s); `UNISPHERE_VERIFY_SSL` / `UNISPHERE_TIMEOUT` apply to all |
+| `LOG_LEVEL` | | `INFO` |
+| `FORWARDED_ALLOW_IPS` | | `127.0.0.1` (trusted proxies for `X-Forwarded-*`; set the Route/ingress CIDR if needed) |
 | `POWERMAX_DEFAULT_ARRAY` | | used when `array_id` is omitted |
-| `PERF_WORKERS` | | `8` parallel requests in `get_performance_overview` |
+| `PERF_WORKERS` | | `8` parallel requests (performance overview, storage-group volumes, director ports, alerts) |
 
 Arrays are routed automatically: the server asks every Unisphere which arrays it sees and sends each
 array's calls to the Unisphere where it is **local** (where its performance data lives). Alerts and
@@ -59,7 +62,7 @@ alert summaries are merged across all Unispheres and tagged with the Unisphere n
 ## Run
 
 ```bash
-docker load -i powermax-mcp-2.0.tar.gz     # or: docker build -t powermax-mcp:2.0 .
+docker build -t powermax-mcp:2.0 .          # or: docker load -i powermax-mcp-2.0.tar.gz
 docker run -d -p 8000:8000 --env-file .env powermax-mcp:2.0
 ```
 
