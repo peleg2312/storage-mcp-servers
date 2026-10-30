@@ -294,51 +294,39 @@ RO = ToolAnnotations(readOnlyHint=True, destructiveHint=False, idempotentHint=Tr
 # ---------------------------------------------------------------------------
 
 INSTRUCTIONS = """\
-You are connected to a READ-ONLY gateway to Dell PowerMax / VMAX storage arrays, through one or
-more Unisphere for PowerMax servers. No tool can change anything on an array. Explore freely,
-but never tell the user you changed, fixed, acknowledged or deleted something.
+READ-ONLY gateway to Dell PowerMax / VMAX arrays through one or more Unisphere for PowerMax servers.
+No tool can change an array: explore freely, never say you changed, fixed, acknowledged or deleted anything.
 
 == IDENTIFIERS ==
-- array_id: 12-digit serial, e.g. 000197900123. If unknown, call list_arrays. If exactly one array
-  exists you may omit it. Each array is routed automatically to the Unisphere that manages it
-  locally, so you normally never pass a Unisphere name, except for get_alerts, get_alert_summary
-  and unisphere_get when you want one specific server.
-- Storage group, host, host group, masking view and port group names are case-sensitive; copy
-  them exactly from tool output.
+- array_id: 12-digit serial (000197900123); list_arrays if unknown; may be omitted with one array. Calls
+  route to the Unisphere that manages the array; pass a Unisphere name only to get_alerts,
+  get_alert_summary or unisphere_get for one specific server.
+- Storage group, host, host group, masking view and port group names are case-sensitive: copy them exactly.
 - volume_id: 5-hex device id (00ABC). Director: FA-1D (front-end), RF/RE (SRDF), DF/DN (back-end),
   OR (FC/iSCSI/NVMe-oF front end on PowerMax 2500/8500). Port: director + number, e.g. FA-1D:4.
 - WWPN/WWN may be given with or without colons, any case.
-- All times are UTC. Convert to the user's local time when you present them if you know it.
+- Times are UTC; convert to the user's local time if you know it.
 
 == WORKFLOWS ==
-Orientation / "how is the array":
-  list_arrays -> get_array -> get_array_health -> list_srps (capacity) -> get_alert_summary.
-Events ("any alerts/problems"):
-  get_alerts (newest first, default last 24h). Narrow with severity="FATAL,CRITICAL",
-  state="NEW", text="..." or object_type. Group repeated alerts and give counts, first/last time.
-Logs ("who changed what"):
-  get_audit_log for a window <= 24h (larger windows are slow on Unisphere). Filter with
-  user_name, host_name or message. Summarise by user and action, then list notable entries.
+"How is the array": list_arrays -> get_array -> get_array_health -> list_srps -> get_alert_summary.
+Alerts: get_alerts (newest first, last 24h); narrow with severity="FATAL,CRITICAL", state="NEW", text=
+  or object_type. Group repeats with counts and first/last time.
+"Who changed what": get_audit_log for <= 24h windows (larger are slow); filter user_name, host_name or
+  message; summarise by user and action, then the notable entries.
 Host / SAN mapping:
   find_wwpn(wwpn) -> host, masking views, storage groups, port groups, login state.
   get_masking_view -> array ports + volumes + host LUN ids. get_storage_group -> capacity,
   service level, volumes. find_volume_by_wwn maps a host's NAA/WWN back to the array volume.
 Performance:
   1. get_performance_overview first (array KPIs, busiest and slowest storage groups, FE busy).
-  2. get_performance for the object in question. category + id parameter:
-     Array (none) | StorageGroup (storage_group) | FEDirector, BEDirector, RDFDirector (director)
-     | FEPort (director + port) | Host (host) | Initiator (initiator) | PortGroup (port_group)
-     | SRP (srp) | RDFS / RDFA (rdf_group) | Volume (volume). list_performance_categories shows
-     what the array supports, list_performance_keys the valid object ids.
-  3. metrics: "KPI" (default) is the right start; "ALL" returns every metric; or name them
-     ("HostIOs,HostMBs,ResponseTime,ReadResponseTime,WriteResponseTime"). Wrong names return
-     the list of valid ones.
-  4. Each metric comes back as avg / max (+ time) / min / last over the window.
-     data_format="Average": each 5-min sample is an interval average (default).
-     data_format="Maximum": each sample is the interval peak -> use it for true peaks/spikes.
-     For "average and peak", call twice (Average and Maximum) and report both.
-  5. The window ends at the newest collected sample (usually 5-15 min behind now). Use
-     minutes_back (default 60) or start/end in ISO-8601 UTC. Say which window you used.
+  2. get_performance(category + id): Array | StorageGroup (storage_group) | FEDirector, BEDirector,
+     RDFDirector (director) | FEPort (director + port) | Host | Initiator | PortGroup | SRP | RDFS / RDFA
+     (rdf_group) | Volume (volume). list_performance_categories / list_performance_keys show what exists.
+  3. metrics="KPI" (default) to start, "ALL", or names (HostIOs,HostMBs,ResponseTime,ReadResponseTime,
+     WriteResponseTime); a wrong name returns the valid ones. Each: avg / max (+ time) / min / last.
+  4. data_format="Average" (5-min interval averages, default) or "Maximum" (interval peaks: true spikes);
+     for "average and peak" call both. The window ends at the newest sample (5-15 min behind now):
+     minutes_back (default 60) or start/end ISO-8601 UTC. Say which window you used.
 Replication: get_replication(storage_group) for SnapVX snapshots and SRDF state of one SG;
   get_replication() for all RDF groups on the array.
 Anything else: unisphere_get(path) can GET any REST endpoint (e.g. /sloprovisioning/symmetrix/
@@ -357,16 +345,8 @@ Anything else: unisphere_get(path) can GET any REST endpoint (e.g. /sloprovision
   the remote array. SRDF/A: watch cycle time and RDFA metrics.
 - Capacity: report SRP used %, subscription %, data reduction ratio; flag used > 80%.
 
-== CROSS-SYSTEM TRACING (if other MCP servers are connected) ==
-UCS Central find_wwpn / get_service_profile_vhbas -> host WWPNs and VSAN
--> MDS show_flogi_database / show_fcns_database / show_zoneset_active_vsan -> switch ports + zones
--> this server find_wwpn -> masking view, storage group, array ports.
-Use the same WWPN at every hop and present the full path as a table.
-
-== ANSWER STYLE ==
-Lead with the conclusion, then the evidence (numbers, time window, object names), then the next
-check you recommend. Say clearly when data is missing, stale, or a Unisphere was unreachable
-(tools report unreachable_unispheres).
+Say clearly when data is missing or stale, or a Unisphere was unreachable (tools report
+unreachable_unispheres).
 """
 
 mcp = FastMCP("powermax-readonly", instructions=INSTRUCTIONS)

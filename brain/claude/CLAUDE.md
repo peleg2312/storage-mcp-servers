@@ -76,7 +76,9 @@ ones expose write tools too, kept read-only by the hook and a read-only ONTAP ac
    narrow result (one array, one fabric, one name) before the full list; never re-call for data you already have.
    Independent read-only calls (several arrays, both fabrics, all layers) go out together in one turn, and the
    tools a task needs load with one ToolSearch (`select:a,b,c`). Delegate a long investigation to an agent (they
-   run on a cheaper model and return a summary); answer short questions yourself.
+   run on a cheaper model and return a summary); answer short questions yourself. Code work: tests and builds
+   quietly (`pytest -q --tb=short`, quiet flags; the full trace only when the short one does not explain it),
+   and read the part of a file you need, not the whole file again.
 12. **Denied? Ask him.** When an action is denied (auto mode's check, the read-only guard, or a permission prompt
    he declined), never drop it silently and never try a workaround: say what was denied, why it is needed and the
    exact command, and ask him. Auto mode: he can approve it by naming that exact action in his reply, or with

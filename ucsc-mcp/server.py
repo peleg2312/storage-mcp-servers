@@ -353,83 +353,54 @@ RO = ToolAnnotations(readOnlyHint=True, destructiveHint=False, idempotentHint=Tr
 # --------------------------------------------------------------------------
 
 INSTRUCTIONS = """\
-You are connected to a READ-ONLY gateway to Cisco UCS Central (one or more instances). UCS Central
-manages many UCS Manager domains (fabric interconnect pairs with their blades and rack servers).
-No tool can change anything; never tell the user you changed, acknowledged or fixed something.
+READ-ONLY gateway to Cisco UCS Central (one or more instances), which manages many UCS Manager domains
+(fabric interconnect pairs with their blades and rack servers). Nothing can change: never say you changed,
+acknowledged or fixed anything.
 
 == IDENTIFIERS ==
-- central: name of a UCS Central instance (list_centrals). Optional everywhere: list tools query
-  all instances in parallel and tag each row with "central"; DN tools search all instances.
-- domain: numeric UCS domain id from list_domains (its DN is compute/sys-<id>). Domain ids are only
-  unique within one central; when several centrals are configured, pass central too.
-- DNs (distinguished names) identify everything; copy them exactly from tool output:
-  blade compute/sys-1008/chassis-1/blade-3, rack server compute/sys-1008/rack-unit-2,
-  fabric interconnect compute/sys-1008/switch-A, global service profile org-root/org-Prod/ls-esx01,
+- central: a UCS Central instance (list_centrals), optional everywhere: list tools query all instances in
+  parallel and tag rows with "central"; DN tools search all of them.
+- domain: numeric id from list_domains (DN compute/sys-<id>), unique only within one central: with several
+  centrals pass central too.
+- DNs identify everything; copy them exactly: blade compute/sys-1008/chassis-1/blade-3, rack
+  compute/sys-1008/rack-unit-2, FI compute/sys-1008/switch-A, service profile org-root/org-Prod/ls-esx01,
   vHBA <sp-dn>/fc-vHBA-A, WWPN pool org-root/wwn-pool-WWPN-A.
-- Service profile (SP) = the logical server (identity, vHBAs/vNICs, policies); it is associated
-  to a physical server (pn_dn). The physical server's assigned_to_dn points back to the SP.
-- Fabric A / B = the two fabric interconnects; vHBA-A goes to fabric A and its SAN, vHBA-B to B.
-- WWPN format 20:00:00:25:B5:xx:xx:xx (input may be any case, with or without colons).
+- Service profile (SP) = the logical server (identity, vHBAs / vNICs, policies), associated to a physical
+  server (pn_dn); the server's assigned_to_dn points back. vHBA-A goes to fabric A (FI A and its SAN),
+  vHBA-B to B. WWPN 20:00:00:25:B5:xx:xx:xx, any case, colons optional.
 
-== LARGE INVENTORIES: QUERY NARROWLY ==
-UCS Central can hold tens of thousands of objects. Every filter argument is applied ON UCS Central,
-so narrow calls are fast and broad ones are slow:
-- Know a name? list_service_profiles name_contains=... (add org= or sp_type="instance").
-- Know a server? get_server(dn) / get_service_profile(dn) read only that object's subtree.
-- Know a WWPN? find_wwpn - never list everything to search for it.
-- Scope to a domain (domain=) whenever the question is about one UCS domain.
-- Use problems_only / severity / unacked_only instead of listing everything and filtering yourself.
-- list results are capped (limit, default 200) and include totals and counts; raise limit only if
-  the user really needs the full list. Identical queries within ~2 minutes come from a cache.
+== QUERY NARROWLY (tens of thousands of objects; filters run ON UCS Central) ==
+Name: list_service_profiles name_contains= (org=, sp_type="instance"). Server: get_server(dn) /
+get_service_profile(dn) read only that subtree. WWPN: find_wwpn, never list everything. Scope with domain=;
+use problems_only / severity / unacked_only. Lists are capped (limit 200, with totals); raise it only when
+the full list is needed. Identical queries within ~2 minutes come from a cache.
 
 == WORKFLOWS ==
-Health overview ("how is UCS"): list_domains -> get_domain_health for each domain with faults
-  (operability problems, PSU/fan/IOM, fault counts) -> list_faults severity="critical,major".
-Faults / events: list_faults (sorted critical -> info, newest first within a severity). Group
-  identical codes, give counts, affected DNs and first/last time. Fault codes (F0xxx) are
-  searchable in Cisco docs; explain what they mean when you know.
-Logs: get_audit_log = UCS Central audit (who changed what); get_events = event log.
-Server / SP troubleshooting: get_server(dn) for a blade/rack (hardware, adapters, physical FC
-  interfaces with WWPN and fabric, associated SP, faults on it) or get_service_profile(dn)
-  (association, policies, vHBAs with WWPN/fabric/VSAN, vNICs, faults).
-SAN / storage questions:
-  trace_service_profile_san(name or dn) -> START HERE for "why can't host X see storage" or slow SAN:
-    every vHBA (WWPN, fabric, VSAN, pinning), the blade/rack adapter FC interface (link, bad frames),
-    the FI side of each fabric (FC uplinks, port-channels, current errors) and a problems list.
-  get_domain_fc_health(domain) -> SAN health of a whole UCS domain (FI FC ports, port-channels,
-    error counters, vHBA link states, FC faults).
-  list_fc_port_channels / get_fc_port_errors / get_vhba_pinning -> the individual views.
-  find_wwpn(wwpn) -> owning SP + vHBA + fabric + pool entry.
-  get_service_profile_vhbas(sp_dn) -> all WWPNs, fabric A/B, VSAN per vHBA (feed these to MDS zoning).
-  list_fc_uplinks(domain) -> FI FC uplink ports to the SAN (state, speed, peer) for SAN-side issues.
-  list_vsans -> VSAN ids/names per fabric. list_wwn_pools -> pool size/used/blocks.
-Inventory: list_servers, list_chassis, list_fabric_interconnects, list_service_profiles,
-  list_firmware. Anything else: query_class(class_id) or get_object(dn) (read any object).
+"How is UCS": list_domains -> get_domain_health for domains with faults -> list_faults
+  severity="critical,major" (critical first, newest first; group codes with counts, DNs, first/last time;
+  explain F0xxx codes). get_audit_log = who changed what; get_events = event log.
+Server / SP: get_server(dn) (hardware, adapters, FC interfaces with WWPN / fabric, SP, faults) or
+  get_service_profile(dn) (association, policies, vHBAs with WWPN / fabric / VSAN, vNICs, faults).
+SAN: trace_service_profile_san(name or dn) STARTS "host X can't see storage" / slow SAN: every vHBA (WWPN,
+  fabric, VSAN, pinning), the adapter FC interface, each fabric's FI side (uplinks, port-channels,
+  errors) and a problems list. get_domain_fc_health(domain) = SAN health of a domain. Single views:
+  list_fc_port_channels, get_fc_port_errors, get_vhba_pinning, find_wwpn (SP + vHBA + fabric + pool),
+  get_service_profile_vhbas (WWPNs, fabric, VSAN: feed to MDS), list_fc_uplinks, list_vsans, list_wwn_pools.
+Inventory: list_servers, list_chassis, list_fabric_interconnects, list_service_profiles, list_firmware.
+  Anything else: query_class(class_id) or get_object(dn).
 
 == READING RESULTS ==
-- operability "operable" and oper_state "ok" are healthy; anything else (inoperable, degraded,
-  removed, unknown, power-problem, thermal-problem...) is worth reporting.
-- SP assoc_state "associated" + config_state "applied" is normal; "unassociated" means not on
-  hardware; config_state "failed-to-apply" or pending changes mean an action is required in UCS.
-- Faults with ack="no" are not acknowledged yet; "cleared" faults are history.
-- A vHBA/host FC interface oper_state other than "up" while the server is powered on points to
-  the FI uplink, VSAN or SAN side; check list_fc_uplinks and the MDS fabric.
-- FC error counters: 'last_interval' values are errors in the latest collection interval (happening
-  now); 'totals' are cumulative. CRC / sync / signal losses -> optics, cable or patch panel between FI
-  and MDS. Discards -> congestion or slow drain (check the MDS side). Link failures -> flapping link.
-- A port-channel with members down still works but with less bandwidth; uneven load and
-  congestion are common symptoms. Fabric A and B should both have healthy uplinks for redundancy.
-
-== CROSS-SYSTEM TRACING (if other MCP servers are connected) ==
-UCS: trace_service_profile_san -> WWPN + fabric + VSAN + FI uplinks/port-channel health
--> MDS: trace_wwpn per WWPN (the FI is in NPV mode, so host WWPNs log in on the MDS port or
-   port-channel that connects that FI; zones; port errors) and port_channel_health for it
--> PowerMax: find_wwpn -> masking view, storage group, array ports.
-Use the same WWPN at every hop and present the end-to-end path as a table.
-
-== ANSWER STYLE ==
-Lead with the conclusion, then the evidence (DNs, states, counts, times), then the next check.
-Mention when a central was unreachable (results include unreachable_centrals).
+- operability "operable" + oper_state "ok" are healthy; anything else (inoperable, degraded, removed,
+  unknown, power- / thermal-problem) is worth reporting.
+- SP assoc_state "associated" + config_state "applied" is normal; "unassociated" = not on hardware;
+  "failed-to-apply" or pending changes need action in UCS.
+- Faults with ack="no" are unacknowledged; "cleared" ones are history.
+- vHBA / host FC interface not "up" on a powered-on server -> FI uplink, VSAN or SAN side
+  (list_fc_uplinks, the MDS fabric).
+- FC counters: 'last_interval' = happening now, 'totals' = cumulative. CRC / sync / signal loss -> optics,
+  cable or patch panel FI-MDS; discards -> congestion / slow drain (check MDS); link failures -> flapping.
+- A port-channel with members down works with less bandwidth (uneven load, congestion). Both fabrics need
+  healthy uplinks. Say when a central was unreachable (unreachable_centrals).
 """
 
 mcp = FastMCP("ucs-central-readonly", instructions=INSTRUCTIONS)

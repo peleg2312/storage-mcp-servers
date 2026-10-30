@@ -38,95 +38,52 @@ mds_san.register(main.mcp, _RO)
 main.mcp.disable(names={"generate_prefab_ui", "search_prefab_components"}, components={"tool"})
 
 INSTRUCTIONS = """\
-You are connected to a READ-ONLY gateway to Cisco MDS Fibre Channel switches (NX-OS via NX-API).
-Every tool runs one `show` command; nothing can change the fabric. Never say you changed,
-cleared or fixed anything.
+READ-ONLY gateway to Cisco MDS Fibre Channel switches (NX-OS via NX-API): every tool runs one `show`
+command, nothing can change the fabric. Never say you changed, cleared or fixed anything.
 
 == IDENTIFIERS ==
-- switch: friendly name from list_switches (e.g. mds-fab-a, mds-fab-b). Several switches usually
-  means two fabrics (A and B); always say which fabric/switch a result came from.
-- interface: fc1/1, fc1/1/1 or port-channel10 (po10 is accepted).
-- vsan: 1-4094. pwwn: 8 colon-separated hex bytes, 50:00:09:73:00:12:34:56.
-- Output is the switch's NX-API JSON: tables are nested as TABLE_x / ROW_x; a single row may be
-  an object instead of a list. Text-only commands come back as plain text.
-- Switch log timestamps are in the switch's own clock/time zone.
+- switch: name from list_switches (e.g. mds-fab-a, mds-fab-b); several switches usually = fabrics A and B:
+  always say which switch a result came from. Switch logs use the switch's own clock / time zone.
+- interface fc1/1, fc1/1/1 or port-channel10 (po10 ok); vsan 1-4094; pwwn 50:00:09:73:00:12:34:56.
+- Output is NX-API JSON (TABLE_x / ROW_x; a single row may be an object, not a list) or plain text.
 
-== SAN TROUBLESHOOTING COMPOSITES (start here) ==
-- trace_wwpn(pwwn): one call, all switches: FLOGI (switch/interface/VSAN/FCID), FCNS, aliases, every
-  ACTIVE zone containing it with the other members and their login state, the login port's health
-  (and port-channel members if it logs in through an F-port-channel from a UCS FI), and warnings
-  (not logged in, logged in but not zoned, zone partner offline, VSAN mismatch, port errors).
-- zone_check(a, b): are two WWPNs/aliases zoned together in the active zoneset, per VSAN, and are both
-  logged in. Use for "can host X reach array port Y".
-- port_channel_health: per port-channel state, speed, trunk VSANs and per-member state, speed, B2B
-  credits and error counters; flags down members, speed mismatch and erroring members.
-- scan_port_errors: ranks every interface by non-zero error/discard/CRC/link-failure/credit counters
-  and lists ports that are down or errDisabled.
-- flogi_summary: logins per interface/VSAN; interfaces with many logins are NPV uplinks such as UCS
-  FI port-channels - shows where each UCS fabric attaches.
-Parsed results include the raw lines; if something looks odd, confirm with run_show.
+== START HERE (composites, all switches in one call) ==
+- trace_wwpn(pwwn): FLOGI (switch / interface / VSAN / FCID), FCNS, aliases, every ACTIVE zone with it and
+  its partners' login state, the login port's health (+ port-channel members for a UCS FI F-port-channel)
+  and warnings (not logged in, not zoned, partner offline, VSAN mismatch, port errors).
+- zone_check(a, b): are two WWPNs / aliases zoned together (active zoneset, per VSAN) and both logged in.
+- port_channel_health: state, speed, trunk VSANs, per-member state / speed / B2B / errors; flags down,
+  mismatched and erroring members. scan_port_errors: ports ranked by error / discard / CRC / link-failure /
+  credit counters, plus ports down or errDisabled. flogi_summary: logins per interface / VSAN (many = NPV
+  uplink, e.g. a UCS FI port-channel: where each UCS fabric attaches).
+- slow_drain_check: OBFL txwait / rxwait / credit-loss / error-stats, port-monitor policy and warning log
+  events per interface. get_log_events: syslog parsed into events (severity, facility, code, interface,
+  VSAN), newest first, with a summary; prefer it to show_logging (max_severity=4 since_hours=24, or
+  interface="fc1/5"). show_logging_onboard(section): OBFL history that survives reboots (error-stats,
+  txwait, rxwait, credit-loss, datarate, environmental-history, exception-log; module=).
+- run_show(command): ANY single show command (port-monitor, rdp, fcs ie, topology, counters detailed...);
+  grep= instead of `| include`, tail_lines= for long output; pipes and tech-support are refused. Errors are
+  explained in plain words; if a command is invalid on this NX-OS, try the closest variant. Parsed
+  results keep the raw lines: confirm odd ones with run_show.
 
-== TOOLS BEYOND THE FIXED show_* SET ==
-- run_show(command): ANY single `show` command, JSON when available, otherwise text. Use it whenever a
-  dedicated tool doesn't exist (show port-monitor, show rdp fcid X vsan Y, show fcs ie, show topology,
-  show interface fcX/Y counters detailed, show system internal ...). Use grep= instead of `| include`
-  and tail_lines= for long output. Pipes and show tech-support are refused.
-- get_log_events: syslog PARSED into events (severity, facility, event code, interfaces, VSAN), across
-  all switches, newest first, with a summary by event and interface. Prefer it over show_logging.
-  Typical: max_severity=4 since_hours=24; or interface="fc1/5" to see one port's history.
-- show_logging_onboard(section): OBFL history that survives reboots: error-stats, txwait, rxwait,
-  credit-loss, datarate, interrupt-stats, environmental-history, exception-log ... (module= for one
-  line card). Use it to answer "has this port had errors/congestion before, and when".
-- slow_drain_check: one call that gathers OBFL txwait/rxwait/credit-loss/error-stats, port-monitor
-  policy and warning-level log events by interface, for one or all switches.
-- Errors are explained in plain words (no permission for the role, command not valid on this NX-OS,
-  switch unreachable, login refused). If a command is not valid, try the closest variant.
-
-== WORKFLOWS ==
-Fabric health: list_switches -> show_version / show_module / show_environment on each switch ->
-  show_interface_brief (ports down or errDisabled) -> get_log_events max_severity=4 since_hours=24.
-Where is a WWPN / host logged in, and is it zoned: trace_wwpn (one call). zone_check for a pair.
-Zoning: show_zoneset_active_vsan (what is enforced) vs show_zoneset_vsan (configured);
-  show_zone_name_vsan for one zone. A device can talk only if both WWPNs (or their aliases) are in
-  the same zone of the ACTIVE zoneset in the same VSAN. Check both fabrics.
-Which ports have problems: scan_port_errors, then port_channel_health for port-channels.
-Port problems / slow drain: show_interface_for (state, speed, errors) ->
-  show_interface_counters_detailed_for and show_interface_bbcredit_for (B2B credits, TxWait,
-  timeouts/discards) -> show_interface_transceiver_detail_for (Rx/Tx power, temperature)
-  -> show_logging_onboard error-stats / txwait for history -> get_log_events interface=... .
-  Compare across the ports of the same path and both fabrics.
-Congestion / slow drain: slow_drain_check first, then drill into the ports it names.
-ISLs / port-channels / UCS FI uplinks: port_channel_health (and flogi_summary to see which
-  port-channel carries which FI's logins).
-UCS hosts: a UCS FI runs in NPV mode, so every server vHBA WWPN logs in on the MDS F-port-channel
-  (or F-port) that connects that FI. Fabric A FI -> fabric A MDS, fabric B FI -> fabric B MDS.
+== WORKFLOWS (check both fabrics) ==
+Health: list_switches -> show_version / show_module / show_environment -> show_interface_brief ->
+  get_log_events. Zoning: show_zoneset_active_vsan (enforced) vs show_zoneset_vsan (configured),
+  show_zone_name_vsan; devices talk only when both WWPNs (or aliases) share a zone of the ACTIVE zoneset
+  in the same VSAN. One port: show_interface_for -> show_interface_counters_detailed_for,
+  show_interface_bbcredit_for -> show_interface_transceiver_detail_for -> OBFL -> get_log_events
+  interface=; compare the ports of the same path. UCS FIs run NPV: server vHBAs log in on the MDS
+  F-port(-channel) of that FI (FI A -> fabric A MDS).
 
 == READING THE NUMBERS (rules of thumb) ==
-- CRC / invalid CRC / link failures / sync loss growing -> physical layer: SFP, cable, patch panel.
-- Optical Rx power below about -7 dBm on short-wave SFPs is marginal, below the transceiver's low
-  alarm threshold is a fault; compare with the thresholds shown in the transceiver detail.
-- TxWait, Tx credit-loss / B2B credit 0 time, timeout discards on an F-port -> slow-drain device
-  (usually the host/HBA behind that port); on an ISL -> congestion spreading in the fabric.
-- Counters are cumulative since last clear/boot; when possible compare two readings over time
-  before calling something "increasing". OBFL gives the history with timestamps.
-- OBFL txwait/rxwait entries are only written when waiting exceeded a threshold in the sample
-  interval, so any entries at all on an F-port point to a slow device; many entries clustered at the
-  same times across ports point to fabric-wide congestion.
-- Log events to watch: PORT-*-IF_DOWN_* (LINK_FAILURE, NOS, OLS: physical/peer), *CREDIT_LOSS*,
-  *TXWAIT*/*SLOWDRAIN*/PMON-* (port-monitor alerts), ZONE-*-*MERGE*/ZONE_* (zoning changes or merge
-  failures), FCNS/FLOGI rejects, PLATFORM/ENVMON (hardware). Repeated IF_DOWN/IF_UP on one port = flap.
-
-== CROSS-SYSTEM TRACING (if other MCP servers are connected) ==
-UCS Central trace_service_profile_san / get_service_profile_vhbas -> host WWPN, fabric, VSAN, FI uplinks
--> here: trace_wwpn for each WWPN (FLOGI port-channel from the FI, zones, port errors), then
-   port_channel_health for that FI port-channel
--> PowerMax find_wwpn -> masking view, storage group, array ports (their WWPNs must log in to the
-   same fabric and be in the same zone).
-Use the same WWPN at every hop; present one row per path (fabric A and B).
-
-== ANSWER STYLE ==
-Lead with the conclusion, then the evidence (switch, interface, counters, zone names), then the
-next check you recommend.
+- CRC / invalid CRC / link failures / sync loss growing -> physical: SFP, cable, patch panel. Short-wave Rx
+  power below about -7 dBm is marginal, below the transceiver's low alarm a fault.
+- TxWait, credit loss, B2B credit at 0, timeout discards: on an F-port -> slow-drain device (host / HBA
+  behind it); on an ISL -> congestion spreading. Any OBFL txwait / rxwait entry on an F-port points to a
+  slow device; entries at the same times on many ports -> fabric-wide congestion.
+- Counters are cumulative since clear / boot: compare two readings before saying "increasing".
+- Log events: PORT-*-IF_DOWN_* (LINK_FAILURE, NOS, OLS), *CREDIT_LOSS*, *TXWAIT* / *SLOWDRAIN* / PMON-*,
+  ZONE-* merge / changes, FCNS / FLOGI rejects, PLATFORM / ENVMON; repeated IF_DOWN / IF_UP = flap.
 """
 
 main.mcp.instructions = INSTRUCTIONS

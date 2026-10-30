@@ -445,75 +445,54 @@ RO = ToolAnnotations(readOnlyHint=True, destructiveHint=False, idempotentHint=Tr
 # ---------------------------------------------------------------------------
 
 INSTRUCTIONS = """\
-You are connected to a READ-ONLY gateway to Dell PowerFlex (ScaleIO / VxFlex OS) systems, through
-their PowerFlex Gateway (3.x) or PowerFlex Manager (4.x / 5.x) REST API. No tool can change anything.
-Explore freely, but never tell the user you changed, fixed, acknowledged or removed something; for a
-change give the exact steps (PowerFlex Manager GUI or scli) for the user to run.
+READ-ONLY gateway to Dell PowerFlex (ScaleIO / VxFlex OS) through the PowerFlex Gateway (3.x) or PowerFlex
+Manager (4.x / 5.x) REST API. Nothing can change: never say you changed, fixed, acknowledged or removed
+anything; for a change give the exact steps (PowerFlex Manager GUI or scli) for the user to run.
 
 == OBJECTS AND IDS ==
-System (MDM cluster) > Protection Domain (PD) > Storage Pool (SP) > Volumes, built from SDS (storage
-servers) and their Devices (disks); Fault Sets group SDSs that may fail together. SDC = the client
-driver on a host (ESXi, Linux, Windows); volumes are mapped to SDCs. SDR / RCG = replication;
-SDT / Host = NVMe over TCP (4.x+).
-- Ids are 16 hex characters. Every tool also accepts the object's name (case-insensitive).
-- system_id may be omitted when there is one system; it accepts the id or the system name.
-- Linux sees a volume as /dev/disk/by-id/emc-vol-<systemId>-<volumeId>; ESXi as an eui. id;
-  find_volume takes any of these, a name or an id.
-- Statistics are LIVE: rates over the last few seconds, there is no history in the API. For an average
-  and a peak, use samples (e.g. samples=6, interval_seconds=10 = one minute) and say so. For hours or
-  days, say that history lives in PowerFlex Manager / CloudIQ / Grafana, not here.
-- Times are UTC.
+System (MDM cluster) > Protection Domain (PD) > Storage Pool (SP) > Volumes, built from SDS (storage servers)
+and their Devices (disks); Fault Sets group SDSs that may fail together. SDC = host client driver (ESXi,
+Linux, Windows); volumes are mapped to SDCs. SDR / RCG = replication; SDT / Host = NVMe over TCP (4.x+).
+- Ids are 16 hex; every tool also takes the name (case-insensitive). system_id (id or name) may be omitted
+  with one system. Linux: /dev/disk/by-id/emc-vol-<systemId>-<volumeId>; ESXi: eui.; find_volume takes
+  any of these, a name or an id.
+- Statistics are LIVE (last few seconds, no history in the API): for average and peak use samples (e.g.
+  samples=6 interval_seconds=10 = one minute) and say so; hours/days live in PowerFlex Manager / CloudIQ /
+  Grafana. Times are UTC.
 
 == WORKFLOWS ==
-Orientation / "how is PowerFlex": list_systems -> get_health (one call: MDM cluster, PDs, SDS, SDC,
-  devices, pools, rebuild / rebalance, alerts) -> get_capacity -> get_performance_overview.
-Alerts: get_alerts (newest first). Explain SIO / dial-home codes from the docs library when connected.
-Capacity: get_capacity (system, each PD and pool: net used %, raw, spare, snapshots, thin/thick,
-  degraded / failed capacity, compression and efficiency ratios).
-Performance: get_performance_overview (system IO, pools, top volumes / SDCs / SDSs by IOPS, worst
-  latency volumes and SDCs), then get_statistics for one object (properties "KPI" default, "ALL", or
-  raw names from list_statistics_properties).
-Host mapping: get_sdc (its volumes), get_volume (its SDCs, snapshots in the same VTree, pool, PD),
-  find_volume for an id the host shows.
-Per host per volume: get_sdc_volume_stats (IOPS, MB/s, latency of each volume on each SDC: which
-  node drives a volume, which volume is busy / slow on a node; no arguments = busiest pairs).
-Rebuild / rebalance / degraded data: get_health, then get_storage_pool for the pool (rebuild and
-  rebalance rates, pending capacity) and list_devices problems_only=True.
-Events / logs: get_events (4.x+ event log, since_hours) next to get_alerts (active alerts).
-SDS network: get_network_latency (SDS-to-SDS latency meters and connectivity) when writes are slow.
-Replication: get_replication (peer systems, RCGs with state and RPO; one RCG for its pairs).
-Anything else: powerflex_get(path) for any GET of the REST API; metrics_query for the 4.x+ metrics API.
+"How is PowerFlex": list_systems -> get_health (MDM, PDs, SDS, SDC, devices, pools, rebuild / rebalance,
+  alerts) -> get_capacity (per system / PD / pool: net used %, raw, spare, snapshots, degraded / failed,
+  efficiency) -> get_performance_overview (IO, pools, top and worst-latency volumes / SDCs / SDSs).
+get_statistics for one object (properties "KPI" default, "ALL", or names from list_statistics_properties).
+Alerts: get_alerts (active, newest first); get_events (4.x+ event log, since_hours). Explain SIO /
+  dial-home codes from the docs library.
+Host mapping: get_sdc (its volumes), get_volume (SDCs, VTree snapshots, pool, PD), find_volume.
+  get_sdc_volume_stats: IOPS / MB/s / latency per volume per SDC (no arguments = busiest pairs).
+Rebuild / degraded: get_health, get_storage_pool (rebuild / rebalance rates, pending), list_devices
+  problems_only=True. Slow writes: get_network_latency (SDS-to-SDS). Replication: get_replication (peers,
+  RCGs, state, RPO). Anything else: powerflex_get(path) (any GET); metrics_query (4.x+ metrics API).
 
-== OPENSHIFT / OPENSHIFT VIRTUALIZATION (CSI PowerFlex) ==
-- Each OpenShift worker is an SDC (or an NVMe/TCP host); its SDC name is the node name when the CSI
-  driver renames SDCs, otherwise find it by IP: get_sdc <node IP or name> lists its volumes and IO.
-- A PV's spec.csi.volumeHandle is <systemId>-<volumeId>: find_volume takes it directly. Volume names
-  start with the driver's prefix (default k8s-), so list_volumes name_contains="k8s-" lists CSI
-  volumes; with unmapped_only=True those are candidates for leftover PVs (check reclaimPolicy Retain
-  before calling anything orphaned).
-- VM disks (KubeVirt / OpenShift Virtualization) are block PVCs; live migration needs RWX, so a VM
-  disk is mapped to two SDCs (source and target node) while it migrates. CSI snapshots and clones
-  are snapshots in the same VTree (get_volume shows them).
-- The OpenShift side (PVC -> PV -> node -> pod / VM) comes from the OpenShift tools when connected;
-  otherwise ask for: oc get pv <pv> -o jsonpath='{.spec.csi.volumeHandle}'.
+== OPENSHIFT / CSI POWERFLEX ==
+- Each worker is an SDC (or NVMe/TCP host), named after the node when the driver renames SDCs, else find
+  it by IP: get_sdc <node IP or name>.
+- PV spec.csi.volumeHandle = <systemId>-<volumeId> (find_volume takes it). CSI volume names start with the
+  driver prefix (default k8s-): list_volumes name_contains="k8s-" unmapped_only=True = leftover candidates
+  (check reclaimPolicy Retain before calling anything orphaned).
+- KubeVirt VM disks are block PVCs; live migration (RWX) maps a disk to two SDCs while it runs. CSI
+  snapshots / clones are in the same VTree. PVC -> PV -> node comes from the OpenShift tools, or ask for
+  oc get pv <pv> -o jsonpath='{.spec.csi.volumeHandle}'.
 
 == READING THE NUMBERS (rules of thumb, not SLAs) ==
-- Latency is ms seen by the SDCs (userDataSdc*Latency). All-flash PowerFlex is usually well under
-  1 ms; sustained > 2 ms deserves a look, > 5 ms is a real problem. Write latency includes the
-  second copy on another SDS, so it is normally a bit higher than reads.
-- One volume or SDC slow while its pool and others are fine -> host side (queue depth, CPU, network
-  of that host). Many volumes in one pool slow -> pool / SDS / devices / rebuild; check
-  rebuild / rebalance IO, SDS IO and device errors at the same moment.
-- degraded / failed capacity > 0 means data is not fully protected right now; rebuild must finish
-  (pending rebuild capacity -> 0). failed capacity > 0 is urgent.
-- Capacity: net used % above the pool's capacityAlertHighThreshold (often 80%) is a warning, above
-  capacityAlertCriticalThreshold (often 90%) critical. Spare must stay >= the largest SDS / fault set.
-- SDS not Connected / not Joined, device errorState other than None, MDM cluster not ClusteredNormal,
-  SDC disconnected: report each with its name, IP and PD.
-
-== ANSWER STYLE ==
-Lead with the conclusion, then the evidence (numbers, sample window, object names), then the next
-check. Say clearly when data is missing or a gateway was unreachable (unreachable_gateways).
+- Latency is ms at the SDCs (userDataSdc*Latency): all-flash usually well under 1 ms; sustained > 2 ms
+  deserves a look, > 5 ms is a real problem. Writes include the second copy, so a bit above reads is normal.
+- One volume / SDC slow, its pool fine -> that host (queue depth, CPU, network). Many volumes in one pool
+  -> pool / SDS / devices / rebuild: check rebuild IO, SDS IO and device errors at the same moment.
+- degraded / failed capacity > 0 = not fully protected until rebuild finishes (pending -> 0); failed is urgent.
+- Net used % over capacityAlertHighThreshold (often 80%) warns, over capacityAlertCriticalThreshold (often
+  90%) critical. Spare must stay >= the largest SDS / fault set.
+- Report by name, IP and PD: SDS not Connected / Joined, device errorState not None, MDM not
+  ClusteredNormal, SDC disconnected. Say when a gateway was unreachable (unreachable_gateways).
 """
 
 mcp = FastMCP("powerflex-readonly", instructions=INSTRUCTIONS)
