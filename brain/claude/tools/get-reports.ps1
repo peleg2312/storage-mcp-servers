@@ -9,12 +9,13 @@ One-time setup on the PC (PowerShell; Windows 10/11 have ssh / scp built in):
   3. scp <user>@<vm>:.claude/tools/get-reports.ps1 $env:USERPROFILE\
 Then, each day (leave the window open, minimised):
   powershell -ExecutionPolicy Bypass -File $env:USERPROFILE\get-reports.ps1 -Vm <user>@<vm>
-Options: -Port 22  -Every 5 (seconds)  -NoOpen (download only)
+Options: -Port 22  -Every 20 (seconds)  -NoOpen (download only)
+Only html / xlsx / csv / pdf / png / svg / md / txt reports are opened by themselves.
 #>
 param(
   [Parameter(Mandatory = $true)][string]$Vm,
   [int]$Port = 22,
-  [int]$Every = 5,
+  [int]$Every = 20,
   [switch]$NoOpen
 )
 $dest = Join-Path $env:USERPROFILE "Downloads\storage-reports"
@@ -36,12 +37,16 @@ while ($true) {
   foreach ($line in @($lines)) {
     if (-not $line) { continue }
     $folder, $open = $line -split "`t", 2
+    # the outbox is plain text any process on the VM can write: absolute safe folder, plain name, allow-listed type
+    if ($folder -notmatch '^/[\w./-]+$' -or $folder -match '\.\.') { continue }
     $name = Split-Path $folder -Leaf
+    if ($name -notmatch '^[\w.-]+$') { continue }
+    if ($open -notmatch '^[A-Za-z0-9._-]+\.(html|xlsx|csv|pdf|png|svg|md|txt)$') { $open = $null }
     scp -P $Port -o BatchMode=yes -r "${Vm}:$folder" "$dest" 2>$null
     if ($LASTEXITCODE -ne 0) { Write-Host "could not copy $folder" -ForegroundColor Yellow; continue }
-    $file = Join-Path (Join-Path $dest $name) $open
+    $file = if ($open) { Join-Path (Join-Path $dest $name) $open } else { Join-Path $dest $name }
     Write-Host ("{0:HH:mm}  {1}" -f (Get-Date), $file) -ForegroundColor Green
-    if (-not $NoOpen -and -not $first -and (Test-Path $file)) { Invoke-Item $file }
+    if (-not $NoOpen -and -not $first -and $open -and (Test-Path $file)) { Invoke-Item $file }
   }
   $first = $false
   Start-Sleep -Seconds $Every
