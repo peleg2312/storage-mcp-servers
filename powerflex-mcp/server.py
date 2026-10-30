@@ -3,8 +3,8 @@ Read-only MCP server for Dell PowerFlex (ScaleIO / VxFlex OS) through the PowerF
 the Gateway (3.x) or PowerFlex Manager (4.x / 5.x).
 
 Read-only is enforced at the HTTP layer: the session object refuses any request that is not a GET,
-except a short list of POSTs that only read (sign-in, querySelectedStatistics, queryMdmCluster, the SDS network latency / connectivity queries, the per-SDC
-volume counters (queryVolumeSdcBwc), the 4.x metrics query). Every other POST, PUT, PATCH, DELETE and
+except a short list of POSTs that only read (sign-in, querySelectedStatistics, queryMdmCluster,
+the SDS network latency / connectivity queries, the per-SDC volume counters (queryVolumeSdcBwc), the 4.x metrics query). Every other POST, PUT, PATCH, DELETE and
 any URL outside the REST API is blocked before it is sent. Use a Monitor (read-only) account as well.
 """
 
