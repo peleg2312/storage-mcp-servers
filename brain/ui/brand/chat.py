@@ -97,7 +97,7 @@ edit("src/modules/chat/composer/QueuedMessageCard.tsx",
       "          )}\n"))
 
 # --- slash commands: everything Claude Code offers in that folder (/compact, /context, /init, /review, plugin
-# commands ...), asked from a CLI started without a prompt (no turn, no transcript), cached per folder for 5 minutes.
+# commands ...), asked from a CLI started without a prompt (no turn, no transcript), cached per folder for 1 hour; no MCP servers are started for it.
 # They go to Claude as typed (type 'skill': inserted by the menu, sent as the message), like in the terminal.
 edit("server/modules/commands/commands.routes.ts",
      ('import express from "express";\n',
@@ -108,10 +108,10 @@ edit("server/modules/commands/commands.routes.ts",
       "const claudeCommandCache = new Map();\n"
       "function claudeCliCommands(cwd) {\n"
       "  const hit = claudeCommandCache.get(cwd);\n"
-      "  if (hit && Date.now() - hit.at < 300_000) return hit.list;\n"
+      "  if (hit && Date.now() - hit.at < 3_600_000) return hit.list;\n"
       "  const list = (async () => {\n"
       "    const idle = { async *[Symbol.asyncIterator]() { await new Promise(() => {}); } };\n"
-      "    const q = claudeQuery({ prompt: idle, options: { cwd, env: { ...globalThis.process.env },\n"
+      "    const q = claudeQuery({ prompt: idle, options: { cwd, env: { ...globalThis.process.env }, strictMcpConfig: true, mcpServers: {},\n"
       "      pathToClaudeCodeExecutable: resolveClaudeCodeExecutablePath(globalThis.process.env.CLAUDE_CLI_PATH) } });\n"
       "    try {\n"
       "      const cmds = await Promise.race([q.supportedCommands(),\n"

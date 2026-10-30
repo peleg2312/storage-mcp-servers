@@ -14,6 +14,9 @@ const STORE = process.env.PAAS_SCHEDULE_STORE || path.join(HOME, '.claude', 'paa
 const OUT = path.join(HOME, 'storage-reports', 'scheduled');
 const CATCH_UP_MS = 60 * 60 * 1000;
 const RUN_TIMEOUT_MS = 30 * 60 * 1000;
+// unattended runs: cheaper model and a spend cap per run (override with these env vars)
+const SCHED_MODEL = process.env.PAAS_SCHEDULE_MODEL || 'sonnet';
+const SCHED_BUDGET = process.env.PAAS_SCHEDULE_BUDGET || '2';
 const claudeBin = () => process.env.CLAUDE_CLI_PATH || [path.join(HOME, '.local', 'bin', 'claude'), '/usr/local/bin/claude'].find((p) => fs.existsSync(p)) || 'claude';
 
 let jobs = [];
@@ -56,7 +59,9 @@ function runJob(job, why) {
   const started = new Date();
   const cwd = job.folder.replace(/^~(?=\/|$)/, HOME);
   fs.mkdirSync(cwd, { recursive: true });
-  const proc = spawn(claudeBin(), ['-p', job.prompt, '--output-format', 'json'], { cwd, env: process.env });
+  const { PAAS_PLUGIN_KEY, ...env } = process.env;   // the plugin key is not for Claude's tools
+  const args = ['-p', job.prompt, '--output-format', 'json', '--model', SCHED_MODEL, '--max-budget-usd', SCHED_BUDGET];
+  const proc = spawn(claudeBin(), args, { cwd, env });
   let out = '';
   let err = '';
   proc.stdout.on('data', (c) => { out += c; });

@@ -146,17 +146,19 @@ const chrome = (args: string[]) => new Promise<string>((resolve, reject) => {
 });
 const claudeSession = (appId: string) => sessionsDb.getSessionById(appId)?.provider_session_id || appId;
 
+let chromeSeen: { at: number; pcs: unknown; line: string } | null = null;
 paasPreview.get('/_chrome', async (req, res) => {
   res.setHeader('Cache-Control', 'no-store');
   if (!CHROME_BIN) { res.json({ installed: false }); return; }
   try {
     const session = String(req.query.session || '').replace(/[^\w-]/g, '');
-    const [pcs, chosen, line] = await Promise.all([
-      chrome(['list', '--json']).then((o) => JSON.parse(o)),
-      session ? chrome(['chosen', claudeSession(session)]).then((o) => JSON.parse(o).port) : Promise.resolve(null),
-      chrome(['windows']).then((o) => o.trim().split('\n').pop()),
-    ]);
-    res.json({ installed: true, pcs, chosen, line });
+    if (!chromeSeen || Date.now() - chromeSeen.at > 30_000)   // the PC list and windows rarely change
+      chromeSeen = { at: Date.now(), ...(await Promise.all([
+        chrome(['list', '--json']).then((o) => JSON.parse(o)),
+        chrome(['windows']).then((o) => o.trim().split('\n').pop()),
+      ]).then(([pcs, line]) => ({ pcs, line }))) };
+    const chosen = session ? JSON.parse(await chrome(['chosen', claudeSession(session)])).port : null;
+    res.json({ installed: true, pcs: chromeSeen.pcs, chosen, line: chromeSeen.line });
   } catch (e) { res.status(500).json({ installed: true, error: (e as Error).message }); }
 });
 
@@ -168,7 +170,9 @@ paasPreview.post('/_chrome', (req, res) => {
       const { session, pc } = JSON.parse(body || '{}');
       const id = String(session || '').replace(/[^\w-]/g, '');
       if (!id || !pc) { res.status(400).json({ error: 'session and pc are needed' }); return; }
-      res.json(JSON.parse(await chrome(['choose', claudeSession(id), String(pc)])));
+      const r = JSON.parse(await chrome(['choose', claudeSession(id), String(pc)]));
+      chromeSeen = null;
+      res.json(r);
     } catch (e) { res.status(400).json({ error: (e as Error).message }); }
   });
 });
@@ -213,6 +217,9 @@ paasPreview.get(/^\/~(\/.*)?$/, (req, res) => {
       <div class="rows">${rows || '<div class="empty">This folder is empty</div>'}</div></div>`));
     return;
   }
+  // scripts in a report must not run on the UI's origin (they could read the sign-in token)
+  res.setHeader('Content-Security-Policy', 'sandbox allow-scripts allow-popups allow-forms allow-modals');
+  res.setHeader('X-Content-Type-Options', 'nosniff');
   res.sendFile(file, { dotfiles: 'allow' });
 });
 

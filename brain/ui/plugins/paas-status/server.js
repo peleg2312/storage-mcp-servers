@@ -70,34 +70,53 @@ const PRICES = [
   [/sonnet-5/, [2, 10, 0.2]], [/sonnet/, [3, 15, 0.3]], [/haiku-5/, [0.1, 0.5, 0.01]], [/haiku/, [1, 5, 0.1]],
 ];
 const price = (model) => (PRICES.find(([re]) => re.test(model || '')) || [null, [4, 20, 0.2]])[1];
-const cache = new Map();   // file -> {mtime, rows}
+const cache = new Map();   // file -> {size, mtime, offset, rows: Map}
 
+// Incremental: a grown file is read from the last complete line on, in chunks (never the whole file as one string).
 function rowsOf(file) {
   const st = fs.statSync(file);
-  const hit = cache.get(file);
-  if (hit && hit.mtime === st.mtimeMs) return hit.rows;
-  const rows = new Map();  // message id -> row (streamed messages repeat their usage)
-  for (const line of fs.readFileSync(file, 'utf8').split('\n')) {
-    if (!line.includes('"usage"')) continue;
-    let d;
-    try { d = JSON.parse(line); } catch { continue; }
-    const m = d.message;
-    if (d.type !== 'assistant' || !m?.usage || m.model === '<synthetic>') continue;
-    const u = m.usage;
-    const c1h = u.cache_creation?.ephemeral_1h_input_tokens ?? 0;
-    const c5m = (u.cache_creation_input_tokens ?? 0) - c1h;
-    const [pin, pout, pread] = price(m.model);
-    rows.set(m.id || `${d.uuid}`, {
-      day: (d.timestamp || '').slice(0, 10), model: m.model, project: d.cwd || path.basename(path.dirname(file)),
-      session: d.sessionId, input: u.input_tokens ?? 0, output: u.output_tokens ?? 0,
-      cacheRead: u.cache_read_input_tokens ?? 0, cacheWrite: u.cache_creation_input_tokens ?? 0,
-      cost: ((u.input_tokens ?? 0) * pin + (u.output_tokens ?? 0) * pout + (u.cache_read_input_tokens ?? 0) * pread
-        + c5m * pin * 1.25 + c1h * pin * 2) / 1e6,
-    });
-  }
-  const list = [...rows.values()];
-  cache.set(file, { mtime: st.mtimeMs, rows: list });
-  return list;
+  let hit = cache.get(file);
+  if (hit && hit.size === st.size && hit.mtime === st.mtimeMs) return hit.list;
+  if (!hit || st.size < hit.offset) hit = { offset: 0, rows: new Map() };   // new or truncated: from the start
+  const fd = fs.openSync(file, 'r');
+  try {
+    const buf = Buffer.allocUnsafe(8 << 20);
+    let rest = Buffer.alloc(0);
+    for (let pos = hit.offset; pos < st.size;) {
+      const n = fs.readSync(fd, buf, 0, Math.min(buf.length, st.size - pos), pos);
+      if (!n) break;
+      pos += n;
+      rest = Buffer.concat([rest, buf.subarray(0, n)]);
+      const end = rest.lastIndexOf(10) + 1;   // keep a half-written last line for the next read
+      if (!end) continue;
+      for (const line of rest.subarray(0, end).toString('utf8').split('\n')) addLine(hit.rows, line, file);
+      hit.offset += end;
+      rest = rest.subarray(end);
+    }
+  } finally { fs.closeSync(fd); }
+  hit.list = [...hit.rows.values()];
+  hit.size = st.size; hit.mtime = st.mtimeMs;
+  cache.set(file, hit);
+  return hit.list;
+}
+
+function addLine(rows, line, file) {   // message id -> row (streamed messages repeat their usage)
+  if (!line.includes('"usage"')) return;
+  let d;
+  try { d = JSON.parse(line); } catch { return; }
+  const m = d.message;
+  if (d.type !== 'assistant' || !m?.usage || m.model === '<synthetic>') return;
+  const u = m.usage;
+  const c1h = u.cache_creation?.ephemeral_1h_input_tokens ?? 0;
+  const c5m = (u.cache_creation_input_tokens ?? 0) - c1h;
+  const [pin, pout, pread] = price(m.model);
+  rows.set(m.id || `${d.uuid}`, {
+    day: (d.timestamp || '').slice(0, 10), model: m.model, project: d.cwd || path.basename(path.dirname(file)),
+    session: d.sessionId, input: u.input_tokens ?? 0, output: u.output_tokens ?? 0,
+    cacheRead: u.cache_read_input_tokens ?? 0, cacheWrite: u.cache_creation_input_tokens ?? 0,
+    cost: ((u.input_tokens ?? 0) * pin + (u.output_tokens ?? 0) * pout + (u.cache_read_input_tokens ?? 0) * pread
+      + c5m * pin * 1.25 + c1h * pin * 2) / 1e6,
+  });
 }
 
 function files(dir, out = []) {
