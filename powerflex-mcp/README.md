@@ -9,9 +9,9 @@ the event log, SDS network latency, per-SDC-per-volume IO and **all statistics**
 
 Every HTTP request goes through one session object that refuses anything except:
 - `GET` under `/api/`, `/rest/`, `/dtapi/`
-- the `POST`s that only read: sign-in (`/rest/auth/login|refresh`), `/api/instances/querySelectedStatistics`,
+- the `POST`s that only read: sign-in (`/rest/auth/login`), `/api/instances/querySelectedStatistics`,
   `/api/instances/System/action/queryMdmCluster`, `Sds::<id>/action/querySdsNetworkLatencyMeters`,
-  `ProtectionDomain::<id>/action/querySdsConnectivityStatus`, `Sdc::<id>/action/queryVolumeSdcBwc`, `.../instances/action/queryBySelectedIds|queryIdByKey`,
+  `ProtectionDomain::<id>/action/querySdsConnectivityStatus`, `Sdc::<id>/action/queryVolumeSdcBwc`,
   and the 4.x metrics query `/dtapi/rest/v1/metrics/query`
 
 Every other `POST` (all PowerFlex changes are `POST .../action/...`), `PUT`, `PATCH`, `DELETE`, any
@@ -54,6 +54,7 @@ PowerFlex Manager, CloudIQ or Grafana.
 | `POWERFLEX_<N>_PORT` | | `443` |
 | `POWERFLEX_<N>_VERIFY_SSL` | | `false` (`true`, or a CA bundle path) |
 | `POWERFLEX_<N>_TIMEOUT` | | `60` s |
+| `POWERFLEX_CONNECT_TIMEOUT` | | `5` s |
 | `POWERFLEX_DEFAULT_SYSTEM` | | system id or name used when `system_id` is omitted |
 
 Each tool call goes to the gateway that manages that system. 4.x tokens last 5 minutes; the server
