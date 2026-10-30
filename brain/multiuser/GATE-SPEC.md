@@ -1,7 +1,6 @@
 # Sign-in gate for the multi-user web UI: specification
 
-For the developer who builds it. Everything around the gate (user accounts, the marketplace, the per-user UI service,
-the Users page for root) is built separately in this repo; this document is the contract between the two.
+The contract of `gate.js`. Accounts, the marketplace, the per-user UI service and the Users page are separate (`paas-user`).
 
 ## 1. What it is for
 
@@ -24,52 +23,13 @@ The gate is the only thing on the network: it checks who you are and forwards yo
                                                 └─────────────────> paas-ui@root  (runs as root)   :41000
 ```
 
-## 2. Pieces that already exist (do not rebuild)
+## 3. Per-user UI instances
 
-| Piece | Where | What the gate uses |
-|---|---|---|
-| The UI app (Node 22 + built CloudCLI) | `/opt/paas/ui/node/bin/node`, `/opt/paas/ui/app` | Started per user by systemd (below) |
-| The UI's own sign-in, checking the Linux password with `su` | `brain/ui/brand/overlay/server/modules/auth/system-auth.ts` | Each instance accepts only its own user (`PAAS_LOGIN_USERS=<user>`). Reuse its `su` technique for the gate's own check |
-| Instance login API | `POST /api/auth/login` `{"username","password"}` → `{"token": "<JWT>"}` (HTTP 200), 401 wrong password, 429 locked | The gate calls it to get the browser's token |
-| Instance health | `GET /health` → 200 | The gate waits for it after starting an instance |
-| Where the browser keeps its token | `localStorage["auth-token"]` | The gate's post-login page writes it there |
-| WebSocket endpoints | `/ws` (chat), `/shell` (terminal), `/desktop-notifications` | Must be forwarded (HTTP Upgrade) |
-| Plugin servers protected by a per-instance key | already in `brain/ui/brand/brand.py` | Nothing to do |
-| TLS certificate | `install-ui.sh` makes a self-signed one; for the gate: `/etc/paas/tls/paas-ui.crt` + `.key` | HTTPS listener |
-
-## 3. Per-user UI instances (systemd)
-
-Template unit `/etc/systemd/system/paas-ui@.service` (the gate starts it; user creation also enables it):
-
-```ini
-[Unit]
-Description=Peleg As A Service web UI for %i
-After=network.target
-
-[Service]
-User=%i
-EnvironmentFile=/etc/paas/users/%i.env
-Environment=HOST=127.0.0.1 NODE_ENV=production
-WorkingDirectory=/opt/paas/ui/app
-ExecStart=/opt/paas/ui/node/bin/node /opt/paas/ui/app/dist-server/server/index.js
-Restart=on-failure
-
-[Install]
-WantedBy=multi-user.target
-```
-
-`/etc/paas/users/<user>.env` (owner root, mode 0600; systemd reads it as root, the running process is only readable
-by that user and root):
-
-```
-SERVER_PORT=41001
-JWT_SECRET=<64 random hex chars, one per user>
-PAAS_LOGIN_USERS=<user>
-PATH=/opt/paas/ui/node/bin:/usr/local/bin:/usr/bin:/bin
-```
-
-Ports: `41000 + n`, unique per user, never reused while the file exists. The gate creates the file the first time an
-allowed user signs in and it is missing.
+One systemd unit per user: `paas-ui@.service` (the file next to this one). Its settings are
+`/etc/paas/users/<user>.env` (root, 0600), written by `write_env` in `paas-user` (the gate's `createEnv` writes the same
+file for a first sign-in): port, `JWT_SECRET`, `PAAS_LOGIN_USERS=<user>`, `CLAUDE_CLI_PATH`, `PATH`. Ports are
+one above the highest in use, never reused while the file exists. Instance API the gate relies on:
+`POST /api/auth/login` (200 + `token`, 401, 429) and `GET /health`.
 
 ## 4. Gate behaviour
 
@@ -89,7 +49,8 @@ allowed user signs in and it is missing.
 - One sign-in page at `GET /` when there is no valid gate session, styled like the current UI sign-in (logo, title
   "Peleg As A Service", "Sign in with this VM's account"). No sign-up.
 - `POST /paas-gate/login` with username + password:
-  1. Rate limit: 5 failures within 10 minutes per `username|client IP` → HTTP 429 for the rest of the window.
+  1. Rate limit: 5 failures within 10 minutes per `username|client IP`, 30 per client IP, 4 password checks at once
+     per client IP → HTTP 429. A request body not complete after 10 s is dropped.
   2. Check the password exactly like `system-auth.ts`: run `su <user> -c 'exit 0'` in a pseudo-terminal, answer the
      password prompt; because the gate is root, run it as `runuser -u nobody -- su <user> -c 'exit 0'` (root's `su`
      never asks). Success only if the prompt appeared **and** exit code is 0. 15 s timeout = failure.
@@ -105,7 +66,8 @@ allowed user signs in and it is missing.
 - Cookie `paas_gate` = `<user>.<expiry unix seconds>.<HMAC-SHA256(user.expiry) hex>`, key from `/etc/paas/gate.key`
   (32 random bytes, created at install, root 0600).
 - Attributes: `HttpOnly; Secure; SameSite=Strict; Path=/`. Lifetime 12 hours.
-- Verify with a constant-time comparison; expired, malformed or unknown user = no session.
+- Verify with a constant-time comparison; expired, malformed or unknown user = no session. A user with
+  `/etc/paas/users/<user>.locked` (made by `paas-user lock`) has no session either.
 
 ### 4.5 Forwarding
 - Every request with a valid session goes to that user's instance (`127.0.0.1:<port>`), path and query unchanged;
@@ -113,7 +75,7 @@ allowed user signs in and it is missing.
 - WebSocket upgrades on `/ws`, `/shell`, `/desktop-notifications` (and any other upgrade) are forwarded the same way
   (raw TCP pipe after the upgrade).
 - No valid session: `GET` of an HTML page → the sign-in page; anything else → 401 JSON `{"error":"Sign in"}`.
-- The instance is stopped (crash, reboot): start it again as in 4.3 step 3 before forwarding.
+- The instance is stopped (crash, reboot): start it again as in 4.3 step 3 before forwarding (not for a locked user).
 - Large bodies (file uploads up to ~60 MB) and streamed responses (chat streaming, downloads) must pass through
   without buffering everything in memory.
 
@@ -160,10 +122,4 @@ Run alongside `brain/ui/test-ui.sh`. Users: `root`, `peleg` and `dana` in `paas-
 | 14 | sign out | cookie cleared; `/api/projects` → 401 |
 | 15 | `systemctl stop paas-ui@peleg`, then any request with peleg's cookie | instance restarted, request served |
 | 16 | 50 MB file upload in the Files tab | succeeds |
-
-## 7. Deliverables
-
-- `brain/multiuser/gate.js` (or equivalent), `paas-gate.service`, `paas-ui@.service`.
-- An install step (root): create `/etc/paas/{users,tls}`, `gate.key`, group `paas-users`, install and enable both
-  units, open port 3001 in firewalld.
-- The acceptance tests above as a script next to `brain/ui/test-ui.sh`.
+| 17 | dana signs in, `paas-user lock dana`, then a request with her cookie | 401, `paas-ui@dana` not restarted |

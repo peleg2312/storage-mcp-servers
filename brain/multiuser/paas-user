@@ -5,7 +5,7 @@
 #
 #   paas-user add <name>          create the account (password read from stdin, or asked), set it up, start its UI
 #   paas-user passwd <name>       new password (stdin, or asked)
-#   paas-user lock|unlock <name>  block / allow signing in (lock also stops their UI)
+#   paas-user lock|unlock <name>  block / allow signing in (lock also ends their UI, sessions and processes)
 #   paas-user remove <name> [--delete-home]   remove the account and its UI (home kept unless --delete-home)
 #   paas-user provision <name>|--all          re-apply the shared links, UI plugins and default items (after updates)
 #   paas-user list [--json]       everyone, with port, locked and running
@@ -21,10 +21,11 @@ home_of() { getent passwd "$1" | cut -d: -f6; }
 
 read_password() {   # one line from stdin when it is not a terminal; else asked twice
   if [ -t 0 ]; then
-    stty -echo; printf 'password for %s: ' "$1" >&2; read -r a; printf '\nagain: ' >&2; read -r b; stty echo; echo >&2
+    stty -echo; trap 'stty echo 2>/dev/null' EXIT; trap 'exit 130' INT     # echo comes back on Ctrl-C too
+    printf 'password for %s: ' "$1" >&2; IFS= read -r a; printf '\nagain: ' >&2; IFS= read -r b; stty echo; trap - EXIT INT; echo >&2
     [ "$a" = "$b" ] || die "the two passwords differ"
   else
-    read -r a || true
+    IFS= read -r a || true
   fi
   [ ${#a} -ge 8 ] || die "password: at least 8 characters"
   printf '%s:%s\n' "$1" "$a" | chpasswd
@@ -55,9 +56,9 @@ EOF
 
 provision() {       # links to the shared brain, own notes, UI plugins, default marketplace items
   u=$1; h=$(home_of "$u"); [ -n "$h" ] || die "no account $u"
-  # root's own settings.json "env" (proxy, CA file, model, ...): handed over in the environment, not on a command line
-  PAAS_ROOT_ENV=$(python3 -c 'import json,sys
-try: print(json.dumps(json.load(open(sys.argv[1])).get("env", {})))
+  # root's own settings.json "env" (proxy, CA file, model, ...; not keys or tokens): handed over in the environment, not on a command line
+  PAAS_ROOT_ENV=$(python3 -c 'import json,re,sys
+try: print(json.dumps({k: v for k, v in json.load(open(sys.argv[1])).get("env", {}).items() if not re.search("KEY|TOKEN|SECRET|PASSWORD", k, re.I)}))
 except Exception: print("{}")' "$(home_of root)/.claude/settings.json") \
   runuser -u "$u" -- sh -s "$P" "$u" <<'EOS'
 set -eu
@@ -106,8 +107,8 @@ EOP
 [ -f "$C/brain/notes.md" ] || printf '# Notes\n\nFacts learned in your sessions (one dated line each).\n' > "$C/brain/notes.md"
 [ ! -f "$P/bin/paas-setup-chats" ] || sh "$P/bin/paas-setup-chats" "$P/hooks/session-start.py"   # ~/chats: storage rules, 1h cache
 # web UI chats made before the UI said "paas-ui": Claude Code hides sdk-* chats from `claude --resume`.
-# Only files idle for 10 minutes (none being written), replaced whole, dates kept.
-python3 - "$C/projects" <<'EOP'
+# Only files idle for 10 minutes (none being written), replaced whole, dates kept. Once per account.
+[ -e "$C/.paas-entrypoint-migrated" ] || { python3 - "$C/projects" <<'EOP'
 import os, sys, time
 for root, _, files in os.walk(sys.argv[1]):
     for f in files:
@@ -125,6 +126,7 @@ for root, _, files in os.walk(sys.argv[1]):
         except (OSError, UnicodeDecodeError):
             pass
 EOP
+touch "$C/.paas-entrypoint-migrated"; }
 for p in "$P"/ui-plugins/*/; do
   n=$(basename "$p")
   [ "$n" = paas-users ] && [ "$2" != root ] && continue   # managing users: root only
@@ -138,6 +140,8 @@ share_dir() {       # where <name> puts the skills / agents they share in the ma
   mkdir -p "$P/marketplace/contrib/$1"
   chown "$1": "$P/marketplace/contrib/$1"; chmod 755 "$P/marketplace/contrib" "$P/marketplace/contrib/$1"
 }
+
+kill_user() { loginctl terminate-user "$1" >/dev/null 2>&1 || true; pkill -KILL -u "$1" 2>/dev/null || true; sleep 1; }   # their claude / shells too
 
 start_ui() { systemctl enable --now "paas-ui@$1" >/dev/null 2>&1 || echo "note: could not start paas-ui@$1 (systemctl status paas-ui@$1)"; }
 
@@ -155,15 +159,18 @@ case "$cmd" in
     u=${1:-}; valid "$u"; id "$u" >/dev/null 2>&1 || die "no account $u"; read_password "$u"; echo "password changed for $u" ;;
   lock)
     u=${1:-}; valid "$u"; [ "$u" != root ] || die "root cannot be locked here"
-    usermod -L "$u"; systemctl stop "paas-ui@$u" 2>/dev/null || true; echo "locked $u" ;;
+    usermod -L "$u"; touch "$ETC/$u.locked"                   # the gate drops a live cookie of a locked user
+    systemctl stop "paas-ui@$u" 2>/dev/null || true; kill_user "$u"; echo "locked $u" ;;
   unlock)
-    u=${1:-}; valid "$u"; usermod -U "$u"; start_ui "$u"; echo "unlocked $u" ;;
+    u=${1:-}; valid "$u"; usermod -U "$u"; rm -f "$ETC/$u.locked"; start_ui "$u"; echo "unlocked $u" ;;
   remove)
     u=${1:-}; valid "$u"; [ "$u" != root ] || die "root cannot be removed"
     systemctl disable --now "paas-ui@$u" >/dev/null 2>&1 || true
-    rm -f "$ETC/$u.env"
+    kill_user "$u"
+    { if [ "${2:-}" = --delete-home ]; then userdel -r "$u"; else userdel "$u"; fi; } || ! id "$u" >/dev/null 2>&1 \
+      || die "could not remove $u (processes still running?)"
+    rm -f "$ETC/$u.env" "$ETC/$u.locked"
     rm -rf "$P/marketplace/contrib/$u"                        # what they shared leaves the marketplace (copies people added stay)
-    if [ "${2:-}" = --delete-home ]; then userdel -r "$u" 2>/dev/null || true; else userdel "$u" 2>/dev/null || true; fi
     echo "removed $u${2:+ (home deleted)}" ;;
   provision)
     if [ "${1:-}" = --all ]; then for f in "$ETC"/*.env; do [ -f "$f" ] && { share_dir "$(basename "$f" .env)"; provision "$(basename "$f" .env)"; }; done
@@ -171,7 +178,7 @@ case "$cmd" in
     echo "provisioned" ;;
   list)
     json=0; [ "${1:-}" = --json ] && json=1
-    [ $json = 1 ] && printf '['
+    if [ $json = 1 ]; then printf '['; fi
     first=1
     for f in "$ETC"/*.env; do
       [ -f "$f" ] || continue
@@ -185,6 +192,6 @@ case "$cmd" in
         printf '%-20s port %-6s %s %s\n' "$u" "$port" "$([ $locked = true ] && echo locked || echo active)" "$([ $running = true ] && echo running || echo stopped)"
       fi
     done
-    [ $json = 1 ] && printf ']\n' ;;
+    if [ $json = 1 ]; then printf ']\n'; fi ;;
   *) sed -n '2,13p' "$0" | sed 's/^# \{0,1\}//'; exit 1 ;;
 esac

@@ -15,7 +15,7 @@ they want to their own ~/.claude (names stay as they are: /morning-check, not /p
   paas-market view <kind>/<name>         read any item before adding it (MCP: without its token)
   paas-market show <kind>/<name>         print one you shared (skill / agent file; MCP: JSON without the token)
   paas-market edit <kind>/<name>         replace it from stdin (same forms as show; MCP: a blank token keeps it), re-shared
-  paas-market connect <https://vm:3443> <token>   use another VM's marketplace (read-only; refreshed every 10 min)
+  paas-market connect <https://vm:3443> [<token>] [--fingerprint SHA256:..]   use another VM's marketplace (read-only; refreshed every 10 min)
   paas-market pull | disconnect          refresh it now / back to this VM's own marketplace
 root only:
   paas-market publish <brain/claude dir> [--mcp mcp.json]   (re)build the marketplace from the brain in this repo
@@ -46,6 +46,7 @@ import subprocess
 import sys
 import tarfile
 import time
+import urllib.error
 import urllib.request
 
 MARKET = os.environ.get("PAAS_MARKET", "/opt/paas/marketplace")
@@ -519,12 +520,16 @@ def already_have(kind, name):
 
 
 def risky(it):
-    """someone else's skill / agent that grants tools without asking (allowed-tools), runs hooks, or ships scripts"""
+    """someone else's skill / agent that grants tools (allowed-tools, tools: Bash/Write/Edit), runs hooks, ships scripts or has a huge description"""
     if not it.get("author") or it["author"] == getpass.getuser() or it["kind"] not in ("skill", "agent"):
         return ""
     p = it["path"]
     fm = frontmatter(open(os.path.join(p, "SKILL.md") if it["kind"] == "skill" else p).read())
     why = [k for k in ("allowed-tools", "hooks") if k in fm]
+    if it["kind"] == "agent" and re.search(r"\b(Bash|Write|Edit)\b", str(fm.get("tools", ""))):
+        why.append("tools")
+    if len(str(fm.get("description", ""))) > 600:
+        why.append("long description")
     if it["kind"] == "skill" and any(not f.endswith(".md") for _, _, fs in os.walk(p) for f in fs):
         why.append("scripts")
     return ", ".join(why)
@@ -595,6 +600,9 @@ def token_mode(entry):
 def mcp_ready(entry):
     """An MCP item can be added once root replaced the HOST (and, for a shared token, the TOKEN) placeholder."""
     cfg = entry.get("server", {})
+    cmd = cfg.get("command", "")
+    if os.path.isabs(cmd) and not os.path.exists(cmd):      # e.g. a venv that was never built on this VM
+        return False
     return "HOST" not in cfg.get("url", "") and not (token_mode(entry) == "shared" and "TOKEN" in json.dumps(cfg.get("headers", {})))
 
 
@@ -786,8 +794,12 @@ def defaults():
         ids = json.load(open(os.path.join(MARKET, "defaults.json")))
     except (OSError, ValueError):
         ids = []
-    have = load_state()["installed"]
-    add(parse_ids([i for i in ids if i not in have]), token="")
+    st = load_state()
+    given = set(st.get("defaults_given", []))              # offered once: what a person removed stays removed
+    add(parse_ids([i for i in ids if i not in st["installed"] and i not in given]), token="")
+    st = load_state()                                      # add() saved its own copy
+    st["defaults_given"] = sorted(given | set(ids))
+    save_state(st)
 
 
 def publish(brain, mcp_file=None):
@@ -842,25 +854,34 @@ def reindex():
     os.replace(tmp, os.path.join(MARKET, "index.json"))
 
 
-def connect(url, token):
+def connect(url, token, want=""):
     m = re.match(r"^https://([\w.-]+):(\d+)/?$", url)
-    if not m or not token.strip():
-        sys.exit("usage: paas-market connect https://<vm>:3443 <token>   (on that VM root reads it: cat /etc/paas/market/token)")
+    if not m:
+        sys.exit("usage: paas-market connect https://<vm>:3443 [<token>] [--fingerprint SHA256:..]   (on that VM root reads the token: cat /etc/paas/market/token)")
+    token = token.strip() or read_secret("marketplace token: ")
+    if not token:
+        sys.exit("paas-market: a token is needed")
     try:
         pem = ssl.get_server_certificate((m.group(1), int(m.group(2))))
     except OSError as e:
         sys.exit(f"paas-market: cannot reach {url}: {e}")
+    fp = hashlib.sha256(ssl.PEM_cert_to_DER_cert(pem)).hexdigest().upper()
+    shown = ":".join(fp[i:i + 2] for i in range(0, 64, 2))
+    print(f"certificate of {m.group(1)}: SHA256 {shown}")
+    print("  compare on that VM: openssl x509 -noout -fingerprint -sha256 -in /etc/paas/tls/paas-ui.crt")
+    if want:                                       # the token is sent only to a certificate that was confirmed
+        if re.sub(r"^SHA256[:=]|[:\s]", "", want.upper()) != fp:
+            sys.exit("paas-market: the certificate does not match --fingerprint; nothing saved")
+    elif sys.stdin.isatty() and input("same as on that VM? type yes: ").strip() != "yes":
+        sys.exit("paas-market: not confirmed; nothing saved")
     old = os.umask(0o077)
     try:
         open(REMOTE_CRT, "w").write(pem)
-        json.dump({"url": url.rstrip("/"), "token": token.strip()}, open(REMOTE_CFG, "w"))
+        json.dump({"url": url.rstrip("/"), "token": token}, open(REMOTE_CFG, "w"))
     finally:
         os.umask(old)
-    fp = hashlib.sha256(ssl.PEM_cert_to_DER_cert(pem)).hexdigest().upper()
-    print(f"certificate of {m.group(1)}: SHA256 {':'.join(fp[i:i + 2] for i in range(0, 64, 2))}")
-    print("  compare on that VM: openssl x509 -noout -fingerprint -sha256 -in /etc/paas/tls/paas-ui.crt")
     global REMOTE
-    REMOTE = {"url": url.rstrip("/"), "token": token.strip()}
+    REMOTE = {"url": url.rstrip("/"), "token": token}
     try:
         pull()
     except BaseException:                          # nothing kept when the first download fails (wrong token, ...)
@@ -873,9 +894,22 @@ def pull():
     """download the other VM's marketplace into MIRROR (whole copy, swapped in at the end)"""
     ctx = ssl.create_default_context(cafile=REMOTE_CRT)
     ctx.check_hostname = False                     # the certificate itself is pinned (connect), whatever name it carries
-    req = urllib.request.Request(REMOTE["url"] + "/snapshot.tar.gz", headers={"Authorization": f"Bearer {REMOTE['token']}"})
+    stamp = os.path.join(MIRROR, ".pulled")
     try:
-        data = urllib.request.urlopen(req, context=ctx, timeout=60).read()
+        url, etag = open(stamp).read().split("\n")[:2]            # the VM the copy is from, and its ETag
+        etag = etag if url == REMOTE["url"] else ""
+    except (OSError, ValueError):
+        etag = ""
+    req = urllib.request.Request(REMOTE["url"] + "/snapshot.tar.gz", headers={
+        "Authorization": f"Bearer {REMOTE['token']}", **({"If-None-Match": etag} if etag else {})})
+    try:
+        r = urllib.request.urlopen(req, context=ctx, timeout=60)
+        data, etag = r.read(), r.headers.get("ETag", "")
+    except urllib.error.HTTPError as e:
+        if e.code == 304:                          # unchanged: keep the copy, restart the 10 min clock
+            os.utime(stamp)
+            return
+        sys.exit(f"paas-market: {REMOTE['url']}: {e.reason}")
     except Exception as e:
         sys.exit(f"paas-market: {REMOTE['url']}: {getattr(e, 'reason', e)}")
     new = MIRROR + ".new"
@@ -885,7 +919,7 @@ def pull():
             if not (ti.isfile() or ti.isdir()) or ti.name.startswith("/") or ".." in ti.name.split("/"):
                 sys.exit(f"paas-market: refused {REMOTE['url']}: unexpected entry {ti.name!r}")
         t.extractall(new, **({"filter": "data"} if hasattr(tarfile, "data_filter") else {}))
-    open(os.path.join(new, ".pulled"), "w").write(REMOTE["url"] + "\n")
+    open(os.path.join(new, ".pulled"), "w").write(f"{REMOTE['url']}\n{etag}\n")
     shutil.rmtree(MIRROR + ".old", ignore_errors=True)
     if os.path.exists(MIRROR):
         os.rename(MIRROR, MIRROR + ".old")
@@ -914,7 +948,9 @@ def main(argv):
         return
     cmd, args = argv[0], argv[1:]
     if cmd == "connect":
-        return connect(*(args + ["", ""])[:2])
+        fp = args[args.index("--fingerprint") + 1] if "--fingerprint" in args[:-1] else ""
+        args = [a for a in args if a != "--fingerprint" and a != fp]
+        return connect(*(args + ["", ""])[:2], want=fp)
     if cmd == "disconnect":
         for p in (REMOTE_CFG, REMOTE_CRT):
             if os.path.exists(p):

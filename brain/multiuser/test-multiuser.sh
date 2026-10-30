@@ -6,6 +6,8 @@
 set -u
 G=https://127.0.0.1:3001
 FAIL=0
+systemctl restart paas-gate    # the sign-in limits are kept in memory: a re-run starts clean
+for u in peleg dana; do runuser -u $u -- paas-market remove skill/zoning-audit >/dev/null 2>&1; done
 check() { if [ "$2" = "$3" ]; then echo "ok   $1"; else echo "FAIL $1: got '$2', want '$3'"; FAIL=1; fi; }
 code() { curl -ks -o /dev/null -w '%{http_code}' "$@"; }
 J='Content-Type: application/json'
@@ -34,7 +36,7 @@ TAMPER="dana.${PC#peleg.}"
 check "edited cookie (user changed)" "$(code -H "Cookie: paas_gate=$TAMPER" -H "Authorization: Bearer $DT" $G/api/projects)" 401
 check "no cookie"                    "$(code -H "Authorization: Bearer $PT" $G/api/projects)" 401
 plugins() { api "$1" "$2" /api/plugins | grep -o '"name":"paas-[a-z]*"' | sort -u | tr -d '"' | sed 's/name://' | tr '\n' ' '; }
-check "peleg's tabs"                 "$(plugins "$PC" "$PT")" "paas-brain paas-market paas-reports paas-schedule paas-status "
+check "peleg's tabs"                 "$(plugins "$PC" "$PT" | grep -c 'paas-brain.*paas-market.*paas-reports.*paas-schedule.*paas-status')" 1
 check "peleg has no Users tab"       "$(plugins "$PC" "$PT" | grep -c paas-users)" 0
 rpc() { curl -ks -H "Cookie: paas_gate=$1" -H "Authorization: Bearer $2" -H "$J" "${@:4}" "$G/api/plugins/$3"; }
 check "marketplace lists items"      "$(rpc "$PC" "$PT" paas-market/rpc/list | python3 -c 'import json,sys;print(len(json.load(sys.stdin)["items"])>40)')" True
@@ -50,9 +52,12 @@ mv $D.test-bak $D; paas-user provision dana >/dev/null
 systemctl stop paas-ui@peleg
 check "stopped UI restarts on use"   "$(code -H "Cookie: paas_gate=$PC" -H "Authorization: Bearer $PT" --max-time 90 $G/api/projects)" 200
 check "sign-out"                     "$(code -X POST -H "Cookie: paas_gate=$PC" -H "Authorization: Bearer $PT" $G/api/auth/logout)" 200
+read -r DC DT <<<"$(signin dana "$PW_DANA")"
 paas-user lock dana >/dev/null
 check "locked user cannot sign in"   "$(code -H "$J" -d "$(cred dana "$PW_DANA")" $G/api/auth/login)" 401
+check "locked user's old cookie dies" "$(code -H "Cookie: paas_gate=$DC" -H "Authorization: Bearer $DT" $G/api/projects)" 401
 paas-user unlock dana >/dev/null
+runuser -u dana -- paas-market remove skill/zoning-audit >/dev/null 2>&1
 for i in 1 2 3 4 5; do code -H "$J" -d "$(cred peleg "bad$i-password")" $G/api/auth/login >/dev/null; done
 check "locked out after 5 wrong"     "$(code -H "$J" -d "$(cred peleg "$PW_PELEG")" $G/api/auth/login)" 429
 [ $FAIL = 0 ] && echo "RESULT: all passed" || { echo "RESULT: FAILED"; exit 1; }

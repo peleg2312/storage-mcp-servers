@@ -22,6 +22,8 @@ const SESSION_S = 12 * 3600;
 const USER_RE = /^[a-z_][a-z0-9_.-]{0,31}$/;
 const WINDOW_MS = 10 * 60 * 1000;
 const MAX_FAILURES = 5;
+const MAX_IP_FAILURES = 30; // all names from one address (NAT users share it, so generous)
+const MAX_IP_BUSY = 4; // password checks running at once per address
 const FAIL_MS = 3500; // every failed sign-in answers after at least this long: unknown user looks like a wrong password
 const BAD = 'Wrong username or password';
 const LOCKED = 'Too many wrong passwords. Try again in 10 minutes.';
@@ -35,13 +37,14 @@ const clientIp = (req) => String(req.socket.remoteAddress || '').replace(/^::fff
 
 // ---- who may sign in -------------------------------------------------------------------------------------------
 
-const failures = new Map(); // "user|ip" -> times of failed (or still running) attempts
+const failures = new Map(); // "user|ip" and "ip" -> times of failed (or still running) attempts
 function recent(key) {
   const now = Date.now();
   const list = (failures.get(key) || []).filter((t) => now - t < WINDOW_MS);
   failures.set(key, list);
   return list;
 }
+const busy = new Map(); // ip -> password checks running
 setInterval(() => { for (const k of failures.keys()) if (!recent(k).length) failures.delete(k); }, WINDOW_MS).unref();
 
 async function allowed(user) {
@@ -82,15 +85,22 @@ function checkPassword(user, password) {
 const envPath = (user) => `${ETC}/users/${user}.env`;
 
 /** The instance's port, or null when the user has no instance file (never signed in, or removed). */
+const ports = new Map(); // user -> { p, t }: the file is read at most every 5 s per user
 function instancePort(user) {
+  const c = ports.get(user);
+  if (c && Date.now() - c.t < 5000) return c.p;
+  let p = null;
   try {
     const m = /^SERVER_PORT=(\d+)$/m.exec(fs.readFileSync(envPath(user), 'utf8'));
-    return m ? Number(m[1]) : null;
-  } catch { return null; }
+    p = m ? Number(m[1]) : null;
+  } catch { /* no file */ }
+  ports.set(user, { p, t: Date.now() });
+  return p;
 }
 
 /** root: 41000; everyone else: one above the highest port in use, so a port is never reused while its file exists. */
 function createEnv(user) {
+  ports.clear(); // read the files fresh: the port is picked from what is on disk now
   if (instancePort(user)) return;
   let port = 41000;
   if (user !== 'root') {
@@ -101,9 +111,10 @@ function createEnv(user) {
   }
   const claude = ['/usr/local/bin/claude', '/usr/bin/claude'].find((p) => fs.existsSync(p)) || '/usr/local/bin/claude';
   const env = `SERVER_PORT=${port}\nJWT_SECRET=${crypto.randomBytes(32).toString('hex')}\nPAAS_LOGIN_USERS=${user}\n`
-    + `CLAUDE_CLI_PATH=${claude}\nPATH=/opt/paas/ui/node/bin:/usr/local/bin:/usr/bin:/bin\n`; // same as paas-user's
+    + `CLAUDE_CLI_PATH=${claude}\nPATH=/opt/paas/ui/node/bin:/usr/local/bin:/usr/bin:/bin\n`; // paas-user's, without its sbin dirs
   try {
     fs.writeFileSync(envPath(user), env, { flag: 'wx', mode: 0o600 });
+    ports.delete(user);
     log(`created ${envPath(user)} (port ${port})`);
   } catch (e) {
     if (e.code !== 'EEXIST') throw e; // the Users page made it at the same moment
@@ -197,6 +208,7 @@ function sessionUser(req) {
   const m = /^([a-z_][a-z0-9_.-]{0,31})\.(\d{1,12})\.([0-9a-f]{64})$/.exec(splitCookies(req.headers.cookie)[0] || '');
   if (!m || Number(m[2]) < Date.now() / 1000) return null;
   if (!crypto.timingSafeEqual(Buffer.from(sign(`${m[1]}.${m[2]}`), 'hex'), Buffer.from(m[3], 'hex'))) return null;
+  if (fs.existsSync(`${ETC}/users/${m[1]}.locked`)) return null; // paas-user lock: the cookie dies with the account
   return instancePort(m[1]) ? m[1] : null;
 }
 
@@ -243,12 +255,13 @@ const sendPage = (res, status, error) => send(res, status, 'text/html; charset=u
 const readBody = (req, max) => new Promise((resolve) => {
   const chunks = [];
   let size = 0;
+  const timer = setTimeout(() => { resolve(null); req.destroy(); }, 10000); // a slow-drip body is dropped
   req.on('data', (c) => {
     size += c.length;
     if (size > max) { resolve(null); req.destroy(); } else chunks.push(c);
   });
-  req.on('end', () => resolve(Buffer.concat(chunks).toString('utf8')));
-  req.on('error', () => resolve(null));
+  req.on('end', () => { clearTimeout(timer); resolve(Buffer.concat(chunks).toString('utf8')); });
+  req.on('error', () => { clearTimeout(timer); resolve(null); });
 });
 
 function credentials(req, body) {
@@ -273,8 +286,16 @@ async function login(req, res, asJson) {
   const key = `${username}|${ip}`;
   const attempts = recent(key);
   if (attempts.length >= MAX_FAILURES) return fail(429, LOCKED, 'locked');
+  const perIp = recent(ip);
+  if (perIp.length >= MAX_IP_FAILURES || (busy.get(ip) || 0) >= MAX_IP_BUSY) return fail(429, LOCKED, 'address limit');
   attempts.push(Date.now()); // counted while it runs, so parallel guesses cannot get around the limit
-  if (!(await allowed(username)) || !(await checkPassword(username, password))) return fail(401, BAD);
+  perIp.push(Date.now());
+  busy.set(ip, (busy.get(ip) || 0) + 1);
+  let ok = false;
+  try { ok = (await allowed(username)) && (await checkPassword(username, password)); } finally {
+    if (busy.get(ip) > 1) busy.set(ip, busy.get(ip) - 1); else busy.delete(ip);
+  }
+  if (!ok) return fail(401, BAD);
   const port = await ensureInstance(username);
   const r = port ? await instanceLogin(port, username, password) : { status: 502, token: null };
   if (!r.token) {
@@ -282,6 +303,7 @@ async function login(req, res, asJson) {
       : fail(502, 'Your workspace did not start. Try again in a minute.', `instance answered ${r.status}`);
   }
   recent(key).pop(); // the right password does not count against the limit
+  recent(ip).pop();
   log(`sign-in ok user=${username} ip=${ip}`);
   res.setHeader('set-cookie', newCookie(username));
   if (asJson) sendJson(res, 200, r.body); else send(res, 200, 'text/html; charset=utf-8', signedInPage(r.token));

@@ -7,6 +7,12 @@ Wants=network-online.target
 ExecStart=/opt/paas/ui/node/bin/node /opt/paas/gate/gate.js
 Restart=on-failure
 RestartSec=2
+PrivateTmp=yes
+ProtectHome=read-only
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+LimitNOFILE=8192
+TasksMax=2048
 
 [Install]
 WantedBy=multi-user.target

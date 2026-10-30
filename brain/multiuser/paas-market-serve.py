@@ -8,6 +8,7 @@
 On another VM: paas-market connect https://<this vm>:3443 <token>   (root reads the token: cat /etc/paas/market/token)
 It runs as the system user paas-market, which can read only /etc/paas/market (token, copy of the VM's certificate).
 """
+import hashlib
 import hmac
 import io
 import json
@@ -15,6 +16,7 @@ import os
 import re
 import ssl
 import tarfile
+import threading
 import time
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
@@ -22,13 +24,41 @@ ROOT = os.environ.get("PAAS_ROOT", "/opt/paas")
 CRED = os.environ.get("PAAS_MARKET_ETC", "/etc/paas/market")     # token + TLS certificate, readable by this service only
 PORT = int(os.environ.get("PAAS_MARKET_PORT", "3443"))
 TOKEN = open(os.path.join(CRED, "token")).read().strip().encode()
-_cache = [0.0, b""]
+_cache = ["", b""]                                  # [etag, tar.gz]
+_lock = threading.Lock()
 
 
-def snapshot():
-    """marketplace/ (no MCP items) + plugins/ + plugin-sources/ as tar.gz; built at most every 30 s"""
-    if time.time() - _cache[0] < 30:   # ponytail: one shared 30 s cache, enough for a few VMs refreshing every 10 min
+def etag():
+    """a hash of the names, sizes and times of what the snapshot holds: cheap next to building it"""
+    h = hashlib.sha256()
+    m = os.path.join(ROOT, "marketplace")
+    for top in ("index.json", "defaults.json", "items/skills", "items/agents", "contrib"):
+        top = os.path.join(m, top)
+        for root, dirs, files in os.walk(top):
+            for n in sorted(files):
+                st = os.stat(os.path.join(root, n))
+                h.update(f"{root}/{n}{st.st_size}{st.st_mtime_ns}".encode())
+        if os.path.isfile(top):
+            st = os.stat(top)
+            h.update(f"{top}{st.st_size}{st.st_mtime_ns}".encode())
+    for top in ("plugins", "plugin-sources"):
+        for root, dirs, files in os.walk(os.path.join(ROOT, top)):
+            dirs[:] = [d for d in dirs if d != ".git"]
+            for n in sorted(files):
+                st = os.stat(os.path.join(root, n))
+                h.update(f"{root}/{n}{st.st_size}{st.st_mtime_ns}".encode())
+    return f'"{h.hexdigest()[:32]}"'
+
+
+def snapshot(tag):
+    """marketplace/ (no MCP items) + plugins/ + plugin-sources/ as tar.gz, built once per change (one thread at a time)"""
+    with _lock:
+        if _cache[0] != tag:
+            _cache[:] = [tag, build()]
         return _cache[1]
+
+
+def build():
     m = os.path.join(ROOT, "marketplace")
     buf = io.BytesIO()
     with tarfile.open(fileobj=buf, mode="w:gz") as t:
@@ -55,8 +85,7 @@ def snapshot():
         if os.path.isdir(os.path.join(ROOT, "plugin-sources")):     # other marketplaces root added (paas-market source add)
             t.add(os.path.join(ROOT, "plugin-sources"), "plugin-sources",
                   filter=lambda ti: None if re.search(r"(^|/)(\.git|\.[^/]+\.(new|old))(/|$)", ti.name) else skip(ti))
-    _cache[:] = [time.time(), buf.getvalue()]
-    return _cache[1]
+    return buf.getvalue()
 
 
 class Handler(BaseHTTPRequestHandler):
@@ -70,12 +99,20 @@ class Handler(BaseHTTPRequestHandler):
             return self.reply(401, b'{"error":"token needed"}', "application/json")
         if self.path != "/snapshot.tar.gz":
             return self.reply(404, b'{"error":"not found"}', "application/json")
-        self.reply(200, snapshot(), "application/gzip")
+        tag = etag()
+        if self.headers.get("If-None-Match") == tag:       # the client already holds this snapshot
+            self.send_response(304)
+            self.send_header("ETag", tag)
+            self.send_header("Content-Length", "0")
+            return self.end_headers()
+        self.reply(200, snapshot(tag), "application/gzip", tag)
 
-    def reply(self, code, body, ctype):
+    def reply(self, code, body, ctype, tag=""):
         self.send_response(code)
         self.send_header("Content-Type", ctype)
         self.send_header("Content-Length", str(len(body)))
+        if tag:
+            self.send_header("ETag", tag)
         self.end_headers()
         self.wfile.write(body)
 
