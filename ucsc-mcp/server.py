@@ -54,6 +54,13 @@ class ReadOnlyUcscHandle(UcscHandle):
                 f"Blocked XML method '{elem.tag}': this server is read-only")
         return super().post_elem(elem, dme=dme)
 
+    def post_xml(self, xml_str, read=True, dme="central-mgr"):
+        s = xml_str.decode() if isinstance(xml_str, bytes) else xml_str
+        m = re.match(r"\s*<(\w+)", s)
+        if not m or m.group(1) not in ALLOWED_XML_METHODS:
+            raise ReadOnlyViolation(f"Blocked XML method {m and m.group(1)!r}: this server is read-only")
+        return super().post_xml(xml_str, read=read, dme=dme)
+
     def _blocked(self, *args, **kwargs):
         raise ReadOnlyViolation("Configuration changes are disabled: this server is read-only")
 
@@ -90,7 +97,7 @@ class Central:
 
     def _login(self):
         h = ReadOnlyUcscHandle(self.host, self._user, self._pw, port=self.port)
-        h.login()
+        h.login(auto_refresh=True)  # SDK refresh timer (aaaRefresh via post_elem) keeps idle sessions alive
         log.info("Logged in to UCS Central %s (%s), version %s", self.name, self.host, h.version)
         return h
 
@@ -110,7 +117,11 @@ class Central:
                 with self._plock:
                     self._created -= 1
                 raise
-        return self._pool.get(timeout=600)
+        try:
+            return self._pool.get(timeout=60)
+        except queue.Empty:
+            raise RuntimeError(f"UCS Central {self.name}: all {self._max} sessions busy for 60 s; "
+                               "raise UCSC_SESSIONS or retry") from None
 
     def _discard(self, h):
         try:
@@ -130,6 +141,10 @@ class Central:
                 self._pool.put(h)
                 raise
             except (UcscException, OSError) as e:
+                code = str(getattr(e, "error_code", "") or "")
+                if code and code not in ("551", "552"):  # a rejected query, not a dead session
+                    self._pool.put(h)
+                    raise
                 self._discard(h)
                 if attempt == 2:
                     raise
@@ -206,6 +221,20 @@ def fan_out(central, fn):
             errors[name] = str(e)
             log.warning("UCS Central %s failed: %s", name, e)
     return rows, errors
+
+
+def central_for_domain(domain, central=""):
+    """The one central that has this domain id (or the only/named central)."""
+    cs = pick(central)
+    if len(cs) == 1:
+        return cs[0]
+    found, err = fan_out(central, lambda c: [c] if any(m.id == str(domain) for m in
+                                                       query(c, "computeSystem", _filter("id", str(domain)))) else [])
+    if len(found) == 1:
+        return found[0]
+    if found:
+        raise ValueError(f"Domain {domain} exists on {[c.name for c in found]}; pass central=<name>")
+    raise LookupError(f"Domain {domain} not found on any central" + (f" (unreachable: {err})" if err else ""))
 
 
 def find_dn(dn: str, central: str = ""):
@@ -311,10 +340,21 @@ def query(c, class_id, flt=None):
 
 def _to_dict(mo, props=None):
     if props:
-        return {p: getattr(mo, p, None) for p in ("dn", *props)}
-    # every property of the class, without the empty ones (most are: -85% per object, nothing set is lost)
+        return {p: v for p in ("dn", *props) for v in [getattr(mo, p, None)] if v not in (None, "")}
+    # empty properties are left out (most are: -85% per object, nothing set is lost)
     return {p: v for p in sorted(mo.prop_meta) if p != "child_action"
             for v in [getattr(mo, p, None)] if v not in (None, "")}
+
+
+def _since(since):
+    """'7d' / '30d' / 'all' -> (server filter on 'created', date prefixes for the Python re-check)."""
+    if not since or since == "all":
+        return None, ()
+    m = re.fullmatch(r"(\d{1,3})d", since)
+    if not m:
+        raise ValueError("since: 7d, 30d or all")
+    ds = tuple(time.strftime("%Y-%m-%d", time.gmtime(time.time() - 86400 * i)) for i in range(int(m[1]) + 1))
+    return '(created, "^(' + "|".join(ds) + ')", type="re")', ds
 
 
 def _in_domain(dn, domain):
@@ -340,6 +380,14 @@ def _class_rows(central, class_id, props=None, flt=None, keep=lambda mo: True):
     def one(c):
         return [dict(_to_dict(m, props), central=c.name) for m in query(c, class_id, flt) if keep(m)]
     return fan_out(central, one)
+
+
+def _props(props):
+    """'dn,model' -> ('model',) or None (all non-empty properties)."""
+    want = tuple(p.strip() for p in props.split(",") if p.strip())
+    if not all(re.fullmatch(r"[a-z_][a-z0-9_]*", p) for p in want):
+        raise ValueError("props: comma-separated property names, e.g. model,serial")
+    return want or None
 
 
 def _bad(op):
@@ -372,22 +420,21 @@ acknowledged or fixed anything.
 == QUERY NARROWLY (tens of thousands of objects; filters run ON UCS Central) ==
 Name: list_service_profiles name_contains= (org=, sp_type="instance"). Server: get_server(dn) /
 get_service_profile(dn) read only that subtree. WWPN: find_wwpn, never list everything. Scope with domain=;
-use problems_only / severity / unacked_only. Lists are capped (limit 200, with totals); raise it only when
-the full list is needed. Identical queries within ~2 minutes come from a cache.
+use problems_only / severity / unacked_only. Lists are capped (limit 200; list_faults and query_class 50;
+totals reported); raise it only when the full list is needed. get_events / get_audit_log cover since=7d unless
+you pass since=30d or all. list_firmware is grouped; limit>0 adds raw rows. Identical queries within ~2
+minutes come from a cache.
 
 == WORKFLOWS ==
 "How is UCS": list_domains -> get_domain_health for domains with faults -> list_faults
-  severity="critical,major" (critical first, newest first; group codes with counts, DNs, first/last time;
-  explain F0xxx codes). get_audit_log = who changed what; get_events = event log.
+  severity="critical,major" (by_code = counts with first/last time over all matches; raise limit or pass
+  code= only to list DNs; explain F0xxx codes). get_audit_log = who changed what; get_events = event log.
 Server / SP: get_server(dn) (hardware, adapters, FC interfaces with WWPN / fabric, SP, faults) or
   get_service_profile(dn) (association, policies, vHBAs with WWPN / fabric / VSAN, vNICs, faults).
 SAN: trace_service_profile_san(name or dn) STARTS "host X can't see storage" / slow SAN: every vHBA (WWPN,
   fabric, VSAN, pinning), the adapter FC interface, each fabric's FI side (uplinks, port-channels,
-  errors) and a problems list. get_domain_fc_health(domain) = SAN health of a domain. Single views:
-  list_fc_port_channels, get_fc_port_errors, get_vhba_pinning, find_wwpn (SP + vHBA + fabric + pool),
-  get_service_profile_vhbas (WWPNs, fabric, VSAN: feed to MDS), list_fc_uplinks, list_vsans, list_wwn_pools.
-Inventory: list_servers, list_chassis, list_fabric_interconnects, list_service_profiles, list_firmware.
-  Anything else: query_class(class_id) or get_object(dn).
+  errors) and a problems list. get_domain_fc_health(domain) = SAN health of a domain.
+Anything else: query_class(class_id, props=) or get_object(dn, props=).
 
 == READING RESULTS ==
 - operability "operable" + oper_state "ok" are healthy; anything else (inoperable, degraded, removed,
@@ -399,8 +446,7 @@ Inventory: list_servers, list_chassis, list_fabric_interconnects, list_service_p
   (list_fc_uplinks, the MDS fabric).
 - FC counters: 'last_interval' = happening now, 'totals' = cumulative. CRC / sync / signal loss -> optics,
   cable or patch panel FI-MDS; discards -> congestion / slow drain (check MDS); link failures -> flapping.
-- A port-channel with members down works with less bandwidth (uneven load, congestion). Both fabrics need
-  healthy uplinks. Say when a central was unreachable (unreachable_centrals).
+- Both fabrics need healthy uplinks. Say when a central was unreachable (unreachable_centrals).
 """
 
 mcp = FastMCP("ucs-central-readonly", instructions=INSTRUCTIONS)
@@ -414,14 +460,10 @@ mcp = FastMCP("ucs-central-readonly", instructions=INSTRUCTIONS)
 def test_connection() -> dict:
     """Log in to every configured UCS Central and return name, version and status. Run first if
     anything fails."""
-    out = []
-    for c in centrals().values():
-        try:
-            info = c.call(lambda h: {"ucs_central": h.ucs, "version": str(h.version)})
-            out.append({"central": c.name, "host": c.host, "ok": True, **info})
-        except Exception as e:
-            out.append({"central": c.name, "host": c.host, "ok": False, "error": str(e)})
-    return {"centrals": out}
+    rows, err = fan_out("", lambda c: [dict(central=c.name, host=c.host, ok=True,
+                                            **c.call(lambda h: {"ucs_central": h.ucs, "version": str(h.version)}))])
+    rows += [{"central": n, "host": centrals()[n].host, "ok": False, "error": e} for n, e in err.items()]
+    return {"centrals": sorted(rows, key=lambda r: r["central"])}
 
 
 @mcp.tool(annotations=RO)
@@ -437,29 +479,29 @@ def list_domains(central: str = "", limit: int = 500) -> dict:
     props = ("id", "name", "address", "site", "product_family", "fw_package_version",
              "oper_group_dn", "subscribe_status", "inventory_status", "flt_aggr")
     rows, err = _class_rows(central, "computeSystem", props)
-    return _cap(sorted(rows, key=lambda r: (r["central"], r["name"] or "")), limit, err)
+    return _cap(sorted(rows, key=lambda r: (r["central"], r.get("name", ""))), limit, err)
 
 
 @mcp.tool(annotations=RO)
-def list_fabric_interconnects(domain: str = "", central: str = "") -> dict:
+def list_fabric_interconnects(domain: str = "", central: str = "", limit: int = 500) -> dict:
     """Fabric interconnects (A/B) per domain: model, serial, management IP, operability."""
     props = ("id", "model", "serial", "oob_if_ip", "operability", "total_memory")
     rows, err = _class_rows(central, "networkElement", props, flt=_domain_filter(domain),
                             keep=lambda m: _in_domain(m.dn, domain))
     for r in rows:
         r["domain"] = _domain_of(r["dn"])
-    return _cap(rows, 1000, err)
+    return _cap(rows, limit, err)
 
 
 @mcp.tool(annotations=RO)
-def list_chassis(domain: str = "", central: str = "") -> dict:
+def list_chassis(domain: str = "", central: str = "", limit: int = 500) -> dict:
     """Blade chassis per domain: model, serial, operability, oper state."""
     props = ("id", "model", "serial", "operability", "oper_state", "admin_state")
     rows, err = _class_rows(central, "equipmentChassis", props, flt=_domain_filter(domain),
                             keep=lambda m: _in_domain(m.dn, domain))
     for r in rows:
         r["domain"] = _domain_of(r["dn"])
-    return _cap(rows, 2000, err)
+    return _cap(rows, limit, err)
 
 
 @mcp.tool(annotations=RO)
@@ -467,7 +509,7 @@ def list_servers(domain: str = "", kind: str = "all", problems_only: bool = Fals
                  serial: str = "", central: str = "", limit: int = 200) -> dict:
     """Physical blade and rack servers. domain: numeric id (empty = all). kind: blade, rack or all.
     problems_only: only servers whose operability/oper_state is not healthy. model / serial: filter
-    (serial exact, model contains). Filters run on UCS Central, so narrow queries are fast."""
+    (serial exact, model contains)."""
     props = ("model", "serial", "uuid", "oper_state", "operability", "oper_power", "association",
              "assigned_to_dn", "num_of_cpus", "num_of_cores", "total_memory", "num_of_fc_host_ifs", "usr_lbl")
     classes = {"blade": ["computeBlade"], "rack": ["computeRackUnit"]}.get(kind, ["computeBlade", "computeRackUnit"])
@@ -520,10 +562,7 @@ def get_server(dn: str, central: str = "") -> dict:
 def get_domain_health(domain: str, central: str = "") -> dict:
     """One-call health summary of a UCS domain: FIs, chassis, servers, IOMs, PSUs and fans that are
     not operable, server association counts, and fault counts by severity (unacknowledged)."""
-    cs = pick(central)
-    if len(cs) > 1:
-        raise ValueError("Several centrals are configured; pass central=<name> with a domain id")
-    c = cs[0]
+    c = central_for_domain(domain, central)
 
     dfl = _domain_filter(domain)
     not_ok = 'not (operability, "operable", type="eq")'
@@ -568,10 +607,11 @@ def get_domain_health(domain: str, central: str = "") -> dict:
 
 @mcp.tool(annotations=RO)
 def list_faults(severity: str = "", domain: str = "", unacked_only: bool = False, code: str = "",
-                text: str = "", central: str = "", limit: int = 200) -> dict:
+                text: str = "", central: str = "", limit: int = 50) -> dict:
     """Active faults sorted by severity (critical, major, minor, warning, info, condition, cleared)
     then newest first. severity: one or comma-separated. domain: numeric id (empty = all, including
-    UCS Central's own). code: e.g. F0283. text: substring of the description."""
+    UCS Central's own). code: e.g. F0283. text: substring of the description. by_code covers ALL matches;
+    items = first `limit` rows."""
     sevs = [x.strip().lower() for x in severity.split(",") if x.strip()]
     flt = _and(_any_of("severity", sevs), _domain_filter(domain),
                _filter("ack", "no") if unacked_only else None,
@@ -585,37 +625,52 @@ def list_faults(severity: str = "", domain: str = "", unacked_only: bool = False
                 and (not text or text.lower() in (m.descr or "").lower()))
     rows, err = _class_rows(central, "faultInst", props, flt=flt, keep=keep)
     order = {"critical": 0, "major": 1, "minor": 2, "warning": 3, "info": 4, "condition": 5, "cleared": 6}
-    rows.sort(key=lambda r: r["created"] or "", reverse=True)
-    rows.sort(key=lambda r: order.get(r["severity"], 9))
+    rows.sort(key=lambda r: r.get("created", ""), reverse=True)
+    rows.sort(key=lambda r: order.get(r.get("severity"), 9))
     for r in rows:
         r["domain"] = _domain_of(r["dn"])
     out = _cap(rows, limit, err)
-    out["by_severity"] = dict(Counter(r["severity"] for r in rows))
+    out["by_severity"] = dict(Counter(r.get("severity") for r in rows))
+    groups = {}
+    for r in rows:
+        cr = r.get("created", "")
+        g = groups.setdefault((r.get("code"), r.get("severity")),
+                              {"count": 0, "example": r.get("descr"), "first": cr, "last": cr})
+        g["count"] += 1
+        if cr and (not g["first"] or cr < g["first"]):
+            g["first"] = cr
+        g["last"] = max(g["last"], cr)
+    out["by_code"] = [{"code": k[0], "severity": k[1], **g}
+                      for k, g in sorted(groups.items(), key=lambda kv: -kv[1]["count"])[:20]]
     return out
 
 
 @mcp.tool(annotations=RO)
-def get_audit_log(user: str = "", text: str = "", central: str = "", limit: int = 200) -> dict:
+def get_audit_log(user: str = "", text: str = "", since: str = "7d", central: str = "", limit: int = 200) -> dict:
     """UCS Central audit log (aaaModLR): who changed what and when, newest first. Filter by user or
-    description text."""
+    description text. since: 7d (default), 30d or all."""
     props = ("id", "created", "user", "descr", "ind", "severity")
+    sflt, ds = _since(since)
 
     def keep(m):
         return (not user or (m.user or "").lower() == user.lower()) and \
-               (not text or text.lower() in (m.descr or "").lower())
-    flt = _and(_filter("user", user) if user else None, _contains("descr", text) if text else None)
+               (not text or text.lower() in (m.descr or "").lower()) and (not ds or (m.created or "").startswith(ds))
+    flt = _and(sflt, _filter("user", user) if user else None, _contains("descr", text) if text else None)
     rows, err = _class_rows(central, "aaaModLR", props, flt=flt, keep=keep)
-    rows.sort(key=lambda r: r["created"] or "", reverse=True)
+    rows.sort(key=lambda r: r.get("created", ""), reverse=True)
     return _cap(rows, limit, err)
 
 
 @mcp.tool(annotations=RO)
-def get_events(text: str = "", central: str = "", limit: int = 200) -> dict:
-    """UCS Central event log (eventInst), newest first, optionally filtered by description text."""
+def get_events(text: str = "", since: str = "7d", central: str = "", limit: int = 200) -> dict:
+    """UCS Central event log (eventInst), newest first, optionally filtered by description text.
+    since: 7d (default), 30d or all."""
     props = ("id", "created", "descr", "severity")
-    rows, err = _class_rows(central, "eventInst", props, flt=_contains("descr", text) if text else None,
-                            keep=lambda m: not text or text.lower() in (m.descr or "").lower())
-    rows.sort(key=lambda r: r["created"] or "", reverse=True)
+    sflt, ds = _since(since)
+    rows, err = _class_rows(central, "eventInst", props, flt=_and(sflt, _contains("descr", text) if text else None),
+                            keep=lambda m: (not text or text.lower() in (m.descr or "").lower())
+                            and (not ds or (m.created or "").startswith(ds)))
+    rows.sort(key=lambda r: r.get("created", ""), reverse=True)
     return _cap(rows, limit, err)
 
 
@@ -628,12 +683,9 @@ def get_events(text: str = "", central: str = "", limit: int = 200) -> dict:
 def list_service_profiles(name_contains: str = "", sp_type: str = "", assoc_state: str = "",
                           org: str = "", server_dn: str = "", central: str = "", limit: int = 200) -> dict:
     """Service profiles and templates with association state and the physical server they run on.
-    Filters run on UCS Central (fast even with tens of thousands of profiles) - always pass at least
-    one when you can:
-      name_contains (case-insensitive), sp_type (instance, initial-template, updating-template),
-      assoc_state (associated, unassociated, ...), org (DN prefix, e.g. org-root/org-Prod),
-      server_dn (the physical server, to find which profile runs on it).
-    Returns counts by type and association state for everything that matched."""
+    Pass at least one filter: name_contains, sp_type (instance, initial-template, updating-template),
+    assoc_state (associated, unassociated, ...), org (DN prefix, e.g. org-root/org-Prod), server_dn (the
+    physical server, to find which profile runs on it). Returns counts by type and association state."""
     props = ("name", "type", "assoc_state", "assign_state", "pn_dn", "oper_state", "config_state",
              "oper_src_templ_name", "uuid", "domain", "usr_lbl")
     flt = _and(_contains("name", name_contains) if name_contains else None,
@@ -646,9 +698,9 @@ def list_service_profiles(name_contains: str = "", sp_type: str = "", assoc_stat
         and (not name_contains or name_contains.lower() in (m.name or "").lower())
         and (not org or m.dn.startswith(org.rstrip("/") + "/"))
         and (not server_dn or m.pn_dn == server_dn)))
-    out = _cap(sorted(rows, key=lambda r: r["name"] or ""), limit, err)
-    out["by_type"] = dict(Counter(r["type"] for r in rows))
-    out["by_assoc_state"] = dict(Counter(r["assoc_state"] for r in rows))
+    out = _cap(sorted(rows, key=lambda r: r.get("name", "")), limit, err)
+    out["by_type"] = dict(Counter(r.get("type") for r in rows))
+    out["by_assoc_state"] = dict(Counter(r.get("assoc_state") for r in rows))
     if out["total"] > out["returned"]:
         out["note"] = f"{out['total']} matched; narrow with name_contains / org / sp_type to see the rest."
     return out
@@ -666,7 +718,8 @@ def _sp_subtree(c, sp_dn):
     vhbas = [{"name": v.name, "wwpn": v.addr, "fabric": v.switch_id,
               "wwpn_pool": v.oper_ident_pool_name or v.ident_pool_name,
               "template": v.oper_nw_templ_name or v.nw_templ_name, "order": v.oper_order or v.order,
-              "dn": v.dn, "vsan": vsans.get(v.dn, [])} for v in by.get("VnicFc", [])]
+              "dn": v.dn, "vsan": vsans.get(v.dn, []), "pin_group": v.pin_to_group_name or None}
+             for v in by.get("VnicFc", [])]
     vnics = [{"name": v.name, "mac": v.addr, "fabric": v.switch_id, "dn": v.dn} for v in by.get("VnicEther", [])]
     faults = [_to_dict(x, ("severity", "code", "descr", "created", "ack"))
               for x in by.get("FaultInst", []) if x.severity != "cleared"]
@@ -706,16 +759,12 @@ def find_wwpn(wwpn: str, central: str = "") -> dict:
     w = ":".join(hexd[i:i + 2] for i in range(0, 16, 2))
 
     def one(c):
-        def f(h):
-            def by(cid, prop):
-                for val in (w, w.lower()):
-                    hit = [m for m in h.query_classid(cid, filter_str=_filter(prop, val))
-                           if (getattr(m, prop) or "").upper() == w]
-                    if hit:
-                        return hit
-                return []
-            return by("vnicFc", "addr"), by("fcpoolInitiator", "id"), by("adaptorHostFcIf", "wwn")
-        vh, pool, phys = c.call(f)
+        def by(a):
+            cid, prop = a  # one case-insensitive anchored regex (w is hex and colons only)
+            return [m for m in query(c, cid, f'({prop}, "^{w}$", type="re", flag="I")')
+                    if (getattr(m, prop) or "").upper() == w]
+        with ThreadPoolExecutor(max_workers=3) as ex:
+            vh, pool, phys = ex.map(by, [("vnicFc", "addr"), ("fcpoolInitiator", "id"), ("adaptorHostFcIf", "wwn")])
         return [{"central": c.name,
                  "vhbas": [{"dn": v.dn, "service_profile_dn": v.dn.rsplit("/", 1)[0], "vhba": v.name,
                             "fabric": v.switch_id} for v in vh],
@@ -734,32 +783,29 @@ def find_wwpn(wwpn: str, central: str = "") -> dict:
 def list_wwn_pools(central: str = "", limit: int = 500) -> dict:
     """WWPN/WWNN pools: purpose, size, assigned count and address blocks."""
     def one(c):
-        def f(h):
-            out = []
-            for p in h.query_classid("fcpoolInitiators"):
-                blocks = h.query_children(in_dn=p.dn, class_id="fcpoolBlock")
-                out.append({"central": c.name, "dn": p.dn, "name": p.name, "purpose": p.purpose,
-                            "size": p.size, "assigned": p.assigned,
-                            "blocks": [{"from": b.r_from, "to": b.to} for b in blocks]})
-            return out
-        return c.call(f)
+        blocks = {}
+        for b in query(c, "fcpoolBlock"):
+            blocks.setdefault(b.dn.rsplit("/", 1)[0], []).append({"from": b.r_from, "to": b.to})
+        return [{"central": c.name, "dn": p.dn, "name": p.name, "purpose": p.purpose, "size": p.size,
+                 "assigned": p.assigned, "blocks": blocks.get(p.dn, [])} for p in query(c, "fcpoolInitiators")]
     rows, err = fan_out(central, one)
     return _cap(rows, limit, err)
 
 
 @mcp.tool(annotations=RO)
-def list_vsans(domain: str = "", central: str = "") -> dict:
+def list_vsans(domain: str = "", central: str = "", limit: int = 200) -> dict:
     """VSANs (global and per domain): id, name, fabric (A/B or dual), FCoE VLAN, zoning state."""
     props = ("id", "name", "switch_id", "fcoe_vlan", "zoning_state", "oper_state")
     rows, err = _class_rows(central, "fabricVsan", props, flt=_domain_filter(domain),
                             keep=lambda m: not domain or _in_domain(m.dn, domain))
-    return _cap(rows, 5000, err)
+    return _cap(rows, limit, err)
 
 
 @mcp.tool(annotations=RO)
-def list_fc_uplinks(domain: str = "", problems_only: bool = False, central: str = "") -> dict:
+def list_fc_uplinks(domain: str = "", problems_only: bool = False, central: str = "", limit: int = 200) -> dict:
     """Fabric interconnect FC ports (uplinks to the SAN/MDS): FI, slot/port, WWN, speed, admin/oper
-    state, role and peer. problems_only: ports that are enabled but not up."""
+    state, role and peer. problems_only: ports that are enabled but not up. Pass domain=; unscoped lists
+    are capped at limit."""
     props = ("switch_id", "slot_id", "port_id", "wwn", "oper_speed", "admin_state", "oper_state",
              "if_role", "peer_dn")
 
@@ -772,16 +818,29 @@ def list_fc_uplinks(domain: str = "", problems_only: bool = False, central: str 
     rows, err = _class_rows(central, "fcPIo", props, flt=flt, keep=keep)
     for r in rows:
         r["domain"] = _domain_of(r["dn"])
-    return _cap(rows, 5000, err)
+    return _cap(rows, limit, err)
 
 
 @mcp.tool(annotations=RO)
-def list_firmware(domain: str = "", central: str = "", limit: int = 2000) -> dict:
-    """Running firmware versions (UCS Central, fabric interconnects, IOMs, servers, adapters)."""
+def list_firmware(domain: str = "", central: str = "", limit: int = 0) -> dict:
+    """Running firmware grouped by type/deployment/version with counts and an example dn. limit>0 also
+    returns raw rows with DNs (per-server questions; pass domain=)."""
     props = ("type", "deployment", "version", "package_version")
     rows, err = _class_rows(central, "firmwareRunning", props, flt=_domain_filter(domain),
                             keep=lambda m: _in_domain(m.dn, domain))
-    return _cap(rows, limit, err)
+    groups = {}
+    for r in rows:
+        g = groups.setdefault((r["central"], r.get("type"), r.get("deployment"), r.get("version")),
+                              {"count": 0, "example_dn": r["dn"]})
+        g["count"] += 1
+    out = {"total_objects": len(rows),
+           "groups": [dict(zip(("central", "type", "deployment", "version"), k), **g)
+                      for k, g in sorted(groups.items(), key=lambda kv: -kv[1]["count"])]}
+    if limit > 0:
+        out["items"] = _cap(rows, limit)["items"]
+    if err:
+        out["unreachable_centrals"] = err
+    return out
 
 
 # --------------------------------------------------------------------------
@@ -790,25 +849,28 @@ def list_firmware(domain: str = "", central: str = "", limit: int = 2000) -> dic
 
 
 @mcp.tool(annotations=RO)
-def get_object(dn: str, hierarchy: bool = False, central: str = "", limit: int = 300) -> dict:
-    """Read any managed object by DN (optionally with its whole subtree). Empty properties are left out."""
+def get_object(dn: str, hierarchy: bool = False, central: str = "", limit: int = 100, props: str = "") -> dict:
+    """Read any managed object by DN, optionally with its subtree (can be hundreds of objects). Empty
+    properties are left out; props (e.g. model,serial) returns only those."""
+    want = _props(props)
     c, mo = find_dn(dn, central)
     if hierarchy:
         mos = c.call(lambda h: h.query_dn(dn, hierarchy=True))
-        rows = [dict(_to_dict(m), class_id=m.get_class_id()) for m in mos]
+        rows = [dict(_to_dict(m, want), class_id=m.get_class_id()) for m in mos]
     else:
-        rows = [dict(_to_dict(mo), class_id=mo.get_class_id())]
+        rows = [dict(_to_dict(mo, want), class_id=mo.get_class_id())]
     return dict(_cap(rows, limit), central=c.name)
 
 
 @mcp.tool(annotations=RO)
 def query_class(class_id: str, prop: str = "", value: str = "", match: str = "eq",
-                domain: str = "", central: str = "", limit: int = 200) -> dict:
-    """Read all objects of a UCS Central class with an optional property filter. Useful classes:
+                domain: str = "", central: str = "", limit: int = 50, props: str = "") -> dict:
+    """Read objects of a UCS Central class with an optional property filter. Useful classes:
     computeBlade, computeRackUnit, lsServer, vnicFc, vnicEther, faultInst, equipmentChassis,
     equipmentPsu, equipmentFan, equipmentIOCard, networkElement, fcPIo, etherPIo, fabricVsan,
-    fabricVlan, adaptorHostFcIf, firmwareRunning, macpoolPool, uuidpoolPool. match: eq, ne, wcard. Empty
-    properties are left out."""
+    fabricVlan, adaptorHostFcIf, firmwareRunning, macpoolPool, uuidpoolPool. match: eq, ne, wcard.
+    Empty properties are left out; props (e.g. model,serial) returns only those."""
+    want = _props(props)
     try:
         load_class(class_id[0].upper() + class_id[1:])
     except Exception:
@@ -821,7 +883,7 @@ def query_class(class_id: str, prop: str = "", value: str = "", match: str = "eq
             raise ValueError("Invalid property name")
         flt = _filter(prop, value, match)
     flt = _and(flt, _domain_filter(domain))
-    rows, err = _class_rows(central, class_id, None, flt=flt, keep=lambda m: _in_domain(m.dn, domain))
+    rows, err = _class_rows(central, class_id, want, flt=flt, keep=lambda m: _in_domain(m.dn, domain))
     return _cap(rows, limit, err)
 
 
@@ -906,8 +968,7 @@ def _port_channels(c, domain="", fabric=""):
 def list_fc_port_channels(domain: str = "", fabric: str = "", central: str = "") -> dict:
     """Fabric Interconnect SAN (FC) port-channels to the MDS: per port-channel its fabric (A/B),
     admin/oper state, speed and member ports with their state and down-reason; plus the physical FI FC
-    ports that are port-channel members (state, speed, WWN). domain: numeric id; fabric: A or B.
-    A port-channel with members down halves bandwidth for every vHBA pinned to it."""
+    ports that are port-channel members (state, speed, WWN). domain: numeric id; fabric: A or B."""
     def one(c):
         pcs, phys = _port_channels(c, domain, fabric)
         return [{"central": c.name, "port_channels": pcs, "member_ports_physical": phys}]
@@ -960,10 +1021,10 @@ def _resolve_sp(service_profile, central):
     return inst[0]
 
 
-def _pinning(c, sp_dn, vhba_mos):
+def _pinning(c, vhbas):
     out = {}
-    for v in vhba_mos:
-        grp = (v.pin_to_group_name or "").strip()
+    for v in vhbas:
+        grp = (v["pin_group"] or "").strip()
         entry = {"pin_group": grp or None, "targets": []}
         if grp:
             for g in query(c, "fabricSanPinGroup", _filter("name", grp)):
@@ -977,7 +1038,7 @@ def _pinning(c, sp_dn, vhba_mos):
         else:
             entry["mode"] = ("dynamic: the FI picks an FC uplink or port-channel in the vHBA's VSAN; the "
                              "port actually used shows on the MDS as the FLOGI interface (trace_wwpn)")
-        out[v.dn] = entry
+        out[v["dn"]] = entry
     return out
 
 
@@ -986,23 +1047,20 @@ def get_vhba_pinning(service_profile: str, central: str = "") -> dict:
     """How each vHBA of a service profile reaches the SAN: static SAN pin group and its targets (FI
     uplink port or port-channel per fabric) or dynamic pinning. service_profile: DN or exact name."""
     c, sp = _resolve_sp(service_profile, central)
-    vh = c.call(lambda h: h.query_children(in_dn=sp.dn, class_id="vnicFc"))
-    pins = _pinning(c, sp.dn, vh)
+    vh = _sp_subtree(c, sp.dn)[0]
+    pins = _pinning(c, vh)
     return {"central": c.name, "service_profile": sp.name, "dn": sp.dn,
-            "vhbas": [{"name": v.name, "wwpn": v.addr, "fabric": v.switch_id, **pins[v.dn]} for v in vh]}
+            "vhbas": [{"name": v["name"], "wwpn": v["wwpn"], "fabric": v["fabric"], **pins[v["dn"]]} for v in vh]}
 
 
 @mcp.tool(annotations=RO)
 def trace_service_profile_san(service_profile: str, central: str = "") -> dict:
-    """End-to-end UCS side of a host's SAN paths in ONE call (service_profile = DN or exact name):
-    per vHBA -> WWPN, fabric A/B, VSAN, pinning, the physical adapter FC interface on the blade/rack
-    (state, link, bad frames), and the Fabric Interconnect side of that fabric: FC uplink ports and
-    port-channels (state, members up) with current error counters. Ends with the WWPNs to feed to the
-    MDS (trace_wwpn) and PowerMax (find_wwpn) servers, and a list of problems found."""
+    """End-to-end UCS side of a host's SAN paths in ONE call (service_profile = DN or exact name): per vHBA
+    WWPN, fabric, VSAN, pinning, adapter FC interface, and the FI side (uplinks, port-channels, errors),
+    plus a problems list. Feed the WWPNs to MDS trace_wwpn and PowerMax find_wwpn."""
     c, sp = _resolve_sp(service_profile, central)
     vhbas, _, sp_faults = _sp_subtree(c, sp.dn)
-    vh_mos = c.call(lambda h: h.query_children(in_dn=sp.dn, class_id="vnicFc"))
-    pins = _pinning(c, sp.dn, vh_mos)
+    pins = _pinning(c, vhbas)
     server_dn = sp.pn_dn or ""
     domain = _domain_of(server_dn)
     phys, stats = {}, {}
@@ -1017,9 +1075,10 @@ def trace_service_profile_san(service_profile: str, central: str = "") -> dict:
     if domain:
         errs = {r["port_dn"]: r for r in _err_rows(c, domain)}
         pcs, pc_phys = _port_channels(c, domain)
+        fc_ports = query(c, "fcPIo", _domain_filter(domain))
         for fab in sorted({(v["fabric"] or "").upper() for v in vhbas if v["fabric"]}):
             ups = []
-            for fp in query(c, "fcPIo", _fabric_filter(domain, fab)):
+            for fp in fc_ports:
                 dom, fi, port = _fi_port(fp.dn)
                 if dom != domain or fi != fab or (fp.if_role or "") not in ("network", "nas", ""):
                     continue
@@ -1068,7 +1127,7 @@ def trace_service_profile_san(service_profile: str, central: str = "") -> dict:
     if len(fabs) < 2 and paths:
         problems.append(f"only fabric(s) {sorted(fabs)} have a vHBA - no SAN redundancy")
     for f in sp_faults:
-        problems.append(f"fault {f['code']} ({f['severity']}): {f['descr']}")
+        problems.append(f"fault {f.get('code')} ({f.get('severity')}): {f.get('descr')}")
     return {"central": c.name, "service_profile": sp.name, "dn": sp.dn, "assoc_state": sp.assoc_state,
             "server": server_dn or None, "domain": domain, "paths": paths, "fabric_interconnect": fabrics,
             "problems": list(dict.fromkeys(problems)),
@@ -1080,29 +1139,31 @@ def get_domain_fc_health(domain: str, central: str = "") -> dict:
     """SAN health of one UCS domain in one call: FI FC ports by role and state (uplinks down),
     FC port-channels and members up, ports with FC errors in the last interval and in total, VSANs,
     server vHBA adapter interfaces by link state, and FC-related active faults."""
-    cs = pick(central)
-    if len(cs) > 1:
-        raise ValueError("Several centrals are configured; pass central=<name> with a domain id")
-    c = cs[0]
+    c = central_for_domain(domain, central)
     dfl = _domain_filter(domain)
-    ports = [m for m in query(c, "fcPIo", dfl) if _in_domain(m.dn, domain)]
+
+    def cls(cid, extra=None):
+        return [m for m in query(c, cid, _and(dfl, extra)) if _in_domain(m.dn, domain)]
+    jobs = {"ports": lambda: cls("fcPIo"), "pcs": lambda: _port_channels(c, domain)[0],
+            "errs": lambda: _err_rows(c, domain), "host_fc": lambda: cls("adaptorHostFcIf"),
+            "faults": lambda: cls("faultInst", 'not (severity, "cleared", type="eq")'),
+            "vsans": lambda: cls("fabricVsan")}
+    with ThreadPoolExecutor(max_workers=3) as ex:
+        futs = {k: ex.submit(f) for k, f in jobs.items()}
+    ports, pcs, errs, host_fc, faults, vsan_mos = (futs[k].result() for k in jobs)
     by_role = Counter((p.if_role or "unknown", p.oper_state) for p in ports)
     down = []
     for p in ports:
         if p.admin_state == "enabled" and p.oper_state != "up":
             _, fi, port = _fi_port(p.dn)
             down.append({"fabric": fi, "port": port, "role": p.if_role, "oper_state": p.oper_state})
-    pcs, _ = _port_channels(c, domain)
-    errs = sorted(_err_rows(c, domain), key=lambda r: r["_score"], reverse=True)
+    errs.sort(key=lambda r: r["_score"], reverse=True)
     for r in errs:
         r.pop("_score", None)
-    host_fc = [m for m in query(c, "adaptorHostFcIf", dfl) if _in_domain(m.dn, domain)]
-    faults = [m for m in query(c, "faultInst", _and(dfl, 'not (severity, "cleared", type="eq")'))
-              if _in_domain(m.dn, domain)]
     fc_faults = [_to_dict(f, ("severity", "code", "descr", "created", "ack")) for f in faults
                  if re.search(r"/switch-fc/|/host-fc-|/fc-|vsan|vhba|\bfc\b|fibre|san", f"{f.dn} {f.descr}", re.I)]
     vsans = [_to_dict(v, ("id", "name", "switch_id", "zoning_state"))
-             for v in query(c, "fabricVsan", dfl) if _in_domain(v.dn, domain)]
+             for v in vsan_mos]
     return {"central": c.name, "domain": domain,
             "fi_fc_ports": [{"role": k[0], "oper_state": k[1], "count": n} for k, n in sorted(by_role.items())],
             "enabled_ports_not_up": down,

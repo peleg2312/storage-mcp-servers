@@ -120,7 +120,7 @@ def fake_post_xml(self, xml_str, read=True, dme="central-mgr"):
     if method in ("configResolveClass", "configResolveChildren"):
         cid = re.search(r'classId="(\w+)"', xml_str).group(1)
         if method == "configResolveClass" and cid == "eventInst" and "<inFilter>" in xml_str and "<filter" in xml_str:
-            return ('<configResolveClass cookie="c1" response="yes" errorCode="552" '
+            return ('<configResolveClass cookie="c1" response="yes" errorCode="150" '
                     'errorDescr="filter not supported" />')
         objs = _select(data.get(cid, ""), xml_str) if method == "configResolveClass" else data.get(cid, "")
         if method == "configResolveChildren":
@@ -179,23 +179,41 @@ async def main():
     assert await call("list_servers", serial="FCH9") and (await call("list_servers", serial="FCH9"))["total"] == 1
     fl2 = await call("list_faults", severity="critical,major", domain="1008", unacked_only=True)
     assert [f["code"] for f in fl2["items"]] == ["F0369"], fl2  # F0001 is on a global SP, not in domain 1008
-    ev = await call("get_events", text="sync")  # filter rejected by fake -> fallback still correct
+    n0 = len(SENT)
+    ev = await call("get_events", text="sync", since="all")  # filter rejected by fake -> fallback still correct
     assert {e["central"] for e in ev["items"]} == {"ucsc-dc1", "ucsc-dc2"}, ev
+    # a rejected filter is not a dead session: no logout, no second try of the same query
+    assert [m for _, m in SENT[n0:]].count("aaaLogout") == 0, SENT[n0:]
+    assert (await call("get_events", since="1d"))["total"] == 0  # fixtures are dated 2026-10-21
+    assert (await call("get_audit_log", since="999d"))["total"] == 2  # date filter is accepted by the SDK parser
+    assert (await call("list_faults"))["by_code"][0]["count"] == 1
+    fwg = await call("list_firmware")
+    assert fwg["total_objects"] == 1 and fwg["groups"][0]["count"] == 1 and "items" not in fwg, fwg
+    assert (await call("list_firmware", limit=5))["items"][0]["version"] == "2.0(1q)"
+    assert (await call("query_class", class_id="computeBlade", props="model,serial"))["items"][0].keys() == {"dn", "model", "serial", "central"}
     print("server-side filters sent:", len(FILTERS))
 
-    au = await call("get_audit_log")
+    au = await call("get_audit_log", since="all")
     assert au["items"][0]["user"] == "ops"
     for t, a in [("list_centrals", {}), ("list_fabric_interconnects", {}), ("list_chassis", {}),
                  ("list_servers", {"problems_only": True}), ("list_service_profiles", {}),
                  ("get_service_profile_vhbas", {"sp_dn": SP}), ("list_wwn_pools", {}), ("list_vsans", {}),
-                 ("list_firmware", {}), ("get_events", {}), ("get_object", {"dn": SP}),
+                 ("list_firmware", {}), ("get_events", {"since": "all"}), ("get_object", {"dn": SP}),
                  ("query_class", {"class_id": "computeBlade", "prop": "model", "value": "UCSB-B200-M5"})]:
         await call(t, **a)
+    assert (await call("get_domain_health", domain="1008"))["central"] == "ucsc-dc1"  # unique id, no central= needed
+    try:
+        await call("get_domain_health", domain="4242")
+        raise SystemExit("unknown domain accepted")
+    except Exception as e:
+        assert "not found" in str(e)
+    DC2["computeSystem"] += '<computeSystem dn="compute/sys-1008" id="1008" name="dup" />'
     try:
         await call("get_domain_health", domain="1008")
         raise SystemExit("ambiguous domain accepted")
     except Exception as e:
         assert "pass central" in str(e)
+    DC2["computeSystem"] = DC2["computeSystem"].split("<computeSystem dn=\"compute/sys-1008\"")[0]
 
     # ---- parallelism: 2 centrals x 0.4 s latency should take ~0.4 s, not 0.8 s ----
     global LATENCY
@@ -220,6 +238,7 @@ async def main():
     mo = LsServer(parent_mo_or_dn="org-root", name="hacked")
     for fn in (lambda: h.add_mo(mo), lambda: h.set_mo(mo), lambda: h.remove_mo(mo), lambda: h.commit(),
                lambda: h.file_download("x", "/tmp", "f"),
+               lambda: h.post_xml('<configConfMo cookie="c1" dn="org-root" />'),
                lambda: h.post_elem(config_conf_mo(cookie="c1", dn="org-root/ls-hacked", in_config=None))):
         try:
             fn()
@@ -230,6 +249,24 @@ async def main():
     writes = [m for _, m in SENT if m not in server.ALLOWED_XML_METHODS]
     assert not writes, writes
     print("XML methods sent:", sorted({m for _, m in SENT}))
+    # expired session (552) -> exactly one re-login; rejected query (150) -> no retry, session kept
+    from ucscsdk.ucscexception import UcscException
+    n, calls = len([1 for _, m in SENT if m == "aaaLogin"]), []
+
+    def flaky(code):
+        def f(hd):
+            calls.append(1)
+            if len(calls) == 1:
+                raise UcscException(code, "x")
+            return "ok"
+        return f
+    assert c.call(flaky("552")) == "ok" and len(calls) == 2
+    calls.clear()
+    try:
+        c.call(flaky("150"))
+        raise SystemExit("150 retried")
+    except UcscException:
+        assert len(calls) == 1
     print("ALL TESTS PASSED")
 
 

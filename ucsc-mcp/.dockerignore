@@ -4,3 +4,4 @@ __pycache__/
 *.pyc
 test_readonly.py
 openshift.yaml
+test_san.py
