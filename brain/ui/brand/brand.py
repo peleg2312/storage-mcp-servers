@@ -54,12 +54,13 @@ with open(os.path.join(SRC, "src/index.css"), "a", encoding="utf-8") as f:
 
 edit("index.html", ("<title>CloudCLI UI</title>", f"<title>{NAME}</title>"))
 m = json.load(open(os.path.join(SRC, "public/manifest.json")))
-m.update(name=NAME, short_name="PaaS", description=f"{NAME}: the storage & platform brain", theme_color="#0d0f1c",
+m.update(name=NAME, short_name="Peleg", description=f"{NAME}: the storage & platform brain", theme_color="#0d0f1c",
          background_color="#0d0f1c")
 json.dump(m, open(os.path.join(SRC, "public/manifest.json"), "w"), indent=2)
 edit("src/modules/chat/utils/pageTitleNotification.ts", ("'CloudCLI UI'", f"'{NAME}'"))
 
-strings("sidebar.json", app__title=NAME, app__subtitle="Storage & platform brain")
+strings("sidebar.json", app__title=NAME, app__subtitle="Storage & platform brain",
+        search__modeConversations="Chats")   # the long "Conversations" label was clipped in the narrow first tab
 edit("src/modules/i18n/locales/en/common.json", ('"Loading CloudCLI"', f'"Loading {NAME}"'))
 strings("auth.json", login__title=NAME, register__title=NAME, register__description="First start: create your login (one account, kept on this VM)")
 
@@ -95,14 +96,36 @@ edit("src/modules/auth/AuthLoadingScreen.tsx",
      ('className="mb-4 text-2xl font-bold tracking-tight text-foreground"',
       'className="paas-wordmark mb-4 text-2xl font-bold tracking-tight text-foreground"'),
      ("          CloudCLI\n", f"          {NAME}\n"))
-edit("src/modules/sidebar/SidebarFooter.tsx", ("CloudCLI v{currentVersion}", "PaaS · CloudCLI v{currentVersion}"))
+# the version line in plain words, 12 px and readable; the AGPL source link keeps its own row
+edit("src/modules/sidebar/SidebarFooter.tsx",
+     ('        <div className="hidden px-3 py-2 text-center md:block">\n'
+      '          <a\n'
+      '            href={GITHUB_REPO_URL}\n'
+      '            target="_blank"\n'
+      '            rel="noopener noreferrer"\n'
+      '            className="text-[10px] text-muted-foreground/40 transition-colors hover:text-muted-foreground"\n'
+      '          >\n'
+      "            CloudCLI v{currentVersion} \u2013 {t('branding.openSource')}\n"
+      '          </a>\n'
+      '        </div>',
+      '        <div className="hidden px-3 py-2 text-center md:block">\n'
+      f'          <span className="block text-xs text-muted-foreground">{NAME} · v{{currentVersion}}</span>\n'
+      '          <a\n'
+      '            href={GITHUB_REPO_URL}\n'
+      '            target="_blank"\n'
+      '            rel="noopener noreferrer"\n'
+      '            className="text-xs text-muted-foreground underline-offset-2 transition-colors hover:text-foreground hover:underline"\n'
+      '          >\n'
+      '            Source (open source)\n'
+      '          </a>\n'
+      '        </div>'))
 edit("src/shared/utils.ts", ("const DEFAULT_PAGE_TITLE = 'CloudCLI UI';", f"const DEFAULT_PAGE_TITLE = '{NAME}';"))
 # offline VM: no GitHub stars badge (it calls api.github.com), no Discord / issue links; the repo link stays (AGPL)
 edit("src/modules/sidebar/GitHubStarBadge.tsx", ("  if (IS_PLATFORM || isDismissed) return null;", "  return null;"))
 # sign in with the VM's own account (PAAS_LOGIN_USERS, default root), checked by the system; no sign-up page
 edit("server/modules/auth/auth.service.ts",
      ("import { AppError } from '@/shared/utils.js';",
-      "import { AppError } from '@/shared/utils.js';\n\nimport { checkSystemPassword, isThrottled, loginUsers, recordFailure } from './system-auth.js';"),
+      "import { AppError } from '@/shared/utils.js';\n\nimport { checkSystemPassword, isThrottled, loginUsers, recordFailure, throttleMinutes } from './system-auth.js';"),
      ("        needsSetup: !dependencies.users.hasUsers(),", "        needsSetup: false,"),
      ("      dependencies.transaction.begin();\n",
       "      throw new AppError('Sign-up is disabled: sign in with this VM\\'s account', {\n"
@@ -115,10 +138,15 @@ edit("server/modules/auth/auth.service.ts",
       "      if (!user || !validPassword) {",
       "      const lockKey = `${username}|${String(clientAddress ?? '')}`;   // per person: one typo-prone colleague cannot lock the team out\n"
       "      if (isThrottled(lockKey)) {\n"
-      "        throw new AppError('Too many failed sign-ins: try again in 10 minutes', {\n"
+      "        const wait = throttleMinutes(lockKey);\n"
+      "        throw new AppError(`Too many wrong passwords. Try again in ${wait} minute${wait === 1 ? '' : 's'}.`, {\n"
       "          code: 'AUTH_THROTTLED', statusCode: 429 });\n"
       "      }\n"
-      "      const validPassword = loginUsers().includes(username) && await checkSystemPassword(username, password);\n"
+      "      const check = loginUsers().includes(username) ? await checkSystemPassword(username, password) : 'bad';\n"
+      "      if (check === 'timeout') {   // a slow VM is not a wrong password: no strike, and a message that says so\n"
+      "        throw new AppError('The VM did not answer in time. Try again in a moment.', { code: 'AUTH_BUSY', statusCode: 503 });\n"
+      "      }\n"
+      "      const validPassword = check === 'ok';\n"
       "      if (!validPassword) recordFailure(lockKey);\n"
       "      // the VM account gets a row on first sign-in (the stored hash is random: the password always comes from the VM)\n"
       "      const user = validPassword\n"
@@ -134,7 +162,7 @@ edit("server/modules/auth/auth.routes.ts",
       "      res.json(await service.login(body.username, body.password, req.ip));"))
 strings("auth.json", login__description="Sign in with this VM's account",
         login__footerText="Runs on this VM · read-only toward infrastructure",
-        login__placeholders__username="root", login__placeholders__password="The VM's root password")
+        login__placeholders__username="Your VM username", login__placeholders__password="Your VM password")
 
 # HTTPS when PAAS_TLS_CERT / PAAS_TLS_KEY are set (install-ui.sh makes a certificate): the password is not sent in clear
 edit("server/index.ts",
@@ -151,7 +179,25 @@ edit("src/modules/chat/transcript/ProviderSelectionEmptyState.tsx",
       '<img src="/logo.svg" alt="" className="mx-auto mb-5 h-12 w-12 rounded-xl shadow-lg shadow-primary/30" />\n'
       '            <h2 className="font-serif text-3xl tracking-tight text-foreground sm:text-4xl">\n'
       '              {(() => { const h = new Date().getHours(); return h < 5 ? "Working late" : h < 12 ? "Good morning" : h < 18 ? "Good afternoon" : "Good evening"; })()}\n'
-      '            </h2>'))
+      '            </h2>'),
+     # first run: what to try (a click fills the box, it does not send) and what this tool will and will not do
+     ('            <p className="mt-1 text-[13px] text-muted-foreground">\n'
+      '              {t("providerSelection.description")}\n'
+      '            </p>\n'
+      '          </div>\n',
+      '            <p className="mt-1 text-[13px] text-muted-foreground">\n'
+      '              {t("providerSelection.description")}\n'
+      '            </p>\n'
+      '          </div>\n'
+      '          <div className="mx-auto mb-4 flex max-w-md flex-wrap justify-center gap-2">\n'
+      '            {["Which volumes are over 90% full?", "Export the capacity report to Excel", "List the storage systems you can reach"].map((example) => (\n'
+      '              <button key={example} type="button" className="min-h-[44px] rounded-lg border border-border bg-card px-3 py-2 text-left text-sm text-foreground transition-colors hover:bg-accent"\n'
+      '                onClick={() => { setInput(example); textareaRef.current?.focus(); }}>\n'
+      '                {example}\n'
+      '              </button>\n'
+      '            ))}\n'
+      '          </div>\n'
+      '          <p className="mb-6 text-center text-xs text-muted-foreground">Read-only toward your storage. Changes always ask first.</p>\n'))
 strings("chat.json", providerSelection__description="What are we working on today?")
 # upstream: any 401 before signing in (plugin / task polling) showed "Your session expired" on the sign-in page
 edit("src/shared/api.ts", ("    if (response.status === 401 && response.headers.get('X-Auth-Error')) {",
@@ -174,9 +220,9 @@ edit("src/modules/chat/transcript/Markdown.tsx",
      ("              {linkChildren}\n            </a>\n          );\n        }\n",
       "              {linkChildren}\n            </a>\n"
       "            {PAAS_DOWNLOADABLE.test(stripLineSuffix(fileRef.trim())) && (\n"
-      "              <button type=\"button\" className=\"paas-dl\" title=\"Download to this computer\"\n"
-      "                onClick={(event) => { event.preventDefault(); void downloadChatFile(fileRef, paasProjectId); }}>\n"
-      "                ↓ Download\n"
+      "              <button type=\"button\" className=\"paas-dl\" title=\"Download to this computer\" aria-label={`Download ${fileRef}`}\n"
+      "                onClick={(event) => { event.preventDefault(); void downloadChatFile(fileRef, paasProjectId, event.currentTarget); }}>\n"
+      "                <span aria-hidden=\"true\">↓</span> Download\n"
       "              </button>\n"
       "            )}\n"
       "            </>\n          );\n        }\n"),
@@ -216,9 +262,22 @@ edit("src/modules/chat/composer/ChatComposer.tsx",
       "                  {slashCommandsCount}\n"
       "                </span>\n"
       "              )}\n",
-      "              <span className=\"text-[15px] font-semibold leading-none\" data-count={slashCommandsCount}>/</span>\n"))
+      "              <span aria-hidden=\"true\" className=\"text-[15px] font-semibold leading-none\">/</span>\n"),
+     ("              tooltip={{ content: t('input.showAllCommands') }}\n",
+      "              tooltip={{ content: t('input.showAllCommands') }}\n"
+      "              aria-label=\"Commands and skills\"\n"
+      "              title={`Commands and skills (${slashCommandsCount})`}\n"))
 edit("src/modules/chat/transcript/MessageComponent.tsx",
-     ('rounded-full bg-blue-600 text-sm text-white sm:flex">', 'rounded-full paas-avatar text-sm font-semibold sm:flex">'))
+     ('rounded-full bg-blue-600 text-sm text-white sm:flex">\n              U\n',
+      'rounded-full paas-avatar text-sm font-semibold sm:flex" title={paasUser || undefined}>\n'
+      "              {(paasUser || 'U').charAt(0).toUpperCase()}\n"),
+     ("import { GitBranchIcon, PencilIcon } from 'lucide-react';\n",
+      "import { GitBranchIcon, PencilIcon } from 'lucide-react';\nimport { useAuth } from '@/modules/auth';\n"),
+     ("  const formattedTime = useMemo(() => new Date(message.timestamp).toLocaleTimeString(), [message.timestamp]);",
+      "  const formattedTime = useMemo(() => new Date(message.timestamp).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }), [message.timestamp]);\n"
+      "  // who asked, so a shared screen shows it (no sign-in provider around the component in tests: then just 'U')\n"
+      "  let paasUser = '';\n"
+      "  try { paasUser = useAuth().user?.username || ''; } catch { /* outside AuthProvider */ }"))
 # only Claude on this VM: no Cursor / Codex / OpenCode tabs and pickers
 edit("src/modules/settings/tabs/agents-settings/AgentsSettingsTab.tsx",
      ("    return ['claude', 'cursor', 'codex', 'opencode'];", "    return ['claude'];"))
@@ -248,9 +307,9 @@ edit("src/modules/project-workspace/WorkspaceStateView.tsx",
       '            <h2 className="mb-2 font-serif text-3xl tracking-tight text-foreground">\n'
       '              {(() => { const h = new Date().getHours(); return h < 5 ? "Working late" : h < 12 ? "Good morning" : h < 18 ? "Good afternoon" : "Good evening"; })()}\n'
       '            </h2>'))
-strings("common.json", mainContent__selectProjectDescription="Start a plain chat, or pick a project on the left to work in its folder (code, git, files).",
-        mainContent__createProjectDesktop="the folder button at the top of the sidebar adds a project",
-        mainContent__createProjectMobile="tap the menu button above to see your projects")
+strings("common.json", mainContent__selectProjectDescription="Start a chat, or open a project from the menu to work in its folder (code, git, files).",
+        mainContent__createProjectDesktop="to add a project, use the folder button at the top of the sidebar",
+        mainContent__createProjectMobile="to add a project, open the menu, then the folder button")
 # no first-run git setup screen: it rewrote the VM's global git identity for everyone on the shared login
 # (set it once in a terminal: git config --global user.name / user.email, with the GitLab email)
 edit("server/modules/user/user.module.ts",
@@ -275,21 +334,22 @@ edit("src/modules/project-workspace/WorkspaceStateView.tsx",
       "  const isLoading = mode === 'loading';\n"
       "  const { handleNewSession } = useProjectCommandState();\n"
       "  const { sidebarSharedProps } = useProjectSidebarState();\n"
-      "  const chats = (sidebarSharedProps?.projects || []).find((p) => /[\\/]chats$/.test(p.fullPath));\n"),
+      "  const chats = (sidebarSharedProps?.projects || []).find((p) => /[\\/]chats$/.test(p.fullPath));\n"
+      "  const redirecting = !!chats && window.location.pathname === '/';   // opens a new chat by itself: no button, no flash\n"),
      ("            <p className=\"mb-5 text-sm leading-relaxed text-muted-foreground\">{t('mainContent.selectProjectDescription')}</p>\n",
-      "            {chats && (\n"
+      "            {chats && !redirecting && (\n"
       "              <button type=\"button\" onClick={() => handleNewSession(chats)} className=\"paas-newchat mb-4\">New chat</button>\n"
       "            )}\n"
-      "            <p className=\"mb-5 text-sm leading-relaxed text-muted-foreground\">{t('mainContent.selectProjectDescription')}</p>\n"))
+      "            <p aria-live=\"polite\" className=\"mb-5 text-sm leading-relaxed text-muted-foreground\">{redirecting ? 'Opening a new chat…' : t('mainContent.selectProjectDescription')}</p>\n"))
 # the app opens straight into a new chat (like Claude desktop), so the header with Brain / Usage is always there;
 # the sidebar "+" starts a new chat, the folder button next to it creates a project
 edit("src/modules/project-workspace/WorkspaceStateView.tsx",
      ("import { useTranslation } from 'react-i18next';", "import { useEffect } from 'react';\nimport { useTranslation } from 'react-i18next';"),
-     ("  const chats = (sidebarSharedProps?.projects || []).find((p) => /[\\/]chats$/.test(p.fullPath));\n",
-      "  const chats = (sidebarSharedProps?.projects || []).find((p) => /[\\/]chats$/.test(p.fullPath));\n"
+     ("  const redirecting = !!chats && window.location.pathname === '/';   // opens a new chat by itself: no button, no flash\n",
+      "  const redirecting = !!chats && window.location.pathname === '/';   // opens a new chat by itself: no button, no flash\n"
       "  useEffect(() => {\n"
-      "    if (!isLoading && chats && window.location.pathname === '/') handleNewSession(chats);\n"
-      "  }, [isLoading, chats, handleNewSession]);\n"))
+      "    if (!isLoading && redirecting) handleNewSession(chats);\n"
+      "  }, [isLoading, redirecting, chats, handleNewSession]);\n"))
 for rel in ("src/modules/sidebar/SidebarContent.tsx", "src/modules/sidebar/SidebarHeader.tsx"):
     edit(rel, ("  onCreateProject: () => void;\n", "  onCreateProject: () => void;\n  onNewChat: () => void;\n"),
          ("  onCreateProject,\n", "  onCreateProject,\n  onNewChat,\n"))
@@ -303,8 +363,12 @@ edit("src/modules/sidebar/Sidebar.tsx",
       "              if (chats) onNewSession(chats); else { pendingChat.current = true; void refreshProjects(); }\n"
       "            }}\n"))
 edit("src/modules/sidebar/SidebarHeader.tsx",
+     ("              onClick={onRefresh}\n              disabled={isRefreshing}\n              title={t('tooltips.refresh')}\n",
+      "              onClick={onRefresh}\n              disabled={isRefreshing}\n              title={t('tooltips.refresh')}\n              aria-label={t('tooltips.refresh')}\n"),
+     ("              onClick={onCollapseSidebar}\n              title={t('tooltips.hideSidebar')}\n",
+      "              onClick={onCollapseSidebar}\n              title={t('tooltips.hideSidebar')}\n              aria-label={t('tooltips.hideSidebar')}\n"),
      ("              onClick={onCreateProject}\n              title={t('tooltips.createProject')}\n            >\n              <Plus className=\"h-3.5 w-3.5\" />\n",
-      "              onClick={onCreateProject}\n              title={t('tooltips.createProject')}\n            >\n              <FolderPlus className=\"h-3.5 w-3.5\" />\n"
+      "              onClick={onCreateProject}\n              title=\"Add project\"\n              aria-label=\"Add project\"\n            >\n              <FolderPlus className=\"h-3.5 w-3.5\" />\n"
       "            </Button>\n"
       "            <Button\n"
       "              variant=\"ghost\"\n"
@@ -312,10 +376,17 @@ edit("src/modules/sidebar/SidebarHeader.tsx",
       "              className=\"h-7 w-7 rounded-lg p-0 text-muted-foreground hover:bg-accent/80 hover:text-foreground\"\n"
       "              onClick={onNewChat}\n"
       "              title=\"New chat\"\n"
+      "              aria-label=\"New chat\"\n"
       "            >\n"
       "              <Plus className=\"h-3.5 w-3.5\" />\n"),
+     # phones keep the way to add a project (folder button) and get New chat as a second button next to it
      ("              onClick={onCreateProject}\n            >\n              <FolderPlus className=\"h-4 w-4\" />\n            </button>\n",
-      "              onClick={onNewChat}\n              title=\"New chat\"\n            >\n              <Plus className=\"h-4 w-4\" />\n            </button>\n"))
+      "              onClick={onCreateProject}\n              title=\"Add project\"\n              aria-label=\"Add project\"\n            >\n              <FolderPlus className=\"h-4 w-4\" />\n            </button>\n"
+      "            <button\n"
+      "              className=\"flex h-8 w-8 items-center justify-center rounded-lg bg-primary/90 text-primary-foreground transition-all active:scale-95\"\n"
+      "              onClick={onNewChat}\n              title=\"New chat\"\n              aria-label=\"New chat\"\n            >\n              <Plus className=\"h-4 w-4\" />\n            </button>\n"),
+     ("              onClick={onRefresh}\n              disabled={isRefreshing}\n            >\n              <RefreshCw className={`h-4 w-4",
+      "              onClick={onRefresh}\n              disabled={isRefreshing}\n              title=\"Refresh\"\n              aria-label=\"Refresh\"\n            >\n              <RefreshCw className={`h-4 w-4"))
 # simpler, offline-only UI: no settings for things the air-gapped VM cannot use (OpenAI voice, TaskMaster, browser
 # automation, plugin installs from GitHub, web push, API tokens), no GitHub star badge / update check, a quieter
 # new-chat screen and composer (model and mode stay in the composer)
@@ -401,7 +472,16 @@ edit("src/modules/sidebar/hooks/useSidebarController.ts",
 edit("src/modules/sidebar/SidebarProjectList.tsx",
      ("          : filteredProjects.map((project) => {", "          : filteredProjects.filter((p) => !/[\\/]chats$/.test(p.fullPath)).map((project) => {"))
 edit("src/modules/sidebar/SidebarProjectItem.tsx",
-     ("                  : 'opacity-40 hover:opacity-100 hover:bg-accent',", "                  : 'opacity-0 group-hover:opacity-50 hover:!opacity-100 hover:bg-accent',"),
+     ("                  : 'opacity-40 hover:opacity-100 hover:bg-accent',",
+      "                  : 'opacity-0 group-hover:opacity-60 focus-visible:opacity-100 hover:!opacity-100 [@media(hover:none)]:opacity-40 hover:bg-accent',"),
+     # a real control: reachable by keyboard, named, and its state is announced
+     ("              onClick={(event) => {\n                event.stopPropagation();\n                toggleStarProject();\n              }}\n"
+      "              title={isStarred ? t('tooltips.removeFromFavorites') : t('tooltips.addToFavorites')}\n            >",
+      "              role=\"button\"\n              tabIndex={0}\n              aria-pressed={isStarred}\n"
+      "              aria-label={isStarred ? 'Unstar project' : 'Star project'}\n"
+      "              onKeyDown={(event) => {\n                if (event.key === 'Enter' || event.key === ' ') {\n                  event.preventDefault();\n                  event.stopPropagation();\n                  toggleStarProject();\n                }\n              }}\n"
+      "              onClick={(event) => {\n                event.stopPropagation();\n                toggleStarProject();\n              }}\n"
+      "              title={isStarred ? t('tooltips.removeFromFavorites') : t('tooltips.addToFavorites')}\n            >"),
      ("            isStarred &&\n              !isSelected &&\n              'bg-yellow-50/50 dark:bg-yellow-900/10 hover:bg-yellow-100/50 dark:hover:bg-yellow-900/20',\n", ""),
      ("                  <div className=\"text-xs text-muted-foreground\">\n                    {sessionCountDisplay}\n                    {project.fullPath !== project.displayName && (\n"
       "                      <span className=\"ml-1 opacity-60\" title={project.fullPath}>\n                        {' - '}\n"
@@ -470,5 +550,28 @@ edit("src/modules/sidebar/SidebarFooter.tsx",
 # root's own home is a normal place for its chats and projects (upstream refused every path under /root, so root's
 # Chats space was never registered: no tab bar, and "+" had nowhere to go); other users cannot write there anyway
 edit("server/shared/utils.ts", ("  '/boot',\n  '/root',\n  '/lib',", "  '/boot',\n  '/lib',"))
+# the model chip in the prompt bar reads "Sonnet", not a long id cut to "claude-o..." on phones; the full name is in its tooltip
+edit("src/modules/chat/composer/ComposerModelMenu.tsx",
+     ("  const triggerLabel = hasModelSection ? modelLabel : effortLabel;",
+      "  const shortModel = /(opus|sonnet|haiku)/i.exec(modelLabel)?.[1];\n"
+      "  const triggerLabel = hasModelSection ? (shortModel ? shortModel[0].toUpperCase() + shortModel.slice(1).toLowerCase() : modelLabel) : effortLabel;"),
+     ("        aria-label={ariaLabel}\n        title={ariaLabel}\n      >",
+      "        aria-label={`${ariaLabel}: ${modelLabel}`}\n        title={`${ariaLabel}: ${modelLabel}`}\n      >"))
+# a chat that has no AI title (offline VM) is named after its first message (60 characters), not "Untitled Claude Session"
+edit("server/modules/providers/list/claude/claude-session-synchronizer.provider.ts",
+     ("      let foundLastPrompt: string | undefined;\n",
+      "      let foundLastPrompt: string | undefined;\n      let foundFirstMessage: string | undefined;\n"),
+     ("        } else if (eventType === 'last-prompt') {",
+      "        } else if (eventType === 'user' && !foundFirstMessage && !data.isMeta) {\n"
+      "          const content = (data.message as { content?: unknown } | undefined)?.content;\n"
+      "          const text = (typeof content === 'string' ? content\n"
+      "            : Array.isArray(content) ? content.map((part) => (part as { text?: unknown })?.text).find((t) => typeof t === 'string') : '') as string | undefined;\n"
+      "          const clean = (text ?? '').replace(/\\s+/g, ' ').trim();\n"
+      "          if (clean && !clean.startsWith('<')) {   // skip command echoes and system wrappers\n"
+      "            foundFirstMessage = clean.length > 60 ? `${clean.slice(0, 59).trimEnd()}\u2026` : clean;\n"
+      "          }\n"
+      "        } else if (eventType === 'last-prompt') {"),
+     ("      return foundCustomTitle || foundAiTitle || foundLastPrompt;",
+      "      return foundCustomTitle || foundAiTitle || foundLastPrompt || foundFirstMessage;"))
 exec(open(os.path.join(HERE, "chat.py"), encoding="utf-8").read())    # chat fixes, same edit()
 print(f"branded {SRC} as {NAME}")

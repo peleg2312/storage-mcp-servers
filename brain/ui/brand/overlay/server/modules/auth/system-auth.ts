@@ -21,13 +21,22 @@ export function isThrottled(username: string): boolean {
   return recent.length >= MAX_FAILURES;
 }
 
+/** Whole minutes until the oldest of the recent failures leaves the window (at least 1): the wait shown on a lockout. */
+export function throttleMinutes(username: string): number {
+  const first = (failures.get(username) || [])[0] ?? Date.now();
+  return Math.max(1, Math.ceil((first + WINDOW_MS - Date.now()) / 60000));
+}
+
 export function recordFailure(username: string): void {
   failures.set(username, [...(failures.get(username) || []), Date.now()]);
 }
 
-export function checkSystemPassword(username: string, password: string): Promise<boolean> {
+/** 'timeout': the VM did not answer in time (slow or stuck su): not a wrong password, so not counted as one. */
+export type PasswordCheck = 'ok' | 'bad' | 'timeout';
+
+export function checkSystemPassword(username: string, password: string): Promise<PasswordCheck> {
   if (!/^[a-z_][a-z0-9_.-]*$/.test(username) || /[\r\n]/.test(password) || password.length > 512) {
-    return Promise.resolve(false);
+    return Promise.resolve('bad');
   }
   return new Promise((resolve) => {
     // as root, su never asks for a password: drop to "nobody" first so the system really checks it
@@ -39,14 +48,14 @@ export function checkSystemPassword(username: string, password: string): Promise
     });
     let sent = false;
     let done = false;
-    const finish = (ok: boolean) => {
+    const finish = (ok: PasswordCheck) => {
       if (done) return;
       done = true;
       clearTimeout(timer);
       try { proc.kill(); } catch { /* already gone */ }
       resolve(ok);
     };
-    const timer = setTimeout(() => finish(false), 15000);
+    const timer = setTimeout(() => finish('timeout'), 15000);
     proc.onData((data) => {
       if (!sent && /password/i.test(data)) {
         sent = true;
@@ -54,6 +63,6 @@ export function checkSystemPassword(username: string, password: string): Promise
       }
     });
     // no password prompt at all (e.g. su without a tty check) never counts as a sign-in
-    proc.onExit(({ exitCode }) => finish(sent && exitCode === 0));
+    proc.onExit(({ exitCode }) => finish(sent && exitCode === 0 ? 'ok' : 'bad'));
   });
 }
