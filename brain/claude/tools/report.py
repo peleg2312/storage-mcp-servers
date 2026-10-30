@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Charts and Excel from tables: one run turns CSV / JSON files into
-  - a text chart per file on stdout (paste it in the answer: the terminal shows it as is) + min / avg / max / last,
+  - a sparkline per series on stdout (paste it in the answer) + min / avg / max / last,
   - report.html: every chart (hover for values, light / dark) with its data table under it, one self-contained file,
   - report.xlsx: one sheet per file (header, filters, frozen top row) with a native Excel chart, plus a Summary sheet.
 
@@ -12,11 +12,12 @@ Input: wide tables, first column = x (time, number or name), every other column 
     python3 report.py aggr1_throughput.csv node_latency.csv --title "ONTAP last 10 days" --unit "MB/s"
     python3 report.py unused_luns.csv --kind table --title "Unused LUNs"        (Excel + HTML table, no chart)
     python3 report.py --send ~/storage-reports/x/custom.xlsx    (a file made another way: deliver it to the PC too)
-Every run queues its folder for get-reports.ps1 (the PC downloads and opens it by itself) and prints the
-PowerShell line that copies and opens it by hand.
+Every run queues its folder for get-reports.ps1 (the PC downloads and opens it by itself); in an SSH session
+it also prints the PowerShell line that copies and opens it by hand.
 Options: --kind auto|line|area|bar|table (auto: line for time / numbers, bar for names), --unit U (one for all,
 or one per file: --unit "MB/s,ms,%"), --out DIR
-(default ~/storage-reports/<date>-<title>), --width N (text chart columns, default 100).
+(default ~/storage-reports/<date>-<title>), --text spark|full (stdout: one sparkline per series, or the
+full plotext chart; --width N columns, default 48 / 72).
 Standard library + the pure-Python wheels in vendor/ (openpyxl, plotext): nothing to pip install.
 """
 import argparse, csv, datetime as dt, glob, html, json, math, os, re, sys
@@ -48,6 +49,7 @@ def to_time(v):
         x = float(v)
         return dt.datetime.fromtimestamp(x / 1000 if x > 1e11 else x)
     s = str(v).strip().replace("Z", "+00:00")
+    s = re.sub(r"\.(\d+)", lambda m: "." + (m.group(1) + "000000")[:6], s, count=1)   # Python 3.9: exactly 6 digits
     t = dt.datetime.fromisoformat(s if "T" in s or len(s) <= 10 else s.replace(" ", "T", 1))
     return t.astimezone().replace(tzinfo=None) if t.tzinfo else t
 
@@ -142,15 +144,25 @@ def stats(t, unit):
 
 
 # ---------------------------------------------------------------- text chart (stdout)
+def spark(v, n=48):
+    """One line of blocks (bucket max, n wide); gaps are blanks."""
+    b = [[y for y in v[i * len(v) // n:(i + 1) * len(v) // n] if y is not None] for i in range(n)] if len(v) > n \
+        else [[y] if y is not None else [] for y in v]
+    b = [max(x) if x else None for x in b]
+    vals = [x for x in b if x is not None]
+    lo, hi = min(vals, default=0), max(vals, default=0)
+    return "".join(" " if x is None else "▄" if hi == lo else "▁▂▃▄▅▆▇█"[int((x - lo) / (hi - lo) * 7 + .5)] for x in b)
+
+
 def text_chart(t, kind, unit, width):
-    """One small chart per series: the answer shows no colour, so series are told apart by their titles."""
+    """--text full: one plotext chart per series; the answer shows no colour, so series are told apart by titles."""
     import plotext as plt
     out, names = [], list(t["series"])
     span = (t["x"][-1] - t["x"][0]).total_seconds() / 86400 if t["xtype"] == "time" and len(t["x"]) > 1 else 0
     for name in names:
         v = t["series"][name]
         plt.clf()
-        plt.plotsize(width, min(len(v), 20) + 4 if kind == "bar" else 16 if len(names) == 1 else 11)
+        plt.plotsize(width, min(len(v), 20) + 4 if kind == "bar" else 10)
         plt.theme("clear")
         label = (name if len(names) > 1 else t["title"]) + (f" ({unit})" if unit else "")
         if kind == "bar":
@@ -392,16 +404,24 @@ def send(folder, open_name):
     SSH_CONNECTION ("client port server port") holds the address and port he connected to."""
     import getpass, socket
     folder = os.path.abspath(os.path.expanduser(folder))
-    os.makedirs(os.path.dirname(OUTBOX), exist_ok=True)
-    with open(OUTBOX, "a", encoding="utf-8") as f:
-        f.write(f"{folder}\t{open_name}\n")
+    root = os.path.dirname(OUTBOX)
+    if folder == root:
+        sys.exit(f"save the file in its own subfolder of {root}, not in {root} itself (the PC copies the whole folder)")
+    if not re.fullmatch(r"[\w.-]+\.(html|xlsx|csv|pdf|png|svg|md|txt)", open_name, re.I):
+        open_name = ""                                       # the PC only auto-opens these types
+    os.makedirs(root, exist_ok=True)
+    line = f"{folder}\t{open_name}"
+    old = open(OUTBOX, encoding="utf-8").read().splitlines() if os.path.exists(OUTBOX) else []
+    if line not in old:
+        with open(OUTBOX, "a", encoding="utf-8") as f:
+            f.write(line + "\n")
     parts = os.environ.get("SSH_CONNECTION", "").split()
     host = parts[2] if len(parts) == 4 else socket.getfqdn()
     port = f"-P {parts[3]} " if len(parts) == 4 and parts[3] != "22" else ""
     host = f"[{host}]" if ":" in host else host
     local = f"$env:USERPROFILE\\Downloads\\{os.path.basename(folder)}"
-    return (f'scp {port}-r {getpass.getuser()}@{host}:"{folder}" "$env:USERPROFILE\\Downloads\\"; '
-            f'ii "{local}\\{open_name}"')
+    return (f'scp {port}-r {getpass.getuser()}@{host}:"{folder}" "$env:USERPROFILE\\Downloads\\"' +
+            (f'; ii "{local}\\{open_name}"' if open_name else ""))
 
 
 # ---------------------------------------------------------------- main
@@ -409,14 +429,17 @@ def main():
     ap = argparse.ArgumentParser(description=__doc__.split("\n")[0])
     if sys.argv[1:2] == ["--send"] and len(sys.argv) == 3:
         f = os.path.abspath(os.path.expanduser(sys.argv[2]))
-        print(f"to the PC (PowerShell: copies into Downloads and opens it): {send(os.path.dirname(f), os.path.basename(f))}")
+        line = send(os.path.dirname(f), os.path.basename(f))
+        print(f"to the PC (PowerShell: copies into Downloads and opens it): {line}" if os.environ.get("SSH_CONNECTION")
+              else f"queued {f} for the PC")
         return
     ap.add_argument("files", nargs="+")
     ap.add_argument("--title", default="")
     ap.add_argument("--unit", default="")
     ap.add_argument("--kind", default="auto", choices=["auto", "line", "area", "bar", "table"])
     ap.add_argument("--out", default="")
-    ap.add_argument("--width", type=int, default=100)
+    ap.add_argument("--text", default="spark", choices=["spark", "full"])
+    ap.add_argument("--width", type=int, default=0)
     a = ap.parse_args()
     tables = [load(f) for f in a.files]
     title = a.title or tables[0]["title"]
@@ -435,21 +458,30 @@ def main():
         dropped = limit_series(t) if kind != "table" else []
         st = stats(t, unit) if kind != "table" else []
         stats_by.append(st)
-        print(f"## {t['title']}  ({len(t['rows'])} rows)")
+        rng = f"  {xlabel(t['x'][0], t['xtype'], 0)} -> {xlabel(t['x'][-1], t['xtype'], 0)}" if kind == "line" and t["x"] else ""
+        print(f"## {t['title']}  ({len(t['rows'])} rows){rng}")
         if dropped:
             print(f"note: {len(dropped)} more series not charted (8 at most; split into several files): {', '.join(dropped[:10])}")
         if kind != "table":
-            print(text_chart(t, kind, unit, a.width))
+            if a.text == "full":
+                print(text_chart(t, kind, unit, a.width or 72))
             for s in st:
+                if a.text == "spark":
+                    v = t["series"][s["series"]]
+                    print(f"  {s['series']}: " + (" · ".join(f"{x} {fmt(y)}" for x, y in list(zip(t["x"], v))[:20] if y is not None)
+                                                  if kind == "bar" else spark(v, a.width or 48)))
                 at = xlabel(s["max_at"], t["xtype"], 1)
                 print(f"  {s['series']}: min {fmt(s['min'], unit)} · avg {fmt(s['avg'], unit)} · "
                       f"max {fmt(s['max'], unit)} at {at} · last {fmt(s['last'], unit)}")
         print()
     write_html(os.path.join(out, "report.html"), title, tables, kinds, stats_by)
     write_xlsx(os.path.join(out, "report.xlsx"), tables, kinds, stats_by)
-    print(f"files: {out}/report.html (charts, hover for values) · {out}/report.xlsx (data + Excel charts)")
     first = "report.html" if any(k != "table" for k in kinds) else "report.xlsx"
-    print(f"to the PC (PowerShell: copies into Downloads and opens it): {send(out, first)}")
+    line = send(out, first)                                  # always queued for get-reports.ps1
+    if os.environ.get("SSH_CONNECTION"):
+        print(f"to the PC (PowerShell: copies into Downloads and opens it): {line}")
+    else:
+        print(f"files: {out}/report.html (charts, hover for values) · {out}/report.xlsx (data + Excel charts)")
 
 
 if __name__ == "__main__":

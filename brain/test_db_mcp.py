@@ -7,7 +7,7 @@ import json, os, subprocess, sys, tempfile
 
 PG, MG = os.environ.get("DB_MCP_TEST_PG"), os.environ.get("DB_MCP_TEST_MONGO")
 if not (PG and MG):
-    sys.exit(print("db-mcp: skipped (set DB_MCP_TEST_PG and DB_MCP_TEST_MONGO)"))
+    sys.exit(print("db-mcp: SKIPPED, NOT RUN: the read-only guard was not tested (set DB_MCP_TEST_PG and DB_MCP_TEST_MONGO)", file=sys.stderr))
 import psycopg, pymongo  # noqa: E402
 
 with psycopg.connect(PG, autocommit=True) as c:                      # seed (the test, not the server, writes)
@@ -57,7 +57,14 @@ calls = [("db_list", {}), ("pg_schema", {"connection": "app-pg"}), ("pg_schema",
          ("mongo_write", {"connection": "dev-shop", "database": "shop", "collection": "orders", "op": "delete_one", "filter": {"sku": "Z9"}}),
          ("mongo_write", {"connection": "dev-shop", "database": "shop", "collection": "orders", "op": "create_index",
                           "keys": {"qty": 1}}),
-         ("db_list", {})]
+         ("db_list", {}),
+         # several statements in one string must never run (SET TRANSACTION READ WRITE would lift READ ONLY)
+         ("pg_query", {"connection": "app-pg", "sql": "SET TRANSACTION READ WRITE; DELETE FROM users; COMMIT"}),
+         ("pg_query", {"connection": "app-pg", "sql": "SELECT 1; SET TRANSACTION READ WRITE; DELETE FROM users; COMMIT"}),
+         ("pg_explain", {"connection": "app-pg", "sql": "SELECT 1; SET TRANSACTION READ WRITE; DELETE FROM users; COMMIT"}),
+         ("pg_query", {"connection": "app-pg", "sql": "SELECT id FROM users LIMIT 2;"}),
+         ("pg_schema", {"connection": "app-pg", "table": "public.users"}),
+         ("pg_schema", {"connection": "app-pg", "table": "nothere"})]
 msgs = [{"jsonrpc": "2.0", "id": 0, "method": "initialize", "params": {"protocolVersion": "2025-06-18"}},
         {"jsonrpc": "2.0", "method": "notifications/initialized"}, {"jsonrpc": "2.0", "id": 1, "method": "tools/list"}]
 msgs += [{"jsonrpc": "2.0", "id": i + 10, "method": "tools/call", "params": {"name": n, "arguments": a}} for i, (n, a) in enumerate(calls)]
@@ -65,7 +72,7 @@ out = subprocess.run([sys.executable, srv], input="\n".join(json.dumps(m) for m 
                      env={**os.environ, "DB_MCP_CONFIG": conf, "T_MONGO": MG}, timeout=120).stdout
 R = {r["id"]: r["result"] for r in map(json.loads, out.splitlines())}
 assert len(R[1]["tools"]) == 10
-assert {t["name"] for t in R[1]["tools"] if not t["annotations"]["readOnlyHint"]} == {"pg_execute", "mongo_write"}
+assert {t["name"] for t in R[1]["tools"] if not t["annotations"].get("readOnlyHint")} == {"pg_execute", "mongo_write"}
 res = lambda i: (R[i + 10]["isError"], R[i + 10]["content"][0]["text"])                   # noqa: E731
 J = lambda i: json.loads(res(i)[1])                                                          # noqa: E731
 assert ":pw@" not in res(0)[1] and "postgres@localhost" in res(0)[1], res(0)                # no password shown
@@ -75,7 +82,7 @@ q = J(3); assert q["rows"][0] == [1, "u1@x.io"] and len(q["rows"]) == 5 and "tru
 assert "users_email_key" in J(4)["plan"] or "Index" in J(4)["plan"], J(4)
 for i in (5, 6, 7, 8):                                                                       # every write refused
     err, text = res(i)
-    assert err and ("read-only" in text or "read only" in text), (i, text)
+    assert err and ("read-only" in text or "read only" in text or "multiple commands" in text), (i, text)
 assert J(9)["databases"] == ["shop"] and J(10)["collections"][0]["documents_estimate"] == 12
 s = J(11); assert s["fields"]["addr.city"] == {"str": 12} and any(ix["key"] == {"sku": 1} for ix in s["indexes"]), s
 f = J(12)["documents"]; assert [d["qty"] for d in f] == [10, 7] and isinstance(f[0]["_id"], str), f
@@ -89,6 +96,11 @@ assert res(22)[0] and "read-only" in res(22)[1]                                 
 assert len(J(23)["inserted_id"]) == 24 and J(24) == {"matched": 4, "modified": 4, "upserted_id": None}
 assert res(25)[0] and "all=true" in res(25)[1] and J(26)["deleted"] == 1 and J(27)["index"] == "qty_1"
 assert [(c["connection"], c["write"]) for c in J(28)["connections"]] == [("app-pg", False), ("shop", False), ("dev-pg", True), ("dev-shop", True)]
+for i in (29, 30, 31):
+    err, text = res(i)
+    assert err and "multiple commands" in text, (i, text)
+assert not res(32)[0] and len(J(32)["rows"]) == 2                                            # a trailing ; is fine
+assert [c[0] for c in J(33)["columns"]] == ["id", "email", "created"] and res(34)[0] and "no such table" in res(34)[1]
 with psycopg.connect(PG) as c:                                                              # only the writable connection changed it
     assert c.execute("SELECT count(*) FROM users").fetchone()[0] == 31
     assert c.execute("SELECT to_regclass('notes')").fetchone()[0] == "notes"

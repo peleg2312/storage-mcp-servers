@@ -9,10 +9,11 @@ Connections: ~/.claude/brain/databases.json (re-read on every call, so edits nee
 Passwords never in that file: Postgres reads ~/.pgpass (chmod 600), a Mongo URI with a password comes from the
 environment variable named in uri_env. Use database accounts with read rights only.
 
-Reading tools are read-only by construction on every connection: each Postgres statement runs in a READ ONLY
-transaction (statement_timeout 15 s) and is rolled back; Mongo reads are find / aggregate (no $out, $merge) /
+Reading tools are read-only on every connection: each Postgres statement runs in a READ ONLY transaction
+(statement_timeout 15 s), alone (extended protocol: several statements in one string are refused) and rolled
+back; the database account itself should still have read rights only, that is the real guarantee; Mongo reads are find / aggregate (no $out, $merge) /
 count / list / indexes. Writing (pg_execute, mongo_write) works only on connections with "write": true, and the
-brain's hook asks the user to confirm each write call. Results are capped (rows, long values cut).
+brain's hook asks the user to confirm each write call. Results are capped (rows, long values, 20 KB per reply).
 Drivers: psycopg (3) and pymongo, installed with the dev tools (brain/devtools); a missing driver only disables
 its database type.
 """
@@ -26,7 +27,7 @@ import uuid
 
 CONFIG = os.environ.get("DB_MCP_CONFIG") or os.path.expanduser("~/.claude/brain/databases.json")
 TIMEOUT_MS = 15000
-MAX_ROWS, MAX_VALUE = 500, 400
+MAX_ROWS, MAX_VALUE, MAX_REPLY = 500, 400, 20000
 
 
 def connections():
@@ -55,18 +56,21 @@ def writable(name):
         raise PermissionError(f"{name} is read-only: add \"write\": true to it in {CONFIG} to allow changes")
 
 
-def clean(v):
-    """JSON-safe, short: long strings and binary cut, dates / decimals / ids as text."""
+def clean(v, depth=0):
+    """JSON-safe, short: long strings and binary cut, 50 keys / items, 4 levels, dates / decimals / ids as text."""
     if isinstance(v, (bytes, bytearray, memoryview)):
         return f"<{len(bytes(v))} bytes>"
     if isinstance(v, str):
         return v if len(v) <= MAX_VALUE else v[:MAX_VALUE] + f"... ({len(v)} chars)"
     if isinstance(v, (datetime.date, datetime.datetime, datetime.time, decimal.Decimal, uuid.UUID)):
         return str(v)
+    if isinstance(v, (dict, list, tuple)) and depth > 4:
+        return "<object>"
     if isinstance(v, dict):
-        return {str(k): clean(x) for k, x in v.items()}
+        out = {str(k): clean(x, depth + 1) for k, x in list(v.items())[:50]}
+        return {**out, "...": f"{len(v) - 50} more keys"} if len(v) > 50 else out
     if isinstance(v, (list, tuple)):
-        return [clean(x) for x in v[:50]] + ([f"... {len(v) - 50} more"] if len(v) > 50 else [])
+        return [clean(x, depth + 1) for x in v[:50]] + ([f"... {len(v) - 50} more"] if len(v) > 50 else [])
     if v is None or isinstance(v, (bool, int, float)):
         return v
     return str(v)                                             # ObjectId, Decimal128, Timestamp...
@@ -82,18 +86,30 @@ def pg(name, write=False):
     return conn
 
 
-def pg_rows(name, sql, params=None, limit=MAX_ROWS):
+def _read(cur, named, sql, params, limit):
+    with cur:
+        # prepare=True sends a parameter-less statement through the extended protocol, which Postgres refuses
+        # when it holds several commands ('SET TRANSACTION READ WRITE; DELETE ...; COMMIT' would escape READ ONLY)
+        cur.execute(sql, params, **({"prepare": True} if params is None and not named else {}))
+        if not named and cur.description is None:
+            return {"columns": [], "rows": [], "note": "statement returned no rows"}
+        rows = cur.fetchmany(limit + 1)                      # a named cursor knows its columns only after a fetch
+        more = len(rows) > limit
+        return {"columns": [d.name for d in cur.description], "rows": [[clean(v) for v in r] for r in rows[:limit]],
+                **({"truncated": f"first {limit} rows"} if more else {})}
+
+
+def pg_rows(name, sql, params=None, limit=MAX_ROWS, big=False):
+    """big: a SELECT-like query read through a server-side cursor, so a huge result never reaches this process."""
+    import psycopg
     with pg(name) as conn:
         try:
-            with conn.cursor() as cur:
-                cur.execute(sql, params)
-                if cur.description is None:
-                    return {"columns": [], "rows": [], "note": "statement returned no rows"}
-                cols = [d.name for d in cur.description]
-                rows = cur.fetchmany(limit + 1)
-                more = len(rows) > limit
-                return {"columns": cols, "rows": [[clean(v) for v in r] for r in rows[:limit]],
-                        **({"truncated": f"first {limit} rows"} if more else {})}
+            if big:
+                try:
+                    return _read(conn.cursor(name="q"), True, sql, params, limit)
+                except psycopg.errors.SyntaxError:           # not cursor-able: run it plainly (errors again if truly bad)
+                    conn.rollback()
+            return _read(conn.cursor(), False, sql, params, limit)
         finally:
             conn.rollback()
 
@@ -104,15 +120,19 @@ def pg_schema(args):
         return pg_rows(name, """SELECT n.nspname AS schema, c.relname AS table, c.reltuples::bigint AS rows_estimate,
                pg_size_pretty(pg_total_relation_size(c.oid)) AS size
                FROM pg_class c JOIN pg_namespace n ON n.oid = c.relnamespace
-               WHERE c.relkind IN ('r', 'p', 'v', 'm') AND n.nspname NOT IN ('pg_catalog', 'information_schema')
+               WHERE c.relkind IN ('r', 'p', 'v', 'm') AND NOT c.relispartition AND n.nspname NOT IN ('pg_catalog', 'information_schema')
                  AND n.nspname NOT LIKE 'pg_toast%%' AND (%(s)s = '' OR n.nspname = %(s)s)
-               ORDER BY 1, 2""", {"s": schema}, 1000)
+               ORDER BY 1, 2""", {"s": schema}, 300)
+    if "." in table:
+        schema, _, table = table.rpartition(".")
     schema = schema or "public"
     p = {"s": schema, "t": table}
-    return {"table": f"{schema}.{table}",
-            "columns": pg_rows(name, """SELECT column_name, data_type, is_nullable, column_default
+    cols = pg_rows(name, """SELECT column_name, data_type, is_nullable, column_default
                 FROM information_schema.columns WHERE table_schema = %(s)s AND table_name = %(t)s
-                ORDER BY ordinal_position""", p)["rows"],
+                ORDER BY ordinal_position""", p)["rows"]
+    if not cols:
+        raise ValueError(f"no such table {schema}.{table} (or no rights to it); call pg_schema without table to list them")
+    return {"table": f"{schema}.{table}", "columns": cols,
             "constraints": pg_rows(name, """SELECT con.conname, con.contype, pg_get_constraintdef(con.oid)
                 FROM pg_constraint con JOIN pg_class c ON c.oid = con.conrelid JOIN pg_namespace n ON n.oid = c.relnamespace
                 WHERE n.nspname = %(s)s AND c.relname = %(t)s""", p)["rows"],
@@ -121,7 +141,9 @@ def pg_schema(args):
 
 
 def pg_query(args):
-    return pg_rows(args["connection"], args["sql"], None, max(1, min(int(args.get("limit", 100)), MAX_ROWS)))
+    sql = args["sql"]
+    big = sql.lstrip().lower().startswith(("select", "with", "values", "("))
+    return pg_rows(args["connection"], sql, None, max(1, min(int(args.get("limit", 25)), MAX_ROWS)), big)
 
 
 def pg_execute(args):
@@ -191,15 +213,16 @@ def mongo_schema(args):
             return {"database": db, "collections": [
                 {"name": n, "documents_estimate": d[n].estimated_document_count(maxTimeMS=TIMEOUT_MS)}
                 for n in sorted(d.list_collection_names())]}
-        n = max(1, min(int(args.get("sample", 50)), 500))
+        n = max(1, min(int(args.get("sample", 20)), 100))
         docs = list(d[coll].aggregate([{"$sample": {"size": n}}], maxTimeMS=TIMEOUT_MS))
-        return {"collection": f"{db}.{coll}", "sampled": len(docs),
-                "fields": {k: v for k, v in sorted(field_types(docs).items())},
+        fields = sorted(field_types(docs).items())
+        return {"collection": f"{db}.{coll}", "sampled": len(docs), **({"fields_truncated": f"first 200 of {len(fields)}"} if len(fields) > 200 else {}),
+                "fields": dict(fields[:200]),
                 "indexes": [clean(ix) for ix in d[coll].list_indexes()]}
 
 
 def mongo_find(args):
-    lim = max(1, min(int(args.get("limit", 20)), MAX_ROWS))
+    lim = max(1, min(int(args.get("limit", 10)), MAX_ROWS))
     with mongo(args["connection"]) as cl:
         cur = cl[args["database"]][args["collection"]].find(
             doc_obj(args.get("filter") or {}, "filter"), doc_obj(args.get("projection"), "projection") or None,
@@ -274,12 +297,12 @@ def db_list(args):
 
 
 # ---------------------------------------------------------------- MCP (stdio JSON-RPC)
-RO = {"readOnlyHint": True, "destructiveHint": False, "idempotentHint": True, "openWorldHint": True}
-RW = {"readOnlyHint": False, "destructiveHint": True, "idempotentHint": False, "openWorldHint": True}
+RO, RW = {"readOnlyHint": True}, {"destructiveHint": True}
 WRITE_TOOLS = {"pg_execute", "mongo_write"}
 S = lambda **p: {"type": "object", "properties": p, "required": [k for k, v in p.items() if v.pop("req", False)]}  # noqa
-STR, INT, ANY = (lambda req=False, d="": {"type": "string", "description": d, "req": req}), \
-    (lambda d="": {"type": "integer", "description": d}), (lambda d="": {"description": d})
+D = lambda o, d: {**o, "description": d} if d else o                                   # no empty descriptions
+STR, INT, ANY = (lambda req=False, d="": D({"type": "string", "req": req}, d)), \
+    (lambda d="": D({"type": "integer"}, d)), (lambda d="": D({}, d))
 TOOLS = [
     ("db_list", db_list, "The configured database connections (name, type, host / db without password). Start here. "
      f"Connections live in {CONFIG}: {{name: {{type: postgres | mongo, uri | uri_env}}}}; Postgres passwords in ~/.pgpass.",
@@ -288,7 +311,7 @@ TOOLS = [
      "table, its columns, constraints (PK / FK / unique / check) and indexes.",
      S(connection=STR(True), schema=STR(d="default: all (list) / public (table)"), table=STR())),
     ("pg_query", pg_query, "Run one read-only SQL statement (SELECT / WITH / SHOW) in a READ ONLY transaction, "
-     f"15 s timeout, rolled back; up to {MAX_ROWS} rows (limit, default 100).",
+     f"15 s timeout, rolled back; up to {MAX_ROWS} rows (limit, default 25); a reply is cut at 20 KB.",
      S(connection=STR(True), sql=STR(True), limit=INT())),
     ("pg_execute", pg_execute, "Change data or schema on a WRITABLE connection (\"write\": true): INSERT / UPDATE / "
      "DELETE / CREATE / ALTER ..., committed; RETURNING rows come back. Prefer the app's migrations for lasting schema "
@@ -296,20 +319,18 @@ TOOLS = [
     ("pg_explain", pg_explain, "EXPLAIN (not ANALYZE) of a query: the plan, indexes used, estimated rows.",
      S(connection=STR(True), sql=STR(True))),
     ("mongo_schema", mongo_schema, "MongoDB schema: no database -> databases; database -> collections with document "
-     "estimates; collection -> field paths with types and counts from a random sample (sample, default 50) and indexes.",
+     "estimates; collection -> field paths with types and counts from a random sample (sample, default 20, max 100) and indexes.",
      S(connection=STR(True), database=STR(), collection=STR(), sample=INT())),
     ("mongo_find", mongo_find, "find() with a JSON filter / projection / sort (e.g. {\"status\": \"active\"}); "
-     "limit default 20.", S(connection=STR(True), database=STR(True), collection=STR(True), filter=ANY(),
+     "limit default 10.", S(connection=STR(True), database=STR(True), collection=STR(True), filter=ANY(),
                             projection=ANY(), sort=ANY(), limit=INT())),
     ("mongo_aggregate", mongo_aggregate, "aggregate() with a JSON pipeline list ($out / $merge refused); limit "
      "default 50.", S(connection=STR(True), database=STR(True), collection=STR(True), pipeline=ANY(), limit=INT())),
     ("mongo_count", mongo_count, "count_documents() with a JSON filter.",
      S(connection=STR(True), database=STR(True), collection=STR(True), filter=ANY())),
-    ("mongo_write", mongo_write, "One write on a WRITABLE connection (\"write\": true). op: insert_one (document), "
-     "insert_many (documents), update_one / update_many (filter, update, upsert), replace_one (filter, document), "
-     "delete_one / delete_many (filter; an empty filter needs all=true), create_index (keys, unique), drop_index "
-     "(name), drop_collection. The user confirms each call.",
-     S(connection=STR(True), database=STR(True), collection=STR(True), op=STR(True), document=ANY(), documents=ANY(),
+    ("mongo_write", mongo_write, "One write op on a WRITABLE connection (\"write\": true): op + its JSON fields "
+     "(document / documents / filter / update / keys / name); delete_many with an empty filter needs all=true. The user confirms each call.",
+     S(connection=STR(True), database=STR(True), collection=STR(True), op={"enum": sorted(MONGO_OPS)}, document=ANY(), documents=ANY(),
        filter=ANY(), update=ANY(), upsert={"type": "boolean"}, keys=ANY(), unique={"type": "boolean"}, name=STR(),
        all={"type": "boolean"})),
 ]
@@ -335,7 +356,10 @@ def handle(msg):
     if method == "tools/call":
         try:
             out = FUNCS[params["name"]](params.get("arguments") or {})
-            return {"content": [{"type": "text", "text": json.dumps(out, ensure_ascii=False, default=str, separators=(",", ":"))}], "isError": False}
+            text = json.dumps(out, ensure_ascii=False, default=str, separators=(",", ":"))
+            if len(text) > MAX_REPLY:
+                text = text[:MAX_REPLY] + f"...[cut at {MAX_REPLY} of {len(text)} chars, rows / 'truncated' may be missing: lower limit, select fewer columns, filter]"
+            return {"content": [{"type": "text", "text": text}], "isError": False}
         except Exception as e:
             msg_ = str(e).split("\n")[0][:500]
             return {"content": [{"type": "text", "text": f"{e.__class__.__name__}: {msg_}"}], "isError": True}
