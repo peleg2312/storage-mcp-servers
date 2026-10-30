@@ -17,7 +17,7 @@ Input: one or more NAAs / devices / datastores. Run `identify-lun` first for eac
 5. No replication: SRDF / Metro / SnapVX (PowerMax), SnapMirror / active sync (ONTAP); no snapshots
    or clones depending on it
 6. Not an ESXi boot LUN, not a vVols PE, not a gatekeeper
-7. No recent changes or open work on it (PowerMax `what_changed` / audit log; ONTAP events)
+7. No recent changes or open work on it (PowerMax `get_audit_log`; ONTAP events)
 8. The owner/team named in the environment file agrees (ask the user)
 
 Verdict: **SAFE CANDIDATE** only if 1-7 PASS. Any FAIL → NOT SAFE. Any NOT CHECKED → UNKNOWN, with what

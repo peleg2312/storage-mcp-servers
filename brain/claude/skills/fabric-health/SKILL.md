@@ -10,9 +10,9 @@ You run in a forked context: gather everything, then return a complete answer (a
 
 # Fabric health
 
-Run per switch, both fabrics. Prefer the summary tools (`fabric_health_check`, `scan_port_errors`,
-`slow_drain_check` / `investigate_slow_drain`, `port_channel_health`, `show_logging_onboard`,
-`get_log_events`) and drill down with the `show_*` tools.
+Run per switch, both fabrics. Prefer the summary tools (`scan_port_errors`, `slow_drain_check`,
+`port_channel_health`, `show_logging_onboard`, `get_log_events`) and drill down with the `show_*` tools only for the
+ports they flag.
 
 ## Checks
 1. **Interfaces**: down / err-disabled / initializing ports that have a description (expected up);
@@ -28,7 +28,7 @@ Run per switch, both fabrics. Prefer the summary tools (`fabric_health_check`, `
 5. **Onboard logs**: link flaps and error events with timestamps (`show_logging_onboard`); correlate
    with the time of the user's problem.
 6. **Changes**: zoning / config changes in the logs and accounting log in the last days.
-7. UCS: FI FC faults (critical / major) via `domain_san_health` / `list_faults`.
+7. UCS: FI FC faults (critical / major) via `get_domain_fc_health` / `list_faults`.
 
 ## Output
 Per fabric: status line (OK / degraded / critical), then a severity-ordered table:

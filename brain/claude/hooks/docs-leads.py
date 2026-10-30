@@ -28,8 +28,13 @@ iscsi nvme nvmeof multipath multipathing alua hba hbas snapmirror snapvault snap
 aggregate aggregates svm vserver igroup igroups lif lifs flexvol flexgroup qtree qos fabricpool metrocluster raid ems
 autosupport storage san nas nfs smb cifs replication sdc sds mdm pfmp unisphere symcli solutions-enabler pvc pv
 storageclass provisioner snapshotter attacher dedupe deduplication compression thin provisioning iops latency throughput
-masking initiator initiators target targets array arrays volume volumes disk disks shelf shelves controller controllers
-cluster node failover takeover giveback mediator tiebreaker kb contap dsa""".split())
+masking initiator initiators shelf shelves failover takeover giveback mediator tiebreaker kb contap dsa""".split())
+# everyday in code and ops too ("the failing target", "disk usage function"): storage only when two of them meet
+WEAK = set("""target targets array arrays volume volumes disk disks controller controllers cluster node iops latency
+throughput""".split())
+CODE_ASK = re.compile(r"\b(bug|bugs|test|tests|pytest|refactor|commit|code|function|class|lint|typing|stack ?trace)\b|\.py\b", re.I)
+NOISE = re.compile(r"^(changelog|release notes?|release \d|reference)\b|\bPR #?\d", re.I)   # changelog / PR pages
+WANTS_NOISE = re.compile(r"\b(release|version|changelog|upgrade|fixed|fix(es)? in|pr|pull request)\b", re.I)
 
 
 def load(name, path):
@@ -63,7 +68,7 @@ def in_domain(words):
     words = [x for x in words if not re.search(r"[/~\\]|^https?:", x)]      # folder paths and urls do not count
     toks = {w.lower() for x in words for w in re.findall(r"[A-Za-z][A-Za-z0-9]+", x)}
     named = set().union(*(vendors_of.get(t, set()) for t in toks)) if toks else set()
-    return bool(toks & vocab), named
+    return bool(toks & vocab) or len(toks & WEAK) >= 2, named
 
 
 def main():
@@ -98,6 +103,9 @@ def main():
     about, vendors = in_domain(words)
     if not lines and not about:
         return 0
+    said = {w.lower() for x in words for w in re.findall(r"[A-Za-z][A-Za-z0-9]+", x)}
+    if not lines and CODE_ASK.search(prompt) and not said & DOMAIN:
+        return 0          # a coding request (bug, test, refactor) naming no storage product: changelogs do not help
     try:
         mod = os.path.join(LIB, "search.py")
         lib = load("search", mod if os.path.exists(mod) else os.path.join(LIB, "search_cli.py"))
@@ -106,7 +114,7 @@ def main():
         res = lib.search_docs(c, q, vendor=next(iter(vendors)) if len(vendors) == 1 else "", limit=8)["results"]
     except Exception:
         res = []
-    leads, seen_docs, seen_titles = [], set(), set()
+    leads, seen_docs, seen_titles, eds = [], set(), set(), []
     for r in res:
         if vendors and r["vendor"].lower() not in vendors:
             continue
@@ -114,10 +122,15 @@ def main():
         if not n or int(hit) < MIN_WORDS or int(hit) / int(n) < MIN_COVER:
             continue
         title = re.sub(r"\s*\|\s*Dell.*$", "", r["title"])[:90]
-        if r["path"] in seen_docs or title.lower() in seen_titles:     # one lead per document, not per version
+        if NOISE.search(title) and not WANTS_NOISE.search(prompt):
             continue
-        seen_docs.add(r["path"]); seen_titles.add(title.lower())
         sec = r.get("section")
+        words_t = set(re.findall(r"[a-z0-9]+", title.lower()))
+        # one lead per document, and one per edition: same product and section with half the title words in common
+        if r["path"] in seen_docs or title.lower() in seen_titles or any(
+                (r["product"], (sec or "").lower()) == k[:2] and len(words_t & k[2]) * 2 >= len(words_t | k[2]) for k in eds):
+            continue
+        seen_docs.add(r["path"]); seen_titles.add(title.lower()); eds.append((r["product"], (sec or "").lower(), words_t))
         leads.append(f"{title}" + (f" :: {sec[:60]}" if sec else "") + f" [{r['vendor']}/{r['product']}, chunk {r['chunk_id']}]")
         if len(leads) >= MAX_LEADS:
             break
@@ -135,10 +148,10 @@ def main():
                 f.write("\n".join(leads) + "\n")
         except OSError:
             pass
-        lines += ["lead: " + x for x in leads]
+        lines += leads
     if lines:
-        print("Offline docs library, matched to this request (leads, not answers: read_chunk / search_docs before "
-              "relying on them; ignore if unrelated):\n" + "\n".join("- " + x.lstrip("- ") for x in lines))
+        print("Docs leads (verify with read_chunk before relying on them; ignore if unrelated):\n"
+              + "\n".join("- " + x.lstrip("- ") for x in lines))
     return 0
 
 

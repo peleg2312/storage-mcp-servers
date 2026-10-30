@@ -10,7 +10,7 @@ Thresholds come from the environment file; ask once if they are empty.
 
 1. **Datastores** (Aria; kuparashit has size and `trend` only): capacity, free %, provisioned (thin overcommit %), growth over
    30/90 days, Aria time-to-full forecast. Flag below thresholds and overcommit > 150 %.
-2. **PowerMax** (`capacity_report`, `list_srps`): SRP usable / used / subscribed %, data reduction ratio,
+2. **PowerMax** (`list_srps`; largest groups: `list_storage_groups` + `get_storage_group` include_volumes=False): SRP usable / used / subscribed %, data reduction ratio,
    snapshot usage; top storage groups by allocated capacity.
 3. **ONTAP**: aggregates used %, volumes used % incl. snapshot reserve / overflow, LUN space settings
    (thin vs reserved), efficiency savings; volumes with autosize limits close.

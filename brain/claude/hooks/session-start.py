@@ -93,7 +93,9 @@ def hook_line():
         except ValueError:
             hooks = {}
         cmds += " ".join(h.get("command", "") for e in hooks.get("PreToolUse", []) for h in e.get("hooks", []))
-    if "block-write-tools.py" in cmds and os.path.exists(os.path.join(HOME, "hooks", "block-write-tools.py")):
+    # the script the settings run (~/.claude/hooks for one user, /opt/paas/hooks on the shared server) must exist
+    scripts = [os.path.expanduser(p) for p in re.findall(r"(\S*block-write-tools\.py)", cmds)]
+    if any(os.path.exists(p) for p in scripts):
         return "Read-only guard: active (PreToolUse hook blocks write-looking MCP calls)."
     return f"Read-only guard: NOT configured in {HOME}/settings.json (re-run sh brain/install.sh)."
 

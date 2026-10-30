@@ -2945,7 +2945,12 @@ def main():
             for rule_name, reminder in pattern_matches:
                 warning_key = f"{file_path}-{rule_name}"
                 if atomic_check_and_mark_warning(session_id, warning_key):
-                    all_guidance.append(reminder)
+                    # storage brain: the full reminder once per rule and session, then one line per further file
+                    # (verify=False recurs in every REST client against self-signed arrays: ~180 tokens each time)
+                    if atomic_check_and_mark_warning(session_id, f"rule-{rule_name}"):
+                        all_guidance.append(reminder)
+                    else:
+                        all_guidance.append(f"Again: {rule_name} in {os.path.basename(file_path)} (see the earlier warning).")
 
             # Record matched rules as pending so the Stop-hook sweep can
             # later tally fixed vs unresolved. Only runs when patterns match.

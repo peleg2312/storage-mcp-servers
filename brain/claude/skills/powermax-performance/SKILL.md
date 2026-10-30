@@ -17,7 +17,7 @@ when_to_use: Trigger phrases - "PowerMax response time last 24h", "top storage g
    - SRDF: R1 write response time, link throughput, cycle time (async)
 4. Report **avg and max** with the time of the max; for "who is causing it" rank storage groups by
    IOPS and MB/s at the peak time.
-5. Correlate: alerts (`get_alerts`) and changes (`what_changed`) in the same window; SRDF health.
+5. Correlate: alerts (`get_alerts`) and changes (`get_audit_log`) in the same window; SRDF health.
 6. For unexplained behaviour, search the docs MCP (vendor `dell`, product `powermax` for the guides and
    the Events and Alerts guide, product `kb` for Dell KB articles) with the exact metric / alert text and
    the PowerMaxOS version.

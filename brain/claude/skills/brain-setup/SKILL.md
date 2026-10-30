@@ -11,12 +11,15 @@ Read-only: only list/get/show tools.
 
 ## 1. Tool map
 For every connected MCP server (kuparashit, Aria/vROps, ontap, harvest, mds, ucsc, powermax, the docs MCP
-(docs-search or docs-local, whichever is connected) and any other), list its tools from your own tool list. For each server write:
-- server name as used in tool names (`mcp__<server>__...`)
-- every tool: name, one line on what it returns, key parameters
-- which questions from the "Sources" table in CLAUDE.md it answers
-- whether any tool looks like it can change something (create/delete/modify/set/...). List those under
-  "DO NOT USE" so they are never called.
+(docs-search or docs-local, whichever is connected) and any other), list its tools from your own tool list. The
+map is loaded in every session of every user, and Claude Code already shows each tool's own description, so write
+only what the descriptions do not say (about 3-6 lines per server, the whole file under ~60 lines):
+- server name as used in tool names (`mcp__<server>__...`) and the full names of its 3-6 entry tools: the
+  overview / health / locate / trace tool to start with, and which question from the "Sources" table each answers
+- parameter quirks you found (exact formats, required ids, slow calls, limits)
+- any tool that looks like it can change something (create/delete/modify/set/...): list those under
+  "DO NOT USE" so they are never called
+- MCP prompts (`/` recipes, not tools) under "Not tools", with the tools they call
 Pay special attention to **kuparashit**: `overview` (vCenters covered, snapshot times, warnings) and
 `fields` / `relationships`; record the real field names and one tested call each for pWWN → ESX → NAAs and
 NAA → datastore / RDM / VM / ESX.

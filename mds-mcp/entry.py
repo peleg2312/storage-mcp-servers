@@ -33,6 +33,9 @@ main._validate_command = _strict_validate
 _RO = ToolAnnotations(readOnlyHint=True, destructiveHint=False, idempotentHint=True, openWorldHint=True)
 mds_extra.register(main.mcp, _RO)
 mds_san.register(main.mcp, _RO)
+# upstream's generative-UI tools (Prefab): ~1.3k tokens of tool descriptions in every session, and Claude Code shows no
+# Prefab UI; hidden here so upstream main.py stays as it is
+main.mcp.disable(names={"generate_prefab_ui", "search_prefab_components"}, components={"tool"})
 
 INSTRUCTIONS = """\
 You are connected to a READ-ONLY gateway to Cisco MDS Fibre Channel switches (NX-OS via NX-API).

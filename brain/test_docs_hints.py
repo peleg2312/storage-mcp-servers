@@ -31,14 +31,15 @@ def run(tool, text, sid):
 
 sid = f"t{os.getpid()}"
 ctx = run("mcp__ontap__ems", "node1: wafl.vol.full on vol1.prod; host esx01.corp.local; SIO02.04.0000005", sid)
-assert "wafl.vol.full [ontap-ems, chunk 10]: ALERT. This message occurs when the volume is full." in ctx, ctx
-assert "Corrective action: Grow it." in ctx and "SIO02.04.0000005 [dell/kb, chunk 20]" in ctx, ctx
+assert "wafl.vol.full [ontap-ems, chunk 10]: ALERT. The volume is full." in ctx, ctx
+assert "Fix: Grow it." in ctx and "SIO02.04.0000005 [dell/kb, chunk 20]" in ctx, ctx
 assert "vol1.prod" not in ctx and "esx01" not in ctx, ctx                       # only documented names
 assert run("mcp__ontap__ems", "wafl.vol.full again", sid) == ""                # once per session
 assert run("mcp__docs-local__search_docs", "wafl.vol.full", sid + "b") == ""   # not on the docs MCP itself
 assert run("mcp__ontap__ems", "all good, nothing to report", sid + "c") == ""
 ctx = run("mcp__k8s__events", "AttachVolume failed: rpc error: code = Unavailable desc = the NodeID is a required field", sid + "d")
 assert '"the NodeID is a required field" [dell/csi-powermax, chunk 30]' in ctx and "ValidateVolumeHostConnectivity" in ctx, ctx
+assert run("mcp__k8s__events", "AttachVolume failed: rpc error: code = Unavailable desc = the NodeID is a required field", sid + "d") == ""   # an error phrase: once per session too
 for f in os.listdir(tempfile.gettempdir()):
     if f.startswith("claude-docs-hints-t"):
         os.remove(os.path.join(tempfile.gettempdir(), f))

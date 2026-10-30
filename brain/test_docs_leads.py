@@ -28,11 +28,11 @@ def run(prompt, sid):
 
 sid = f"l{os.getpid()}"
 out = run("I want to build an app that replicates snapshots like netapp snapmirror between clusters", sid)
-assert "lead: SnapMirror replication overview" in out and "[netapp/ontap, chunk" in out, out
+assert "- SnapMirror replication overview" in out and "[netapp/ontap, chunk" in out, out
 assert run("I want to build an app that replicates snapshots like netapp snapmirror between clusters", sid) == ""  # once
 assert "wafl.vol.full [ontap-ems, chunk" in run("cluster1 keeps logging wafl.vol.full, why?", sid + "b")
 for p in ("yes, do it", "how do I center a div in css", "summarize this meeting for my manager",
-          "Use ~/storage-mcp-servers for this", "/brain-health"):
+          "Use ~/storage-mcp-servers for this", "/brain-health", "run the tests and fix the failing target", "add a python test for the disk usage function"):
     assert run(p, sid + "c") == "", p                                     # unrelated: silent
 for f in os.listdir(tempfile.gettempdir()):
     if f.startswith(("claude-docs-leads-l", "claude-docs-hints-l")):

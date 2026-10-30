@@ -6,17 +6,18 @@ disable-model-invocation: true
 ---
 # Morning check
 
-Run the layers in parallel (agents if available). Window: last 24 h (or since the last check).
+Call the layers' summary tools yourself, independent calls together in one turn; an agent only to drill into a layer
+that is not OK. Window: last 24 h (or since the last check).
 
 | Layer | What |
 |---|---|
-| PowerMax | `daily_health_check` / `get_array_health`, new alerts, SRDF health, SRP capacity |
+| PowerMax | `get_array_health`, `list_srps`, `get_alerts` since_hours=24, `get_replication()` (RDF group state) |
 | ONTAP | cluster / node health, EMS errors and alerts, aggregates / volumes over threshold, SnapMirror lag |
 | Harvest | anomalies: latency peaks on top LUNs / volumes overnight |
-| MDS | `fabric_health_check` both fabrics: ports down, error rates, slow drain, log events |
-| UCS | `ucs_health_check` / `domain_san_health`: critical / major faults, FC uplinks |
+| MDS | per switch, both fabrics: `scan_port_errors`, `slow_drain_check`, `port_channel_health`, `get_log_events` max_severity=4 since_hours=24 |
+| UCS | `get_domain_health` per domain, `list_faults` severity='critical,major' unacked_only=true, `list_fc_uplinks` problems_only=true |
 | Aria | storage-related alerts: datastore latency, datastore space, host path issues |
-| Changes | PowerMax `what_changed`, UCS audit log, MDS accounting log |
+| Changes | PowerMax `get_audit_log` + `get_alerts` (same window), UCS `get_audit_log`, MDS `show_accounting_log` |
 
 Output (one page):
 1. Status line per layer: OK / WARNING / CRITICAL.

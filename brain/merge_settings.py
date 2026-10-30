@@ -80,6 +80,8 @@ if not mcpjson:
         "(Cisco MDS / Nexus), UCS, vCenter / ESXi and OpenShift clusters: changes to them are made by the user"):
         if line not in env:
             env.append(line)
+# no "suggested next message" model call after every reply (tokens, no effect on answers); a person may turn it on
+s.setdefault("promptSuggestionEnabled", False)
 # look and feel (UI only, no tokens): always the brain's, replacing earlier values (settings.json is backed up above)
 s["statusLine"] = {"type": "command", "command": f"python3 {banner_dir}/paas-statusline.py", "padding": 0}
 s["theme"] = "custom:paas"                                   # ~/.claude/themes/paas.json, banner colours; /theme to change

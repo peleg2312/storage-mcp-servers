@@ -15,8 +15,8 @@ native Excel chart, plus a Summary sheet), in `~/storage-reports/<date>-<title>/
 | ONTAP throughput / IOPS / latency over days (volume, LUN, aggregate, node, FC port) | **harvest**: range query of the metric (`volume_read_data`, `volume_write_data`, `volume_avg_latency`, `lun_*`, `node_cpu_busy`, `fcp_*`; exact names: docs `harvest` "ontap metrics"), step 5m-1h |
 | PowerMax (array, storage group, port, director) | **powermax**: `list_performance_metrics` for the names, then `get_performance` with start / end and the keys |
 | VM / datastore / ESXi latency, IOPS, capacity, forecasts | **VMware Aria Operations** stats for the resource and time range |
-| Capacity now (per array, SRP, aggregate, datastore) | powermax `capacity_report` / `list_srps`, ontap aggregates, kuparashit `ds` sizes |
-| Fabric port traffic / errors | mds counters / `port_history` |
+| Capacity now (per array, SRP, aggregate, datastore) | powermax `list_srps`, ontap aggregates, kuparashit `ds` sizes |
+| Fabric port traffic / errors | mds `show_interface_counters_detailed_for` / `get_log_events` |
 
 Match the step to the range so a series stays under ~3,000 points (10 days → 5-15 min; 90 days → 1 h-1 d).
 Never invent or fill missing points: a gap stays empty (blank cell).

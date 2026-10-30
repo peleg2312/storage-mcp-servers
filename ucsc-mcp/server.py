@@ -312,7 +312,9 @@ def query(c, class_id, flt=None):
 def _to_dict(mo, props=None):
     if props:
         return {p: getattr(mo, p, None) for p in ("dn", *props)}
-    return {p: getattr(mo, p, None) for p in sorted(mo.prop_meta) if p != "child_action"}
+    # every property of the class, without the empty ones (most are: -85% per object, nothing set is lost)
+    return {p: v for p in sorted(mo.prop_meta) if p != "child_action"
+            for v in [getattr(mo, p, None)] if v not in (None, "")}
 
 
 def _in_domain(dn, domain):
@@ -818,7 +820,7 @@ def list_firmware(domain: str = "", central: str = "", limit: int = 2000) -> dic
 
 @mcp.tool(annotations=RO)
 def get_object(dn: str, hierarchy: bool = False, central: str = "", limit: int = 300) -> dict:
-    """Read any managed object by DN (optionally with its whole subtree)."""
+    """Read any managed object by DN (optionally with its whole subtree). Empty properties are left out."""
     c, mo = find_dn(dn, central)
     if hierarchy:
         mos = c.call(lambda h: h.query_dn(dn, hierarchy=True))
@@ -834,7 +836,8 @@ def query_class(class_id: str, prop: str = "", value: str = "", match: str = "eq
     """Read all objects of a UCS Central class with an optional property filter. Useful classes:
     computeBlade, computeRackUnit, lsServer, vnicFc, vnicEther, faultInst, equipmentChassis,
     equipmentPsu, equipmentFan, equipmentIOCard, networkElement, fcPIo, etherPIo, fabricVsan,
-    fabricVlan, adaptorHostFcIf, firmwareRunning, macpoolPool, uuidpoolPool. match: eq, ne, wcard."""
+    fabricVlan, adaptorHostFcIf, firmwareRunning, macpoolPool, uuidpoolPool. match: eq, ne, wcard. Empty
+    properties are left out."""
     try:
         load_class(class_id[0].upper() + class_id[1:])
     except Exception:

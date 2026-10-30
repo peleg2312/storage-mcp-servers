@@ -7,7 +7,7 @@ disable-model-invocation: true
 # Change review
 
 1. Window: from the user, or 24-72 h before the problem started.
-2. Collect: PowerMax `what_changed` / `get_audit_log`; ONTAP audit / EMS events (ontap MCP; explain unknown
+2. Collect: PowerMax `get_audit_log` + `get_alerts`; ONTAP audit / EMS events (ontap MCP; explain unknown
    EMS names with the docs product `ontap-ems-<cluster version>`); MDS `show_accounting_log` and
    `get_log_events` (zoning commits, interface shut / no shut); UCS `get_audit_log` + `get_events`;
    Aria alerts for the involved objects.

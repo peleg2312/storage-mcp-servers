@@ -335,7 +335,7 @@ def handle(msg):
     if method == "tools/call":
         try:
             out = FUNCS[params["name"]](params.get("arguments") or {})
-            return {"content": [{"type": "text", "text": json.dumps(out, ensure_ascii=False, default=str)}], "isError": False}
+            return {"content": [{"type": "text", "text": json.dumps(out, ensure_ascii=False, default=str, separators=(",", ":"))}], "isError": False}
         except Exception as e:
             msg_ = str(e).split("\n")[0][:500]
             return {"content": [{"type": "text", "text": f"{e.__class__.__name__}: {msg_}"}], "isError": True}

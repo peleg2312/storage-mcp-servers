@@ -47,7 +47,8 @@ search again. A version in the query (`9.15.1`, `2.16.2`, `25.10`) ranks that ve
 what to do. Default 8 hits; raise `limit` only when the titles are all off-target.
 
 ## 3. Read, cite, version
-`read_chunk(id, context=1)` on the best 2-3 hits; `read_document` only for a procedure or table spanning
+`read_chunk(id, context=0)` on the best hit (context 1 when the section is cut off); read the next hits too when the
+first does not fully answer, or when another version or a KB may change the answer; `read_document` only for a procedure or table spanning
 sections. Never answer from snippets. Cite title (PDF titled "pdf" / "View": the file name from the url, with
 the page) + url + the version it applies to; another version's document is a hint ("documented for 9.2;
 confirm for yours"). Quote verbatim when wording matters (states, thresholds, limits). Two versions disagree:

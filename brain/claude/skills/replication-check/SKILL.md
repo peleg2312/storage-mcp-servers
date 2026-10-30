@@ -9,8 +9,8 @@ Cover every array and both directions; say which were not checked. Read-only: ne
 suspend, swap, failover, quiesce, break or resync anything.
 
 ## PowerMax SRDF
-- Live: powermax MCP `srdf_health`, `get_replication` (per SG / RDF group), `get_alerts` (SRDF alerts),
-  `what_changed`. If he is at the CLI: `symrdf -sid <sid> list` or `symrdf -sid <sid> -sg <sg> -rdfg <n>
+- Live: powermax MCP `get_replication` (per SG / RDF group), `get_performance` category RDFDirector (busy groups),
+  `get_alerts` text='RDF', `get_audit_log` (recent changes). If he is at the CLI: `symrdf -sid <sid> list` or `symrdf -sid <sid> -sg <sg> -rdfg <n>
   query [-rdf_metro]`, `symcfg -sid <sid> list -rdfg all` (RDF groups, link state), `symrdf -sid <sid>
   -rdfg <n> ping`, Unisphere › Data Protection › SRDF (groups, pairs, witness).
 - Per RDF group: mode (Sync / Async / Metro), link status (Online / Offline), pairs by state, and for

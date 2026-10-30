@@ -36,10 +36,13 @@ ones expose write tools too, kept read-only by the hook and a read-only ONTAP ac
 2. **Never invent** an ID, WWN, NAA, device ID, size, version, KB or bug number. Every fact comes from a
    tool result or a document; say which. If a source is unavailable, say what you could not check.
 3. **Normalize identifiers before comparing** (rules below). Compare lists of more than ~20 items in
-   code (python) on saved files, never by eye. Save large tool outputs to files under
-   `~/storage-reports/<date>-<topic>/` and work from them.
-4. **Both fabrics, all vCenters, all arrays.** A check that looked at one fabric / one vCenter / one array
-   must say so. Missing redundancy (single fabric, single path) is always a finding.
+   code (python), never by eye. A result Claude Code already saved to a file (too large to show): work from that
+   file; shell / `search.py` output you will reuse: redirect it to `~/storage-reports/<date>-<topic>/`. Never copy
+   a result that is already in the conversation into a file (it is paid for twice).
+4. **Both fabrics, all vCenters, all arrays** for health, redundancy, path and "where is X" questions. A named
+   object: locate it first (kuparashit `locate`, `find_volume_by_wwn`, `find_wwpn`), then query where it lives, and
+   both fabrics for its paths. A check that looked at one fabric / one vCenter / one array must say so. Missing
+   redundancy (single fabric, single path) is always a finding.
 5. **Sources disagree?** Show both values and which tool said what; do not silently pick one.
 6. **Nothing is "unused" or "safe to remove"** until the `decommission-check` skill passed every check;
    always list what was NOT verified.
@@ -54,10 +57,11 @@ ones expose write tools too, kept read-only by the hook and a read-only ONTAP ac
    meanings, APIs / SDKs for automation, comparisons, and requests that only borrow from a product (an app
    modelled on NetApp snapshots, a script against the PowerMax REST API, a design review). Follow
    `docs-lookup` (version-matched product, exact terms, read before answering, cite title + url + version);
-   answer from memory only what involves no product. Library has nothing (MDS / UCS): say it is general
-   knowledge. Unasked during any investigation, every error, alert or failed state in a live result is
-   explained from the docs before you conclude. "Offline docs library" lines beside a request or a tool
-   result are leads found for you: read the relevant chunk, ignore unrelated ones, search further if they miss.
+   answer from memory only what involves no product. Library has nothing (UCS): say it is general
+   knowledge. Unasked during any investigation, every distinct error, alert or failed state in a live result is
+   explained from the docs before you conclude: one lookup per distinct code (group repeats). "Docs leads" lines
+   beside a request and "Docs on identifiers" lines after a tool result are found for you: they give a known code's
+   meaning and the chunk; read the relevant chunk, ignore unrelated ones, search further if they miss.
 9. **Versions** come from the environment file or a tool result; never assume the latest.
 10. **Memory is a catalog.** An environment fact learned from a tool result or from him is one dated line
    (date · fact · source), updated in place. `~/.claude/brain/notes.md` (loaded every session, ≤ 60 lines)
@@ -69,9 +73,10 @@ ones expose write tools too, kept read-only by the hook and a read-only ONTAP ac
    a note contradicting `environment.md` → ask.
 11. **Token economy.** Search before reading; `read_chunk` with context 0-1, `read_document` only when the
    answer spans sections (page with `start`, never a whole PDF at once). Ask tools for the filtered,
-   narrow result (one array, one fabric, one name) before the full list; save big outputs to a file and
-   work from it instead of re-calling. Delegate a long investigation to an agent (they run on a cheaper
-   model and return a summary); answer short questions yourself.
+   narrow result (one array, one fabric, one name) before the full list; never re-call for data you already have.
+   Independent read-only calls (several arrays, both fabrics, all layers) go out together in one turn, and the
+   tools a task needs load with one ToolSearch (`select:a,b,c`). Delegate a long investigation to an agent (they
+   run on a cheaper model and return a summary); answer short questions yourself.
 12. **Denied? Ask him.** When an action is denied (auto mode's check, the read-only guard, or a permission prompt
    he declined), never drop it silently and never try a workaround: say what was denied, why it is needed and the
    exact command, and ask him. Auto mode: he can approve it by naming that exact action in his reply, or with
@@ -100,12 +105,10 @@ Exact tool names per server: see the tool map imported at the bottom (run `/brai
 - **Normalize WWNs**: strip `:`/`-`/spaces, lowercase, 16 hex. MDS/ONTAP show `20:00:00:25:b5:..`,
   PowerMax shows `2000002...` (no colons), UCS shows upper case, ESXi shows `fc.<wwnn>:<wwpn>` (take the
   **second** part as the WWPN).
-- **NAA** (`naa.` + 32 hex; compare lowercase without `naa.`):
-  - `naa.60000970` → **PowerMax/VMAX**: hex chars 9-20 = 12-digit array serial; the **last 10 hex chars
-    decoded as ASCII = the 5-character device ID** (e.g. `...3030334135` → `003A5`). PowerMax volume
-    `wwn` = the NAA without `naa.`; `find_volume_by_wwn` matches it directly.
-  - `naa.600a0980` → **NetApp ONTAP**: the remaining 24 hex chars decoded as ASCII = the 12-char LUN
-    **serial number** (`lun show -fields serial`).
+- **NAA** (`naa.` + 32 hex; compare lowercase without `naa.`), decoded by `decode_naa` below:
+  `naa.60000970` = **PowerMax/VMAX** (array serial + 5-char device ID, e.g. `...3030334135` → `003A5`; the volume
+  `wwn` is the NAA without `naa.`, `find_volume_by_wwn` takes it); `naa.600a0980` = **NetApp ONTAP** (12-char LUN
+  serial, `lun show -fields serial`).
   ```python
   def decode_naa(naa):
       h = naa.lower().removeprefix("naa.")

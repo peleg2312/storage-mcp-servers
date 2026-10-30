@@ -81,10 +81,20 @@ def ems_hint(c, name):
     desc = re.search(r"\*Description\*::\s*(.*?)(?=\*\w[\w ]*\*::|$)", t)
     fix = re.search(r"\*Corrective Action\*::\s*(.*?)(?=\*\w[\w ]*\*::|$)", t)
     s = f"{heading} [{product}, chunk {rowid}]: {sev.group(1) + '. ' if sev else ''}"
-    s += (desc.group(1).strip()[:220] if desc else t[:220])
+    d = re.sub(r"^This message occurs when\s+", "", desc.group(1).strip() if desc else t)
+    s += first_sentence(d[:1].upper() + d[1:], 160)
     if fix and fix.group(1).strip() not in ("(None).", "(None)", ""):
-        s += " Corrective action: " + fix.group(1).strip()[:200]
+        s += " Fix: " + first_sentence(fix.group(1).strip(), 140)
     return s
+
+
+def first_sentence(text, limit):
+    """Its first sentence when that is short enough and says something, else cut at a word boundary (read_chunk has
+    the rest): the meaning in fewer tokens, not a mid-word cut."""
+    m = re.match(r"(.{40,}?[.!?])(\s|$)", text)
+    if m and len(m.group(1)) <= limit:
+        return m.group(1)
+    return text if len(text) <= limit else text[:limit].rsplit(" ", 1)[0] + "..."
 
 
 def code_hint(c, code):
@@ -107,7 +117,7 @@ def code_hint(c, code):
         return f"{code} [{vendor}/{product}, chunk {first[0] if first else rowid}]: {title[:150]}"
     t = re.sub(r"\s+", " ", text)
     i = t.find(code)
-    near = t[i + len(code):i + len(code) + 180].strip() if i >= 0 else t[:180]
+    near = t[i + len(code):i + len(code) + 120].strip() if i >= 0 else t[:120]
     return f"{code} [{vendor}/{product}, chunk {rowid}]: {title[:110]}" + (f" :: {near}" if near else "")
 
 
@@ -159,7 +169,7 @@ def main():
     text = "\n".join(strings(data.get("tool_response"), []))[:300_000]
     seen_file = os.path.join(tempfile.gettempdir(), f"claude-docs-hints-{re.sub(r'[^A-Za-z0-9-]', '', str(data.get('session_id', 'x')))}")
     try:
-        seen = set(open(seen_file).read().split())
+        seen = set(filter(None, open(seen_file).read().splitlines()))   # one entry per line: error phrases have spaces
     except OSError:
         seen = set()
     c = sqlite3.connect(f"file:{DB}?mode=ro", uri=True)
@@ -201,8 +211,8 @@ def main():
             f.write("\n".join(sorted(seen)))
     except OSError:
         pass
-    ctx = ("Offline docs library on identifiers in this result (read_chunk <chunk> for the full text; check the "
-           "version-specific reference for the installed release):\n" + "\n".join("- " + h for h in hints))
+    ctx = ("Docs on identifiers in this result (read_chunk <chunk> for the full text; versions differ):\n"
+           + "\n".join("- " + h for h in hints))
     print(json.dumps({"hookSpecificOutput": {"hookEventName": "PostToolUse", "additionalContext": ctx}}))
     return 0
 
