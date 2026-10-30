@@ -6,7 +6,9 @@ lib = os.path.join(here, "..", "docs-search-mcp")
 sys.path.insert(0, lib)
 import docs_index  # noqa: E402
 
-d = tempfile.mkdtemp()
+_tmp = tempfile.TemporaryDirectory()          # also TMPDIR of the hook: its marker files die with it
+d = _tmp.name
+os.makedirs(os.path.join(d, "tmp"))
 pages = {"netapp/ontap/snapmirror-concept.adoc": "= SnapMirror replication overview\n\nSnapMirror replicates volume snapshots "
          "asynchronously between clusters; the destination is read-only until you break the relationship.\n",
          "dell/powermax/srdf-modes.md": "# SRDF modes\n\nSRDF/S is synchronous, SRDF/A is asynchronous with cycle-based "
@@ -24,7 +26,7 @@ open(os.path.join(chats, "CLAUDE.md"), "w").write("<!-- generated -->\n# Storage
 
 
 def run(prompt, sid, cwd=chats):
-    env = {**os.environ, "DOCS_LEADS_LIB": lib, "DOCS_LEADS_DB": db, "DOCS_HINTS_DB": db}
+    env = {**os.environ, "TMPDIR": os.path.join(d, "tmp"), "DOCS_LEADS_LIB": lib, "DOCS_LEADS_DB": db, "DOCS_HINTS_DB": db}
     return subprocess.run([sys.executable, hook], input=json.dumps({"session_id": sid, "prompt": prompt, "cwd": cwd}),
                           capture_output=True, text=True, env=env).stdout
 
@@ -43,7 +45,11 @@ assert out.startswith("Storage question outside Chats: read ") and "storage.md (
 assert "storage.md" not in run("is snapmirror async between clusters?", sid + "d", code)
 assert run("run the tests and fix the failing target", sid + "e", code) == ""
 assert "storage.md" not in run("in the app folder, find where the volume commands are validated", sid + "f", code)
-for f in os.listdir(tempfile.gettempdir()):
-    if f.startswith(("claude-docs-leads-l", "claude-docs-hints-l", "claude-storage-rules-l")):
-        os.remove(os.path.join(tempfile.gettempdir(), f))
+# Hebrew words around the Latin ones do not count against the coverage; a storage-free dev prompt gets no storage.md note
+assert "- SnapMirror replication overview" in run("למה ה-snapmirror איטי בין clusters", sid + "g")
+for p in ("write a kubernetes deployment yaml for my flask app with a pvc",
+          "optimize the throughput and latency of my python worker queue", "add gzip compression to the flask api response"):
+    assert run(p, sid + "h", code) == "", p
+assert "storage.md" in run("is snapmirror async between clusters?", sid + "i", code)
+_tmp.cleanup()
 print("docs leads ok")

@@ -93,13 +93,25 @@ def _words(seg):
         return seg.split()
 
 
+# wrapper options that take a value ("sudo -u root symsg ..."): the value is not the program
+WRAP_VAL = {"sudo": {"-u", "-g", "-h", "-p", "-C", "-D", "-R", "-T", "-U", "--user", "--group", "--host"},
+            "xargs": {"-a", "-I", "-d", "-L", "-l", "-n", "-P", "-E", "-s"}, "timeout": {"-s", "-k"},
+            "env": {"-u", "-C", "-S"}, "nice": {"-n"}, "ionice": {"-c", "-n", "-p"}, "stdbuf": {"-i", "-o", "-e"},
+            "watch": {"-n", "-d"}}
+SHELL_C = re.compile(r"""(?<![\w.-])(?:(?:bash|sh|zsh|dash|ksh)\s+(?:-\w+\s+)*?-\w*c\w*|eval)\s+("[^"]*"|'[^']*'|\S+)""")
+
+
 def _program(w):
-    """(program, its arguments): the first word that is not VAR=x, a wrapper (sudo, timeout...) or its option."""
+    """(program, its arguments): the first word that is not VAR=x, a wrapper (sudo, timeout...) or its option / value."""
+    wrap = ""
     for i, t in enumerate(w):
+        if wrap and i and w[i - 1] in WRAP_VAL.get(wrap, ()):
+            continue
         if re.match(r"^\w+=", t) or t.startswith("-") or re.fullmatch(r"[\d.]+[smhd]?", t):
             continue
         base = os.path.basename(t)
         if base in WRAPPERS:
+            wrap = base
             continue
         return base, w[i + 1:]
     return "", []
@@ -116,6 +128,12 @@ def shell_check(cmd, depth=0):
         return "block", "writes to /sys or /proc/sys (SCSI rescan / delete, kernel settings)"
     if re.search(r"\b(pwsh|powershell|Connect-VIServer)\b", cmd, re.I) and POWERCLI_CHANGE.search(cmd):
         return "block", "PowerCLI / PowerShell command that changes something"
+    if depth < 2:     # bash -c "..." / eval "...": check the quoted command (the splitter below would cut inside the quotes)
+        for m in SHELL_C.finditer(cmd):
+            r = shell_check((_words(m.group(1)) or [""])[0] if m.group(1)[0] in "\"'" else m.group(1), depth + 1)
+            if r[0] == "block":
+                return r
+            worst = worst if worst[0] else r
     for seg in re.split(r"\|\||&&|[;|&\n]|\$\(|`|\)", cmd):
         prog, args = _program(_words(seg))
         low = [a.lower() for a in args]
@@ -130,6 +148,11 @@ def shell_check(cmd, depth=0):
                 r = ("ask", f"{prog} adm changes the cluster")
             elif sub in ("exec", "rsh", "debug") and "--" in args and depth < 2:
                 r = shell_check(" ".join(shlex.quote(a) for a in args[args.index("--") + 1:]), depth + 1)
+        elif prog == "eval" and depth < 2:
+            r = shell_check(" ".join(args), depth + 1)
+        elif prog == "chroot" and depth < 2:
+            r = shell_check(" ".join(shlex.quote(a) for a in args[next((i for i, a in enumerate(args) if not a.startswith("-")), -1) + 1:]),
+                            depth + 1)
         elif prog == "helm" and sub in HELM_CHANGE:
             r = ("ask", f"helm {sub} changes the cluster")
         elif prog in ("curl", "wget"):
@@ -152,7 +175,7 @@ def shell_check(cmd, depth=0):
             if remote:
                 if REMOTE_CONFIG.search(remote):
                     r = ("block", f"configuration change over ssh: {remote[:80]!r}")
-                elif set(re.findall(r"[a-z_-]+", remote.lower())) & (WRITE - {"start", "stop", "test"}) - {"show"}:
+                elif set(re.findall(r"(?<![/.\w-])[a-z_-]+(?![/.\w-])", remote.lower())) & (WRITE - {"start", "stop", "test"}) - {"show"}:
                     r = ("block", f"remote command that changes something: {remote[:80]!r}")
                 elif depth < 2:
                     r = shell_check(remote, depth + 1)
@@ -261,15 +284,20 @@ def main():
     # only lets it open this server's own pages
     if re.match(r"mcp__(plugin_[\w-]+_)?chrome-devtools__", name):
         return 0
+    if re.match(r"mcp__docs-(local|search)__", name):    # read-only documentation search: the query text may say "create view" / "grant"
+        return 0
     tool_input = data.get("tool_input") or {}
     if re.fullmatch(r"mcp__databases__(pg_execute|mongo_write)", name):
         # the user's own application databases (writable connections only, the server checks): confirm each write
         if bypass:
             return 0
         what = tool_input.get("sql") or " ".join(str(tool_input.get(k, "")) for k in ("op", "database", "collection"))
+        s = str(what)     # show what will run, so nothing past the cut is approved unseen
+        shown = s[:1500] + (f" ...[+{len(s) - 1500} more chars not shown]" if len(s) > 1500 else "")
+        warn = "LONG/DESTRUCTIVE: " if len(s) > 1500 or re.search(r"(?i)\b(drop|truncate|delete\s+from|alter)\b", s) else ""
         print(json.dumps({"hookSpecificOutput": {"hookEventName": "PreToolUse", "permissionDecision": "ask",
-                                                 "permissionDecisionReason": f"Read-only guard: database write on {tool_input.get('connection')}: "
-                                                                             f"{str(what)[:300]}"}}))
+                                                 "permissionDecisionReason": f"Read-only guard: database write on "
+                                                                             f"{tool_input.get('connection')}: {warn}{shown}"}}))
         return 0
     r = reason_for(name, tool_input)
     if r and name.startswith("mcp__databases__"):

@@ -1,7 +1,8 @@
 """Check of the docs-hints hook on a tiny library: python3 brain/test_docs_hints.py"""
 import json, os, sqlite3, subprocess, sys, tempfile
 
-d = tempfile.mkdtemp()
+_tmp = tempfile.TemporaryDirectory()          # also TMPDIR of the hook
+d = _tmp.name
 db = os.path.join(d, "docs.db")
 c = sqlite3.connect(db)
 c.executescript("""CREATE TABLE docs(id INTEGER PRIMARY KEY, path TEXT, vendor TEXT, product TEXT, title TEXT, dup_of INTEGER);
@@ -25,7 +26,7 @@ hook = os.path.join(os.path.dirname(os.path.abspath(__file__)), "claude", "hooks
 def run(tool, text, sid):
     inp = json.dumps({"session_id": sid, "tool_name": tool, "tool_response": [{"type": "text", "text": text}]})
     out = subprocess.run([sys.executable, hook], input=inp, capture_output=True, text=True,
-                         env={**os.environ, "DOCS_HINTS_DB": db}).stdout
+                         env={**os.environ, "TMPDIR": d, "DOCS_HINTS_DB": db}).stdout
     return json.loads(out)["hookSpecificOutput"]["additionalContext"] if out else ""
 
 
@@ -40,7 +41,6 @@ assert run("mcp__ontap__ems", "all good, nothing to report", sid + "c") == ""
 ctx = run("mcp__k8s__events", "AttachVolume failed: rpc error: code = Unavailable desc = the NodeID is a required field", sid + "d")
 assert '"the NodeID is a required field" [dell/csi-powermax, chunk 30]' in ctx and "ValidateVolumeHostConnectivity" in ctx, ctx
 assert run("mcp__k8s__events", "AttachVolume failed: rpc error: code = Unavailable desc = the NodeID is a required field", sid + "d") == ""   # an error phrase: once per session too
-for f in os.listdir(tempfile.gettempdir()):
-    if f.startswith("claude-docs-hints-t"):
-        os.remove(os.path.join(tempfile.gettempdir(), f))
+assert os.stat(os.path.join(d, f"claude-brain-{os.getuid()}")).st_mode & 0o777 == 0o700    # private dir for the caches
+_tmp.cleanup()
 print("docs hints ok")

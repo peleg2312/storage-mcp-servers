@@ -21,7 +21,8 @@ for ok in ["oc get pvc -A", "kubectl describe pod csi-node-x -n vxflexos", "oc l
            "oc exec pod-1 -- multipath -ll", "curl -sk -u mon:x https://u4p:8443/univmax/restapi/version",
            "curl -X POST http://localhost:8000/api/items -d '{}'", "curl -X DELETE http://127.0.0.1:8080/items/1",
            "ssh admin@mds01 'show zoneset active vsan 10'", "ssh admin@cl1 'volume show -fields size'",
-           "scli --query_all_volumes", "symcfg list", "symaccess -sid 123 list view", "symdev -sid 123 show 00A1",
+           "scli --query_all_volumes", "sudo -u root symcfg list", "bash -c \"symcfg list\"",
+           "chroot /host multipath -ll", "ssh host 'tail -n 50 /var/log/restart.log'", "symcfg list", "symaccess -sid 123 list view", "symdev -sid 123 show 00A1",
            "govc ls /dc/vm", "esxcli storage core path list", "multipath -ll", "iscsiadm -m session", "nvme list",
            "systemctl status multipathd", 'grep -rn "kubectl delete" docs', "echo hi > /tmp/x", "mount", "lsblk",
            "fdisk -l", "dd if=/dev/sda of=/tmp/mbr bs=512 count=1", "helm list -A", "cat /sys/class/fc_host/host1/port_name",
@@ -41,7 +42,12 @@ for bad in ["ssh admin@mds01 'conf t ; zone name z1 vsan 10'", "ssh admin@cl1 'v
             "mkfs.xfs /dev/sdb", "wipefs -a /dev/sdb", "dd if=/dev/zero of=/dev/sdb bs=1M", "multipath -f mpatha",
             "iscsiadm -m node --login", "nvme disconnect -n nqn.x", "echo 1 > /sys/block/sdb/device/delete",
             "echo '- - -' | tee /sys/class/scsi_host/host0/scan", "oc exec pod-1 -- multipath -f mpatha",
-            "sudo wipefs -a /dev/sdc", "$(ssh admin@mds 'copy run start')", "rescan-scsi-bus.sh -r"]:
+            "sudo wipefs -a /dev/sdc", "sudo -u root symsg -sid 1 create foo", "sudo -g wheel symsg delete x",
+            "xargs -a f symsg delete", "timeout -s KILL 5 symconfigure commit", "bash -c \"symsg create foo\"",
+            "sh -c 'symconfigure -cmd x commit'", "eval \"symsg create foo\"", "eval symsg create foo",
+            "bash -c \"echo hi; symsg create foo\"", "cd /x && sudo bash -lc 'multipath -f x'",
+            "chroot /host multipath -f x", "oc debug node/x -- chroot /host multipath -f x",
+            "oc debug node/x -- chroot /host sh -c 'multipath -F'", "$(ssh admin@mds 'copy run start')", "rescan-scsi-bus.sh -r"]:
     assert sh(bad)[0] == "block", (bad, sh(bad))
 print("shell guard ok")
 
@@ -61,6 +67,13 @@ rc, out = run_hook({"tool_name": "mcp__databases__mongo_write", "tool_input": {"
 assert rc == 0 and '"ask"' in out, out
 assert run_hook({"tool_name": "mcp__databases__pg_query", "tool_input": {"sql": "SELECT 1"}}) == (0, "")
 assert h.reason_for("mcp__databases__pg_query", {"sql": "DROP TABLE t"})
+for q_ in ("symaccess create view masking view", "how to grant access to a vserver", "update volume set autosize"):
+    for t_ in ("mcp__docs-local__search_docs", "mcp__docs-search__search_docs"):
+        assert run_hook({"tool_name": t_, "tool_input": {"query": q_}}) == (0, ""), (t_, q_)
+assert h.reason_for("mcp__databases__pg_query", {"query": "grant all on t to x"})    # databases keep the SQL check
+long_ = "select 1; " + "x" * 2000 + "; drop table users"
+out = run_hook({"tool_name": "mcp__databases__pg_execute", "tool_input": {"connection": "dev", "sql": long_}})[1]
+assert "LONG/DESTRUCTIVE" in out and "more chars not shown" in out, out
 print("databases guard ok")
 
 # Bypass mode: the guard's questions are skipped (the user approved changes on the server); the blocks stay

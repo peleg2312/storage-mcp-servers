@@ -11,7 +11,7 @@ import subprocess
 import sys
 
 MAX_LINES = 15
-ERRORS = "E9,F63,F7,F82,F401,F811,F841"   # syntax errors, undefined names, unused imports / variables, redefinitions
+ERRORS = "E9,F63,F7,F82,F811"   # syntax errors, undefined names, redefinitions (not unused imports: the next edit may use them)
 
 
 def has_config(path):
@@ -53,8 +53,7 @@ def main():
     if r.returncode != 1 or not lines:
         return 0
     more = f"\n... and {len(lines) - MAX_LINES} more" if len(lines) > MAX_LINES else ""
-    msg = (f"ruff found {len(lines)} problem(s) in {os.path.basename(path)} after this edit; fix them now "
-           f"(`ruff check --fix {path}` handles the auto-fixable ones):\n" + "\n".join(lines[:MAX_LINES]) + more)
+    msg = (f"ruff found {len(lines)} problem(s) in {os.path.basename(path)} after this edit; fix them now:\n" + "\n".join(lines[:MAX_LINES]) + more)
     print(json.dumps({"hookSpecificOutput": {"hookEventName": "PostToolUse", "additionalContext": msg}}))
     return 0
 
