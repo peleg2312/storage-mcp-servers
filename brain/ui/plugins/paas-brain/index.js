@@ -2,21 +2,30 @@
 // Shared UI helpers for the tab plugins. Tabs are loaded through a Blob URL and cannot import siblings,
 // so sync-shared.py pastes this block at the top of every index.js. Use: root element gets class "paas".
 const PAAS_CSS = `
-.paas{font:14px/1.5 Inter,ui-sans-serif,system-ui,sans-serif;color:hsl(var(--foreground));padding:28px;max-width:1000px;margin:0 auto;box-sizing:border-box}
+.paas{font:14px/1.5 Inter,ui-sans-serif,system-ui,sans-serif;color:hsl(var(--foreground));padding:24px 28px 40px;max-width:1120px;margin:0 auto;box-sizing:border-box}
 .paas *,.paas *::before,.paas *::after{box-sizing:border-box}
-.paas h2{font-size:22px;font-weight:700;margin:0}
-.paas h3{font-size:15px;font-weight:600;margin:0}
+.paas h2{font-size:22px;font-weight:600;line-height:1.25;margin:0}
+.paas h3{font-size:14px;font-weight:600;margin:0}
 .paas .sub{color:hsl(var(--muted-foreground));font-size:13px}
-.paas .head{display:flex;gap:12px;flex-wrap:wrap;align-items:center;justify-content:space-between;margin-bottom:18px}
-.paas .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
-.paas .spread{justify-content:space-between}
-.paas .card{border:1px solid hsl(var(--border));background:hsl(var(--card));border-radius:12px;padding:16px 18px;margin-top:16px}
-.paas .btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:36px;padding:0 18px;border:0;border-radius:999px;font:600 13px/1.4 inherit;cursor:pointer;color:hsl(var(--primary-foreground));background:var(--paas-gradient,hsl(var(--primary)))}
-.paas .btn.ghost{background:none;color:inherit;border:1px solid hsl(var(--border));font-weight:500}
-.paas .btn.ghost:hover:not(:disabled){background:hsl(var(--accent))}
-.paas .btn.danger{background:none;color:hsl(var(--destructive));border:1px solid hsl(var(--destructive))}
+.paas .head{display:flex;gap:12px 16px;flex-wrap:wrap;align-items:center;justify-content:space-between;padding:0 0 16px;margin-bottom:24px;border-bottom:1px solid hsl(var(--border))}
+.paas .head>div:first-child{min-width:0;flex:1 1 320px}.paas .head .sub{margin-top:4px;max-width:70ch}
+.paas .head .actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.paas .row{display:flex;gap:8px 12px;flex-wrap:wrap;align-items:center}
+.paas .spread{display:flex;gap:8px 12px;flex-wrap:wrap;align-items:center;justify-content:space-between}
+.paas .card{border:1px solid hsl(var(--border));background:hsl(var(--card));border-radius:12px;padding:16px 20px;margin-top:16px;transition:border-color .15s}
+.paas .card[data-id]:hover,.paas .grid .item:hover{border-color:hsl(var(--primary))}
+.paas .grid .item.have{border-color:hsl(var(--primary));box-shadow:0 0 0 3px hsl(var(--ring)/.2)}
+.paas .sec-label{margin:24px 0 8px;font:600 12px/1.4 inherit;color:hsl(var(--muted-foreground));text-transform:uppercase;letter-spacing:.08em}
+.paas .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:36px;padding:0 16px;border:1px solid transparent;border-radius:10px;font:600 13px/1.4 inherit;cursor:pointer;color:hsl(222 47% 11%);background:var(--paas-gradient,hsl(var(--primary)));transition:opacity .15s,background-color .15s,border-color .15s}
+.paas .btn:hover:not(:disabled){opacity:.92}
+.paas .btn.ghost{background:none;color:hsl(var(--foreground));border-color:hsl(var(--border));font-weight:500}
+.paas .btn.ghost:hover:not(:disabled){background:hsl(var(--accent));opacity:1}
+.paas .btn.link{background:none;border-color:transparent;color:hsl(var(--primary));font-weight:500;padding:0 8px}
+.paas .btn.link:hover:not(:disabled){background:hsl(var(--accent));opacity:1}
+.paas .btn.danger{background:none;color:hsl(var(--destructive));border-color:hsl(var(--destructive))}
 .paas .btn.danger.solid{background:hsl(var(--destructive));color:hsl(var(--background))}
 .paas .btn.sm{min-height:30px;padding:0 12px;font-size:12px}
+.paas .btn.link.sm{padding:0 8px}
 .paas .btn:disabled,.paas .btn[aria-busy=true]{opacity:.55;cursor:not-allowed}
 .paas .btn[aria-busy=true]{cursor:progress}
 .paas .btn svg,.paas .ico{width:16px;height:16px;flex:none;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
@@ -27,33 +36,61 @@ const PAAS_CSS = `
 .paas .field .hint{font-size:12px;color:hsl(var(--muted-foreground))}
 .paas .field.invalid input,.paas .field.invalid select,.paas .field.invalid textarea{border-color:hsl(var(--destructive))}
 .paas .field .error{font-size:12px;color:hsl(var(--destructive))}
-.paas .tag,.paas .badge{display:inline-flex;align-items:center;gap:4px;font-size:12px;font-weight:500;border-radius:999px;padding:1px 9px;color:inherit;background:color-mix(in srgb,currentColor 10%,transparent);border:1px solid color-mix(in srgb,currentColor 25%,transparent)}
-.paas .pill{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;border-radius:999px;padding:1px 10px;color:hsl(var(--foreground));background:hsl(var(--muted))}
-.paas .pill::before{content:'';width:8px;height:8px;border-radius:50%;background:currentColor}
+.paas .tag,.paas .badge{display:inline-flex;align-items:center;gap:4px;font-size:12px;font-weight:500;line-height:18px;border-radius:999px;padding:0 8px;color:hsl(var(--muted-foreground));background:none;border:1px solid hsl(var(--border));white-space:nowrap}
+.paas .tags{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.paas .pill{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;line-height:20px;border-radius:999px;padding:0 10px;color:hsl(var(--foreground));background:hsl(var(--muted))}
+.paas .pill::before{content:'';width:8px;height:8px;border-radius:50%;background:currentColor;flex:none}
 .paas .pill.ok::before{background:hsl(var(--primary))}
 .paas .pill.warn{border:1px dashed hsl(var(--muted-foreground))}.paas .pill.warn::before{background:hsl(var(--muted-foreground));border-radius:2px}
 .paas .pill.fail{color:hsl(var(--destructive));background:color-mix(in srgb,hsl(var(--destructive)) 12%,transparent)}.paas .pill.fail::before{border-radius:0;clip-path:polygon(50% 0,100% 100%,0 100%)}
-.paas .table-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
-.paas table{width:100%;border-collapse:collapse;font-size:13.5px}
-.paas th,.paas td{padding:10px 8px;text-align:left;border-bottom:1px solid hsl(var(--border)/.6);vertical-align:middle}
-.paas th{color:hsl(var(--muted-foreground));font-weight:500;font-size:12px;white-space:nowrap}
+.paas .table-wrap{overflow:auto;max-height:min(60vh,560px);-webkit-overflow-scrolling:touch}
+.paas table{width:100%;border-collapse:collapse;font-size:14px}
+.paas th,.paas td{padding:10px 12px;text-align:left;border-bottom:1px solid hsl(var(--border));vertical-align:middle}
+.paas th{position:sticky;top:0;z-index:1;background:hsl(var(--card));color:hsl(var(--muted-foreground));font-weight:600;font-size:12px;text-transform:uppercase;letter-spacing:.06em;white-space:nowrap}
 .paas tr:last-child td{border-bottom:0}
-.paas .seg,.paas .subtabs{display:flex;gap:4px;overflow-x:auto;scrollbar-width:none;-webkit-mask-image:linear-gradient(90deg,#000 calc(100% - 24px),transparent);mask-image:linear-gradient(90deg,#000 calc(100% - 24px),transparent);padding-right:24px}
+.paas th.n,.paas td.n{text-align:right;font-variant-numeric:tabular-nums}
+.paas .seg{display:flex;gap:4px;overflow-x:auto;scrollbar-width:none;border:1px solid hsl(var(--border));border-radius:10px;padding:3px;width:max-content;max-width:100%}
 .paas .seg::-webkit-scrollbar,.paas .subtabs::-webkit-scrollbar{display:none}
-.paas .seg{border:1px solid hsl(var(--border));border-radius:999px;padding:3px;width:max-content;max-width:100%}
-.paas .seg button,.paas .subtabs button{flex:none;min-height:32px;padding:0 14px;border:0;border-radius:999px;background:none;color:hsl(var(--muted-foreground));font:500 13px/1.4 inherit;cursor:pointer;white-space:nowrap}
-.paas .seg button[aria-pressed=true],.paas .seg button[aria-selected=true],.paas .subtabs button[aria-selected=true]{background:hsl(var(--accent));color:hsl(var(--foreground))}
+.paas .seg button{flex:none;min-height:30px;padding:0 14px;border:0;border-radius:8px;background:none;color:hsl(var(--muted-foreground));font:500 13px/1.4 inherit;cursor:pointer;white-space:nowrap}
+.paas .seg button:hover{color:hsl(var(--foreground))}
+.paas .seg button[aria-pressed=true],.paas .seg button[aria-selected=true]{background:hsl(var(--accent));color:hsl(var(--foreground))}
+.paas .subtabs{display:flex;gap:4px;overflow-x:auto;scrollbar-width:none;border-bottom:1px solid hsl(var(--border));margin-bottom:16px}
+.paas .subtabs button{position:relative;flex:none;min-height:40px;padding:0 14px;border:0;background:none;color:hsl(var(--muted-foreground));font:500 14px/1.4 inherit;cursor:pointer;white-space:nowrap}
+.paas .subtabs button:hover{color:hsl(var(--foreground))}
+.paas .subtabs button[aria-selected=true]{color:hsl(var(--foreground));font-weight:600}
+.paas .subtabs button[aria-selected=true]::after{content:'';position:absolute;left:10px;right:10px;bottom:-1px;height:2px;border-radius:2px;background:var(--paas-gradient,hsl(var(--primary)))}
+.paas .tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-top:16px}
+.paas .tile{border:1px solid hsl(var(--border));background:hsl(var(--card));border-radius:12px;padding:16px;min-width:0}
+.paas .tile .k{font-size:12px;font-weight:500;color:hsl(var(--muted-foreground));text-transform:uppercase;letter-spacing:.06em}
+.paas .tile .v{font-size:28px;line-height:1.2;font-weight:600;margin-top:4px;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+.paas .tile .v.sm{font-size:18px;line-height:1.5}
+.paas .tile .v small,.paas .tile .u{font-size:13px;font-weight:400;color:hsl(var(--muted-foreground))}
+.paas .tile .sub{margin-top:2px}
+.paas .gauge{height:4px;border-radius:4px;background:hsl(var(--muted));margin-top:12px;overflow:hidden}
+.paas .gauge i{display:block;height:100%;border-radius:4px;background:var(--paas-gradient,hsl(var(--primary)))}
+.paas .gauge.warn i{background:hsl(var(--foreground)/.55)}.paas .gauge.fail i{background:hsl(var(--destructive))}
 .paas .live{min-height:20px;font-size:13px;color:hsl(var(--muted-foreground))}
+.paas .live:empty{min-height:0}
 .paas .live.err,.paas .alert{color:hsl(var(--destructive))}
 .paas .alert{border:1px solid hsl(var(--destructive));border-radius:12px;padding:14px 16px;margin-top:16px;display:flex;gap:12px;flex-wrap:wrap;align-items:center;justify-content:space-between}
-.paas .empty{border:1px dashed hsl(var(--border));border-radius:12px;padding:28px 16px;margin-top:16px;text-align:center;color:hsl(var(--muted-foreground));display:flex;flex-direction:column;gap:12px;align-items:center}
+.paas .empty{padding:48px 16px;margin-top:16px;text-align:center;color:hsl(var(--muted-foreground));display:flex;flex-direction:column;gap:8px;align-items:center;max-width:46ch;margin-inline:auto}
+.paas .empty .ei{width:48px;height:48px;border-radius:50%;background:hsl(var(--muted));color:hsl(var(--muted-foreground));display:grid;place-items:center;margin-bottom:4px}
+.paas .empty .ei svg{width:22px;height:22px}
+.paas .empty .et{font-size:15px;font-weight:600;color:hsl(var(--foreground))}
+.paas .empty .btn{margin-top:8px}
+.paas .skel{display:flex;flex-direction:column;gap:12px;margin-top:16px}
+.paas .skel i{display:block;border-radius:8px;background:linear-gradient(90deg,hsl(var(--muted)) 25%,hsl(var(--muted-foreground)/.18) 50%,hsl(var(--muted)) 75%);background-size:200% 100%;animation:paas-shimmer 1.4s linear infinite}
+.paas .skel .sk-card{border:1px solid hsl(var(--border));border-radius:12px;padding:16px;display:flex;flex-direction:column;gap:10px;background:hsl(var(--card))}
+.paas .skel .sk-card i:nth-child(1){height:14px;width:34%}.paas .skel .sk-card i:nth-child(2){height:12px;width:82%}.paas .skel .sk-card i:nth-child(3){height:12px;width:56%}
+.paas .skel .sk-row{height:36px}.paas .skel .sk-head{height:14px;width:100%;opacity:.7}
+@keyframes paas-shimmer{from{background-position:200% 0}to{background-position:-200% 0}}
 .paas .confirm{border:1px solid hsl(var(--border));border-radius:12px;padding:12px 14px;display:flex;flex-direction:column;gap:8px;background:hsl(var(--card))}
 .paas .confirm.danger{border-color:hsl(var(--destructive))}
 .paas .confirm label{display:flex;gap:8px;align-items:flex-start;font-size:13px}
 .paas .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
 .paas :focus-visible{outline:2px solid hsl(var(--ring));outline-offset:2px}
 @media (pointer:coarse){.paas .btn,.paas .btn.sm,.paas .seg button,.paas .subtabs button,.paas .field input,.paas .field select{min-height:44px}.paas .confirm input[type=checkbox]{width:24px;height:24px}}
-@media (max-width:640px){.paas{padding:16px}}
+@media (max-width:640px){.paas{padding:16px 16px 32px}.paas .tiles{grid-template-columns:1fr 1fr;gap:10px}.paas .tile .v{font-size:24px}}
 @media (prefers-reduced-motion:reduce){.paas *{animation:none!important;transition:none!important;scroll-behavior:auto!important}}`;
 
 const esc = (s) => String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
@@ -81,27 +118,37 @@ const ICONS = {
   edit: '<path d="M4 20h4L19 9l-4-4L4 16v4zM14 6l4 4"/>',
   search: '<circle cx="11" cy="11" r="7"/><path d="m21 21-5-5"/>',
   x: '<path d="M6 6l12 12M18 6 6 18"/>',
+  inbox: '<path d="M22 12h-6l-2 3h-4l-2-3H2"/><path d="M5.5 5h13L22 12v6a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2v-6z"/>',
+  file: '<path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><path d="M14 3v6h6"/>',
+  calendar: '<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/>',
+  users: '<circle cx="9" cy="8" r="3.5"/><path d="M2 20a7 7 0 0 1 14 0M16 4.5a3.5 3.5 0 0 1 0 7M22 20a7 7 0 0 0-4-6.3"/>',
+  box: '<path d="M21 8 12 3 3 8v8l9 5 9-5z"/><path d="m3 8 9 5 9-5M12 13v8"/>',
+  globe: '<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/>',
 };
 // icon('trash') -> inline SVG markup, decorative (put the words next to it)
 const icon = (name) => `<svg class="ico" viewBox="0 0 24 24" aria-hidden="true" focusable="false">${ICONS[name] || ''}</svg>`;
 
-// header('Reports', 'Files your agents made') -> markup; add buttons into .head after it if needed
-const header = (title, subtitle) => `<div class="head"><div><h2>${esc(title)}</h2>${subtitle ? `<div class="sub">${esc(subtitle)}</div>` : ''}</div></div>`;
+// header('Reports', 'Files your agents made', '<button class="btn">..</button>') -> markup: title + subtitle left, actions (optional) right, hairline under
+const header = (title, subtitle, actions) => `<div class="head"><div><h2>${esc(title)}</h2>${subtitle ? `<div class="sub">${esc(subtitle)}</div>` : ''}</div>${actions ? `<div class="actions">${actions}</div>` : ''}</div>`;
 
-// errorBlock(message, onRetry) -> element: plain-words error with Try again
-function errorBlock(message, onRetry) {
-  const b = el(`<div class="alert" role="alert"><span>The UI server did not answer (${esc(message)})</span></div>`);
-  if (onRetry) {
-    const r = el(`<button type="button" class="btn ghost">${icon('refresh')}Try again</button>`);
-    r.addEventListener('click', onRetry);
-    b.append(r);
-  }
-  return b;
+// skeleton('cards'|'table'|'list') -> markup: shimmering blocks shaped like the content (static under reduced motion)
+function skeleton(kind = 'cards') {
+  const rows = (n, c) => Array.from({ length: n }, () => `<i class="${c}"></i>`).join('');
+  const body = kind === 'table' ? `<i class="sk-head"></i>${rows(5, 'sk-row')}`
+    : kind === 'list' ? rows(6, 'sk-row') : Array.from({ length: 3 }, () => '<div class="sk-card"><i></i><i></i><i></i></div>').join('');
+  return `<div class="skel" role="status" aria-busy="true"><span class="sr">Loading</span>${body}</div>`;
 }
 
-// emptyBlock('No reports yet', 'Refresh', fn) -> element; button only when both label and handler are given
-function emptyBlock(text, actionLabel, onAction) {
-  const b = el(`<div class="empty"><span>${esc(text)}</span></div>`);
+// tags(['a', ['b', 'tooltip'], 'c'], 2) -> markup: at most max quiet outline tags, then a "+n" with the rest in its tooltip
+const tags = (list, max = 2) => {
+  const l = list.filter(Boolean).map((t) => (Array.isArray(t) ? t : [t, '']));
+  const one = ([t, tip]) => `<span class="tag"${tip ? ` title="${esc(tip)}"` : ''}>${esc(t)}</span>`;
+  return `<span class="tags">${l.slice(0, max).map(one).join('')}${l.length > max ? `<span class="tag" title="${esc(l.slice(max).map((x) => x[0]).join(', '))}">+${l.length - max}</span>` : ''}</span>`;
+};
+
+// emptyBlock('One line of help', 'Refresh', fn, {icon:'inbox', title:'No reports yet'}) -> element; button only when both label and handler are given
+function emptyBlock(text, actionLabel, onAction, o = {}) {
+  const b = el(`<div class="empty"><span class="ei">${icon(o.icon || 'inbox')}</span>${o.title ? `<span class="et">${esc(o.title)}</span>` : ''}<span>${esc(text)}</span></div>`);
   if (actionLabel && onAction) {
     const a = el(`<button type="button" class="btn ghost">${esc(actionLabel)}</button>`);
     a.addEventListener('click', onAction);
@@ -153,22 +200,22 @@ function busy(button, label) {
 // (skills, agents, MCP servers, hooks, memory files). Data: server.js.
 
 const CSS = `
-.paas .tabs{margin-bottom:16px;border-bottom:1px solid hsl(var(--border))}
-.paas .grp{margin:18px 0 10px;font-size:13px;font-weight:600;color:hsl(var(--muted-foreground));text-transform:uppercase;letter-spacing:.08em}
-.paas .hk{display:flex;gap:14px;align-items:center;justify-content:space-between;padding:10px 0;border-top:1px solid hsl(var(--border)/.6)}
+.paas .hk{display:flex;gap:16px;align-items:center;justify-content:space-between;padding:12px 8px;margin:0 -8px;border-top:1px solid hsl(var(--border));border-radius:8px}.paas .hk:hover{background:hsl(var(--accent)/.5)}
 .paas .hk-t{min-width:0}
 .paas .sw{position:relative;width:40px;height:22px;flex:none;cursor:pointer}.paas .sw input{opacity:0;width:0;height:0;position:absolute}
 .paas .sw:after{content:'';position:absolute;inset:-11px -4px}
 .paas .sw span{position:absolute;inset:0;border-radius:999px;background:hsl(var(--muted));border:1px solid hsl(var(--border));transition:.15s}
-.paas .sw span:before{content:'';position:absolute;width:16px;height:16px;left:2px;top:2px;border-radius:50%;background:hsl(var(--background));box-shadow:0 1px 2px #0003;transition:.15s}
+.paas .sw span:before{content:'';position:absolute;width:16px;height:16px;left:2px;top:2px;border-radius:50%;background:hsl(var(--background));box-shadow:0 1px 2px hsl(var(--foreground)/.25);transition:.15s}
 .paas .sw input:checked+span{background:var(--paas-gradient,hsl(var(--primary)));border-color:transparent}.paas .sw input:checked+span:before{transform:translateX(18px)}
 .paas .sw input:focus-visible+span{outline:2px solid hsl(var(--ring));outline-offset:2px}
-.paas .res{padding:12px 0;border-bottom:1px solid hsl(var(--border)/.6)}.paas .res:last-child{border:0}
+.paas .res{padding:12px 0;border-bottom:1px solid hsl(var(--border))}.paas .res:last-child{border:0}
 .paas .res a{color:hsl(var(--primary));font-weight:600;text-decoration:none}.paas .res a:hover{text-decoration:underline}
 .paas .snip{color:hsl(var(--muted-foreground));font-size:13px;margin-top:4px;white-space:pre-wrap}.paas .snip b{color:hsl(var(--foreground))}
-.paas .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:12px}
-.paas .item{border:1px solid hsl(var(--border));border-radius:12px;padding:12px 14px;background:hsl(var(--card))}
-.paas .item .t{font-weight:600}.paas .item .d{color:hsl(var(--muted-foreground));font-size:13px;margin-top:4px;display:-webkit-box;-webkit-line-clamp:4;-webkit-box-orient:vertical;overflow:hidden}
+.paas .counts{margin:0 0 24px}
+.paas .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:12px;margin-top:8px}
+.paas .item .row:last-child{margin-top:auto}
+.paas .item{border:1px solid hsl(var(--border));border-radius:12px;padding:16px;background:hsl(var(--card));display:flex;flex-direction:column;gap:8px;transition:border-color .15s}
+.paas .item .t{font-size:14px;font-weight:600}.paas .item .d{color:hsl(var(--muted-foreground));font-size:13px;display:-webkit-box;-webkit-line-clamp:4;-webkit-box-orient:vertical;overflow:hidden}
 .paas .drop{border:2px dashed hsl(var(--border));border-radius:12px;padding:22px;text-align:center;color:hsl(var(--muted-foreground));cursor:pointer}
 .paas .drop.over{border-color:hsl(var(--ring));background:hsl(var(--accent))}.paas .drop[aria-disabled=true]{opacity:.5;cursor:progress}
 .paas .two{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:14px}
@@ -192,10 +239,10 @@ export function mount(container, api) {
   const fromHash = () => { const k = location.hash.replace(/^#brain-/, ''); return keys.includes(k) ? k : null; };
   let tab = fromHash() || (() => { try { const k = sessionStorage.getItem('paas-brain-tab'); return keys.includes(k) ? k : 'docs'; } catch { return 'docs'; } })();
   container.innerHTML = `<style>${PAAS_CSS}${CSS}</style><div class="paas">${header('Brain', 'Loading…')}
-    <div class="note"></div>
+    <div class="note"></div><div class="tiles counts" hidden></div>
     <div class="subtabs tabs" role="tablist" aria-label="Brain sections">${TABS.map(([k, l]) =>
       `<button role="tab" data-k="${k}" aria-selected="${k === tab}" tabindex="${k === tab ? 0 : -1}">${l}</button>`).join('')}</div>
-    <div class="guard"></div><div class="pane" role="tabpanel"></div></div>`;
+    <div class="guard"></div><div class="pane" role="tabpanel">${skeleton('cards')}</div></div>`;
   const pane = container.querySelector('.pane');
   const tabBtns = [...container.querySelectorAll('.tabs button')];
   const sub = container.querySelector('.head .sub');
@@ -235,10 +282,14 @@ export function mount(container, api) {
   async function refresh() {
     try { data = await api.rpc('GET', 'overview'); } catch (e) {
       sub.textContent = SUB;
-      pane.replaceChildren(errorBlock(e.message || String(e), () => { sub.textContent = 'Loading…'; refresh(); }));
+      pane.replaceChildren(errorBlock(e.message || String(e), () => { sub.textContent = 'Loading…'; pane.innerHTML = skeleton('cards'); refresh(); }));
       return;
     }
     const docs = ((data.library.sources || '').split('\n')[0].match(/([\d,]+) documents/) || [])[1];
+    const cnt = container.querySelector('.counts');
+    cnt.innerHTML = [['Skills', data.skills.length, `incl. ${data.skills.filter((x) => x.mine).length} yours`], ['Agents', data.agents.length, ''], ['MCP servers', data.mcp.length, ''], ['Hooks', data.hooks.length, `${data.hooks.filter((h) => h.on).length} on`], ['Docs', docs || '0', 'in the library']]
+      .map(([k, v, u]) => `<div class="tile"><div class="k">${k}</div><div class="v">${esc(v)}</div>${u ? `<div class="u">${u}</div>` : ''}</div>`).join('');
+    cnt.hidden = false;
     sub.textContent = data.library.version ? `Library ${data.library.version}${docs ? ` · ${docs} documents` : ''}` : 'Docs library not installed on this VM';
     render();
   }
@@ -255,16 +306,16 @@ export function mount(container, api) {
 
   function renderMcp() {
     pane.innerHTML = `<div class="card"><h3>MCP servers</h3><div class="sub" style="margin-bottom:8px">${data.mcp.length} connected tool servers</div>${data.mcp.length
-      ? `<div class="table-wrap"><table><tr><th>Name</th><th>Type</th><th>Runs</th><th></th></tr>${data.mcp.map((m) => `<tr><td><b>${esc(m.name)}</b></td><td>${esc(m.type)}</td><td><code>${esc(m.target)}</code></td>
-        <td>${data.canShare ? `<button class="btn ghost sm" data-share="mcp:${esc(m.name)}:0">Share with everyone</button>` : ''}</td></tr>`).join('')}</table></div>`
-      : '<div class="sub">No MCP servers configured.</div>'}
+      ? `<div class="table-wrap"><table><tr><th>Name</th><th>Type</th><th>Runs</th><th><span class="sr">Actions</span></th></tr>${data.mcp.map((m) => `<tr><td><b>${esc(m.name)}</b></td><td>${esc(m.type)}</td><td><code>${esc(m.target)}</code></td>
+        <td>${data.canShare ? `<button class="btn link sm" data-share="mcp:${esc(m.name)}:0">Share with everyone</button>` : ''}</td></tr>`).join('')}</table></div>`
+      : emptyBlock('Ask your admin to connect a tool server, or add one from the Marketplace.', '', null, { icon: 'box', title: 'No MCP servers configured' }).outerHTML}
       <div class="row" style="margin-top:10px"><button class="btn ghost sm chk">${icon('play')} Check connections</button><span class="sub">runs <code>claude mcp list</code></span></div><pre class="st" role="status" style="display:none"></pre></div>
       <div class="card"><h3>Hooks</h3><div class="sub" style="margin-bottom:10px">Small helpers that run around Claude's steps. Switching one off applies to your chats only.</div>${data.hooks.length ? data.hooks.map((h) => `<div class="hk">
         <div class="hk-t"><b>${esc(h.title)}</b> <span class="badge">${h.source === 'shared' ? 'shared' : 'yours'}</span>
         <div class="sub">${esc(h.about || h.command)}</div><div class="sub">${esc(h.when)}${h.matcher !== '*' ? ` · <code>${esc(h.matcher)}</code>` : ''}</div></div>
         ${h.canToggle ? `<label class="sw"><input type="checkbox" role="switch" aria-label="${esc(h.title)}" data-hk="${esc(h.id)}" ${h.on ? 'checked' : ''}><span></span></label>`
           : `<span class="sub">${h.id === 'block-write-tools' ? 'Always on: keeps your storage read-only' : 'Set by root'}</span>`}</div>`).join('')
-        : '<div class="sub">No hooks set up.</div>'}</div>`;
+        : emptyBlock('Hooks are small helpers that run around Claude\'s steps.', '', null, { icon: 'play', title: 'No hooks set up' }).outerHTML}</div>`;
     wireShare(renderMcp);
     pane.querySelectorAll('[data-hk]').forEach((cb) => cb.addEventListener('change', async () => {
       cb.disabled = true;
@@ -282,7 +333,7 @@ export function mount(container, api) {
   // Memory: notes.md / environment.md / tool-map.md are yours (kept by every install); CLAUDE.md is shown only
   function renderMemory(i = 0) {
     const m = data.memory[i];
-    if (!m) { pane.innerHTML = '<div class="empty">No memory files found.</div>'; return; }
+    if (!m) { pane.replaceChildren(emptyBlock('Claude creates them the first time it saves a note.', '', null, { icon: 'file', title: 'No memory files found' })); return; }
     dirty = false;
     pane.innerHTML = `<div class="seg" role="group" aria-label="Memory file">${data.memory.map((x, k) => `<button data-i="${k}" aria-pressed="${k === i}">${esc(x.name)}</button>`).join('')}</div>
       <div class="sub" style="margin:12px 0 8px">${m.editable
@@ -303,7 +354,7 @@ export function mount(container, api) {
     });
   }
 
-  const actions = (kind, id, o) => `<button class="btn ghost sm" data-edit="${esc(id)}">${icon('edit')} Edit</button>${o.mine && data.canShare ? `<button class="btn ghost sm" data-share="${kind}:${esc(id)}:${o.shared ? 1 : 0}">${o.shared ? 'Unshare' : 'Share with everyone'}</button>` : ''}${o.mine ? `<button class="btn danger sm" data-del="${esc(id)}">${icon('trash')} Delete</button>` : ''}`;
+  const actions = (kind, id, o) => `<button class="btn ghost sm" data-edit="${esc(id)}">${icon('edit')} Edit</button>${o.mine && data.canShare ? `<button class="btn link sm" data-share="${kind}:${esc(id)}:${o.shared ? 1 : 0}">${o.shared ? 'Unshare' : 'Share with everyone'}</button>` : ''}${o.mine ? `<button class="btn danger sm" data-del="${esc(id)}">${icon('trash')} Delete</button>` : ''}`;
 
   function wireDelete(kind, rpcName, back) {
     pane.querySelectorAll('[data-del]').forEach((b) => b.addEventListener('click', async () => {
@@ -333,7 +384,7 @@ export function mount(container, api) {
       <div class="d" title="${esc(x.description)}">${esc(x.description)}</div><div class="row">${actions('skill', x.dir, x)}</div></div>`;
     pane.innerHTML = `<div class="row spread"><span class="sub">${data.skills.length} skills · ${mine.length} of them yours</span>
       ${editing ? '' : '<button class="btn new">New skill</button>'}</div>${form}
-      ${mine.length ? `<h3 class="grp">Your skills</h3><div class="grid">${mine.map(card).join('')}</div><h3 class="grp">Built in</h3>` : '<div style="height:12px"></div>'}
+      ${mine.length ? `<div class="sec-label">Your skills</div><div class="grid">${mine.map(card).join('')}</div><div class="sec-label">Built in</div>` : '<div style="height:12px"></div>'}
       <div class="grid">${data.skills.filter((x) => !x.mine).map(card).join('')}</div>`;
     pane.querySelector('.new')?.addEventListener('click', () => renderSkills({}));
     pane.querySelector('.f-cancel')?.addEventListener('click', () => renderSkills());
@@ -354,11 +405,11 @@ export function mount(container, api) {
   function renderAgents() {
     dirty = false;
     const card = (a) => `<div class="item"><div class="t">${esc(a.name)}${a.mine ? ' <span class="tag">yours</span>' : ''}</div><div class="d" title="${esc(a.description)}">${esc(a.description)}</div>
-      <div class="row"><span class="tag">${esc(a.tools)}</span>${a.model ? `<span class="tag">${esc(a.model)}</span>` : ''}</div>
+      ${tags([a.tools, a.model], 2)}
       <div class="row">${actions('agent', a.file, a)}</div></div>`;
     pane.innerHTML = `<div class="row spread"><span class="sub">${data.agents.length} agents: helpers Claude hands a task to (they run with their own instructions and tools)</span>
       <button class="btn new">New agent</button></div><div style="height:12px"></div>${data.agents.length ? `<div class="grid">${data.agents.map(card).join('')}</div>`
-      : '<div class="empty">No agents yet. Click New agent to add a helper.</div>'}`;
+      : emptyBlock('Add a helper Claude can hand a task to: click New agent above.', '', null, { icon: 'box', title: 'No agents yet' }).outerHTML}`;
     pane.querySelector('.new').addEventListener('click', () => editFile('agent', '', true, renderAgents));
     pane.querySelectorAll('[data-edit]').forEach((b) => b.addEventListener('click', () => editFile('agent', b.dataset.edit, false, renderAgents)));
     wireShare(renderAgents);
@@ -444,7 +495,7 @@ export function mount(container, api) {
           <div style="height:12px"></div>${field('Put it under', '<input class="to2" placeholder="local/uploads">', 'vendor/product, default local/uploads')}
           <pre class="upout" role="status" style="display:none"></pre></div>
       </div>
-      <div class="card"><h3>Your added documents</h3>${data.inbox.length ? `<div class="table-wrap"><table><tr><th>File</th><th>Size</th><th>Added</th></tr>${data.inbox.map((f) => `<tr><td><code>${esc(f.path)}</code></td><td>${kb(f.size)}</td><td>${new Date(f.mtime).toLocaleDateString()}</td></tr>`).join('')}</table></div>` : '<div class="sub">None yet</div>'}</div>`}`;
+      <div class="card"><h3>Your added documents</h3>${data.inbox.length ? `<div class="table-wrap"><table><tr><th>File</th><th class="n">Size</th><th class="n">Added</th></tr>${data.inbox.map((f) => `<tr><td><code>${esc(f.path)}</code></td><td class="n">${kb(f.size)}</td><td class="n">${new Date(f.mtime).toLocaleDateString()}</td></tr>`).join('')}</table></div>` : emptyBlock('Documents you add by URL or upload show up here.', '', null, { icon: 'file', title: 'None yet' }).outerHTML}</div>`}`;
     const q = pane.querySelector('.q');
     const out = pane.querySelector('.out');
     const sb = pane.querySelector('.s');
@@ -452,7 +503,7 @@ export function mount(container, api) {
       const term = q.value.trim();
       if (!term || sb.disabled) return;
       const done = busy(sb, 'Searching…');
-      out.innerHTML = '<div class="sub" style="margin-top:12px">Searching…</div>';
+      out.innerHTML = skeleton('list');
       const v = pane.querySelector('.v').value.trim();
       const r = await api.rpc('GET', `search?q=${encodeURIComponent(term)}${v ? `&vendor=${encodeURIComponent(v)}` : ''}`).catch((e) => ({ error: String(e) }));
       done();

@@ -11,6 +11,6 @@ cannot import sibling files.
 - Edit `shared.js`, then run `python3 brain/ui/plugins/sync-shared.py`.
 - `python3 brain/ui/plugins/sync-shared.py --check` exits 1 when a tab is out of date.
 - Give the tab's root element class `paas` and add `<style>${PAAS_CSS}</style>`.
-- Helpers: `esc`, `el`, `icon`, `header`, `errorBlock`, `emptyBlock`, `statusLine`, `confirmInline`, `busy`,
+- Helpers: `esc`, `el`, `icon`, `header(title, sub, actionsHtml)`, `skeleton(kind)`, `tags(list, max)`, `errorBlock`, `emptyBlock`, `statusLine`, `confirmInline`, `busy`,
   `fmtSize`, `fmtTime`. A tab must not define these names itself (sync drops a duplicate one-line `esc`, `fmtSize`, `fmtTime`).
 - No `alert`/`confirm`/`prompt`: use `confirmInline` and `statusLine`.

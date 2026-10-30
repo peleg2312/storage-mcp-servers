@@ -2,21 +2,30 @@
 // Shared UI helpers for the tab plugins. Tabs are loaded through a Blob URL and cannot import siblings,
 // so sync-shared.py pastes this block at the top of every index.js. Use: root element gets class "paas".
 const PAAS_CSS = `
-.paas{font:14px/1.5 Inter,ui-sans-serif,system-ui,sans-serif;color:hsl(var(--foreground));padding:28px;max-width:1000px;margin:0 auto;box-sizing:border-box}
+.paas{font:14px/1.5 Inter,ui-sans-serif,system-ui,sans-serif;color:hsl(var(--foreground));padding:24px 28px 40px;max-width:1120px;margin:0 auto;box-sizing:border-box}
 .paas *,.paas *::before,.paas *::after{box-sizing:border-box}
-.paas h2{font-size:22px;font-weight:700;margin:0}
-.paas h3{font-size:15px;font-weight:600;margin:0}
+.paas h2{font-size:22px;font-weight:600;line-height:1.25;margin:0}
+.paas h3{font-size:14px;font-weight:600;margin:0}
 .paas .sub{color:hsl(var(--muted-foreground));font-size:13px}
-.paas .head{display:flex;gap:12px;flex-wrap:wrap;align-items:center;justify-content:space-between;margin-bottom:18px}
-.paas .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
-.paas .spread{justify-content:space-between}
-.paas .card{border:1px solid hsl(var(--border));background:hsl(var(--card));border-radius:12px;padding:16px 18px;margin-top:16px}
-.paas .btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:36px;padding:0 18px;border:0;border-radius:999px;font:600 13px/1.4 inherit;cursor:pointer;color:hsl(var(--primary-foreground));background:var(--paas-gradient,hsl(var(--primary)))}
-.paas .btn.ghost{background:none;color:inherit;border:1px solid hsl(var(--border));font-weight:500}
-.paas .btn.ghost:hover:not(:disabled){background:hsl(var(--accent))}
-.paas .btn.danger{background:none;color:hsl(var(--destructive));border:1px solid hsl(var(--destructive))}
+.paas .head{display:flex;gap:12px 16px;flex-wrap:wrap;align-items:center;justify-content:space-between;padding:0 0 16px;margin-bottom:24px;border-bottom:1px solid hsl(var(--border))}
+.paas .head>div:first-child{min-width:0;flex:1 1 320px}.paas .head .sub{margin-top:4px;max-width:70ch}
+.paas .head .actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.paas .row{display:flex;gap:8px 12px;flex-wrap:wrap;align-items:center}
+.paas .spread{display:flex;gap:8px 12px;flex-wrap:wrap;align-items:center;justify-content:space-between}
+.paas .card{border:1px solid hsl(var(--border));background:hsl(var(--card));border-radius:12px;padding:16px 20px;margin-top:16px;transition:border-color .15s}
+.paas .card[data-id]:hover,.paas .grid .item:hover{border-color:hsl(var(--primary))}
+.paas .grid .item.have{border-color:hsl(var(--primary));box-shadow:0 0 0 3px hsl(var(--ring)/.2)}
+.paas .sec-label{margin:24px 0 8px;font:600 12px/1.4 inherit;color:hsl(var(--muted-foreground));text-transform:uppercase;letter-spacing:.08em}
+.paas .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:36px;padding:0 16px;border:1px solid transparent;border-radius:10px;font:600 13px/1.4 inherit;cursor:pointer;color:hsl(222 47% 11%);background:var(--paas-gradient,hsl(var(--primary)));transition:opacity .15s,background-color .15s,border-color .15s}
+.paas .btn:hover:not(:disabled){opacity:.92}
+.paas .btn.ghost{background:none;color:hsl(var(--foreground));border-color:hsl(var(--border));font-weight:500}
+.paas .btn.ghost:hover:not(:disabled){background:hsl(var(--accent));opacity:1}
+.paas .btn.link{background:none;border-color:transparent;color:hsl(var(--primary));font-weight:500;padding:0 8px}
+.paas .btn.link:hover:not(:disabled){background:hsl(var(--accent));opacity:1}
+.paas .btn.danger{background:none;color:hsl(var(--destructive));border-color:hsl(var(--destructive))}
 .paas .btn.danger.solid{background:hsl(var(--destructive));color:hsl(var(--background))}
 .paas .btn.sm{min-height:30px;padding:0 12px;font-size:12px}
+.paas .btn.link.sm{padding:0 8px}
 .paas .btn:disabled,.paas .btn[aria-busy=true]{opacity:.55;cursor:not-allowed}
 .paas .btn[aria-busy=true]{cursor:progress}
 .paas .btn svg,.paas .ico{width:16px;height:16px;flex:none;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
@@ -27,33 +36,61 @@ const PAAS_CSS = `
 .paas .field .hint{font-size:12px;color:hsl(var(--muted-foreground))}
 .paas .field.invalid input,.paas .field.invalid select,.paas .field.invalid textarea{border-color:hsl(var(--destructive))}
 .paas .field .error{font-size:12px;color:hsl(var(--destructive))}
-.paas .tag,.paas .badge{display:inline-flex;align-items:center;gap:4px;font-size:12px;font-weight:500;border-radius:999px;padding:1px 9px;color:inherit;background:color-mix(in srgb,currentColor 10%,transparent);border:1px solid color-mix(in srgb,currentColor 25%,transparent)}
-.paas .pill{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;border-radius:999px;padding:1px 10px;color:hsl(var(--foreground));background:hsl(var(--muted))}
-.paas .pill::before{content:'';width:8px;height:8px;border-radius:50%;background:currentColor}
+.paas .tag,.paas .badge{display:inline-flex;align-items:center;gap:4px;font-size:12px;font-weight:500;line-height:18px;border-radius:999px;padding:0 8px;color:hsl(var(--muted-foreground));background:none;border:1px solid hsl(var(--border));white-space:nowrap}
+.paas .tags{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.paas .pill{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;line-height:20px;border-radius:999px;padding:0 10px;color:hsl(var(--foreground));background:hsl(var(--muted))}
+.paas .pill::before{content:'';width:8px;height:8px;border-radius:50%;background:currentColor;flex:none}
 .paas .pill.ok::before{background:hsl(var(--primary))}
 .paas .pill.warn{border:1px dashed hsl(var(--muted-foreground))}.paas .pill.warn::before{background:hsl(var(--muted-foreground));border-radius:2px}
 .paas .pill.fail{color:hsl(var(--destructive));background:color-mix(in srgb,hsl(var(--destructive)) 12%,transparent)}.paas .pill.fail::before{border-radius:0;clip-path:polygon(50% 0,100% 100%,0 100%)}
-.paas .table-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
-.paas table{width:100%;border-collapse:collapse;font-size:13.5px}
-.paas th,.paas td{padding:10px 8px;text-align:left;border-bottom:1px solid hsl(var(--border)/.6);vertical-align:middle}
-.paas th{color:hsl(var(--muted-foreground));font-weight:500;font-size:12px;white-space:nowrap}
+.paas .table-wrap{overflow:auto;max-height:min(60vh,560px);-webkit-overflow-scrolling:touch}
+.paas table{width:100%;border-collapse:collapse;font-size:14px}
+.paas th,.paas td{padding:10px 12px;text-align:left;border-bottom:1px solid hsl(var(--border));vertical-align:middle}
+.paas th{position:sticky;top:0;z-index:1;background:hsl(var(--card));color:hsl(var(--muted-foreground));font-weight:600;font-size:12px;text-transform:uppercase;letter-spacing:.06em;white-space:nowrap}
 .paas tr:last-child td{border-bottom:0}
-.paas .seg,.paas .subtabs{display:flex;gap:4px;overflow-x:auto;scrollbar-width:none;-webkit-mask-image:linear-gradient(90deg,#000 calc(100% - 24px),transparent);mask-image:linear-gradient(90deg,#000 calc(100% - 24px),transparent);padding-right:24px}
+.paas th.n,.paas td.n{text-align:right;font-variant-numeric:tabular-nums}
+.paas .seg{display:flex;gap:4px;overflow-x:auto;scrollbar-width:none;border:1px solid hsl(var(--border));border-radius:10px;padding:3px;width:max-content;max-width:100%}
 .paas .seg::-webkit-scrollbar,.paas .subtabs::-webkit-scrollbar{display:none}
-.paas .seg{border:1px solid hsl(var(--border));border-radius:999px;padding:3px;width:max-content;max-width:100%}
-.paas .seg button,.paas .subtabs button{flex:none;min-height:32px;padding:0 14px;border:0;border-radius:999px;background:none;color:hsl(var(--muted-foreground));font:500 13px/1.4 inherit;cursor:pointer;white-space:nowrap}
-.paas .seg button[aria-pressed=true],.paas .seg button[aria-selected=true],.paas .subtabs button[aria-selected=true]{background:hsl(var(--accent));color:hsl(var(--foreground))}
+.paas .seg button{flex:none;min-height:30px;padding:0 14px;border:0;border-radius:8px;background:none;color:hsl(var(--muted-foreground));font:500 13px/1.4 inherit;cursor:pointer;white-space:nowrap}
+.paas .seg button:hover{color:hsl(var(--foreground))}
+.paas .seg button[aria-pressed=true],.paas .seg button[aria-selected=true]{background:hsl(var(--accent));color:hsl(var(--foreground))}
+.paas .subtabs{display:flex;gap:4px;overflow-x:auto;scrollbar-width:none;border-bottom:1px solid hsl(var(--border));margin-bottom:16px}
+.paas .subtabs button{position:relative;flex:none;min-height:40px;padding:0 14px;border:0;background:none;color:hsl(var(--muted-foreground));font:500 14px/1.4 inherit;cursor:pointer;white-space:nowrap}
+.paas .subtabs button:hover{color:hsl(var(--foreground))}
+.paas .subtabs button[aria-selected=true]{color:hsl(var(--foreground));font-weight:600}
+.paas .subtabs button[aria-selected=true]::after{content:'';position:absolute;left:10px;right:10px;bottom:-1px;height:2px;border-radius:2px;background:var(--paas-gradient,hsl(var(--primary)))}
+.paas .tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-top:16px}
+.paas .tile{border:1px solid hsl(var(--border));background:hsl(var(--card));border-radius:12px;padding:16px;min-width:0}
+.paas .tile .k{font-size:12px;font-weight:500;color:hsl(var(--muted-foreground));text-transform:uppercase;letter-spacing:.06em}
+.paas .tile .v{font-size:28px;line-height:1.2;font-weight:600;margin-top:4px;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+.paas .tile .v.sm{font-size:18px;line-height:1.5}
+.paas .tile .v small,.paas .tile .u{font-size:13px;font-weight:400;color:hsl(var(--muted-foreground))}
+.paas .tile .sub{margin-top:2px}
+.paas .gauge{height:4px;border-radius:4px;background:hsl(var(--muted));margin-top:12px;overflow:hidden}
+.paas .gauge i{display:block;height:100%;border-radius:4px;background:var(--paas-gradient,hsl(var(--primary)))}
+.paas .gauge.warn i{background:hsl(var(--foreground)/.55)}.paas .gauge.fail i{background:hsl(var(--destructive))}
 .paas .live{min-height:20px;font-size:13px;color:hsl(var(--muted-foreground))}
+.paas .live:empty{min-height:0}
 .paas .live.err,.paas .alert{color:hsl(var(--destructive))}
 .paas .alert{border:1px solid hsl(var(--destructive));border-radius:12px;padding:14px 16px;margin-top:16px;display:flex;gap:12px;flex-wrap:wrap;align-items:center;justify-content:space-between}
-.paas .empty{border:1px dashed hsl(var(--border));border-radius:12px;padding:28px 16px;margin-top:16px;text-align:center;color:hsl(var(--muted-foreground));display:flex;flex-direction:column;gap:12px;align-items:center}
+.paas .empty{padding:48px 16px;margin-top:16px;text-align:center;color:hsl(var(--muted-foreground));display:flex;flex-direction:column;gap:8px;align-items:center;max-width:46ch;margin-inline:auto}
+.paas .empty .ei{width:48px;height:48px;border-radius:50%;background:hsl(var(--muted));color:hsl(var(--muted-foreground));display:grid;place-items:center;margin-bottom:4px}
+.paas .empty .ei svg{width:22px;height:22px}
+.paas .empty .et{font-size:15px;font-weight:600;color:hsl(var(--foreground))}
+.paas .empty .btn{margin-top:8px}
+.paas .skel{display:flex;flex-direction:column;gap:12px;margin-top:16px}
+.paas .skel i{display:block;border-radius:8px;background:linear-gradient(90deg,hsl(var(--muted)) 25%,hsl(var(--muted-foreground)/.18) 50%,hsl(var(--muted)) 75%);background-size:200% 100%;animation:paas-shimmer 1.4s linear infinite}
+.paas .skel .sk-card{border:1px solid hsl(var(--border));border-radius:12px;padding:16px;display:flex;flex-direction:column;gap:10px;background:hsl(var(--card))}
+.paas .skel .sk-card i:nth-child(1){height:14px;width:34%}.paas .skel .sk-card i:nth-child(2){height:12px;width:82%}.paas .skel .sk-card i:nth-child(3){height:12px;width:56%}
+.paas .skel .sk-row{height:36px}.paas .skel .sk-head{height:14px;width:100%;opacity:.7}
+@keyframes paas-shimmer{from{background-position:200% 0}to{background-position:-200% 0}}
 .paas .confirm{border:1px solid hsl(var(--border));border-radius:12px;padding:12px 14px;display:flex;flex-direction:column;gap:8px;background:hsl(var(--card))}
 .paas .confirm.danger{border-color:hsl(var(--destructive))}
 .paas .confirm label{display:flex;gap:8px;align-items:flex-start;font-size:13px}
 .paas .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
 .paas :focus-visible{outline:2px solid hsl(var(--ring));outline-offset:2px}
 @media (pointer:coarse){.paas .btn,.paas .btn.sm,.paas .seg button,.paas .subtabs button,.paas .field input,.paas .field select{min-height:44px}.paas .confirm input[type=checkbox]{width:24px;height:24px}}
-@media (max-width:640px){.paas{padding:16px}}
+@media (max-width:640px){.paas{padding:16px 16px 32px}.paas .tiles{grid-template-columns:1fr 1fr;gap:10px}.paas .tile .v{font-size:24px}}
 @media (prefers-reduced-motion:reduce){.paas *{animation:none!important;transition:none!important;scroll-behavior:auto!important}}`;
 
 const esc = (s) => String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
@@ -81,27 +118,37 @@ const ICONS = {
   edit: '<path d="M4 20h4L19 9l-4-4L4 16v4zM14 6l4 4"/>',
   search: '<circle cx="11" cy="11" r="7"/><path d="m21 21-5-5"/>',
   x: '<path d="M6 6l12 12M18 6 6 18"/>',
+  inbox: '<path d="M22 12h-6l-2 3h-4l-2-3H2"/><path d="M5.5 5h13L22 12v6a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2v-6z"/>',
+  file: '<path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><path d="M14 3v6h6"/>',
+  calendar: '<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/>',
+  users: '<circle cx="9" cy="8" r="3.5"/><path d="M2 20a7 7 0 0 1 14 0M16 4.5a3.5 3.5 0 0 1 0 7M22 20a7 7 0 0 0-4-6.3"/>',
+  box: '<path d="M21 8 12 3 3 8v8l9 5 9-5z"/><path d="m3 8 9 5 9-5M12 13v8"/>',
+  globe: '<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/>',
 };
 // icon('trash') -> inline SVG markup, decorative (put the words next to it)
 const icon = (name) => `<svg class="ico" viewBox="0 0 24 24" aria-hidden="true" focusable="false">${ICONS[name] || ''}</svg>`;
 
-// header('Reports', 'Files your agents made') -> markup; add buttons into .head after it if needed
-const header = (title, subtitle) => `<div class="head"><div><h2>${esc(title)}</h2>${subtitle ? `<div class="sub">${esc(subtitle)}</div>` : ''}</div></div>`;
+// header('Reports', 'Files your agents made', '<button class="btn">..</button>') -> markup: title + subtitle left, actions (optional) right, hairline under
+const header = (title, subtitle, actions) => `<div class="head"><div><h2>${esc(title)}</h2>${subtitle ? `<div class="sub">${esc(subtitle)}</div>` : ''}</div>${actions ? `<div class="actions">${actions}</div>` : ''}</div>`;
 
-// errorBlock(message, onRetry) -> element: plain-words error with Try again
-function errorBlock(message, onRetry) {
-  const b = el(`<div class="alert" role="alert"><span>The UI server did not answer (${esc(message)})</span></div>`);
-  if (onRetry) {
-    const r = el(`<button type="button" class="btn ghost">${icon('refresh')}Try again</button>`);
-    r.addEventListener('click', onRetry);
-    b.append(r);
-  }
-  return b;
+// skeleton('cards'|'table'|'list') -> markup: shimmering blocks shaped like the content (static under reduced motion)
+function skeleton(kind = 'cards') {
+  const rows = (n, c) => Array.from({ length: n }, () => `<i class="${c}"></i>`).join('');
+  const body = kind === 'table' ? `<i class="sk-head"></i>${rows(5, 'sk-row')}`
+    : kind === 'list' ? rows(6, 'sk-row') : Array.from({ length: 3 }, () => '<div class="sk-card"><i></i><i></i><i></i></div>').join('');
+  return `<div class="skel" role="status" aria-busy="true"><span class="sr">Loading</span>${body}</div>`;
 }
 
-// emptyBlock('No reports yet', 'Refresh', fn) -> element; button only when both label and handler are given
-function emptyBlock(text, actionLabel, onAction) {
-  const b = el(`<div class="empty"><span>${esc(text)}</span></div>`);
+// tags(['a', ['b', 'tooltip'], 'c'], 2) -> markup: at most max quiet outline tags, then a "+n" with the rest in its tooltip
+const tags = (list, max = 2) => {
+  const l = list.filter(Boolean).map((t) => (Array.isArray(t) ? t : [t, '']));
+  const one = ([t, tip]) => `<span class="tag"${tip ? ` title="${esc(tip)}"` : ''}>${esc(t)}</span>`;
+  return `<span class="tags">${l.slice(0, max).map(one).join('')}${l.length > max ? `<span class="tag" title="${esc(l.slice(max).map((x) => x[0]).join(', '))}">+${l.length - max}</span>` : ''}</span>`;
+};
+
+// emptyBlock('One line of help', 'Refresh', fn, {icon:'inbox', title:'No reports yet'}) -> element; button only when both label and handler are given
+function emptyBlock(text, actionLabel, onAction, o = {}) {
+  const b = el(`<div class="empty"><span class="ei">${icon(o.icon || 'inbox')}</span>${o.title ? `<span class="et">${esc(o.title)}</span>` : ''}<span>${esc(text)}</span></div>`);
   if (actionLabel && onAction) {
     const a = el(`<button type="button" class="btn ghost">${esc(actionLabel)}</button>`);
     a.addEventListener('click', onAction);
@@ -157,14 +204,7 @@ const HINT = { ok: 'Working', warn: 'Worth a look, not broken', fail: 'Needs fix
 
 // Tab-specific rules only; the common look is PAAS_CSS.
 const CSS = `
-.paas .tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px;margin-top:16px}
-.paas .tile{border:1px solid hsl(var(--border));background:hsl(var(--card));border-radius:12px;padding:14px 16px}
-.paas .tile .k{font-size:12px;color:hsl(var(--muted-foreground));text-transform:uppercase;letter-spacing:.06em}
-.paas .tile .v{font-size:22px;font-weight:700;margin-top:2px;font-variant-numeric:tabular-nums}
-.paas .gauge{height:5px;border-radius:5px;background:hsl(var(--muted));margin-top:8px;overflow:hidden}
-.paas .gauge i{display:block;height:100%;border-radius:5px;background:hsl(var(--primary))}
-.paas .gauge.warn i{background:#b45309}.paas .gauge.fail i{background:hsl(var(--destructive))}
-.paas td.g{color:hsl(var(--muted-foreground));width:150px}.paas td.s{width:100px;white-space:nowrap}
+.paas td.g{color:hsl(var(--muted-foreground));width:150px;font-size:12px;text-transform:uppercase;letter-spacing:.06em;font-weight:600}.paas td.s{width:100px;white-space:nowrap}
 .paas .fix{margin-top:4px;font-size:13px;display:flex;gap:8px;flex-wrap:wrap;align-items:center}
 .paas .fix code{background:hsl(var(--muted));border-radius:6px;padding:1px 6px;font-size:12px}
 .paas .busy{opacity:.6;transition:opacity .15s}
@@ -174,13 +214,11 @@ const CSS = `
 .paas .hit:hover .bar,.paas .hit:focus-visible .bar{opacity:1}
 .paas .hit:focus-visible{outline:2px solid hsl(var(--ring));outline-offset:-2px}
 .paas .axis{display:flex;justify-content:space-between;color:hsl(var(--muted-foreground));font-size:12px;margin-top:6px}
-.paas .tip{position:absolute;pointer-events:none;background:hsl(var(--popover));color:hsl(var(--popover-foreground));border:1px solid hsl(var(--border));border-radius:8px;padding:6px 10px;font-size:12px;white-space:nowrap;box-shadow:0 8px 24px rgba(0,0,0,.25);display:none;z-index:5}
+.paas .tip{position:absolute;pointer-events:none;background:hsl(var(--popover));color:hsl(var(--popover-foreground));border:1px solid hsl(var(--border));border-radius:8px;padding:6px 10px;font-size:12px;white-space:nowrap;box-shadow:0 8px 24px hsl(var(--foreground)/.15);display:none;z-index:5}
 .paas .grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(320px,100%),1fr));gap:16px}
-.paas td.n,.paas th.n{text-align:right;font-variant-numeric:tabular-nums}
-.paas .meter{height:4px;border-radius:4px;background:hsl(var(--primary));margin-top:4px}
+.paas .meter{height:3px;border-radius:3px;background:var(--paas-gradient,hsl(var(--primary)));margin-top:6px}
 .paas .name{max-width:340px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.paas .sw{display:flex;justify-content:center;margin-bottom:18px}
-@media (max-width:640px){.paas td.g{width:auto}.paas .tiles{grid-template-columns:1fr 1fr;gap:10px}.paas .name{max-width:150px}}`;
+@media (max-width:640px){.paas td.g{width:auto}.paas .name{max-width:150px}}`;
 
 const pill = (s) => `<span class="pill ${s}" title="${HINT[s]}">${LABEL[s]}</span>`;
 const fmtTok = (n) => (n >= 1e9 ? `${(n / 1e9).toFixed(1)}B` : n >= 1e6 ? `${(n / 1e6).toFixed(1)}M` : n >= 1e3 ? `${(n / 1e3).toFixed(1)}K` : `${n}`);
@@ -194,10 +232,10 @@ const copy = async (text, st) => {
 };
 
 function mountHealth(container, api) {
-  container.innerHTML = `${header('Health', 'Brain health on this VM: the checks of /brain-health that need no AI, live')}
-    <div class="top" style="min-height:80px"><div class="sub">Checking…</div></div>
-    <div class="card"><h3>MCP servers</h3><div class="mcp sub">Starting each server to test it (up to a minute)…</div></div>`;
-  const head = container.querySelector('.head');
+  container.innerHTML = `${header('Health', 'Brain health on this VM: the checks of /brain-health that need no AI, live', '<span class="slot"></span>')}
+    <div class="top">${skeleton('cards')}</div>
+    <div class="sec-label">MCP servers</div><div class="card" style="margin-top:0"><div class="mcp sub">Starting each server to test it (up to a minute)…</div></div>`;
+  const head = container.querySelector('.actions');
   const btn = el(`<button type="button" class="btn">${icon('refresh')}Run again</button>`);
   head.append(btn);
   const st = statusLine(container);
@@ -222,12 +260,12 @@ function mountHealth(container, api) {
     const fixOf = (c) => (c.fix ? `<div class="fix"><span>How to fix: ${esc(c.fix)}</span>${c.cmd ? `<code>${esc(c.cmd)}</code><button type="button" class="btn ghost sm" data-copy="${esc(c.cmd)}">${icon('copy')}Copy command</button>` : ''}</div>` : '');
     top.innerHTML = `
       <div class="tiles">
-        <div class="tile"><div class="k">Host</div><div class="v" style="font-size:17px">${esc(m.host)}</div><div class="sub">${esc(m.os)}</div></div>
-        <div class="tile"><div class="k">Memory</div><div class="v">${(used * 100).toFixed(0)}%${lvl ? ` <span class="sub">${lvl === 'fail' ? 'Critical' : 'High'}</span>` : ''}</div><div class="sub">${gb(m.mem.total - m.mem.free)} of ${gb(m.mem.total)}</div><div class="gauge ${lvl}"><i style="width:${used * 100}%"></i></div></div>
+        <div class="tile"><div class="k">Host</div><div class="v sm">${esc(m.host)}</div><div class="sub">${esc(m.os)}</div></div>
+        <div class="tile"><div class="k">Memory</div><div class="v">${(used * 100).toFixed(0)}<span class="u">%</span>${lvl ? ` <span class="u">${lvl === 'fail' ? 'Critical' : 'High'}</span>` : ''}</div><div class="sub">${gb(m.mem.total - m.mem.free)} of ${gb(m.mem.total)}</div><div class="gauge ${lvl}"><i style="width:${used * 100}%"></i></div></div>
         <div class="tile"><div class="k">Load (1 min)</div><div class="v">${m.load[0].toFixed(2)}</div><div class="sub">${m.cpus} CPUs, ${m.load[0] / m.cpus > 1 ? 'busy' : 'ok'} (fine while load stays below this)</div></div>
-        <div class="tile"><div class="k">Up</div><div class="v" style="font-size:19px">${dur(m.uptime)}</div><div class="sub">since last restart</div></div>
+        <div class="tile"><div class="k">Up</div><div class="v sm">${dur(m.uptime)}</div><div class="sub">since last restart</div></div>
       </div>
-      <div class="card"><div class="row"><h3>Brain checks</h3>${summary}</div><div class="table-wrap"><table>
+      <div class="sec-label">Brain checks</div><div class="card" style="margin-top:0"><div class="row" style="margin-bottom:8px">${summary}</div><div class="table-wrap"><table>
         ${groups.map((g) => g.map((c, i) => `<tr><td class="g">${i ? '' : esc(c.group)}</td><td>${esc(c.name)}<div class="sub">${esc(c.detail)}</div>${fixOf(c)}</td><td class="s">${pill(c.status)}</td></tr>`).join('')).join('')}
       </table></div><div class="sub" style="margin-top:8px">Updated ${new Date().toLocaleTimeString()}</div></div>`;
     top.querySelectorAll('[data-copy]').forEach((b) => b.addEventListener('click', () => copy(b.dataset.copy, st)));
@@ -257,10 +295,10 @@ function mountHealth(container, api) {
 
 function mountUsage(container, api) {
   let days = 30;
-  container.innerHTML = `${header('Usage', 'Tokens and estimated cost of every Claude Code session on this VM. Estimated at API list prices; on a subscription you are not billed per token, so it shows relative use.')}
-    <div class="body"><div class="sub">Reading session logs…</div></div>`;
+  container.innerHTML = `${header('Usage', 'Tokens and estimated cost of every Claude Code session on this VM. Estimated at API list prices; on a subscription you are not billed per token, so it shows relative use.', '<span class="slot"></span>')}
+    <div class="body">${skeleton('cards')}</div>`;
   const seg = el(`<div class="seg" role="group" aria-label="Range">${[7, 30, 90].map((d) => `<button type="button" data-d="${d}" aria-pressed="${d === days}">${d} days</button>`).join('')}</div>`);
-  container.querySelector('.head').append(seg);
+  container.querySelector('.actions').append(seg);
   const body = container.querySelector('.body');
   seg.querySelectorAll('button').forEach((b) => b.addEventListener('click', () => {
     days = Number(b.dataset.d);
@@ -317,14 +355,15 @@ function mountUsage(container, api) {
 export function mount(container, api) {
   let view = 'health';
   try { if (localStorage.getItem('paas-status.view') === 'usage') view = 'usage'; } catch { /* storage blocked */ }
-  container.innerHTML = `<style>${PAAS_CSS}${CSS}</style><div class="paas"><div class="sw"><div class="seg" role="group" aria-label="View">
-    <button type="button" data-v="health">Health</button><button type="button" data-v="usage">Usage</button></div></div><div class="pane"></div></div>`;
+  container.innerHTML = `<style>${PAAS_CSS}${CSS}</style><div class="paas"><div class="pane"></div></div>`;
+  const sw = el('<div class="seg" role="group" aria-label="View"><button type="button" data-v="health">Health</button><button type="button" data-v="usage">Usage</button></div>');
   const pane = container.querySelector('.pane');
-  const btns = container.querySelectorAll('.sw button');
+  const btns = sw.querySelectorAll('button');
   const show = (v) => {
     btns.forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.v === v)));
     try { localStorage.setItem('paas-status.view', v); } catch { /* storage blocked */ }
     (v === 'usage' ? mountUsage : mountHealth)(pane, api);
+    pane.querySelector('.actions')?.prepend(sw);
   };
   btns.forEach((b) => b.addEventListener('click', () => show(b.dataset.v)));
   show(view);
