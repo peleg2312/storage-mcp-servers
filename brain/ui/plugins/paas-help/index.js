@@ -159,11 +159,11 @@ const SECTIONS = [
     <p>This is Claude, your assistant for storage and development work. Ask in plain words, it looks things up,
     checks your systems when you ask it to, and writes reports, scripts and code for you.</p>
     <div class="grid">
-      <div class="card"><h4>Knows your environment</h4><p>Reads PowerMax, ONTAP, PowerFlex, MDS, UCS and VMware, and searches the vendor docs and KBs.</p></div>
-      <div class="card"><h4>Never changes storage</h4><p>It only reads your systems. When something needs changing, it gives you the exact steps to run.</p></div>
-      <div class="card"><h4>Yours</h4><p>Your chats, files, reports and notes are your own. Nobody else sees them.</p></div>
+      <div class="card"><h3>Knows your environment</h3><p>Reads PowerMax, ONTAP, PowerFlex, MDS, UCS and VMware, and searches the vendor docs and KBs.</p></div>
+      <div class="card"><h3>Never changes storage</h3><p>It only reads your systems. When something needs changing, it gives you the exact steps to run.</p></div>
+      <div class="card"><h3>Yours</h3><p>Your chats, files, reports and notes are your own. Nobody else sees them.</p></div>
     </div>
-    <h4>Try this first</h4>
+    <h3>Try this first</h3>
     <ol><li>Press <b>New chat</b> in the left menu (${k('☰')} on a phone) and ask something, e.g. "which hosts have only one path?".</li>
     <li>Type ${k('/')} in the message box to see every command.</li>
     <li>Ask for "an Excel of all LUNs over 2 TB" and find it in ${tab('Reports')}.</li>
@@ -178,7 +178,7 @@ const SECTIONS = [
     <li><b>Stop</b> (the square button) ends the answer. A note "No response requested" after it is normal.</li>
     <li>The chat follows the answer down. Scroll up to read and it stays where you are; scroll back down to follow again.</li>
     <li>Files Claude makes get a <b>↓ Download</b> button: one click and it is on your computer.</li></ul>
-    <h4>Sending more while it is still answering</h4>
+    <h3>Sending more while it is still answering</h3>
     <ul><li>Just send: your message waits in a <b>queue</b> above the box and goes out by itself when the answer ends.</li>
     <li><b>Edit</b> or <b>Delete</b> a queued message if you change your mind.</li>
     <li>Urgent? <b>Send now</b> stops the current answer and sends yours straight away.</li></ul>` },
@@ -189,24 +189,26 @@ const SECTIONS = [
     <li>Answers start with the short answer, then the evidence, the findings and the <b>sources</b>. If something could not be checked, it says so: it does not guess.</li>
     <li>Long lists or trends: ask for "a chart", "Excel" or "CSV".</li>
     <li>Need a change made? Claude writes the steps <b>for you to run</b>, with checks before and after and how to undo it.</li>
-    <li>Tell it a fact once ("our prod SVMs start with svm_p") and it remembers it for next time.</li></ul>
-    <h4>Ideas</h4>
+    <li>Tell it a fact once ("our prod SVMs start with svm_p") and it remembers it for next time.</li>
+    <li><b>Paste a log line, alert or code</b> and ask "explain this": Claude looks it up in the vendor docs and answers with sources.</li>
+    <li><b>Open a document</b>: "show me the start of the PowerMax SRDF guide". <b>Ask several things at once</b>: Claude searches for all of them together.</li></ul>
+    <h3>Ideas</h3>
     <ul class="ex"><li>Which hosts have a single path to array 1234?</li><li>Trace this OpenShift PVC to its LUN, array and switch ports.</li>
     <li>What does EMS event wafl.vol.autoSize.fail mean and what do I do?</li><li>IOPS and latency per volume for this PowerFlex host.</li>
     <li>Is this LUN still used anywhere?</li><li>Build a FastAPI endpoint that lists storage groups, with tests.</li><li>Show me my app in the Browser tab.</li></ul>` },
 
   { id: 'commands', title: '/ commands', body: `
     <p>Type ${k('/')} in the message box (or press <b>/</b>). Keep typing to filter, ${k('↑')} ${k('↓')} and ${k('Enter')} to pick.</p>
-    <h4>Ready-made routines</h4>
+    <h3>Ready-made routines</h3>
     <ul><li><code>/morning-check</code> the daily health round · <code>/capacity-report</code> capacity across arrays</li>
     <li><code>/trace-path</code> a host to its storage, end to end · <code>/identify-lun</code> what a NAA / WWN is and where it lives</li>
     <li><code>/zoning-audit</code>, <code>/fabric-health</code> the SAN fabrics · <code>/replication-check</code> SRDF / SnapMirror</li>
     <li><code>/explain-error</code> an error or alert, from the docs · <code>/change-review</code> a change plan checked before you run it</li>
     <li><code>/decommission-check</code> before anything is removed · <code>/report-export</code> Excel, CSV, charts</li></ul>
     <p>You rarely have to type them: Claude picks the right one from your question.</p>
-    <h4>Handy commands</h4>
-    <ul><li><code>/clear</code> starts a fresh chat and deletes the one you were in (it goes to the archive, where you can still restore it). <code>/new</code> starts a fresh chat and keeps the old one.</li>
-    <ul><li><code>/compact</code> a long chat: Claude summarises it and carries on, quicker and cheaper.</li>
+    <h3>Handy commands</h3>
+    <ul><li><code>/clear</code> empties this chat and moves it to the archive (you can restore it). <code>/new</code> starts a new chat and keeps this one.</li>
+    <li><code>/compact</code> a long chat: Claude summarises it and carries on, quicker and cheaper.</li>
     <li><code>/context</code> how full the chat is · <code>/cost</code> what it has used so far.</li>
     <li><code>/review</code> looks over code changes in a project.</li></ul>` },
 
@@ -219,21 +221,21 @@ const SECTIONS = [
   { id: 'projects', title: 'Projects: code, files and Git', body: `
     <p>A <b>project</b> is a folder you work in with Claude: an API, a script collection, a Terraform repo. Its chats run in that folder,
     so Claude reads and edits the code there. A project also gets three more tabs: ${tab('Shell')}, ${tab('Files')} and ${tab('Source control')}.</p>
-    <h4>Set up Git once</h4>
+    <h3>Set up Git once</h3>
     <p>Before your first commit, tell Git who you are: <b>Settings → Git</b>, fill in your name and your GitLab e-mail, <b>Save</b>.
     (Or in ${tab('Shell')}: <code>git config --global user.name "Your Name"</code> and <code>git config --global user.email you@company.com</code>.)</p>
-    <h4>Create a project</h4>
+    <h3>Create a project</h3>
     <ol><li>Press the <b>folder</b> button at the top of the left menu.</li>
     <li><b>Existing workspace</b>: a folder you already have, e.g. <code>~/projects/storage-api</code>.
       <b>New workspace</b>: a new folder, empty or <b>cloned from a Git URL</b> (your GitLab repository).</li>
     <li>The repository needs a login? Clone it in a terminal first (<code>git clone https://gitlab.../group/repo.git</code>, it asks for your user and token), then add the folder as an existing workspace.</li></ol>
-    <h4>${tab('Files')}</h4>
+    <h3>${tab('Files')}</h3>
     <ul><li>The folder as a tree: search, open a file to read or edit it, save.</li>
     <li>Right-click (long-press on a phone): new file or folder, rename, delete, copy path, <b>Upload files</b>, <b>Download</b>.</li>
     <li>Simple, compact or detailed view (sizes, dates, permissions).</li></ul>
-    <h4>${tab('Shell')}</h4>
+    <h3>${tab('Shell')}</h3>
     <p>A terminal in the project folder, as you: run tests, start your app (then see it in ${tab('Browser')}), use git or any tool.</p>
-    <h4>${tab('Source control')}</h4>
+    <h3>${tab('Source control')}</h3>
     <ul><li><b>Changes</b>: every changed file with its diff; tick the files, write a message, <b>Commit</b>.</li>
     <li><b>Commits</b>: the history. <b>Compare</b>: two branches side by side. <b>Branches</b>: switch, create, delete.</li>
     <li><b>Fetch</b>, <b>Pull</b> and <b>Push</b> at the top, with how many commits are waiting each way.</li>
@@ -254,13 +256,14 @@ const SECTIONS = [
   { id: 'reports', title: 'Reports', body: `
     <p>${tab('Reports')} holds everything Claude saved for you: Excel, CSV, charts, write-ups. Newest first.</p>
     <ul><li>Click a file to preview it, <b>Download</b> to keep it. Filter by name at the top.</li>
+    <li>Scheduled runs are in the <code>scheduled</code> folder. Files over 25 MB are listed but not previewed.</li>
     <li>Ask for one in any chat: "export this as Excel", "chart the latency for the last week".</li></ul>` },
 
   { id: 'browser', title: 'Browser', body: `
     <p>${tab('Browser')} shows web pages from your own work inside this page:</p>
     <ul><li>An app you are building: type its port and path, e.g. <code>8000/docs</code>.</li>
     <li>Your files and reports: <code>~/storage-reports/</code>, an HTML report with its charts.</li>
-    <li>Buttons at the top list the apps you have running. ↗ opens the page in its own browser tab.</li>
+    <li>The <b>Your apps</b> row lists ports listening on this VM. ↗ opens the page in its own browser tab.</li>
     <li>Or ask: "show it to me in the Browser tab".</li></ul>
     <p class="note">It shows your own apps and files only, not internet sites or other people's apps.</p>` },
 
@@ -275,16 +278,14 @@ const SECTIONS = [
     Claude may open any site, except storage, switch, UCS and vCenter pages: those stay read-only.</p>` },
 
   { id: 'uiux', title: 'UI design (UI UX Pro Max)', body: `
-    <p>The <b>ui-ux-pro-max</b> plugin (Marketplace → Add) gives Claude a design library: 79 styles, 192 color palettes,
-    74 font pairs, 119 UX rules, 25 chart types and guidance for 22 stacks (React, Next.js, Vue, Tailwind, shadcn/ui, Flutter...),
-    plus skills for design systems, brand, slides and banners.</p>
+    <p>The <b>ui-ux-pro-max</b> plugin (Marketplace → Add) helps Claude design and review pages.</p>
     <ul><li>Ask: "design a dashboard for storage capacity", "make this page look professional", "review this form's UX".</li>
     <li>Fonts are installed locally from your npm (<code>@fontsource/…</code>), nothing loads from the internet.</li>
     <li>AI image generation (logos from Gemini) is not available here: Claude draws logos and icons as SVG instead.</li></ul>` },
 
   { id: 'brain', title: 'Brain', body: `
     <p>${tab('Brain')} is what Claude knows and can use:</p>
-    <ul><li><b>Search</b> the vendor docs and KBs yourself.</li>
+    <ul><li><b>Search</b> the vendor docs and KBs yourself, or ask Claude in chat: it uses the same search.</li>
     <li><b>Add documents</b>: upload PDFs or pages, or paste links to your wiki. Claude can search them a few seconds later.</li>
     <li><b>Skills and agents</b>: read, adjust or create your own routines. <b>Share with everyone</b> offers one to your colleagues.</li>
     <li><b>Systems</b> Claude can query, with <b>Check connections</b>, and your <b>memory</b> (the facts it remembers for you).</li>
@@ -294,10 +295,11 @@ const SECTIONS = [
     <p>${tab('Schedule')} runs a question or routine for you, <b>daily</b>, on <b>weekdays</b> or <b>weekly</b>.</p>
     <ul><li>Example: every weekday at 07:30, "check capacity on all arrays and list volumes over 85%".</li>
     <li>Each run lands in ${tab('Reports')} and as a chat you can open and continue.</li>
-    <li><b>Run now</b> tries it straight away. <b>Edit</b> or <b>Delete</b> it any time.</li></ul>` },
+    <li><b>Run now</b> tries it straight away. <b>Edit</b> or <b>Delete</b> it any time. <b>Pause</b>/<b>Resume</b> a job.</li>
+    <li>Runs are unattended and cannot ask permission. Each run stops after 30 minutes or about $2 (sonnet model).</li></ul>` },
 
   { id: 'status', title: 'Status', body: `
-    <p>${tab('Status')} shows what Claude can reach right now (each storage system and the docs) and what your chats have used (per day, project and chat).</p>
+    <p>${tab('Status')} has <b>Health</b>: is this VM in order (disk, memory, docs library, read-only guard, connections to your systems). And <b>Usage</b>: tokens and estimated cost (API prices, not a bill) per day, project and chat.</p>
     <p>Claude says a system is unavailable? Look here first.</p>` },
 
   { id: 'market', title: 'Marketplace', body: `
@@ -325,6 +327,7 @@ const SECTIONS = [
 
   { id: 'trouble', title: 'Something is wrong', body: `
     <dl>
+    <dt>Signed out after wrong passwords</dt><dd>5 wrong passwords, or too many tries from one shared address, lock sign-in for 10 minutes. Wait, then try again.</dd>
     <dt>The answer seems stuck</dt><dd>Press <b>Stop</b> and send again. Still stuck: reload the page, your chat is kept.</dd>
     <dt>You are back at the sign-in page</dt><dd>The 12 hours ended. Sign in again: nothing is lost.</dd>
     <dt>"System unavailable"</dt><dd>Check ${tab('Status')}. If a system is red, tell your admin.</dd>
@@ -336,6 +339,8 @@ const SECTIONS = [
 ];
 
 const CSS = `
+.ph .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+.ph nav a:focus-visible,.ph nav input:focus-visible{outline:2px solid hsl(var(--ring,var(--foreground)));outline-offset:1px}
 .ph{font:14px/1.6 Inter,ui-sans-serif,system-ui,sans-serif;color:hsl(var(--foreground));height:100%;display:grid;grid-template-columns:230px 1fr;min-height:0}
 .ph nav{border-right:1px solid hsl(var(--border));padding:20px 12px;overflow:auto}
 .ph nav input{width:100%;box-sizing:border-box;background:hsl(var(--background));border:1px solid hsl(var(--border));border-radius:10px;padding:7px 11px;color:inherit;font:inherit;margin-bottom:12px}
@@ -346,34 +351,35 @@ const CSS = `
 .ph h1{font-size:24px;margin:0 0 4px}.ph .sub{color:hsl(var(--muted-foreground));margin:0 0 22px}
 .ph section{border:1px solid hsl(var(--border));background:hsl(var(--card));border-radius:14px;padding:20px 22px;margin-bottom:16px;scroll-margin-top:12px}
 .ph ul{list-style:disc}.ph ol{list-style:decimal}.ph ul ul{list-style:circle}
-.ph h2{font-size:17px;margin:0 0 10px}.ph h4{font-size:14px;margin:14px 0 6px}.ph p{margin:0 0 10px}.ph ul,.ph ol{margin:0 0 10px;padding-left:20px}.ph li{margin:3px 0}
+.ph h2{font-size:17px;margin:0 0 10px}.ph h3{font-size:14px;margin:14px 0 6px}.ph p{margin:0 0 10px}.ph ul,.ph ol{margin:0 0 10px;padding-left:20px}.ph li{margin:3px 0}
 .ph code{font:12.5px ui-monospace,SFMono-Regular,Menlo,monospace;background:hsl(var(--muted));border-radius:6px;padding:1px 6px}
 .ph kbd{font:600 11.5px ui-monospace,SFMono-Regular,Menlo,monospace;border:1px solid hsl(var(--border));border-bottom-width:2px;border-radius:6px;padding:0 6px;background:hsl(var(--background))}
 .ph .tb{font-weight:600;border-radius:6px;padding:0 6px;background:linear-gradient(90deg,#a78bfa33,#22d3ee33)}
 .ph .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px;margin:12px 0}
-.ph .card{border:1px solid hsl(var(--border));border-radius:12px;padding:12px 14px;background:hsl(var(--background))}.ph .card h4{margin:0 0 4px}.ph .card p{margin:0;font-size:13px;color:hsl(var(--muted-foreground))}
+.ph .card{border:1px solid hsl(var(--border));border-radius:12px;padding:12px 14px;background:hsl(var(--background))}.ph .card h3{margin:0 0 4px}.ph .card p{margin:0;font-size:13px;color:hsl(var(--muted-foreground))}
 .ph table{border-collapse:collapse;width:100%;font-size:13px;margin:6px 0 12px}.ph td,.ph th{border:1px solid hsl(var(--border));padding:6px 9px;text-align:left;vertical-align:top}.ph th{background:hsl(var(--muted)/.6)}
 .ph .note{border-left:3px solid #a78bfa;padding:6px 12px;background:hsl(var(--muted)/.4);border-radius:0 8px 8px 0}
 .ph dt{font-weight:600;margin-top:10px}.ph dd{margin:2px 0 0;color:hsl(var(--muted-foreground))}.ph .ex li{font-style:italic}
 .ph .none{color:hsl(var(--muted-foreground));padding:30px 0}
 @media (max-width:760px){.ph{grid-template-columns:1fr;grid-template-rows:auto 1fr}.ph nav{border-right:0;border-bottom:1px solid hsl(var(--border));padding:10px;display:flex;gap:6px;overflow-x:auto;flex-wrap:nowrap}
-.ph nav input{min-width:150px;margin:0}.ph nav a{white-space:nowrap}.ph main{padding:16px 14px 40px}.ph section{padding:16px}}`;
+.ph nav input{min-width:150px;margin:0}.ph nav a{white-space:nowrap;padding:10px 12px}.ph main{padding:16px 14px 40px}.ph section{padding:16px}}`;
 
 export function mount(container) {
-  container.innerHTML = `<style>${CSS}</style><div class="ph"><nav><input type="search" placeholder="Search help…" aria-label="Search help">
+  container.innerHTML = `<style>${PAAS_CSS}</style><style>${CSS}</style><div class="paas ph"><nav><input type="search" placeholder="Search help…" aria-label="Search help"><div class="sr" role="status" aria-live="polite"></div>
     ${SECTIONS.map((s) => `<a href="#" data-s="${s.id}">${s.title}</a>`).join('')}</nav>
     <main><div class="in"><h1>How to use Peleg As A Service</h1><p class="sub">What every part does and how to get the most out of it.</p>
     ${SECTIONS.map((s) => `<section id="ph-${s.id}"><h2>${s.title}</h2>${s.body}</section>`).join('')}
-    <div class="none" hidden>Nothing matches. Try another word, or just ask Claude in a chat.</div></div></main></div>`;
+    <div class="none" role="status" hidden>Nothing matches. Try another word, or just ask Claude in a chat.</div></div></main></div>`;
   const main = container.querySelector('main');
   const links = [...container.querySelectorAll('nav a')];
   const secs = [...container.querySelectorAll('section')];
   const none = container.querySelector('.none');
+  const live = container.querySelector('nav .sr');
   const mark = (id) => links.forEach((a) => a.classList.toggle('on', a.dataset.s === id));
 
   links.forEach((a) => a.addEventListener('click', (e) => {
     e.preventDefault();
-    container.querySelector(`#ph-${a.dataset.s}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    container.querySelector(`#ph-${a.dataset.s}`)?.scrollIntoView({ behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'start' });
     mark(a.dataset.s);
   }));
   main.addEventListener('scroll', () => {           // the section at the top is the one marked in the menu
@@ -389,6 +395,7 @@ export function mount(container) {
       s.hidden = !hit; links[i].hidden = !hit; shown += hit;
     });
     none.hidden = shown > 0;
+    live.textContent = words.length ? `${shown} section${shown === 1 ? '' : 's'} match` : '';
     main.scrollTop = 0;
   });
   mark(SECTIONS[0].id);
