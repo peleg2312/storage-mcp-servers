@@ -249,10 +249,10 @@ export function mount(container, api) {
     return new Blob([bytes], { type });
   };
 
-  async function open(p) {
+  async function open(p, auto) {
     selected = p;
     renderList();
-    root.classList.add('open');
+    if (!auto) root.classList.add('open');
     viewEl.innerHTML = `<div class="vh"><button class="btn ghost back" data-b>${icon('chevron')} All reports</button></div><div class="empty" role="status">Loading ${esc(p)}…</div>`;
     viewEl.querySelector('[data-b]').addEventListener('click', () => root.classList.remove('open'));
     let d;
@@ -290,14 +290,14 @@ export function mount(container, api) {
       setTimeout(() => URL.revokeObjectURL(url), 60000);
       st.say(`Saved ${d.name} (${fmtSize(d.size)})`);
     });
-    if (matchMedia('(max-width:760px)').matches) viewEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    if (!auto && matchMedia('(max-width:760px)').matches) viewEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
 
   filter.addEventListener('input', renderList);
   refreshBtn.addEventListener('click', load);
   load().then((ok) => {
     const saved = recall();
-    if (ok && saved && files.some((f) => f.path === saved)) open(saved);
+    if (ok && saved && files.some((f) => f.path === saved)) open(saved, true);
   });
 }
 
