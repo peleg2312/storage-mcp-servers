@@ -43,6 +43,9 @@ if [ -f "$CLAUDE_MD" ] && ! cmp -s "$TMP_MD" "$CLAUDE_MD"; then
   cp "$CLAUDE_MD" "$CLAUDE_MD.bak.$TS"; echo "backed up existing $CLAUDE_MD -> CLAUDE.md.bak.$TS"
 fi
 cp "$TMP_MD" "$CLAUDE_MD"; rm -f "$TMP_MD"
+# the storage rules: loaded in plain chats (~/chats, see below) and in a project install; code projects read them on demand
+sed "s#@~/\.claude/brain/#$IMPORT_PREFIX#" "$SRC/brain/storage.md" > "$DST/brain/storage.md"
+[ -z "$PROJECT" ] || grep -q "storage\.md" "$CLAUDE_MD" || printf '\n## Storage rules\n%sstorage.md\n' "$IMPORT_PREFIX" >> "$CLAUDE_MD"
 cp -R "$SRC/skills/." "$DST/skills/"
 cp -R "$SRC/agents/." "$DST/agents/"
 if [ -n "$PROJECT" ]; then
@@ -53,7 +56,7 @@ if [ -n "$PROJECT" ]; then
     -e "s#~/\.claude/#$DST/#g" \
     -e "s#__LIB__#$LIBDST#g"
   sed -i.paas-tmp -e "s#~/\.claude/brain/library#__LIB__#g" -e "s#~/\.claude/CLAUDE\.md#$PROJECT/CLAUDE.md#g" \
-    -e "s#~/\.claude/projects/#__PROJECTS__#g" -e "s#~/\.claude/#$DST/#g" -e "s#__LIB__#$LIBDST#g" -e "s#__PROJECTS__#~/.claude/projects/#g" "$CLAUDE_MD"
+    -e "s#~/\.claude/projects/#__PROJECTS__#g" -e "s#~/\.claude/#$DST/#g" -e "s#__LIB__#$LIBDST#g" -e "s#__PROJECTS__#~/.claude/projects/#g" "$CLAUDE_MD" "$DST/brain/storage.md"
   find "$DST/skills" "$DST/agents" "$PROJECT" -maxdepth 3 -name '*.paas-tmp' -delete 2>/dev/null || true
 fi
 cp "$SRC/hooks/block-write-tools.py" "$SRC/hooks/session-start.py" "$SRC/hooks/docs-hints.py" "$SRC/hooks/docs-leads.py" "$SRC/hooks/py-lint.py" "$DST/hooks/"
@@ -186,6 +189,7 @@ if [ -n "$PROJECT" ]; then
 else
   # shellcheck disable=SC2086
   python3 "$HERE/merge_settings.py" "$DST/settings.json" $SERVERS
+  sh "$HERE/multiuser/setup-chats.sh" "$DST/hooks/session-start.py"
 fi
 
 # Development: ruff + basedpyright (offline wheels) and Anthropic's official dev plugins (offline copy in

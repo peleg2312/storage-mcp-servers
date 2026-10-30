@@ -18,11 +18,14 @@ for rel, text in pages.items():
 db = os.path.join(d, "docs.db")
 docs_index.build(os.path.join(d, "docs"), db, full=True, log=lambda *a: None)
 hook = os.path.join(here, "claude", "hooks", "docs-leads.py")
+chats, code = os.path.join(d, "chats"), os.path.join(d, "code", "app")   # Chats imports the storage rules
+os.makedirs(chats), os.makedirs(code)
+open(os.path.join(chats, "CLAUDE.md"), "w").write("<!-- generated -->\n# Storage rules (SAN / storage operations)\n")
 
 
-def run(prompt, sid):
+def run(prompt, sid, cwd=chats):
     env = {**os.environ, "DOCS_LEADS_LIB": lib, "DOCS_LEADS_DB": db, "DOCS_HINTS_DB": db}
-    return subprocess.run([sys.executable, hook], input=json.dumps({"session_id": sid, "prompt": prompt}),
+    return subprocess.run([sys.executable, hook], input=json.dumps({"session_id": sid, "prompt": prompt, "cwd": cwd}),
                           capture_output=True, text=True, env=env).stdout
 
 
@@ -34,7 +37,13 @@ assert "wafl.vol.full [ontap-ems, chunk" in run("cluster1 keeps logging wafl.vol
 for p in ("yes, do it", "how do I center a div in css", "summarize this meeting for my manager",
           "Use ~/storage-mcp-servers for this", "/brain-health", "run the tests and fix the failing target", "add a python test for the disk usage function"):
     assert run(p, sid + "c") == "", p                                     # unrelated: silent
+# a storage question in a code project: read storage.md, once per chat; coding asks there stay silent
+out = run("cluster1 keeps logging wafl.vol.full, why?", sid + "d", code)
+assert out.startswith("Storage question outside Chats: read ") and "storage.md (storage rules" in out and "wafl.vol.full" in out, out
+assert "storage.md" not in run("is snapmirror async between clusters?", sid + "d", code)
+assert run("run the tests and fix the failing target", sid + "e", code) == ""
+assert "storage.md" not in run("in the app folder, find where the volume commands are validated", sid + "f", code)
 for f in os.listdir(tempfile.gettempdir()):
-    if f.startswith(("claude-docs-leads-l", "claude-docs-hints-l")):
+    if f.startswith(("claude-docs-leads-l", "claude-docs-hints-l", "claude-storage-rules-l")):
         os.remove(os.path.join(tempfile.gettempdir(), f))
 print("docs leads ok")

@@ -6,7 +6,7 @@ when_to_use: Trigger phrases - "ONTAP latency on volume X", "node CPU on the Net
 # ONTAP performance (Harvest + ONTAP)
 
 1. Identify objects with the ONTAP MCP: cluster, node, SVM, volume, LUN path (serial ↔ NAA via the
-   identifier rules), aggregate, FC LIFs/ports, QoS policy.
+   storage.md identifier rules), aggregate, FC LIFs/ports, QoS policy.
 2. Use the Harvest MCP for history. Get the exact metric names from Harvest (or the docs MCP, vendor
    `netapp`, product `harvest`, "ontap metrics") instead of guessing; typical families: `lun_*` (avg read/write latency,
    ops), `volume_*` (avg_latency, read/write ops, throughput), `node_*` (cpu busy), `aggr_*` / `disk_*`

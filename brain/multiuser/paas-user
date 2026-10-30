@@ -63,7 +63,7 @@ except Exception: print("{}")' "$(home_of root)/.claude/settings.json") \
 set -eu
 P=$1; C=$HOME/.claude
 mkdir -p "$C/brain/notes" "$HOME/storage-reports" "$HOME/chats" "$HOME/.claude-code-ui/plugins"
-for l in brain/library:library tools:tools banner:banner themes:themes; do
+for l in brain/library:library brain/storage.md:brain/storage.md tools:tools banner:banner themes:themes; do
   dst=$C/${l%%:*}; src=$P/${l#*:}
   [ -L "$dst" ] || [ ! -e "$dst" ] || continue      # never replace a real file the person made
   ln -sfn "$src" "$dst"
@@ -104,6 +104,7 @@ for p, seed in ((sys.argv[1], {"hasCompletedOnboarding": True}),
         json.dump(new, open(p, "w"), indent=2)
 EOP
 [ -f "$C/brain/notes.md" ] || printf '# Notes\n\nFacts learned in your sessions (one dated line each).\n' > "$C/brain/notes.md"
+[ ! -f "$P/bin/paas-setup-chats" ] || sh "$P/bin/paas-setup-chats" "$P/hooks/session-start.py"   # ~/chats: storage rules, 1h cache
 # web UI chats made before the UI said "paas-ui": Claude Code hides sdk-* chats from `claude --resume`.
 # Only files idle for 10 minutes (none being written), replaced whole, dates kept.
 python3 - "$C/projects" <<'EOP'

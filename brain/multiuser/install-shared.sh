@@ -78,6 +78,8 @@ chmod 755 "$P/bin/paas-api-key"
 python3 "$HERE/managed_settings.py" /etc/claude-code/managed-settings.json "$P"
 # the brain's rules: everyone gets their own editable ~/.claude/CLAUDE.md, started from this default (root's is its own)
 sed -e "s#~/\.claude/brain/library#$P/library#g" "$BRAIN/claude/CLAUDE.md" > "$P/brain/CLAUDE.md"
+cp "$BRAIN/claude/brain/storage.md" "$P/brain/storage.md"; chmod 644 "$P/brain/storage.md"   # linked into every account
+install -m 755 "$HERE/setup-chats.sh" "$P/bin/paas-setup-chats"   # ~/chats: storage rules up front, 1-hour cache
 rm -f /etc/claude-code/CLAUDE.md                                  # earlier versions put them VM-wide
 [ -f "$RC/CLAUDE.md" ] || { [ -f "$RC/CLAUDE.md.single-user" ] && mv "$RC/CLAUDE.md.single-user" "$RC/CLAUDE.md"; }
 chmod 644 /etc/claude-code/managed-settings.json "$P/brain/CLAUDE.md"

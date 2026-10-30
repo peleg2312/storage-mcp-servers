@@ -82,10 +82,6 @@ if not mcpjson:
             env.append(line)
 # no "suggested next message" model call after every reply (tokens, no effect on answers); a person may turn it on
 s.setdefault("promptSuggestionEnabled", False)
-# API-key billing caches 5 minutes by default: a pause longer than that (reading output, a meeting) re-pays the whole
-# conversation at the full input rate. 1h costs more per cache write but survives pauses; subagents and compaction keep
-# 5m (they run in bursts). Needs Claude Code 2.1.242+; a person may set "5m".
-s.setdefault("promptCacheTtl", "1h")
 # look and feel (UI only, no tokens): always the brain's, replacing earlier values (settings.json is backed up above)
 s["statusLine"] = {"type": "command", "command": f"python3 {banner_dir}/paas-statusline.py", "padding": 0}
 s["theme"] = "custom:paas"                                   # ~/.claude/themes/paas.json, banner colours; /theme to change

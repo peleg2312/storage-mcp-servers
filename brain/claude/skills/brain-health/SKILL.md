@@ -56,11 +56,12 @@ Run `/doctor prompt-audit` (Claude Code >= 2.1.283; audits CLAUDE.md, the import
 and agents under `~/.claude/`). Report its findings - contradictions between files, references to tools,
 files or commands that do not exist, instructions written for older models - as WARN rows with the
 proposed edit; apply nothing (he decides). If the command is unavailable, say so and compare by hand the
-rules in CLAUDE.md with the skills that cite them (read-only rule, answer format, notes.md as memory).
+rules in CLAUDE.md and brain/storage.md with the skills that cite them (read-only rule, answer format, notes.md as memory).
 
 ## 6. Context size
-Imports load at launch and do not save context: `wc -l ~/.claude/CLAUDE.md ~/.claude/brain/environment.md
-~/.claude/brain/notes.md ~/.claude/brain/tool-map.md` must stay around 200 lines in total (the docs
+Every session loads `~/.claude/CLAUDE.md` + `notes.md`; plain chats (~/chats/CLAUDE.md, generated) add
+`storage.md`, `environment.md` and `tool-map.md`: `wc -l ~/.claude/CLAUDE.md ~/.claude/brain/storage.md
+~/.claude/brain/environment.md ~/.claude/brain/notes.md ~/.claude/brain/tool-map.md` must stay around 200 lines in total (the docs
 recommend < 200 lines per file; `tool-map.md` is the usual offender), notes.md ≤ 60. Over that: WARN with the
 file to trim (move notes.md facts most sessions do not need into `notes/<topic>.md`, which is read on demand;
 shorten tool-map.md to the tools actually used). A topic file over ~150 lines: split it or drop stale facts.

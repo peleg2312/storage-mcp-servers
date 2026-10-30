@@ -6,7 +6,7 @@ when_to_use: Trigger phrases - "what is naa.xxx", "decode this eui", "where does
 # Identify a LUN
 
 ## 1. Classify the input
-- `naa.60000970…` → PowerMax: decode serial + device ID (CLAUDE.md identifier rules)
+- `naa.60000970…` → PowerMax: decode serial + device ID (storage.md identifier rules)
 - `naa.600a0980…` → ONTAP: decode the LUN serial
 - `eui.…` → PowerFlex or NVMe namespace
 - 5 hex chars (e.g. `003A5`) → PowerMax device ID: ask/find which array if several
