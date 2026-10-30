@@ -80,6 +80,23 @@ director ports summarized.
 6. Budgets are tested: `brain/test_budgets.py` fails when a core file or a skill/agent listing grows past its cap.
 7. Measure before trusting: `brain/claude/tools/token-report.py` shows where a VM's tokens went per tool and per hook.
 
+## Docs search, second pass (same day)
+
+| | Before | After |
+|---|---|---|
+| Round trips for a docs answer | search + 2-3 read_chunk | one `search_docs(read_top=2)`; rephrasings go in one call (`queries=[...]`) |
+| Exact codes (EMS, SYMAPI, SIO, CONTAP, DSA, Dell KB numbers) | search, then read | `explain_code(code)`: severity, description, corrective action, KB sections in one reply |
+| First-pass query time | 110 ms | 77 ms (mmap, cache_size); a repeated query 0.02 ms (per-connection LRU) |
+| hit@1 / hit@5, held-out set | 0.90 / 1.00 | 0.95 / 1.00 |
+| hit@1 / hit@5, blind troubleshooting | 0.72 / 0.92 | 0.75 / 0.97 |
+| hit@1 / hit@5, hard paraphrases (held-out) | 0.52 / 0.88 | 0.60 / 0.88 |
+
+Ranking is byte-identical on all 241 eval queries before the synonyms; the gain comes from 17 plain-language synonym
+groups (user word to vendor word: lower / reduce, slow / latency, tiebreaker / mediator, ots / ONTAP Select ...) that
+were mined from the eval misses themselves, so the eval numbers are optimistic; no set lost hit@5. The stdio server
+still needs a restart when docs.db is replaced (as before). PowerMax SYMAPI names truncated by the PDF extraction can
+miss an exact lookup; a search still finds them.
+
 ## Owner decisions (done after the pass, on the owner's go-ahead)
 
 - Root `LICENSE` added (Apache-2.0, matching the vendored Anthropic plugins); README says what it covers.
