@@ -97,6 +97,24 @@ were mined from the eval misses themselves, so the eval numbers are optimistic; 
 still needs a restart when docs.db is replaced (as before). PowerMax SYMAPI names truncated by the PDF extraction can
 miss an exact lookup; a search still finds them.
 
+## Web UI, UX pass (same day)
+
+Reviewed every tab, the chat, the theme and the sign-in page against the ui-ux-pro-max rules (116 confirmed findings).
+Ships with the next `install-vm.sh` (plugin tabs): one shared style and behaviour kit inlined into every tab
+(`brain/ui/plugins/shared.js`, synced by `sync-shared.py`; the test runner checks it), so buttons, cards, inputs,
+badges and tables look the same everywhere in both themes; visible labels on every field; an error card with
+"Try again" instead of a bare line; inline confirmations instead of browser dialogs (Remove a person, Delete a
+schedule, Unshare); a status line that says what just happened ("Removed dana", "Saved"); busy labels on buttons;
+44 px targets on phones; keyboard focus rings; sub-tab and filter rows that scroll on phones; Status lists the
+problems first with a count; Help covers the new docs tools and the default plugins.
+In the repo for the next bundle build (`build-bundle.sh`) and `install-gate.sh`: sign-in page with focus rings,
+feedback during the delay, kept username, 16 px fields, show-password and caps-lock hints, lockout time left;
+chat "Send now" and /clear confirm, command-menu loading state, labelled download chip, example prompts and
+honest copy on the welcome screen, header buttons and the star reachable by keyboard and touch, light-theme
+tokens and wordmark contrast, preview and signed-out cards that follow the app theme.
+Verified in a local harness (`scratchpad/ui-harness`, mock data) on desktop and phone, dark and light, normal,
+empty and error states; node syntax checks on every file; the suite passes (25 pass).
+
 ## Owner decisions (done after the pass, on the owner's go-ahead)
 
 - Root `LICENSE` added (Apache-2.0, matching the vendored Anthropic plugins); README says what it covers.
