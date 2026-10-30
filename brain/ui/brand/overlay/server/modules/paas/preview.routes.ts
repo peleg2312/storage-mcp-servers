@@ -160,13 +160,16 @@ paasPreview.get('/_chrome', async (req, res) => {
   if (!CHROME_BIN) { res.json({ installed: false }); return; }
   try {
     const session = String(req.query.session || '').replace(/[^\w-]/g, '');
-    if (!chromeSeen || Date.now() - chromeSeen.at > 30_000)   // the PC list and windows rarely change
-      chromeSeen = { at: Date.now(), ...(await Promise.all([
-        chrome(['list', '--json']).then((o) => JSON.parse(o)),
+    if (!chromeSeen || Date.now() - chromeSeen.at > 30_000) {   // the PC list and windows rarely change
+      const [pcs, line] = await Promise.all([
+        chrome(['list', '--json']).then((o) => JSON.parse(o) as unknown),
         chrome(['windows']).then((o) => o.trim().split('\n').pop()),
-      ]).then(([pcs, line]) => ({ pcs, line }))) };
+      ]);
+      chromeSeen = { at: Date.now(), pcs, line };
+    }
+    const seen = chromeSeen;
     const chosen = session ? JSON.parse(await chrome(['chosen', claudeSession(session)])).port : null;
-    res.json({ installed: true, pcs: chromeSeen.pcs, chosen, line: chromeSeen.line });
+    res.json({ installed: true, pcs: seen.pcs, chosen, line: seen.line });
   } catch (e) { res.status(500).json({ installed: true, error: (e as Error).message }); }
 });
 

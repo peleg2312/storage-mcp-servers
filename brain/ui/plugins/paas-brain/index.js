@@ -298,7 +298,7 @@ export function mount(container, api) {
     }
     const docs = ((data.library.sources || '').split('\n')[0].match(/([\d,]+) documents/) || [])[1];
     const cnt = container.querySelector('.counts');
-    cnt.innerHTML = [['Skills', data.skills.length, `incl. ${data.skills.filter((x) => x.mine).length} yours`], ['Agents', data.agents.length, ''], ['MCP servers', data.mcp.length, ''], ['Hooks', data.hooks.length, `${data.hooks.filter((h) => h.on).length} on`], ['Docs', docs || '0', 'in the library']]
+    cnt.innerHTML = [['Skills', data.skills.length, `incl. ${data.skills.filter((x) => x.mine).length} yours`], ['Agents', data.agents.length, ''], ['MCP servers', data.mcp.length, ''], ['Hooks', data.hooks.length, `${data.hooks.filter((h) => h.on).length} on`]]
       .map(([k, v, u]) => `<div class="tile"><div class="k">${k}</div><div class="v">${esc(v)}</div>${u ? `<div class="u">${u}</div>` : ''}</div>`).join('');
     cnt.hidden = false;
     sub.textContent = data.library.version ? `Library ${data.library.version}${docs ? ` · ${docs} documents` : ''}` : 'Docs library not installed on this VM';

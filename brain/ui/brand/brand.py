@@ -189,7 +189,7 @@ edit("src/modules/chat/transcript/ProviderSelectionEmptyState.tsx",
       '              {t("providerSelection.description")}\n'
       '            </p>\n'
       '          </div>\n'
-      '          <div className="mx-auto mb-4 flex max-w-md flex-wrap justify-center gap-2">\n'
+      '          <div className="mx-auto mb-4 flex max-w-xl flex-wrap justify-center gap-2">\n'
       '            {["Which volumes are over 90% full?", "Export the capacity report to Excel", "List the storage systems you can reach"].map((example) => (\n'
       '              <button key={example} type="button" className="min-h-[44px] rounded-lg border border-border bg-card px-3 py-2 text-left text-sm text-foreground transition-colors hover:bg-accent"\n'
       '                onClick={() => { setInput(example); textareaRef.current?.focus(); }}>\n'
@@ -456,12 +456,21 @@ edit("src/modules/mcp/McpServers.tsx",
      ("function TeamMcpFeatureCard() {\n", "function TeamMcpFeatureCard() {\n  return null;\n"))
 # plain chats (~/chats) have no project to browse: only Chat and the brain's tabs there; projects keep all of them
 edit("src/modules/project-workspace/WorkspaceHeader.tsx",
+     # the title column takes only what a title needs, so the tab strip fits without scrolling on laptop screens
+     ('sm:max-w-[min(34%,24rem)] sm:flex-[1_1_18rem]', 'sm:max-w-[min(30%,20rem)] sm:flex-[0_1_14rem]'),
      ("                shouldShowBrowserTab={shouldShowBrowserTab}\n              />",
       "                shouldShowBrowserTab={shouldShowBrowserTab}\n                isChats={/[\\/]chats$/.test(selectedProject.fullPath)}\n              />"))
 edit("src/modules/project-workspace/WorkspaceTabs.tsx",
      ("  shouldShowBrowserTab: boolean;\n};", "  shouldShowBrowserTab: boolean;\n  isChats?: boolean;\n};"),
      ("  shouldShowBrowserTab,\n}: WorkspaceTabsProps) {", "  shouldShowBrowserTab,\n  isChats,\n}: WorkspaceTabsProps) {"),
-     ("    ...BASE_TABS,\n", "    ...(isChats ? BASE_TABS.slice(0, 1) : BASE_TABS),\n"))
+     ("    ...BASE_TABS,\n", "    ...(isChats ? BASE_TABS.slice(0, 1) : BASE_TABS),\n"),
+     # the tab strip is the main navigation: taller pills, larger icons, the labels always shown (phones: the active one)
+     ('className="h-8 max-w-44 px-2.5 py-[5px]"', 'className="h-9 max-w-52 px-3"'),
+     ('<tab.icon className="h-3.5 w-3.5 shrink-0"', '<tab.icon className="h-4 w-4 shrink-0"'),
+     ("className=\"flex h-3.5 w-3.5 shrink-0 items-center justify-center [&>svg]:h-full [&>svg]:w-full\"",
+      "className=\"flex h-4 w-4 shrink-0 items-center justify-center [&>svg]:h-full [&>svg]:w-full\""),
+     ("<span className={`${isActive ? 'inline max-w-28' : 'hidden'} truncate sm:max-w-36 lg:inline`}>",
+      "<span className={`${isActive ? 'inline max-w-32' : 'hidden'} truncate sm:inline sm:max-w-40`}>"))
 # Conversations list: reloaded whenever the projects / sessions change (upstream loaded it only on opening the tab,
 # so a new chat did not appear); the refresh button in the sidebar header reloads it too
 edit("src/modules/sidebar/hooks/useSidebarController.ts",
