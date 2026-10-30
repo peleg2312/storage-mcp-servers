@@ -379,6 +379,7 @@ MAX_QUERIES = 5
 
 def query_list(query="", queries=None):
     """The queries to run: the `queries` list when given (it wins), else the single query."""
+    queries = [queries] if isinstance(queries, str) else queries      # a bare string is one query, not characters
     qs = [q.strip() for q in (queries or []) if isinstance(q, str) and q.strip()][:MAX_QUERIES]
     return qs or [query]
 
@@ -553,7 +554,7 @@ def explain_code(c, code, id_base=0):
         nxt = CODE_RX[kind].search(near)                 # stop where the next code's entry starts
         near = near[:nxt.start()] if nxt else near
         out["description"] = re.sub(r"[\s\d]*(Table\s*\d*\.?)?[\s\d]*$", "", near).strip()
-    return out
+    return {k: v for k, v in out.items() if v != ""}      # no empty description
 
 
 def _norm_title(t):
