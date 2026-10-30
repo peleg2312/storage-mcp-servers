@@ -21,40 +21,41 @@ function machine() {
 
 function brain() {
   const out = [];
-  const add = (group, name, status, detail) => out.push({ group, name, status, detail });
+  const add = (group, name, status, detail, fix, cmd) => out.push({ group, name, status, detail, ...(status !== 'ok' && fix ? { fix, cmd } : {}) });
+  const INSTALL = ['Ask your admin to run brain/install.sh on the VM.', 'bash brain/install.sh'];
   for (const d of machine().disks) {
     const pct = 100 - (d.free / d.total) * 100;
-    add('Machine', `Disk ${d.path}`, pct > 95 ? 'fail' : pct > 85 ? 'warn' : 'ok', `${gb(d.free)} free of ${gb(d.total)} (${pct.toFixed(0)}% used)`);
+    add('Machine', `Disk ${d.path}`, pct > 95 ? 'fail' : pct > 85 ? 'warn' : 'ok', `${gb(d.free)} free of ${gb(d.total)} (${pct.toFixed(0)}% used)`, 'Free up space on this disk: delete old files, or ask your admin to add disk.');
   }
 
   const lib = path.join(CL, 'brain', 'library');
   const ver = read(path.join(lib, 'VERSION'))?.trim();
   const docs = read(path.join(lib, 'MANIFEST.md'))?.match(/\*\*(\d+) unique documents, (\d+) sections\*\*/);
-  add('Docs library', 'Version', ver ? 'ok' : 'fail', ver || `missing: ${lib} (run brain/install.sh)`);
-  if (ver) add('Docs library', 'Content', docs ? 'ok' : 'warn', docs ? `${Number(docs[1]).toLocaleString()} documents, ${Number(docs[2]).toLocaleString()} sections` : 'MANIFEST.md unreadable');
+  add('Docs library', 'Version', ver ? 'ok' : 'fail', ver || `missing: ${lib}`, ...INSTALL);
+  if (ver) add('Docs library', 'Content', docs ? 'ok' : 'warn', docs ? `${Number(docs[1]).toLocaleString()} documents, ${Number(docs[2]).toLocaleString()} sections` : 'MANIFEST.md unreadable', ...INSTALL);
 
   let settings = {};
-  try { settings = JSON.parse(read(path.join(CL, 'settings.json')) || '{}'); } catch { add('Settings', 'settings.json', 'fail', 'not valid JSON'); }
+  try { settings = JSON.parse(read(path.join(CL, 'settings.json')) || '{}'); } catch { add('Settings', 'settings.json', 'fail', 'not valid JSON', 'Ask your admin to repair ~/.claude/settings.json, or to re-run brain/install.sh.', 'bash brain/install.sh'); }
   const hooks = JSON.stringify(settings.hooks || {});
   const guard = path.join(CL, 'hooks', 'block-write-tools.py');
-  if (!hooks.includes('block-write-tools.py')) add('Read-only guard', 'Installed', 'fail', 'not in ~/.claude/settings.json (run brain/install.sh)');
-  else if (!/mcp__\.\*\|Bash/.test(hooks)) add('Read-only guard', 'Installed', 'warn', 'guards MCP tools only (old install): re-run brain/install.sh');
+  if (!hooks.includes('block-write-tools.py')) add('Read-only guard', 'Installed', 'fail', 'not in ~/.claude/settings.json', ...INSTALL);
+  else if (!/mcp__\.\*\|Bash/.test(hooks)) add('Read-only guard', 'Installed', 'warn', 'guards MCP tools only (old install)', ...INSTALL);
   else add('Read-only guard', 'Installed', 'ok', 'MCP tools and shell commands');
   if (fs.existsSync(guard)) {
     const r = spawnSync('python3', [guard], { input: JSON.stringify({ tool_name: 'Bash', tool_input: { command: 'scli --add_volume' } }), timeout: 10000 });
     add('Read-only guard', 'Blocks an infrastructure change', r.status === 2 ? 'ok' : 'fail',
-      r.status === 2 ? 'test "scli --add_volume" was blocked' : `test command not blocked (exit ${r.status ?? 'timeout'})`);
+      r.status === 2 ? 'test "scli --add_volume" was blocked' : `test command not blocked (exit ${r.status ?? 'timeout'})`, ...INSTALL);
   }
   for (const [file, what] of [['docs-hints.py', 'docs meaning of alerts in results'], ['docs-leads.py', 'library leads per request'], ['session-start.py', 'session status']]) {
     const ok = hooks.includes(file) && fs.existsSync(path.join(CL, 'hooks', file));
-    add('Hooks', file, ok ? 'ok' : 'warn', ok ? what : `missing (${what})`);
+    add('Hooks', file, ok ? 'ok' : 'warn', ok ? what : `missing (${what})`, ...INSTALL);
   }
   const env = settings.autoMode?.environment || [];
   add('Settings', 'Auto mode knows this VM', env.some((e) => /air-gapped/.test(e)) ? 'ok' : 'warn',
-    env.some((e) => /air-gapped/.test(e)) ? 'autoMode.environment set by the brain' : 'not set: re-run brain/install.sh');
+    env.some((e) => /air-gapped/.test(e)) ? 'autoMode.environment set by the brain' : 'not set', ...INSTALL);
   for (const f of ['environment.md', 'notes.md']) {
     const t = read(path.join(CL, 'brain', f));
-    add('Brain files', f, t ? 'ok' : 'warn', t ? `${t.split('\n').length} lines` : 'missing');
+    add('Brain files', f, t ? 'ok' : 'warn', t ? `${t.split('\n').length} lines` : 'missing', 'In Claude, run /brain-setup to create it.', '/brain-setup');
   }
   const ui = read(path.join(CL, 'paas-ui', 'VERSION'))?.trim();
   if (ui) add('Web UI', 'Version', 'ok', ui);
