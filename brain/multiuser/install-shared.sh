@@ -34,9 +34,13 @@ share() {   # share <path under ~/.claude> <shared path>
 share brain/library "$P/library"
 share brain/environment.md "$P/brain/environment.md" file
 share brain/tool-map.md "$P/brain/tool-map.md" file
-rm -rf "$P/tools" "$P/hooks" "$P/banner" "$P/themes"
-for d in tools hooks banner themes; do cp -R "$BRAIN/claude/$d" "$P/$d" 2>/dev/null || mkdir -p "$P/$d"; done
-rm -rf "$P/plugins"; cp -R "$BRAIN/plugins" "$P/plugins"        # Claude Code plugins, offered in the marketplace
+swap() {   # swap <source dir> <name>: copy beside, then rename in, so the read-only guard is never missing mid-update
+  rm -rf "$P/$2.new" "$P/$2.old"; cp -R "$1" "$P/$2.new" 2>/dev/null || mkdir -p "$P/$2.new"
+  [ ! -e "$P/$2" ] || mv "$P/$2" "$P/$2.old"
+  mv "$P/$2.new" "$P/$2"; rm -rf "$P/$2.old"
+}
+for d in tools hooks banner themes; do swap "$BRAIN/claude/$d" "$d"; done
+swap "$BRAIN/plugins" plugins                                   # Claude Code plugins, offered in the marketplace
 chmod -R a+rX "$P/library" "$P/brain" "$P/tools" "$P/hooks" "$P/banner" "$P/themes" "$P/plugins"
 chmod 644 "$P/brain/environment.md" "$P/brain/tool-map.md"   # root edits them; everyone reads
 ln -sfn "$P/tools/paas-open" /usr/local/bin/paas-open       # shows a page in the web UI's Browser tab
@@ -49,7 +53,6 @@ ln -sfn "$P/bin/paas-market" /usr/local/bin/paas-market
 PAAS_MARKET="$P/marketplace" python3 "$P/bin/paas-market" publish "$BRAIN/claude" --mcp "$BRAIN/marketplace/mcp.json"
 chmod -R a+rX "$P/marketplace"
 # shared MCP tokens are in there: only marketplace users (and the service for other VMs, below) may look inside
-getent group paas-users >/dev/null || groupadd paas-users
 chgrp paas-users "$P/marketplace"; chmod 750 "$P/marketplace"
 
 # the single-user UI service (root's, on :3001) gives way to the gate and the per-user services
@@ -57,7 +60,6 @@ systemctl --user disable --now paas-ui >/dev/null 2>&1 || true
 pkill -u root -f "paas-ui/app/dist-server/server/index.js" 2>/dev/null || true
 # the web UI files, the per-user plugins, the per-user service and the user tool
 UI_DIR="$P/ui" UI_SHARED=1 sh "$BRAIN/ui/install-ui.sh"
-rm -rf "$BRAIN/ui/plugins/paas-usage"                            # merged into Status (left over from older tars)
 rm -rf "$P/ui-plugins"; cp -R "$BRAIN/ui/plugins" "$P/ui-plugins"; chmod -R a+rX "$P/ui-plugins"
 install -m 644 "$HERE/paas-ui@.service" /etc/systemd/system/paas-ui@.service
 install -m 755 "$HERE/paas-user" "$P/bin/paas-user"
