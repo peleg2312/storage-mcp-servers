@@ -26,8 +26,9 @@ The gate is the only thing on the network: it checks who you are and forwards yo
 ## 3. Per-user UI instances
 
 One systemd unit per user: `paas-ui@.service` (the file next to this one). Its settings are
-`/etc/paas/users/<user>.env` (root, 0600), written by `write_env` in `paas-user` (the gate's `createEnv` writes the same
-file for a first sign-in): port, `JWT_SECRET`, `PAAS_LOGIN_USERS=<user>`, `CLAUDE_CLI_PATH`, `PATH`. Ports are
+`/etc/paas/users/<user>.env` (root, 0600), written by `write_env` in `paas-user`; at a first sign-in the gate asks for it
+with `paas-user env <user>` (one writer, so two sign-ins or the Users page can never pick the same port) and writes the
+same file itself only where paas-user is absent: port, `JWT_SECRET`, `PAAS_LOGIN_USERS=<user>`, `CLAUDE_CLI_PATH`, `PATH`. Ports are
 one above the highest in use, never reused while the file exists. Instance API the gate relies on:
 `POST /api/auth/login` (200 + `token`, 401, 429) and `GET /health`.
 
