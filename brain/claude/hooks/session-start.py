@@ -165,6 +165,46 @@ NOTES_CAP = 60
 TOPIC_CAP = 150          # a topic file is read whole when its topic comes up
 
 
+STALE_DAYS = 180
+
+
+def stale_count(mem):
+    """'- ' lines of notes.md and notes/*.md whose first date is older than STALE_DAYS (cheap: a regex per line)"""
+    cut = time.time() - STALE_DAYS * 86400
+    n = 0
+    for f in [os.path.join(mem, "brain", "notes.md")] + glob.glob(os.path.join(mem, "brain", "notes", "*.md")):
+        for line in read(f).splitlines():
+            m = line.startswith("- ") and re.search(r"(\d{4})-(\d{2})-(\d{2})", line)
+            if m:
+                try:
+                    import calendar
+                    if calendar.timegm((int(m.group(1)), int(m.group(2)), int(m.group(3)), 0, 0, 0)) < cut:
+                        n += 1
+                except (ValueError, OverflowError):
+                    pass
+    return n
+
+
+def index_knowledge():
+    """Team knowledge into the docs search: when notes pages or incidents changed since the last run and the library
+    is here, `add-docs --brain` runs in the background (seconds), so teammates' pages are found by search_docs next to the
+    vendor documents. A stamp file keeps it from running when nothing changed."""
+    brain = os.path.join(USER_HOME, "brain")
+    files = glob.glob(os.path.join(brain, "notes", "*.md")) + glob.glob(os.path.join(brain, "incidents", "**", "*.md"), recursive=True)
+    add = next((p for p in (os.path.join(USER_HOME, "tools", "add-docs"), os.path.expanduser("~/.local/bin/add-docs"), "/opt/paas/tools/add-docs")
+                if os.path.exists(p)), "")
+    if not files or not add or not os.path.exists(os.path.join(brain, "library", "docs.db")):
+        return
+    state = "%d:%d" % (len(files), int(max(os.path.getmtime(f) for f in files)))
+    stamp = os.path.join(brain, ".brain-index-stamp")
+    if read(stamp).strip() == state:
+        return
+    with open(stamp, "w") as f:
+        f.write(state + "\n")
+    subprocess.Popen(["sh", add, "--brain"], stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+                     start_new_session=True)
+
+
 def memory_line():
     """The memory catalog: notes.md is always loaded; the topic files are listed here and read on demand."""
     # multi-user VM: hooks live in /opt/paas (no notes there), each person's notes in their own ~/.claude
@@ -187,9 +227,16 @@ def memory_line():
         line += ". Tidy the memory files marked OVER after answering his first question, then tell him in one line"
     if len(topics) > 25:
         topics = topics[:25] + [f"  ... and {len(topics) - 25} more (grep notes/)"]
-    caps = len(glob.glob(os.path.join(USER_HOME, "brain", "captures", "*.md")))
+    cap_files = glob.glob(os.path.join(USER_HOME, "brain", "captures", "*.md"))
+    caps = len(cap_files)
     if caps:
-        line += f".\ncaptures: {caps} waiting for curation (brain-learn skill)"
+        oldest = min((time.time() - os.path.getmtime(c)) / 86400 for c in cap_files)
+        due = caps >= 5 or oldest > 14
+        line += f".\ncaptures: {caps} waiting for curation (brain-learn skill)" + \
+            (f" - curation is due ({'5 or more' if caps >= 5 else f'the oldest is {int(oldest)} days old'}): offer it once after his first question" if due else "")
+    stale = stale_count(mem)
+    if stale:
+        line += f".\nstale: {stale} fact(s) older than 180 days; re-verify the ones a question touches (brain-learn marks them verified / observed again)"
     inc = glob.glob(os.path.join(USER_HOME, "brain", "incidents", "**", "*.md"), recursive=True)
     if inc:
         line += f".\nincidents: {len(inc)} under ~/.claude/brain/incidents/ (grep them; brain-learn writes them)"
@@ -268,6 +315,10 @@ def main():
         pass
     try:
         chats_rules()
+    except Exception:
+        pass
+    try:
+        index_knowledge()
     except Exception:
         pass
     lines = []

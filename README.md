@@ -48,6 +48,24 @@ AD group (`/etc/paas/team-groups`), and idle web UI instances are stopped after 
 signed in, not the headcount.
 The MCP servers below (PowerMax, UCS, MDS, docs-search on OpenShift) are added on top with `claude mcp add`.
 
+## Install a team's brain on any machine
+
+Any VM or laptop that has Claude Code, git and python3 3.9 or newer, and can reach the team's GitLab project:
+
+```bash
+claude plugin marketplace add git@gitlab/storage/brain-nas.git        # the team repository (ssh or https url)
+claude plugin install paas-brain-nas@paas-brain-nas
+claude                                                                 # first session: the plugin sets the team up
+```
+That first session clones the team's knowledge into `~/.claude/brain/teams/nas`, links the memory files into it, writes the
+persona, the storage rules and the core rules (one import line in your `~/.claude/CLAUDE.md`), copies `paas-team` to
+`~/.claude/tools`, and from then on every note is committed and pushed to the team, every session start pulls. You get the
+team's skills (`/paas-brain-nas:<skill>`), agents, the seven hooks (read-only guard, docs hints and leads, notes scan,
+lint, capture nudge, session start), the coding rules as a skill, and the team's MCP servers from its mcp.json. Updates
+arrive with `claude plugin update paas-brain-nas@paas-brain-nas` or auto-update. Not in the plugin: the documentation
+library (`sh install-laptop.sh --team nas` from this repository adds it and docs-local), the web UI, the dev tools.
+No GitLab access: `paas-team export nas` on the VM gives a zip; unzip and run `install-team.sh` inside it.
+
 ## Get the images
 
 Each image is split into 45 MB parts (GitHub refuses files over 100 MB). Join and load:

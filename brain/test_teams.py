@@ -52,6 +52,8 @@ for t in TEAMS:
     mk = json.load(open(os.path.join(out, ".claude-plugin", "marketplace.json")))
     assert mk["plugins"][0]["source"] == "./paas-brain-" + t
     assert json.load(open(os.path.join(plug, ".claude-plugin", "plugin.json")))["name"] == "paas-brain-" + t
+    assert os.path.isfile(os.path.join(plug, "skills", "coding-rules", "SKILL.md")) and "coding-rules" in meta["skills"], "coding rules travel as a skill"
+    assert "Think before coding" in open(os.path.join(plug, "skills", "coding-rules", "SKILL.md")).read()
 san_skills = json.load(open(os.path.join(out, "paas-brain-san", "team.json")))["skills"]
 nas_skills = json.load(open(os.path.join(out, "paas-brain-nas", "team.json")))["skills"]
 assert "zoning-audit" in san_skills and "zoning-audit" not in nas_skills and "share-access-check" in nas_skills
@@ -131,6 +133,17 @@ nx = os.path.join(brain, "notes", "powermax.md")
 open(nx, "w").write("# PowerMax\n- fact 2026-10-31 verified\n")
 run([sys.executable, os.path.join(hooks, "notes-check.py")], inp=json.dumps({"tool_input": {"file_path": nx}}))
 assert "brain: knowledge/notes/powermax.md" in git(os.path.join(brain, "teams", "san"), "log", "--format=%s")
+idx = open(os.path.join(brain, "teams", "san", "knowledge", "INDEX.md")).read()          # regenerated and committed with the note
+assert "powermax.md" in idx and "Core facts" in idx and "INDEX.md" in git(os.path.join(brain, "teams", "san"), "ls-files"), idx
+# session start: stale facts and due curation are announced
+open(os.path.join(brain, "notes", "old.md"), "w").write("# Old\n- 2020-01-01 an old fact observed source\n")
+for i in range(5):
+    open(os.path.join(brain, "captures", f"c{i}.md"), "w").write("# C\n")
+rc, o = run([sys.executable, os.path.join(hooks, "session-start.py")], inp="{}")
+assert "stale: 1 fact(s) older than 180 days" in o and "curation is due (5 or more)" in o, o
+for i in range(5):
+    os.remove(os.path.join(brain, "captures", f"c{i}.md"))
+os.remove(os.path.join(brain, "notes", "old.md"))
 assert git(brain, "log", "--format=%s") == "", "nothing committed to the old whole-brain folder"
 bare = os.path.join(work, "san.git")
 subprocess.run(["git", "init", "-q", "--bare", "-b", "main", bare], check=True)
@@ -183,6 +196,7 @@ broken = tempfile.mkdtemp(); shutil.copytree(src, os.path.join(broken, "r"), ign
 open(os.path.join(broken, "r", "paas-brain-nas", ".mcp.json"), "w").write("{")
 open(os.path.join(broken, "r", "knowledge", "notes", "leak.md"), "w").write("- login password=hunter2\n- ok password=abc notes-check: allow\n")
 r = subprocess.run([sys.executable, os.path.join(broken, "r", "check.py")], capture_output=True, text=True)
+assert "note knowledge/notes/leak.md:1: fact line without a date" in r.stdout, r.stdout
 assert r.returncode == 1 and "FAIL json paas-brain-nas/.mcp.json" in r.stdout and "FAIL no secret in knowledge/notes/leak.md: line 1" in r.stdout and "all checks passed" not in r.stdout, r.stdout
 # the plugin version is a fingerprint of its content, identical from publish.py and from paas-team bump
 v0 = json.load(open(os.path.join(src, "paas-brain-nas", ".claude-plugin", "plugin.json")))["version"]

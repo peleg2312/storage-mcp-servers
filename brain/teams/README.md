@@ -95,6 +95,34 @@ hooks.json and .mcp.json wrappers, skills and agents with frontmatter, team.json
 line caps on notes.md and tool-map.md) and a `.gitlab-ci.yml` that runs it on every push; the Brain tab's edits go through
 the same file when they are committed, so a broken edit is caught at the push, not at everyone's next session.
 
+## Knowledge and learning, end to end
+
+1. **Load.** Every session starts with notes.md (core facts, under 60 lines) and a catalog of the topic files, pages,
+   captures waiting and incidents; a topic file is read only when a question touches it. The session-start line also says
+   when curation is due (5 captures or more, or one older than 14 days) and how many facts are older than 180 days.
+2. **Look up.** Before answering, Claude searches the offline library (docs-lookup, docs-leads) and the team's own
+   knowledge: notes pages and incidents are indexed into the docs search (`add-docs --brain`, run in the background by the
+   session-start hook whenever they changed), so a teammate's page is found by `search_docs` next to the vendor documents.
+3. **Learn.** A solved problem, a quirk, a corrected assumption is written down (golden rule 6): a dated line with a
+   confidence word (verified / observed / hypothesis) and its source into notes/<topic>.md, a capture under captures/ when
+   the topic is unclear, a page notes/<topic>-<slug>.md when it needs sections, an incident postmortem under incidents/.
+   The stop hook asks once after a long session without a capture. Agents end with a Learned line the parent files.
+4. **Guard.** The notes hook scans every save for secrets and private addresses and sends them back for redaction before
+   anything is committed; the team repository's check.py runs the same patterns at every push, and notes fact lines
+   without a date or confidence word.
+5. **Share.** Each save is committed and pushed to the team repository; every session start and Brain tab opening pulls.
+   `knowledge/INDEX.md` is regenerated at every commit: topics with their fact counts, pages, captures, incidents, so the
+   team's brain is readable at a glance in GitLab. The Brain tab shows the files with history and restore.
+6. **Curate.** `brain-learn` promotes captures into notes (merge, keep, discard, with the person's go-ahead), re-verifies
+   stale facts and raises or lowers confidence only with new evidence. Memory stays small: caps on notes.md and topic
+   files are reported by session start and check.py.
+7. **Switch.** Each team has its own memory; a person moving between SAN and NAS carries their own notes with them on the
+   first switch and sees the other team's knowledge immediately.
+
+Compared with team-brain repositories that review every learning in a merge request: here the learning lands at once
+and the review happens at curation and at the CI gate; a team that wants human review before merge can protect `main`
+in GitLab and give members a branch, the sync reports the state either way.
+
 ## Everything is pushed, by every path
 
 The notes hook commits and pushes each file Claude saves (notes, captures, incidents, tool map); the Brain tab pushes

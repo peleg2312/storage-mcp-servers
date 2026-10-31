@@ -102,5 +102,18 @@ for f in files(".md", os.path.join(ROOT, "knowledge")):
     cap = CAPS.get(os.path.basename(f))
     if cap and os.path.dirname(f) == os.path.join(ROOT, "knowledge"):
         ok(f"{os.path.basename(f)} under {cap} lines", len(lines) <= cap, f"{len(lines)} lines: move facts into notes/<topic>.md")
+# quality notes (never a failure): a '- ' fact line in notes.md / notes/<topic>.md should carry its date and a confidence word
+loose = 0
+for f in [os.path.join(ROOT, "knowledge", "notes.md")] + files(".md", os.path.join(ROOT, "knowledge", "notes")):
+    try:
+        for n, line in enumerate(open(f, encoding="utf-8", errors="replace").read().splitlines(), 1):
+            if line.startswith("- ") and not (re.search(r"\d{4}-\d{2}-\d{2}", line) and re.search(r"\b(verified|observed|hypothesis)\b", line)):
+                loose += 1
+                if loose <= 10:
+                    print(f"note {os.path.relpath(f, ROOT)}:{n}: fact line without a date or a confidence word (date · fact · verified / observed / hypothesis · source)")
+    except OSError:
+        pass
+if loose > 10:
+    print(f"note: {loose - 10} more fact lines without a date or a confidence word")
 print("all checks passed" if not bad else f"{len(bad)} finding(s)")
 sys.exit(1 if bad else 0)

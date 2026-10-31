@@ -111,6 +111,14 @@ def build(out, team_name="san", hooks=True):
     os.makedirs(os.path.join(plug, "agents"), exist_ok=True)
     for n, p in agents:
         shutil.copy(p, os.path.join(plug, "agents", n + ".md"))
+    # the coding rules as a skill too (one source: brain/claude/brain/coding.md), so a plugin-only install has them and
+    # Claude loads them by itself before code work; the file copy under brain/ stays for the installed brains
+    coding = open(os.path.join(SRC, "brain", "coding.md"), encoding="utf-8").read()
+    write(os.path.join(plug, "skills", "coding-rules", "SKILL.md"),
+          "---\nname: coding-rules\ndescription: The brain's coding rules, read once before the first code change of a session "
+          "(think first, simplicity, surgical changes, checkable goals). Triggers - writing or changing code, scripts, services, apps\n---\n"
+          + coding.split("\n", 1)[1].lstrip("\n"))
+    skills = skills + [("coding-rules", os.path.join(plug, "skills", "coding-rules"))]
     if hooks:
         shutil.copytree(os.path.join(SRC, "hooks"), os.path.join(plug, "hooks"), ignore=IGNORE)
         write(os.path.join(plug, "hooks", "hooks.json"), dump(hooks_json()))
