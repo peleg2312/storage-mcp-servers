@@ -2,13 +2,13 @@
 // Shared UI helpers for the tab plugins. Tabs are loaded through a Blob URL and cannot import siblings,
 // so sync-shared.py pastes this block at the top of every index.js. Use: root element gets class "paas".
 const PAAS_CSS = `
-.paas{font:14px/1.5 Inter,ui-sans-serif,system-ui,sans-serif;color:hsl(var(--foreground));padding:24px 28px 40px;max-width:1120px;margin:0 auto;box-sizing:border-box}
+.paas{font:14px/1.5 Inter,ui-sans-serif,system-ui,sans-serif;color:hsl(var(--foreground));padding:16px 28px 40px;max-width:1120px;margin:0 auto;box-sizing:border-box}
 .paas *,.paas *::before,.paas *::after{box-sizing:border-box}
-.paas h2{font-size:22px;font-weight:600;line-height:1.25;margin:0}
+.paas h2{font-size:18px;font-weight:600;line-height:1.3;margin:0}
 .paas h3{font-size:14px;font-weight:600;margin:0}
 .paas .sub{color:hsl(var(--muted-foreground));font-size:13px}
-.paas .head{display:flex;gap:12px 16px;flex-wrap:wrap;align-items:center;justify-content:space-between;padding:0 0 16px;margin-bottom:24px;border-bottom:1px solid hsl(var(--border))}
-.paas .head>div:first-child{min-width:0;flex:1 1 320px}.paas .head .sub{margin-top:4px;max-width:70ch}
+.paas .head{display:flex;gap:8px 16px;flex-wrap:wrap;align-items:center;justify-content:space-between;padding:0 0 10px;margin-bottom:16px;border-bottom:1px solid hsl(var(--border))}
+.paas .head>div:first-child{min-width:0;flex:1 1 320px;display:flex;gap:4px 12px;flex-wrap:wrap;align-items:baseline}.paas .head .sub{margin-top:0;max-width:70ch}
 .paas .head .actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
 .paas .row{display:flex;gap:8px 12px;flex-wrap:wrap;align-items:center}
 .paas .spread{display:flex;gap:8px 12px;flex-wrap:wrap;align-items:center;justify-content:space-between}
@@ -222,7 +222,8 @@ const CSS = `
 .paas .res{padding:12px 0;border-bottom:1px solid hsl(var(--border))}.paas .res:last-child{border:0}
 .paas .res a{color:hsl(var(--primary));font-weight:600;text-decoration:none}.paas .res a:hover{text-decoration:underline}
 .paas .snip{color:hsl(var(--muted-foreground));font-size:13px;margin-top:4px;white-space:pre-wrap}.paas .snip b{color:hsl(var(--foreground))}
-.paas .counts{margin:0 0 24px}
+.paas .counts{margin:0 0 16px;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:8px}
+.paas .counts .tile{padding:8px 12px;display:flex;align-items:baseline;gap:6px;flex-wrap:wrap}.paas .counts .tile .k{font-size:11px;flex:1 1 100%}.paas .counts .tile .v{font-size:18px;line-height:1.3;margin:0}.paas .counts .tile .u{font-size:12px}
 .paas .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:12px;margin-top:8px}
 .paas .item .row:last-child{margin-top:auto}
 .paas .item{border:1px solid hsl(var(--border));border-radius:12px;padding:16px;background:hsl(var(--card));display:flex;flex-direction:column;gap:8px;transition:border-color .15s}

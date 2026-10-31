@@ -2,13 +2,13 @@
 // Shared UI helpers for the tab plugins. Tabs are loaded through a Blob URL and cannot import siblings,
 // so sync-shared.py pastes this block at the top of every index.js. Use: root element gets class "paas".
 const PAAS_CSS = `
-.paas{font:14px/1.5 Inter,ui-sans-serif,system-ui,sans-serif;color:hsl(var(--foreground));padding:24px 28px 40px;max-width:1120px;margin:0 auto;box-sizing:border-box}
+.paas{font:14px/1.5 Inter,ui-sans-serif,system-ui,sans-serif;color:hsl(var(--foreground));padding:16px 28px 40px;max-width:1120px;margin:0 auto;box-sizing:border-box}
 .paas *,.paas *::before,.paas *::after{box-sizing:border-box}
-.paas h2{font-size:22px;font-weight:600;line-height:1.25;margin:0}
+.paas h2{font-size:18px;font-weight:600;line-height:1.3;margin:0}
 .paas h3{font-size:14px;font-weight:600;margin:0}
 .paas .sub{color:hsl(var(--muted-foreground));font-size:13px}
-.paas .head{display:flex;gap:12px 16px;flex-wrap:wrap;align-items:center;justify-content:space-between;padding:0 0 16px;margin-bottom:24px;border-bottom:1px solid hsl(var(--border))}
-.paas .head>div:first-child{min-width:0;flex:1 1 320px}.paas .head .sub{margin-top:4px;max-width:70ch}
+.paas .head{display:flex;gap:8px 16px;flex-wrap:wrap;align-items:center;justify-content:space-between;padding:0 0 10px;margin-bottom:16px;border-bottom:1px solid hsl(var(--border))}
+.paas .head>div:first-child{min-width:0;flex:1 1 320px;display:flex;gap:4px 12px;flex-wrap:wrap;align-items:baseline}.paas .head .sub{margin-top:0;max-width:70ch}
 .paas .head .actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
 .paas .row{display:flex;gap:8px 12px;flex-wrap:wrap;align-items:center}
 .paas .spread{display:flex;gap:8px 12px;flex-wrap:wrap;align-items:center;justify-content:space-between}
