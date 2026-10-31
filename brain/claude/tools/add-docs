@@ -2,6 +2,7 @@
 # Add your own documents to the offline docs library (searched by docs-local like everything else):
 #   put PDF / HTML / Markdown / text files in ~/.claude/brain/inbox/<vendor>/<product>/   (loose files: local/inbox)
 #   then run:  add-docs
+#   add-docs --brain   index ~/.claude/brain/notes/*.md and incidents/**/*.md (local/brain-notes, local/brain-incidents)
 # Or fetch pages the VM can reach (intranet wiki, internal portal, vendor page through the proxy) straight in:
 #   add-docs https://wiki.corp/san/zoning-standard [more urls] [--to <vendor>/<product>]   (default: web/<host>)
 # The url becomes the document's link in search results. Only new or changed files are read; a file deleted from
@@ -15,6 +16,17 @@ DB=${DOCS_DB:-$HOME/.claude/brain/library/docs.db}
 PY=$HOME/.claude/devtools-venv/bin/python
 "$PY" -c "import pypdf" 2>/dev/null || PY=python3          # PDFs need pypdf (installed by install.sh in the devtools venv)
 mkdir -p "$INBOX"
+if [ "${1:-}" = "--brain" ]; then
+  # copies (mtime kept, so unchanged pages are not re-read) in a staging tree shaped local/<product>/<file>; rebuilt
+  # each run, so a page removed from notes/ leaves the index. captures, notes.md and environment.md stay out.
+  B=${BRAIN:-$HOME/.claude/brain}; S=$B/.brain-index
+  rm -rf "$S"; mkdir -p "$S/local/brain-notes" "$S/local/brain-incidents"
+  for f in "$B"/notes/*.md; do [ -f "$f" ] && cp -p "$f" "$S/local/brain-notes/"; done
+  find "$B/incidents" -name '*.md' -type f 2>/dev/null | while read -r f; do
+    cp -p "$f" "$S/local/brain-incidents/$(basename "$(dirname "$f")")-$(basename "$f")"
+  done
+  exec "$PY" "$TOOLS/docs_index.py" --docs "$S" --db "$DB" --add brain/
+fi
 if [ $# -gt 0 ]; then
   python3 - "$INBOX" "$@" <<'EOF'
 import json, os, re, sys, urllib.parse, urllib.request

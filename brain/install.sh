@@ -91,6 +91,19 @@ LIB=$HERE/../library
 HAVE_LIB=0
 NEW_LIB=0
 mkdir -p "$USER_DST/brain/inbox"                   # your own documents (add-docs); kept across library updates
+# the brain as a git history (notes-check.py commits each saved note); big or private things stay out of it
+if command -v git >/dev/null 2>&1 && [ ! -d "$USER_DST/brain/.git" ]; then
+  ( cd "$USER_DST/brain" && git init -q \
+    && printf 'library/\ninbox/\nplugins/\n.nudged/\n.brain-index/\n*.bak\n*.db\n.DS_Store\n' > .gitignore \
+    && git add -A >/dev/null 2>&1 \
+    && git -c user.name=brain -c user.email=brain@localhost commit -q -m 'brain: initial' >/dev/null 2>&1 ) \
+    || echo "note: could not start a git history in $USER_DST/brain (skipped)"
+fi
+if [ -d "$USER_DST/brain/.git" ]; then                 # an older history learns new ignore lines
+  for l in library/ inbox/ plugins/ .nudged/ .brain-index/ '*.bak' '*.db' .DS_Store; do
+    grep -qxF -- "$l" "$USER_DST/brain/.gitignore" 2>/dev/null || echo "$l" >> "$USER_DST/brain/.gitignore"
+  done
+fi
 if [ "$NO_LIBRARY" = 0 ] && [ -f "$LIB/VERSION" ] && ls "$LIB"/docs-library-*.part-* >/dev/null 2>&1; then
   if [ "$(cat "$LIB/VERSION")" != "$(cat "$LIBDST/VERSION" 2>/dev/null || true)" ]; then
     echo "installing documentation library $(cat "$LIB/VERSION") into $LIBDST (a minute)..."

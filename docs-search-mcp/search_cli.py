@@ -664,6 +664,20 @@ def _href(url):
     return urlunsplit((u.scheme.lower(), u.netloc.lower(), u.path.rstrip("/"), u.query, ""))
 
 
+def _key(url):
+    """What identifies a KB article across its link forms: Dell kbdoc and Broadcom KB links carry the article
+    number with varying slugs and ?lang= parameters, so they match by number (a LIKE pattern on docs.url / links.href);
+    anything else matches by its normalized url without a query."""
+    u = _href(url)
+    m = re.search(r"dell\.com/support/kbdoc/[^/]+/(\d{9})", u)
+    if m:
+        return ("dell", f"%dell.com/support/kbdoc/%/{m.group(1)}%")
+    m = re.search(r"knowledge\.broadcom\.com/external/article/(\d+)", u)
+    if m:
+        return ("bcm", f"%knowledge.broadcom.com/external/article/{m.group(1)}%")
+    return ("", u.split("?", 1)[0])
+
+
 def related_docs(c, chunk_id=0, path="", url="", limit=10):
     """Pages the document links to / pages that link to it, resolved inside the library (link targets are
     matched to docs.url). The document: a chunk's document, or its path, or its url. unresolved: outgoing
@@ -700,15 +714,30 @@ def related_docs(c, chunk_id=0, path="", url="", limit=10):
 
     try:
         hrefs = [h for (h,) in c.execute("SELECT DISTINCT href FROM links WHERE doc_id = ?", (d["id"],))]
-        to, resolved = [], 0
-        for h in hrefs:
+        mine = {_key(r["url"]) for r in group if r["url"]} | {("", "")}
+        to, keys = [], {}
+        for h in hrefs:                                   # one target per article: a KB linked in 12 languages is one link
+            k = _key(h)
+            if k not in mine:
+                keys.setdefault(k, h)
+        resolved = 0
+        for k, h in keys.items():
             hit = c.execute("SELECT * FROM docs WHERE url IN (?, ?) ORDER BY dup_of IS NOT NULL LIMIT 1", (h, h + "/")).fetchone()
+            if not hit and k[0]:                          # the KB's own numbering: slug and language differ, the article does not
+                hit = c.execute("SELECT * FROM docs WHERE url LIKE ? ORDER BY dup_of IS NOT NULL LIMIT 1", (k[1],)).fetchone()
             if hit and hit["id"] not in ids:
                 to.append(hit)
             resolved += bool(hit)
+        hrefs = list(keys)
         frm = []
-        for h in me:
-            frm += c.execute("SELECT d.* FROM links l JOIN docs d ON d.id = l.doc_id WHERE l.href = ? LIMIT 200", (h,)).fetchall()
+        for r in group:
+            if not r["url"]:
+                continue
+            k = _key(r["url"])
+            frm += c.execute("SELECT d.* FROM links l JOIN docs d ON d.id = l.doc_id WHERE l.href IN (?, ?) LIMIT 200",
+                             (_href(r["url"]), _href(r["url"]) + "/")).fetchall()
+            if k[0]:
+                frm += c.execute("SELECT d.* FROM links l JOIN docs d ON d.id = l.doc_id WHERE l.href LIKE ? LIMIT 200", (k[1],)).fetchall()
         frm = [r for r in frm if r["id"] not in ids]
     except sqlite3.OperationalError:                    # an index built before the links table existed
         to, frm, hrefs, resolved = [], [], [], 0

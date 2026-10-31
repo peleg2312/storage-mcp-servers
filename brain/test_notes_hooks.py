@@ -54,3 +54,48 @@ assert run("capture-nudge.py", sess("b", stop_hook_active=True)) == (0, "")
 open(tr, "w").write('{"type":"tool_use"}\n' * 25 + '{"type":"tool_use","name":"Write","input":{"file_path":"/home/u/.claude/brain/captures/x.md"}}\n')
 assert run("capture-nudge.py", sess("c")) == (0, "")
 print("capture-nudge ok")
+
+# brain as a git repository: the hook commits what it scans, --commit works, incidents are scanned
+git = lambda *a: subprocess.run(["git", "-C", brain, *a], capture_output=True, text=True).stdout
+os.makedirs(os.path.join(brain, "notes"))
+nx = os.path.join(brain, "notes", "x.md")
+open(nx, "w").write("# X\n- fine\n")
+assert run("notes-check.py", {"tool_input": {"file_path": nx}}) == (0, ""), "no repository: silent"
+subprocess.run(["git", "-C", brain, "init", "-q"], check=True)
+open(nx, "w").write("# X\n- fine, again\n")
+assert run("notes-check.py", {"tool_input": {"file_path": nx}}) == (0, ""), "commit must print nothing"
+assert "brain: notes/x.md" in git("log", "--format=%s"), git("log")
+open(nx, "w").write("# X\n- third\n")
+assert run("notes-check.py", args=["--commit", "brain: manual"]) == (0, "")
+assert git("log", "-1", "--format=%s").strip() == "brain: manual"
+assert run("notes-check.py", args=["--commit", "nothing changed"]) == (0, "")
+os.makedirs(os.path.join(brain, "incidents", "2026"))
+open(os.path.join(brain, "incidents", "2026", "x.md"), "w").write("- password=hunter2\n")
+rc, out = run("notes-check.py", args=["--scan"])
+assert rc == 1 and "incidents/2026/x.md:1" in out, (rc, out)
+print("brain git history ok")
+
+# add-docs --brain: pages land as local/brain-notes and local/brain-incidents; a removed page leaves the index
+import shutil, sqlite3
+repo = os.path.dirname(HOOKS.rsplit("claude", 1)[0].rstrip(os.sep))
+tools = os.path.join(home, "tools")
+os.makedirs(tools)
+shutil.copy(os.path.join(HOOKS, "..", "tools", "add-docs"), tools)
+for m in ("docs_index.py", "docs_text.py"):
+    shutil.copy(os.path.join(repo, "docs-search-mcp", m), tools)
+db = os.path.join(home, "docs.db")
+os.makedirs(os.path.join(home, "empty"))
+subprocess.run([sys.executable, os.path.join(tools, "docs_index.py"), "--docs", os.path.join(home, "empty"), "--db", db],
+               capture_output=True, env=env)
+os.makedirs(os.path.join(brain, "incidents", "2026"), exist_ok=True)
+open(os.path.join(brain, "incidents", "2026", "x.md"), "w").write("# Incident\n- zoning outage\n")
+os.makedirs(os.path.join(brain, "captures"))
+open(os.path.join(brain, "captures", "c.md"), "w").write("# Capture\n")
+e2 = dict(env, DOCS_DB=db)
+paths = lambda: sorted(r[0] for r in sqlite3.connect(db).execute("SELECT path FROM docs"))
+r = subprocess.run(["sh", os.path.join(tools, "add-docs"), "--brain"], capture_output=True, text=True, env=e2)
+assert r.returncode == 0 and paths() == ["brain/local/brain-incidents/2026-x.md", "brain/local/brain-notes/x.md"], (r.stderr, paths())
+os.remove(nx)
+subprocess.run(["sh", os.path.join(tools, "add-docs"), "--brain"], capture_output=True, env=e2)
+assert paths() == ["brain/local/brain-incidents/2026-x.md"], paths()
+print("add-docs --brain ok")

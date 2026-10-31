@@ -3,14 +3,17 @@
 Hook: a file under ~/.claude/brain/ or ~/storage-reports/ is scanned for secrets (private keys, JWTs, tokens,
 password = value, AWS keys, -password/-p arguments) and private IPv4 addresses; findings go back to Claude to
 replace with <REDACTED>. Silent when clean. A line ending in 'notes-check: allow' (or holding '# allow-ip' for
-IPs) is skipped; environment.md and tool-map.md may hold management IPs.
-  notes-check.py --scan        scan all notes and captures, exit 1 on findings
+IPs) is skipped; environment.md and tool-map.md may hold management IPs. A file saved under the
+brain is also committed to the brain's git history ('brain: <path>') when ~/.claude/brain/.git exists; silent.
+  notes-check.py --scan        scan all notes, captures and incidents, exit 1 on findings
+  notes-check.py --commit MSG  commit everything changed in the brain (silent, exit 0)
   notes-check.py --stale N     list '- ' note lines whose first YYYY-MM-DD is older than N days (informational)"""
 import datetime
 import glob
 import json
 import os
 import re
+import subprocess
 import sys
 
 BRAIN = os.path.expanduser("~/.claude/brain")
@@ -50,13 +53,16 @@ def findings(path):
 
 def note_files():
     return [os.path.join(BRAIN, "notes.md")] + sorted(glob.glob(os.path.join(BRAIN, "notes", "*.md"))) + \
-        sorted(glob.glob(os.path.join(BRAIN, "captures", "*.md")))
+        sorted(glob.glob(os.path.join(BRAIN, "captures", "*.md"))) + \
+        sorted(glob.glob(os.path.join(BRAIN, "incidents", "**", "*.md"), recursive=True))
 
 
 def stale(days):
     cut = datetime.date.today() - datetime.timedelta(days=days)
     n = 0
     for f in note_files():
+        if os.sep + "incidents" + os.sep in f:
+            continue                       # --stale: notes and captures only
         try:
             lines = open(f, encoding="utf-8", errors="replace").read().splitlines()
         except OSError:
@@ -73,6 +79,19 @@ def stale(days):
     return 0
 
 
+def commit(message, rel=None):
+    """Brain history: git add + commit, 4 s each, every error swallowed. Not a repository: nothing happens."""
+    if not os.path.isdir(os.path.join(BRAIN, ".git")):
+        return
+    ident = ["-c", "user.name=brain", "-c", "user.email=brain@localhost"]
+    try:
+        for cmd in (["add", "-A"] + (["--", rel] if rel else []), ident + ["commit", "-q", "-m", message]):
+            subprocess.run(["git", "-C", BRAIN] + cmd, stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL,
+                           stderr=subprocess.DEVNULL, timeout=4)
+    except Exception:
+        pass
+
+
 def hook():
     try:
         path = (json.load(sys.stdin).get("tool_input") or {}).get("file_path", "")
@@ -83,6 +102,9 @@ def hook():
     if not path.startswith(tuple(roots)) or not os.path.isfile(path):
         return 0
     f = findings(path)
+    brain = os.path.realpath(BRAIN) + os.sep
+    if path.startswith(brain):
+        commit("brain: " + path[len(brain):], path[len(brain):])
     if f:
         more = f"\n... and {len(f) - MAX_LINES} more" if len(f) > MAX_LINES else ""
         print(f"{os.path.basename(path)} holds {len(f)} secret(s) or real location(s); replace each value with "
@@ -98,6 +120,9 @@ def main():
         return 1 if f else 0
     if a[:1] == ["--stale"]:
         return stale(int(a[1]) if len(a) > 1 and a[1].isdigit() else 180)
+    if a[:1] == ["--commit"]:
+        commit(a[1] if len(a) > 1 else "brain: update")
+        return 0
     return hook()
 
 

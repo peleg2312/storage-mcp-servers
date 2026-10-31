@@ -20,6 +20,7 @@ const MEMORY = {
 };
 const CAPTURES = path.join(C, 'brain', 'captures');
 const CAPTURE = /^captures\/([\w][\w.-]{0,100}\.md)$/;     // a file directly in captures/, never a deeper path
+const BRAIN = path.join(C, 'brain');
 const MULTI = fs.existsSync('/opt/paas/marketplace');
 const writable = (p) => { try { fs.accessSync(p, fs.constants.W_OK); return true; } catch { return false; } };
 const MARKET = process.env.PAAS_MARKET || '/opt/paas/marketplace';
@@ -35,6 +36,23 @@ const run = (cmd, args, timeout = 120000) => new Promise((resolve) => {
   execFile(cmd, args, { timeout, maxBuffer: 20 * 1024 * 1024, env: { ...process.env, PATH: `${HOME}/.local/bin:${process.env.PATH}` } },
     (err, stdout, stderr) => resolve({ ok: !err, out: `${stdout}${stderr}`.trim() }));
 });
+
+// history of the memory files: ~/.claude/brain may be a git repository (install.sh); never blocks a save
+const git = (args) => run('git', ['-C', BRAIN, '-c', 'user.name=brain', '-c', 'user.email=brain@localhost', ...args], 5000);
+const isRepo = () => fs.existsSync(path.join(BRAIN, '.git'));
+const commitFile = async (p, msg) => {
+  if (!isRepo()) return;
+  await git(['add', '-A', '--', path.relative(BRAIN, p)]);
+  await git(['commit', '-q', '-m', msg]);
+};
+// the file behind a memory name or captures/<file>, and its path inside the repository (null: outside it)
+function memPath(name) {
+  const cap = CAPTURE.exec(String(name || ''));
+  const p = cap ? path.join(CAPTURES, cap[1]) : Object.hasOwn(MEMORY, name) ? MEMORY[name] : null;
+  if (!p) return null;
+  const rel = path.relative(BRAIN, p);
+  return { p, rel: rel.startsWith('..') ? null : rel, cap: !!cap };
+}
 
 function frontmatter(text) {
   const m = /^---\n([\s\S]*?)\n---/.exec(text || '');
@@ -215,12 +233,13 @@ const routes = {
     const cap = CAPTURE.exec(String(b.name || ''));
     if (cap) {                                                         // a capture: save, or discard with {remove:true}
       const p = path.join(CAPTURES, cap[1]);
-      if (b.remove) { try { fs.unlinkSync(p); } catch { /* already gone */ } return { ok: true }; }
+      if (b.remove) { try { fs.unlinkSync(p); } catch { /* already gone */ } await commitFile(p, `brain tab: remove ${b.name}`); return { ok: true }; }
       const t = String(b.text ?? '');
       if (t.length > 500000) return { ok: false, out: 'Too long' };
       fs.mkdirSync(CAPTURES, { recursive: true });
       if (fs.existsSync(p)) fs.copyFileSync(p, `${p}.bak`);
       fs.writeFileSync(p, t.endsWith('\n') ? t : `${t}\n`);
+      await commitFile(p, `brain tab: ${b.name}`);
       return { ok: true };
     }
     if (!Object.hasOwn(MEMORY, b.name)) return { ok: false, out: 'That file is not editable here' };
@@ -230,7 +249,27 @@ const routes = {
     const p = MEMORY[b.name];
     if (fs.existsSync(p)) fs.copyFileSync(p, `${p}.bak`);            // one step back, next to the file
     fs.writeFileSync(p, text.endsWith('\n') ? text : `${text}\n`);
+    await commitFile(p, `brain tab: ${b.name}`);
     return { ok: true };
+  },
+  'GET /history': async (q) => {
+    const m = memPath(q.get('name'));
+    if (!m || !m.rel || !isRepo()) return { repo: false, entries: [] };
+    const r = await git(['log', '--format=%h%x09%ct%x09%s', '-n', '25', '--', m.rel]);
+    const entries = r.ok ? r.out.split('\n').filter(Boolean).map((l) => { const [sha, when, ...s] = l.split('\t'); return { sha, when: Number(when), subject: s.join('\t') }; }) : [];
+    return { repo: true, entries };
+  },
+  'POST /restore': async (_q, b) => {
+    const m = memPath(b.name);
+    if (!m || !m.rel || !isRepo()) return { ok: false, out: 'No history for that file' };
+    if (!/^[0-9a-f]{7,40}$/.test(String(b.sha || ''))) return { ok: false, out: 'Bad version' };
+    if (fs.existsSync(m.p) && !writable(m.p)) return { ok: false, out: 'Shared file: only root changes it' };
+    const r = await git(['show', `${b.sha}:${m.rel.split(path.sep).join('/')}`]);
+    if (!r.ok) return { ok: false, out: 'That version is not in the history' };
+    if (fs.existsSync(m.p)) fs.copyFileSync(m.p, `${m.p}.bak`);
+    fs.writeFileSync(m.p, r.out ? `${r.out}\n` : '');
+    await commitFile(m.p, `brain tab: restore ${b.name} from ${b.sha}`);
+    return { ok: true, text: read(m.p) ?? '' };
   },
   // your own skills (marked .user-skill; install.sh never touches them): create / update / delete
   'POST /skill': async (_q, b) => {

@@ -22,16 +22,18 @@ Management IPs only in `environment.md`.
    ## How we know    what was observed, when, confidence: verified | observed | hypothesis
    ## History        <date>: created
    ```
+   A fact that does not fit a dated line is a knowledge page `notes/<topic>-<slug>.md` (line 1 `# <title>`, then the
+   sections of a capture); session-start lists it with the topic files.
 4. Tell the user the file path and a two-line summary.
 
 ## b) Curate ("curate the captures")
-List `~/.claude/brain/captures/*.md`. For each choose: **promote** (into `notes/<topic>.md` as dated lines or a short
-section), **merge** (fold into an existing note, bump its date), **keep**, **discard**. Show the table
+List `~/.claude/brain/captures/*.md`. For each choose: **promote** (into `notes/<topic>.md` as dated lines, or as a page
+`notes/<topic>-<slug>.md` when it fits no line), **merge** (fold into an existing note, bump its date), **keep**, **discard**. Show the table
 (file | decision | reason) and wait for the user's go-ahead before writing anything. Never raise confidence while
 curating. Stale facts: `python3 ~/.claude/hooks/notes-check.py --stale 180`; ask the user to re-verify, never delete them.
 
 ## c) Incident report
-Blameless postmortem of a storage incident, saved to `~/storage-reports/<date>-incident-<slug>/incident.md`.
+Blameless postmortem of a storage incident, saved to `~/.claude/brain/incidents/<yyyy>/<date>-<slug>.md` (create the folder).
 First search the library and `notes/` for related history. Sections, in order:
 - **Header**: title, date, severity (sev1-sev4), status, systems (arrays / fabrics / hosts / datastores affected),
   started, detected, mitigated, resolved (each with timezone).
@@ -44,5 +46,10 @@ First search the library and `notes/` for related history. Sections, in order:
 - **Evidence**: redacted log lines, alert names, EMS events, KB and bug numbers cited from the library.
 - **Action items**: owner, due.
 
-Then add one dated line in `notes/<topic>.md` pointing to the report, and deliver it with
-`python3 ~/.claude/tools/report.py --send <file>`.
+Then add one dated line in `notes/<topic>.md` pointing to the report. Only when the user wants it delivered: copy it
+to `~/storage-reports/<date>-incident-<slug>/incident.md` and run `python3 ~/.claude/tools/report.py --send <file>`.
+
+## d) After writing
+After a promote, a new page or an incident, run `add-docs --brain`: the docs search then finds them next to the
+vendor documents (notes.md, captures and environment.md are never indexed). Nothing to commit by hand: the
+notes-check hook commits each saved file to the brain's git history (Brain tab shows it).

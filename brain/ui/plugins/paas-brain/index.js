@@ -352,7 +352,7 @@ export function mount(container, api) {
         ? `What Claude reads at the start of every session. Edit and save; the previous version is kept as a .bak file.${m.name === 'CLAUDE.md' ? ' A brain update replaces this file: keep lasting facts in notes.md.' : ''}`
         : 'Shared file: only root changes it.'}</div>
       ${m.editable ? `${field(`${esc(m.name)}`, `<textarea class="mt" spellcheck="false">${esc(m.text)}</textarea>`)}
-        <div class="row sticky"><button class="btn save">Save</button><span class="stbox"></span></div>` : `<pre>${esc(m.text)}</pre>`}
+        <div class="row sticky"><button class="btn save">Save</button><button class="btn ghost hist">History</button><span class="stbox"></span></div><div class="histbox"></div>` : `<pre>${esc(m.text)}</pre>`}
       ${cap ? '' : `<div class="sub" style="margin:18px 0 8px"><b>Captures</b>: what Claude wrote down for later curation (ask it to "curate the captures").</div>
       ${(data.captures || []).length ? data.captures.map((c, k) => `<div class="row"><span class="grow">${esc(c.name)} <span class="sub">${esc(new Date(c.mtime).toLocaleDateString())} ${esc(c.text.split('\n')[0].replace(/^#+\s*/, '').slice(0, 80))}</span></span>
         <button class="btn ghost sm" data-open="${k}">Open</button><button class="btn danger sm" data-drop="${k}">Discard</button></div>`).join('')
@@ -373,6 +373,24 @@ export function mount(container, api) {
     if (!box) return;
     const st = statusLine(box);
     pane.querySelector('.mt').addEventListener('input', () => st.say('Unsaved changes'));
+    pane.querySelector('.hist').addEventListener('click', async () => {
+      const hb = pane.querySelector('.histbox');
+      const r = await api.rpc('GET', `history?name=${encodeURIComponent(m.name)}`).catch((x) => ({ error: String(x) }));
+      if (r.error) { st.error(`No history: ${r.error}`); return; }
+      if (!r.repo) { hb.innerHTML = '<div class="sub">No history: the brain is not a git repository yet (re-run install.sh on the VM).</div>'; return; }
+      hb.innerHTML = r.entries.length ? r.entries.map((x, k) => { const d = new Date(x.when * 1000).toLocaleString();
+        return `<div class="row"><span class="grow">${esc(d)} <span class="sub">${esc(x.subject)}</span></span><button class="btn ghost sm" data-sha="${k}">Restore</button></div>`; }).join('')
+        : '<div class="sub">No changes recorded yet.</div>';
+      hb.querySelectorAll('[data-sha]').forEach((b) => b.addEventListener('click', async () => {
+        const x = r.entries[Number(b.dataset.sha)]; const d = new Date(x.when * 1000).toLocaleString();
+        if (!(await confirmInline(b, { title: `Restore ${m.name} from ${d}?`, text: 'The current text is kept in history.', confirmLabel: 'Restore' })).ok) return;
+        const q = await api.rpc('POST', 'restore', { name: m.name, sha: x.sha }).catch((e) => ({ out: String(e) }));
+        if (!q.ok) { st.error(`Not restored: ${q.out || 'unknown error'}`); return; }
+        m.text = q.text; pane.querySelector('.mt').value = q.text; dirty = false; hb.replaceChildren();
+        const c = cap && data.captures.find((y) => `captures/${y.name}` === m.name); if (c) c.text = q.text;
+        st.say('Restored');
+      }));
+    });
     pane.querySelector('.save').addEventListener('click', async (e) => {
       const text = pane.querySelector('.mt').value; const done = busy(e.currentTarget, 'Saving…');
       const r = await api.rpc('POST', 'memory', { name: m.name, text }).catch((x) => ({ out: String(x) }));
