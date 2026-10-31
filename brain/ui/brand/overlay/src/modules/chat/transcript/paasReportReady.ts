@@ -25,7 +25,8 @@ const READ_RE = /\b(read|reading|open(ed)?|look(ed)?|check(ed)?|found|exists?|ex
 
 /** Files this reply hands over: under storage-reports, or a project file the sentence says was made (not just read). */
 export function reportFiles(text: string): string[] {
-  const plain = text.replace(/https?:\/\/\S+/g, ' ');
+  // a markdown link counts once, by its target (the label would match again as a bare name)
+  const plain = text.replace(/\[[^\]\n]*\]\(([^)\n]*)\)/g, ' $1 ').replace(/https?:\/\/\S+/g, ' ');
   const found = new Set<string>();
   for (const m of plain.matchAll(FILE_RE)) {
     const ref = m[0].replace(/^\.\//, '');
