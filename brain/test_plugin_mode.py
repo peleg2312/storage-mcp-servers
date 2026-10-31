@@ -90,5 +90,24 @@ assert r.returncode == 0 and not r.stdout.strip(), (r.returncode, r.stdout, r.st
 alone = dict(env, CLAUDE_PLUGIN_ROOT="/x", PAAS_MANAGED_SETTINGS=os.path.join(work, "none.json"))
 r = subprocess.run([sys.executable, hook], input=call, capture_output=True, text=True, env=alone, timeout=30)
 assert r.returncode == 2, (r.returncode, r.stdout, r.stderr)
+# every hook steps aside the same way (hook mode only; the CLI uses of notes-check keep working)
+ss = os.path.join(R, "brain", "claude", "hooks", "session-start.py")
+open(managed, "w").write(json.dumps({"hooks": {"SessionStart": [{"hooks": [{"type": "command", "command": "python3 /opt/paas/hooks/session-start.py"}]}]}}))
+r = subprocess.run([sys.executable, ss], input="{}", capture_output=True, text=True, env=twin, timeout=30)
+assert r.returncode == 0 and not r.stdout.strip(), (r.stdout[:200], r.stderr[:200])
+r = subprocess.run([sys.executable, ss], input="{}", capture_output=True, text=True, env=alone, timeout=30)
+assert r.stdout.startswith("Storage brain:"), r.stdout[:200]
+nc = os.path.join(R, "brain", "claude", "hooks", "notes-check.py")
+open(managed, "w").write(json.dumps({"hooks": {"PostToolUse": [{"hooks": [{"type": "command", "command": "python3 /opt/paas/hooks/notes-check.py"}]}]}}))
+r = subprocess.run([sys.executable, nc, "--sync"], capture_output=True, text=True, env=dict(twin, HOME=home), timeout=30)
+assert "brain:" in r.stdout, r.stdout                     # a CLI use is never a twin
+# an install made without --team carries the hooks in settings.json: the switch to a team plugin strips them
+home3 = os.path.join(work, "home3"); os.makedirs(os.path.join(home3, ".claude", "tools"))
+shutil.copy(TOOL, os.path.join(home3, ".claude", "tools", "paas-team"))
+subprocess.run([sys.executable, os.path.join(R, "brain", "merge_settings.py"), os.path.join(home3, ".claude", "settings.json")], check=True, capture_output=True)
+assert json.load(open(os.path.join(home3, ".claude", "settings.json")))["hooks"]
+run([sys.executable, TOOL, "use", "san"], e=dict(env, HOME=home3))
+assert not json.load(open(os.path.join(home3, ".claude", "settings.json"))).get("hooks"), "settings hooks stripped: the plugin runs them"
+assert open(os.path.join(home3, ".claude", "brain", "team-mode")).read().strip() == "plugin"
 print("guard twin ok")
 shutil.rmtree(work, ignore_errors=True)

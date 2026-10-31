@@ -120,7 +120,7 @@ def team_line():
         try:
             if subprocess.run([sys.executable, tool, "needs-refresh"], stdin=subprocess.DEVNULL, capture_output=True,
                               timeout=3).returncode == 0:
-                subprocess.run([sys.executable, tool, "refresh"], stdin=subprocess.DEVNULL, capture_output=True, timeout=10)
+                subprocess.run([sys.executable, tool, "relink"], stdin=subprocess.DEVNULL, capture_output=True, timeout=12)
                 line += " - updated from the team repository: new skills apply to the next session"
         except subprocess.TimeoutExpired:
             pass
@@ -308,6 +308,13 @@ def main():
 
 
 if __name__ == "__main__":
+    # a team plugin on a VM whose managed settings run this hook for every account: that copy is the enforced one
+    if len(sys.argv) == 1 and os.environ.get("CLAUDE_PLUGIN_ROOT"):
+        try:
+            if os.path.basename(__file__) in open(os.environ.get("PAAS_MANAGED_SETTINGS") or "/etc/claude-code/managed-settings.json").read():
+                sys.exit(0)
+        except OSError:
+            pass
     try:   # switched off by this person in the web UI (Brain tab, MCP & hooks)
         if "session-start" in open(os.path.expanduser("~/.claude/brain/hooks-off")).read().split():
             sys.exit(0)

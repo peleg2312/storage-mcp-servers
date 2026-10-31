@@ -129,7 +129,7 @@ Code; few high-signal tools) and measured with `docs-search-mcp/eval_search.py`:
   is produced by `merge_settings.py` itself, so matchers and timeouts cannot drift from the VM. The rules
   (`main.md` import in `~/.claude/CLAUDE.md`), tools, notes and library stay in `~/.claude/brain` as on the VM. Cost: skills are
   namespaced (`/paas-brain-san:zoning-audit`), and the guard is a plugin hook a person can disable; on the multi-user VM the
-  managed settings keep the guard enforced for every account and the plugin's copy steps aside, so it runs once.
+  managed settings run every brain hook for every account (enforced) and the plugin's copies step aside, so each runs once.
 - **Third-party plugins: curated.** Every enabled plugin's skill / agent / command descriptions sit in the
   context on every turn. Included: the 7 plugins `install.sh` installs from
   `brain/plugins` (marketplace `brain-dev`): pr-review-toolkit, feature-dev, commit-commands, security-guidance,

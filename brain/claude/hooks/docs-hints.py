@@ -221,6 +221,13 @@ def main():
 
 
 if __name__ == "__main__":
+    # a team plugin on a VM whose managed settings run this hook for every account: that copy is the enforced one
+    if len(sys.argv) == 1 and os.environ.get("CLAUDE_PLUGIN_ROOT"):
+        try:
+            if os.path.basename(__file__) in open(os.environ.get("PAAS_MANAGED_SETTINGS") or "/etc/claude-code/managed-settings.json").read():
+                sys.exit(0)
+        except OSError:
+            pass
     try:   # switched off by this person in the web UI (Brain tab, MCP & hooks)
         if "docs-hints" in open(os.path.expanduser("~/.claude/brain/hooks-off")).read().split():
             sys.exit(0)

@@ -53,4 +53,11 @@ def main():
 
 
 if __name__ == "__main__":
+    # a team plugin on a VM whose managed settings run this hook for every account: that copy is the enforced one
+    if len(sys.argv) == 1 and os.environ.get("CLAUDE_PLUGIN_ROOT"):
+        try:
+            if os.path.basename(__file__) in open(os.environ.get("PAAS_MANAGED_SETTINGS") or "/etc/claude-code/managed-settings.json").read():
+                sys.exit(0)
+        except OSError:
+            pass
     sys.exit(main())

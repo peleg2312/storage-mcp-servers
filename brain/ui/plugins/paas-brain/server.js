@@ -160,8 +160,9 @@ function skills() {
   if (t) {
     let tn = [];
     try { tn = fs.readdirSync(path.join(t.dir, 'skills')); } catch { /* no skills */ }
+    const listed = new Set(out.map((s) => s.dir));          // a personal copy without a description must not hide the team's
     for (const n of tn) {
-      if (!SKILL_NAME.test(n) || names.includes(n)) continue;
+      if (!SKILL_NAME.test(n) || listed.has(n)) continue;
       const teamPath = path.join(t.dir, 'skills', n, 'SKILL.md');
       const f = frontmatter(read(teamPath, 60000));
       if (f.description) out.push({ dir: n, shared: false, name: f.name || n, description: f.description, when: f.when_to_use || '', mine: false, source: 'team', teamPath });
@@ -184,9 +185,10 @@ function agents() {
   if (t) {
     let tn = [];
     try { tn = fs.readdirSync(path.join(t.dir, 'agents')).filter((n) => n.endsWith('.md')); } catch { /* no agents */ }
+    const listed = new Set(out.map((a) => a.file));          // a personal copy must not hide the team's agent
     for (const n of tn) {
       const file = n.replace(/\.md$/, '');
-      if (!SKILL_NAME.test(file) || names.includes(n)) continue;
+      if (!SKILL_NAME.test(file) || listed.has(file)) continue;
       const teamPath = path.join(t.dir, 'agents', n);
       const f = frontmatter(read(teamPath, 4000));
       out.push({ file, mine: false, source: 'team', shared: false, name: f.name || file, description: f.description || '', tools: info(f), model: f.model || '', teamPath });
@@ -437,7 +439,7 @@ const routes = {
   },
   'POST /agent-delete': async (_q, b) => {
     const p = defFile('agent', b.name);
-    if (p && !fs.existsSync(p) && teamFile('agent', b.name)) return { ok: false, out: 'Team skills are removed in the team editor' };
+    if (p && !fs.existsSync(p) && teamFile('agent', b.name)) return { ok: false, out: 'Team agents are removed in the team editor' };
     if (!p || !isMine('agent', b.name)) return { ok: false, out: 'Only your own agents can be deleted' };
     fs.rmSync(p, { force: true });
     return { ok: true };

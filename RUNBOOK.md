@@ -147,8 +147,9 @@ whichever machine they sit at. A laptop with the library installed (`install-lap
    start pulls. Re-run the publish after a `git pull` of this repository: members get the new skills at their next sync.
 3. Multi-user VM: `sh brain/multiuser/install-shared.sh` publishes every team into `/opt/paas/teams/<team>`, republishes
    each team that has a GitLab url recorded straight to that project (so `git pull && install-shared.sh` updates every
-   member's plugin at their next sync), and installs `paas-team`. The managed settings keep only the read-only guard;
-   everything else comes with the team plugin, as on a laptop. Record a team's GitLab url there: `python3 brain/teams/publish.py nas --to /opt/paas/teams/nas --remote <url>`
+   member's plugin at their next sync), and installs `paas-team`. The managed settings run every brain hook for every
+   account (enforced); the team plugin's own copies step aside on the VM, so a person has the same plugin as on a laptop and
+   nothing runs twice. Record a team's GitLab url there: `python3 brain/teams/publish.py nas --to /opt/paas/teams/nas --remote <url>`
    (members then clone from GitLab, and fall back to the VM copy when it is unreachable). Give a person a team with
    `paas-user add dana --team nas`, `paas-user team dana nas`, or by AD group (step 3 of the next section). The Brain tab of
    the web UI has the same switch; a person may belong to one team at a time and change at will.

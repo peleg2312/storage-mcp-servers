@@ -6,8 +6,7 @@ usage: merge_settings.py <settings.json> [--hooks-dir DIR] [--banner-dir DIR] [-
                               a project install passes <dir>/.claude/hooks etc. as absolute paths)
   --mcpjson NAME              pre-approve the .mcp.json server NAME (enabledMcpjsonServers; project install)
   --no-hooks                  no hook entries (team plugin mode: the plugin's hooks.json runs them); existing brain hook
-                              entries are removed so nothing runs twice
-  --guard-only                only the read-only guard (multi-user VM managed settings: enforced; the rest comes with the plugin)"""
+                              entries are removed so nothing runs twice"""
 import copy
 import json
 import os
@@ -17,13 +16,11 @@ import sys
 args = sys.argv[1:]
 path = args.pop(0)
 hooks_dir, banner_dir, mcpjson, servers = "~/.claude/hooks", "~/.claude/banner", [], []
-no_hooks = guard_only = False
+no_hooks = False
 while args:
     a = args.pop(0)
     if a == "--no-hooks":
         no_hooks = True
-    elif a == "--guard-only":
-        guard_only = True
     elif a == "--hooks-dir":
         hooks_dir = args.pop(0)
     elif a == "--banner-dir":
@@ -69,17 +66,11 @@ def drop(groups, scripts):
             groups.remove(e)
 
 
-if not (no_hooks or guard_only):
-    hook(pre, "block-write-tools.py", 10, "mcp__.*|Bash")   # a timed-out hook lets the call through: keep slack
-if not no_hooks:
-    pass
-if guard_only:
-    hook(pre, "block-write-tools.py", 10, "mcp__.*|Bash")
-if no_hooks or guard_only:
-    rest = BRAIN_HOOKS if no_hooks else tuple(h for h in BRAIN_HOOKS if h != "block-write-tools.py")
+if no_hooks:                                             # the team plugin runs them: none here, earlier entries removed
     for groups in (pre, post, ups, start, stop):
-        drop(groups, rest)
+        drop(groups, BRAIN_HOOKS)
 else:
+    hook(pre, "block-write-tools.py", 10, "mcp__.*|Bash")   # a timed-out hook lets the call through: keep slack
     hook(post, "docs-hints.py", 5, "mcp__.*")                # meaning of EMS / alerts / codes seen in live results
     hook(post, "py-lint.py", 5, "Edit|Write|MultiEdit")      # ruff findings on every .py file Claude edits
     hook(post, "notes-check.py", 5, "Edit|Write|MultiEdit")  # secrets / real IPs written into notes and reports
@@ -149,6 +140,6 @@ if os.path.exists(path) and s != old:
     shutil.copy(path, f"{path}.bak")
 with open(path, "w") as f:
     json.dump(s, f, indent=2)
-print(f"settings ({path}): read-only, auto-mode environment, docs-hints, docs-leads and session-start hooks installed, status line set, MCP servers allowed without prompts: "
+print(f"settings ({path}): {'no hooks (the team plugin runs them)' if no_hooks else 'read-only, docs-hints, docs-leads and session-start hooks installed'}, auto-mode environment, status line set, MCP servers allowed without prompts: "
       f"{', '.join(servers) or '(none found)'}{'; .mcp.json servers pre-approved: ' + ', '.join(mcpjson) if mcpjson else ''}; "
       f"theme {s['theme']}, notifications {s['preferredNotifChannel']}")

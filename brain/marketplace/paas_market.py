@@ -803,7 +803,7 @@ def defaults():
     skip = {"mcp/docs-local"} if plugin_mode else set()
     add(parse_ids([i for i in ids if i not in st["installed"] and i not in given and i not in skip]), token="")
     st = load_state()                                      # add() saved its own copy
-    st["defaults_given"] = sorted(given | set(ids))
+    st["defaults_given"] = sorted(given | (set(ids) - skip))
     save_state(st)
 
 

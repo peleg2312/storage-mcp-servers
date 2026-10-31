@@ -24,6 +24,6 @@ persona and storage rules, tools in `~/.claude/tools`, the library. Check: `clau
 
 The VM runs the same plugin (`paas-team` in plugin mode wherever `claude` is installed), so one install exists for
 everyone: skills are `/paas-brain-<team>:<skill>` everywhere, hooks and docs-local come with the plugin. On the multi-user
-VM the managed settings keep the read-only guard enforced for every account and the plugin's copy of the guard steps
-aside (`CLAUDE_PLUGIN_ROOT` set and the managed settings naming it), so nothing runs twice. A laptop lacks the web UI,
+VM the managed settings run every brain hook for every account (enforced) and the plugin's copies step aside
+(`CLAUDE_PLUGIN_ROOT` set and the managed settings naming the script), so nothing runs twice. A laptop lacks the web UI,
 the multi-user parts, the dev tools and the banner. `session-start.py` recognises the guard inside the plugin.

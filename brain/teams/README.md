@@ -154,8 +154,9 @@ A switch rewrites `~/.claude/brain/persona.md` and `storage.md`, repoints `notes
 Claude Code plugin: `paas-brain-<team>` installed and enabled from the person's clone (a marketplace added from a local
 path loads in place, so a sync brings new skills to the next session with no update step), the other teams' plugins
 disabled. This is the same install on the VM and on every laptop: skills are `/paas-brain-<team>:<skill>`, the hooks and
-`docs-local` come with the plugin. On the multi-user VM the managed settings keep only the read-only guard (enforced for
-every account; the plugin's own copy of the guard steps aside when it sees that twin), so no hook runs twice. A machine
+`docs-local` come with the plugin. On the multi-user VM the managed settings run every brain hook for every account
+(enforced, cannot be switched off) and the plugin's own copies step aside when they see that twin, so no hook runs twice
+and an account without a team is covered too. A machine
 without the `claude` command falls back to **files mode**: skills and agents copied into `~/.claude` and hooks from
 settings.json (`paas-team mode files|plugin`). Under a second either way. The first switch moves the person's existing notes into the
 team's knowledge folder; a person's own skills (`.user-skill`, `agents/.user-agents`) and the skills and agents they

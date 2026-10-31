@@ -122,25 +122,23 @@ class Server:
         outs = []
         b = self.brain()
         for q in qs:
-            outs.append((q, lib.search_docs(self.con, q, vendor, product, limit)))
-            if b is not None:
-                o = lib.search_docs(b, q, vendor, product, limit)
-                for r in o["results"]:
+            o = lib.search_docs(self.con, q, vendor, product, limit)
+            if b is not None:                                 # the team knowledge joins the library's answer for this query
+                ob = lib.search_docs(b, q, vendor, product, limit)
+                for r in ob["results"]:
                     r["chunk_id"] += ID_BASE
                     r["library"] = "team knowledge"
-                outs.append((q, o))
-        out = outs[0][1] if len(outs) == 1 else lib.merge_queries(outs, limit)
-        if b is not None and len(qs) > 1 or (b is not None and "by_query" in out):   # one entry per query, both indexes counted
-            byq = {}
-            for e in out.get("by_query", []):
-                m = byq.setdefault(e["q"], {"q": e["q"], "hits": 0})
-                m["hits"] += e["hits"]
-                for k in ("partial", "unmatched"):
-                    if k in e:
-                        m[k] = e[k]
-            out["by_query"] = list(byq.values())
-            if len(qs) == 1:
-                out.pop("by_query", None)
+                o["results"] = sorted(o["results"] + ob["results"], key=lambda r: -r["score"])
+                if ob.get("match_mode", "all words") == "all words":
+                    o["match_mode"] = "all words"
+                for k, v in ob.get("by_product", {}).items():
+                    o.setdefault("by_product", {})[k] = o.get("by_product", {}).get(k, 0) + v
+            outs.append((q, o))
+        if len(outs) == 1 and b is not None:
+            out = lib.merge_queries(outs, limit)              # the per-document rule and the limit over both indexes
+            out.pop("by_query", None)
+        else:
+            out = outs[0][1] if len(outs) == 1 else lib.merge_queries(outs, limit)
         return lib.finish_search(out, args.get("read_top", 0),
                                  lambda cid: lib.read_chunk(self.where(cid)[0], self.where(cid)[1], 0)["sections"][0]["text"])
 
@@ -226,17 +224,38 @@ def refresh_knowledge(brain_dir, db_path):
     db path, or None when there is nothing to index and no index exists."""
     import glob
     import shutil
-    files = sorted(glob.glob(os.path.join(brain_dir, "notes", "*.md"))) + sorted(glob.glob(os.path.join(brain_dir, "incidents", "*", "*.md")))
+    files = sorted(glob.glob(os.path.join(brain_dir, "notes", "*.md"))) + sorted(glob.glob(os.path.join(brain_dir, "incidents", "**", "*.md"), recursive=True))
     stamp = db_path + ".stamp"
     state = "%d:%d" % (len(files), int(max((os.path.getmtime(f) for f in files), default=0)))
-    try:
-        if open(stamp).read().strip() == state and os.path.exists(db_path):
-            return db_path
-    except OSError:
-        pass
+
+    def fresh():
+        try:
+            return open(stamp).read().strip() == state and os.path.exists(db_path)
+        except OSError:
+            return False
+    if fresh():
+        return db_path
+    if not files and not os.path.exists(stamp):
+        return db_path if os.path.exists(db_path) else None   # no pages and no index of ours: leave whatever is there alone
     di = _docs_index()
     if di is None:
         return db_path if os.path.exists(db_path) else None
+    os.makedirs(os.path.dirname(os.path.abspath(db_path)), exist_ok=True)
+    lock = open(db_path + ".lock", "w")                       # two sessions starting together: one builds, the other waits
+    try:
+        import fcntl
+        fcntl.flock(lock, fcntl.LOCK_EX)
+    except (ImportError, OSError):
+        pass
+    try:
+        if fresh():
+            return db_path
+        return _rebuild(files, db_path, stamp, state, di, shutil)
+    finally:
+        lock.close()
+
+
+def _rebuild(files, db_path, stamp, state, di, shutil):
     staging = db_path + ".staging"
     shutil.rmtree(staging, ignore_errors=True)
     os.makedirs(os.path.join(staging, "local", "brain-notes"))
@@ -246,7 +265,6 @@ def refresh_knowledge(brain_dir, db_path):
             shutil.copy2(f, os.path.join(staging, "local", "brain-notes", os.path.basename(f)))
         else:
             shutil.copy2(f, os.path.join(staging, "local", "brain-incidents", os.path.basename(os.path.dirname(f)) + "-" + os.path.basename(f)))
-    os.makedirs(os.path.dirname(os.path.abspath(db_path)), exist_ok=True)
     try:
         di.build(staging, db_path, log=lambda *_: None, prefix="brain/")
         with open(stamp, "w") as f:
@@ -256,6 +274,21 @@ def refresh_knowledge(brain_dir, db_path):
     finally:
         shutil.rmtree(staging, ignore_errors=True)
     return db_path if os.path.exists(db_path) else None
+
+
+def empty_index(db_path):
+    """an index with no documents (a laptop before its first note), so docs-local still answers"""
+    import shutil
+    import tempfile
+    di = _docs_index()
+    if di is None:
+        sys.exit("no library and no team knowledge to index yet")
+    tmp = tempfile.mkdtemp()
+    try:
+        di.build(tmp, db_path, log=lambda *_: None, prefix="brain/")
+    finally:
+        shutil.rmtree(tmp, ignore_errors=True)
+    return db_path
 
 
 class Teams:
@@ -474,23 +507,15 @@ def main():
     ap.add_argument("--refresh-minutes", type=int, default=10)
     ap.add_argument("--knowledge", metavar="DIR")
     a = ap.parse_args()
-    if a.knowledge:
-        a.brain_db = refresh_knowledge(a.knowledge, a.brain_db or default_brain_db())
-        has_lib = a.db and os.path.isfile(a.db) or (not a.db and any(os.path.isfile(c) for c in (
-            os.getenv("INDEX_DB", "").split(",")[0], os.path.join(os.path.dirname(os.path.abspath(__file__)), "docs.db"),
-            os.path.join(os.path.dirname(a.knowledge), "brain", "library", "docs.db"), os.path.join(a.knowledge, "library", "docs.db")) if c))
-        if not has_lib:                                       # a laptop: the team knowledge is the whole index
+    if not a.http:                                            # every docs-local indexes the person's team knowledge at start
+        knowledge = a.knowledge or os.path.dirname(a.brain_db or default_brain_db())
+        a.brain_db = refresh_knowledge(knowledge, a.brain_db or default_brain_db())
+        lib_db = lib.locate_db(a.db)
+        if not lib_db:                                        # a laptop: the team knowledge is the whole index
             if not a.brain_db:
-                di = _docs_index()
-                empty = os.path.join(a.knowledge, "brain.db")
-                if di is None:
-                    sys.exit("no library and no team knowledge to index yet")
-                os.makedirs(os.path.join(a.knowledge, ".empty"), exist_ok=True)
-                di.build(os.path.join(a.knowledge, ".empty"), empty, log=lambda *_: None, prefix="brain/")
-                a.brain_db = empty
-            srv = Server(a.brain_db, "/nonexistent-brain-db")
-            srv.knowledge_only = True
-            return serve_stdio(srv)
+                a.brain_db = empty_index(os.path.join(knowledge, "brain.db"))
+            return serve_stdio(Server(a.brain_db, "/nonexistent-brain-db"))
+        a.db = lib_db
     if a.http:
         return serve_http(lib.find_db(a.db), a.http if ":" in a.http else "0.0.0.0:" + a.http, a.token_file, a.tls_cert, a.tls_key,
                           a.teams_dir, a.state_dir, a.refresh_minutes)

@@ -30,14 +30,20 @@ from pathlib import Path
 from urllib.parse import urlsplit, urlunsplit
 
 
-def find_db(arg):
+def locate_db(arg):
+    """the library index: the argument, $INDEX_DB, next to this file, the brain's library, the image paths; None when absent"""
     here = os.path.dirname(os.path.abspath(__file__))
+    home = os.environ.get("CLAUDE_HOME") or os.path.expanduser("~/.claude")
     cands = [arg, os.getenv("INDEX_DB", "").split(",")[0], os.path.join(here, "docs.db"),
-             os.path.expanduser("~/.claude/brain/library/docs.db"), "/data/index/docs.db", "/bundle/docs.db"]
+             os.path.join(home, "brain", "library", "docs.db"), "/data/index/docs.db", "/bundle/docs.db"]
     for c in cands:
         if c and os.path.isfile(c):
             return c
-    sys.exit("no index found: give --db <docs.db> (built by docs_index.py or extracted from library/)")
+    return None
+
+
+def find_db(arg):
+    return locate_db(arg) or sys.exit("no index found: give --db <docs.db> (built by docs_index.py or extracted from library/)")
 
 
 class _Conn(sqlite3.Connection):

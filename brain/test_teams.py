@@ -329,5 +329,11 @@ assert skills() == ["docs-lookup", "mine"], skills()
 assert sorted(os.listdir(os.path.join(home, ".claude", "agents"))) == ["Explore.md"]
 assert have() == ["mcp/kuparashit"], have()
 assert json.loads(team("list", "--json"))["active"] is None
+# an install that copied its team before team-mode existed stays in files mode when the file is missing
+os.remove(os.path.join(brain, "team-mode"))
+json.dump({"skills": ["zoning-audit"], "agents": [], "mcp": {}}, open(os.path.join(brain, "teams", ".installed.json"), "w"))
+assert json.loads(team("list", "--json"))["mode"] == "files"
+json.dump({"skills": [], "agents": [], "mcp": {}}, open(os.path.join(brain, "teams", ".installed.json"), "w"))
+open(os.path.join(brain, "team-mode"), "w").write("files\n")
 print("no team ok")
 shutil.rmtree(work, ignore_errors=True)
