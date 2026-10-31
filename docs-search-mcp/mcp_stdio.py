@@ -584,7 +584,15 @@ def main():
     ap.add_argument("--refresh-minutes", type=int, default=10)
     ap.add_argument("--knowledge", metavar="DIR")
     ap.add_argument("--shared-knowledge", metavar="DIR")
+    ap.add_argument("--proxy", metavar="URL", help="stdio bridge to a docs-search server (token: PAAS_DOCS_TOKEN or --token-file)")
+    ap.add_argument("--ca", metavar="FILE", help="certificate the --proxy server is verified against (the VM's)")
     a = ap.parse_args()
+    if a.proxy:
+        token = os.environ.get("PAAS_DOCS_TOKEN", "")
+        if a.token_file:
+            with open(a.token_file) as f:
+                token = f.read().strip()
+        return serve_proxy(a.proxy, token, a.ca)
     if not a.http:                                            # every docs-local indexes the person's team knowledge at start
         knowledge = a.knowledge or os.path.dirname(a.brain_db or default_brain_db())
         shared = shared_knowledge(knowledge, a.shared_knowledge) if a.shared_knowledge else None
@@ -600,6 +608,46 @@ def main():
                           a.teams_dir, a.state_dir, a.refresh_minutes)
     srv = Server(lib.find_db(a.db), a.brain_db)
     return serve_stdio(srv)
+
+
+def serve_proxy(url, token, ca=None):
+    """A laptop without the library: docs-local speaks stdio to Claude Code and forwards every JSON-RPC line as one POST to
+    the team's docs-search server (the VM: library plus the team's knowledge index). Notifications get no answer; a server
+    error or an unreachable VM comes back as a JSON-RPC error, so the session goes on. No proxy environment: the VM is
+    on the local network. The VM's self-signed certificate: --ca."""
+    import ssl
+    import urllib.error
+    import urllib.request
+    ctx = ssl.create_default_context(cafile=ca) if ca else ssl.create_default_context()
+    opener = urllib.request.build_opener(urllib.request.ProxyHandler({}), urllib.request.HTTPSHandler(context=ctx))
+    headers = {"Content-Type": "application/json", "Accept": "application/json", **({"Authorization": "Bearer " + token} if token else {})}
+    out = sys.stdout
+    for line in sys.stdin:
+        line = line.strip()
+        if not line:
+            continue
+        try:
+            msg = json.loads(line)
+        except json.JSONDecodeError:
+            continue
+        mid = msg.get("id") if isinstance(msg, dict) else None
+        body = b""
+        try:
+            with opener.open(urllib.request.Request(url, data=line.encode(), method="POST", headers=headers), timeout=60) as r:
+                body = r.read()
+        except urllib.error.HTTPError as e:
+            raw = e.read()
+            try:
+                detail = json.loads(raw).get("error") if raw else None
+            except (ValueError, AttributeError):
+                detail = None
+            body = json.dumps({"jsonrpc": "2.0", "id": mid, "error": {"code": -32000, "message": f"docs-search answered {e.code}"
+                               + (f": {detail}" if isinstance(detail, str) else "")}}).encode()
+        except Exception as e:
+            body = json.dumps({"jsonrpc": "2.0", "id": mid, "error": {"code": -32000, "message": f"docs-search unreachable: {e}"}}).encode()
+        if mid is not None and body.strip():
+            out.write(body.decode("utf-8", "replace").strip() + "\n")
+            out.flush()
 
 
 def serve_stdio(srv):

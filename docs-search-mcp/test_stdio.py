@@ -196,6 +196,24 @@ try:
     assert st == 200 and bad["error"]["code"] == -32601, bad
     assert req("/mcp", {"jsonrpc": "2.0", "id": 6, "method": "ping"})[1]["result"] == {}
     print("http mode ok")
+    # --proxy: a laptop's docs-local bridges stdio to this server (token from the environment); a wrong token is a JSON-RPC
+    # error, not a crash; notifications get no answer
+    lines = [{"jsonrpc": "2.0", "id": 1, "method": "initialize", "params": {"protocolVersion": "2025-06-18", "capabilities": {}}},
+             {"jsonrpc": "2.0", "method": "notifications/initialized"},
+             {"jsonrpc": "2.0", "id": 2, "method": "tools/call", "params": {"name": "search_docs", "arguments": {"query": "smartconnect zone pool0"}}}]
+    bridge = lambda token: subprocess.run([sys.executable, os.path.join(here, "mcp_stdio.py"), "--proxy", f"http://127.0.0.1:{port}/mcp?team=t1"],
+                                          input="".join(json.dumps(m) + "\n" for m in lines), capture_output=True, text=True, timeout=60,
+                                          env=dict(os.environ, PAAS_DOCS_TOKEN=token))
+    p = bridge("s3cret-token-for-tests")
+    got = [json.loads(l) for l in p.stdout.splitlines() if l.strip()]
+    assert p.returncode == 0 and [g["id"] for g in got] == [1, 2], (p.stdout, p.stderr)
+    assert got[0]["result"]["serverInfo"]["name"] == "docs-search"
+    hits = json.loads(got[1]["result"]["content"][0]["text"])["results"]
+    assert any(r.get("library") == "team knowledge" for r in hits), hits
+    p = bridge("wrong-token-wrong-token")
+    got = [json.loads(l) for l in p.stdout.splitlines() if l.strip()]
+    assert p.returncode == 0 and all("401" in g["error"]["message"] for g in got) and len(got) == 2, p.stdout
+    print("stdio bridge ok")
 finally:
     srv.kill()
 

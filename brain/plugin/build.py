@@ -149,10 +149,13 @@ def build(out, team_name="san", hooks=True):
     for f in ("mcp_stdio.py", "search_cli.py", "docs_text.py", "docs_index.py"):
         shutil.copy(os.path.join(ROOT, "docs-search-mcp", f), os.path.join(plug, "lib", f))
     exe = os.path.join(plug, "bin", "docs-local")
-    write(exe, '#!/bin/sh\n# docs-local of the team plugin: the library (when installed) and the team knowledge of ~/.claude/brain\n'
+    write(exe, '#!/bin/sh\n# docs-local of the team plugin: the library (when installed) and the team knowledge of ~/.claude/brain.\n'
+               '# No library but the team\'s docs-search address in the environment (.mcp.json, from the team\'s mcp.json): a stdio bridge to\n'
+               '# that server (the VM\'s library and the team\'s knowledge index, over its certificate). Neither: the knowledge folder alone.\n'
                'B="${CLAUDE_HOME:-$HOME/.claude}/brain"; L=$(cd "$(dirname "$0")/.." && pwd)/lib\n'
                'S=""; [ -d /var/lib/paas-docs/index ] && S="--shared-knowledge /var/lib/paas-docs/index"   # multi-user VM: one index per team, built by the docs service\n'
                'if [ -f "$B/library/docs.db" ]; then exec python3 "$L/mcp_stdio.py" --db "$B/library/docs.db" --knowledge "$B" $S\n'
+               'elif [ -n "${PAAS_DOCS_URL:-}" ]; then CA=""; [ -f "$L/paas-ui.crt" ] && CA="--ca $L/paas-ui.crt"; exec python3 "$L/mcp_stdio.py" --proxy "$PAAS_DOCS_URL" $CA\n'
                'else exec python3 "$L/mcp_stdio.py" --knowledge "$B" $S; fi\n')
     os.chmod(exe, 0o755)
     write(os.path.join(out, ".claude-plugin", "marketplace.json"), dump({

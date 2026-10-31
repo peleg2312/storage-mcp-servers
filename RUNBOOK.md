@@ -136,9 +136,9 @@ runs the same dependency-free server in HTTP mode on port 8001 with the gate's c
 `https://<vm>:8001/mcp?team=nas` adds that team's knowledge: the service keeps its own clone of every team repository
 under `/var/lib/paas-docs` (from the remote recorded in `/opt/paas/teams/<team>/team.json`), pulls it and rebuilds the
 team's index every 10 minutes and at once when a member's notes hook pushes (it posts to `/refresh?team=<team>` with the
-token from the team's `mcp.json`). Each team's `mcp.json` already carries `docs-search` with its `?team=` url: fill HOST and the
-token in the team editor and every laptop member gets it at the next switch or sync; a machine that has the library
-(the VM) skips it, since `docs-local` covers it there. Health: `curl -k https://<vm>:8001/health`. The OpenShift
+token from the team's `mcp.json`). `install-shared.sh` writes `docs-search` with its `?team=` url and the token into every team's `mcp.json`
+when it publishes the teams; the plugin's `docs-local` uses it as a bridge on every machine without the library (a laptop),
+and serves the library itself where it is installed (the VM), so there is one docs server name everywhere and one token. Health: `curl -k https://<vm>:8001/health`. The OpenShift
 deployment of `docs-search` (`docs-search-mcp/bundle/build-offline.sh --from-library`, `openshift-offline.yaml`) remains an
 option for a cluster-hosted copy; it serves the library only.
 
@@ -169,8 +169,9 @@ diffutils hostname sssd realmd oddjob oddjob-mkhomedir adcli samba-common-tools`
    `paas-brain-<team>/`, `team.json` and `mcp.json` (a CODEOWNERS file with those paths; members need Developer on `knowledge/`).
    Then, from this checkout on the VM: `python3 brain/teams/publish.py san --to <san url>` and the same for `nas`, and
    `sh brain/multiuser/install-shared.sh` once more (it records each team's url in /opt/paas/teams and republishes there on every update).
-6. The teams' MCP servers: Brain tab, Team card, Edit (address and token per server; saved into the team repository's `mcp.json`
-   and pushed, so every member gets them). Or `paas-team edit <team>` with the same JSON on stdin.
+6. The teams' MCP servers: Brain tab, Team card, Edit (address and token per server; saved into the team repository's `mcp.json`,
+   built into the plugin's `.mcp.json` and pushed, so every member's Claude connects them at the next session). Or `paas-team edit
+   <team>` with the same JSON on stdin. A server left on its placeholders is not connected and is named in a note at a switch.
 7. Try it: sign in as a member of each AD group, check the Team card shows the team, ask one storage question, save one note and
    see the commit in GitLab. Laptops: the three `claude plugin` lines in README.md with the team's url.
 

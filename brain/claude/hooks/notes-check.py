@@ -175,7 +175,8 @@ def notify_docs():
         headers = {"Content-Length": "0", **({"Authorization": cfg["headers"]["Authorization"]} if cfg.get("headers", {}).get("Authorization") else {})}
         req = urllib.request.Request(f"{base}/refresh?team={team}", data=b"", method="POST", headers=headers)
         ctx = ssl.create_default_context()           # the VM's certificate: published by install-shared.sh, or copied beside the brain
-        for cert in ("/opt/paas/paas-ui.crt", os.path.join(os.path.dirname(BRAIN), "paas-ui.crt")):
+        certs = ["/opt/paas/paas-ui.crt", os.path.join(os.path.dirname(BRAIN), "paas-ui.crt")] + glob.glob(os.path.join(REPO, "paas-brain-*", "lib", "paas-ui.crt"))
+        for cert in certs:
             if os.path.isfile(cert):
                 ctx.load_verify_locations(cert)
         urllib.request.urlopen(req, timeout=3, context=ctx).read()   # a certificate that does not verify: no request, no token sent

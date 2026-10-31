@@ -31,6 +31,14 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 BRAIN = os.path.dirname(HERE)
 sys.path.insert(0, os.path.join(BRAIN, "plugin"))
 import build  # noqa: E402  (brain/plugin/build.py)
+import importlib.machinery  # noqa: E402
+import importlib.util  # noqa: E402
+
+_spec = importlib.util.spec_from_loader("paas_team", importlib.machinery.SourceFileLoader(
+    "paas_team", os.path.join(BRAIN, "claude", "tools", "paas-team")))
+paas_team = importlib.util.module_from_spec(_spec)       # one implementation of the plugin's .mcp.json and the version fingerprint
+_spec.loader.exec_module(paas_team)
+CERTS = ("/opt/paas/paas-ui.crt", "/etc/paas/market/paas-ui.crt")   # the VM's certificate, for laptops' docs-local bridge
 
 IGNORE = "*.bak\n.DS_Store\n._*\n__pycache__/\n"
 CATALOG = os.path.join(BRAIN, "marketplace", "mcp.json")        # the servers' shapes (HOST / TOKEN placeholders)
@@ -66,7 +74,8 @@ def readme(team, remote):
             f"version {t['version']}); rebuilt only by `brain/teams/publish.py` from the storage-mcp-servers repository, never edited here\n"
             "- `knowledge/`: the team's shared memory, written by every member's brain and synced through this repository: "
             "notes.md (the catalog loaded every session), environment.md, tool-map.md, notes/<topic>.md, captures/, incidents/\n"
-            "- `mcp.json`: the team's MCP servers (address and token), connected for every member; `team.json`: the team's lists\n"
+            "- `mcp.json`: the team's MCP servers (address and token), built into the plugin's `.mcp.json` so every member's Claude "
+            "connects them; `team.json`: the team's lists\n"
             "- `check.py` runs in CI (`.gitlab-ci.yml`) and refuses a push that carries a credential or breaks the notes format\n\n"
             f"`paas-team` shows the state, `paas-team use <other>` switches team, `paas-team off` leaves team mode. "
             "The docs library is the one thing this repository does not carry: the team's docs-search server (mcp.json) or "
@@ -107,8 +116,9 @@ echo "Rules: @~/.claude/brain/main.md in $DST/CLAUDE.md. Check: claude plugin li
 
 
 
-def publish(team, dest, remote=None, hooks=True, commit=True, force=False):
-    """build the team into the repository at dest (a directory); returns the plugin's team.json data"""
+def publish(team, dest, remote=None, hooks=True, commit=True, force=False, docs_search=None, docs_token=None):
+    """build the team into the repository at dest (a directory); returns the plugin's team.json data. docs_search: the VM's
+    docs-search url (?team= is added), docs_token its token: written into the team's mcp.json, so laptops reach the library."""
     os.makedirs(dest, exist_ok=True)
     if not os.path.isdir(os.path.join(dest, ".git")):
         git(dest, "init", "-q", "-b", "main", check=True)
@@ -123,26 +133,30 @@ def publish(team, dest, remote=None, hooks=True, commit=True, force=False):
                      f"(Brain tab edits):\n  " + "\n  ".join(edits[:10]) + "\nPort them into brain/teams/" + team
                      + " (git -C <repo> show <sha>) or re-run with --force to drop them.")
     plug = build.build(dest, team, hooks)
+    mcp_path = os.path.join(dest, "mcp.json")                          # made once from the catalog; the team editor fills it
+    if not os.path.exists(mcp_path):
+        cat = json.load(open(CATALOG)) if os.path.exists(CATALOG) else {}
+        with open(os.path.join(plug, "team.json")) as f:
+            want = json.load(f).get("mcp", [])
+        servers = {n: json.loads(json.dumps(cat[n]["server"]).replace("TEAM", team)) for n in want if n in cat and n != "docs-local"}
+    else:
+        with open(mcp_path) as f:
+            servers = json.load(f)
+    if docs_search:                                                    # the VM's docs service: every member's docs-local reaches the library
+        url = docs_search if "?team=" in docs_search else docs_search + "?team=" + team
+        servers["docs-search"] = {"type": "http", "url": url, **({"headers": {"Authorization": "Bearer " + docs_token}} if docs_token else {})}
+    with open(mcp_path, "w") as f:
+        json.dump(servers, f, indent=2, sort_keys=True)
+        f.write("\n")
+    paas_team.plugin_mcp(plug, servers)                                # the filled-in servers ride in the plugin's .mcp.json
+    for cert in CERTS:
+        if os.path.isfile(cert):
+            shutil.copy(cert, os.path.join(plug, "lib", "paas-ui.crt"))
+            break
     # Claude Code gives a user a new copy of a plugin from a git-hosted marketplace only when plugin.json's version changes:
-    # the version is the library version plus a fingerprint of the plugin's content, so every publish with a change is one
-    import hashlib
-    h = hashlib.sha1()
-    for root, dirs, files in os.walk(plug):
-        dirs.sort()
-        for f in sorted(files):
-            if f == "plugin.json" or f == "team.json":
-                continue
-            h.update(os.path.relpath(os.path.join(root, f), plug).encode())
-            with open(os.path.join(root, f), "rb") as fh:
-                h.update(fh.read())
-    for name in ("team.json", os.path.join(".claude-plugin", "plugin.json")):
-        pj = os.path.join(plug, name)
-        with open(pj) as f:
-            d = json.load(f)
-        d["version"] = d["version"].split("-")[0] + "-" + h.hexdigest()[:8]
-        with open(pj, "w") as f:
-            json.dump(d, f, indent=2, sort_keys=True)
-            f.write("\n")
+    # the version is the library version plus a fingerprint of the plugin's content (paas-team's rule), so every publish
+    # with a change is one
+    paas_team.bump_version(plug)
     with open(os.path.join(plug, "team.json")) as f:
         t = json.load(f)
     k = os.path.join(dest, "knowledge")
@@ -154,13 +168,6 @@ def publish(team, dest, remote=None, hooks=True, commit=True, force=False):
     for f in ("tool-map.md", "notes.md", "environment.md"):           # the team's memory starts from the templates, once
         if not os.path.exists(os.path.join(k, f)):
             shutil.copy(os.path.join(plug, "brain", f), os.path.join(k, f))
-    mcp_path = os.path.join(dest, "mcp.json")                          # made once from the catalog; members fill and edit it
-    if not os.path.exists(mcp_path):
-        cat = json.load(open(CATALOG)) if os.path.exists(CATALOG) else {}
-        servers = {n: json.loads(json.dumps(cat[n]["server"]).replace("TEAM", team)) for n in t.get("mcp", []) if n in cat and n != "docs-local"}
-        with open(mcp_path, "w") as f:
-            json.dump(servers, f, indent=2, sort_keys=True)
-            f.write("\n")
     meta_path = os.path.join(dest, "team.json")
     meta = {}
     if os.path.exists(meta_path):
@@ -201,7 +208,7 @@ def publish(team, dest, remote=None, hooks=True, commit=True, force=False):
     return t
 
 
-def publish_url(team, url, hooks, commit, force=False):
+def publish_url(team, url, hooks, commit, force=False, docs_search=None, docs_token=None):
     tmp = tempfile.mkdtemp(prefix="paas-team-")
     try:
         r = subprocess.run(["git", "clone", "-q", "--", url, tmp], capture_output=True, text=True, timeout=300,
@@ -210,7 +217,7 @@ def publish_url(team, url, hooks, commit, force=False):
             sys.exit(f"publish.py: cannot clone {url}: {r.stderr.strip()[-300:]}")
         if git(tmp, "rev-parse", "--verify", "-q", "HEAD").returncode:      # an empty project
             git(tmp, "checkout", "-q", "-b", "main")
-        t = publish(team, tmp, remote=url, hooks=hooks, commit=commit, force=force)
+        t = publish(team, tmp, remote=url, hooks=hooks, commit=commit, force=force, docs_search=docs_search, docs_token=docs_token)
         if commit:
             r = git(tmp, "push", "-u", "origin", "HEAD:main", timeout=300)
             if r.returncode:
@@ -225,10 +232,16 @@ def main():
     team = dest = remote = None
     hooks = commit = True
     everything = force = False
+    docs_search = docs_token = None
     while args:
         a = args.pop(0)
         if a == "--to" and args:
             dest = args.pop(0)
+        elif a == "--docs-search" and args:
+            docs_search = args.pop(0)
+        elif a == "--docs-token-file" and args:
+            with open(args.pop(0)) as f:
+                docs_token = f.read().strip()
         elif a == "--remote" and args:
             remote = args.pop(0)
         elif a == "--all":
@@ -247,13 +260,14 @@ def main():
         sys.exit(__doc__)
     if everything:
         for name in build.team_names():
-            t = publish(name, os.path.join(os.path.abspath(dest), name), remote=remote, hooks=hooks, commit=commit, force=force)
+            t = publish(name, os.path.join(os.path.abspath(dest), name), remote=remote, hooks=hooks, commit=commit, force=force,
+                        docs_search=docs_search, docs_token=docs_token)
             print(f"team {name}: plugin {t['version']} ({len(t['skills'])} skills, {len(t['agents'])} agents) in {os.path.join(dest, name)}")
         return
     if is_url(dest):
-        publish_url(team, dest, hooks, commit, force)
+        publish_url(team, dest, hooks, commit, force, docs_search, docs_token)
     else:
-        t = publish(team, os.path.abspath(dest), remote=remote, hooks=hooks, commit=commit, force=force)
+        t = publish(team, os.path.abspath(dest), remote=remote, hooks=hooks, commit=commit, force=force, docs_search=docs_search, docs_token=docs_token)
         print(f"team {team}: plugin {t['version']} ({len(t['skills'])} skills, {len(t['agents'])} agents) in {dest}")
 
 

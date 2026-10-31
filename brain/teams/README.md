@@ -57,13 +57,15 @@ contribute.
 
 The team repository's `mcp.json` holds the team's live MCP servers with address and token (`{"powermax": {"type": "http",
 "url": "http://...:8000/mcp", "headers": {"Authorization": "Bearer ..."}}}`), created from the catalog with HOST / TOKEN
-placeholders at the first publish and filled in the Brain tab's team editor (or by hand). A switch registers every filled
-server for the person with `claude mcp add-json` (VM or laptop alike) and removes the previous team's; a server not filled in
-falls back to the VM's marketplace (`paas-market add mcp/<name>`, root's shared token from the Market tab); a server the
-person added themselves is left alone. The Team card shows which servers are added. The owner's decision: the tokens in
-`mcp.json` are readable by everyone with access to the team's GitLab project, so use read-only tokens for the read-only
-servers and rotate them when someone leaves; the notes hook never asks to redact that file. The docs library is the
-plugin's own `docs-local`.
+placeholders at the first publish and filled in the Brain tab's team editor (or by hand). Every filled-in http server is
+written into the plugin's `.mcp.json` (publish.py and the editor both do it, through `paas-team`'s `plugin_mcp`), so Claude
+Code connects it wherever the plugin is enabled, VM or laptop, and nothing is registered per person; a server still on its
+placeholders is left out and named in a note at a switch; a server the person added themselves is theirs. The Team card
+shows which servers the plugin connects. `docs-search` is not listed twice: its address and token ride in `docs-local`'s
+environment, and `docs-local` bridges to it (stdio to HTTPS, the VM's certificate from `lib/paas-ui.crt`) on a machine without
+the library. The owner's decision: the tokens in `mcp.json` and `.mcp.json` are readable by everyone with access to the team's
+GitLab project, so use read-only tokens for the read-only servers and rotate them when someone leaves; the notes hook never
+asks to redact those files.
 
 ## Editing a team in the Brain tab
 

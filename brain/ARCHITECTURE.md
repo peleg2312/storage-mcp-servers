@@ -105,7 +105,8 @@ Code; few high-signal tools) and measured with `docs-search-mcp/eval_search.py`:
 - **The team plugin delivers the brain everywhere (October 2026).** `paas-brain-<team>` (skills, agents, hooks, docs-local,
   plus the persona, rules and templates a plugin cannot activate by itself) is installed from the team repository as a
   marketplace, on the VM and on laptops alike; `paas-team` activates what a plugin cannot (the rules import in `~/.claude/CLAUDE.md`,
-  the memory links, the MCP servers). Cost: skills are namespaced (`/paas-brain-san:zoning-audit`). `brain/claude/.claude-plugin/`
+  the memory links); the team's MCP servers are in the plugin's `.mcp.json`, built from the team repository's `mcp.json`, so
+  they connect wherever the plugin is enabled and nothing is registered per person. Cost: skills are namespaced (`/paas-brain-san:zoning-audit`). `brain/claude/.claude-plugin/`
   also lets the raw folder load with `--plugin-dir` for `claude plugin validate` and `claude plugin eval` (`brain/claude/evals/`).
   Files mode (copies into `~/.claude`) remains only for a machine without the `claude` command.
 - **Team profiles (`brain/teams/<team>`, October 2026).** One brain per team (`san` = the brain above, `nas` = PowerScale /

@@ -97,30 +97,29 @@ echo "per-person budget: memory high ${PAAS_MEMORY_HIGH:-${HIGH_MB}M}, max ${PAA
 install -m 755 "$HERE/paas-user" "$P/bin/paas-user"
 ln -sfn "$P/bin/paas-user" /usr/local/sbin/paas-user
 # team profiles: one repository per team under /opt/paas/teams (plugin + knowledge skeleton), the switch tool for everyone.
+# docs-search for other machines (the service below): one token for everyone, written into every team's mcp.json by the
+# publish, so a laptop's docs-local reaches the VM's library and the team's knowledge index through the team plugin
+[ -s "$ETC/docs-token" ] || { umask 077; head -c 24 /dev/urandom | base64 | tr -d '/+=' > "$ETC/docs-token"; umask 022; }
+chown root:paas-market "$ETC/docs-token"; chmod 640 "$ETC/docs-token"
+[ -f "$ETC/docs.env" ] || printf 'PAAS_DOCS_PORT=8001\nPAAS_DOCS_REFRESH=10\n' > "$ETC/docs.env"
+DOCS_URL="https://$(hostname -f 2>/dev/null || hostname):$(sed -n 's/^PAAS_DOCS_PORT=//p' "$ETC/docs.env")/mcp"
+DOCS_OPTS="--docs-search $DOCS_URL --docs-token-file $ETC/docs-token"
 # A team's GitLab remote (members clone and push there): python3 brain/teams/publish.py <team> --to /opt/paas/teams/<team> --remote <url>
 install -m 755 "$BRAIN/claude/tools/paas-team" "$P/bin/paas-team"
 ln -sfn "$P/bin/paas-team" /usr/local/bin/paas-team
-python3 "$BRAIN/teams/publish.py" --all --to "$P/teams" > "$P/teams.log" 2>&1 || { cat "$P/teams.log"; echo "install-shared: publishing the teams failed (see above)"; exit 1; }
+python3 "$BRAIN/teams/publish.py" --all --to "$P/teams" $DOCS_OPTS > "$P/teams.log" 2>&1 || { cat "$P/teams.log"; echo "install-shared: publishing the teams failed (see above)"; exit 1; }
 sed 's/^/teams: /' "$P/teams.log"; rm -f "$P/teams.log"
 # a team with a GitLab project recorded: the new plugin goes there too, so every member (VM or laptop) gets it at the next sync
 for tj in "$P"/teams/*/team.json; do
   [ -f "$tj" ] || continue
   t=$(basename "$(dirname "$tj")"); remote=$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1])).get("remote") or "")' "$tj")
   [ -n "$remote" ] || continue
-  python3 "$BRAIN/teams/publish.py" "$t" --to "$remote" 2>&1 | sed "s/^/teams: $t -> GitLab: /" || true
+  python3 "$BRAIN/teams/publish.py" "$t" --to "$remote" $DOCS_OPTS 2>&1 | sed "s/^/teams: $t -> GitLab: /" || true
 done
-# a team's mcp.json may hold its servers' tokens: readable by the brain's users only, like the marketplace; directory (AD)
-# groups listed in /etc/paas/allowed-groups get the same read access through ACLs
-chgrp -R paas-users "$P/teams"; chmod -R u+rwX,g+rX,o-rwx "$P/teams"
-if [ -f "$ETC/allowed-groups" ] && command -v setfacl >/dev/null 2>&1; then
-  grep -v '^#' "$ETC/allowed-groups" | sed 's/[[:blank:]]*$//; s/^[[:blank:]]*//' | grep -v '^$' | grep -vx paas-users | while read -r grp; do
-    getent group "$grp" >/dev/null 2>&1 || { echo "note: group $grp (allowed-groups) is unknown here; skipped"; continue; }
-    setfacl -R -m "g:$grp:rX" -m "d:g:$grp:rX" "$P/teams" "$P/marketplace" 2>/dev/null || echo "note: setfacl for $grp failed"
-  done
-fi
-systemctl daemon-reload 2>/dev/null || true
-
-# API key for everyone's Claude: root writes it once into /etc/paas/api-key (group paas-users may read it)
+# API key for everyone's Claude: root writes it once into /etc/paas/api-key; the helper below hands it to each person's
+# Claude Code (managed settings). Readable by group paas-users and, through the ACLs below, by the directory groups that may
+# sign in (an AD account is in no local group). Every member can read it: the helper runs as them. Hiding it would take a
+# local proxy that holds the key and adds it to each request.
 [ -f "$ETC/api-key" ] || { : > "$ETC/api-key"; echo "put the Anthropic API key into $ETC/api-key (one line)"; }
 chown root:paas-users "$ETC/api-key"; chmod 640 "$ETC/api-key"
 cat > "$P/bin/paas-api-key" <<'EOF'
@@ -129,6 +128,17 @@ cat > "$P/bin/paas-api-key" <<'EOF'
 exec head -n1 /etc/paas/api-key
 EOF
 chmod 755 "$P/bin/paas-api-key"
+# a team's mcp.json may hold its servers' tokens: readable by the brain's users only, like the marketplace; directory (AD)
+# groups listed in /etc/paas/allowed-groups get the same read access through ACLs (and the API key, or their Claude has none)
+chgrp -R paas-users "$P/teams"; chmod -R u+rwX,g+rX,o-rwx "$P/teams"
+if [ -f "$ETC/allowed-groups" ] && command -v setfacl >/dev/null 2>&1; then
+  grep -v '^#' "$ETC/allowed-groups" | sed 's/[[:blank:]]*$//; s/^[[:blank:]]*//' | grep -v '^$' | grep -vx paas-users | while read -r grp; do
+    getent group "$grp" >/dev/null 2>&1 || { echo "note: group $grp (allowed-groups) is unknown here; skipped"; continue; }
+    setfacl -R -m "g:$grp:rX" -m "d:g:$grp:rX" "$P/teams" "$P/marketplace" 2>/dev/null || echo "note: setfacl for $grp failed"
+    setfacl -m "g:$grp:r" "$ETC/api-key" 2>/dev/null || echo "note: setfacl for $grp on the API key failed"
+  done
+fi
+systemctl daemon-reload 2>/dev/null || true
 
 # VM-wide Claude Code settings and rules (users cannot switch these off)
 python3 "$HERE/managed_settings.py" /etc/claude-code/managed-settings.json "$P"
@@ -169,9 +179,6 @@ fi
 # docs-search for other machines: the stdlib docs server in HTTP mode on 8001 (token, the gate's certificate), with every
 # team's knowledge index refreshed from the team repositories (clones under /var/lib/paas-docs). Laptops put it into the team's
 # mcp.json (the editor); VM users keep docs-local.
-[ -s "$ETC/docs-token" ] || { umask 077; head -c 24 /dev/urandom | base64 | tr -d '/+=' > "$ETC/docs-token"; umask 022; }
-chown root:paas-market "$ETC/docs-token"; chmod 640 "$ETC/docs-token"
-[ -f "$ETC/docs.env" ] || printf 'PAAS_DOCS_PORT=8001\nPAAS_DOCS_REFRESH=10\n' > "$ETC/docs.env"
 setfacl -R -m u:paas-market:rX "$P/teams" "$P/library" 2>/dev/null || chmod -R o+rX "$P/library"
 cp "$BRAIN/../docs-search-mcp/docs_index.py" "$P/library/docs_index.py" 2>/dev/null || true   # the HTTP server indexes team knowledge with it
 install -m 644 "$HERE/paas-docs.service" /etc/systemd/system/paas-docs.service
@@ -180,9 +187,8 @@ if [ -f "$ETC/market/paas-ui.crt" ]; then
   if command -v firewall-cmd >/dev/null 2>&1 && firewall-cmd --state >/dev/null 2>&1; then
     firewall-cmd -q --permanent --add-port="$(sed -n 's/^PAAS_DOCS_PORT=//p' "$ETC/docs.env")/tcp" && firewall-cmd -q --reload
   fi
-  DOCS_URL="https://$(hostname -f 2>/dev/null || hostname):$(sed -n 's/^PAAS_DOCS_PORT=//p' "$ETC/docs.env")/mcp"
   PAAS_MARKET="$P/marketplace" python3 "$P/bin/paas-market" setup-mcp docs-search "$DOCS_URL" shared < "$ETC/docs-token" >/dev/null 2>&1 || true
-  echo "docs-search for other machines: $DOCS_URL (token: cat $ETC/docs-token; per team: ...?team=<team>); health: $DOCS_URL/../health"
+  echo "docs-search for other machines: $DOCS_URL (one token for everyone, in every team's mcp.json; laptops reach it through the team plugin); health: $DOCS_URL/../health"
 else
   echo "docs-search for other machines: starts after install-gate.sh made the certificate (re-run this script then)"
 fi

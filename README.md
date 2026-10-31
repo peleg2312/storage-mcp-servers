@@ -61,11 +61,13 @@ That first session clones the team's knowledge into `~/.claude/brain/teams/nas`,
 persona, the storage rules and the core rules (one import line in your `~/.claude/CLAUDE.md`), copies `paas-team` to
 `~/.claude/tools`, and from then on every note is committed and pushed to the team, every session start pulls. You get the
 team's skills (`/paas-brain-nas:<skill>`), agents, the seven hooks (read-only guard, docs hints and leads, notes scan,
-lint, capture nudge, session start), the coding rules as a skill, and the team's MCP servers from its mcp.json. Updates
-arrive with `claude plugin update paas-brain-nas@paas-brain-nas` or auto-update. Not in the plugin: the documentation
-library (`sh install-laptop.sh --team nas` from this repository adds it and docs-local), the web UI, the dev tools. The library
-and the team's knowledge are still searchable from the VM's `docs-search` service over HTTPS (`?team=nas`), which the team's
-`mcp.json` points at once filled in (RUNBOOK, "Docs search").
+lint, capture nudge, session start), the coding rules as a skill, and the team's MCP servers: they are in the plugin's own
+`.mcp.json` (built from the team repository's `mcp.json`, address and token included), so Claude connects them wherever the
+plugin is enabled, with no `claude mcp` command for anyone. Updates arrive with `claude plugin update
+paas-brain-nas@paas-brain-nas` or auto-update. Not in the plugin: the documentation library, the web UI, the dev tools. Without
+the library, the plugin's `docs-local` bridges to the VM's `docs-search` service over HTTPS (library plus the team's knowledge
+index, `?team=nas`; the address and token come with the plugin once the VM's install-shared.sh published the team), so the docs
+search works on a laptop as on the VM. `sh install-laptop.sh --team nas` from this repository installs the library locally instead.
 No GitLab access: `paas-team export nas` on the VM gives a zip; unzip and run `install-team.sh` inside it.
 
 ## Get the images

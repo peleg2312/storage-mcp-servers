@@ -263,28 +263,38 @@ json.dump(d, open(st, "w"))
 d0 = json.load(open(os.path.join(home, ".claude", "paas-market.json"))); d0["installed"]["mcp/kuparashit"] = "1"
 json.dump(d0, open(os.path.join(home, ".claude", "paas-market.json"), "w"))
 os.makedirs(os.path.join(brain, "library"), exist_ok=True); open(os.path.join(brain, "library", "docs.db"), "w").close()   # this machine has the library
+# the team's servers ride in the plugin's .mcp.json (built from the team's mcp.json; only filled-in ones): nothing per person,
+# the person's own marketplace server stays theirs, servers still on placeholders are named in a note
 o = team("use", "san")
-assert "MCP powermax, powerflex, ontap, harvest, mds, ucsc" in o and "docs-search" not in o, o          # docs-local covers docs-search here
+assert "note: MCP powermax: no address or token" in o and "docs-local" not in o.split("note:")[1], o
 have = lambda: sorted(k for k in json.load(open(os.path.join(home, ".claude", "paas-market.json")))["installed"] if k.startswith("mcp/"))
-assert have() == ["mcp/harvest", "mcp/kuparashit", "mcp/mds", "mcp/ontap", "mcp/powerflex", "mcp/powermax", "mcp/ucsc"], have()
-assert "kuparashit" not in json.load(open(os.path.join(brain, "teams", ".installed.json")))["mcp"], "the person's own server is not the team's"
+assert have() == ["mcp/kuparashit"], have()
+assert json.load(open(os.path.join(brain, "teams", ".installed.json")))["mcp"] == {}
+plug_mcp = lambda t: json.load(open(os.path.join(brain, "teams", t, "paas-brain-" + t, ".mcp.json")))["mcpServers"]
+assert list(plug_mcp("san")) == ["docs-local"] and plug_mcp("san")["docs-local"]["command"] == "${CLAUDE_PLUGIN_ROOT}/bin/docs-local", plug_mcp("san")
 lst = json.loads(team("list", "--json"))
-assert next(x for x in lst["teams"] if x["name"] == "san")["mcp_added"] == ["docs-local", "harvest", "mds", "ontap", "powerflex", "powermax", "ucsc"]
-team("use", "nas")
-assert have() == ["mcp/harvest", "mcp/kuparashit", "mcp/ontap"], have()
-print("team mcp ok")
-
-# 6b. the team editor: show, then edit (title, persona, a SAN skill added to nas, an agent dropped, an MCP server with its
-#     token into mcp.json); the change is committed and pushed; with the server filled in, a switch applies it through
-#     `claude mcp add-json` (a stand-in claude on PATH records the calls) instead of the marketplace
-d = json.loads(team("show", "nas", "--json"))
-assert d["skills"] and "share-access-check" in d["skills"] and d["mcp_servers"]["ontap"]["configured"] is False
-assert any(c["name"] == "zoning-audit" and c["source"].startswith("team") for c in d["available_skills"]), d["available_skills"][:3]
+assert next(x for x in lst["teams"] if x["name"] == "san")["mcp_added"] == ["docs-local"]
+# a person who still has servers from the earlier per-person registration: they are removed once (the stand-in claude logs it)
+json.dump({"skills": [], "agents": [], "mcp": {"powermax": "team", "mds": "market"}}, open(os.path.join(brain, "teams", ".installed.json"), "w"))
+d0 = json.load(open(os.path.join(home, ".claude", "paas-market.json"))); d0["installed"]["mcp/mds"] = "1"
+json.dump(d0, open(os.path.join(home, ".claude", "paas-market.json"), "w"))
 fake_claude = os.path.join(home, "fakebin")
 os.makedirs(fake_claude, exist_ok=True)
 open(os.path.join(fake_claude, "claude"), "w").write("#!/bin/sh\necho \"$@\" >> \"$HOME/claude.log\"\n")
 os.chmod(os.path.join(fake_claude, "claude"), 0o755)
 env_c = dict(env, PATH=fake_claude + os.pathsep + env["PATH"])
+subprocess.run([sys.executable, TOOL, "use", "nas"], capture_output=True, text=True, env=env_c, timeout=120, check=True)
+assert "mcp remove -s user powermax" in open(os.path.join(home, "claude.log")).read()
+assert have() == ["mcp/kuparashit"], have()
+print("team mcp ok")
+
+# 6b. the team editor: show, then edit (title, persona, a SAN skill added to nas, an agent dropped, an MCP server with its
+#     token into mcp.json); the change is committed and pushed; the filled-in server lands in the plugin's .mcp.json (the
+#     placeholder one does not), so every member's Claude connects it; no `claude mcp` command runs
+d = json.loads(team("show", "nas", "--json"))
+assert d["skills"] and "share-access-check" in d["skills"] and d["mcp_servers"]["ontap"]["configured"] is False
+assert any(c["name"] == "zoning-audit" and c["source"].startswith("team") for c in d["available_skills"]), d["available_skills"][:3]
+open(os.path.join(home, "claude.log"), "w").close()
 change = {"title": "NAS team", "persona": "## Who you work for\nA NAS person.\n",
           "skills": d["skills"] + ["zoning-audit"], "agents": [a for a in d["agents"] if a != "ontap-analyst"],
           "mcp_servers": {"ontap": {"url": "http://ontap.example:8000/mcp", "token": "s3cr3t-token-value"}, "harvest": {"url": "http://h.example:8000/mcp"}},
@@ -301,9 +311,11 @@ assert servers["ontap"]["headers"]["Authorization"] == "Bearer s3cr3t-token-valu
 assert servers["harvest"]["url"].startswith("http://h.example") and servers["harvest"]["headers"]["Authorization"] == "Bearer TOKEN", servers   # no token given: the placeholder stays
 assert "NAS person" in open(os.path.join(brain, "persona.md")).read() and "zoning-audit" in skills(), "active team re-applied"
 assert "brain tab: team nas edited" in git(os.path.join(work, "sources", "nas"), "log", "--format=%s")   # pushed to the remote
-log = open(os.path.join(home, "claude.log")).read()
-assert "mcp add-json -s user ontap" in log and "s3cr3t-token-value" in log and "mcp add-json -s user harvest" not in log, log
-assert json.load(open(os.path.join(brain, "teams", ".installed.json")))["mcp"] == {"ontap": "team", "harvest": "market"}
+assert "mcp" not in open(os.path.join(home, "claude.log")).read(), open(os.path.join(home, "claude.log")).read()
+pm = plug_mcp("nas")
+assert sorted(pm) == ["docs-local", "ontap"] and pm["ontap"] == {"type": "http", "url": "http://ontap.example:8000/mcp", "headers": {"Authorization": "Bearer s3cr3t-token-value"}}, pm
+assert json.load(open(os.path.join(brain, "teams", ".installed.json")))["mcp"] == {}
+assert next(x for x in json.loads(team("list", "--json"))["teams"] if x["name"] == "nas")["mcp_added"] == ["docs-local", "ontap"]
 sh = json.loads(team("show", "nas", "--json"))
 assert sh["title"] == "NAS team" and sh["mcp_servers"]["ontap"]["token_set"] and sh["mcp_servers"]["ontap"]["configured"]
 assert sh["version"] != d["version"] and "-" in sh["version"], (sh["version"], d["version"])          # bumped for plugin-mode members
