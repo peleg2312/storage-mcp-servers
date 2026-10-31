@@ -126,10 +126,14 @@ Try: `python3 ~/.claude/brain/library/search.py search "scsiblade.san.config.act
 5. Beyond the team: everyone adds skills and agents from the Market tab (`paas-market add skill/<name>`) or writes their own
    in the Brain tab; a team switch never removes or overwrites those. `paas-team use none` (Brain tab: "No team") leaves
    the teams: the team's skills go, your own stay, the rules become your own editable copies.
-6. Pushing is automatic on every path (the notes hook after each saved file, the Brain tab after each save, every session
+6. MCP servers per team: root sets each server's address and shared token once in the Market tab; a switch adds the team's
+   servers (`team.json` "mcp") for the person and drops the previous team's. A team skill edited in the Brain tab is pushed
+   to the team repository and reaches every member at their next sync; `publish.py` then refuses to overwrite it until it is
+   ported into `brain/teams/<team>` (or run with `--force`). Reports never go to git; notes.md and environment.md stay personal.
+7. Pushing is automatic on every path (the notes hook after each saved file, the Brain tab after each save, every session
    start and Brain tab opening syncs); the shared GitLab repository is always current. Publish a new plugin version with
    `publish.py <team> --to <url>` after a `git pull` of this repository: members pick it up at their next sync.
-7. A new team: a folder `brain/teams/<name>/` with `team.json` and `persona.md` (plus its own rules file, skills, agents),
+8. A new team: a folder `brain/teams/<name>/` with `team.json` and `persona.md` (plus its own rules file, skills, agents),
    `python3 brain/test_budgets.py` and `python3 brain/test_teams.py` green, then publish. `brain/teams/README.md` has the schema.
 
 ## Active Directory accounts on the multi-user VM

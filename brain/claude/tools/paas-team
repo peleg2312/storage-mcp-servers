@@ -158,12 +158,14 @@ def listing():
     act = active()
     teams = []
     seen = set()
+    mine = jload(os.path.join(HOME, "paas-market.json")).get("installed", {})
     for name, tdir in local_teams().items():
         t = info(tdir)
         teams.append({"name": name, "title": t.get("title", name), "description": t.get("description", ""),
                       "version": t.get("version", ""), "local": True, "active": name == act,
                       "source": None, "remote": remote_of(tdir) or t.get("remote") or None,
-                      "skills": len(t.get("skills", [])), "agents": len(t.get("agents", []))})
+                      "skills": len(t.get("skills", [])), "agents": len(t.get("agents", [])),
+                      "mcp": t.get("mcp", []), "mcp_added": sorted(m for m in t.get("mcp", []) if m == "docs-local" or f"mcp/{m}" in mine)})
         seen.add(name)
     for name, sdir in source_teams().items():
         if name in seen:
@@ -172,7 +174,8 @@ def listing():
         teams.append({"name": name, "title": t.get("title", name), "description": t.get("description", ""),
                       "version": t.get("version", ""), "local": False, "active": False,
                       "source": sdir, "remote": t.get("remote") or None,
-                      "skills": len(t.get("skills", [])), "agents": len(t.get("agents", []))})
+                      "skills": len(t.get("skills", [])), "agents": len(t.get("agents", [])),
+                      "mcp": t.get("mcp", []), "mcp_added": []})
     return {"active": act or None, "mode": mode(), "brain": BRAIN, "teams": teams}
 
 
@@ -259,7 +262,45 @@ def copy_rule(src, dst):
 
 
 def installed():
-    return jload(STATE, {"skills": [], "agents": []})
+    return jload(STATE, {"skills": [], "agents": [], "mcp": []})
+
+
+def market_bin():
+    return next((p for p in ("/opt/paas/bin/paas-market", os.path.expanduser("~/.local/bin/paas-market"),
+                             "/usr/local/bin/paas-market") if os.path.isfile(p)), "")
+
+
+def market(*args):
+    try:
+        r = subprocess.run([sys.executable, market_bin()] + list(args), capture_output=True, text=True, timeout=90,
+                           stdin=subprocess.DEVNULL, env=dict(os.environ, PAAS_MARKET=os.environ.get("PAAS_MARKET", "/opt/paas/marketplace")))
+        return r.returncode, (r.stdout + r.stderr).strip()
+    except Exception as e:
+        return 127, str(e)
+
+
+def apply_mcp(t, old):
+    """The team's MCP servers from the VM's marketplace (root set their address and the shared token there, in the Market
+    tab): added for this person; the ones the previous team added and this one does not list are removed. A server the
+    person added themselves is never touched. A personal-token server needs the person's token: the Market tab does it."""
+    if not market_bin():
+        return []
+    want = [m for m in t.get("mcp", []) if m != "docs-local"]          # docs-local comes with every install
+    mine = jload(os.path.join(HOME, "paas-market.json")).get("installed", {})
+    added = []
+    for m in old.get("mcp", []):
+        if m not in want and f"mcp/{m}" in mine:
+            market("remove", f"mcp/{m}")
+    for m in want:
+        if f"mcp/{m}" in mine:
+            added.append(m)                                          # already there (theirs or an earlier team's)
+            continue
+        rc, out = market("add", f"mcp/{m}")
+        if rc == 0:
+            added.append(m)
+        else:
+            print(f"note: MCP {m} not added ({out.splitlines()[-1][:120] if out else 'no answer'}); the Market tab can add it")
+    return added
 
 
 def personal(kind, name):
@@ -301,6 +342,7 @@ def apply_files(plug, t):
         if os.path.isfile(src) and not personal("agents", n):
             shutil.copy(src, os.path.join(HOME, "agents", n + ".md"))
             put["agents"].append(n)
+    put["mcp"] = apply_mcp(t, installed())
     write(STATE, json.dumps(put, indent=2) + "\n")
 
 
@@ -378,9 +420,10 @@ def apply(team, say=True, skills=True):
                 lines.append(l)
         write(ignore, "\n".join(lines) + "\n")
     if say:
+        mcp = installed().get("mcp", [])
         print(f"team {team} ({t.get('title', team)}) active, {mode()} mode: {len(t.get('skills', []))} skills, "
-              f"{len(t.get('agents', []))} agents, version {t.get('version', '?')}; knowledge in {k}"
-              + (" (your notes moved into it)" if first else ""))
+              f"{len(t.get('agents', []))} agents" + (f", MCP {', '.join(mcp)}" if mcp else "")
+              + f", version {t.get('version', '?')}; knowledge in {k}" + (" (your notes moved into it)" if first else ""))
         print("Start a new Claude session (or a new chat in the web UI) to work with it.")
     return t
 
@@ -477,10 +520,16 @@ def off():
         if shutil.which("claude"):
             claude("disable", f"paas-brain-{t}@paas-brain-{t}")
     else:
-        remove_team_files(installed())
-        write(STATE, json.dumps({"skills": [], "agents": []}) + "\n")
+        old = installed()
+        remove_team_files(old)
+        if market_bin():
+            mine = jload(os.path.join(HOME, "paas-market.json")).get("installed", {})
+            for m in old.get("mcp", []):
+                if f"mcp/{m}" in mine:
+                    market("remove", f"mcp/{m}")
+        write(STATE, json.dumps({"skills": [], "agents": [], "mcp": []}) + "\n")
     os.remove(os.path.join(BRAIN, "team"))
-    print(f"no team: {t}'s skills and agents left ~/.claude (your own and marketplace ones stay); persona.md, storage.md and the "
+    print(f"no team: {t}'s skills, agents and MCP servers left ~/.claude (your own and marketplace ones stay); persona.md, storage.md and the "
           f"knowledge files are plain copies in {BRAIN} now, yours to edit; the team clone stays in {team_dir(t)}.\n"
           "Add skills from the marketplace (paas-market add skill/<name>, or the Market tab); paas-team use <team> joins a team again.")
 

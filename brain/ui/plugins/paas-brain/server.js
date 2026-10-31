@@ -72,6 +72,21 @@ const commitFile = async (p, msg) => {
   const up = await git(repo, ['rev-parse', '--abbrev-ref', '@{upstream}']);
   if (up.ok) await run('git', ['-C', repo, 'push', '-q'], 10000);
 };
+// A team skill or agent edited here changes for the whole team: the file goes into the team's repository too
+// (its plugin folder), committed and pushed; teammates pick it up at their next sync. Returns the team name, or null.
+async function teamWriteBack(kind, name, file) {
+  const repo = repoDir();
+  const team = (read(path.join(BRAIN, 'team'), 200) || '').trim();
+  if (!repo || repo === BRAIN || !TEAM_NAME.test(team)) return null;
+  const put = json(path.join(BRAIN, 'teams', '.installed.json')) || {};
+  const list = kind === 'skill' ? put.skills : put.agents;
+  if (!Array.isArray(list) || !list.includes(name)) return null;        // the person's own or a marketplace item: theirs alone
+  const dst = kind === 'skill' ? path.join(repo, `paas-brain-${team}`, 'skills', name, 'SKILL.md') : path.join(repo, `paas-brain-${team}`, 'agents', `${name}.md`);
+  if (!fs.existsSync(path.dirname(dst))) return null;
+  fs.copyFileSync(file, dst);
+  await commitFile(dst, `brain tab: team ${kind} ${name}`);
+  return team;
+}
 // the file behind a memory name or captures/<file>, and its repository and path inside it (null: outside it)
 function memPath(name) {
   const cap = CAPTURE.exec(String(name || ''));
@@ -351,7 +366,8 @@ const routes = {
     if (!isNew) fs.copyFileSync(p, `${p}.bak`);
     fs.writeFileSync(p, text.endsWith('\n') ? text : `${text}\n`);
     if (isNew) markMine(b.kind, b.name);
-    return { ok: true };
+    const shared = await teamWriteBack(b.kind, b.name, p);
+    return { ok: true, team: shared };
   },
   'POST /agent-delete': async (_q, b) => {
     const p = defFile('agent', b.name);

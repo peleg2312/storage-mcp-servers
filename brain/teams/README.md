@@ -53,6 +53,25 @@ the VM; `git clone` is not needed. When the repository is unreachable, the hook 
 instead and tries again next session. Plugins stay read-only content in Claude Code's cache; the hook is what lets this one
 contribute.
 
+## MCP servers per team
+
+`team.json` lists the team's live MCP servers (`"mcp"`). On the multi-user VM root sets each server's address and the
+shared token once in the Market tab (`paas-market setup-mcp`; tokens never enter git), and a switch adds the team's servers
+for the person (`paas-market add mcp/<name>`) and drops the previous team's; a server the person added themselves is left
+alone, and a server with a personal token is added from the Market tab, where the token is typed. The Team card shows which
+of the team's servers are added. On a laptop (no marketplace) live servers are added with `claude mcp add`; the docs
+library is the plugin's own `docs-local`.
+
+## Edits from the Brain tab reach the team
+
+Memory: `notes/`, `captures/`, `incidents/` and `tool-map.md` are the team's (committed and pushed after every save);
+`notes.md` and `environment.md` are the person's and never leave the VM; reports under `~/storage-reports` are never in git.
+Skills and agents: an edit of a **team** skill or agent in the Brain tab is written into the team repository too
+(`paas-brain-<team>/skills/<name>/SKILL.md`), committed as `brain tab: team skill <name>` and pushed; every teammate's
+brain re-applies it at their next sync or session start. A person's own or marketplace skill stays theirs. Because such an
+edit lives only in the team repository, `publish.py` refuses to overwrite it until it is ported into `brain/teams/<team>`
+(or `brain/claude`) in this repository, or `--force` is given.
+
 ## Everything is pushed, by every path
 
 The notes hook commits and pushes each file Claude saves (notes, captures, incidents, tool map); the Brain tab pushes

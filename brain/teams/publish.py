@@ -9,6 +9,7 @@ knowledge folder, in one git repository people clone (paas-team add) and Claude 
   options: --remote <url>  record another url as the remote members clone and push to
            --no-hooks      the plugin without hooks (a VM whose hooks are managed settings)
            --no-commit     leave the files uncommitted
+           --force         replace a plugin that members changed from the Brain tab (their edits are dropped)
 Layout of a team repository:
   .claude-plugin/marketplace.json   paas-brain-<team>/ (the plugin, replaced on every publish)
   knowledge/{notes,captures,incidents}/ + tool-map.md   (what the team learns; notes.md and environment.md stay personal)
@@ -95,11 +96,21 @@ echo "Rules: @~/.claude/brain/main.md in $DST/CLAUDE.md. Check: claude plugin li
 
 
 
-def publish(team, dest, remote=None, hooks=True, commit=True):
+def publish(team, dest, remote=None, hooks=True, commit=True, force=False):
     """build the team into the repository at dest (a directory); returns the plugin's team.json data"""
     os.makedirs(dest, exist_ok=True)
     if not os.path.isdir(os.path.join(dest, ".git")):
         git(dest, "init", "-q", "-b", "main", check=True)
+    plugdir = os.path.join(dest, "paas-brain-" + team)
+    if os.path.isdir(os.path.join(dest, ".git")) and os.path.isdir(plugdir) and not force:
+        # commits touching the plugin that publish.py did not make: someone changed a team skill from the Brain tab (the
+        # change is live for the whole team). Port it into brain/teams/<team> or brain/claude first, or pass --force.
+        r = git(dest, "log", "--format=%h %s", "--", "paas-brain-" + team)
+        edits = [l for l in r.stdout.splitlines() if not l.split(" ", 1)[1].startswith(f"team {team}: plugin")] if r.returncode == 0 else []
+        if edits:
+            sys.exit(f"publish.py: the team repository holds {len(edits)} change(s) to the plugin made outside publish.py "
+                     f"(Brain tab edits):\n  " + "\n  ".join(edits[:10]) + "\nPort them into brain/teams/" + team
+                     + " (git -C <repo> show <sha>) or re-run with --force to drop them.")
     plug = build.build(dest, team, hooks)
     with open(os.path.join(plug, "team.json")) as f:
         t = json.load(f)
@@ -147,7 +158,7 @@ def publish(team, dest, remote=None, hooks=True, commit=True):
     return t
 
 
-def publish_url(team, url, hooks, commit):
+def publish_url(team, url, hooks, commit, force=False):
     tmp = tempfile.mkdtemp(prefix="paas-team-")
     try:
         r = subprocess.run(["git", "clone", "-q", url, tmp], capture_output=True, text=True, timeout=300,
@@ -156,7 +167,7 @@ def publish_url(team, url, hooks, commit):
             sys.exit(f"publish.py: cannot clone {url}: {r.stderr.strip()[-300:]}")
         if git(tmp, "rev-parse", "--verify", "-q", "HEAD").returncode:      # an empty project
             git(tmp, "checkout", "-q", "-b", "main")
-        t = publish(team, tmp, remote=url, hooks=hooks, commit=commit)
+        t = publish(team, tmp, remote=url, hooks=hooks, commit=commit, force=force)
         if commit:
             r = git(tmp, "push", "-u", "origin", "HEAD:main", timeout=300)
             if r.returncode:
@@ -169,8 +180,8 @@ def publish_url(team, url, hooks, commit):
 def main():
     args = sys.argv[1:]
     team = dest = remote = None
-    everything = hooks = commit = True
-    everything = False
+    hooks = commit = True
+    everything = force = False
     while args:
         a = args.pop(0)
         if a == "--to" and args:
@@ -183,6 +194,8 @@ def main():
             hooks = False
         elif a == "--no-commit":
             commit = False
+        elif a == "--force":
+            force = True
         elif a.startswith("-") or team:
             sys.exit(__doc__)
         else:
@@ -191,13 +204,13 @@ def main():
         sys.exit(__doc__)
     if everything:
         for name in build.team_names():
-            t = publish(name, os.path.join(os.path.abspath(dest), name), remote=remote, hooks=hooks, commit=commit)
+            t = publish(name, os.path.join(os.path.abspath(dest), name), remote=remote, hooks=hooks, commit=commit, force=force)
             print(f"team {name}: plugin {t['version']} ({len(t['skills'])} skills, {len(t['agents'])} agents) in {os.path.join(dest, name)}")
         return
     if is_url(dest):
-        publish_url(team, dest, hooks, commit)
+        publish_url(team, dest, hooks, commit, force)
     else:
-        t = publish(team, os.path.abspath(dest), remote=remote, hooks=hooks, commit=commit)
+        t = publish(team, os.path.abspath(dest), remote=remote, hooks=hooks, commit=commit, force=force)
         print(f"team {team}: plugin {t['version']} ({len(t['skills'])} skills, {len(t['agents'])} agents) in {dest}")
 
 

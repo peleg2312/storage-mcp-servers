@@ -193,12 +193,50 @@ rc, o = run([sys.executable, os.path.join(bare, "plug", "hooks", "session-start.
 assert "Plugin-only" not in o and "set up from" not in o, o
 print("marketplace, export and bare plugin ok")
 
-# 6. no team: the team's skills and agents leave, the person's own and marketplace ones stay, plain files again, the clone stays
+# 6. the team's MCP servers come from the VM's marketplace (a stand-in paas-market records the calls): san adds its four,
+# nas drops them and adds its own; a server the person added themselves is left alone
+mk = os.path.join(home, ".local", "bin", "paas-market")
+os.makedirs(os.path.dirname(mk), exist_ok=True)
+open(mk, "w").write("""import json, os, sys
+st = os.path.expanduser("~/.claude/paas-market.json"); d = json.load(open(st)) if os.path.exists(st) else {"installed": {}}
+log = open(os.path.expanduser("~/market.log"), "a")
+for a in sys.argv[2:]:
+    log.write(sys.argv[1] + " " + a + "\\n")
+    if sys.argv[1] == "add": d["installed"][a] = "1"
+    if sys.argv[1] == "remove": d["installed"].pop(a, None)
+json.dump(d, open(st, "w"))
+""")
+d0 = json.load(open(os.path.join(home, ".claude", "paas-market.json"))); d0["installed"]["mcp/kuparashit"] = "1"
+json.dump(d0, open(os.path.join(home, ".claude", "paas-market.json"), "w"))
+o = team("use", "san")
+assert "MCP powermax, powerflex, mds, ucsc" in o, o
+have = lambda: sorted(k for k in json.load(open(os.path.join(home, ".claude", "paas-market.json")))["installed"] if k.startswith("mcp/"))
+assert have() == ["mcp/kuparashit", "mcp/mds", "mcp/powerflex", "mcp/powermax", "mcp/ucsc"], have()
+lst = json.loads(team("list", "--json"))
+assert next(x for x in lst["teams"] if x["name"] == "san")["mcp_added"] == ["docs-local", "mds", "powerflex", "powermax", "ucsc"]
+team("use", "nas")
+assert have() == ["mcp/harvest", "mcp/kuparashit", "mcp/ontap"], have()
+print("team mcp ok")
+
+# 7. an edit of a team skill made in the team repository (the Brain tab writes it there) is kept from the next publish
+#    unless --force; a plain republish still adds nothing
+open(os.path.join(src, "paas-brain-nas", "skills", "quota-report", "SKILL.md"), "a").write("\nTeam edit from the Brain tab.\n")
+subprocess.run(["git", "-C", src, "-c", "user.name=t", "-c", "user.email=t@x", "commit", "-qam", "brain tab: team skill quota-report"], check=True)
+rc, o = run([sys.executable, PUBLISH, "nas", "--to", src], ok=False)
+assert rc and "made outside publish.py" in o and "quota-report" in o, o
+assert "Team edit from the Brain tab." in open(os.path.join(src, "paas-brain-nas", "skills", "quota-report", "SKILL.md")).read()
+run([sys.executable, PUBLISH, "nas", "--to", src, "--force"])
+assert "Team edit" not in open(os.path.join(src, "paas-brain-nas", "skills", "quota-report", "SKILL.md")).read()
+print("publish guard ok")
+
+# 8. no team: the team's skills and agents leave, the person's own and marketplace ones stay, plain files again, the clone stays
+team("use", "san")
 team("use", "none")
 assert not os.path.islink(os.path.join(brain, "notes")) and os.path.isfile(os.path.join(brain, "notes", "powermax.md"))
 assert not os.path.exists(os.path.join(brain, "team")) and os.path.isdir(os.path.join(brain, "teams", "san", ".git"))
 assert skills() == ["docs-lookup", "mine"], skills()
 assert sorted(os.listdir(os.path.join(home, ".claude", "agents"))) == ["Explore.md"]
+assert have() == ["mcp/kuparashit"], have()
 assert json.loads(team("list", "--json"))["active"] is None
 print("no team ok")
 shutil.rmtree(work, ignore_errors=True)
