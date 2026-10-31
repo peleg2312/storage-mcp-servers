@@ -151,8 +151,9 @@ def build(out, team_name="san", hooks=True):
     exe = os.path.join(plug, "bin", "docs-local")
     write(exe, '#!/bin/sh\n# docs-local of the team plugin: the library (when installed) and the team knowledge of ~/.claude/brain\n'
                'B="${CLAUDE_HOME:-$HOME/.claude}/brain"; L=$(cd "$(dirname "$0")/.." && pwd)/lib\n'
-               'if [ -f "$B/library/docs.db" ]; then exec python3 "$L/mcp_stdio.py" --db "$B/library/docs.db" --knowledge "$B"\n'
-               'else exec python3 "$L/mcp_stdio.py" --knowledge "$B"; fi\n')
+               'S=""; [ -d /var/lib/paas-docs ] && S="--shared-knowledge /var/lib/paas-docs"   # multi-user VM: one index per team, built by the docs service\n'
+               'if [ -f "$B/library/docs.db" ]; then exec python3 "$L/mcp_stdio.py" --db "$B/library/docs.db" --knowledge "$B" $S\n'
+               'else exec python3 "$L/mcp_stdio.py" --knowledge "$B" $S; fi\n')
     os.chmod(exe, 0o755)
     write(os.path.join(out, ".claude-plugin", "marketplace.json"), dump({
         "name": name, "owner": {"name": "paas"}, "description": team.get("title", team_name) + " brain: " + team.get("description", ""),

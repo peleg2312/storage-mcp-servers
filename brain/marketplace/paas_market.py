@@ -552,14 +552,89 @@ def view(kind, name):
             print("\n--- other files in this skill: " + ", ".join(extra))
 
 
+BRAIN_DIR = os.path.join(CLAUDE, "brain")
+TEAMS_HOME = os.path.join(BRAIN_DIR, "teams")
+TEAMS_SHARED = os.environ.get("PAAS_TEAMS", "/opt/paas/teams")
+
+
+def active_team():
+    try:
+        t = open(os.path.join(BRAIN_DIR, "team")).read().strip()
+    except OSError:
+        return ""
+    return t if re.match(r"^[a-z][a-z0-9_-]{0,31}$", t) else ""
+
+
+def team_meta(folder):
+    """{name, title, description, version, skills, agents, mcp} of a team repository folder (plugin team.json first)"""
+    try:
+        mk = json.load(open(os.path.join(folder, ".claude-plugin", "marketplace.json")))
+        plug = os.path.join(folder, mk["plugins"][0]["source"].lstrip("./"))
+        t = json.load(open(os.path.join(plug, "team.json")))
+        t.update({k: v for k, v in json.load(open(os.path.join(folder, "team.json"))).items() if k in ("title", "description", "remote")})
+        return t
+    except (OSError, ValueError, KeyError, IndexError):
+        return None
+
+
+def team_provides():
+    """what the active team's plugin already gives this person: {"skill/<n>", "agent/<n>", "mcp/<n>"} and the team name"""
+    t = active_team()
+    meta = team_meta(os.path.join(TEAMS_HOME, t)) if t else None
+    if not meta:
+        return set(), ""
+    return ({f"skill/{n}" for n in meta.get("skills", [])} | {f"agent/{n}" for n in meta.get("agents", [])}
+            | {f"mcp/{n}" for n in meta.get("mcp", [])}), t
+
+
+def team_plugin_items():
+    """the team profiles as plugin items: every team this VM offers or the person has cloned; added = cloned, enabled = active"""
+    names = {}
+    for base in (TEAMS_SHARED, TEAMS_HOME):
+        if os.path.isdir(base):
+            for d in sorted(os.listdir(base)):
+                if re.match(r"^[a-z][a-z0-9_-]{0,31}$", d) and team_meta(os.path.join(base, d)):
+                    names[d] = os.path.join(base, d)
+    act = active_team()
+    out = []
+    for name, folder in sorted(names.items()):
+        meta = team_meta(os.path.join(TEAMS_HOME, name)) if os.path.isdir(os.path.join(TEAMS_HOME, name)) else team_meta(folder)
+        out.append({"kind": "plugin", "name": f"paas-brain-{name}", "team": name, "source": "", "author": None,
+                    "description": f"{meta.get('title', name)}: {meta.get('description', '')} ({len(meta.get('skills', []))} skills, "
+                                   f"{len(meta.get('agents', []))} agents, MCP {', '.join(meta.get('mcp', []))})",
+                    "version": meta.get("version", ""), "id": f"plugin/paas-brain-{name}",
+                    "added": os.path.isdir(os.path.join(TEAMS_HOME, name)), "enabled": name == act, "update": False, "ready": True})
+    return out
+
+
+def team_tool():
+    return next((p for p in (os.path.join(CLAUDE, "tools", "paas-team"), "/opt/paas/bin/paas-team",
+                             os.path.expanduser("~/.local/bin/paas-team")) if os.path.isfile(p)), "")
+
+
+def team_switch(team):
+    """plugin/paas-brain-<team> added or enabled: the person switches to that team; disabled: no team"""
+    tool = team_tool()
+    if not tool:
+        sys.exit("paas-market: paas-team is not installed on this machine")
+    r = subprocess.run([sys.executable, tool, "use", team], text=True, capture_output=True, timeout=300)
+    print((r.stdout + r.stderr).strip())
+    if r.returncode:
+        sys.exit(r.returncode)
+
+
 def listing(words=None):
     state = load_state()["installed"]
     plugins = installed_plugins() if os.path.isdir(PLUGINS) or source_names() else {}
+    provided, team = team_provides()
     out = []
-    for it in load_index() + source_items():
+    for it in team_plugin_items() + load_index() + source_items():
         it.setdefault("source", "")
         if it["kind"] == "plugin":
             if words and not all(w.lower() in f"{it['name']} {it['description']} plugin".lower() for w in words):
+                continue
+            if it.get("team"):
+                out.append(it)
                 continue
             out.append({**it, "id": f"plugin/{it['name']}", "added": it["name"] in plugins,
                         "enabled": plugins.get(it["name"], False), "update": False, "ready": it.get("offline", True)})
@@ -570,10 +645,12 @@ def listing(words=None):
         have = state.get(key)
         mcp_entry = json.load(open(it.get("path") or item_path("mcp", it["name"]))) if it["kind"] == "mcp" else {}
         mcp = mcp_entry.get("server", {})
-        out.append({**it, "id": key, "added": bool(have) or ("@" not in it["name"] and already_have(it["kind"], it["name"])),
-                    "update": bool(have and have != it["version"]),
+        from_team = key in provided                            # the team plugin gives it already: added, and not the marketplace's to remove
+        out.append({**it, "id": key, "added": from_team or bool(have) or ("@" not in it["name"] and already_have(it["kind"], it["name"])),
+                    "update": bool(have and have != it["version"]) and not from_team,
                     "ready": it["kind"] != "mcp" or mcp_ready(mcp_entry), "risky": risky(it),
                     "local": it["kind"] == "mcp" and mcp.get("type", "stdio") == "stdio",   # runs on this VM: no address
+                    **({"team": team} if from_team else {}),
                     **({"token_mode": token_mode(mcp_entry), "url": "" if "HOST" in mcp.get("url", "") else mcp.get("url", "")}
                        if it["kind"] == "mcp" else {})})
     return out
@@ -694,7 +771,22 @@ def clash(state, kind, name):
     return next((k for k in state["installed"] if k != f"{kind}/{name}" and k.split("@")[0] == f"{kind}/{real}"), None)
 
 
+def team_guard(ids, action):
+    """a team plugin item routes to paas-team; an item the team plugin provides is not the marketplace's to add or remove"""
+    rest = []
+    provided, team = team_provides()
+    for kind, name in ids:
+        if kind == "plugin" and name.startswith("paas-brain-"):
+            team_switch(name[len("paas-brain-"):] if action != "disable" else "none")
+        elif f"{kind}/{name}" in provided and action in ("add", "remove"):
+            print(f"{kind}/{name} comes with your team plugin ({team}); the team editor in the Brain tab changes the team's set")
+        else:
+            rest.append((kind, name))
+    return rest
+
+
 def add(ids, quiet=False, token=None):
+    ids = team_guard(ids, "add")
     index = {(i["kind"], i["name"]): i for i in load_index() + source_items()}
     state = load_state()
     for kind, name in ids:
@@ -744,6 +836,7 @@ def add(ids, quiet=False, token=None):
 
 
 def remove(ids):
+    ids = team_guard(ids, "remove")
     state = load_state()
     for kind, name in ids:
         if kind == "plugin":
@@ -826,6 +919,16 @@ def publish(brain, mcp_file=None):
     for n in sorted(os.listdir(os.path.join(brain, "agents"))):
         if n.endswith(".md"):
             shutil.copy(os.path.join(brain, "agents", n), item_path("agent", n[:-3]))
+    teams = os.path.join(brain, "..", "teams")                        # every team's own skills and agents are items too
+    for t in sorted(os.listdir(teams)) if os.path.isdir(teams) else []:
+        for n in sorted(os.listdir(os.path.join(teams, t, "skills"))) if os.path.isdir(os.path.join(teams, t, "skills")) else []:
+            if os.path.isfile(os.path.join(teams, t, "skills", n, "SKILL.md")):
+                dst = item_path("skill", n)
+                shutil.rmtree(dst, ignore_errors=True)
+                shutil.copytree(os.path.join(teams, t, "skills", n), dst)
+        for n in sorted(os.listdir(os.path.join(teams, t, "agents"))) if os.path.isdir(os.path.join(teams, t, "agents")) else []:
+            if n.endswith(".md"):
+                shutil.copy(os.path.join(teams, t, "agents", n), item_path("agent", n[:-3]))
     for name, entry in (json.load(open(mcp_file)) if mcp_file else {}).items():
         dst = item_path("mcp", name)
         if not os.path.exists(dst):                     # root's edited address / headers win over the template
@@ -983,6 +1086,9 @@ def main(argv):
         for kind, name in parse_ids(args):
             if kind != "plugin":
                 sys.exit("paas-market: only plugins are switched on / off")
+            if name.startswith("paas-brain-"):
+                team_switch(name[len("paas-brain-"):] if cmd == "enable" else "none")
+                continue
             plugin_cmd(cmd, name)
     elif cmd == "new":
         if len(args) != 2:

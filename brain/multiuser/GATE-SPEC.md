@@ -42,6 +42,13 @@ starts gets its clock started then. The decision is the pure function `idleUsers
 A stopped instance needs no sign-in again: the next request with a live cookie starts it (4.5). `node gate.js --self-test`
 checks the decision and the allowed-groups parser without touching `/etc/paas`.
 
+### 3.2 One budget per person
+
+`install-shared.sh` writes `/etc/systemd/system/paas-ui@.service.d/limits.conf` from `/etc/paas/limits.env`: `MemoryHigh`,
+`MemoryMax`, `CPUWeight`, `TasksMax` sized from the VM's RAM and cores for the expected number of concurrent people. The
+instance and everything it starts (Claude Code, hooks, docs-local, shells) live in that cgroup; one person's runaway slows
+and reclaims their own processes first and, at the hard limit, ends their largest process, never another person's.
+
 ## 4. Gate behaviour
 
 ### 4.1 Listener

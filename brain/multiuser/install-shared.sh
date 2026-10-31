@@ -67,6 +67,31 @@ pkill -u root -f 'node dist-server/server/index.js' 2>/dev/null || true
 UI_DIR="$P/ui" UI_SHARED=1 sh "$BRAIN/ui/install-ui.sh"
 rm -rf "$P/ui-plugins"; cp -R "$BRAIN/ui/plugins" "$P/ui-plugins"; chmod -R a+rX "$P/ui-plugins"
 install -m 644 "$HERE/paas-ui@.service" /etc/systemd/system/paas-ui@.service
+# one resource budget per person: the UI instance and everything it starts (Claude Code, hooks, docs-local, shells) live in
+# its cgroup. Defaults from the VM's RAM and cores for PAAS_PEOPLE concurrent people (/etc/paas/limits.env; edit and re-run)
+RAM_MB=$(awk '/MemTotal/ {print int($2/1024)}' /proc/meminfo); CORES=$(nproc 2>/dev/null || echo 2)
+[ -f "$ETC/limits.env" ] || cat > "$ETC/limits.env" <<EOF
+# People expected to work at the same time; the per-person memory budget is (RAM - 3 GB) / PAAS_PEOPLE, at least 1.5 GB.
+PAAS_PEOPLE=$(( CORES > 1 ? CORES : 2 ))
+# Override the computed values here if you prefer fixed ones (systemd sizes: 2G, 1500M ...):
+# PAAS_MEMORY_HIGH=2G    soft limit: a person's processes are throttled and reclaimed above it
+# PAAS_MEMORY_MAX=3G     hard limit: above it the biggest process of that person is killed, the others live on
+# PAAS_CPU_WEIGHT=100    fair share between people (100 = equal); PAAS_TASKS_MAX=512 processes and threads per person
+EOF
+. "$ETC/limits.env"
+PEOPLE=${PAAS_PEOPLE:-4}; [ "$PEOPLE" -ge 1 ] || PEOPLE=1
+HIGH_MB=$(( (RAM_MB - 3072) / PEOPLE )); [ "$HIGH_MB" -ge 1536 ] || HIGH_MB=1536
+MAX_MB=$(( HIGH_MB + HIGH_MB / 2 ))
+mkdir -p /etc/systemd/system/paas-ui@.service.d
+cat > /etc/systemd/system/paas-ui@.service.d/limits.conf <<EOF
+# written by install-shared.sh from /etc/paas/limits.env (RAM ${RAM_MB} MB, ${CORES} cores, ${PEOPLE} people)
+[Service]
+MemoryHigh=${PAAS_MEMORY_HIGH:-${HIGH_MB}M}
+MemoryMax=${PAAS_MEMORY_MAX:-${MAX_MB}M}
+CPUWeight=${PAAS_CPU_WEIGHT:-100}
+TasksMax=${PAAS_TASKS_MAX:-512}
+EOF
+echo "per-person budget: memory high ${PAAS_MEMORY_HIGH:-${HIGH_MB}M}, max ${PAAS_MEMORY_MAX:-${MAX_MB}M} for ${PEOPLE} concurrent people (edit $ETC/limits.env, re-run)"
 install -m 755 "$HERE/paas-user" "$P/bin/paas-user"
 ln -sfn "$P/bin/paas-user" /usr/local/sbin/paas-user
 # team profiles: one repository per team under /opt/paas/teams (plugin + knowledge skeleton), the switch tool for everyone.

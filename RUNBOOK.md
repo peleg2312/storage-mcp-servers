@@ -103,6 +103,26 @@ re-extracted only when `library/VERSION` changed).
 Try: `python3 ~/.claude/brain/library/search.py search "scsiblade.san.config.active"` or, inside Claude,
 `explain EMS scsiblade.san.config.active`, `/zoning-audit fabric A`, `which KB covers FC link down after a switch reboot`.
 
+## Sizing the VM for many people and teams
+
+What one person costs while working: a Claude Code process (the bulk, 300 MB to 1 GB with a long context), the web UI
+instance (100 to 150 MB), one `docs-local` process per Claude session (about 30 MB; the library file is mapped once by the
+kernel for everyone), hook processes that live for tens of milliseconds, and on disk the team clone (a few MB), the chats
+and reports. The library (1.3 GB), the team folders, the marketplace and the plugins exist once under `/opt/paas`.
+
+The installer gives every person one budget: `install-shared.sh` writes `/etc/systemd/system/paas-ui@.service.d/limits.conf`
+from `/etc/paas/limits.env`, sized from the VM's RAM and cores for `PAAS_PEOPLE` concurrent people (memory high =
+(RAM - 3 GB) / people, at least 1.5 GB; max = 1.5 x high; equal CPU weight; 512 tasks). The UI instance and everything it
+starts (Claude Code, hooks, docs-local, shells) live in that cgroup, so one person's runaway cannot starve the others:
+above the soft limit their processes are slowed and reclaimed first, above the hard limit their largest process is ended,
+nobody else notices. Edit `/etc/paas/limits.env` and re-run `install-shared.sh` to change it; `systemctl status paas-ui@<name>`
+shows a person's use. Idle instances stop after `GATE_IDLE_MINUTES` (default 120), so RAM follows the people active now.
+
+Rule of thumb: 1.5 to 2 GB of RAM per concurrent person plus 4 GB for the system, one core per two or three concurrent
+people, 20 GB of disk plus 1 GB per person for chats and reports. Teams add nothing per person beyond a small clone: the
+docs service keeps one knowledge index per team under `/var/lib/paas-docs` and a member's `docs-local` uses it when it is as
+fresh as their clone, so twenty people on one team share one index instead of building twenty.
+
 ## Docs search: one library for every team, local or on OpenShift
 
 There is one documentation library for everyone; a team changes which rules and skills point into it, not the library.
@@ -159,7 +179,10 @@ whichever machine they sit at. A laptop with the library installed (`install-lap
    export nas` on the VM writes the same as a zip into the Reports tab for a laptop without GitLab access (unzip, run
    `install-team.sh` inside). The docs library is not part of it: `install-laptop.sh` adds it.
 5. Beyond the team: everyone adds skills and agents from the Market tab (`paas-market add skill/<name>`) or writes their own
-   in the Brain tab; a team switch never removes or overwrites those. `paas-team use none` (Brain tab: "No team") leaves
+   in the Brain tab; a team switch never removes or overwrites those. The Market tab shows what the team plugin already
+   gives you as added ("from your team") and lists every team as a plugin item: turning one on switches your team, turning it
+   off leaves the teams. A change someone pushes to the team repository reaches you at your next session start or Brain tab
+   opening; nothing to re-add. `paas-team use none` (Brain tab: "No team") leaves
    the teams: the team's skills go, your own stay, the rules become your own editable copies.
 6. MCP servers per team: root sets each server's address and shared token once in the Market tab; a switch adds the team's
    servers (`team.json` "mcp") for the person and drops the previous team's. A team skill edited in the Brain tab is pushed

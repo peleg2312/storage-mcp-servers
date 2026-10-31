@@ -256,3 +256,20 @@ o = ask_stdio(["--knowledge", kb, "--brain-db", kdb])
 assert o[1]["results"] and all(r.get("library", "main") == "main" for r in o[1]["results"]), o[1]
 assert [l["library"] for l in o[2]["libraries"]] == ["main"] and o[2]["libraries"][0]["documents"] == 2, o[2]
 print("knowledge at start ok")
+
+# a shared team index on a multi-user VM: a member's docs-local uses the service's index when its stamp matches the member's
+# clone (same pages, by content), and builds its own only when they differ
+member = os.path.join(root, "member"); os.makedirs(os.path.join(member, "notes"))
+open(os.path.join(member, "team"), "w").write("t1\n")
+import shutil
+for f in os.listdir(os.path.join(tdir, "t1", "knowledge", "notes")):
+    shutil.copy(os.path.join(tdir, "t1", "knowledge", "notes", f), os.path.join(member, "notes", f))
+own = os.path.join(root, "member.db")
+assert os.path.exists(os.path.join(state, "t1.db.stamp"))
+o = ask_stdio(["--db", db, "--knowledge", member, "--brain-db", own, "--shared-knowledge", state])
+assert [l["library"] for l in o[2]["libraries"]] == ["main", "team knowledge"] and o[2]["libraries"][1]["documents"] == 2, o[2]
+assert not os.path.exists(own), "the shared index served: no index of the member's own was built"
+open(os.path.join(member, "notes", "mine.md"), "w").write("# Mine\n- 2026-10-31 a fact only I have observed me\n")
+o = ask_stdio(["--db", db, "--knowledge", member, "--brain-db", own, "--shared-knowledge", state])
+assert os.path.exists(own) and o[2]["libraries"][1]["documents"] == 3, "pages differ from the service's: own index"
+print("shared knowledge ok")

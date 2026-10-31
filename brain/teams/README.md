@@ -85,6 +85,16 @@ brain re-applies it at their next sync or session start. A person's own or marke
 edit lives only in the team repository, `publish.py` refuses to overwrite it until it is ported into `brain/teams/<team>`
 (or `brain/claude`) in this repository, or `--force` is given.
 
+## In the marketplace
+
+The Market tab lists the team plugins (`plugin/paas-brain-<team>`: added when the person has the team, on when it is
+the active one; Turn on switches the team, Turn off leaves it) and marks every skill, agent and MCP server the active team's
+plugin provides as added "from your team", so what a person has is visible in one place: the team's set plus what they added
+themselves. `paas-market add` of such an item says it comes with the team; the team editor changes the team's set. The
+multi-user VM shares one knowledge index per team (`/var/lib/paas-docs/<team>.db`, built by the docs service) that a member's
+`docs-local` uses when it matches their clone, and one resource budget per person (`/etc/paas/limits.env`); `RUNBOOK.md`,
+"Sizing the VM".
+
 ## Updates and the CI gate
 
 The plugin's `version` is the library version plus a fingerprint of the plugin's content (`2026.10.25b-7cbc8a20`): Claude

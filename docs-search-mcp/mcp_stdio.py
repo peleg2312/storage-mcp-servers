@@ -14,6 +14,9 @@ for a VM that runs Claude Code but has no pip, no containers and no internet.
                       index at start when they changed since the last run (one or two seconds for a team's pages, nothing
                       otherwise), so the team knowledge is searched with the library without any other step. Without a
                       library (--db missing: a laptop) the knowledge index is the only index (knowledge-only mode).
+    --shared-knowledge DIR   a multi-user VM: the docs service keeps one index per team under DIR (/var/lib/paas-docs,
+                      <team>.db + .stamp); when it is as fresh as this person's clone it is used as is, so twenty people
+                      do not each rebuild the same index; otherwise the person's own index is built as usual.
     --http [HOST:]PORT  serve the same tools to other machines over MCP's Streamable HTTP (POST /mcp, JSON answers,
                       GET /health), still standard library only: the VM's docs-search for laptops and other VMs.
       --token-file F    bearer token every /mcp request must carry (one line; 401 otherwise)
@@ -226,7 +229,7 @@ def refresh_knowledge(brain_dir, db_path):
     import shutil
     files = sorted(glob.glob(os.path.join(brain_dir, "notes", "*.md"))) + sorted(glob.glob(os.path.join(brain_dir, "incidents", "**", "*.md"), recursive=True))
     stamp = db_path + ".stamp"
-    state = "%d:%d" % (len(files), int(max((os.path.getmtime(f) for f in files), default=0)))
+    state = knowledge_state(brain_dir, files)
 
     def fresh():
         try:
@@ -274,6 +277,40 @@ def _rebuild(files, db_path, stamp, state, di, shutil):
     finally:
         shutil.rmtree(staging, ignore_errors=True)
     return db_path if os.path.exists(db_path) else None
+
+
+def knowledge_state(brain_dir, files):
+    """a fingerprint of the knowledge pages that is the same in every clone of the same commit (names and contents, not
+    mtimes), so the service's index and a member's clone can be compared; cheap: a team's pages are small"""
+    import hashlib
+    h = hashlib.sha1()
+    for f in files:
+        h.update(os.path.relpath(f, brain_dir).encode())
+        try:
+            with open(f, "rb") as fh:
+                h.update(fh.read())
+        except OSError:
+            pass
+    return "%d:%s" % (len(files), h.hexdigest()[:16])
+
+
+def shared_knowledge(brain_dir, shared_dir):
+    """the service's index of the person's active team, when its stamp matches the clone's pages (same count and newest
+    mtime, as refresh_knowledge computes it); None otherwise"""
+    import glob
+    try:
+        team = open(os.path.join(brain_dir, "team")).read().strip()
+    except OSError:
+        return None
+    db = os.path.join(shared_dir, team + ".db")
+    try:
+        files = sorted(glob.glob(os.path.join(brain_dir, "notes", "*.md"))) + sorted(glob.glob(os.path.join(brain_dir, "incidents", "**", "*.md"), recursive=True))
+        state = knowledge_state(brain_dir, files)
+        if open(db + ".stamp").read().strip() == state and os.access(db, os.R_OK):
+            return db
+    except OSError:
+        pass
+    return None
 
 
 def empty_index(db_path):
@@ -340,8 +377,8 @@ class Teams:
                 else:
                     clone = os.path.join(self.dir, team)       # no remote: the VM's copy is all there is
                 k = os.path.join(clone, "knowledge")
-                files = sorted(glob.glob(os.path.join(k, "notes", "*.md"))) + sorted(glob.glob(os.path.join(k, "incidents", "*", "*.md")))
-                state = "%d:%d" % (len(files), int(max((os.path.getmtime(f) for f in files), default=0)))
+                files = sorted(glob.glob(os.path.join(k, "notes", "*.md"))) + sorted(glob.glob(os.path.join(k, "incidents", "**", "*.md"), recursive=True))
+                state = knowledge_state(k, files)
                 stamp = self.db(team) + ".stamp"
                 try:
                     if open(stamp).read().strip() == state and os.path.exists(self.db(team)):
@@ -506,10 +543,12 @@ def main():
     ap.add_argument("--state-dir")
     ap.add_argument("--refresh-minutes", type=int, default=10)
     ap.add_argument("--knowledge", metavar="DIR")
+    ap.add_argument("--shared-knowledge", metavar="DIR")
     a = ap.parse_args()
     if not a.http:                                            # every docs-local indexes the person's team knowledge at start
         knowledge = a.knowledge or os.path.dirname(a.brain_db or default_brain_db())
-        a.brain_db = refresh_knowledge(knowledge, a.brain_db or default_brain_db())
+        shared = shared_knowledge(knowledge, a.shared_knowledge) if a.shared_knowledge else None
+        a.brain_db = shared or refresh_knowledge(knowledge, a.brain_db or default_brain_db())
         lib_db = lib.locate_db(a.db)
         if not lib_db:                                        # a laptop: the team knowledge is the whole index
             if not a.brain_db:

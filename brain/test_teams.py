@@ -336,4 +336,26 @@ assert json.loads(team("list", "--json"))["mode"] == "files"
 json.dump({"skills": [], "agents": [], "mcp": {}}, open(os.path.join(brain, "teams", ".installed.json"), "w"))
 open(os.path.join(brain, "team-mode"), "w").write("files\n")
 print("no team ok")
+
+# 9. the marketplace: every team's skills and agents are items; the active team's items read as added "from your team";
+#    the teams are plugin items (added = cloned, enabled = active); adding one switches, adding a team item points to the editor
+market = os.path.join(work, "market"); os.makedirs(market)
+menv = dict(env, PAAS_MARKET=market)
+mk = os.path.join(R, "brain", "marketplace", "paas_market.py")
+run([sys.executable, mk, "publish", os.path.join(R, "brain", "claude"), "--mcp", os.path.join(R, "brain", "marketplace", "mcp.json")], e=menv)
+team("use", "nas")
+rows = {i["id"]: i for i in json.loads(run([sys.executable, mk, "list", "--json"], e=menv)[1])}
+assert rows["skill/share-access-check"]["added"] and rows["skill/share-access-check"]["team"] == "nas", rows["skill/share-access-check"]
+assert rows["agent/nas-analyst"]["team"] == "nas" and rows["mcp/ontap"]["team"] == "nas"
+assert not rows["skill/rdm-inventory"].get("team") and "mcp/powermax" in rows and not rows["mcp/powermax"].get("team")
+assert rows["plugin/paas-brain-nas"]["added"] and rows["plugin/paas-brain-nas"]["enabled"] and rows["plugin/paas-brain-nas"]["team"] == "nas"
+assert rows["plugin/paas-brain-san"]["added"] and not rows["plugin/paas-brain-san"]["enabled"]
+o = run([sys.executable, mk, "add", "skill/share-access-check"], e=menv)[1]
+assert "comes with your team plugin (nas)" in o, o
+o = run([sys.executable, mk, "add", "plugin/paas-brain-san"], e=menv)[1]
+assert open(os.path.join(brain, "team")).read().strip() == "san", o
+run([sys.executable, mk, "disable", "plugin/paas-brain-san"], e=menv)
+assert not os.path.exists(os.path.join(brain, "team"))
+team("use", "san")
+print("marketplace teams ok")
 shutil.rmtree(work, ignore_errors=True)

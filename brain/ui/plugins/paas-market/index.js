@@ -245,6 +245,7 @@ const CSS = `
 @media (pointer:coarse){.mk .tm button{min-height:44px}.mk .acts{gap:10px}}
 @media (max-width:640px){.mk .grid,.mk .fields,.mk .types{grid-template-columns:1fr}}`;
 
+const TEAM_NOTE = "Team plugins carry the team's skills, agents and MCP servers; turning one on switches your team (Brain tab shows the details).";
 let seq = 0;
 // label + control with a real for/id pair; extra is the hint text
 const field = (label, control, cls = '', hint = '') => { const id = `mk${++seq}`; return `<div class="field ${cls}"><label for="${id}">${label}</label>${control.replace(/^<(\w+)/, `<$1 id="${id}"`)}${hint ? `<span class="hint" id="${id}h">${hint}</span>` : ''}</div>`; };
@@ -284,14 +285,14 @@ export function mount(container, api) {
 
   function render() {
     const words = q.value.toLowerCase().split(/\s+/).filter(Boolean);
-    const shown0 = items.filter((i) => (kind === 'all' || (kind === 'have' ? i.added || (i.author && i.author === me) : i.kind === kind))
+    const shown0 = items.filter((i) => (kind === 'all' || (kind === 'have' ? i.added || i.team || (i.author && i.author === me) : i.kind === kind))
       && words.every((w) => `${i.name} ${i.description} ${KIND[i.kind]} ${i.source_title || ''}`.toLowerCase().includes(w)));
-    const card = (i) => { const mine = i.author && i.author === me; return `<div class="item${i.added || mine ? ' have' : ''}" data-id="${esc(i.id)}">
-      ${tags([KIND[i.kind], mine ? 'yours' : i.author ? `by ${i.author}` : '', i.added ? 'added' : '', i.update ? ['update available', 'A newer version is available'] : '', i.added && i.kind === 'plugin' && !i.enabled ? ['off', 'Added but switched off'] : '', i.ready ? '' : i.kind === 'plugin' ? ['needs internet', 'This VM is offline, so plugins cannot be fetched'] : ['waiting for admin', 'An admin has to enter the server address first'], i.token_mode === 'personal' ? ['asks for your token', 'Each person uses their own token'] : '', i.risky ? ['can run commands', i.risky] : ''], 3)}
+    const card = (i) => { const mine = i.author && i.author === me; const teamItem = !!i.team && i.kind !== 'plugin'; const teamPlug = !!i.team && i.kind === 'plugin'; return `<div class="item${i.added || i.team || mine ? ' have' : ''}" data-id="${esc(i.id)}">
+      ${tags([KIND[i.kind], mine ? 'yours' : i.author ? `by ${i.author}` : '', teamItem ? ['from your team', `Comes with the ${i.team} team plugin`] : teamPlug ? [`team ${i.team}`, 'Your team profile: switching it changes rules, skills, agents and MCP servers'] : i.added ? 'added' : '', i.update && !teamItem ? ['update available', 'A newer version is available'] : '', i.added && i.kind === 'plugin' && !i.enabled ? ['off', 'Added but switched off'] : '', i.ready ? '' : i.kind === 'plugin' ? ['needs internet', 'This VM is offline, so plugins cannot be fetched'] : ['waiting for admin', 'An admin has to enter the server address first'], i.token_mode === 'personal' ? ['asks for your token', 'Each person uses their own token'] : '', i.risky ? ['can run commands', i.risky] : ''], 3)}
       <div class="t">${i.kind === 'skill' ? '/' : ''}${esc(i.name.split('@')[0])}</div><div class="d" title="${esc(i.description)}">${esc(i.description)}</div>
       <div class="acts">${mine ? '<button type="button" class="btn ghost sm" data-a="edit">Edit</button><button type="button" class="btn ghost sm" data-a="unshare">Unshare</button>'
-        : `${i.added && i.kind === 'plugin' ? `<button type="button" class="btn ghost sm" data-a="toggle" data-on="${i.enabled ? 0 : 1}">${i.enabled ? 'Turn off' : 'Turn on'}</button>` : ''}${i.added ? `<button type="button" class="btn ghost danger sm" data-a="remove">Remove</button>${i.update ? '<button type="button" class="btn sm" data-a="add">Update</button>' : ''}`
-        : i.ready ? '<button type="button" class="btn sm" data-a="add">Add</button>' : `<span class="sub">${i.kind === 'plugin' ? 'Needs internet (this VM is offline)' : root ? '' : 'Ask root to set it up'}</span>`}
+        : `${i.added && i.kind === 'plugin' ? `<button type="button" class="btn ghost sm" data-a="toggle" data-on="${i.enabled ? 0 : 1}">${i.enabled ? 'Turn off' : 'Turn on'}</button>` : ''}${i.added && !i.team ? `<button type="button" class="btn ghost danger sm" data-a="remove">Remove</button>${i.update ? '<button type="button" class="btn sm" data-a="add">Update</button>' : ''}`
+        : i.added ? '' : i.ready ? '<button type="button" class="btn sm" data-a="add">Add</button>' : `<span class="sub">${i.kind === 'plugin' ? 'Needs internet (this VM is offline)' : root ? '' : 'Ask root to set it up'}</span>`}
         ${root && i.kind === 'mcp' && !i.author && !i.local ? '<button type="button" class="btn link sm" data-a="setup">Set up</button>' : ''}
         ${i.kind !== 'plugin' ? '<button type="button" class="btn link sm" data-a="view">View</button>' : ''}`}</div>
     </div>`; };
@@ -305,7 +306,7 @@ export function mount(container, api) {
       const added = shown.filter((i) => i.added).length;
       return `<div class="sec${open ? ' open' : ''}" data-s="${esc(s)}"><button type="button" class="sh" aria-expanded="${!!open}"><span class="car" aria-hidden="true">${icon('chevron')}</span><b>${esc(title(s))}</b>
         <span class="sub">${shown.length === total ? total : `${shown.length} of ${total}`} items${added ? ` · ${added} added` : ''}${s ? ` · ${esc(s)}` : ''}</span></button>
-        <div class="grid">${shown.map(card).join('') || `<div class="sub" style="padding:8px 0">${total ? 'Nothing matches' : 'The marketplace is empty'}</div>`}</div></div>`;
+        <div class="grid">${shown.some((i) => i.team && i.kind === 'plugin') ? `<div class="sub" style="grid-column:1/-1">${esc(TEAM_NOTE)}</div>` : ''}${shown.map(card).join('') || `<div class="sub" style="padding:8px 0">${total ? 'Nothing matches' : 'The marketplace is empty'}</div>`}</div></div>`;
     }).join('') || emptyBlock('Try fewer words, or pick All above.', '', null, { icon: 'search', title: 'Nothing matches' }).outerHTML;
     grid.querySelectorAll('.sec>.sh').forEach((h) => h.addEventListener('click', () => {
       const sec = h.parentElement; const s = sec.dataset.s;
