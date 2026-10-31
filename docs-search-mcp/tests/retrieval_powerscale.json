@@ -1,0 +1,11 @@
+[
+{"q": "onefs synciq failover and failback policy configuration", "expect": ["configuring-synciq-failoverfailback-policies"]},
+{"q": "isi cloud pools create command options", "expect": ["isi-cloud-pools-create"]},
+{"q": "does cloudpools work together with smartdedupe", "expect": ["cloudpools-and-smartdedupe"]},
+{"q": "add node pools to a tier on powerscale", "expect": ["add-node-pools-to-a-tier"]},
+{"q": "allow anonymous access to an smb share on onefs", "expect": ["anonymous-access-to-smb-shares"]},
+{"q": "assign an alias to a snapshot in onefs", "expect": ["assign-a-snapshot-alias-to-a-snapshot", "managing-snapshot-aliases"]},
+{"q": "in which order are file pool policies applied", "expect": ["about-file-pool-policy-order"]},
+{"q": "synciq source and target clusters behind nat", "expect": ["configuring-synciq-source-and-target-clusters-with-nat"]},
+{"q": "create a synciq domain", "expect": ["create-a-synciq-domain"]}
+]
