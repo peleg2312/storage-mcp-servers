@@ -186,14 +186,15 @@ def stale_count(mem):
 
 
 def index_knowledge():
-    """Team knowledge into the docs search: when notes pages or incidents changed since the last run and the library
-    is here, `add-docs --brain` runs in the background (seconds), so teammates' pages are found by search_docs next to the
-    vendor documents. A stamp file keeps it from running when nothing changed."""
+    """Team knowledge into the docs search: when notes pages or incidents changed since the last run, `add-docs --brain`
+    rebuilds the person's own small index (~/.claude/brain/brain.db) in the background (seconds); docs-local searches it
+    with the library, so teammates' pages are found by search_docs next to the vendor documents. A stamp file keeps it
+    from running when nothing changed."""
     brain = os.path.join(USER_HOME, "brain")
     files = glob.glob(os.path.join(brain, "notes", "*.md")) + glob.glob(os.path.join(brain, "incidents", "**", "*.md"), recursive=True)
     add = next((p for p in (os.path.join(USER_HOME, "tools", "add-docs"), os.path.expanduser("~/.local/bin/add-docs"), "/opt/paas/tools/add-docs")
                 if os.path.exists(p)), "")
-    if not files or not add or not os.path.exists(os.path.join(brain, "library", "docs.db")):
+    if not files or not add:
         return
     state = "%d:%d" % (len(files), int(max(os.path.getmtime(f) for f in files)))
     stamp = os.path.join(brain, ".brain-index-stamp")

@@ -103,6 +103,16 @@ re-extracted only when `library/VERSION` changed).
 Try: `python3 ~/.claude/brain/library/search.py search "scsiblade.san.config.active"` or, inside Claude,
 `explain EMS scsiblade.san.config.active`, `/zoning-audit fabric A`, `which KB covers FC link down after a switch reboot`.
 
+## Docs search: one library for every team, local or on OpenShift
+
+There is one documentation library for everyone; a team changes which rules and skills point into it, not the library.
+On the VM each Claude session searches it with `docs-local` (a stdio process over the shared read-only `docs.db`; the OS
+page cache is shared, so ten people cost one copy), plus the person's own `brain.db` with the active team's notes pages and
+incidents. The HTTP server `docs-search` on OpenShift (`docs-search-mcp/bundle/build-offline.sh --from-library`,
+`openshift-offline.yaml`) serves the same tools to laptops without the library and to other VMs; give it a bearer token
+and a TLS edge route, put it into each team's `mcp.json` through the team editor, and keep `docs-local` on the VM (it alone
+sees the team knowledge index). Both may be connected at once: the brain uses whichever answers.
+
 ## Teams: one brain per team, one account per person
 
 1. Pick the team at install time: `sh install-vm.sh --team nas` (single VM; `san` is the default and needs no flag), `sh

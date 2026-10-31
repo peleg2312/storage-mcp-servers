@@ -2,7 +2,9 @@
 # Add your own documents to the offline docs library (searched by docs-local like everything else):
 #   put PDF / HTML / Markdown / text files in ~/.claude/brain/inbox/<vendor>/<product>/   (loose files: local/inbox)
 #   then run:  add-docs
-#   add-docs --brain   index ~/.claude/brain/notes/*.md and incidents/**/*.md (local/brain-notes, local/brain-incidents)
+#   add-docs --brain   index ~/.claude/brain/notes/*.md and incidents/**/*.md (local/brain-notes, local/brain-incidents) into
+#                      ~/.claude/brain/brain.db ($BRAIN_DB), the person's own small index that docs-local searches with the
+#                      library (the shared library is read-only on the multi-user VM; the session-start hook runs this)
 # Or fetch pages the VM can reach (intranet wiki, internal portal, vendor page through the proxy) straight in:
 #   add-docs https://wiki.corp/san/zoning-standard [more urls] [--to <vendor>/<product>]   (default: web/<host>)
 # The url becomes the document's link in search results. Only new or changed files are read; a file deleted from
@@ -12,7 +14,7 @@ set -eu
 TOOLS=$(dirname "$(readlink -f "$0")")
 INBOX=${INBOX:-$HOME/.claude/brain/inbox}
 DB=${DOCS_DB:-$HOME/.claude/brain/library/docs.db}
-[ -f "$DB" ] || { echo "add-docs: no $DB (install the documentation library first)"; exit 1; }
+[ "${1:-}" = "--brain" ] || [ -f "$DB" ] || { echo "add-docs: no $DB (install the documentation library first)"; exit 1; }
 PY=$HOME/.claude/devtools-venv/bin/python
 "$PY" -c "import pypdf" 2>/dev/null || PY=python3          # PDFs need pypdf (installed by install.sh in the devtools venv)
 mkdir -p "$INBOX"
@@ -25,7 +27,8 @@ if [ "${1:-}" = "--brain" ]; then
   find "$B/incidents" -name '*.md' -type f 2>/dev/null | while read -r f; do
     cp -p "$f" "$S/local/brain-incidents/$(basename "$(dirname "$f")")-$(basename "$f")"
   done
-  exec "$PY" "$TOOLS/docs_index.py" --docs "$S" --db "$DB" --add brain/
+  BDB=${BRAIN_DB:-${CLAUDE_HOME:-$HOME/.claude}/brain/brain.db}
+  exec "$PY" "$TOOLS/docs_index.py" --docs "$S" --db "$BDB" --add brain/
 fi
 if [ $# -gt 0 ]; then
   python3 - "$INBOX" "$@" <<'EOF'

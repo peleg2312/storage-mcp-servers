@@ -101,8 +101,10 @@ the same file when they are committed, so a broken edit is caught at the push, n
    captures waiting and incidents; a topic file is read only when a question touches it. The session-start line also says
    when curation is due (5 captures or more, or one older than 14 days) and how many facts are older than 180 days.
 2. **Look up.** Before answering, Claude searches the offline library (docs-lookup, docs-leads) and the team's own
-   knowledge: notes pages and incidents are indexed into the docs search (`add-docs --brain`, run in the background by the
-   session-start hook whenever they changed), so a teammate's page is found by `search_docs` next to the vendor documents.
+   knowledge: notes pages and incidents are indexed into a small per-person index, `~/.claude/brain/brain.db`
+   (`add-docs --brain`, run in the background by the session-start hook whenever they changed; the shared library itself
+   is read-only on the multi-user VM). `docs-local` searches that index together with the library, so a teammate's page is
+   found by `search_docs` next to the vendor documents, marked `library: team knowledge`; it follows the active team.
 3. **Learn.** A solved problem, a quirk, a corrected assumption is written down (golden rule 6): a dated line with a
    confidence word (verified / observed / hypothesis) and its source into notes/<topic>.md, a capture under captures/ when
    the topic is unclear, a page notes/<topic>-<slug>.md when it needs sections, an incident postmortem under incidents/.

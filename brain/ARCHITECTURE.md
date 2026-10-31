@@ -119,6 +119,11 @@ Code; few high-signal tools) and measured with `docs-search-mcp/eval_search.py`:
   prints both: the NAS member pays 7.9 KB of rules and 6.5 KB of skill frontmatter against 10.4 / 10.2 KB for SAN). People stay
   individual accounts (Active Directory on the multi-user VM, the team picked by AD group at first sign-in); the team is a profile,
   not a shared login, so the audit log, chats and personal notes stay per person.
+- **Team knowledge in the docs search.** `docs-local` opens a second, per-person index (`~/.claude/brain/brain.db`, built by
+  `add-docs --brain` from the active team's notes pages and incidents, rebuilt in the background by session start when they
+  changed) and searches it with the library: chunk ids offset by 10^10 as server.py does for several indexes, results marked
+  `library: team knowledge`, read_chunk / read_document / related_docs routed by id or `brain/` path, `list_sources` names
+  both. The shared library stays read-only; nothing a person writes touches it.
 - **Laptop install is the exception: a plugin plus the rules.** `install-laptop.sh` publishes the team repositories and installs
   the chosen team's plugin `paas-brain-<team>` (skills, agents, hooks, `docs-local`); its `hooks.json`
   is produced by `merge_settings.py` itself, so matchers and timeouts cannot drift from the VM. The rules

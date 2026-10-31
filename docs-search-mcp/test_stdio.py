@@ -32,8 +32,9 @@ msgs = [
     {"jsonrpc": "2.0", "id": 11, "method": "tools/call", "params": {"name": "explain_code", "arguments": {"code": "scsiblade.san.config.active"}}},
     {"jsonrpc": "2.0", "id": 12, "method": "tools/call", "params": {"name": "explain_code", "arguments": {"code": "nothing.documented.here"}}},
 ]
+env = dict(os.environ, BRAIN_DB=os.path.join(root, "none.db"))      # no team-knowledge index: the library alone
 p = subprocess.run([sys.executable, os.path.join(here, "mcp_stdio.py"), "--db", db],
-                   input="".join(json.dumps(m) + "\n" for m in msgs), capture_output=True, text=True, timeout=60)
+                   input="".join(json.dumps(m) + "\n" for m in msgs), capture_output=True, text=True, timeout=60, env=env)
 out = {m["id"]: m for m in (json.loads(l) for l in p.stdout.splitlines() if l.strip())}
 assert out[1]["result"]["serverInfo"]["name"] == "docs-search" and out[1]["result"]["instructions"]
 assert [t["name"] for t in out[2]["result"]["tools"]] == ["search_docs", "explain_code", "read_chunk", "read_document", "related_docs", "list_sources"]
@@ -100,3 +101,42 @@ assert partial and "Partial article" in page and "SIGN IN" not in page and "ONTA
 _, page, _ = kb.extract(b"<html><title>t</title><body>no container</body></html>", "u")
 assert page is None
 print("stdio server, CLI and NetApp KB extraction OK")
+
+# a second, small index of the person's team knowledge (add-docs --brain): searched with the library, chunk ids offset,
+# read_chunk / read_document / related_docs routed to it, list_sources names both
+bdocs, bdb = os.path.join(root, "bdocs"), os.path.join(root, "brain.db")
+os.makedirs(os.path.join(bdocs, "local", "brain-notes"))
+open(os.path.join(bdocs, "local", "brain-notes", "ontap-nas.md"), "w").write(
+    "# ONTAP NAS\n- 2026-10-31 the active-active state note of the team: SAN config active-active checked verified ontap\n")
+assert docs_index.build(bdocs, bdb, log=lambda *_: None, prefix="brain/")["documents"] == 1
+msgs2 = [
+    {"jsonrpc": "2.0", "id": 1, "method": "initialize", "params": {"protocolVersion": "2025-06-18", "capabilities": {}}},
+    {"jsonrpc": "2.0", "id": 2, "method": "tools/call", "params": {"name": "search_docs", "arguments": {"query": "active-active state"}}},
+    {"jsonrpc": "2.0", "id": 3, "method": "tools/call", "params": {"name": "list_sources", "arguments": {}}},
+    {"jsonrpc": "2.0", "id": 4, "method": "tools/call", "params": {"name": "read_document", "arguments": {"path": "brain/local/brain-notes/ontap-nas.md"}}},
+    {"jsonrpc": "2.0", "id": 5, "method": "tools/call", "params": {"name": "search_docs", "arguments": {"queries": ["active-active state", "nothing here"], "read_top": 1}}},
+]
+p = subprocess.run([sys.executable, os.path.join(here, "mcp_stdio.py"), "--db", db, "--brain-db", bdb],
+                   input="".join(json.dumps(m) + "\n" for m in msgs2), capture_output=True, text=True, timeout=60)
+out = {m["id"]: m for m in (json.loads(l) for l in p.stdout.splitlines() if l.strip())}
+hits = json.loads(out[2]["result"]["content"][0]["text"])["results"]
+libs = {r.get("library", "main") for r in hits}
+assert libs == {"main", "team knowledge"}, hits
+team_hit = next(r for r in hits if r.get("library") == "team knowledge")
+assert team_hit["chunk_id"] >= 10 ** 10, team_hit
+msgs3 = [{"jsonrpc": "2.0", "id": 1, "method": "tools/call", "params": {"name": "read_chunk", "arguments": {"chunk_id": team_hit["chunk_id"]}}},
+         {"jsonrpc": "2.0", "id": 2, "method": "tools/call", "params": {"name": "related_docs", "arguments": {"chunk_id": team_hit["chunk_id"]}}}]
+p3 = subprocess.run([sys.executable, os.path.join(here, "mcp_stdio.py"), "--db", db, "--brain-db", bdb],
+                    input="".join(json.dumps(m) + "\n" for m in msgs3), capture_output=True, text=True, timeout=60)
+out3 = {m["id"]: m for m in (json.loads(l) for l in p3.stdout.splitlines() if l.strip())}
+rc1 = json.loads(out3[1]["result"]["content"][0]["text"])
+assert rc1["path"] == "brain/local/brain-notes/ontap-nas.md" and rc1["sections"][0]["chunk_id"] == team_hit["chunk_id"], rc1
+assert not out3[2]["result"]["isError"], out3[2]
+src = json.loads(out[3]["result"]["content"][0]["text"])["libraries"]
+assert [l["library"] for l in src] == ["main", "team knowledge"] and src[1]["documents"] == 1, src
+rd = json.loads(out[4]["result"]["content"][0]["text"])
+assert rd["sections"][0]["chunk_id"] >= 10 ** 10 and "active-active" in rd["sections"][0]["text"], rd
+multi = json.loads(out[5]["result"]["content"][0]["text"])
+assert {e["q"] for e in multi["by_query"]} == {"active-active state", "nothing here"} and len(multi["by_query"]) == 2, multi["by_query"]
+assert multi["results"][0].get("text"), "read_top fetched across indexes"
+print("team-knowledge index ok")
