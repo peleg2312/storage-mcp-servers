@@ -99,16 +99,6 @@ assert run("notes-check.py", {"tool_input": {"file_path": nx}}) == (0, "")
 assert "line one" in gi(bare, "show", "main:notes/x.md"), (gi(brain, "log", "--oneline"), gi(brain, "status"), gi(bare, "log", "main", "--oneline"))
 rc, out = run("notes-check.py", args=["--sync"], e=env2)
 assert rc == 0 and out.strip() == "brain: in sync" and "line one" in open(os.path.join(brain2, "notes", "x.md")).read(), (rc, out, gi(brain2, "log", "--oneline", "--all"), gi(brain2, "status"), open(os.path.join(brain2, "notes", "x.md")).read())
-# conflict: the same line changed on both sides (the second to sync loses nothing, the tree stays usable)
-nx2 = os.path.join(brain2, "notes", "x.md")
-open(nx2, "w").write("# X\n- line one\n- from two\n")
-run("notes-check.py", args=["--commit", "two"], e=env2)
-open(nx, "w").write("# X\n- line one\n- from one\n")
-run("notes-check.py", args=["--commit", "one"])
-rc, out = run("notes-check.py", args=["--sync"])        # two pushed first, so one clashes
-assert rc == 1 and out.startswith("brain: conflict with the shared brain in: notes/x.md;"), (rc, out)
-assert gi(brain, "status", "--porcelain").strip() == "", gi(brain, "status")
-assert "<<<<" not in open(nx).read() and "from one" in open(nx).read()
 # a file holding a secret is reported, not committed (the redacted save is); a rebase left behind by a killed sync is aborted
 leak = os.path.join(brain, "notes", "leak.md")
 open(leak, "w").write("# L\n- login password=hunter2!\n")
@@ -121,7 +111,19 @@ os.makedirs(os.path.join(brain, ".git", "rebase-merge"))          # what a kille
 open(os.path.join(brain, ".git", "rebase-merge", "head-name"), "w").write("refs/heads/main\n")
 rc, out = run("notes-check.py", args=["--sync"])
 assert rc == 0 and not os.path.isdir(os.path.join(brain, ".git", "rebase-merge")), (rc, out)
+os.remove(leak); run("notes-check.py", args=["--commit", "leak gone"])   # the later add-docs case counts the notes pages
+assert run("notes-check.py", args=["--sync"], e=env2)[0] == 0      # the second person is current again for the conflict scenario
 print("secrets and stuck rebase ok")
+# conflict: the same line changed on both sides (the second to sync loses nothing, the tree stays usable)
+nx2 = os.path.join(brain2, "notes", "x.md")
+open(nx2, "w").write("# X\n- line one\n- from two\n")
+run("notes-check.py", args=["--commit", "two"], e=env2)
+open(nx, "w").write("# X\n- line one\n- from one\n")
+run("notes-check.py", args=["--commit", "one"])
+rc, out = run("notes-check.py", args=["--sync"])        # two pushed first, so one clashes
+assert rc == 1 and out.startswith("brain: conflict with the shared brain in: notes/x.md;"), (rc, out)
+assert gi(brain, "status", "--porcelain").strip() == "", gi(brain, "status")
+assert "<<<<" not in open(nx).read() and "from one" in open(nx).read()
 print("shared brain ok")
 
 # add-docs --brain: pages land as local/brain-notes and local/brain-incidents; a removed page leaves the index

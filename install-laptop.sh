@@ -77,7 +77,9 @@ echo plugin > "$B/team-mode"                          # skills and hooks come fr
 python3 "$HERE/brain/teams/publish.py" --all --to "$B/team-sources" >/dev/null   # every team of this clone, for `paas-team use <other>` offline
 if [ -n "$TEAM_SOURCE" ]; then
   python3 "$DST/tools/paas-team" add "$TEAM" "$TEAM_SOURCE"
-elif [ -d "$B/teams/$TEAM" ]; then                    # added earlier from this clone: this clone's plugin replaces the old one
+elif [ -d "$B/teams/$TEAM" ] && case "$(git -C "$B/teams/$TEAM" remote get-url origin 2>/dev/null)" in ""|"$B/team-sources/"*) true ;; *) false ;; esac; then
+  # added earlier from this clone (no remote, or this clone's team-sources): this clone's plugin replaces the old one;
+  # a team taken from a published repository (--team-source, GitLab) is left to `paas-team sync`
   rm -rf "$B/teams/$TEAM/paas-brain-$TEAM"; cp -R "$B/team-sources/$TEAM/paas-brain-$TEAM" "$B/teams/$TEAM/"
   cp "$B/team-sources/$TEAM/.claude-plugin/marketplace.json" "$B/teams/$TEAM/.claude-plugin/"
   ( cd "$B/teams/$TEAM" && git add -A >/dev/null 2>&1 && git -c user.name=brain -c user.email=brain@localhost commit -q -m "team $TEAM: plugin updated by install-laptop.sh" >/dev/null 2>&1 ) || true
