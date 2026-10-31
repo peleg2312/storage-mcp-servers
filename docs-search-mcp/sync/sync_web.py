@@ -149,21 +149,23 @@ def main():
     stats = {"saved": 0, "skipped": 0, "login_or_empty": 0, "robots": 0, "failed": 0}
     manifests = {}
 
-    def dump(mf, man):
-        """Merge with what another run (a shard of the same list) wrote meanwhile, then write."""
+    def read(mf):
         try:
-            on_disk = json.load(open(mf))
-        except (OSError, ValueError):
-            on_disk = {}
-        on_disk.update(man)
-        man.update(on_disk)
-        json.dump(man, open(mf, "w"), indent=1)
+            return json.load(open(mf))
+        except (OSError, ValueError):            # missing, or half-written by another shard
+            return {}
+
+    def dump(mf, man):
+        """Merge with what another run (a shard of the same list) wrote meanwhile, then write atomically."""
+        man.update({k: v for k, v in read(mf).items() if k not in man})
+        json.dump(man, open(mf + ".tmp", "w"), indent=1)
+        os.replace(mf + ".tmp", mf)
 
     for vendor, product, url in rows:
         d = os.path.join(a.dest, vendor, product)
         os.makedirs(d, exist_ok=True)
         mf = os.path.join(d, "manifest.json")
-        man = manifests.setdefault(mf, json.load(open(mf)) if os.path.exists(mf) else {})
+        man = manifests.setdefault(mf, read(mf))
         if not a.refresh and any(v.get("url") == url for v in man.values()):
             stats["skipped"] += 1
             continue
