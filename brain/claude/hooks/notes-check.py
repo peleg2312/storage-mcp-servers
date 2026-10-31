@@ -182,8 +182,8 @@ def hook():
         return 0
     path = os.path.realpath(os.path.expanduser(path)) if path else ""
     roots = [os.path.realpath(p) + os.sep for p in (BRAIN, os.path.expanduser("~/storage-reports"))]
-    if not path.startswith(tuple(roots)) or not os.path.isfile(path):
-        return 0
+    if not path.startswith(tuple(roots)) or not os.path.isfile(path) or os.path.basename(path) == "mcp.json":
+        return 0                                   # a team's mcp.json carries its servers' tokens by the owner's decision
     f = findings(path)
     repo = os.path.realpath(REPO) + os.sep         # team mode: the real file lives in the team clone
     if path.startswith(repo):

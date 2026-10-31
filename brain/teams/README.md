@@ -33,7 +33,7 @@ and `team.json` with the resolved lists). `python3 brain/teams/publish.py nas --
 
 ```
 .claude-plugin/marketplace.json      paas-brain-nas/        knowledge/{notes,captures,incidents}/  knowledge/tool-map.md
-team.json (name, title, remote)      README.md              .gitignore (knowledge/notes.md and environment.md stay personal)
+knowledge/notes.md, environment.md   mcp.json (the team's live MCP servers with address and token)   team.json   README.md
 ```
 One git repository per team, in GitLab: `python3 brain/teams/publish.py nas --to git@gitlab/storage/brain-nas.git`
 (clone, rebuild the plugin, commit, push; the url is recorded as the team's remote). Members' brains push their notes,
@@ -55,17 +55,30 @@ contribute.
 
 ## MCP servers per team
 
-`team.json` lists the team's live MCP servers (`"mcp"`). On the multi-user VM root sets each server's address and the
-shared token once in the Market tab (`paas-market setup-mcp`; tokens never enter git), and a switch adds the team's servers
-for the person (`paas-market add mcp/<name>`) and drops the previous team's; a server the person added themselves is left
-alone, and a server with a personal token is added from the Market tab, where the token is typed. The Team card shows which
-of the team's servers are added. On a laptop (no marketplace) live servers are added with `claude mcp add`; the docs
-library is the plugin's own `docs-local`.
+The team repository's `mcp.json` holds the team's live MCP servers with address and token (`{"powermax": {"type": "http",
+"url": "http://...:8000/mcp", "headers": {"Authorization": "Bearer ..."}}}`), created from the catalog with HOST / TOKEN
+placeholders at the first publish and filled in the Brain tab's team editor (or by hand). A switch registers every filled
+server for the person with `claude mcp add-json` (VM or laptop alike) and removes the previous team's; a server not filled in
+falls back to the VM's marketplace (`paas-market add mcp/<name>`, root's shared token from the Market tab); a server the
+person added themselves is left alone. The Team card shows which servers are added. The owner's decision: the tokens in
+`mcp.json` are readable by everyone with access to the team's GitLab project, so use read-only tokens for the read-only
+servers and rotate them when someone leaves; the notes hook never asks to redact that file. The docs library is the
+plugin's own `docs-local`.
+
+## Editing a team in the Brain tab
+
+The Team card's "Edit team" opens the team's definition: title, description, persona, rules, environment template, the
+skills and agents (checkboxes over everything on this machine: your own, the marketplace's, the other teams'), and the MCP
+servers with their tokens. Saving writes into the team repository (`paas-team edit <team>` with JSON on stdin), commits
+`brain tab: team <team> edited`, pushes, and re-applies the team if it is the active one; every member picks the change up at
+their next sync. `paas-team show <team> --json` prints the same definition. `publish.py` refuses to overwrite such edits
+without `--force`.
 
 ## Edits from the Brain tab reach the team
 
-Memory: `notes/`, `captures/`, `incidents/` and `tool-map.md` are the team's (committed and pushed after every save);
-`notes.md` and `environment.md` are the person's and never leave the VM; reports under `~/storage-reports` are never in git.
+Memory: `notes.md`, `environment.md`, `notes/`, `captures/`, `incidents/` and `tool-map.md` are all the team's (committed
+and pushed after every save; the first switch merges a person's earlier notes into them). Reports under `~/storage-reports`
+are never in git.
 Skills and agents: an edit of a **team** skill or agent in the Brain tab is written into the team repository too
 (`paas-brain-<team>/skills/<name>/SKILL.md`), committed as `brain tab: team skill <name>` and pushed; every teammate's
 brain re-applies it at their next sync or session start. A person's own or marketplace skill stays theirs. Because such an
@@ -102,9 +115,9 @@ agents: in **files mode** (VMs; hooks come from settings.json or the managed set
 is enabled and the other teams' disabled. Under a second. The first switch moves the person's existing notes into the
 team's knowledge folder; a person's own skills (`.user-skill`, `agents/.user-agents`) and the skills and agents they
 added from the marketplace (`paas-market add skill/<name>`, the Market tab; recorded in `~/.claude/paas-market.json`) are
-never removed or overwritten, so everyone has the team's set plus their own choices. Each team has its own personal
-`notes.md` and `environment.md` (never committed) and the team's shared `notes/`, `captures/`, `incidents/`,
-`tool-map.md` (committed by the notes hook, pushed to the team remote, pulled at every session start).
+never removed or overwritten, so everyone has the team's set plus their own choices. Each team has its own memory:
+`notes.md`, `environment.md`, `notes/`, `captures/`, `incidents/`, `tool-map.md`, shared by every member (committed by the
+notes hook, pushed to the team remote, pulled at every session start).
 
 Cost: a team clone is about 0.5 MB plus the knowledge; a NAS member's context is smaller than a SAN member's (the
 NAS rules and skill list are shorter, `test_budgets.py` prints both).

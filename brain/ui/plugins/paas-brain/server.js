@@ -406,6 +406,30 @@ const routes = {
     const r = await run('python3', args);
     return r.ok ? { ...r, file: r.out.split('\n')[0].trim() } : r;
   },
+  // one team in full, for the editor
+  'GET /team-show': async (q) => {
+    if (!TEAM_BIN) return { ok: false, out: 'Teams are not installed on this VM' };
+    const name = String(q.get('name') || '');
+    if (!TEAM_NAME.test(name)) return { ok: false, out: 'Bad team name' };
+    const r = await run('python3', [TEAM_BIN, 'show', name, '--json']);
+    try { return { ok: true, ...JSON.parse(r.out) }; } catch { return { ok: false, out: r.out.slice(0, 2000) || 'paas-team gave no answer' }; }
+  },
+  // apply an edit: the change (it may hold a token) goes to paas-team on stdin only and is never logged
+  'POST /team-edit': async (_q, b) => {
+    if (!TEAM_BIN) return { ok: false, out: 'Teams are not installed on this VM' };
+    const name = String(b.name || '');
+    if (!TEAM_NAME.test(name)) return { ok: false, out: 'Bad team name' };
+    if (!b.change || typeof b.change !== 'object' || Array.isArray(b.change)) return { ok: false, out: 'Nothing to save' };
+    const payload = JSON.stringify(b.change);
+    if (Buffer.byteLength(payload) > 2 * 1024 * 1024) return { ok: false, out: 'The change is too large (2 MB at most)' };
+    return new Promise((resolve) => {
+      const child = execFile('python3', [TEAM_BIN, 'edit', name],
+        { timeout: 180000, maxBuffer: 20 * 1024 * 1024, env: { ...process.env, PATH: `${HOME}/.local/bin:${process.env.PATH}` } },
+        (err, stdout, stderr) => resolve({ ok: !err, out: `${stdout}${stderr}`.trim() }));
+      child.stdin.on('error', () => { /* the child exited before reading: its exit code reports it */ });
+      child.stdin.end(payload);
+    });
+  },
   'POST /team-sync': async () => (TEAM_BIN ? run('python3', [TEAM_BIN, 'sync']) : { ok: false, out: 'Teams are not installed on this VM' }),
   'GET /mcp-status': () => run('claude', ['mcp', 'list'], 90000),
 };

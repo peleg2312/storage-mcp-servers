@@ -18,6 +18,10 @@ persona.md and storage.md as before.
                                    plain files again; your own and marketplace skills stay (also: paas-team use none)
   paas-team export [<team>] [<dir>]  zip of the team's plugin (marketplace + install-team.sh) for a laptop without
                                    GitLab access, into ~/storage-reports (the Reports tab) or <dir>
+  paas-team show <team> [--json]   the team's definition: persona, rules, skills, agents, MCP servers, what could be added
+  paas-team edit <team>            change it from JSON on stdin (title, description, persona, rules, environment, skills,
+                                   agents, mcp_servers {name: {url, type, token}}, remove_mcp): written into the team's
+                                   repository, committed, pushed, re-applied; the Brain tab's team editor uses it
   paas-team mode files|plugin      how skills reach Claude: copied into ~/.claude (VM, hooks managed by the
                                    installer) or as the Claude Code plugin (laptop, hooks inside the plugin)
 Environment: PAAS_TEAMS (source directory: /opt/paas/teams on a multi-user VM, else ~/.claude/brain/team-sources,
@@ -165,7 +169,9 @@ def listing():
                       "version": t.get("version", ""), "local": True, "active": name == act,
                       "source": None, "remote": remote_of(tdir) or t.get("remote") or None,
                       "skills": len(t.get("skills", [])), "agents": len(t.get("agents", [])),
-                      "mcp": t.get("mcp", []), "mcp_added": sorted(m for m in t.get("mcp", []) if m == "docs-local" or f"mcp/{m}" in mine)})
+                      "mcp": t.get("mcp", []),
+                      "mcp_added": sorted(m for m in t.get("mcp", []) if m == "docs-local" or f"mcp/{m}" in mine
+                                          or (name == act and m in (installed().get("mcp") or {})))})
         seen.add(name)
     for name, sdir in source_teams().items():
         if name in seen:
@@ -233,9 +239,11 @@ def add(team, source=None, quiet=False):
 
 # ---- use / refresh ---------------------------------------------------------------------------------------------
 
-def link(brain_name, target):
+def link(brain_name, target, template=None):
     """~/.claude/brain/<name> -> target. A real file or directory there is moved into the team's knowledge the first
-    time a team is used (the person's own notes travel with them); later a stray real file is kept as <name>.pre-team."""
+    time a team is used (the person's own notes travel with them): a directory merges (files missing on the team side
+    move over), a file replaces a team file that is still the untouched template, else its '- ' lines the team file
+    lacks are appended; the person's file is kept as <name>.pre-team."""
     p = os.path.join(BRAIN, brain_name)
     if os.path.islink(p):
         if os.readlink(p) == target:
@@ -249,6 +257,15 @@ def link(brain_name, target):
                 if not os.path.exists(os.path.join(target, name)):
                     shutil.move(os.path.join(p, name), os.path.join(target, name))
             shutil.rmtree(p)
+        elif os.path.isfile(p) and os.path.isfile(target):
+            mine, theirs = read(p), read(target)
+            if template and theirs.strip() == read(template).strip():
+                write(target, mine)                            # the team file was never filled: the person's wins
+            else:
+                missing = [l for l in mine.splitlines() if l.startswith("- ") and l not in theirs.splitlines()]
+                if missing:
+                    write(target, theirs.rstrip("\n") + "\n" + "\n".join(missing) + "\n")
+            os.replace(p, p + ".pre-team")
         else:
             os.replace(p, p + ".pre-team")
     os.makedirs(os.path.dirname(target), exist_ok=True)
@@ -279,27 +296,60 @@ def market(*args):
         return 127, str(e)
 
 
-def apply_mcp(t, old):
-    """The team's MCP servers from the VM's marketplace (root set their address and the shared token there, in the Market
-    tab): added for this person; the ones the previous team added and this one does not list are removed. A server the
-    person added themselves is never touched. A personal-token server needs the person's token: the Market tab does it."""
-    if not market_bin():
-        return []
+def mcp_ready(cfg):
+    """a server entry of the team's mcp.json with its placeholders filled (HOST, TOKEN) and a command that exists"""
+    cmd = cfg.get("command", "")
+    if cmd and os.path.isabs(cmd) and not os.path.exists(cmd):
+        return False
+    return "HOST" not in cfg.get("url", "") and "TOKEN" not in json.dumps(cfg.get("headers", {}))
+
+
+def claude_mcp(*args):
+    try:
+        r = subprocess.run(["claude", "mcp"] + list(args), capture_output=True, text=True, timeout=60, stdin=subprocess.DEVNULL)
+        return r.returncode, (r.stdout + r.stderr).strip()
+    except Exception as e:
+        return 127, str(e)
+
+
+def apply_mcp(t, old, tdir):
+    """The team's live MCP servers for this person. First from the team repository's mcp.json (address and token kept
+    there by the team's decision: `claude mcp add-json`, works on a laptop too); a server not filled in there comes from
+    the VM's marketplace (root set it up in the Market tab). The previous team's servers leave; a server the person added
+    themselves (marketplace state) is never touched. Returns {name: "team" | "market"}."""
     want = [m for m in t.get("mcp", []) if m != "docs-local"]          # docs-local comes with every install
+    servers = jload(os.path.join(tdir, "mcp.json"))
     mine = jload(os.path.join(HOME, "paas-market.json")).get("installed", {})
-    added = []
-    for m in old.get("mcp", []):
-        if m not in want and f"mcp/{m}" in mine:
-            market("remove", f"mcp/{m}")
-    for m in want:
-        if f"mcp/{m}" in mine:
-            added.append(m)                                          # already there (theirs or an earlier team's)
+    prev = old.get("mcp", {})
+    prev = {m: "market" for m in prev} if isinstance(prev, list) else prev
+    for m, via in prev.items():
+        if m in want:
             continue
-        rc, out = market("add", f"mcp/{m}")
-        if rc == 0:
-            added.append(m)
-        else:
-            print(f"note: MCP {m} not added ({out.splitlines()[-1][:120] if out else 'no answer'}); the Market tab can add it")
+        if via == "team" and shutil.which("claude"):
+            claude_mcp("remove", "-s", "user", m)
+        elif via == "market" and market_bin() and f"mcp/{m}" in mine:
+            market("remove", f"mcp/{m}")
+    added = {}
+    for m in want:
+        cfg = servers.get(m) or {}
+        if cfg and mcp_ready(cfg) and shutil.which("claude"):
+            claude_mcp("remove", "-s", "user", m)
+            rc, out = claude_mcp("add-json", "-s", "user", m, json.dumps(cfg))
+            if rc == 0:
+                added[m] = "team"
+                continue
+            print(f"note: MCP {m}: claude mcp add-json failed ({out.splitlines()[-1][:120] if out else 'no answer'})")
+        if market_bin():
+            if f"mcp/{m}" in mine or prev.get(m) == "market":
+                added[m] = "market"
+                continue
+            rc, out = market("add", f"mcp/{m}")
+            if rc == 0:
+                added[m] = "market"
+            else:
+                print(f"note: MCP {m} not added ({out.splitlines()[-1][:120] if out else 'no answer'}); fill it in the team editor or the Market tab")
+        elif not cfg:
+            print(f"note: MCP {m}: no address in the team's mcp.json yet (team editor)")
     return added
 
 
@@ -342,7 +392,7 @@ def apply_files(plug, t):
         if os.path.isfile(src) and not personal("agents", n):
             shutil.copy(src, os.path.join(HOME, "agents", n + ".md"))
             put["agents"].append(n)
-    put["mcp"] = apply_mcp(t, installed())
+    put["mcp"] = apply_mcp(t, installed(), os.path.dirname(plug))
     write(STATE, json.dumps(put, indent=2) + "\n")
 
 
@@ -393,8 +443,8 @@ def apply(team, say=True, skills=True):
     first = not read(os.path.join(BRAIN, "team")).strip()     # first team ever: the person's files move in
     os.makedirs(BRAIN, exist_ok=True)
     for name in LINKS:
-        link(name, os.path.join(k, name))
-    for name in ("notes.md", "environment.md", "tool-map.md"):    # personal (notes.md, environment.md) or shared templates
+        link(name, os.path.join(k, name), os.path.join(plug, "brain", name) if name.endswith(".md") else None)
+    for name in ("notes.md", "environment.md", "tool-map.md"):    # the team's memory files start from the templates
         if not os.path.exists(os.path.join(k, name)):
             shutil.copy(os.path.join(plug, "brain", name), os.path.join(k, name))
     copy_rule(os.path.join(plug, "brain", "persona.md"), os.path.join(BRAIN, "persona.md"))
@@ -420,7 +470,7 @@ def apply(team, say=True, skills=True):
                 lines.append(l)
         write(ignore, "\n".join(lines) + "\n")
     if say:
-        mcp = installed().get("mcp", [])
+        mcp = list(installed().get("mcp") or [])
         print(f"team {team} ({t.get('title', team)}) active, {mode()} mode: {len(t.get('skills', []))} skills, "
               f"{len(t.get('agents', []))} agents" + (f", MCP {', '.join(mcp)}" if mcp else "")
               + f", version {t.get('version', '?')}; knowledge in {k}" + (" (your notes moved into it)" if first else ""))
@@ -522,12 +572,8 @@ def off():
     else:
         old = installed()
         remove_team_files(old)
-        if market_bin():
-            mine = jload(os.path.join(HOME, "paas-market.json")).get("installed", {})
-            for m in old.get("mcp", []):
-                if f"mcp/{m}" in mine:
-                    market("remove", f"mcp/{m}")
-        write(STATE, json.dumps({"skills": [], "agents": [], "mcp": []}) + "\n")
+        apply_mcp({"mcp": []}, old, team_dir(t))
+        write(STATE, json.dumps({"skills": [], "agents": [], "mcp": {}}) + "\n")
     os.remove(os.path.join(BRAIN, "team"))
     print(f"no team: {t}'s skills, agents and MCP servers left ~/.claude (your own and marketplace ones stay); persona.md, storage.md and the "
           f"knowledge files are plain copies in {BRAIN} now, yours to edit; the team clone stays in {team_dir(t)}.\n"
@@ -562,6 +608,132 @@ def export(team=None, dest=None):
                 z.write(os.path.join(tdir, f), os.path.join(f"paas-brain-{team}", f))
     print(f"{out}\nOn the laptop: unzip it, then  sh paas-brain-{team}/install-team.sh  (Claude Code installed; the docs library is not in the zip)")
     return out
+
+
+# ---- show / edit (the Brain tab's team editor) -----------------------------------------------------------------
+
+def candidates(kind):
+    """where a skill folder / agent file of a given name can be taken from when a team adds it: the person's own
+    ~/.claude copy (own or marketplace), the VM's marketplace, every team source and every local team"""
+    out = []
+    ext = "" if kind == "skills" else ".md"
+    roots = [(os.path.join(HOME, kind), "mine"), (os.path.join(os.environ.get("PAAS_MARKET", "/opt/paas/marketplace"), "items", kind), "marketplace")]
+    for base in (SOURCES, TEAMS):
+        for d in sorted(glob.glob(os.path.join(base, "*", "paas-brain-*", kind))):
+            roots.append((d, "team " + d.split(os.sep)[-3]))
+    seen = set()
+    for root, src in roots:
+        if not os.path.isdir(root):
+            continue
+        for n in sorted(os.listdir(root)):
+            name = n[:-3] if ext and n.endswith(ext) else n
+            path = os.path.join(root, n)
+            ok = os.path.isfile(os.path.join(path, "SKILL.md")) if kind == "skills" else (n.endswith(ext) and os.path.isfile(path))
+            if ok and NAME.match(name.lower()) and name not in seen:
+                seen.add(name)
+                out.append({"name": name, "source": src, "path": path})
+    return out
+
+
+def show(team):
+    tdir = team_dir(team) if plugin_dir(team_dir(team)) else os.path.join(SOURCES, team)
+    plug = plugin_dir(tdir)
+    if not plug:
+        die(f"no team {team}")
+    t = info(tdir)
+    servers = jload(os.path.join(tdir, "mcp.json"))
+    b = os.path.join(plug, "brain")
+    return {"name": team, "title": t.get("title", team), "description": t.get("description", ""), "version": t.get("version", ""),
+            "local": tdir == team_dir(team), "remote": remote_of(tdir) or t.get("remote") or None, "active": active() == team,
+            "persona": read(os.path.join(b, "persona.md")), "rules": read(os.path.join(b, "storage.md")),
+            "environment": read(os.path.join(b, "environment.md")),
+            "skills": t.get("skills", []), "agents": t.get("agents", []), "mcp": t.get("mcp", []),
+            "mcp_servers": {n: {"type": c.get("type", "http" if c.get("url") else "stdio"), "url": c.get("url", ""),
+                                "command": c.get("command", ""), "token_set": "Authorization" in c.get("headers", {}) and "TOKEN" not in json.dumps(c.get("headers")),
+                                "configured": mcp_ready(c)} for n, c in servers.items()},
+            "available_skills": [{"name": c["name"], "source": c["source"]} for c in candidates("skills")],
+            "available_agents": [{"name": c["name"], "source": c["source"]} for c in candidates("agents")]}
+
+
+def edit(team, change):
+    """apply a JSON change to the team's repository (local clone; added first when needed), commit, push, re-apply"""
+    add(team, None, quiet=True)
+    tdir = team_dir(team)
+    if remote_of(tdir):                                       # edit on top of what the team has now
+        git(tdir, "add", "-A", timeout=30)
+        git(tdir, "commit", "-q", "-m", f"team {team}: before an edit", timeout=30)
+        rc, out = git(tdir, "pull", "--rebase", "-q", timeout=60)
+        if rc and rc != 124:
+            git(tdir, "rebase", "--abort", timeout=10)
+            die("the team repository changed in a way that clashes with this clone; run paas-team sync, resolve the "
+                "conflict it names, then edit again")
+    plug = plugin_dir(tdir)
+    b = os.path.join(plug, "brain")
+    pj = os.path.join(plug, "team.json")
+    t = jload(pj)
+    rj = os.path.join(tdir, "team.json")
+    r = jload(rj)
+    for k in ("title", "description"):
+        if isinstance(change.get(k), str):
+            t[k] = r[k] = change[k].strip()
+    for k, f in (("persona", "persona.md"), ("rules", "storage.md"), ("environment", "environment.md")):
+        if isinstance(change.get(k), str) and change[k].strip():
+            write(os.path.join(b, f), change[k].rstrip() + "\n")
+    for kind in ("skills", "agents"):
+        if not isinstance(change.get(kind), list):
+            continue
+        want = [str(n) for n in dict.fromkeys(change[kind]) if NAME.match(str(n).lower())]
+        have = set(t.get(kind, []))
+        cand = {c["name"]: c["path"] for c in candidates(kind)}
+        ext = "" if kind == "skills" else ".md"
+        for n in have - set(want):
+            p = os.path.join(plug, kind, n + ext)
+            shutil.rmtree(p, ignore_errors=True) if kind == "skills" else (os.path.isfile(p) and os.remove(p))
+        for n in want:
+            dst = os.path.join(plug, kind, n + ext)
+            if os.path.exists(dst):
+                continue
+            src = cand.get(n)
+            if not src:
+                die(f"{kind[:-1]} {n!r} is nowhere to be found (your ~/.claude, the marketplace, another team)")
+            os.makedirs(os.path.dirname(dst), exist_ok=True)
+            shutil.copytree(src, dst, ignore=shutil.ignore_patterns(".user-skill", "__pycache__")) if kind == "skills" else shutil.copy(src, dst)
+        t[kind] = want
+    servers = jload(os.path.join(tdir, "mcp.json"))
+    for n in change.get("remove_mcp") or []:
+        servers.pop(str(n), None)
+    for n, c in (change.get("mcp_servers") or {}).items():
+        if not NAME.match(str(n).lower()) or not isinstance(c, dict):
+            continue
+        cur = dict(servers.get(n) or {})
+        if c.get("command"):
+            cur = {"type": "stdio", "command": str(c["command"]), "args": [str(a) for a in c.get("args") or []]}
+        elif c.get("url"):
+            cur = {"type": c.get("type") or "http", "url": str(c["url"]).strip(), **({"headers": cur["headers"]} if cur.get("headers") else {})}
+        if "token" in c:                                      # a string sets it, null / empty removes it, absent keeps it
+            tok = str(c["token"] or "").strip()
+            if tok:
+                cur["headers"] = {"Authorization": "Bearer " + tok}
+            else:
+                cur.pop("headers", None)
+        servers[n] = cur
+    t["mcp"] = ["docs-local"] + [n for n in servers if n != "docs-local"]
+    r["mcp"] = t["mcp"]
+    write(os.path.join(tdir, "mcp.json"), json.dumps(servers, indent=2, sort_keys=True) + "\n")
+    write(pj, json.dumps(t, indent=2, sort_keys=True) + "\n")
+    write(rj, json.dumps(r, indent=2, sort_keys=True) + "\n")
+    git(tdir, "add", "-A", timeout=30)
+    git(tdir, "commit", "-q", "-m", f"brain tab: team {team} edited", timeout=30)
+    pushed = ""
+    if remote_of(tdir):
+        rc, out = git(tdir, "push", "-q", timeout=60)
+        pushed = "pushed to the team repository" if rc == 0 else "not pushed (the next sync retries): " + (out.splitlines()[-1][:120] if out else "?")
+    else:
+        pushed = "no remote: the change stays on this machine"
+    if active() == team:
+        apply(team, say=False)
+    print(f"edited team {team}: {len(t.get('skills', []))} skills, {len(t.get('agents', []))} agents, MCP {', '.join(t['mcp'])}; {pushed}"
+          + ("; re-applied, a new Claude session uses it" if active() == team else ""))
 
 
 def status():
@@ -607,6 +779,20 @@ def main(a):
         off()
     elif cmd == "use" and len(a) >= 2:
         use(a[1], a[2] if len(a) > 2 else None)
+    elif cmd == "show" and len(a) >= 2:
+        d = show(a[1])
+        if "--json" in a:
+            print(json.dumps(d))
+        else:
+            print(f"{d['name']}: {d['title']} ({d['version']}); skills {len(d['skills'])}, agents {len(d['agents'])}, MCP {', '.join(d['mcp'])}")
+            for n, c in d["mcp_servers"].items():
+                print(f"  {n}: {c['url'] or c['command']} {'ready' if c['configured'] else 'HOST / TOKEN not filled in'}")
+    elif cmd == "edit" and len(a) >= 2:
+        try:
+            change = json.load(sys.stdin)
+        except ValueError:
+            die("edit: JSON expected on stdin")
+        edit(a[1], change)
     elif cmd == "bootstrap" and len(a) >= 3:
         bootstrap(a[1], a[2])
     elif cmd == "export":

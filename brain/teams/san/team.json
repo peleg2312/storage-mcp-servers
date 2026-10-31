@@ -7,5 +7,13 @@
   "environment": "brain/claude/brain/environment.md",
   "skills": "all",
   "agents": "all",
-  "mcp": ["docs-local", "powermax", "powerflex", "mds", "ucsc"]
+  "mcp": [
+    "docs-local",
+    "powermax",
+    "powerflex",
+    "ontap",
+    "harvest",
+    "mds",
+    "ucsc"
+  ]
 }

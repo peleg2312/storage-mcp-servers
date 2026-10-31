@@ -129,7 +129,10 @@ Try: `python3 ~/.claude/brain/library/search.py search "scsiblade.san.config.act
 6. MCP servers per team: root sets each server's address and shared token once in the Market tab; a switch adds the team's
    servers (`team.json` "mcp") for the person and drops the previous team's. A team skill edited in the Brain tab is pushed
    to the team repository and reaches every member at their next sync; `publish.py` then refuses to overwrite it until it is
-   ported into `brain/teams/<team>` (or run with `--force`). Reports never go to git; notes.md and environment.md stay personal.
+   ported into `brain/teams/<team>` (or run with `--force`). The whole team memory (notes.md, environment.md, notes/,
+   captures/, incidents/, tool-map.md) is shared; reports never go to git. The team editor in the Brain tab ("Edit team")
+   changes title, persona, rules, environment template, skills, agents and the MCP servers with their tokens (stored in the
+   team repository's mcp.json by your decision: read-only tokens, rotate when someone leaves).
 7. Pushing is automatic on every path (the notes hook after each saved file, the Brain tab after each save, every session
    start and Brain tab opening syncs); the shared GitLab repository is always current. Publish a new plugin version with
    `publish.py <team> --to <url>` after a `git pull` of this repository: members pick it up at their next sync.

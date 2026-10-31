@@ -69,7 +69,11 @@ for t in TEAMS:
     for p in (".git", ".claude-plugin/marketplace.json", "paas-brain-" + t, "knowledge/notes", "knowledge/captures",
               "knowledge/incidents", "knowledge/tool-map.md", "team.json", "README.md", ".gitignore"):
         assert os.path.exists(os.path.join(d, p)), (t, p)
-    assert "knowledge/notes.md" in open(os.path.join(d, ".gitignore")).read()
+    assert "knowledge/notes.md" not in open(os.path.join(d, ".gitignore")).read(), "notes.md and environment.md are team memory"
+    for f in ("knowledge/notes.md", "knowledge/environment.md", "mcp.json"):
+        assert os.path.exists(os.path.join(d, f)), (t, f)
+    servers = json.load(open(os.path.join(d, "mcp.json")))
+    assert "docs-local" not in servers and all("HOST" in c.get("url", "") for c in servers.values()), servers
 git = lambda d, *a: subprocess.run(["git", "-C", d, *a], capture_output=True, text=True).stdout
 n = git(os.path.join(work, "sources", "san"), "rev-list", "--count", "HEAD").strip()
 run([sys.executable, PUBLISH, "san", "--to", os.path.join(work, "sources", "san"), "--remote", "git@gitlab.example:san/brain.git"])
@@ -209,14 +213,47 @@ json.dump(d, open(st, "w"))
 d0 = json.load(open(os.path.join(home, ".claude", "paas-market.json"))); d0["installed"]["mcp/kuparashit"] = "1"
 json.dump(d0, open(os.path.join(home, ".claude", "paas-market.json"), "w"))
 o = team("use", "san")
-assert "MCP powermax, powerflex, mds, ucsc" in o, o
+assert "MCP powermax, powerflex, ontap, harvest, mds, ucsc" in o, o
 have = lambda: sorted(k for k in json.load(open(os.path.join(home, ".claude", "paas-market.json")))["installed"] if k.startswith("mcp/"))
-assert have() == ["mcp/kuparashit", "mcp/mds", "mcp/powerflex", "mcp/powermax", "mcp/ucsc"], have()
+assert have() == ["mcp/harvest", "mcp/kuparashit", "mcp/mds", "mcp/ontap", "mcp/powerflex", "mcp/powermax", "mcp/ucsc"], have()
 lst = json.loads(team("list", "--json"))
-assert next(x for x in lst["teams"] if x["name"] == "san")["mcp_added"] == ["docs-local", "mds", "powerflex", "powermax", "ucsc"]
+assert next(x for x in lst["teams"] if x["name"] == "san")["mcp_added"] == ["docs-local", "harvest", "mds", "ontap", "powerflex", "powermax", "ucsc"]
 team("use", "nas")
 assert have() == ["mcp/harvest", "mcp/kuparashit", "mcp/ontap"], have()
 print("team mcp ok")
+
+# 6b. the team editor: show, then edit (title, persona, a SAN skill added to nas, an agent dropped, an MCP server with its
+#     token into mcp.json); the change is committed and pushed; with the server filled in, a switch applies it through
+#     `claude mcp add-json` (a stand-in claude on PATH records the calls) instead of the marketplace
+d = json.loads(team("show", "nas", "--json"))
+assert d["skills"] and "share-access-check" in d["skills"] and d["mcp_servers"]["ontap"]["configured"] is False
+assert any(c["name"] == "zoning-audit" and c["source"].startswith("team") for c in d["available_skills"]), d["available_skills"][:3]
+fake_claude = os.path.join(home, "fakebin")
+os.makedirs(fake_claude, exist_ok=True)
+open(os.path.join(fake_claude, "claude"), "w").write("#!/bin/sh\necho \"$@\" >> \"$HOME/claude.log\"\n")
+os.chmod(os.path.join(fake_claude, "claude"), 0o755)
+env_c = dict(env, PATH=fake_claude + os.pathsep + env["PATH"])
+change = {"title": "NAS team", "persona": "## Who you work for\nA NAS person.\n",
+          "skills": d["skills"] + ["zoning-audit"], "agents": [a for a in d["agents"] if a != "ontap-analyst"],
+          "mcp_servers": {"ontap": {"url": "http://ontap.example:8000/mcp", "token": "s3cr3t-token-value"}, "harvest": {"url": "http://h.example:8000/mcp"}},
+          "remove_mcp": []}
+subprocess.run(["git", "-C", os.path.join(work, "sources", "nas"), "config", "receive.denyCurrentBranch", "updateInstead"], check=True)  # GitLab is bare; this stand-in is not
+r = subprocess.run([sys.executable, TOOL, "edit", "nas"], input=json.dumps(change), capture_output=True, text=True, env=env_c, timeout=120)
+assert r.returncode == 0 and "edited team nas" in r.stdout and "pushed to the team repository" in r.stdout, (r.stdout, r.stderr)
+nasdir = os.path.join(brain, "teams", "nas")
+assert "zoning-audit" in json.load(open(os.path.join(nasdir, "paas-brain-nas", "team.json")))["skills"]
+assert os.path.isfile(os.path.join(nasdir, "paas-brain-nas", "skills", "zoning-audit", "SKILL.md"))
+assert not os.path.exists(os.path.join(nasdir, "paas-brain-nas", "agents", "ontap-analyst.md"))
+servers = json.load(open(os.path.join(nasdir, "mcp.json")))
+assert servers["ontap"]["headers"]["Authorization"] == "Bearer s3cr3t-token-value" and "HOST" in servers["harvest"].get("url", "") or servers["harvest"]["url"].startswith("http://h.example"), servers
+assert "NAS person" in open(os.path.join(brain, "persona.md")).read() and "zoning-audit" in skills(), "active team re-applied"
+assert "brain tab: team nas edited" in git(os.path.join(work, "sources", "nas"), "log", "--format=%s")   # pushed to the remote
+log = open(os.path.join(home, "claude.log")).read()
+assert "mcp add-json -s user ontap" in log and "s3cr3t-token-value" in log and "mcp add-json -s user harvest" not in log, log
+assert json.load(open(os.path.join(brain, "teams", ".installed.json")))["mcp"] == {"ontap": "team", "harvest": "market"}
+sh = json.loads(team("show", "nas", "--json"))
+assert sh["title"] == "NAS team" and sh["mcp_servers"]["ontap"]["token_set"] and sh["mcp_servers"]["ontap"]["configured"]
+print("team editor ok")
 
 # 7. an edit of a team skill made in the team repository (the Brain tab writes it there) is kept from the next publish
 #    unless --force; a plain republish still adds nothing

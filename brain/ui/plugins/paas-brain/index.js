@@ -238,6 +238,8 @@ const CSS = `
 .paas .sticky{position:sticky;bottom:0;background:hsl(var(--background));padding:10px 0;margin-top:10px}
 .paas .bad{color:hsl(var(--destructive))}
 .paas .grow{flex:1 1 220px}
+.paas .ted td input:not([type=checkbox]),.paas .ted .t-filter{width:100%;min-width:110px;min-height:32px;padding:5px 10px;border:1px solid hsl(var(--input));border-radius:10px;background:hsl(var(--background));color:inherit;font:inherit}
+.paas .ted .t-filter{margin-bottom:6px}
 @media (max-width:640px){.paas{padding:16px}.paas .grid,.paas .two{grid-template-columns:1fr}.paas pre{max-height:none}}`;
 
 const TABS = [['docs', 'Docs library'], ['skills', 'Skills'], ['agents', 'Agents'], ['mcp', 'MCP & hooks'], ['memory', 'Memory']];
@@ -360,7 +362,8 @@ export function mount(container, api) {
       <details class="tadd" style="margin-top:12px"><summary>Add a team from a git url</summary>
         ${field('Name', '<input class="ta-name" aria-label="Team name" placeholder="san" autocomplete="off" spellcheck="false">', 'lower-case letters, digits, dashes')}
         ${field('Git url', '<input class="ta-url" aria-label="Git url" placeholder="https://gitlab.example.com/team/brain.git" autocomplete="off" spellcheck="false">')}
-        <div class="row"><button type="button" class="btn ta-go">Add</button></div></details>`}</div>`;
+        <div class="row"><button type="button" class="btn ta-go">Add</button></div></details>
+      <details class="ted" style="margin-top:12px"><summary>Edit team</summary><div class="ted-body"></div></details>`}</div>`;
     if (t.error) return;
     const st = statusLine(box.querySelector('.stbox'));
     const lead = teamMsg ? `${teamMsg} ` : '';
@@ -412,6 +415,7 @@ export function mount(container, api) {
       teamMsg = `Added ${name}. Pick it in the list and press Switch.`;
       renderTeam(box);
     });
+    teamEditor(box, t.active, st);
     if (t.active && !teamSynced) {                       // quiet background sync: no spinner, no dialog
       teamSynced = true;
       api.rpc('POST', 'team-sync').then((r) => {
@@ -420,6 +424,109 @@ export function mount(container, api) {
         st.say(`${lead}Sync: ${line}`);
       }).catch((x) => { if (box.isConnected) st.say(`${lead}Sync: ${x.message || x}`); });
     }
+  }
+
+  // Edit team (inside the Team card): load one team (GET team-show), edit its text, skills, agents and MCP servers,
+  // send only what changed (POST team-edit). Tokens travel in the request body only and are never shown again.
+  function teamEditor(box, active, st) {
+    const det = box.querySelector('.ted'); const body = det.querySelector('.ted-body'); const sel = box.querySelector('.tsel');
+    let seq = 0;
+    async function load() {
+      const name = sel.value; const my = ++seq;
+      if (name === 'none') { body.innerHTML = '<div class="sub">Pick a team above to edit it.</div>'; return; }
+      body.innerHTML = skeleton('list');
+      const r = await api.rpc('GET', `team-show?name=${encodeURIComponent(name)}`).catch((e) => ({ ok: false, out: e.message || String(e) }));
+      if (my !== seq || !box.isConnected) return;
+      if (!r.ok) { body.innerHTML = `<div class="sub bad" role="alert">${esc(r.out || 'Could not load the team')}</div>`; return; }
+      form(name, r);
+    }
+    det.addEventListener('toggle', () => { if (det.open) load(); });
+    sel.addEventListener('change', () => { if (det.open) load(); });
+
+    function form(name, d) {
+      const text = (k, label, hint, rows) => field(label, `<textarea class="mono" data-k="${k}" rows="${rows}" spellcheck="false" aria-label="${esc(label)}">${esc(d[k] || '')}</textarea>`, hint);
+      const pick = (kind, have, avail) => {
+        const src = new Map((avail || []).map((x) => [x.name, x.source]));
+        const names = [...new Set([...src.keys(), ...have])].sort((a, b) => a.localeCompare(b));
+        return field(kind === 'skills' ? 'Skills' : 'Agents', `<input type="text" class="t-filter" data-for="${kind}" placeholder="Filter" aria-label="Filter ${kind}" autocomplete="off" spellcheck="false">
+          <div class="t-list" data-list="${kind}" style="max-height:220px;overflow:auto;border:1px solid hsl(var(--border));border-radius:10px;padding:6px 10px">${names.length ? names.map((n) => `<label class="row" data-n="${esc(n)}" style="padding:3px 0"><input type="checkbox" value="${esc(n)}" ${have.includes(n) ? 'checked' : ''}> <span>${esc(n)}</span>${src.has(n) ? ` <span class="tag">${esc(src.get(n))}</span>` : ' <span class="sub">(in the team only)</span>'}</label>`).join('') : '<div class="sub">None available.</div>'}</div>`);
+      };
+      const servers = Object.entries(d.mcp_servers || {});
+      const mrow = ([n, s]) => {
+        const web = s.type === 'http' || s.type === 'sse';
+        return `<tr data-m="${esc(n)}"><td><b>${esc(n)}</b></td><td>${esc(s.type || '')}</td>
+          <td><input type="text" class="m-url" aria-label="URL of ${esc(n)}" value="${esc(web ? s.url || '' : s.command || '')}" ${web ? '' : 'disabled'} autocomplete="off" spellcheck="false"></td>
+          <td>${web ? `<input type="password" class="m-tok" aria-label="Token of ${esc(n)}" placeholder="${s.token_set ? 'token kept' : 'no token'}" autocomplete="new-password">${s.token_set ? ' <label class="sub"><input type="checkbox" class="m-clr"> Remove token</label>' : ''}` : ''}</td>
+          <td>${s.configured ? 'yes' : 'no'}</td><td><button type="button" class="btn danger sm m-rm" aria-pressed="false">Remove</button></td></tr>`;
+      };
+      body.innerHTML = `${field('Title', `<input type="text" data-k="title" value="${esc(d.title || '')}" aria-label="Title" autocomplete="off">`)}
+        ${field('Description', `<input type="text" data-k="description" value="${esc(d.description || '')}" aria-label="Description" autocomplete="off">`)}
+        ${text('persona', 'Persona', 'Who you work for', 8)}${text('rules', 'Rules', 'the storage rules file', 14)}${text('environment', 'Environment template', 'the template a new member starts from', 10)}
+        ${pick('skills', d.skills || [], d.available_skills)}${pick('agents', d.agents || [], d.available_agents)}
+        <div class="field"><label>MCP servers</label><div class="table-wrap"><table><tr><th>Name</th><th>Type</th><th>URL</th><th>Token</th><th>Configured</th><th><span class="sr">Actions</span></th></tr>
+          ${servers.map(mrow).join('')}
+          <tr class="m-new"><td><input type="text" class="n-name" aria-label="New server name" placeholder="Add server: name" autocomplete="off" spellcheck="false"></td><td>http</td>
+          <td><input type="text" class="n-url" aria-label="New server URL" placeholder="https://..." autocomplete="off" spellcheck="false"></td>
+          <td><input type="password" class="n-tok" aria-label="New server token" placeholder="no token" autocomplete="new-password"></td><td></td><td></td></tr></table></div>
+          <span class="hint">Tokens are stored in the team repository and visible to everyone with access to it; use read-only tokens.</span></div>
+        <div class="row"><button type="button" class="btn t-save">Save</button><button type="button" class="btn ghost t-cancel">Cancel</button></div>`;
+
+      body.querySelectorAll('.t-filter').forEach((f) => f.addEventListener('input', () => {
+        const q = f.value.trim().toLowerCase();
+        body.querySelectorAll(`[data-list="${f.dataset.for}"] label`).forEach((l) => { l.hidden = !!q && !l.dataset.n.toLowerCase().includes(q); });
+      }));
+      body.querySelectorAll('.m-rm').forEach((b) => b.addEventListener('click', () => {
+        const on = b.getAttribute('aria-pressed') !== 'true';
+        b.setAttribute('aria-pressed', String(on)); b.textContent = on ? 'Undo remove' : 'Remove';
+        b.closest('tr').style.textDecoration = on ? 'line-through' : '';
+      }));
+      body.querySelector('.t-cancel').addEventListener('click', () => { det.open = false; det.querySelector('summary').focus(); });
+
+      const checked = (kind) => [...body.querySelectorAll(`[data-list="${kind}"] input:checked`)].map((i) => i.value);
+      const same = (a, b) => a.length === b.length && [...a].sort().every((x, i) => x === [...b].sort()[i]);
+      const save = body.querySelector('.t-save');
+      save.addEventListener('click', async () => {
+        const change = {};
+        for (const k of ['title', 'description', 'persona', 'rules', 'environment']) {
+          const v = body.querySelector(`[data-k="${k}"]`).value;
+          if (v !== (d[k] || '')) change[k] = v;
+        }
+        for (const k of ['skills', 'agents']) { const c = checked(k); if (!same(c, d[k] || [])) change[k] = c; }
+        const mcp = {}; const rm = [];
+        for (const tr of body.querySelectorAll('tr[data-m]')) {
+          const n = tr.dataset.m; const s = d.mcp_servers[n];
+          if (tr.querySelector('.m-rm').getAttribute('aria-pressed') === 'true') { rm.push(n); continue; }
+          const tok = tr.querySelector('.m-tok')?.value || ''; const clr = !!tr.querySelector('.m-clr')?.checked;
+          const url = tr.querySelector('.m-url').value.trim();
+          if (!tr.querySelector('.m-tok')) continue;
+          if (url === (s.url || '') && !tok && !clr) continue;
+          if (!url) { st.error(`Not saved: ${n} needs a URL.`); return; }
+          mcp[n] = { url, type: s.type === 'sse' ? 'sse' : 'http' };
+          if (tok) mcp[n].token = tok; else if (clr) mcp[n].token = '';
+        }
+        const nn = body.querySelector('.n-name').value.trim(); const nu = body.querySelector('.n-url').value.trim(); const nt = body.querySelector('.n-tok').value;
+        if (nn || nu || nt) {
+          if (!/^[a-z0-9][\w.-]{0,40}$/i.test(nn) || !/^https?:\/\/\S+$/.test(nu)) { st.error('Not saved: a new server needs a name and an http(s) URL.'); return; }
+          if (d.mcp_servers[nn] || mcp[nn]) { st.error(`Not saved: ${nn} already exists.`); return; }
+          mcp[nn] = { url: nu, type: 'http' };
+          if (nt) mcp[nn].token = nt;
+        }
+        if (Object.keys(mcp).length) change.mcp_servers = mcp;
+        if (rm.length) change.remove_mcp = rm;
+        if (!Object.keys(change).length) { st.say('Nothing changed.'); return; }
+        if (name === active || change.skills || change.agents || change.mcp_servers || change.remove_mcp) {
+          const c = await confirmInline(save, { title: 'Save changes to this team?', text: 'This changes the team for everyone who uses it; teammates get it at their next sync.', confirmLabel: 'Save' });
+          if (!c.ok) return;
+        }
+        const done = busy(save, 'Saving…'); st.say('');
+        const r = await api.rpc('POST', 'team-edit', { name, change }).catch((e) => ({ ok: false, out: e.message || String(e) }));
+        done();
+        if (!r.ok) { st.error(`Not saved: ${r.out || 'unknown error'}`); return; }
+        teamMsg = String(r.out || '').split('\n').filter(Boolean).pop() || 'Saved.';
+        renderTeam(box);
+      });
+    }
+    if (det.open) load();
   }
 
   // Memory: notes.md / environment.md / tool-map.md are yours (kept by every install); CLAUDE.md is your own copy too

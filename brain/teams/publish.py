@@ -12,7 +12,9 @@ knowledge folder, in one git repository people clone (paas-team add) and Claude 
            --force         replace a plugin that members changed from the Brain tab (their edits are dropped)
 Layout of a team repository:
   .claude-plugin/marketplace.json   paas-brain-<team>/ (the plugin, replaced on every publish)
-  knowledge/{notes,captures,incidents}/ + tool-map.md   (what the team learns; notes.md and environment.md stay personal)
+  knowledge/{notes,captures,incidents}/ + notes.md, environment.md, tool-map.md   (the team's memory, shared by every member)
+  mcp.json   the team's live MCP servers with address and token (the owner's decision: readable by everyone in the
+             project; use read-only tokens and rotate them when someone leaves); HOST / TOKEN placeholders until filled
   team.json (name, title, remote)   README.md   .gitignore
   install-team.sh + bin/paas-team   a laptop installs the team from the clone alone (no storage-mcp-servers checkout):
                                     git clone <url> && sh <clone>/install-team.sh
@@ -29,7 +31,8 @@ BRAIN = os.path.dirname(HERE)
 sys.path.insert(0, os.path.join(BRAIN, "plugin"))
 import build  # noqa: E402  (brain/plugin/build.py)
 
-IGNORE = "knowledge/notes.md\nknowledge/environment.md\n*.bak\n.DS_Store\n._*\n__pycache__/\n"
+IGNORE = "*.bak\n.DS_Store\n._*\n__pycache__/\n"
+CATALOG = os.path.join(BRAIN, "marketplace", "mcp.json")        # the servers' shapes (HOST / TOKEN placeholders)
 IDENT = ["-c", "user.name=brain", "-c", "user.email=brain@localhost"]
 
 
@@ -120,8 +123,16 @@ def publish(team, dest, remote=None, hooks=True, commit=True, force=False):
         keep = os.path.join(k, d, ".keep")
         if not os.listdir(os.path.join(k, d)):
             open(keep, "w").close()
-    if not os.path.exists(os.path.join(k, "tool-map.md")):
-        shutil.copy(os.path.join(plug, "brain", "tool-map.md"), os.path.join(k, "tool-map.md"))
+    for f in ("tool-map.md", "notes.md", "environment.md"):           # the team's memory starts from the templates, once
+        if not os.path.exists(os.path.join(k, f)):
+            shutil.copy(os.path.join(plug, "brain", f), os.path.join(k, f))
+    mcp_path = os.path.join(dest, "mcp.json")                          # made once from the catalog; members fill and edit it
+    if not os.path.exists(mcp_path):
+        cat = json.load(open(CATALOG)) if os.path.exists(CATALOG) else {}
+        servers = {n: cat[n]["server"] for n in t.get("mcp", []) if n in cat and n != "docs-local"}
+        with open(mcp_path, "w") as f:
+            json.dump(servers, f, indent=2, sort_keys=True)
+            f.write("\n")
     meta_path = os.path.join(dest, "team.json")
     meta = {}
     if os.path.exists(meta_path):
