@@ -11,6 +11,16 @@
       ]
     }
   },
+  "docs-search": {
+    "description": "Documentation library search served by the VM over HTTPS (the same tools as docs-local) for laptops and other VMs; the team's knowledge pages are searched too (url ?team=<team>)",
+    "server": {
+      "type": "http",
+      "url": "https://HOST:8001/mcp?team=TEAM",
+      "headers": {
+        "Authorization": "Bearer TOKEN"
+      }
+    }
+  },
   "databases": {
     "description": "Read-only PostgreSQL / MongoDB for your own apps (connections in ~/.claude/brain/databases.json)",
     "server": {

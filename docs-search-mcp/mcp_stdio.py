@@ -10,6 +10,13 @@ for a VM that runs Claude Code but has no pip, no containers and no internet.
                       `add-docs --brain`), searched together with the library: --brain-db, else $BRAIN_DB, else
                       ~/.claude/brain/brain.db; opened when the file exists, so it may appear later. Its chunk ids are
                       offset by ID_BASE as server.py does for several indexes.
+    --http [HOST:]PORT  serve the same tools to other machines over MCP's Streamable HTTP (POST /mcp, JSON answers,
+                      GET /health), still standard library only: the VM's docs-search for laptops and other VMs.
+      --token-file F    bearer token every /mcp request must carry (one line; 401 otherwise)
+      --tls-cert C --tls-key K   HTTPS with the gate's certificate
+      --teams-dir D     /mcp?team=<name> searches that team's knowledge too: D/<name>/team.json names the team's git
+                        remote, the server keeps its own clone and index under --state-dir, pulled and rebuilt every
+                        --refresh-minutes (default 10); a team without a remote is indexed from D/<name>/knowledge
 
 Implements MCP over stdio (JSON-RPC 2.0, one message per line): initialize, ping, tools/list,
 tools/call, and empty prompts/resources lists. Read-only.
@@ -19,6 +26,7 @@ import argparse
 import json
 import os
 import sys
+import time
 import traceback
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -75,8 +83,9 @@ def default_brain_db():
 
 
 class Server:
-    def __init__(self, db, brain_db=None):
-        self.con = lib.connect(db)
+    def __init__(self, db, brain_db=None, shared=False):
+        self.shared = shared                                  # HTTP mode: requests arrive on several threads (one at a time, locked)
+        self.con = lib.connect(db, shared)
         self.brain_path = brain_db or default_brain_db()
         self.brain_con = None
         self.brain_mtime = None
@@ -90,7 +99,7 @@ class Server:
             return None
         if self.brain_con is None or st.st_mtime != self.brain_mtime:
             try:
-                self.brain_con = lib.connect(self.brain_path)
+                self.brain_con = lib.connect(self.brain_path, self.shared)
                 self.brain_mtime = st.st_mtime
             except Exception:
                 self.brain_con = None
@@ -190,11 +199,219 @@ class Server:
         raise LookupError(method)
 
 
+# ---- HTTP mode ---------------------------------------------------------------------------------------------------
+
+def _docs_index():
+    """docs_index.py: beside this file (repository), in the library folder, or in the brain's tools"""
+    import importlib.util
+    here = os.path.dirname(os.path.abspath(__file__))
+    home = os.environ.get("CLAUDE_HOME") or os.path.expanduser("~/.claude")
+    for p in (os.path.join(here, "docs_index.py"), os.path.join(home, "tools", "docs_index.py"), "/opt/paas/tools/docs_index.py"):
+        if os.path.isfile(p):
+            spec = importlib.util.spec_from_file_location("docs_index", p)
+            mod = importlib.util.module_from_spec(spec)
+            spec.loader.exec_module(mod)
+            return mod
+    return None
+
+
+class Teams:
+    """Team knowledge for the HTTP server: one clone and one small index per team, refreshed from the team repository."""
+
+    def __init__(self, teams_dir, state_dir, log):
+        self.dir, self.state, self.log = teams_dir, state_dir, log
+        self.servers = {}
+        self.lock = __import__("threading").Lock()
+
+    def names(self):
+        try:
+            return sorted(d for d in os.listdir(self.dir) if os.path.isfile(os.path.join(self.dir, d, "team.json")))
+        except OSError:
+            return []
+
+    def db(self, team):
+        return os.path.join(self.state, team + ".db")
+
+    def refresh(self):
+        """pull every team's repository (its own clone under the state dir) and rebuild its index when the knowledge changed"""
+        import glob
+        import shutil
+        import subprocess
+        di = _docs_index()
+        for team in self.names():
+            try:
+                meta = json.load(open(os.path.join(self.dir, team, "team.json")))
+                remote = meta.get("remote")
+                clone = os.path.join(self.state, "teams", team)
+                env = dict(os.environ, GIT_TERMINAL_PROMPT="0")
+                if remote:
+                    if os.path.isdir(os.path.join(clone, ".git")):
+                        subprocess.run(["git", "-C", clone, "pull", "-q", "--ff-only"], env=env, timeout=120, capture_output=True)
+                    else:
+                        os.makedirs(os.path.dirname(clone), exist_ok=True)
+                        r = subprocess.run(["git", "clone", "-q", remote, clone], env=env, timeout=300, capture_output=True, text=True)
+                        if r.returncode:
+                            self.log(f"team {team}: clone of {remote} failed: {r.stderr.strip()[-160:]}")
+                            clone = os.path.join(self.dir, team)
+                else:
+                    clone = os.path.join(self.dir, team)       # no remote: the VM's copy is all there is
+                k = os.path.join(clone, "knowledge")
+                files = sorted(glob.glob(os.path.join(k, "notes", "*.md"))) + sorted(glob.glob(os.path.join(k, "incidents", "*", "*.md")))
+                state = "%d:%d" % (len(files), int(max((os.path.getmtime(f) for f in files), default=0)))
+                stamp = self.db(team) + ".stamp"
+                try:
+                    if open(stamp).read().strip() == state and os.path.exists(self.db(team)):
+                        continue
+                except OSError:
+                    pass
+                if di is None:
+                    self.log("docs_index.py not found: team knowledge is not indexed")
+                    return
+                staging = os.path.join(self.state, "staging-" + team)
+                shutil.rmtree(staging, ignore_errors=True)
+                os.makedirs(os.path.join(staging, "local", "brain-notes"))
+                os.makedirs(os.path.join(staging, "local", "brain-incidents"))
+                for f in files:
+                    if os.sep + "notes" + os.sep in f:
+                        shutil.copy2(f, os.path.join(staging, "local", "brain-notes", os.path.basename(f)))
+                    else:
+                        shutil.copy2(f, os.path.join(staging, "local", "brain-incidents", os.path.basename(os.path.dirname(f)) + "-" + os.path.basename(f)))
+                os.makedirs(self.state, exist_ok=True)
+                di.build(staging, self.db(team), log=lambda *_: None, prefix="brain/")
+                shutil.rmtree(staging, ignore_errors=True)
+                with open(stamp, "w") as f:
+                    f.write(state + "\n")
+                self.log(f"team {team}: knowledge index rebuilt ({len(files)} pages)")
+            except Exception as e:
+                self.log(f"team {team}: refresh failed: {e}")
+
+    def server(self, team, db):
+        with self.lock:
+            if team not in self.servers:
+                self.servers[team] = Server(db, self.db(team) if team else os.path.join(self.state, "none.db"), shared=True)
+            return self.servers[team]
+
+
+def serve_http(db, bind, token_file=None, tls_cert=None, tls_key=None, teams_dir=None, state_dir=None, refresh_minutes=10):
+    import hmac
+    import ssl
+    import threading
+    from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+    from urllib.parse import parse_qs, urlparse
+
+    log = lambda m: print(time.strftime("%Y-%m-%dT%H:%M:%S ") + m, flush=True)
+    token = open(token_file).read().strip() if token_file else ""
+    state_dir = state_dir or os.path.join(os.path.expanduser("~"), ".cache", "paas-docs")
+    teams = Teams(teams_dir, state_dir, log) if teams_dir else None
+    lock = threading.Lock()                         # sqlite connections are used from one thread at a time
+    main_srv = Server(db, os.path.join(state_dir, "none.db"), shared=True)   # no personal index in HTTP mode
+
+    def pick(team):
+        if team and teams and team in teams.names():
+            return teams.server(team, db)
+        return main_srv
+
+    class H(BaseHTTPRequestHandler):
+        server_version = "docs-search/1.2-http"
+
+        def log_message(self, fmt, *a):            # one quiet line per request, never the body
+            log(f"{self.client_address[0]} {self.command} {self.path.split('?')[0]} {a[1] if len(a) > 1 else ''}")
+
+        def send(self, code, body, ctype="application/json"):
+            data = body if isinstance(body, bytes) else json.dumps(body).encode()
+            self.send_response(code)
+            self.send_header("Content-Type", ctype)
+            self.send_header("Content-Length", str(len(data)))
+            self.send_header("Cache-Control", "no-store")
+            self.end_headers()
+            self.wfile.write(data)
+
+        def authorized(self):
+            if not token:
+                return True
+            got = self.headers.get("Authorization", "")
+            return got.startswith("Bearer ") and hmac.compare_digest(got[7:].strip(), token)
+
+        def do_GET(self):
+            path = urlparse(self.path).path
+            if path == "/health":
+                return self.send(200, {"ok": True, "teams": teams.names() if teams else []})
+            if path == "/mcp":
+                if not self.authorized():
+                    return self.send(401, {"error": "bearer token required"})
+                return self.send(405, {"error": "this server answers POST /mcp with JSON (no event stream)"})
+            self.send(404, {"error": "not found"})
+
+        def do_DELETE(self):
+            self.send(200, {})
+
+        def do_POST(self):
+            u = urlparse(self.path)
+            if u.path != "/mcp":
+                return self.send(404, {"error": "not found"})
+            if not self.authorized():
+                return self.send(401, {"error": "bearer token required"})
+            n = int(self.headers.get("Content-Length") or 0)
+            if n > 1_000_000:
+                return self.send(413, {"error": "too large"})
+            try:
+                msg = json.loads(self.rfile.read(n) or b"null")
+            except ValueError:
+                return self.send(400, {"jsonrpc": "2.0", "id": None, "error": {"code": -32700, "message": "parse error"}})
+            team = (parse_qs(u.query).get("team") or [""])[0]
+            srv = pick(team)
+            msgs = msg if isinstance(msg, list) else [msg]
+            answers = []
+            for m in msgs:
+                if not isinstance(m, dict):
+                    continue
+                mid = m.get("id")
+                try:
+                    with lock:
+                        result = srv.handle(m)
+                    if mid is None:
+                        continue
+                    answers.append({"jsonrpc": "2.0", "id": mid, "result": result})
+                except LookupError:
+                    answers.append({"jsonrpc": "2.0", "id": mid, "error": {"code": -32601, "message": f"method not found: {m.get('method')}"}})
+                except Exception as e:
+                    answers.append({"jsonrpc": "2.0", "id": mid, "error": {"code": -32603, "message": f"{e.__class__.__name__}: {e}"}})
+            if not answers:
+                return self.send(202, b"")
+            self.send(200, answers if isinstance(msg, list) else answers[0])
+
+    if teams:
+        def loop():
+            while True:
+                teams.refresh()
+                time.sleep(max(1, refresh_minutes) * 60)
+        threading.Thread(target=loop, daemon=True).start()
+    host, _, port = bind.rpartition(":")
+    httpd = ThreadingHTTPServer((host or "0.0.0.0", int(port)), H)
+    if tls_cert:
+        ctx = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
+        ctx.load_cert_chain(tls_cert, tls_key)
+        httpd.socket = ctx.wrap_socket(httpd.socket, server_side=True)
+    log(f"docs-search listening on {'https' if tls_cert else 'http'}://{host or '0.0.0.0'}:{port}/mcp"
+        + (f" (token)" if token else " (no token)") + (f", teams from {teams_dir}" if teams_dir else ""))
+    httpd.serve_forever()
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--db")
     ap.add_argument("--brain-db")
+    ap.add_argument("--http", metavar="[HOST:]PORT")
+    ap.add_argument("--token-file")
+    ap.add_argument("--tls-cert")
+    ap.add_argument("--tls-key")
+    ap.add_argument("--teams-dir")
+    ap.add_argument("--state-dir")
+    ap.add_argument("--refresh-minutes", type=int, default=10)
     a = ap.parse_args()
+    if a.http:
+        return serve_http(lib.find_db(a.db), a.http if ":" in a.http else "0.0.0.0:" + a.http, a.token_file, a.tls_cert, a.tls_key,
+                          a.teams_dir, a.state_dir, a.refresh_minutes)
     srv = Server(lib.find_db(a.db), a.brain_db)
     out = sys.stdout
     for line in sys.stdin:

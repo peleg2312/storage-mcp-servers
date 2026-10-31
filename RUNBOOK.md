@@ -108,10 +108,29 @@ Try: `python3 ~/.claude/brain/library/search.py search "scsiblade.san.config.act
 There is one documentation library for everyone; a team changes which rules and skills point into it, not the library.
 On the VM each Claude session searches it with `docs-local` (a stdio process over the shared read-only `docs.db`; the OS
 page cache is shared, so ten people cost one copy), plus the person's own `brain.db` with the active team's notes pages and
-incidents. The HTTP server `docs-search` on OpenShift (`docs-search-mcp/bundle/build-offline.sh --from-library`,
-`openshift-offline.yaml`) serves the same tools to laptops without the library and to other VMs; give it a bearer token
-and a TLS edge route, put it into each team's `mcp.json` through the team editor, and keep `docs-local` on the VM (it alone
-sees the team knowledge index). Both may be connected at once: the brain uses whichever answers.
+incidents, rebuilt in the background when they change.
+
+**The VM serves the same search to other machines over HTTPS** (`install-shared.sh` sets it up): the service `paas-docs`
+runs the same dependency-free server in HTTP mode on port 8001 with the gate's certificate and a bearer token
+(`/etc/paas/docs-token`; port and refresh interval in `/etc/paas/docs.env`). `https://<vm>:8001/mcp` is the library;
+`https://<vm>:8001/mcp?team=nas` adds that team's knowledge: the service keeps its own clone of every team repository
+under `/var/lib/paas-docs` (from the remote recorded in `/opt/paas/teams/<team>/team.json`), pulls it and rebuilds the
+team's index every 10 minutes. Each team's `mcp.json` already carries `docs-search` with its `?team=` url: fill HOST and the
+token in the team editor and every laptop member gets it at the next switch or sync; a machine that has the library
+(the VM) skips it, since `docs-local` covers it there. Health: `curl -k https://<vm>:8001/health`. The OpenShift
+deployment of `docs-search` (`docs-search-mcp/bundle/build-offline.sh --from-library`, `openshift-offline.yaml`) remains an
+option for a cluster-hosted copy; it serves the library only.
+
+**Where the team knowledge index lives, per kind of user**
+
+| Who | Knowledge clone | Index | Searched through | Fresh when |
+|---|---|---|---|---|
+| VM user (web UI or shell) | `~/.claude/brain/teams/<team>` (pulled at every session start and Brain tab opening) | `~/.claude/brain/brain.db`, rebuilt in the background when pages changed | `docs-local` | next session start after a teammate pushed |
+| Plugin user on a laptop or another VM | `~/.claude/brain/teams/<team>` (same clone, same pulls) | none on the machine (no library there) | `docs-search` on the VM, `?team=<team>` | the VM's service pulled, at most 10 minutes after the push |
+| The VM's `paas-docs` service | `/var/lib/paas-docs/teams/<team>` | `/var/lib/paas-docs/<team>.db` | serves the row above | every 10 minutes |
+
+All three read the same git repository, so what one person's Claude wrote down is what every other member searches,
+whichever machine they sit at. A laptop with the library installed (`install-laptop.sh`) behaves like a VM user.
 
 ## Teams: one brain per team, one account per person
 

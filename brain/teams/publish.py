@@ -150,7 +150,7 @@ def publish(team, dest, remote=None, hooks=True, commit=True, force=False):
     mcp_path = os.path.join(dest, "mcp.json")                          # made once from the catalog; members fill and edit it
     if not os.path.exists(mcp_path):
         cat = json.load(open(CATALOG)) if os.path.exists(CATALOG) else {}
-        servers = {n: cat[n]["server"] for n in t.get("mcp", []) if n in cat and n != "docs-local"}
+        servers = {n: json.loads(json.dumps(cat[n]["server"]).replace("TEAM", team)) for n in t.get("mcp", []) if n in cat and n != "docs-local"}
         with open(mcp_path, "w") as f:
             json.dump(servers, f, indent=2, sort_keys=True)
             f.write("\n")

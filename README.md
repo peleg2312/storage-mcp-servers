@@ -63,7 +63,9 @@ persona, the storage rules and the core rules (one import line in your `~/.claud
 team's skills (`/paas-brain-nas:<skill>`), agents, the seven hooks (read-only guard, docs hints and leads, notes scan,
 lint, capture nudge, session start), the coding rules as a skill, and the team's MCP servers from its mcp.json. Updates
 arrive with `claude plugin update paas-brain-nas@paas-brain-nas` or auto-update. Not in the plugin: the documentation
-library (`sh install-laptop.sh --team nas` from this repository adds it and docs-local), the web UI, the dev tools.
+library (`sh install-laptop.sh --team nas` from this repository adds it and docs-local), the web UI, the dev tools. The library
+and the team's knowledge are still searchable from the VM's `docs-search` service over HTTPS (`?team=nas`), which the team's
+`mcp.json` points at once filled in (RUNBOOK, "Docs search").
 No GitLab access: `paas-team export nas` on the VM gives a zip; unzip and run `install-team.sh` inside it.
 
 ## Get the images

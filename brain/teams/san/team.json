@@ -9,6 +9,7 @@
   "agents": "all",
   "mcp": [
     "docs-local",
+    "docs-search",
     "powermax",
     "powerflex",
     "ontap",

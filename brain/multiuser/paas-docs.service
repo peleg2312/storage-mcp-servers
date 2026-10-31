@@ -1,0 +1,27 @@
+[Unit]
+Description=Documentation search for other machines (docs-search over HTTPS, token; team knowledge indexes refreshed from the team repositories)
+After=network-online.target
+
+[Service]
+# the same stdlib server Claude Code runs over stdio as docs-local, in HTTP mode: /mcp (bearer token), /mcp?team=<team> adds
+# that team's knowledge index, /health. TLS: the gate's certificate. Settings: /etc/paas/docs.env (PAAS_DOCS_PORT, PAAS_DOCS_REFRESH)
+EnvironmentFile=-/etc/paas/docs.env
+ExecStart=/usr/bin/python3 /opt/paas/library/mcp_stdio.py --db /opt/paas/library/docs.db --http 0.0.0.0:${PAAS_DOCS_PORT} \
+  --token-file /etc/paas/docs-token --tls-cert /etc/paas/market/paas-ui.crt --tls-key /etc/paas/market/paas-ui.key \
+  --teams-dir /opt/paas/teams --state-dir /var/lib/paas-docs --refresh-minutes ${PAAS_DOCS_REFRESH}
+User=paas-market
+Group=paas-market
+StateDirectory=paas-docs
+ProtectSystem=strict
+ProtectHome=yes
+PrivateTmp=yes
+NoNewPrivileges=yes
+PrivateDevices=yes
+CapabilityBoundingSet=
+RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX
+MemoryMax=768M
+TasksMax=64
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target

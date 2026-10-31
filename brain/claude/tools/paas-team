@@ -362,7 +362,10 @@ def apply_mcp(t, old, tdir):
         elif via == "market" and market_bin() and f"mcp/{m}" in mine:
             market("remove", f"mcp/{m}")
     added = {}
+    have_library = os.path.exists(os.path.join(BRAIN, "library", "docs.db"))
     for m in want:
+        if m == "docs-search" and have_library:
+            continue                                              # docs-local covers it here (and sees the person's knowledge index)
         if f"mcp/{m}" in mine and prev.get(m) != "market":
             continue                                              # the person added it themselves before any team: theirs
         cfg = servers.get(m) or {}

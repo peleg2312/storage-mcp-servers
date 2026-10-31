@@ -76,6 +76,7 @@ for t in TEAMS:
         assert os.path.exists(os.path.join(d, f)), (t, f)
     servers = json.load(open(os.path.join(d, "mcp.json")))
     assert "docs-local" not in servers and all("HOST" in c.get("url", "") for c in servers.values()), servers
+    assert servers["docs-search"]["url"].endswith(f"/mcp?team={t}"), servers["docs-search"]      # the team's own knowledge over HTTP
 git = lambda d, *a: subprocess.run(["git", "-C", d, *a], capture_output=True, text=True).stdout
 n = git(os.path.join(work, "sources", "san"), "rev-list", "--count", "HEAD").strip()
 run([sys.executable, PUBLISH, "san", "--to", os.path.join(work, "sources", "san"), "--remote", "git@gitlab.example:san/brain.git"])
@@ -247,8 +248,9 @@ json.dump(d, open(st, "w"))
 """)
 d0 = json.load(open(os.path.join(home, ".claude", "paas-market.json"))); d0["installed"]["mcp/kuparashit"] = "1"
 json.dump(d0, open(os.path.join(home, ".claude", "paas-market.json"), "w"))
+os.makedirs(os.path.join(brain, "library"), exist_ok=True); open(os.path.join(brain, "library", "docs.db"), "w").close()   # this machine has the library
 o = team("use", "san")
-assert "MCP powermax, powerflex, ontap, harvest, mds, ucsc" in o, o
+assert "MCP powermax, powerflex, ontap, harvest, mds, ucsc" in o and "docs-search" not in o, o          # docs-local covers docs-search here
 have = lambda: sorted(k for k in json.load(open(os.path.join(home, ".claude", "paas-market.json")))["installed"] if k.startswith("mcp/"))
 assert have() == ["mcp/harvest", "mcp/kuparashit", "mcp/mds", "mcp/ontap", "mcp/powerflex", "mcp/powermax", "mcp/ucsc"], have()
 assert "kuparashit" not in json.load(open(os.path.join(brain, "teams", ".installed.json")))["mcp"], "the person's own server is not the team's"

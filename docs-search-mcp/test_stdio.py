@@ -140,3 +140,60 @@ multi = json.loads(out[5]["result"]["content"][0]["text"])
 assert {e["q"] for e in multi["by_query"]} == {"active-active state", "nothing here"} and len(multi["by_query"]) == 2, multi["by_query"]
 assert multi["results"][0].get("text"), "read_top fetched across indexes"
 print("team-knowledge index ok")
+
+# HTTP mode: token, health, JSON answers, a team's knowledge index built by the server from the team folder
+import socket
+import threading
+import time
+import urllib.error
+import urllib.request
+sock = socket.socket(); sock.bind(("127.0.0.1", 0)); port = sock.getsockname()[1]; sock.close()
+tdir = os.path.join(root, "teams"); os.makedirs(os.path.join(tdir, "t1", "knowledge", "notes"))
+open(os.path.join(tdir, "t1", "team.json"), "w").write(json.dumps({"name": "t1", "title": "Team one"}))
+open(os.path.join(tdir, "t1", "knowledge", "notes", "powerscale.md"), "w").write("# PowerScale\n- 2026-10-31 smartconnect zone answers from pool0 verified isi\n")
+tok = os.path.join(root, "token"); open(tok, "w").write("s3cret-token\n")
+state = os.path.join(root, "state")
+srv = subprocess.Popen([sys.executable, os.path.join(here, "mcp_stdio.py"), "--db", db, "--http", f"127.0.0.1:{port}", "--token-file", tok,
+                        "--teams-dir", tdir, "--state-dir", state, "--refresh-minutes", "60"], stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
+try:
+    def req(path, body=None, token="s3cret-token"):
+        data = json.dumps(body).encode() if body is not None else None
+        r = urllib.request.Request(f"http://127.0.0.1:{port}{path}", data=data, method="POST" if data else "GET",
+                                   headers={"Content-Type": "application/json", **({"Authorization": "Bearer " + token} if token else {})})
+        try:
+            with urllib.request.urlopen(r, timeout=10) as resp:
+                return resp.status, json.loads(resp.read() or b"null")
+        except urllib.error.HTTPError as e:
+            return e.code, json.loads(e.read() or b"null")
+    for _ in range(100):
+        try:
+            if req("/health", token="")[0] == 200:
+                break
+        except Exception:
+            time.sleep(0.1)
+    for _ in range(100):                      # the refresh thread builds t1's index at start
+        if os.path.exists(os.path.join(state, "t1.db.stamp")):
+            break
+        time.sleep(0.1)
+    assert req("/health", token="")[1]["teams"] == ["t1"]
+    assert req("/mcp", {"jsonrpc": "2.0", "id": 1, "method": "ping"}, token="")[0] == 401
+    assert req("/mcp", {"jsonrpc": "2.0", "id": 1, "method": "ping"}, token="wrong")[0] == 401
+    st, init = req("/mcp", {"jsonrpc": "2.0", "id": 1, "method": "initialize", "params": {"protocolVersion": "2025-06-18", "capabilities": {}}})
+    assert st == 200 and init["result"]["serverInfo"]["name"] == "docs-search", init
+    assert req("/mcp", {"jsonrpc": "2.0", "method": "notifications/initialized"})[0] == 202
+    st, lib_only = req("/mcp", {"jsonrpc": "2.0", "id": 2, "method": "tools/call", "params": {"name": "search_docs", "arguments": {"query": "active-active state"}}})
+    assert not lib_only["result"]["isError"], lib_only
+    hits = json.loads(lib_only["result"]["content"][0]["text"])["results"]
+    assert hits and all(r.get("library", "main") == "main" for r in hits), hits        # without ?team= the library alone answers
+    st, team = req("/mcp?team=t1", {"jsonrpc": "2.0", "id": 3, "method": "tools/call", "params": {"name": "search_docs", "arguments": {"query": "smartconnect zone pool0"}}})
+    assert not team["result"]["isError"], team
+    hits = json.loads(team["result"]["content"][0]["text"])["results"]
+    assert any(r.get("library") == "team knowledge" and "powerscale.md" in r.get("path", "") for r in hits), hits
+    st, src = req("/mcp?team=t1", {"jsonrpc": "2.0", "id": 4, "method": "tools/call", "params": {"name": "list_sources", "arguments": {}}})
+    assert [l["library"] for l in json.loads(src["result"]["content"][0]["text"])["libraries"]] == ["main", "team knowledge"]
+    st, bad = req("/mcp", {"jsonrpc": "2.0", "id": 5, "method": "nope"})
+    assert st == 200 and bad["error"]["code"] == -32601, bad
+    assert req("/mcp", {"jsonrpc": "2.0", "id": 6, "method": "ping"})[1]["result"] == {}
+    print("http mode ok")
+finally:
+    srv.kill()

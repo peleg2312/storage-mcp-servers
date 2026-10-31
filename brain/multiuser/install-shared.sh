@@ -131,6 +131,27 @@ else
   echo "marketplace for other VMs: starts after install-gate.sh made the certificate (re-run this script then)"
 fi
 
+# docs-search for other machines: the stdlib docs server in HTTP mode on 8001 (token, the gate's certificate), with every
+# team's knowledge index refreshed from the team repositories (clones under /var/lib/paas-docs). Laptops put it into the team's
+# mcp.json (the editor); VM users keep docs-local.
+[ -s "$ETC/docs-token" ] || { umask 077; head -c 24 /dev/urandom | base64 | tr -d '/+=' > "$ETC/docs-token"; umask 022; }
+chown root:paas-market "$ETC/docs-token"; chmod 640 "$ETC/docs-token"
+[ -f "$ETC/docs.env" ] || printf 'PAAS_DOCS_PORT=8001\nPAAS_DOCS_REFRESH=10\n' > "$ETC/docs.env"
+setfacl -R -m u:paas-market:rX "$P/teams" "$P/library" 2>/dev/null || chmod -R o+rX "$P/library"
+cp "$BRAIN/../docs-search-mcp/docs_index.py" "$P/library/docs_index.py" 2>/dev/null || true   # the HTTP server indexes team knowledge with it
+install -m 644 "$HERE/paas-docs.service" /etc/systemd/system/paas-docs.service
+if [ -f "$ETC/market/paas-ui.crt" ]; then
+  systemctl daemon-reload; systemctl enable -q paas-docs; systemctl restart paas-docs
+  if command -v firewall-cmd >/dev/null 2>&1 && firewall-cmd --state >/dev/null 2>&1; then
+    firewall-cmd -q --permanent --add-port="$(sed -n 's/^PAAS_DOCS_PORT=//p' "$ETC/docs.env")/tcp" && firewall-cmd -q --reload
+  fi
+  DOCS_URL="https://$(hostname -f 2>/dev/null || hostname):$(sed -n 's/^PAAS_DOCS_PORT=//p' "$ETC/docs.env")/mcp"
+  PAAS_MARKET="$P/marketplace" python3 "$P/bin/paas-market" setup-mcp docs-search "$DOCS_URL" shared < "$ETC/docs-token" >/dev/null 2>&1 || true
+  echo "docs-search for other machines: $DOCS_URL (token: cat $ETC/docs-token; per team: ...?team=<team>); health: $DOCS_URL/../health"
+else
+  echo "docs-search for other machines: starts after install-gate.sh made the certificate (re-run this script then)"
+fi
+
 # root as the first user (its UI on 127.0.0.1; the gate puts it on :3001)
 "$P/bin/paas-user" add root
 # an update: everyone's UI plugins, rules they never edited and default items, then their running UIs restart on the new files

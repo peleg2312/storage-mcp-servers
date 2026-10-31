@@ -104,7 +104,9 @@ the same file when they are committed, so a broken edit is caught at the push, n
    knowledge: notes pages and incidents are indexed into a small per-person index, `~/.claude/brain/brain.db`
    (`add-docs --brain`, run in the background by the session-start hook whenever they changed; the shared library itself
    is read-only on the multi-user VM). `docs-local` searches that index together with the library, so a teammate's page is
-   found by `search_docs` next to the vendor documents, marked `library: team knowledge`; it follows the active team.
+   found by `search_docs` next to the vendor documents, marked `library: team knowledge`; it follows the active team. A
+   plugin user without the library searches the same knowledge through the VM's `docs-search` (`?team=<team>`), whose
+   service pulls every team repository and rebuilds the index every 10 minutes (`RUNBOOK.md`, "Docs search").
 3. **Learn.** A solved problem, a quirk, a corrected assumption is written down (golden rule 6): a dated line with a
    confidence word (verified / observed / hypothesis) and its source into notes/<topic>.md, a capture under captures/ when
    the topic is unclear, a page notes/<topic>-<slug>.md when it needs sections, an incident postmortem under incidents/.
