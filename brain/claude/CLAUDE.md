@@ -51,13 +51,18 @@ The user's own documents: files in `~/.claude/brain/inbox/<vendor>/<product>/` g
    beside a request and "Docs on identifiers" lines after a tool result are found for you: they give a known code's
    meaning and the chunk; read the relevant chunk, ignore unrelated ones, search further if they miss.
 6. **Memory is a catalog.** An environment fact learned from a tool result or from him is one dated line
-   (date · fact · source), updated in place. `~/.claude/brain/notes.md` (loaded every session, ≤ 60 lines)
-   holds only names / prefixes, thresholds, owners. Everything else (recurring issues and causes, tool
-   quirks, per-array / fabric / cluster details, decisions) goes to `~/.claude/brain/notes/<topic>.md`
-   (powermax, ontap, powerflex, fabric, ucs, vmware, k8s, tools, general; line 1 `# Topic: what is in it`).
-   The session-start lines list those files: read the one a question touches first; grep `notes/` for an
-   unknown name. These are the only files you write besides reports. No guesses, passwords or tokens;
-   a note contradicting `environment.md` → ask.
+   (date · fact · confidence · source), updated in place; confidence is `verified` (tested here), `observed`
+   (seen once, or read in a document) or `hypothesis`, never raised without new evidence. `~/.claude/brain/notes.md`
+   (loaded every session, ≤ 60 lines) holds only names / prefixes, thresholds, owners. Everything else (recurring
+   issues and causes, tool quirks, per-array / fabric / cluster details, decisions) goes to
+   `~/.claude/brain/notes/<topic>.md` (powermax, ontap, powerflex, fabric, ucs, vmware, k8s, tools, general; line 1
+   `# Topic: what is in it`). The session-start lines list those files: read the one a question touches first; grep
+   `notes/` for an unknown name. A fixed problem, root cause, workaround, quirk of this environment, procedure that
+   worked or wrong assumption corrected is written down when solved: into `notes/<topic>.md` when confident and
+   the topic is clear, else as a capture `~/.claude/brain/captures/<date>-<slug>.md` (symptom, cause, fix, scope,
+   how we know, confidence) for later curation; skill `brain-learn` holds the format, the curate pass and the
+   incident report. These are the only files you write besides reports. No guesses; never passwords, tokens
+   or credentials in notes or captures; a note contradicting `environment.md` → ask.
 7. **Token economy.** Search before reading; `read_document` only when the answer spans sections
    (page with `start`, never a whole PDF at once). Ask tools for the filtered, narrow
    result before the full list; never re-call for data you already have. Independent read-only calls go out

@@ -46,7 +46,8 @@ function brain() {
     add('Read-only guard', 'Blocks an infrastructure change', r.status === 2 ? 'ok' : 'fail',
       r.status === 2 ? 'test "scli --add_volume" was blocked' : `test command not blocked (exit ${r.status ?? 'timeout'})`, ...INSTALL);
   }
-  for (const [file, what] of [['docs-hints.py', 'docs meaning of alerts in results'], ['docs-leads.py', 'library leads per request'], ['session-start.py', 'session status']]) {
+  for (const [file, what] of [['docs-hints.py', 'docs meaning of alerts in results'], ['docs-leads.py', 'library leads per request'], ['session-start.py', 'session status'],
+    ['notes-check.py', 'secrets in notes and reports'], ['capture-nudge.py', 'capture reminder after long sessions']]) {
     const ok = hooks.includes(file) && fs.existsSync(path.join(CL, 'hooks', file));
     add('Hooks', file, ok ? 'ok' : 'warn', ok ? what : `missing (${what})`, ...INSTALL);
   }
@@ -56,6 +57,17 @@ function brain() {
   for (const f of ['environment.md', 'notes.md']) {
     const t = read(path.join(CL, 'brain', f));
     add('Brain files', f, t ? 'ok' : 'warn', t ? `${t.split('\n').length} lines` : 'missing', 'In Claude, run /brain-setup to create it.', '/brain-setup');
+  }
+  const nc = path.join(CL, 'hooks', 'notes-check.py');
+  if (fs.existsSync(nc)) {
+    const run = (arg) => spawnSync('python3', [nc, ...arg], { encoding: 'utf8', timeout: 10000 });
+    const sc = run(['--scan']);
+    add('Notes', 'No secrets', sc.status === 0 ? 'ok' : 'fail', sc.status === 0 ? 'notes and captures are clean' : (sc.stdout || '').split('\n')[0] || `check failed (exit ${sc.status ?? 'timeout'})`,
+      'Open the file in the Brain tab, Memory, and replace the value with <REDACTED>.');
+    const st = run(['--stale', '180']);
+    const n = (st.stdout || '').trim().split('\n').pop().match(/^(\d+) stale/);
+    if (n) add('Notes', 'Stale facts', n[1] === '0' ? 'ok' : 'warn', n[1] === '0' ? 'no dated fact older than 180 days' : `${n[1]} facts older than 180 days`,
+      'Ask Claude to re-verify them: "re-verify the stale notes"');
   }
   const ui = read(path.join(CL, 'paas-ui', 'VERSION'))?.trim();
   if (ui) add('Web UI', 'Version', 'ok', ui);

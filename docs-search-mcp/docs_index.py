@@ -28,6 +28,7 @@ import sqlite3
 import sys
 import time
 from html.parser import HTMLParser
+from urllib.parse import parse_qsl, urlencode, urljoin, urlsplit, urlunsplit
 
 TEXT_EXT = (".adoc", ".md", ".mdx", ".markdown", ".rst", ".txt")      # .mdx: Markdown with components (MCP specification)
 CODE_EXT = (".go", ".py", ".proto", ".yaml", ".yml", ".sh")       # source code (sync-git.sh "code" lines)
@@ -39,6 +40,9 @@ CREATE TABLE IF NOT EXISTS docs(id INTEGER PRIMARY KEY, path TEXT UNIQUE, vendor
 CREATE INDEX IF NOT EXISTS docs_hash ON docs(hash);
 CREATE INDEX IF NOT EXISTS docs_dup ON docs(dup_of);
 CREATE INDEX IF NOT EXISTS docs_url ON docs(url);
+CREATE TABLE IF NOT EXISTS links(doc_id INTEGER, href TEXT);
+CREATE INDEX IF NOT EXISTS links_doc ON links(doc_id);
+CREATE INDEX IF NOT EXISTS links_href ON links(href);
 CREATE TABLE IF NOT EXISTS chunks(id INTEGER PRIMARY KEY, doc_id INTEGER, seq INTEGER);
 CREATE INDEX IF NOT EXISTS chunks_doc ON chunks(doc_id, seq);
 CREATE VIRTUAL TABLE IF NOT EXISTS chunks_fts USING fts5(title, heading, text,
@@ -128,6 +132,48 @@ def _adoc_inline(s):
     return s.replace("`", "")
 
 
+# ---------------------------------------------------------------------------
+# Outgoing links: the parsers leave the raw hrefs of the last parsed file here (take_links), so the
+# parser return values and every call site stay as they are; _insert_doc normalizes and stores them
+# ---------------------------------------------------------------------------
+
+MAX_LINKS = 200
+_RAW_LINKS = []
+_TEXT_URL = re.compile(r"https?://[^\s<>\[\]()\"'`]+")        # markdown links, adoc link:url[..], bare urls
+
+
+def norm_url(href, base=None):
+    """Canonical form of a link target (None: not a page link). base: the linking document's own url,
+    to resolve a relative href."""
+    href = (href or "").strip()
+    if not href or href.startswith("#"):
+        return None
+    try:
+        u = urlsplit(urljoin(base, href) if base else href)
+    except ValueError:                                # e.g. a broken [ipv6] host
+        return None
+    if u.scheme.lower() not in ("http", "https") or not u.netloc:
+        return None                                   # mailto:, javascript:, relative without a base
+    q = urlencode([kv for kv in parse_qsl(u.query, keep_blank_values=True) if not kv[0].lower().startswith("utm_")])
+    return urlunsplit((u.scheme.lower(), u.netloc.lower(), u.path.rstrip("/"), q, ""))
+
+
+def _text_links(text):
+    return [m.rstrip(".,;:!?") for m in _TEXT_URL.findall(text)]
+
+
+def take_links(url=None):
+    """Normalized, de-duplicated outgoing links of the last parsed file (no self-link, at most MAX_LINKS)."""
+    me, out = norm_url(url), []
+    for h in _RAW_LINKS:
+        n = norm_url(h, url)
+        if n and n != me and n not in out:
+            out.append(n)
+            if len(out) >= MAX_LINKS:
+                break
+    return out
+
+
 class SkipDocument(Exception):
     pass
 
@@ -151,6 +197,7 @@ def parse_adoc(text, fallback):
     meta, text = _front_matter(text)
     if "redirect" in meta:
         raise SkipDocument("redirect stub")
+    _RAW_LINKS[:] = _text_links(text)
     title, sections, heading, buf = None, [], None, []
     if meta.get("summary"):
         buf.append(meta["summary"].strip("'\""))
@@ -179,6 +226,7 @@ def parse_md(text, fallback):
     meta, text = _front_matter(text)
     if "redirect" in meta:
         raise SkipDocument("redirect stub")
+    _RAW_LINKS[:] = _text_links(text)
     text = re.sub(r"\{\{[<%].*?[%>]\}\}", "", text)          # Hugo shortcodes
     text = re.sub(r"</?(dfn|abbr|strong|em|b|i|u|span|sup|sub|small|mark|kbd|br|a)(\s[^>]*)?/?>", "", text, flags=re.I)  # inline HTML (FastAPI docs)
     title, sections, heading, buf = None, [], None, []
@@ -209,8 +257,11 @@ class _HTMLText(HTMLParser):
         self.parts, self.skip, self.title, self._in_title = [], 0, "", False
         self.heading = None
         self.sections = []
+        self.links = []
 
     def handle_starttag(self, tag, attrs):
+        if tag == "a" and not self.skip:
+            self.links.extend(v for k, v in attrs if k == "href" and v)
         if tag in self.SKIP:
             self.skip += 1
         if tag == "title":
@@ -239,6 +290,7 @@ class _HTMLText(HTMLParser):
 def parse_html(text, fallback):
     p = _HTMLText()
     p.feed(text)
+    _RAW_LINKS[:] = p.links
     p.sections.append((p.heading, "".join(p.parts)))
     title = re.sub(r"\s+", " ", html.unescape(p.title)).strip() or fallback
     secs = []
@@ -442,6 +494,7 @@ def parse_code(text, path):
 
 
 def parse_file(path):
+    _RAW_LINKS.clear()
     fallback = os.path.splitext(os.path.basename(path))[0].replace("-", " ").replace("_", " ")
     low = path.lower()
     if low.endswith(".pdf"):
@@ -508,7 +561,7 @@ def build(docs_root, db_path, full=False, log=print, prefix=""):
             updated += 1
         else:
             added += 1
-        doc_id = _insert_doc(con, rel, vendor, product, title, url, st, chunks)
+        doc_id = _insert_doc(con, rel, vendor, product, title, url, st, chunks, take_links(url))
         if (added + updated) % 2000 == 0:
             con.commit()
             log(f"... {added + updated} documents parsed ({time.time() - t0:.0f}s)")
@@ -567,11 +620,12 @@ def _context_title(rel, vendor, product, title):
     return f"{title} | {' '.join(words)}" if words else title
 
 
-def _insert_doc(con, rel, vendor, product, title, url, st, chunks):
+def _insert_doc(con, rel, vendor, product, title, url, st, chunks, links=()):
     cur = con.execute("INSERT INTO docs(path, vendor, product, title, url, mtime, size, chunks, hash) "
                       "VALUES (?,?,?,?,?,?,?,?,?)", (rel, vendor, product, title, url, st.st_mtime,
                                                       st.st_size, len(chunks), _text_hash(chunks)))
     doc_id = cur.lastrowid
+    con.executemany("INSERT INTO links(doc_id, href) VALUES (?,?)", [(doc_id, h) for h in links])
     ctx_title = _context_title(rel, vendor, product, title)
     for seq, (heading, text) in enumerate(chunks):
         cid = con.execute("INSERT INTO chunks(doc_id, seq) VALUES (?,?)", (doc_id, seq)).lastrowid
@@ -608,7 +662,7 @@ def _dedupe(con, docs_root, log, prefix=""):
                 title, chunks = parse_file(path)
             except Exception:
                 continue
-            _insert_doc(con, rel, row[0], row[1], title, row[2], os.stat(path), chunks)
+            _insert_doc(con, rel, row[0], row[1], title, row[2], os.stat(path), chunks, take_links(row[2]))
     folded = 0
     groups = con.execute("SELECT hash FROM docs WHERE hash IS NOT NULL GROUP BY hash HAVING count(*) > 1").fetchall()
     for (h,) in groups:
@@ -639,6 +693,7 @@ def _dedupe(con, docs_root, log, prefix=""):
 def _delete_doc(con, doc_id):
     con.execute("DELETE FROM chunks_fts WHERE rowid IN (SELECT id FROM chunks WHERE doc_id=?)", (doc_id,))
     con.execute("DELETE FROM chunks WHERE doc_id=?", (doc_id,))
+    con.execute("DELETE FROM links WHERE doc_id=?", (doc_id,))
     con.execute("DELETE FROM docs WHERE id=?", (doc_id,))
 
 

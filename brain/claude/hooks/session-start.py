@@ -92,6 +92,9 @@ def memory_line():
                       + (f" - OVER {TOPIC_CAP} lines: merge duplicates, drop stale facts" if big else ""))
     if n > NOTES_CAP or any("OVER" in t for t in topics):
         line += ". Tidy the memory files marked OVER after answering his first question, then tell him in one line"
+    caps = len(glob.glob(os.path.join(USER_HOME, "brain", "captures", "*.md")))
+    if caps:
+        line += f".\ncaptures: {caps} waiting for curation (brain-learn skill)"
     if topics:
         return line + ".\nMemory topics (read the one a question touches; grep notes/ for an unknown name):\n" + "\n".join(topics)
     return line + "; no topic files yet (notes/<topic>.md)."

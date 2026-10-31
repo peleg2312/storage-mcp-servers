@@ -41,8 +41,9 @@ h = s.get("hooks", {})
 cmds = lambda ev: [(e.get("matcher"), x["command"].split("/")[-1]) for e in h.get(ev, []) for x in e.get("hooks", [])]
 problems = []
 if ("mcp__.*|Bash", "block-write-tools.py") not in cmds("PreToolUse"): problems.append(f"PreToolUse {cmds('PreToolUse')}")
-for need in [("mcp__.*", "docs-hints.py"), ("Edit|Write|MultiEdit", "py-lint.py")]:
+for need in [("mcp__.*", "docs-hints.py"), ("Edit|Write|MultiEdit", "py-lint.py"), ("Edit|Write|MultiEdit", "notes-check.py")]:
     if need not in cmds("PostToolUse"): problems.append(f"PostToolUse missing {need}")
+if not any(c == "capture-nudge.py" for _, c in cmds("Stop")): problems.append("Stop capture-nudge.py")
 if not any(c == "docs-leads.py" for _, c in cmds("UserPromptSubmit")): problems.append("UserPromptSubmit")
 if not any(c == "session-start.py" for _, c in cmds("SessionStart")): problems.append("SessionStart")
 if s.get("env", {}).get("ENABLE_CODE_SECURITY_REVIEW") != "0": problems.append("env")

@@ -18,6 +18,8 @@ const MEMORY = {
   'notes.md': path.join(C, 'brain', 'notes.md'), 'environment.md': path.join(C, 'brain', 'environment.md'),
   'tool-map.md': path.join(C, 'brain', 'tool-map.md'), 'CLAUDE.md': path.join(C, 'CLAUDE.md'),
 };
+const CAPTURES = path.join(C, 'brain', 'captures');
+const CAPTURE = /^captures\/([\w][\w.-]{0,100}\.md)$/;     // a file directly in captures/, never a deeper path
 const MULTI = fs.existsSync('/opt/paas/marketplace');
 const writable = (p) => { try { fs.accessSync(p, fs.constants.W_OK); return true; } catch { return false; } };
 const MARKET = process.env.PAAS_MARKET || '/opt/paas/marketplace';
@@ -148,11 +150,21 @@ function inbox() {
   return out.sort((a, b) => b.mtime - a.mtime).slice(0, 200);
 }
 
+// what Claude wrote down for later curation (brain-learn skill): newest first
+function captures() {
+  try {
+    return fs.readdirSync(CAPTURES).filter((n) => CAPTURE.test(`captures/${n}`)).map((name) => {
+      const p = path.join(CAPTURES, name);
+      return { name, text: read(p) ?? '', mtime: fs.statSync(p).mtimeMs };
+    }).sort((a, b) => b.mtime - a.mtime).slice(0, 50);
+  } catch { return []; }
+}
+
 async function overview() {
   const src = await run('python3', [path.join(LIB, 'search.py'), 'sources'], 60000);
   return {
     library: { version: read(path.join(LIB, 'VERSION'))?.trim() || null, sources: src.ok ? src.out : null },
-    skills: skills(), agents: agents(), hooks: hooks(), mcp: mcpServers(), inbox: inbox(),
+    skills: skills(), agents: agents(), hooks: hooks(), mcp: mcpServers(), inbox: inbox(), captures: captures(),
     // multi-user VM: environment.md / tool-map.md are shared and only root writes them; the library too
     // CLAUDE.md is this account's own copy of the brain's rules, yours to change (a brain update replaces it)
     memory: ['notes.md', 'environment.md', 'tool-map.md', 'CLAUDE.md']
@@ -200,6 +212,17 @@ const routes = {
   },
   'POST /index': () => run(ADD_DOCS, [], 600000),
   'POST /memory': async (_q, b) => {
+    const cap = CAPTURE.exec(String(b.name || ''));
+    if (cap) {                                                         // a capture: save, or discard with {remove:true}
+      const p = path.join(CAPTURES, cap[1]);
+      if (b.remove) { try { fs.unlinkSync(p); } catch { /* already gone */ } return { ok: true }; }
+      const t = String(b.text ?? '');
+      if (t.length > 500000) return { ok: false, out: 'Too long' };
+      fs.mkdirSync(CAPTURES, { recursive: true });
+      if (fs.existsSync(p)) fs.copyFileSync(p, `${p}.bak`);
+      fs.writeFileSync(p, t.endsWith('\n') ? t : `${t}\n`);
+      return { ok: true };
+    }
     if (!Object.hasOwn(MEMORY, b.name)) return { ok: false, out: 'That file is not editable here' };
     if (fs.existsSync(MEMORY[b.name]) && !writable(MEMORY[b.name])) return { ok: false, out: 'Shared file: only root changes it' };
     const text = String(b.text ?? '');

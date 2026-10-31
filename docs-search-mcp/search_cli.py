@@ -27,6 +27,7 @@ import sqlite3
 import sys
 import time
 from pathlib import Path
+from urllib.parse import urlsplit, urlunsplit
 
 
 def find_db(arg):
@@ -656,6 +657,65 @@ def read_doc(c, path="", url="", start=0, max_sections=15, id_base=0):
                          for p in parts]}
 
 
+def _href(url):
+    """docs.url in the form docs_index stores link targets (no fragment, no trailing slash, lower-case host);
+    repeated here because this file also ships alone as search.py."""
+    u = urlsplit(url or "")
+    return urlunsplit((u.scheme.lower(), u.netloc.lower(), u.path.rstrip("/"), u.query, ""))
+
+
+def related_docs(c, chunk_id=0, path="", url="", limit=10):
+    """Pages the document links to / pages that link to it, resolved inside the library (link targets are
+    matched to docs.url). The document: a chunk's document, or its path, or its url. unresolved: outgoing
+    links that point outside the library. A duplicate alias is followed to its canonical copy."""
+    if chunk_id:
+        d = c.execute("SELECT d.* FROM chunks k JOIN docs d ON d.id = k.doc_id WHERE k.id = ?", (int(chunk_id),)).fetchone()
+    elif path:
+        d = c.execute("SELECT * FROM docs WHERE path = ?", (path,)).fetchone()
+    elif url:
+        d = c.execute("SELECT * FROM docs WHERE url IN (?, ?) ORDER BY dup_of IS NOT NULL", (url, url.rstrip("/") or url)).fetchone()
+    else:
+        raise ValueError("give chunk_id, path or url")
+    if not d:
+        raise LookupError("document not found in the index")
+    if d["dup_of"] is not None:
+        d = c.execute("SELECT * FROM docs WHERE id = ?", (d["dup_of"],)).fetchone()
+    limit = max(1, min(int(limit), 50))
+    group = [d] + c.execute("SELECT * FROM docs WHERE dup_of = ?", (d["id"],)).fetchall()   # same page, other versions
+    ids = {r["id"] for r in group}
+    me = {_href(r["url"]) for r in group if r["url"]}
+
+    def card(r):
+        r = c.execute("SELECT * FROM docs WHERE id = ?", (r["dup_of"],)).fetchone() if r["dup_of"] is not None else r
+        return {"path": r["path"], "title": r["title"], "url": r["url"], "product": f"{r['vendor']}/{r['product']}"}
+
+    def uniq(rows):
+        seen, out = set(), []
+        for r in rows:
+            r = card(r)
+            if r["path"] not in seen and r["path"] != d["path"]:
+                seen.add(r["path"])
+                out.append(r)
+        return out
+
+    try:
+        hrefs = [h for (h,) in c.execute("SELECT DISTINCT href FROM links WHERE doc_id = ?", (d["id"],))]
+        to, resolved = [], 0
+        for h in hrefs:
+            hit = c.execute("SELECT * FROM docs WHERE url IN (?, ?) ORDER BY dup_of IS NOT NULL LIMIT 1", (h, h + "/")).fetchone()
+            if hit and hit["id"] not in ids:
+                to.append(hit)
+            resolved += bool(hit)
+        frm = []
+        for h in me:
+            frm += c.execute("SELECT d.* FROM links l JOIN docs d ON d.id = l.doc_id WHERE l.href = ? LIMIT 200", (h,)).fetchall()
+        frm = [r for r in frm if r["id"] not in ids]
+    except sqlite3.OperationalError:                    # an index built before the links table existed
+        to, frm, hrefs, resolved = [], [], [], 0
+    return {"doc": {"path": d["path"], "title": d["title"], "url": d["url"]},
+            "links_to": uniq(to)[:limit], "linked_from": uniq(frm)[:limit], "unresolved": len(hrefs) - resolved}
+
+
 def sources(c, vendor=""):
     """What is in the index: {vendor: "product documents, ..."} (products by size), optionally one vendor."""
     rows = c.execute("SELECT vendor, product, count(*) AS n FROM docs" + (" WHERE vendor = ?" if vendor else "") +
@@ -692,6 +752,11 @@ def main():
     d.add_argument("--url", default="")
     d.add_argument("--start", type=int, default=0)
     d.add_argument("--max", type=int, default=15)
+    q = sub.add_parser("related", help="pages a document links to and pages that link to it")
+    q.add_argument("--chunk", type=int, default=0)
+    q.add_argument("--path", default="")
+    q.add_argument("--url", default="")
+    q.add_argument("--limit", type=int, default=10)
     sub.add_parser("explain-code", help="exact lookup: EMS event, SYMAPI / SIO code, CONTAP, DSA, KB number").add_argument("code")
     sub.add_parser("sources", help="what is in the library").add_argument("--vendor", default="")
     a = ap.parse_args()
@@ -738,6 +803,8 @@ def run(a, c):
             print(f"\n## {s_['section']}  [seq {s_['seq']}]\n\n{s_['text']}")
         if out["next_start"] is not None:
             print(f"\n... continue with --start {out['next_start']}")
+    elif a.cmd == "related":
+        print(json.dumps(related_docs(c, a.chunk, a.path, a.url, a.limit), ensure_ascii=False, indent=1))
     elif a.cmd == "explain-code":
         print(json.dumps(explain_code(c, a.code), ensure_ascii=False, indent=1))
     else:

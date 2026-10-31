@@ -43,10 +43,12 @@ The NAA ID of an ONTAP LUN is naa.600a0980 followed by the hex of the serial. Us
 """)
 w("netapp/ontap/redirect/old-page.adoc", "---\npermalink: old.html\nredirect: ontap/san-admin/map-lun.html\n---\n")
 w("netapp/ontap-ems-9171/callhome-hm-events.adoc", "= callhome.hm events\n\n== callhome.hm.alert.critical\n*Severity*:: ALERT\nSystem health monitor alert.\n")
-w("runbooks/team/decom.md", "# Datastore decommission\n\n## Order\nUnmount, detach on every host, unmap, rescan, detached remove, unzone.\n")
+w("runbooks/team/decom.md", "# Datastore decommission\n\n## Order\nUnmount, detach on every host, unmap, rescan, detached remove, unzone.\n\nSee [mapping](https://DOCS.netapp.com/us-en/ontap/san-admin/map-lun.html/).\n")
 w("dell/powerflex/kb-eui.html", "<html><head><title>PowerFlex EUI identifier</title><style>x{}</style></head><body>"
   "<nav>menu</nav><h2>Locate the EUI</h2><p>ESXi shows SDC volumes as eui.<b>id</b>; match the Volume ID "
-  "from scli --query_all_volumes.</p><script>var a=1;</script></body></html>")
+  "from scli --query_all_volumes.</p><a href='https://docs.netapp.com/us-en/ontap/san-admin/map-lun.html?utm_source=x#steps'>LUN mapping</a>"
+  "<a href='https://example.com/outside'>outside</a><a href='mailto:a@b.c'>m</a>"
+  "<script>var a=1;</script></body></html>")
 os.makedirs(os.path.join(docs, "dell", "powermax"), exist_ok=True)
 shutil.copy(os.path.join(here, "tests", "sample.pdf"), os.path.join(docs, "dell", "powermax", "h8115.pdf"))
 os.utime(os.path.join(docs, "dell", "powermax", "h8115.pdf"), (time.time() - 600 * 86400,) * 2)   # fetched 20 months ago: stale
@@ -77,6 +79,14 @@ async def main():
 
     src = await call("list_sources")
     assert src["libraries"][0]["documents"] == 8 and src["libraries"][0]["library"] == "main", src
+    # related_docs: the html page and the markdown runbook both cite the NetApp page (utm / fragment / case / slash normalized)
+    rel_p = await call("related_docs", path="dell/powerflex/kb-eui.html")
+    assert [d["path"] for d in rel_p["links_to"]] == ["netapp/ontap/san-admin/map-lun.adoc"] and rel_p["unresolved"] == 1, rel_p
+    rel_u = await call("related_docs", url="https://docs.netapp.com/us-en/ontap/san-admin/map-lun.html")
+    assert {d["path"] for d in rel_u["linked_from"]} == {"dell/powerflex/kb-eui.html", "runbooks/team/decom.md"}, rel_u
+    assert rel_u["doc"]["path"] == "netapp/ontap/san-admin/map-lun.adoc" and not rel_u["links_to"], rel_u
+    hit = (await call("search_docs", query="LUN igroup mapping"))["results"][0]["chunk_id"]
+    assert await call("related_docs", chunk_id=hit) == rel_u
     assert src["libraries"][0]["by_vendor"]["netapp"].endswith("ontap 1") and len(json.dumps(src)) < 4000, src
     assert (await call("list_sources", vendor="runbooks"))["libraries"][0]["by_vendor"] == {"runbooks": "team 1"}
     s = await call("search_docs", query="lun mapping create igroup")

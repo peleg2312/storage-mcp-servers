@@ -139,6 +139,19 @@ def read_document(path: str = "", url: str = "", start: int = 0, max_sections: i
     raise LookupError("document not found in the index")
 
 
+@mcp.tool(annotations=RO, description=docs_text.RELATED_DOC)
+def related_docs(chunk_id: int = 0, path: str = "", url: str = "", limit: int = 10) -> dict:
+    if chunk_id:
+        i, c, local = split_id(chunk_id)
+        return lib.related_docs(c, local, limit=limit)
+    for i, c in all_cons():
+        try:
+            return lib.related_docs(c, 0, path, url, limit)
+        except LookupError:
+            pass
+    raise LookupError("document not found in the index")
+
+
 @mcp.tool(annotations=RO)
 def list_sources(vendor: str = "") -> dict:
     """What is in the library: documents per vendor and product ("product documents, ..."), and when it

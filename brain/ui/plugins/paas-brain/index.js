@@ -343,8 +343,8 @@ export function mount(container, api) {
   }
 
   // Memory: notes.md / environment.md / tool-map.md are yours (kept by every install); CLAUDE.md is your own copy too
-  function renderMemory(i = 0) {
-    const m = data.memory[i];
+  function renderMemory(i = 0, cap = null) {
+    const m = cap || data.memory[i];
     if (!m) { pane.replaceChildren(emptyBlock('Claude creates them the first time it saves a note.', '', null, { icon: 'file', title: 'No memory files found' })); return; }
     dirty = false;
     pane.innerHTML = `<div class="seg" role="group" aria-label="Memory file">${data.memory.map((x, k) => `<button data-i="${k}" aria-pressed="${k === i}">${esc(x.name)}</button>`).join('')}</div>
@@ -352,8 +352,23 @@ export function mount(container, api) {
         ? `What Claude reads at the start of every session. Edit and save; the previous version is kept as a .bak file.${m.name === 'CLAUDE.md' ? ' A brain update replaces this file: keep lasting facts in notes.md.' : ''}`
         : 'Shared file: only root changes it.'}</div>
       ${m.editable ? `${field(`${esc(m.name)}`, `<textarea class="mt" spellcheck="false">${esc(m.text)}</textarea>`)}
-        <div class="row sticky"><button class="btn save">Save</button><span class="stbox"></span></div>` : `<pre>${esc(m.text)}</pre>`}`;
+        <div class="row sticky"><button class="btn save">Save</button><span class="stbox"></span></div>` : `<pre>${esc(m.text)}</pre>`}
+      ${cap ? '' : `<div class="sub" style="margin:18px 0 8px"><b>Captures</b>: what Claude wrote down for later curation (ask it to "curate the captures").</div>
+      ${(data.captures || []).length ? data.captures.map((c, k) => `<div class="row"><span class="grow">${esc(c.name)} <span class="sub">${esc(new Date(c.mtime).toLocaleDateString())} ${esc(c.text.split('\n')[0].replace(/^#+\s*/, '').slice(0, 80))}</span></span>
+        <button class="btn ghost sm" data-open="${k}">Open</button><button class="btn danger sm" data-drop="${k}">Discard</button></div>`).join('')
+        : '<div class="sub">Nothing captured yet. Claude writes a capture when it solves something worth keeping.</div>'}`}`;
     pane.querySelectorAll('.seg button').forEach((b) => b.addEventListener('click', () => renderMemory(Number(b.dataset.i))));
+    pane.querySelectorAll('[data-open]').forEach((b) => b.addEventListener('click', () => {
+      const c = data.captures[Number(b.dataset.open)]; renderMemory(0, { name: `captures/${c.name}`, editable: true, text: c.text });
+    }));
+    pane.querySelectorAll('[data-drop]').forEach((b) => b.addEventListener('click', async () => {
+      const c = data.captures[Number(b.dataset.drop)];
+      const r0 = await confirmInline(b, { title: `Discard capture ${c.name}?`, text: 'It is deleted; Claude will not see it again.', confirmLabel: 'Discard', danger: true });
+      if (!r0.ok) return;
+      const r = await api.rpc('POST', 'memory', { name: `captures/${c.name}`, remove: true }).catch((x) => ({ out: String(x) }));
+      if (!r.ok) { say(false, r.out || 'Could not discard it'); return; }
+      data.captures.splice(Number(b.dataset.drop), 1); renderMemory(i);
+    }));
     const box = pane.querySelector('.stbox');
     if (!box) return;
     const st = statusLine(box);
@@ -362,7 +377,7 @@ export function mount(container, api) {
       const text = pane.querySelector('.mt').value; const done = busy(e.currentTarget, 'Saving…');
       const r = await api.rpc('POST', 'memory', { name: m.name, text }).catch((x) => ({ out: String(x) }));
       done();
-      if (r.ok) { m.text = text; dirty = false; st.say(`Saved ${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`); } else st.error(`Not saved: ${r.out || 'unknown error'}`);
+      if (r.ok) { m.text = text; if (cap) { const c = data.captures.find((x) => `captures/${x.name}` === m.name); if (c) c.text = text; } dirty = false; st.say(`Saved ${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`); } else st.error(`Not saved: ${r.out || 'unknown error'}`);
     });
   }
 

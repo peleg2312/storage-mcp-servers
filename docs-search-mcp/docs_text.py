@@ -10,8 +10,8 @@ articles, CSI driver source, Dell CSM pull requests (the fixes), Trident / Harve
 names and acronyms match each other. Filter by vendor / product when known (list_sources(vendor); by_product shows \
 where the hits are). read_top=2 returns the top sections inline. Partial or off-target: queries=[2-3 rephrasings \
 in the vendor's words], replacing the `unmatched` words.
-2. read_chunk the best 2-3 hits before answering; read_document for a whole page or PDF. also_in = the same page \
-in other versions: open the installed one.
+2. read_chunk the best 2-3 hits before answering; read_document for a whole page or PDF. related_docs(chunk_id) \
+lists what the page cites and what cites it. also_in = the same page in other versions: open the installed one.
 3. Cite title + url + version for every statement; never invent commands, settings or bug numbers. `matched` \
 (n/m query words) appears only on partial hits: weak evidence.
 Live state comes from the PowerMax / ONTAP / MDS MCP servers, not from here."""
@@ -28,3 +28,7 @@ EXPLAIN_DOC = ('Exact lookup of an identifier the library documents: ONTAP EMS e
                'SYMAPI_AEVENT2_* alert, PowerFlex SIO dial-home code, CONTAP-* bug, DSA-* advisory, Dell / NetApp KB '
                'number (000xxxxxx). Returns severity, description, corrective action, title, url, product, chunk_id; '
                'a KB / bug adds its Symptoms / Cause / Resolution sections. Not documented: documented=false.')
+
+RELATED_DOC = ('Pages a document links to and pages that link to it, inside the library: follow a hit to its '
+               'referenced KB articles, guides or bug reports without a second search; give the chunk_id of a hit, '
+               'or a path or url')

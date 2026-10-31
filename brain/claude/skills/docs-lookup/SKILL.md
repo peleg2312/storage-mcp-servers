@@ -48,7 +48,7 @@ what to do. Default 8 hits; raise `limit` only when the titles are all off-targe
 ## 3. Read, cite, version
 `read_chunk(id, context=0)` on the best hit (context 1 when the section is cut off); read the next hits too when the
 first does not fully answer, or when another version or a KB may change the answer; `read_document` only for a procedure or table spanning
-sections. Never answer from snippets. Cite title (PDF titled "pdf" / "View": the file name from the url, with
+sections. When the answer may sit in a page the hit cites (KB, guide, bug), `related_docs(chunk_id)` lists what it links to and what links to it. Never answer from snippets. Cite title (PDF titled "pdf" / "View": the file name from the url, with
 the page) + url + the version it applies to; another version's document is a hint ("documented for 9.2;
 confirm for yours"). Quote verbatim when wording matters (states, thresholds, limits). Two versions disagree:
 show both, prefer the installed one. A hit's `note` ("for trident-2410; yours: trident-2510") and `stale: true`

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 docs-search as a **stdio MCP server with no dependencies** (Python 3 standard library only): the same
-tools as server.py (search_docs, explain_code, read_chunk, read_document, list_sources) over the library index,
+tools as server.py (search_docs, explain_code, read_chunk, read_document, related_docs, list_sources) over the library index,
 for a VM that runs Claude Code but has no pip, no containers and no internet.
 
     claude mcp add docs-local -s user -- python3 ~/.claude/brain/library/mcp_stdio.py
@@ -22,7 +22,7 @@ try:
     import search_cli as lib  # noqa: E402  (in the repo: search_cli.py; in the library folder: search.py)
 except ImportError:
     import search as lib  # noqa: E402
-from docs_text import EXPLAIN_DOC, INSTRUCTIONS, SEARCH_DOC  # noqa: E402
+from docs_text import EXPLAIN_DOC, INSTRUCTIONS, RELATED_DOC, SEARCH_DOC  # noqa: E402
 
 TOOLS = [
     {"name": "search_docs",
@@ -48,6 +48,12 @@ TOOLS = [
      "inputSchema": {"type": "object", "properties": {
          "path": {"type": "string", "default": ""}, "url": {"type": "string", "default": ""},
          "start": {"type": "integer", "default": 0}, "max_sections": {"type": "integer", "default": 15}}},
+     "annotations": {"readOnlyHint": True, "destructiveHint": False, "idempotentHint": True, "openWorldHint": False}},
+    {"name": "related_docs",
+     "description": RELATED_DOC,
+     "inputSchema": {"type": "object", "properties": {
+         "chunk_id": {"type": "integer", "default": 0}, "path": {"type": "string", "default": ""},
+         "url": {"type": "string", "default": ""}, "limit": {"type": "integer", "default": 10}}},
      "annotations": {"readOnlyHint": True, "destructiveHint": False, "idempotentHint": True, "openWorldHint": False}},
     {"name": "list_sources",
      "description": "What is in the library: documents per vendor and product (\"product documents, ...\"), and "
@@ -76,6 +82,9 @@ class Server:
                 raise ValueError("give path or url")
             return lib.read_doc(self.con, args.get("path", ""), args.get("url", ""), args.get("start", 0),
                                 args.get("max_sections", 15))
+        if name == "related_docs":
+            return lib.related_docs(self.con, int(args.get("chunk_id", 0)), args.get("path", ""), args.get("url", ""),
+                                    args.get("limit", 10))
         if name == "list_sources":
             return {"libraries": [{"library": "main", **lib.sources(self.con, args.get("vendor", ""))}]}
         raise ValueError(f"unknown tool {name}")

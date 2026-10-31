@@ -36,7 +36,7 @@ p = subprocess.run([sys.executable, os.path.join(here, "mcp_stdio.py"), "--db", 
                    input="".join(json.dumps(m) + "\n" for m in msgs), capture_output=True, text=True, timeout=60)
 out = {m["id"]: m for m in (json.loads(l) for l in p.stdout.splitlines() if l.strip())}
 assert out[1]["result"]["serverInfo"]["name"] == "docs-search" and out[1]["result"]["instructions"]
-assert [t["name"] for t in out[2]["result"]["tools"]] == ["search_docs", "explain_code", "read_chunk", "read_document", "list_sources"]
+assert [t["name"] for t in out[2]["result"]["tools"]] == ["search_docs", "explain_code", "read_chunk", "read_document", "related_docs", "list_sources"]
 hits = json.loads(out[3]["result"]["content"][0]["text"])
 assert hits["results"][0]["section"] == "scsiblade.san.config.active" and hits["results"][0]["chunk_id"] == 1, hits
 assert "NOTICE" in out[4]["result"]["content"][0]["text"]

@@ -39,7 +39,7 @@ if os.path.exists(tmp + ".bak"):
     os.remove(tmp + ".bak")                                  # merge_settings' backup does not belong in /etc
 
 root = "/root/.claude/settings.json"
-BRAIN_HOOKS = ("block-write-tools.py", "docs-hints.py", "docs-leads.py", "session-start.py", "py-lint.py")
+BRAIN_HOOKS = ("block-write-tools.py", "docs-hints.py", "docs-leads.py", "session-start.py", "py-lint.py", "notes-check.py", "capture-nudge.py")
 if os.path.exists(root):
     r = json.load(open(root))
     for event, groups in list(r.get("hooks", {}).items()):

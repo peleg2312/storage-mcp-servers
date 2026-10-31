@@ -131,3 +131,7 @@ Code; few high-signal tools) and measured with `docs-search-mcp/eval_search.py`:
   `--project` folder shows the one-time trust dialog.
 - `omitClaudeMd` on the storage agents needs Claude Code >= 2.1.271; agents do not keep their own memory.
 - The Cisco MDS / UCS documentation is not in the library (not published in a crawlable form).
+
+## Learning loop
+
+What Claude solves is not lost with the session: it writes a capture file (`~/.claude/brain/captures/<date>-<slug>.md`: symptom, cause, fix, scope, how we know, confidence), or a dated line straight into `notes/<topic>.md` when it is confident. The `brain-learn` skill curates captures into notes (promote, merge, keep, discard, with the user's go-ahead), flags stale facts for re-verification and writes storage incident postmortems. The Stop hook `capture-nudge.py` reminds Claude to capture and the PostToolUse hook `notes-check.py` flags secrets and stale lines in what it writes. The session-start hook reports how many captures wait, and the Brain tab lists them.
