@@ -75,6 +75,42 @@ rc, out = run("notes-check.py", args=["--scan"])
 assert rc == 1 and "incidents/2026/x.md:1" in out, (rc, out)
 print("brain git history ok")
 
+# shared brain: a bare remote, a second person joins, hook commits push, --sync, conflict leaves a usable tree
+gi = lambda d, *a: subprocess.run(["git", "-C", d, *a], capture_output=True, text=True).stdout
+bare = os.path.join(home, "shared.git")
+subprocess.run(["git", "init", "-q", "--bare", "-b", "main", bare], check=True)
+assert run("notes-check.py", args=["--sync"]) == (0, "brain: no shared remote\n")
+subprocess.run(["git", "-C", brain, "checkout", "-q", "-B", "main"], check=True)
+open(os.path.join(brain, ".gitignore"), "w").write("notes.md\nenvironment.md\n")
+rc, out = run("notes-check.py", args=["--remote", bare])
+assert rc == 0 and "pushed" in out, (rc, out)
+assert run("notes-check.py", args=["--remote", bare])[0] == 0, "idempotent"
+home2 = tempfile.mkdtemp()
+env2 = dict(os.environ, HOME=home2)
+brain2 = os.path.join(home2, ".claude", "brain")
+os.makedirs(brain2)
+subprocess.run(["git", "-C", brain2, "init", "-q", "-b", "main"], check=True)
+open(os.path.join(brain2, "mine.md"), "w").write("mine\n")
+rc, out = run("notes-check.py", args=["--remote", bare], e=env2)
+assert rc == 0 and os.path.exists(os.path.join(brain2, "notes", "x.md")), (rc, out)
+assert run("notes-check.py", args=["--sync"]) == (0, "brain: in sync\n")   # takes the second one's join commit
+open(nx, "w").write("# X\n- line one\n- shared line\n")
+assert run("notes-check.py", {"tool_input": {"file_path": nx}}) == (0, "")
+assert "line one" in gi(bare, "show", "main:notes/x.md"), (gi(brain, "log", "--oneline"), gi(brain, "status"), gi(bare, "log", "main", "--oneline"))
+rc, out = run("notes-check.py", args=["--sync"], e=env2)
+assert rc == 0 and out.strip() == "brain: in sync" and "line one" in open(os.path.join(brain2, "notes", "x.md")).read(), (rc, out, gi(brain2, "log", "--oneline", "--all"), gi(brain2, "status"), open(os.path.join(brain2, "notes", "x.md")).read())
+# conflict: the same line changed on both sides (the second to sync loses nothing, the tree stays usable)
+nx2 = os.path.join(brain2, "notes", "x.md")
+open(nx2, "w").write("# X\n- line one\n- from two\n")
+run("notes-check.py", args=["--commit", "two"], e=env2)
+open(nx, "w").write("# X\n- line one\n- from one\n")
+run("notes-check.py", args=["--commit", "one"])
+rc, out = run("notes-check.py", args=["--sync"])        # two pushed first, so one clashes
+assert rc == 1 and out.startswith("brain: conflict with the shared brain in: notes/x.md;"), (rc, out)
+assert gi(brain, "status", "--porcelain").strip() == "", gi(brain, "status")
+assert "<<<<" not in open(nx).read() and "from one" in open(nx).read()
+print("shared brain ok")
+
 # add-docs --brain: pages land as local/brain-notes and local/brain-incidents; a removed page leaves the index
 import shutil, sqlite3
 repo = os.path.dirname(HOOKS.rsplit("claude", 1)[0].rstrip(os.sep))

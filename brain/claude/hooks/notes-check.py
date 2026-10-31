@@ -7,6 +7,8 @@ IPs) is skipped; environment.md and tool-map.md may hold management IPs. A file 
 brain is also committed to the brain's git history ('brain: <path>') when ~/.claude/brain/.git exists; silent.
   notes-check.py --scan        scan all notes, captures and incidents, exit 1 on findings
   notes-check.py --commit MSG  commit everything changed in the brain (silent, exit 0)
+  notes-check.py --remote URL  set up the shared brain: origin = URL, pull what the team has, push ours (idempotent)
+  notes-check.py --sync        pull --rebase and push the shared brain; 'brain: in sync' / 'N ahead, M behind'
   notes-check.py --stale N     list '- ' note lines whose first YYYY-MM-DD is older than N days (informational)"""
 import datetime
 import glob
@@ -88,8 +90,74 @@ def commit(message, rel=None):
         for cmd in (["add", "-A"] + (["--", rel] if rel else []), ident + ["commit", "-q", "-m", message]):
             subprocess.run(["git", "-C", BRAIN] + cmd, stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL,
                            stderr=subprocess.DEVNULL, timeout=4)
+        if upstream():       # a failed push is retried by the next --sync or session start
+            subprocess.run(["git", "-C", BRAIN, "push", "-q"], stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL,
+                           stderr=subprocess.DEVNULL, timeout=4)
     except Exception:
         pass
+
+
+def git(args, timeout=15):
+    """(exit code, stdout+stderr) of a git command in the brain; 124 on timeout."""
+    try:
+        r = subprocess.run(["git", "-C", BRAIN, "-c", "user.name=brain", "-c", "user.email=brain@localhost"] + args,
+                           stdin=subprocess.DEVNULL, capture_output=True, text=True, timeout=timeout,
+                           env=dict(os.environ, GIT_TERMINAL_PROMPT="0"))
+        return r.returncode, (r.stdout + r.stderr).strip()
+    except Exception as e:
+        return 124, str(e)
+
+
+def upstream():
+    return os.path.isdir(os.path.join(BRAIN, ".git")) and git(["rev-parse", "--abbrev-ref", "@{upstream}"], 3)[0] == 0
+
+
+def conflict():
+    """Abort the rebase and say which files clashed."""
+    files = git(["diff", "--name-only", "--diff-filter=U"], 5)[1].split()
+    git(["rebase", "--abort"], 10)
+    print("brain: conflict with the shared brain in: " + (", ".join(files) or "?") + "; resolve it in ~/.claude/brain "
+          "with git, then run notes-check.py --sync")
+    return 1
+
+
+def counts():
+    rc, out = git(["rev-list", "--left-right", "--count", "HEAD...@{upstream}"], 5)
+    a, b = (out.split() + ["0", "0"])[:2] if rc == 0 else ("0", "0")
+    return "brain: in sync" if (a, b) == ("0", "0") else f"brain: {a} ahead, {b} behind"
+
+
+def remote(url):
+    if not os.path.isdir(os.path.join(BRAIN, ".git")):
+        print("brain: ~/.claude/brain is not a git repository (run install.sh)")
+        return 1
+    git(["remote", "set-url", "origin", url] if git(["remote", "get-url", "origin"], 3)[0] == 0
+        else ["remote", "add", "origin", url], 5)
+    commit("brain: before joining the shared brain")
+    rc, out = git(["fetch", "origin"], 20)
+    if rc:
+        print("brain: cannot reach the shared remote: " + out.splitlines()[-1][:200] if out else "brain: fetch failed")
+        return 1
+    if git(["rev-parse", "--verify", "-q", "origin/main"], 5)[0] == 0:
+        rc, out = git(["pull", "--rebase", "--allow-unrelated-histories", "origin", "main"], 60)
+        if rc:
+            return conflict()
+    rc, out = git(["push", "-u", "origin", "HEAD:main"], 20)
+    print("brain: shared remote set; " + ("pushed" if rc == 0 else "push failed: " + out.splitlines()[-1][:200]))
+    return 0 if rc == 0 else 1
+
+
+def sync():
+    if not upstream():
+        print("brain: no shared remote")
+        return 0
+    commit("brain: update")                          # whatever is uncommitted goes in first
+    rc, out = git(["pull", "--rebase", "--autostash", "-q"], 15)
+    if rc and rc != 124 and git(["diff", "--name-only", "--diff-filter=U"], 5)[1]:
+        return conflict()
+    git(["push", "-q"], 15)                          # offline is not an error
+    print(counts())
+    return 0
 
 
 def hook():
@@ -120,6 +188,10 @@ def main():
         return 1 if f else 0
     if a[:1] == ["--stale"]:
         return stale(int(a[1]) if len(a) > 1 and a[1].isdigit() else 180)
+    if a[:1] == ["--remote"] and len(a) > 1:
+        return remote(a[1])
+    if a[:1] == ["--sync"]:
+        return sync()
     if a[:1] == ["--commit"]:
         commit(a[1] if len(a) > 1 else "brain: update")
         return 0

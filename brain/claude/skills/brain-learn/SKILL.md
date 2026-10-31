@@ -53,3 +53,4 @@ to `~/storage-reports/<date>-incident-<slug>/incident.md` and run `python3 ~/.cl
 After a promote, a new page or an incident, run `add-docs --brain`: the docs search then finds them next to the
 vendor documents (notes.md, captures and environment.md are never indexed). Nothing to commit by hand: the
 notes-check hook commits each saved file to the brain's git history (Brain tab shows it).
+When the brain has a shared remote (install.sh --brain-remote), notes, captures and incidents reach the team at the next session start; notes.md and environment.md stay personal.

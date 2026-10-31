@@ -68,6 +68,13 @@ function brain() {
     const n = (st.stdout || '').trim().split('\n').pop().match(/^(\d+) stale/);
     if (n) add('Notes', 'Stale facts', n[1] === '0' ? 'ok' : 'warn', n[1] === '0' ? 'no dated fact older than 180 days' : `${n[1]} facts older than 180 days`,
       'Ask Claude to re-verify them: "re-verify the stale notes"');
+    if (fs.existsSync(path.join(CL, 'brain', '.git'))) {
+      const sy = spawnSync('python3', [nc, '--sync'], { encoding: 'utf8', timeout: 20000 });
+      const o = (sy.stdout || '').trim();
+      if (/conflict/.test(o)) add('Notes', 'Shared brain', 'fail', o, 'Resolve the conflict in ~/.claude/brain with git, then re-open the Status tab');
+      else if (/in sync/.test(o)) add('Notes', 'Shared brain', 'ok', 'in sync with the team remote');
+      else if (/(\d+) ahead, (\d+) behind/.test(o)) add('Notes', 'Shared brain', 'warn', o.replace('brain: ', '') + ': it syncs at the next session start', 'Open a new Claude session or run notes-check.py --sync');
+    }
   }
   const ui = read(path.join(CL, 'paas-ui', 'VERSION'))?.trim();
   if (ui) add('Web UI', 'Version', 'ok', ui);

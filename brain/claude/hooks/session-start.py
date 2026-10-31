@@ -5,6 +5,7 @@ import glob
 import json
 import os
 import re
+import subprocess
 import sys
 import tempfile
 import time
@@ -32,6 +33,23 @@ def library_line():
         return "Library: not installed on this VM (use the docs-search MCP; sh brain/install.sh installs docs-local)."
     counts = f", {m.group(1)} documents / {m.group(2)} sections" if m else ""
     return f"Library: {version or 'version unknown'}{counts} in ~/.claude/brain/library (MCP docs-local / docs-search, or search.py)."
+
+
+def shared_line():
+    """Shared brain: the --sync of notes-check.py, 6 s at most (on timeout it is left to finish or fail on its own)."""
+    brain = os.path.join(USER_HOME, "brain")
+    nc = os.path.join(os.path.dirname(os.path.abspath(__file__)), "notes-check.py")
+    if not os.path.isdir(os.path.join(brain, ".git")) or not os.path.exists(nc):
+        return ""
+    if subprocess.run(["git", "-C", brain, "rev-parse", "--abbrev-ref", "@{upstream}"], stdin=subprocess.DEVNULL,
+                      capture_output=True, timeout=3).returncode:
+        return ""
+    try:
+        out = subprocess.run([sys.executable, nc, "--sync"], stdin=subprocess.DEVNULL, capture_output=True, text=True,
+                             timeout=6).stdout.strip()
+    except subprocess.TimeoutExpired:
+        return "shared brain: sync still running (offline?)"
+    return "shared brain: " + out.replace("brain: ", "", 1) if out else ""
 
 
 def env_path():
@@ -119,6 +137,11 @@ def hook_line():
                for p in re.findall(r"(\S*block-write-tools\.py)", cmds)]
     if any(os.path.exists(p) for p in scripts):
         return ""                                # healthy: say nothing
+    # laptop install: the hooks run from the paas-brain plugin, registered by its own hooks.json next to this file
+    here = os.path.dirname(os.path.abspath(__file__))
+    if "block-write-tools.py" in read(os.path.join(here, "hooks.json")) and \
+            os.path.exists(os.path.join(here, "block-write-tools.py")):
+        return ""
     return f"Read-only guard: NOT configured in {HOME}/settings.json (re-run sh brain/install.sh)."
 
 
@@ -173,7 +196,7 @@ def main():
     except Exception:
         pass
     lines = []
-    for fn in (library_line, environment_line, memory_line, hook_line):
+    for fn in (library_line, environment_line, memory_line, shared_line, hook_line):
         try:
             lines.append(fn())
         except Exception:

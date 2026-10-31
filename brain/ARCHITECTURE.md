@@ -107,6 +107,11 @@ Code; few high-signal tools) and measured with `docs-search-mcp/eval_search.py`:
   (`/zoning-audit` -> `/storage-brain:zoning-audit`). `brain/claude/.claude-plugin/plugin.json` + `.mcp.json`
   only let the same folder load with `--plugin-dir` for `claude plugin validate` and `claude plugin eval`
   (`brain/claude/evals/`: skill-triggering cases, docs-local mocked).
+- **Laptop install is the exception: a plugin plus the rules.** `install-laptop.sh` runs `brain/plugin/build.py`, which
+  builds the marketplace `paas-brain` (skills, agents, hooks, `docs-local`) from `brain/claude`; its `hooks.json`
+  is produced by `merge_settings.py` itself, so matchers and timeouts cannot drift from the VM. The rules
+  (`main.md` import in `~/.claude/CLAUDE.md`), tools, notes and library stay in `~/.claude/brain` as on the VM. Cost: skills are
+  namespaced (`/paas-brain:zoning-audit`), and the guard is a plugin hook a person can disable; the VM stays the enforced setup.
 - **Third-party plugins: curated.** Every enabled plugin's skill / agent / command descriptions sit in the
   context on every turn. Included: the 7 plugins `install.sh` installs from
   `brain/plugins` (marketplace `brain-dev`): pr-review-toolkit, feature-dev, commit-commands, security-guidance,

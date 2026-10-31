@@ -4,6 +4,9 @@
 #   sh install.sh --project <dir>      into <dir> only: <dir>/CLAUDE.md, <dir>/.claude/{skills,agents,hooks,brain,banner,
 #                                      settings.json} and <dir>/.mcp.json - the brain exists only inside that folder
 #   sh install.sh --no-library         skip the documentation library (when docs-search runs on the cluster)
+#   sh install.sh --brain-remote <url>  share the team knowledge (notes/, captures/, incidents/, tool-map.md) through a git
+#                                      remote, e.g. an internal GitLab project (or env BRAIN_REMOTE); notes.md and
+#                                      environment.md stay personal. Idempotent.
 # Re-run after every git pull; your environment.md, tool-map.md, notes.md, notes/ and allowed-tools.txt are kept.
 # The documentation library is always shared in ~/.claude/brain/library (also in project mode).
 set -eu
@@ -12,13 +15,17 @@ SRC=$HERE/claude
 USER_DST=${CLAUDE_HOME:-$HOME/.claude}
 PROJECT=""
 NO_LIBRARY=0
+BRAIN_REMOTE=${BRAIN_REMOTE:-}
 while [ $# -gt 0 ]; do
   case "$1" in
     --no-library) NO_LIBRARY=1 ;;
+    --brain-remote) [ $# -ge 2 ] || { echo "usage: install.sh --brain-remote <url>"; exit 1; }
+                    shift; BRAIN_REMOTE=$1 ;;
+    --brain-remote=*) BRAIN_REMOTE=${1#--brain-remote=} ;;
     --project) [ $# -ge 2 ] || { echo "usage: install.sh [--project <dir>] [--no-library]"; exit 1; }
                shift; mkdir -p "$1"; PROJECT=$(cd "$1" && pwd) ;;
     --project=*) PROJECT=${1#--project=}; mkdir -p "$PROJECT"; PROJECT=$(cd "$PROJECT" && pwd) ;;
-    -h|--help) sed -n '2,8p' "$0"; exit 0 ;;
+    -h|--help) sed -n '2,11p' "$0"; exit 0 ;;
     *) echo "unknown option: $1 (usage: install.sh [--project <dir>] [--no-library])"; exit 1 ;;
   esac
   shift
@@ -94,15 +101,24 @@ mkdir -p "$USER_DST/brain/inbox"                   # your own documents (add-doc
 # the brain as a git history (notes-check.py commits each saved note); big or private things stay out of it
 if command -v git >/dev/null 2>&1 && [ ! -d "$USER_DST/brain/.git" ]; then
   ( cd "$USER_DST/brain" && git init -q \
-    && printf 'library/\ninbox/\nplugins/\n.nudged/\n.brain-index/\n*.bak\n*.db\n.DS_Store\n' > .gitignore \
+    && printf 'library/\ninbox/\nplugins/\n.nudged/\n.brain-index/\n*.bak\n*.db\n.DS_Store\nnotes.md\nenvironment.md\nmain.md\nstorage.md\ncoding.md\ndatabases.example.json\n' > .gitignore \
     && git add -A >/dev/null 2>&1 \
     && git -c user.name=brain -c user.email=brain@localhost commit -q -m 'brain: initial' >/dev/null 2>&1 ) \
     || echo "note: could not start a git history in $USER_DST/brain (skipped)"
 fi
 if [ -d "$USER_DST/brain/.git" ]; then                 # an older history learns new ignore lines
-  for l in library/ inbox/ plugins/ .nudged/ .brain-index/ '*.bak' '*.db' .DS_Store; do
+  for l in library/ inbox/ plugins/ .nudged/ .brain-index/ '*.bak' '*.db' .DS_Store notes.md environment.md main.md storage.md coding.md databases.example.json; do
     grep -qxF -- "$l" "$USER_DST/brain/.gitignore" 2>/dev/null || echo "$l" >> "$USER_DST/brain/.gitignore"
   done
+  # notes.md and environment.md are personal (management IPs, owners); main.md, storage.md, coding.md are the
+  # installer's (they differ between brain versions): out of the shared history, files kept
+  if ( cd "$USER_DST/brain" && git ls-files notes.md environment.md main.md storage.md coding.md databases.example.json | grep -q . ); then
+    ( cd "$USER_DST/brain" && git rm --cached -q notes.md environment.md main.md storage.md coding.md databases.example.json 2>/dev/null; git add .gitignore >/dev/null 2>&1
+      git -c user.name=brain -c user.email=brain@localhost commit -q -m 'brain: personal files leave the history' >/dev/null 2>&1 ) || true
+  fi
+fi
+if [ -n "$BRAIN_REMOTE" ] && [ -d "$USER_DST/brain/.git" ]; then   # shared team knowledge (hooks are copied above)
+  python3 "$DST/hooks/notes-check.py" --remote "$BRAIN_REMOTE" || echo "note: the shared brain is not set up yet (see the line above)"
 fi
 if [ "$NO_LIBRARY" = 0 ] && [ -f "$LIB/VERSION" ] && ls "$LIB"/docs-library-*.part-* >/dev/null 2>&1; then
   if [ "$(cat "$LIB/VERSION")" != "$(cat "$LIBDST/VERSION" 2>/dev/null || true)" ]; then

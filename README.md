@@ -25,14 +25,15 @@ UCS  trace_service_profile_san   vHBA WWPN, fabric, VSAN, adapter link, FI uplin
 **Every command for your PC and the VM, in order: [`RUNBOOK.md`](RUNBOOK.md).**
 **Continuing the work with Claude Code on a PC: [`HANDOFF.md`](HANDOFF.md).**
 
-## Offline VM in one command
+## Install the brain: three ways
 
-On the VM that runs Claude Code (python3 + the git clone, nothing else):
-```bash
-git clone https://github.com/peleg2312/storage-mcp-servers.git && cd storage-mcp-servers
-sh install-vm.sh        # brain (CLAUDE.md, skills, agents, hook) + documentation library + MCP server docs-local
-claude                  # then:  /brain-setup
-```
+| Where | Install | Update |
+|---|---|---|
+| Laptop with Claude Code (macOS or Linux, connected or not): a plugin + the rules + the library, no web UI ([`brain/plugin`](brain/plugin/README.md)) | `git clone https://github.com/peleg2312/storage-mcp-servers.git && cd storage-mcp-servers && sh install-laptop.sh` | `git pull && sh install-laptop.sh` |
+| Single VM (python3 + the git clone, nothing else): brain, library, `docs-local`, web UI | `sh install-vm.sh` | `git pull && sh install-vm.sh` |
+| Multi-user VM (shared `/opt/paas`, read-only guard enforced) | `sh install-vm.sh` then `sh brain/multiuser/install-shared.sh` (as root) | `git pull`, then the same two lines |
+
+Then start `claude` and run `/brain-setup`. `install-laptop.sh --no-library` skips the library; `--brain-remote <url>` shares the brain's git history.
 The MCP servers below (PowerMax, UCS, MDS, docs-search on OpenShift) are added on top with `claude mcp add`.
 
 ## Get the images

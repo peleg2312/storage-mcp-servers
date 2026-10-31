@@ -103,6 +103,15 @@ re-extracted only when `library/VERSION` changed).
 Try: `python3 ~/.claude/brain/library/search.py search "scsiblade.san.config.active"` or, inside Claude,
 `explain EMS scsiblade.san.config.active`, `/zoning-audit fabric A`, `which KB covers FC link down after a switch reboot`.
 
+## Sharing the brain through GitLab
+
+1. In GitLab create an **empty** project (default branch `main`, no README). Give everyone who should see the team knowledge the **Developer** role.
+2. Install with its url: `sh install-vm.sh` then `sh brain/install.sh --brain-remote <url>` (or `BRAIN_REMOTE=<url>`; re-running is safe). Use an ssh url with the person's own key, or an https url with a token kept by git's credential helper (`git config --global credential.helper store`), never in the brain or the url written into notes.
+3. Shared: `notes/<topic>.md`, `captures/`, `incidents/`, `tool-map.md`. Personal, never in the history: `notes.md` and `environment.md` (management IPs, owners). The library, inbox and plugins stay local.
+4. Every saved note is committed and pushed (offline is fine, the next sync retries); every session start pulls with rebase and says `shared brain: in sync` or `N ahead, M behind`. By hand: `python3 ~/.claude/hooks/notes-check.py --sync`. The Status tab shows the same under Notes.
+5. Conflict (two people changed the same line): the sync aborts and names the files. In `~/.claude/brain` run `git pull --rebase`, edit the marked files, `git add` them, `git rebase --continue`, then `notes-check.py --sync`.
+6. The code repository itself: `git remote add gitlab <url> && git push --mirror gitlab`, or GitLab's pull mirroring from GitHub. It is about 10 GB because the library parts are in its history.
+
 ## 3. Afterwards
 
 - Sign out of kb.netapp.com once the KB export is done (invalidates the token you used).
