@@ -54,6 +54,9 @@ dbs = subprocess.run([os.path.expanduser("~/.claude/devtools-venv/bin/python"), 
                      capture_output=True).returncode == 0 if os.path.exists(os.path.expanduser("~/.claude/devtools-venv/bin/python")) else False
 for srv in ((("mcp__docs-local",) + (("mcp__databases",) if dbs else ())) if shutil.which("claude") else ()):
     if srv not in allow: problems.append(f"allow {srv}: {allow}")
+deny = s.get("permissions", {}).get("deny", [])
+for tool in ("WebFetch", "WebSearch", "NotebookEdit"):
+    if tool not in deny: problems.append(f"deny {tool}: {deny}")
 print("\n".join("  " + p for p in problems)); sys.exit(1 if problems else 0)
 EOF
 

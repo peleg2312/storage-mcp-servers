@@ -62,6 +62,12 @@ env.setdefault("ENABLE_CODE_SECURITY_REVIEW", "0")
 for k in ("CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC", "DISABLE_AUTOUPDATER"):
     env.setdefault(k, "1")
 allow = s.setdefault("permissions", {}).setdefault("allow", [])
+# air-gapped: the web tools can never answer and NotebookEdit has no notebooks here; denied tools leave the tool list,
+# so every session starts ~2-3k tokens lighter
+deny = s["permissions"].setdefault("deny", [])
+for tool in ("WebFetch", "WebSearch", "NotebookEdit"):
+    if tool not in deny:
+        deny.append(tool)
 # Chrome DevTools plugin: drives the person's own Chrome (empty profile); its connector refuses infrastructure pages
 if "mcp__plugin_chrome-devtools_chrome-devtools" not in allow:
     allow.append("mcp__plugin_chrome-devtools_chrome-devtools")
