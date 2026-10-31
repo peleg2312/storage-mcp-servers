@@ -19,6 +19,9 @@ STORAGE = re.compile(r"\b(vmfs|nfs|nfsv?[34]|datastores?|luns?|naa|apd|pdl|multi
                      r"nvme\w*|satp|psa|nmp|hpp|esxcli|unmap|vmdks?|rdm|rdms|wwn|wwpn|zoning|vasa|dead-paths?|all-paths-down|"
                      r"permanent-device-loss|vsan|vmkernel|storage-(array|device|path|paths|adapter|controller|policy|policies|io|dr|"
                      r"vmotion|provider|container|pod)|esxi-storage|san-storage|nas-storage)\b")
+VMWARE = re.compile(r"\b(esxi?|vsphere|vcenter|vmware|vms?|vmotion|vmkernel|vsan|vmfs|datastore|vcsa)\b")
+NARROW = re.compile(r"\b(storage|disks?|snapshots?|latency|paths?|controller|vmdk|array|thin|thick|nvme|raid|san|capacity|iops)\b")
+DROP = re.compile(r"\b(backup|vami|hcx|vmc|aws|azure|gcp|horizon|nsx|tanzu|aria|workspace|vcf)\b")
 # Broadcom's other products share the KB (CA UIM, Spectrum, mainframe, Symantec...): their slugs are left out
 OTHER = re.compile(r"\b(snmp\w*|uim|spectrum|netops|nfa|ca|clarity|automic|autosys|xcom|librarian|mainframe|ims|cics|db2|datacom|"
                    r"idms|endevor|sysview|top-secret|acf2|siteminder|api-gateway|rally|agile|symantec|dlp|sep|edr|layer7|apm|dx|"
@@ -34,7 +37,12 @@ def main():
     urls = []
     for sub in re.findall(r"<loc>([^<]+)</loc>", get(SITE + "/sitemap.xml")):
         urls += re.findall(r"<loc>([^<]+)</loc>", get(sub))
-    keep = [u for u in urls if u.isascii() and STORAGE.search(u.rsplit("/", 1)[-1]) and not OTHER.search(u.rsplit("/", 1)[-1])]
+    def wanted(slug):
+        # a storage object in the slug, or a VMware word next to a storage word (disk, snapshot, latency, controller:
+        # alone they would pull in Broadcom's other products); hosted and backup products are left out
+        return (STORAGE.search(slug) or (VMWARE.search(slug) and NARROW.search(slug))) and not OTHER.search(slug) \
+            and not DROP.search(slug)
+    keep = [u for u in urls if u.isascii() and wanted(u.rsplit("/", 1)[-1])]
     print(f"{len(urls)} articles, {len(keep)} about storage", file=sys.stderr)
     print("\n".join(sorted(set(keep))))
 

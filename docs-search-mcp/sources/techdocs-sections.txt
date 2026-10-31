@@ -9,3 +9,10 @@ vsphere-7  https://techdocs.broadcom.com/us/en/vmware-cis/vsphere/vsphere/7-0/vs
 vsphere-8  https://techdocs.broadcom.com/us/en/vmware-cis/vsphere/vsphere/8-0/vsphere-monitoring-and-performance/
 # Windows Server Failover Clustering on vSphere (shared RDMs / clustered VMDKs on FC)
 vsphere-8  https://techdocs.broadcom.com/us/en/vmware-cis/vsphere/vsphere/8-0/setup-for-windows-server-failover-clustering/
+# Release notes: ESXi and vCenter update and patch notes (resolved issues, known issues, storage fixes)
+vsphere-9  https://techdocs.broadcom.com/us/en/vmware-cis/vsphere/vsphere/9-0/release-notes/
+vsphere-8  https://techdocs.broadcom.com/us/en/vmware-cis/vsphere/vsphere/8-0/release-notes/
+vsphere-7  https://techdocs.broadcom.com/us/en/vmware-cis/vsphere/vsphere/7-0/release-notes/
+# Monitoring and performance for 7 and 9 too: alarm definitions, events, storage charts (8 is above)
+vsphere-9  https://techdocs.broadcom.com/us/en/vmware-cis/vsphere/vsphere/9-0/vsphere-monitoring-and-performance/
+vsphere-7  https://techdocs.broadcom.com/us/en/vmware-cis/vsphere/vsphere/7-0/vsphere-monitoring-and-performance/

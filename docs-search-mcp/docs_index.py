@@ -278,19 +278,31 @@ def _pdf_word_gaps():
     except ImportError:
         return
     orig = te.crlf_space_check
+    import inspect
+    try:
+        sig = inspect.signature(orig)
+    except (TypeError, ValueError):
+        return
+    need = ("text", "cmtm_prev", "cmtm_matrix", "output", "str_widths", "spacewidth")
+    if any(n not in sig.parameters for n in need):          # the hook changed shape: leave pypdf alone
+        return
 
-    def check(text, cmtm_prev, cmtm_matrix, memo_cmtm, cmap, orientations, output, font_size, visitor_text,
-              str_widths, spacewidth, str_height):
+    def check(*args, **kwargs):
+        # bound by name, so pypdf may add or move parameters (6.1 passes 12, 6.21 passes 13) without the patch
+        # raising inside every page and leaving the PDF empty
         try:
-            m_prev, m = tx.mult(cmtm_prev[1], cmtm_prev[0]), tx.mult(cmtm_matrix[1], cmtm_matrix[0])
-            gap = (m[4] - m_prev[4]) - str_widths
+            a = sig.bind(*args, **kwargs).arguments
+            text, output = a["text"], a["output"]
+            m_prev, m = tx.mult(a["cmtm_prev"][1], a["cmtm_prev"][0]), tx.mult(a["cmtm_matrix"][1], a["cmtm_matrix"][0])
+            gap = (m[4] - m_prev[4]) - a["str_widths"]
+            spacewidth = a["spacewidth"]
             if (text and abs(m[5] - m_prev[5]) < 0.5 and spacewidth > 0 and 0.25 * spacewidth <= gap < spacewidth
                     and not (output + text).endswith((" ", "\n"))):
-                text += " "
+                a["text"] = text + " "
+                return orig(**a)
         except Exception:
             pass
-        return orig(text, cmtm_prev, cmtm_matrix, memo_cmtm, cmap, orientations, output, font_size, visitor_text,
-                    str_widths, spacewidth, str_height)
+        return orig(*args, **kwargs)
     te.crlf_space_check = check
 
 
@@ -312,6 +324,8 @@ def parse_pdf(path, fallback):
         except Exception:
             t = ""
         secs.append((f"{heads[i]} (page {i})" if heads.get(i) else f"page {i}", t))
+    if len(r.pages) > 1 and not any(t.strip() for _, t in secs):
+        log(f"warning: no text extracted from {path} ({len(r.pages)} pages): scanned, or pypdf failed")
     return title, _split(secs, title)
 
 
