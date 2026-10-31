@@ -115,7 +115,8 @@ runs the same dependency-free server in HTTP mode on port 8001 with the gate's c
 (`/etc/paas/docs-token`; port and refresh interval in `/etc/paas/docs.env`). `https://<vm>:8001/mcp` is the library;
 `https://<vm>:8001/mcp?team=nas` adds that team's knowledge: the service keeps its own clone of every team repository
 under `/var/lib/paas-docs` (from the remote recorded in `/opt/paas/teams/<team>/team.json`), pulls it and rebuilds the
-team's index every 10 minutes. Each team's `mcp.json` already carries `docs-search` with its `?team=` url: fill HOST and the
+team's index every 10 minutes and at once when a member's notes hook pushes (it posts to `/refresh?team=<team>` with the
+token from the team's `mcp.json`). Each team's `mcp.json` already carries `docs-search` with its `?team=` url: fill HOST and the
 token in the team editor and every laptop member gets it at the next switch or sync; a machine that has the library
 (the VM) skips it, since `docs-local` covers it there. Health: `curl -k https://<vm>:8001/health`. The OpenShift
 deployment of `docs-search` (`docs-search-mcp/bundle/build-offline.sh --from-library`, `openshift-offline.yaml`) remains an
@@ -126,8 +127,8 @@ option for a cluster-hosted copy; it serves the library only.
 | Who | Knowledge clone | Index | Searched through | Fresh when |
 |---|---|---|---|---|
 | VM user (web UI or shell) | `~/.claude/brain/teams/<team>` (pulled at every session start and Brain tab opening) | `~/.claude/brain/brain.db`, rebuilt in the background when pages changed | `docs-local` | next session start after a teammate pushed |
-| Plugin user on a laptop or another VM | `~/.claude/brain/teams/<team>` (same clone, same pulls) | none on the machine (no library there) | `docs-search` on the VM, `?team=<team>` | the VM's service pulled, at most 10 minutes after the push |
-| The VM's `paas-docs` service | `/var/lib/paas-docs/teams/<team>` | `/var/lib/paas-docs/<team>.db` | serves the row above | every 10 minutes |
+| Plugin user on a laptop or another VM | `~/.claude/brain/teams/<team>` (same clone, same pulls) | the VM indexes for them (no library on the machine) | `docs-search` on the VM, `?team=<team>` | seconds after a push: the notes hook asks the service to re-index that team (`POST /refresh`); every 10 minutes otherwise |
+| The VM's `paas-docs` service | `/var/lib/paas-docs/teams/<team>` | `/var/lib/paas-docs/<team>.db` | serves the row above | on request after a push, and every 10 minutes |
 
 All three read the same git repository, so what one person's Claude wrote down is what every other member searches,
 whichever machine they sit at. A laptop with the library installed (`install-laptop.sh`) behaves like a VM user.

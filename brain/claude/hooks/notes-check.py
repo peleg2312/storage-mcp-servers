@@ -143,8 +143,37 @@ def commit(message, rel=None):
             subprocess.run(["git", "-C", REPO] + cmd, stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL,
                            stderr=subprocess.DEVNULL, timeout=4)
         if upstream():       # a failed push is retried by the next --sync or session start; never a credential prompt
-            subprocess.run(["git", "-C", REPO, "push", "-q"], stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL,
-                           stderr=subprocess.DEVNULL, timeout=4, env=dict(os.environ, GIT_TERMINAL_PROMPT="0"))
+            r = subprocess.run(["git", "-C", REPO, "push", "-q"], stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL,
+                               stderr=subprocess.DEVNULL, timeout=4, env=dict(os.environ, GIT_TERMINAL_PROMPT="0"))
+            if r.returncode == 0:
+                notify_docs()
+    except Exception:
+        pass
+
+
+def notify_docs():
+    """The team's docs-search service (mcp.json of the team repository: url with ?team=<team>, bearer token) re-indexes
+    the team's knowledge at once, so teammates search the new page seconds after the push. Best effort, 3 s, silent."""
+    try:
+        import ssl
+        import urllib.request
+        servers = json.load(open(os.path.join(REPO, "mcp.json"), encoding="utf-8"))
+        cfg = servers.get("docs-search") or {}
+        url = cfg.get("url", "")
+        if "HOST" in url or "?team=" not in url:
+            return
+        base, team = url.split("/mcp", 1)[0], url.split("?team=", 1)[1].split("&")[0]
+        headers = {"Content-Length": "0", **({"Authorization": cfg["headers"]["Authorization"]} if cfg.get("headers", {}).get("Authorization") else {})}
+        req = urllib.request.Request(f"{base}/refresh?team={team}", data=b"", method="POST", headers=headers)
+        ctx = ssl.create_default_context()
+        for cert in ("/etc/paas/tls/paas-ui.crt", os.path.join(os.path.dirname(BRAIN), "paas-ui.crt")):
+            if os.path.isfile(cert):
+                ctx.load_verify_locations(cert)
+        try:
+            urllib.request.urlopen(req, timeout=3, context=ctx).read()
+        except ssl.SSLCertVerificationError:         # the VM's self-signed certificate not imported here: internal network, read-only token
+            ctx = ssl._create_unverified_context()
+            urllib.request.urlopen(req, timeout=3, context=ctx).read()
     except Exception:
         pass
 

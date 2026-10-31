@@ -197,3 +197,32 @@ try:
     print("http mode ok")
 finally:
     srv.kill()
+
+# on-demand refresh: a new page in the team folder is searchable right after POST /refresh?team=t1 (token required)
+srv = subprocess.Popen([sys.executable, os.path.join(here, "mcp_stdio.py"), "--db", db, "--http", f"127.0.0.1:{port}", "--token-file", tok,
+                        "--teams-dir", tdir, "--state-dir", state, "--refresh-minutes", "60"], stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
+try:
+    for _ in range(100):
+        try:
+            if req("/health", token="")[0] == 200:
+                break
+        except Exception:
+            time.sleep(0.1)
+    time.sleep(0.5)
+    open(os.path.join(tdir, "t1", "knowledge", "notes", "vast.md"), "w").write("# VAST\n- 2026-10-31 the viewpolicy quorum rule of tenant alpha observed vms\n")
+    assert req("/refresh?team=t1", {}, token="")[0] == 401
+    assert req("/refresh?team=nope", {})[0] == 404
+    st, r = req("/refresh?team=t1", {})
+    assert st == 202 and r == {"refreshing": ["t1"]}, (st, r)
+    found = False
+    for _ in range(100):
+        st, team = req("/mcp?team=t1", {"jsonrpc": "2.0", "id": 7, "method": "tools/call", "params": {"name": "search_docs", "arguments": {"query": "viewpolicy quorum tenant alpha"}}})
+        hits = json.loads(team["result"]["content"][0]["text"]).get("results", []) if not team["result"]["isError"] else []
+        if any("vast.md" in r.get("path", "") for r in hits):
+            found = True
+            break
+        time.sleep(0.1)
+    assert found, hits
+    print("refresh on demand ok")
+finally:
+    srv.kill()

@@ -16,7 +16,8 @@ for a VM that runs Claude Code but has no pip, no containers and no internet.
       --tls-cert C --tls-key K   HTTPS with the gate's certificate
       --teams-dir D     /mcp?team=<name> searches that team's knowledge too: D/<name>/team.json names the team's git
                         remote, the server keeps its own clone and index under --state-dir, pulled and rebuilt every
-                        --refresh-minutes (default 10); a team without a remote is indexed from D/<name>/knowledge
+                        --refresh-minutes (default 10) and at once on POST /refresh?team=<name> (the notes hook sends it
+                        after every push); a team without a remote is indexed from D/<name>/knowledge
 
 Implements MCP over stdio (JSON-RPC 2.0, one message per line): initialize, ping, tools/list,
 tools/call, and empty prompts/resources lists. Read-only.
@@ -222,6 +223,7 @@ class Teams:
         self.dir, self.state, self.log = teams_dir, state_dir, log
         self.servers = {}
         self.lock = __import__("threading").Lock()
+        self.refresh_lock = __import__("threading").Lock()
 
     def names(self):
         try:
@@ -232,13 +234,20 @@ class Teams:
     def db(self, team):
         return os.path.join(self.state, team + ".db")
 
-    def refresh(self):
-        """pull every team's repository (its own clone under the state dir) and rebuild its index when the knowledge changed"""
+    def refresh(self, only=None):
+        """pull every team's repository (its own clone under the state dir) and rebuild its index when the knowledge
+        changed; only=<team>: that team alone (POST /refresh?team=<team>, sent by the notes hook right after a push)"""
         import glob
         import shutil
         import subprocess
         di = _docs_index()
-        for team in self.names():
+        with self.refresh_lock:
+            self._refresh(only, glob, shutil, subprocess, di)
+
+    def _refresh(self, only, glob, shutil, subprocess, di):
+        for team in ([only] if only else self.names()):
+            if team not in self.names():
+                continue
             try:
                 meta = json.load(open(os.path.join(self.dir, team, "team.json")))
                 remote = meta.get("remote")
@@ -342,11 +351,24 @@ def serve_http(db, bind, token_file=None, tls_cert=None, tls_key=None, teams_dir
                 return self.send(405, {"error": "this server answers POST /mcp with JSON (no event stream)"})
             self.send(404, {"error": "not found"})
 
+        def refresh_now(self, team):
+            """POST /refresh[?team=<team>]: pull and re-index at once (the notes hook calls it after a push)"""
+            if not self.authorized():
+                return self.send(401, {"error": "bearer token required"})
+            if not teams:
+                return self.send(404, {"error": "no team knowledge on this server"})
+            if team and team not in teams.names():
+                return self.send(404, {"error": f"unknown team {team}"})
+            threading.Thread(target=teams.refresh, args=(team or None,), daemon=True).start()
+            self.send(202, {"refreshing": [team] if team else teams.names()})
+
         def do_DELETE(self):
             self.send(200, {})
 
         def do_POST(self):
             u = urlparse(self.path)
+            if u.path == "/refresh":
+                return self.refresh_now((parse_qs(u.query).get("team") or [""])[0])
             if u.path != "/mcp":
                 return self.send(404, {"error": "not found"})
             if not self.authorized():
