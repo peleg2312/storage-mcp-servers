@@ -13,6 +13,8 @@ Layout of a team repository:
   .claude-plugin/marketplace.json   paas-brain-<team>/ (the plugin, replaced on every publish)
   knowledge/{notes,captures,incidents}/ + tool-map.md   (what the team learns; notes.md and environment.md stay personal)
   team.json (name, title, remote)   README.md   .gitignore
+  install-team.sh + bin/paas-team   a laptop installs the team from the clone alone (no storage-mcp-servers checkout):
+                                    git clone <url> && sh <clone>/install-team.sh
 Standard library, Python 3.9."""
 import json
 import os
@@ -44,14 +46,53 @@ def is_url(s):
 
 def readme(team, remote):
     t = team
+    url = remote or "<this repository>"
     return (f"# Team brain: {t.get('title', t['name'])}\n\n{t.get('description', '')}\n\n"
             f"- `paas-brain-{t['name']}/`: the brain as a Claude Code plugin ({len(t['skills'])} skills, {len(t['agents'])} agents, "
             f"version {t['version']}); rebuilt by `brain/teams/publish.py` from the storage-mcp-servers repository\n"
             "- `knowledge/`: what the team learns (notes/<topic>.md, captures/, incidents/, tool-map.md), written by every "
             "member's brain and synced through this repository; notes.md and environment.md are personal and never committed\n\n"
-            "Use it: on the VM `paas-team use " + t["name"] + "`; on a laptop `sh install-laptop.sh --team " + t["name"]
-            + (f" --team-source {remote}" if remote else "") + "`; plugin only: `claude plugin marketplace add "
-            + (remote or "<this repository>") + f" && claude plugin install paas-brain-{t['name']}@paas-brain-{t['name']}`.\n")
+            "## Install on a laptop (Claude Code installed; macOS or Linux)\n\n"
+            f"```sh\ngit clone {url} brain-{t['name']} && sh brain-{t['name']}/install-team.sh\n```\n"
+            "Rules, skills, agents, hooks and the team's knowledge, synced with this repository; `paas-team` shows the state, "
+            "`paas-team use <other>` switches team. Without the docs library (`install-laptop.sh` of storage-mcp-servers adds it) "
+            "the docs-local MCP server stays disconnected and the brain says so.\n"
+            f"Plugin only (no rules, no knowledge): `claude plugin marketplace add {url} && claude plugin install "
+            f"paas-brain-{t['name']}@paas-brain-{t['name']}`.\n\n"
+            f"On the VM: `paas-team use {t['name']}` (or the Brain tab).\n")
+
+
+INSTALL_TEAM = r"""#!/bin/sh
+# Install this team's brain on a laptop from this clone alone: the plugin paas-brain-<team> (skills, agents, hooks,
+# docs-local), the rules (persona + storage rules + core CLAUDE.md as ~/.claude/brain/main.md, one import line in your own
+# ~/.claude/CLAUDE.md) and the team's knowledge folder, kept in sync with this repository. Needs: claude, python3, git.
+#   git clone <url> brain-<team> && sh brain-<team>/install-team.sh        update: git -C brain-<team> pull && sh .../install-team.sh
+# No docs library here (install-laptop.sh of storage-mcp-servers adds it); docs-local stays disconnected until then.
+set -eu
+HERE=$(cd "$(dirname "$0")" && pwd)
+TEAM=$(sed -n 's/^ *"name": *"\([a-z0-9_-]*\)".*//p' "$HERE/team.json" | head -n1)
+[ -n "$TEAM" ] || { echo "install-team.sh: no team name in $HERE/team.json"; exit 1; }
+command -v python3 >/dev/null 2>&1 || { echo "python3 is required"; exit 1; }
+command -v claude >/dev/null 2>&1 || { echo "claude (Claude Code) is required: install it first, then run this again"; exit 1; }
+DST=${CLAUDE_HOME:-$HOME/.claude}; B=$DST/brain
+mkdir -p "$DST/tools" "$B" "$HOME/storage-reports"
+cp "$HERE/bin/paas-team" "$DST/tools/paas-team"; chmod 755 "$DST/tools/paas-team"
+mkdir -p "$HOME/.local/bin" && ln -sf "$DST/tools/paas-team" "$HOME/.local/bin/paas-team"
+cp "$HERE/paas-brain-$TEAM/brain/CLAUDE.md" "$B/main.md"
+cp "$HERE/paas-brain-$TEAM/brain/coding.md" "$B/coding.md"
+touch "$DST/CLAUDE.md"
+grep -qxF '@~/.claude/brain/main.md' "$DST/CLAUDE.md" || printf '
+@~/.claude/brain/main.md
+' >> "$DST/CLAUDE.md"
+echo plugin > "$B/team-mode"
+if [ -d "$B/teams/$TEAM/.git" ]; then git -C "$B/teams/$TEAM" pull -q --rebase --autostash || echo "note: pull of the team clone failed (offline?)"
+else python3 "$DST/tools/paas-team" add "$TEAM" "$HERE"; fi
+ORIGIN=$(git -C "$HERE" remote get-url origin 2>/dev/null || true)
+[ -z "$ORIGIN" ] || python3 "$DST/tools/paas-team" remote "$TEAM" "$ORIGIN" >/dev/null
+python3 "$DST/tools/paas-team" use "$TEAM"
+echo "Rules: @~/.claude/brain/main.md in $DST/CLAUDE.md. Check: claude plugin list (paas-brain-$TEAM enabled); in claude: /brain-setup"
+"""
+
 
 
 def publish(team, dest, remote=None, hooks=True, commit=True):
@@ -86,6 +127,12 @@ def publish(team, dest, remote=None, hooks=True, commit=True):
         f.write(IGNORE)
     with open(os.path.join(dest, "README.md"), "w") as f:
         f.write(readme(t, meta.get("remote")))
+    with open(os.path.join(dest, "install-team.sh"), "w") as f:
+        f.write(INSTALL_TEAM)
+    os.chmod(os.path.join(dest, "install-team.sh"), 0o755)
+    os.makedirs(os.path.join(dest, "bin"), exist_ok=True)
+    shutil.copy(os.path.join(BRAIN, "claude", "tools", "paas-team"), os.path.join(dest, "bin", "paas-team"))
+    os.chmod(os.path.join(dest, "bin", "paas-team"), 0o755)
     if commit:
         git(dest, "add", "-A")
         git(dest, "commit", "-q", "-m", f"team {team}: plugin {t['version']}")   # nothing new: exits 1, fine

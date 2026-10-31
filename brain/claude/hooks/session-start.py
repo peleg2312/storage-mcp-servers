@@ -55,6 +55,24 @@ def shared_line():
     return "shared brain: " + out.replace("brain: ", "", 1) if out else ""
 
 
+def bare_plugin_rules():
+    """The hooks run from a team plugin (hooks.json beside this file) and nothing put the rules in place (no
+    ~/.claude/brain/persona.md: a plain `claude plugin install`): the plugin's own persona and storage rules are the context,
+    so the brain works from the plugin alone. Installed brains (persona.md present) pay nothing here."""
+    here = os.path.dirname(os.path.abspath(__file__))
+    b = os.path.join(os.path.dirname(here), "brain")
+    if os.path.exists(os.path.join(USER_HOME, "brain", "persona.md")) or not os.path.exists(os.path.join(here, "hooks.json")) \
+            or not os.path.isdir(b):
+        return ""
+    text = read(os.path.join(b, "CLAUDE.md"))
+    text = re.sub(r"^@~/\.claude/brain/persona\.md\s*$", read(os.path.join(b, "persona.md")).strip(), text, flags=re.M)
+    text = re.sub(r"^@\S+\s*$\n?", "", text, flags=re.M)      # notes.md and the like do not exist yet
+    rules = re.sub(r"^@\S+\s*$\n?", "", read(os.path.join(b, "storage.md")), flags=re.M)
+    return ("Plugin-only install (no ~/.claude/brain): these are the brain's rules for this session.\n" + text.strip()
+            + "\n\n" + rules.strip() + "\n(For notes, environment and the docs library run install-team.sh from the team "
+            "repository, or install-laptop.sh.)")
+
+
 def team_line():
     """Team mode (paas-team): which team's brain this is, and a re-apply when its repository brought a new plugin."""
     name = read(os.path.join(USER_HOME, "brain", "team")).strip()
@@ -223,7 +241,7 @@ def main():
     except Exception:
         pass
     lines = []
-    for fn in (team_line, library_line, environment_line, memory_line, shared_line, hook_line):
+    for fn in (bare_plugin_rules, team_line, library_line, environment_line, memory_line, shared_line, hook_line):
         try:
             lines.append(fn())
         except Exception:

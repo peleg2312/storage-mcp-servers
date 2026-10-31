@@ -150,9 +150,38 @@ assert "New line from the team." in open(os.path.join(home, ".claude", "skills",
 assert run([sys.executable, TOOL, "needs-refresh"], ok=False)[0] == 1
 print("hook, sync and refresh ok")
 
-# 5. off: plain files again, the clone stays
-team("off")
+# 5. a marketplace skill of a team-skill name is the person's: never overwritten or removed by a switch
+os.makedirs(os.path.join(home, ".claude", "skills", "docs-lookup"), exist_ok=True)
+open(os.path.join(home, ".claude", "skills", "docs-lookup", "SKILL.md"), "w").write("---\nname: docs-lookup\ndescription: market copy\n---\n")
+open(os.path.join(home, ".claude", "paas-market.json"), "w").write(json.dumps({"installed": {"skill/docs-lookup": "1", "agent/Explore": "1"}}))
+team("refresh")
+assert "market copy" in open(os.path.join(home, ".claude", "skills", "docs-lookup", "SKILL.md")).read()
+assert "docs-lookup" not in json.load(open(os.path.join(brain, "teams", ".installed.json")))["skills"]
+# the team repository carries what a laptop needs on its own: install-team.sh, bin/paas-team, the core rules in the plugin
+src = os.path.join(work, "sources", "nas")
+assert os.access(os.path.join(src, "install-team.sh"), os.X_OK) and os.path.isfile(os.path.join(src, "bin", "paas-team"))
+assert os.path.isfile(os.path.join(src, "paas-brain-nas", "brain", "CLAUDE.md"))
+assert subprocess.run(["sh", "-n", os.path.join(src, "install-team.sh")]).returncode == 0
+o = team("export", "san", work)
+assert o.startswith(os.path.join(work, "paas-brain-san-")) and os.path.getsize(o.split("\n")[0]) > 10000, o
+import zipfile
+names = zipfile.ZipFile(o.split("\n")[0]).namelist()
+assert "paas-brain-san/install-team.sh" in names and any(n.endswith("/skills/zoning-audit/SKILL.md") for n in names), names[:5]
+# a bare plugin install (no ~/.claude/brain/persona.md): the session-start hook prints the plugin's rules itself
+bare = tempfile.mkdtemp()
+shutil.copytree(os.path.join(src, "paas-brain-nas"), os.path.join(bare, "plug"))
+rc, o = run([sys.executable, os.path.join(bare, "plug", "hooks", "session-start.py")], e=dict(env, HOME=os.path.join(bare, "h")), inp="{}")
+assert "Plugin-only install" in o and "NAS / file-storage expert" in o and "N1." in o and "@~/" not in o, o
+rc, o = run([sys.executable, os.path.join(bare, "plug", "hooks", "session-start.py")], inp="{}")   # a real brain: silent
+assert "Plugin-only" not in o, o
+print("marketplace, export and bare plugin ok")
+
+# 6. no team: the team's skills and agents leave, the person's own and marketplace ones stay, plain files again, the clone stays
+team("use", "none")
 assert not os.path.islink(os.path.join(brain, "notes")) and os.path.isfile(os.path.join(brain, "notes", "powermax.md"))
 assert not os.path.exists(os.path.join(brain, "team")) and os.path.isdir(os.path.join(brain, "teams", "san", ".git"))
-print("off ok")
+assert skills() == ["docs-lookup", "mine"], skills()
+assert sorted(os.listdir(os.path.join(home, ".claude", "agents"))) == ["Explore.md"]
+assert json.loads(team("list", "--json"))["active"] is None
+print("no team ok")
 shutil.rmtree(work, ignore_errors=True)

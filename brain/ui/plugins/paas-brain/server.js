@@ -68,6 +68,9 @@ const commitFile = async (p, msg) => {
   if (!repo || !rel) return;
   await git(repo, ['add', '-A', '--', rel]);
   await git(repo, ['commit', '-q', '-m', msg]);
+  // a repository with an upstream: the knowledge leaves the VM after every save; a failure is ignored, the next sync retries
+  const up = await git(repo, ['rev-parse', '--abbrev-ref', '@{upstream}']);
+  if (up.ok) await run('git', ['-C', repo, 'push', '-q'], 10000);
 };
 // the file behind a memory name or captures/<file>, and its repository and path inside it (null: outside it)
 function memPath(name) {
@@ -90,6 +93,16 @@ function frontmatter(text) {
   return out;
 }
 
+// where a skill or agent came from: yours, the marketplace, the active team, else the brain itself
+const INSTALLED_TEAM = path.join(BRAIN, 'teams', '.installed.json');
+function sourceOf(kind, id, mine) {
+  if (mine) return 'mine';
+  if ((json(path.join(C, 'paas-market.json')) || {}).installed?.[`${kind}/${id}`] !== undefined) return 'market';
+  const list = (json(INSTALLED_TEAM) || {})[`${kind}s`];
+  if (Array.isArray(list) && (list.includes(id) || list.includes(`${id}.md`))) return 'team';
+  return 'brain';
+}
+
 function skills() {
   const dir = path.join(C, 'skills');
   let names = [];
@@ -98,7 +111,7 @@ function skills() {
     const text = read(path.join(dir, n, 'SKILL.md'), 60000) || '';
     const f = frontmatter(text);
     const mine = fs.existsSync(path.join(dir, n, '.user-skill'));
-    return { dir: n, shared: sharedNow('skill', n), name: f.name || n, description: f.description || '', when: f.when_to_use || '', mine,
+    return { dir: n, shared: sharedNow('skill', n), name: f.name || n, description: f.description || '', when: f.when_to_use || '', mine, source: sourceOf('skill', n, mine),
       body: mine ? text.replace(/^---\n[\s\S]*?\n---\n?/, '').trim() : undefined };
   }).filter((s) => s.description).sort((a, b) => a.name.localeCompare(b.name));
 }
@@ -110,7 +123,7 @@ function agents() {
   return names.map((n) => {
     const f = frontmatter(read(path.join(dir, n), 4000));
     const file = n.replace(/\.md$/, '');
-    return { file, mine: isMine('agent', file), shared: sharedNow('agent', file), name: f.name || file, description: f.description || '', tools: f.tools || f.disallowedTools ? `${f.tools ? `tools: ${f.tools}` : `not: ${f.disallowedTools}`}` : 'all tools', model: f.model || '' };
+    return { file, mine: isMine('agent', file), source: sourceOf('agent', file, isMine('agent', file)), shared: sharedNow('agent', file), name: f.name || file, description: f.description || '', tools: f.tools || f.disallowedTools ? `${f.tools ? `tools: ${f.tools}` : `not: ${f.disallowedTools}`}` : 'all tools', model: f.model || '' };
   });
 }
 
@@ -356,12 +369,26 @@ const routes = {
   'GET /team': async () => {
     if (!TEAM_BIN) return { installed: false };
     const r = await run('python3', [TEAM_BIN, 'list', '--json']);
-    try { return { installed: true, ...JSON.parse(r.out) }; } catch { return { installed: true, error: r.out.slice(0, 2000) || 'paas-team gave no answer' }; }
+    try { return { installed: true, ...JSON.parse(r.out), installed_skills: json(INSTALLED_TEAM) || undefined }; } catch { return { installed: true, error: r.out.slice(0, 2000) || 'paas-team gave no answer' }; }
   },
   'POST /team': async (_q, b) => {
     if (!TEAM_BIN) return { ok: false, out: 'Teams are not installed on this VM' };
-    if (!TEAM_NAME.test(String(b.name || ''))) return { ok: false, out: 'Bad team name' };
+    if (b.name !== 'none' && !TEAM_NAME.test(String(b.name || ''))) return { ok: false, out: 'Bad team name' };
     return run('python3', [TEAM_BIN, 'use', b.name]);
+  },
+  'POST /team-add': async (_q, b) => {
+    if (!TEAM_BIN) return { ok: false, out: 'Teams are not installed on this VM' };
+    const name = String(b.name || ''); const url = String(b.url || '');
+    if (!TEAM_NAME.test(name)) return { ok: false, out: 'Name: lower-case letters, digits, dashes, starting with a letter' };
+    if (url.length > 300 || /\s/.test(url) || !/^(https:\/\/|http:\/\/|ssh:\/\/|git@|\/)/.test(url)) return { ok: false, out: 'Give a git url (https://, ssh://, git@ or a folder path)' };
+    return run('python3', [TEAM_BIN, 'add', name, url], 180000);
+  },
+  'POST /team-export': async (_q, b) => {
+    if (!TEAM_BIN) return { ok: false, out: 'Teams are not installed on this VM' };
+    const args = [TEAM_BIN, 'export'];
+    if (b.name) { if (!TEAM_NAME.test(String(b.name))) return { ok: false, out: 'Bad team name' }; args.push(b.name); }
+    const r = await run('python3', args);
+    return r.ok ? { ...r, file: r.out.split('\n')[0].trim() } : r;
   },
   'POST /team-sync': async () => (TEAM_BIN ? run('python3', [TEAM_BIN, 'sync']) : { ok: false, out: 'Teams are not installed on this VM' }),
   'GET /mcp-status': () => run('claude', ['mcp', 'list'], 90000),

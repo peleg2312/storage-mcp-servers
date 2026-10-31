@@ -14,7 +14,10 @@ persona.md and storage.md as before.
   paas-team refresh                re-apply the active team's files (after its repository was updated)
   paas-team sync                   pull / push the active team's knowledge, refresh if its plugin changed
   paas-team remote <team> <url>    set (or change) the git remote of a local team
-  paas-team off                    stop using teams: the knowledge files become plain files again
+  paas-team off                    no team: the team's skills and agents leave ~/.claude, the knowledge files become
+                                   plain files again; your own and marketplace skills stay (also: paas-team use none)
+  paas-team export [<team>] [<dir>]  zip of the team's plugin (marketplace + install-team.sh) for a laptop without
+                                   GitLab access, into ~/storage-reports (the Reports tab) or <dir>
   paas-team mode files|plugin      how skills reach Claude: copied into ~/.claude (VM, hooks managed by the
                                    installer) or as the Claude Code plugin (laptop, hooks inside the plugin)
 Environment: PAAS_TEAMS (source directory: /opt/paas/teams on a multi-user VM, else ~/.claude/brain/team-sources,
@@ -259,31 +262,46 @@ def installed():
     return jload(STATE, {"skills": [], "agents": []})
 
 
-def apply_files(plug, t):
-    """files mode: the team's skills / agents replace the previous team's in ~/.claude/{skills,agents}"""
-    old = installed()
+def personal(kind, name):
+    """A skill or agent the person made (web UI: .user-skill / agents/.user-agents) or added from the marketplace
+    (~/.claude/paas-market.json) is theirs: a team switch never removes or overwrites it."""
+    if kind == "skills" and os.path.exists(os.path.join(HOME, "skills", name, ".user-skill")):
+        return True
+    if kind == "agents" and name in read(os.path.join(HOME, "agents", ".user-agents")).split():
+        return True
+    return f"{kind[:-1]}/{name}" in jload(os.path.join(HOME, "paas-market.json")).get("installed", {})
+
+
+def remove_team_files(old):
+    """the previous team's skills and agents leave ~/.claude (never a personal one)"""
     for n in old.get("skills", []):
         d = os.path.join(HOME, "skills", n)
-        if os.path.isdir(d) and not os.path.exists(os.path.join(d, ".user-skill")):
+        if os.path.isdir(d) and not personal("skills", n):
             shutil.rmtree(d)
     for n in old.get("agents", []):
         f = os.path.join(HOME, "agents", n + ".md")
-        if os.path.isfile(f):
+        if os.path.isfile(f) and not personal("agents", n):
             os.remove(f)
+
+
+def apply_files(plug, t):
+    """files mode: the team's skills / agents replace the previous team's in ~/.claude/{skills,agents}"""
+    remove_team_files(installed())
     os.makedirs(os.path.join(HOME, "skills"), exist_ok=True)
     os.makedirs(os.path.join(HOME, "agents"), exist_ok=True)
+    put = {"skills": [], "agents": []}
     for n in t.get("skills", []):
         src, dst = os.path.join(plug, "skills", n), os.path.join(HOME, "skills", n)
-        if os.path.isdir(src):
-            if os.path.exists(os.path.join(dst, ".user-skill")):
-                continue                                      # the person's own skill of that name wins
+        if os.path.isdir(src) and not personal("skills", n):     # the person's own or marketplace copy of that name wins
             shutil.rmtree(dst, ignore_errors=True)
             shutil.copytree(src, dst)
+            put["skills"].append(n)
     for n in t.get("agents", []):
         src = os.path.join(plug, "agents", n + ".md")
-        if os.path.isfile(src):
+        if os.path.isfile(src) and not personal("agents", n):
             shutil.copy(src, os.path.join(HOME, "agents", n + ".md"))
-    write(STATE, json.dumps({"skills": t.get("skills", []), "agents": t.get("agents", [])}, indent=2) + "\n")
+            put["agents"].append(n)
+    write(STATE, json.dumps(put, indent=2) + "\n")
 
 
 def claude(*args):
@@ -432,10 +450,46 @@ def off():
                 shutil.copytree(src, p)
             elif os.path.isfile(src):
                 shutil.copy(src, p)
-    if mode() == "plugin" and shutil.which("claude"):
-        claude("disable", f"paas-brain-{t}@paas-brain-{t}")
+    if mode() == "plugin":
+        if shutil.which("claude"):
+            claude("disable", f"paas-brain-{t}@paas-brain-{t}")
+    else:
+        remove_team_files(installed())
+        write(STATE, json.dumps({"skills": [], "agents": []}) + "\n")
     os.remove(os.path.join(BRAIN, "team"))
-    print(f"team {t} off: the knowledge files are plain copies in {BRAIN} again (the team clone stays in {team_dir(t)})")
+    print(f"no team: {t}'s skills and agents left ~/.claude (your own and marketplace ones stay); persona.md, storage.md and the "
+          f"knowledge files are plain copies in {BRAIN} now, yours to edit; the team clone stays in {team_dir(t)}.\n"
+          "Add skills from the marketplace (paas-market add skill/<name>, or the Market tab); paas-team use <team> joins a team again.")
+
+
+def export(team=None, dest=None):
+    """a zip a laptop unpacks: the plugin folder, the marketplace file, install-team.sh and the team's README"""
+    import zipfile
+    team = team or active()
+    if not team:
+        die("which team? paas-team export <team>")
+    tdir = team_dir(team) if plugin_dir(team_dir(team)) else os.path.join(SOURCES, team)
+    plug = plugin_dir(tdir)
+    if not plug:
+        die(f"team {team} is not added and no source offers it")
+    t = info(tdir)
+    dest = dest or os.path.expanduser("~/storage-reports")
+    os.makedirs(dest, exist_ok=True)
+    out = os.path.join(dest, f"paas-brain-{team}-{t.get('version', 'x')}.zip")
+    skip = ("__pycache__", ".pyc", "._", ".DS_Store")
+    with zipfile.ZipFile(out, "w", zipfile.ZIP_DEFLATED) as z:
+        for sub in (os.path.basename(plug), ".claude-plugin", "bin"):
+            for root, _, files in os.walk(os.path.join(tdir, sub)):
+                for f in files:
+                    full = os.path.join(root, f)
+                    if any(x in full for x in skip):
+                        continue
+                    z.write(full, os.path.join(f"paas-brain-{team}", os.path.relpath(full, tdir)))
+        for f in ("README.md", "install-team.sh", "team.json"):
+            if os.path.isfile(os.path.join(tdir, f)):
+                z.write(os.path.join(tdir, f), os.path.join(f"paas-brain-{team}", f))
+    print(f"{out}\nOn the laptop: unzip it, then  sh paas-brain-{team}/install-team.sh  (Claude Code installed; the docs library is not in the zip)")
+    return out
 
 
 def status():
@@ -477,8 +531,12 @@ def main(a):
     elif cmd == "add" and len(a) >= 2:
         add(a[1], a[2] if len(a) > 2 else None)
         print(f"team {a[1]} added ({team_dir(a[1])}); paas-team use {a[1]} switches to it")
+    elif cmd == "use" and len(a) >= 2 and a[1] in ("none", "off"):
+        off()
     elif cmd == "use" and len(a) >= 2:
         use(a[1], a[2] if len(a) > 2 else None)
+    elif cmd == "export":
+        export(a[1] if len(a) > 1 else None, a[2] if len(a) > 2 else None)
     elif cmd == "refresh":
         refresh()
     elif cmd == "sync":

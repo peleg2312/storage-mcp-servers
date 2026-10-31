@@ -38,7 +38,9 @@ Then start `claude` and run `/brain-setup`. `install-laptop.sh --no-library` ski
 **Teams.** `--team san` (default) or `--team nas` on any install picks a team profile ([`brain/teams`](brain/teams/README.md)): its
 persona, storage rules, skills, agents and a knowledge folder the team shares through one git repository per team
 (`python3 brain/teams/publish.py nas --to <gitlab url>`; `claude plugin marketplace add <url>` installs the brain from it
-anywhere). `paas-team use nas` switches a person's brain in a second; a new Claude session uses it. The NAS team covers
+anywhere). `paas-team use nas` switches a person's brain in a second (`use none` for no team; a new Claude session uses it), and
+everyone adds their own or marketplace skills on top. A laptop installs a team from its repository alone: `git clone <url>
+brain-nas && sh brain-nas/install-team.sh`. The NAS team covers
 PowerScale (OneFS), VAST and ONTAP NAS; PowerScale and VAST have no MCP server yet, so those skills work from pasted output
 and the docs library. On the multi-user VM people are Active Directory accounts (`RUNBOOK.md`), the team comes from an
 AD group (`/etc/paas/team-groups`), and idle web UI instances are stopped after two hours so RAM follows the people

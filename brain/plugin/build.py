@@ -6,7 +6,7 @@ The plugin carries the team's skills and agents (brain/teams/<team>/{skills,agen
 hooks (hooks.json is produced by brain/merge_settings.py itself, so matchers and timeouts never drift from the VM
 install; --no-hooks for a VM whose hooks are managed), the docs-local MCP server, and under brain/ the files a
 plugin cannot activate itself: persona.md, storage.md (the team's rules), the environment / tool-map / notes
-templates and coding.md. paas-team puts those in place. team.json inside the plugin lists what was resolved.
+templates, coding.md and the core CLAUDE.md. paas-team puts those in place. team.json inside the plugin lists what was resolved.
 Same output on every run. Standard library, Python 3.9."""
 import datetime
 import json
@@ -122,6 +122,7 @@ def build(out, team_name="san", hooks=True):
     shutil.copy(team_file(team, "environment", "brain/claude/brain/environment.md"), os.path.join(b, "environment.md"))
     for f in ("tool-map.md", "notes.md", "coding.md"):
         shutil.copy(os.path.join(SRC, "brain", f), os.path.join(b, f))
+    shutil.copy(os.path.join(SRC, "CLAUDE.md"), os.path.join(b, "CLAUDE.md"))      # the core rules (main.md on a laptop)
     write(os.path.join(plug, "team.json"), dump({
         "name": team_name, "title": team.get("title", team_name), "description": team.get("description", ""),
         "version": version(), "skills": [n for n, _ in skills], "agents": [n for n, _ in agents],

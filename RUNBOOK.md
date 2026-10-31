@@ -118,7 +118,17 @@ Try: `python3 ~/.claude/brain/library/search.py search "scsiblade.san.config.act
    (members then clone from GitLab, and fall back to the VM copy when it is unreachable). Give a person a team with
    `paas-user add dana --team nas`, `paas-user team dana nas`, or by AD group (step 3 of the next section). The Brain tab of
    the web UI has the same switch; a person may belong to one team at a time and change at will.
-4. A new team: a folder `brain/teams/<name>/` with `team.json` and `persona.md` (plus its own rules file, skills, agents),
+4. Laptop without this repository: `git clone <team url> brain-nas && sh brain-nas/install-team.sh` (Claude Code and
+   python3 installed) installs the team's plugin, rules and knowledge folder from the team repository alone; `paas-team
+   export nas` on the VM writes the same as a zip into the Reports tab for a laptop without GitLab access (unzip, run
+   `install-team.sh` inside). The docs library is not part of it: `install-laptop.sh` adds it.
+5. Beyond the team: everyone adds skills and agents from the Market tab (`paas-market add skill/<name>`) or writes their own
+   in the Brain tab; a team switch never removes or overwrites those. `paas-team use none` (Brain tab: "No team") leaves
+   the teams: the team's skills go, your own stay, the rules become your own editable copies.
+6. Pushing is automatic on every path (the notes hook after each saved file, the Brain tab after each save, every session
+   start and Brain tab opening syncs); the shared GitLab repository is always current. Publish a new plugin version with
+   `publish.py <team> --to <url>` after a `git pull` of this repository: members pick it up at their next sync.
+7. A new team: a folder `brain/teams/<name>/` with `team.json` and `persona.md` (plus its own rules file, skills, agents),
    `python3 brain/test_budgets.py` and `python3 brain/test_teams.py` green, then publish. `brain/teams/README.md` has the schema.
 
 ## Active Directory accounts on the multi-user VM
