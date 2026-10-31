@@ -432,3 +432,47 @@ edit("src/modules/quick-settings-panel/QuickSettingsContent.tsx",
       "import QuickSettingsSection from '@/modules/quick-settings-panel/QuickSettingsSection';\nimport { PaasNotifySwitch } from '@/modules/chat/transcript/paasReportReady';\n"),
      ("      <QuickSettingsSection title={t('quickSettings.sections.inputSettings')}>\n",
       "      <PaasNotifySwitch />\n\n      <QuickSettingsSection title={t('quickSettings.sections.inputSettings')}>\n"))
+
+# --- Brain on / off chip in the message box (overlay ComposerBrainMenu.tsx). Off = a plain chat for simple questions:
+# the provider gets `brain: false` in the message options and runs the turn with a short prompt, no tools, no MCP
+# servers and no settings files (CLAUDE.md, skills, hooks): nothing to guard, nothing to read, ~35k fewer tokens per
+# session and no MCP start-up. The prompt sends storage and vendor questions back to the brain instead of inventing.
+edit("src/modules/chat/composer/ChatComposer.tsx",
+     ("import ComposerPermissionMenu from '@/modules/chat/composer/ComposerPermissionMenu';\n",
+      "import ComposerPermissionMenu from '@/modules/chat/composer/ComposerPermissionMenu';\n"
+      "import ComposerBrainMenu from '@/modules/chat/composer/ComposerBrainMenu';\n"),
+     ("            <ComposerPermissionMenu\n",
+      "            <ComposerBrainMenu />\n\n            <ComposerPermissionMenu\n"))
+edit("src/modules/chat/hooks/useChatComposerState.ts",
+     ("import { useDropzone } from 'react-dropzone';\n",
+      "import { useDropzone } from 'react-dropzone';\nimport { brainOn } from '@/modules/chat/composer/ComposerBrainMenu';\n"),
+     ("      permissionMode: resolvePermissionModeForProvider(provider, permissionMode),\n      toolsSettings,\n",
+      "      permissionMode: resolvePermissionModeForProvider(provider, permissionMode),\n      brain: brainOn(),\n      toolsSettings,\n"))
+edit("src/modules/chat/ChatInterface.tsx",
+     ("import ChatComposer from '@/modules/chat/composer/ChatComposer';\n",
+      "import ChatComposer from '@/modules/chat/composer/ChatComposer';\nimport { brainOn } from '@/modules/chat/composer/ComposerBrainMenu';\n"),
+     ("      options: { model: currentProviderModel, effort: currentProviderEffort, permissionMode },\n",
+      "      options: { model: currentProviderModel, effort: currentProviderEffort, permissionMode, brain: brainOn() },\n"))
+edit("server/modules/providers/list/claude/claude-runtime.provider.js",
+     ("// root's sessions in bypass mode: emulated in canUseTool (Claude Code refuses bypass as root)\n",
+      "// Brain off (the chip in the message box): a plain chat with no tools, no MCP servers and no settings files\n"
+      "const PAAS_PLAIN_PROMPT = 'You are a plain chat assistant on an air-gapped VM, with no tools, no documents and no access to '\n"
+      "  + \"the person's storage systems (the brain is switched off for this message). Answer general questions directly and \"\n"
+      "  + 'briefly, in the language the person writes in; they type fast and misspell, read past it. For anything about their '\n"
+      "  + \"arrays, fabrics, hosts, VMware, Kubernetes volumes, a vendor product's behaviour, limits, versions, errors, KB or bug \"\n"
+      "  + 'numbers, or any identifier (WWN, NAA, device id): do not answer from memory. Say in one line that this needs the '\n"
+      "  + 'brain on (the Brain chip next to the model in the message box) and what it would check. Never invent an '\n"
+      "  + 'identifier, number, version or document.';\n"
+      "// root's sessions in bypass mode: emulated in canUseTool (Claude Code refuses bypass as root)\n"),
+     ("  sdkOptions.settingSources = ['project', 'user', 'local'];\n",
+      "  sdkOptions.settingSources = ['project', 'user', 'local'];\n\n"
+      "  if (options.brain === false) {\n"
+      "    sdkOptions.tools = [];\n"
+      "    sdkOptions.allowedTools = [];\n"
+      "    sdkOptions.mcpServers = {};\n"
+      "    sdkOptions.strictMcpConfig = true;\n"
+      "    sdkOptions.settingSources = [];\n"
+      "    sdkOptions.systemPrompt = PAAS_PLAIN_PROMPT;\n"
+      "  }\n"),
+     ("    const mcpServers = await loadMcpConfig(options.cwd);\n    if (mcpServers) {\n",
+      "    const mcpServers = options.brain === false ? null : await loadMcpConfig(options.cwd);\n    if (mcpServers) {\n"))
