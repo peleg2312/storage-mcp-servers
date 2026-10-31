@@ -163,8 +163,8 @@ diffutils hostname sssd realmd oddjob oddjob-mkhomedir adcli samba-common-tools`
    the docs service, the per-person CPU / memory budget; prints the sizing it chose, see "Sizing" below).
 3. `sh brain/multiuser/install-gate.sh` (the gate on 443 with its certificate, one UI per signed-in person), then
    `sh brain/multiuser/install-shared.sh` again so the marketplace and the docs service use that certificate.
-4. Active Directory: join (section below), then `/etc/paas/allowed-groups` (who may sign in) and `/etc/paas/team-groups`
-   (`<team> <AD group>`: which team a first sign-in gets).
+4. Active Directory: join (section below), then `/etc/paas/allowed-groups` (who may sign in). Nobody gets a team at sign-in:
+   each person picks one in the Brain tab (Team card, one click) or works without one.
 5. GitLab: one empty project per team, default branch `main`, protected so that only the maintainers who run publish push to
    `paas-brain-<team>/`, `team.json` and `mcp.json` (a CODEOWNERS file with those paths; members need Developer on `knowledge/`).
    Then, from this checkout on the VM: `python3 brain/teams/publish.py san --to <san url>` and the same for `nas`, and
@@ -172,7 +172,7 @@ diffutils hostname sssd realmd oddjob oddjob-mkhomedir adcli samba-common-tools`
 6. The teams' MCP servers: Brain tab, Team card, Edit (address and token per server; saved into the team repository's `mcp.json`,
    built into the plugin's `.mcp.json` and pushed, so every member's Claude connects them at the next session). Or `paas-team edit
    <team>` with the same JSON on stdin. A server left on its placeholders is not connected and is named in a note at a switch.
-7. Try it: sign in as a member of each AD group, check the Team card shows the team, ask one storage question, save one note and
+7. Try it: sign in as an AD member, pick a team in the Team card, start a new chat, ask one storage question, save one note and
    see the commit in GitLab. Laptops: the three `claude plugin` lines in README.md with the team's url.
 
 Update later: `git pull && sh install-vm.sh && sh brain/multiuser/install-shared.sh` (members get the new plugin at their next
@@ -244,9 +244,9 @@ the notes stay per person.
    `/opt/paas/marketplace` and `/opt/paas/teams`, which are otherwise readable by `paas-users` only because they can hold
    MCP tokens. The gate lower-cases the typed name and checks membership with `id -nG`; the password check is `su` through
    PAM, so it works for AD and local accounts alike.
-3. Which team: `/etc/paas/team-groups`, lines `<team> <AD group>`, e.g. `san storage-san-team` and `nas storage-nas-team`.
-   At a person's first sign-in the gate runs `paas-user provision <name>` (home, links to the shared brain, UI plugins,
-   marketplace defaults) and the team of the first matching group is switched on. Nothing else to do per person.
+3. At a person's first sign-in the gate runs `paas-user provision <name>` (home, links to the shared brain, UI plugins,
+   marketplace defaults). No team is switched on: the person picks one in the Brain tab, Team card (No team / SAN / NAS, one
+   click, then a new chat), or root sets it with `paas-user team <name> <team>`. Nothing else to do per person.
 4. RAM: the gate stops a person's UI instance after `GATE_IDLE_MINUTES` (default 120) without a request, an open WebSocket
    or a running `claude`; the next request starts it again within seconds and the sign-in cookie stays valid. So the VM
    carries the people active now (about 100-150 MB each), not the headcount. Set the minutes in `paas-gate.service`

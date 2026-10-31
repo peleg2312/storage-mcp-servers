@@ -21,6 +21,7 @@ for t in mds-mcp/test_*.py; do run mds-mcp "$(basename "$t")" "$MDS_PY"; done
 if command -v node >/dev/null; then
   run brain/ui/plugins/paas-schedule "server.js --self-test" node
   run brain/multiuser "gate.js --self-test" node          # idle stop and allowed-groups logic
+  run brain/ui/plugins/paas-brain "test_team_card.cjs" node   # the Team card in headless Chromium (SKIP without playwright)
 else echo "SKIP  node self-tests (no node)"; S=$((S+1)); fi
 run brain/ui/plugins "sync-shared.py --check" "$PY"   # every tab carries the current shared block
 # real-index search quality, only when the built index exists

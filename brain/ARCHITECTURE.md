@@ -153,7 +153,7 @@ Code; few high-signal tools) and measured with `docs-search-mcp/eval_search.py`:
 
 One instance of the web UI per signed-in person (the gate forwards by a signed cookie), one `claude` per person, one audit
 trail per person. Accounts come from Active Directory through sssd (`RUNBOOK.md`); `/etc/paas/allowed-groups` says who may
-sign in, `/etc/paas/team-groups` which team a person gets at first sign-in, when the gate provisions the home. Idle
+sign in; the gate provisions the home at the first sign-in and nobody gets a team by default (the Brain tab switches). Idle
 instances are stopped by the gate (no request, no WebSocket, no running `claude` for `GATE_IDLE_MINUTES`, default 120) and
 restarted on the next request, so memory follows the people active now. A shared account per team was the alternative and
 was rejected: it loses the audit trail, mixes everyone's chats in one instance, and needs a password rotation whenever

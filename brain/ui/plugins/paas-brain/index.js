@@ -359,38 +359,47 @@ export function mount(container, api) {
     if (!t.installed) { box.innerHTML = '<div class="sub" style="margin-bottom:12px">Team profiles are not installed on this VM.</div>'; return; }
     const teams = [...(t.teams || [])].sort((a, b) => Number(!!b.local) - Number(!!a.local));
     const cur = teams.find((x) => x.name === t.active);
+    const mcpLine = cur && (cur.mcp || []).length
+      ? ` · MCP: ${(cur.mcp || []).map((m) => (cur.mcp_added || []).includes(m) ? esc(m) : `<span class="tag" title="No address or token yet: More, Edit team">${esc(m)}: not set up</span>`).join(', ')}`
+      : '';
     box.innerHTML = `<div class="card"><h3>Team</h3>${t.error ? `<div class="sub bad" role="alert">${esc(t.error)}</div>` : `
-      <div class="sub" style="margin-bottom:10px">${cur ? `<b>${esc(cur.title || cur.name)}</b> (${esc(cur.name)})${t.mode === 'files' ? ' · files mode (no claude command)' : ''} · ${esc(cur.skills ?? 0)} skills, ${esc(cur.agents ?? 0)} agents` : 'No team is active.'}</div>
-      ${cur && (cur.mcp || []).length ? `<div class="sub" style="margin-bottom:10px">MCP servers of this team: ${(cur.mcp || []).map((m) => `${esc(m)}${(cur.mcp_added || []).includes(m) ? '' : ' <span class="tag">not added: Market tab</span>'}`).join(', ')}. Edits to a team skill or agent here reach the whole team.</div>` : ''}
-      ${field('Team', `<select class="tsel" aria-label="Team"><option value="none" ${t.active ? '' : 'selected'}>No team (your own skills and rules)</option>${teams.map((x) => `<option value="${esc(x.name)}" ${x.name === t.active ? 'selected' : ''}>${esc(x.title || x.name)} (${esc(x.name)})${x.local ? '' : ' (not added yet)'}</option>`).join('')}</select>`)}
-      <div class="row" style="margin-bottom:10px"><span class="sub grow">${cur ? (cur.remote ? `Git remote: <code>${esc(cur.remote)}</code>` : 'No git remote: the knowledge stays on this VM') : ''}</span>${cur?.remote ? '<button type="button" class="btn ghost sm tcp">Copy</button>' : ''}</div>
-      <div class="row"><button type="button" class="btn tsw">Switch</button>${cur ? '<button type="button" class="btn ghost tsy">Sync knowledge</button><button type="button" class="btn ghost tdl">Download plugin (zip)</button>' : ''}<span class="stbox"></span><span class="opn"></span></div>
-      <details class="tadd" style="margin-top:12px"><summary>Add a team from a git url</summary>
-        ${field('Name', '<input class="ta-name" aria-label="Team name" placeholder="san" autocomplete="off" spellcheck="false">', 'lower-case letters, digits, dashes')}
-        ${field('Git url', '<input class="ta-url" aria-label="Git url" placeholder="https://gitlab.example.com/team/brain.git" autocomplete="off" spellcheck="false">')}
-        <div class="row"><button type="button" class="btn ta-go">Add</button></div></details>
-      <details class="ted" style="margin-top:12px"><summary>Edit team</summary><div class="ted-body"></div></details>`}</div>`;
+      <div class="seg tseg" role="group" aria-label="Team"><button type="button" data-team="none" aria-pressed="${!t.active}">No team</button>${teams.map((x) => `<button type="button" data-team="${esc(x.name)}" aria-pressed="${x.name === t.active}" title="${esc(x.description || x.name)}">${esc(x.title || x.name)}</button>`).join('')}</div>
+      <div class="sub" style="margin:10px 0">${cur
+        ? `<b>${esc(cur.title || cur.name)}</b>: ${esc(cur.skills ?? 0)} skills, ${esc(cur.agents ?? 0)} agents, shared memory${mcpLine}${t.mode === 'files' ? ' · files mode (no claude command)' : ''}.`
+        : 'Your own rules and skills, no shared team memory. Click a team to use its brain; the next chat uses it, and one click brings you back.'}</div>
+      <div class="row"><span class="tanchor"></span><span class="stbox"></span><span class="opn"></span></div>
+      <details class="tmore" style="margin-top:12px"><summary>More: sync, git, download, edit a team</summary>
+        <div class="row" style="margin:10px 0"><span class="sub grow">${cur ? (cur.remote ? `Git remote: <code>${esc(cur.remote)}</code>` : 'No git remote: the knowledge stays on this VM') : 'No team active.'}</span>${cur?.remote ? '<button type="button" class="btn ghost sm tcp">Copy</button>' : ''}</div>
+        ${cur ? '<div class="row" style="margin-bottom:10px"><button type="button" class="btn ghost sm tsy">Sync knowledge</button><button type="button" class="btn ghost sm tdl">Download plugin (zip)</button></div>' : ''}
+        <details class="tadd" style="margin-top:8px"><summary>Add a team from a git url</summary>
+          ${field('Name', '<input class="ta-name" aria-label="Team name" placeholder="san" autocomplete="off" spellcheck="false">', 'lower-case letters, digits, dashes')}
+          ${field('Git url', '<input class="ta-url" aria-label="Git url" placeholder="https://gitlab.example.com/team/brain.git" autocomplete="off" spellcheck="false">')}
+          <div class="row"><button type="button" class="btn ta-go">Add</button></div></details>
+        <details class="ted" style="margin-top:8px"><summary>Edit a team (for the whole team)</summary>
+          ${field('Team to edit', `<select class="tsel" aria-label="Team to edit">${teams.map((x) => `<option value="${esc(x.name)}" ${x.name === (t.active || teams[0]?.name) ? 'selected' : ''}>${esc(x.title || x.name)} (${esc(x.name)})</option>`).join('') || '<option value="none">No team available</option>'}</select>`)}
+          <div class="ted-body"></div></details>
+      </details>`}</div>`;
     if (t.error) return;
     const st = statusLine(box.querySelector('.stbox'));
     const lead = teamMsg ? `${teamMsg} ` : '';
     if (teamMsg) { st.say(teamMsg); teamMsg = null; }
-    const sw = box.querySelector('.tsw');
-    sw?.addEventListener('click', async () => {
-      const name = box.querySelector('.tsel').value; const x = teams.find((y) => y.name === name) || { local: true };
-      if (name === (t.active || 'none')) { st.say(name === 'none' ? 'Already using your own skills and rules.' : 'Already using this team.'); return; }
-      const r0 = await confirmInline(sw, name === 'none'
-        ? { title: 'Switch to no team?', text: 'Your next chat uses your own copies of the rules; the team\'s skills leave. Your own and marketplace skills stay.', confirmLabel: 'Switch' }
-        : { title: `Switch to ${x.title || name}?`, text: `Your next Claude chat uses this team's rules and skills.${dirty ? ' Unsaved edits below are lost.' : ''}${x.local ? '' : ' It is added first, which can take a few seconds.'}`, confirmLabel: 'Switch' });
-      if (!r0.ok) return;
-      const done = busy(sw, x.local ? 'Switching…' : 'Adding…'); st.say('');
+    // one click switches; the only question is about edits below that would be lost
+    box.querySelectorAll('.tseg button').forEach((b) => b.addEventListener('click', async () => {
+      const name = b.dataset.team; const x = teams.find((y) => y.name === name) || { local: true, title: '' };
+      if (name === (t.active || 'none')) return;
+      if (dirty) {
+        const r0 = await confirmInline(box.querySelector('.tanchor'), { title: 'Switch and drop the unsaved edits?', text: 'Something below is edited and not saved.', confirmLabel: 'Switch' });
+        if (!r0.ok) return;
+      }
+      const done = busy(b, x.local ? 'Switching…' : 'Adding…'); st.say('');
       if (syncing) await syncing;                          // never run two git operations in the same clone
       const r = await api.rpc('POST', 'team', { name }).catch((e) => ({ out: String(e) }));
       done();
       if (!r.ok) { st.error(`Not switched: ${r.out || 'unknown error'}`); return; }
-      teamMsg = name === 'none' ? 'Switched to no team. Start a new chat to use it.' : `Switched to ${x.title || name}. Start a new chat to use it.`;
+      teamMsg = name === 'none' ? 'No team now. Start a new chat to work with your own rules.' : `Now on ${x.title || name}. Start a new chat to use it.`;
       teamSynced = false;
       refresh();
-    });
+    }));
     box.querySelector('.tsy')?.addEventListener('click', async (e) => {
       const done = busy(e.currentTarget, 'Syncing…'); st.say('');
       const r = await runSync();
@@ -419,7 +428,7 @@ export function mount(container, api) {
       const r = await api.rpc('POST', 'team-add', { name, url }).catch((x) => ({ out: String(x) }));
       done();
       if (!r.ok) { st.error(`Not added: ${r.out || 'unknown error'}`); return; }
-      teamMsg = `Added ${name}. Pick it in the list and press Switch.`;
+      teamMsg = `Added ${name}: click it above to switch.`;
       renderTeam(box);
     });
     teamEditor(box, t.active, st);
@@ -443,7 +452,7 @@ export function mount(container, api) {
     async function load() {
       const name = sel.value; const my = ++seq;
       clean();                                             // fresh data replaces whatever was typed
-      if (name === 'none') { body.innerHTML = '<div class="sub">Pick a team above to edit it.</div>'; return; }
+      if (!name || name === 'none') { body.innerHTML = '<div class="sub">No team to edit.</div>'; return; }
       body.innerHTML = skeleton('list');
       const r = await api.rpc('GET', `team-show?name=${encodeURIComponent(name)}`).catch((e) => ({ ok: false, out: e.message || String(e) }));
       if (my !== seq || !box.isConnected) return;
@@ -572,7 +581,7 @@ export function mount(container, api) {
         <button class="btn ghost sm" data-open="${k}">Open</button><button class="btn danger sm" data-drop="${k}">Discard</button></div>`).join('')
         : '<div class="sub">Nothing captured yet. Claude writes a capture when it solves something worth keeping.</div>'}`}`;
     if (!cap) renderTeam(pane.querySelector('.teambox'));
-    pane.querySelectorAll('.seg button').forEach((b) => b.addEventListener('click', () => renderMemory(Number(b.dataset.i))));
+    pane.querySelectorAll('.seg:not(.tseg) button').forEach((b) => b.addEventListener('click', () => renderMemory(Number(b.dataset.i))));
     pane.querySelectorAll('[data-open]').forEach((b) => b.addEventListener('click', () => {
       const c = data.captures[Number(b.dataset.open)]; renderMemory(0, { name: `captures/${c.name}`, editable: true, text: c.text });
     }));

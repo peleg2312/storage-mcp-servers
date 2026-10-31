@@ -188,6 +188,6 @@ NAS rules and skill list are shorter, `test_budgets.py` prints both).
   as before (plain files, no symlinks).
 - `sh install-laptop.sh [--team nas] [--team-source <url>]`: plugin mode; the pre-team `paas-brain` plugin is removed.
 - Multi-user VM: `install-shared.sh` publishes every team into `/opt/paas/teams/<team>` (plugins without hooks, the
-  hooks are managed settings) and installs `paas-team`. `paas-user add dana --team nas`, `paas-user team dana nas`, or
-  the AD mapping in `/etc/paas/team-groups` (`nas  storage-nas-team`) at the person's first sign-in. The Brain tab of
-  the web UI has the same switch.
+  hooks are managed settings) and installs `paas-team`. Everyone starts without a team; the Team card of the Brain tab
+  switches with one click (No team / SAN / NAS), root can also set it with `paas-user team dana nas` or `paas-user add
+  dana --team nas`.

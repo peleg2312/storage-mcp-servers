@@ -79,8 +79,7 @@ and reclaims their own processes first and, at the hard limit, ends their larges
   3. Provision on first use: when `/etc/paas/users/<user>.env` did not exist yet (first sign-in) or the home has no
      `.claude/brain`, run `/opt/paas/bin/paas-user provision <user>` (60 s timeout; a failure is logged, never fatal).
      It makes the home when sssd has not (`mkhomedir_helper`), links the brain, installs the UI plugins and default
-     marketplace items, and picks the team: `/etc/paas/team-groups` (lines `<team> <group>`, `#` comments) maps AD
-     groups to teams; a person with no team yet gets the team of the first group they belong to (`paas-team use`).
+     marketplace items. No team is chosen: the person starts with their own rules and picks a team in the Brain tab.
      Then make sure the user's instance runs: create `/etc/paas/users/<user>.env` if missing, `systemctl start
      paas-ui@<user>`, poll `http://127.0.0.1:<port>/health` up to 60 s.
   4. Get the browser token: `POST http://127.0.0.1:<port>/api/auth/login` with the same username + password
@@ -151,6 +150,6 @@ Run alongside `brain/ui/test-ui.sh`. Users: `root`, `peleg` and `dana` in `paas-
 | 16 | 50 MB file upload in the Files tab | succeeds |
 | 17 | dana signs in, `paas-user lock dana`, then a request with her cookie | 401, `paas-ui@dana` not restarted |
 | 18 | `GATE_IDLE_MINUTES=1`, peleg signs in, no request and no `claude` for over 1 minute (plus the 60 s sweep); then any request with his cookie | `paas-ui@peleg` stopped (gate log), then restarted and the request served |
-| 19 | a member of an AD group in `allowed-groups`, never created with `paas-user add`, signs in | 200; `.env` made, home exists with `.claude/brain`, team from `team-groups` set |
+| 19 | a member of an AD group in `allowed-groups`, never created with `paas-user add`, signs in | 200; `.env` made, home exists with `.claude/brain`, no team set |
 | 20 | peleg keeps a WebSocket open (or a `claude` process runs as him) past the timeout | `paas-ui@peleg` is not stopped; after the socket closes it is stopped once idle again |
 | 21 | a second group added to `/etc/paas/allowed-groups` (wait 60 s or restart the gate) | its members sign in; non-members still get the same 401 as test 3 |

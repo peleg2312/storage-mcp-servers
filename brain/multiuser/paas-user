@@ -38,17 +38,6 @@ set_team() {        # the team profile is the person's own (paas-team runs as th
 
 team_of() { h=$(home_of "$1"); if [ -n "$h" ] && [ -s "$h/.claude/brain/team" ]; then head -n1 "$h/.claude/brain/team"; else echo none; fi; }
 
-team_from_groups() {   # /etc/paas/team-groups: "<team> <group>" per line; the first group the person is in picks the team
-  [ -f /etc/paas/team-groups ] || return 0
-  have=" $(lower "$(id -nG "$1" 2>/dev/null)") "
-  while read -r t grp _; do
-    case "$t" in ''|'#'*) continue ;; esac
-    [ -n "$grp" ] || continue
-    case "$have" in *" $(lower "$grp") "*) set_team "$1" "$t" || true; return 0 ;; esac
-  done < /etc/paas/team-groups
-  return 0
-}
-
 ask_password() {    # into $a: one line from stdin when it is not a terminal; else asked twice. Checked before any account is made
   if [ -t 0 ]; then
     stty -echo; trap 'stty echo 2>/dev/null' EXIT; trap 'exit 130' INT     # echo comes back on Ctrl-C too
@@ -174,8 +163,7 @@ for p in "$P"/ui-plugins/*/; do
 done
 PAAS_MARKET=$P/marketplace "$P/bin/paas-market" defaults >/dev/null 2>&1 || echo "note: default marketplace items not added (is claude installed?)"
 EOS
-  # no team yet: the first mapped group of the person (AD membership) picks it
-  [ "$u" = root ] || [ -e "$h/.claude/brain/team" ] || team_from_groups "$u"
+  # no team is chosen for anyone: a person starts with their own rules and picks a team in the Brain tab (or root: paas-user team)
   return 0
 }
 

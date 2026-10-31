@@ -43,9 +43,9 @@ everyone adds their own or marketplace skills on top. A laptop installs a team f
 `claude plugin marketplace add <url> && claude plugin install paas-brain-nas@paas-brain-nas` (the plugin sets the team up at its
 first session, notes flow back to the repository). The NAS team covers
 PowerScale (OneFS), VAST and ONTAP NAS; PowerScale and VAST have no MCP server yet, so those skills work from pasted output
-and the docs library. On the multi-user VM people are Active Directory accounts (`RUNBOOK.md`), the team comes from an
-AD group (`/etc/paas/team-groups`), and idle web UI instances are stopped after two hours so RAM follows the people
-signed in, not the headcount.
+and the docs library. On the multi-user VM people are Active Directory accounts (`RUNBOOK.md`); everyone starts without a
+team and picks one in the Brain tab with one click (and switches back the same way); idle web UI instances are stopped
+after an hour so RAM follows the people signed in, not the headcount.
 The MCP servers below (PowerMax, UCS, MDS, docs-search on OpenShift) are added on top with `claude mcp add`.
 
 ## Install a team's brain on any machine
