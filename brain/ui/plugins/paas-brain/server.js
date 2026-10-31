@@ -33,7 +33,7 @@ const oneLine = (v, max) => String(v || '').replace(/\s+/g, ' ').trim().slice(0,
 const read = (p, max = 200000) => { try { return fs.readFileSync(p, 'utf8').slice(0, max); } catch { return null; } };
 const json = (p) => { try { return JSON.parse(fs.readFileSync(p, 'utf8')); } catch { return null; } };
 const run = (cmd, args, timeout = 120000) => new Promise((resolve) => {
-  execFile(cmd, args, { timeout, maxBuffer: 20 * 1024 * 1024, env: { ...process.env, PATH: `${HOME}/.local/bin:${process.env.PATH}` } },
+  execFile(cmd, args, { timeout, maxBuffer: 20 * 1024 * 1024, env: { ...process.env, GIT_TERMINAL_PROMPT: '0', PATH: `${HOME}/.local/bin:${process.env.PATH}` } },
     (err, stdout, stderr) => resolve({ ok: !err, out: `${stdout}${stderr}`.trim() }));
 });
 
@@ -63,6 +63,18 @@ function locate(p) {
     return { repo, rel: rel.startsWith('..') || path.isAbsolute(rel) ? null : rel };
   } catch { return { repo, rel: null }; }
 }
+// a file the UI is about to write must really lie inside the brain or the team repository: the memory files are symlinks
+// into the team clone, and a teammate could commit a symlink that points elsewhere (writing through it would land there)
+function inside(p, roots) {
+  let real;
+  try { real = fs.realpathSync(p); } catch { try { real = path.join(fs.realpathSync(path.dirname(p)), path.basename(p)); } catch { return false; } }
+  return roots.filter(Boolean).some((r) => {
+    let rr; try { rr = fs.realpathSync(r); } catch { return false; }
+    const rel = path.relative(rr, real);
+    return rel !== '' && !rel.startsWith('..') && !path.isAbsolute(rel);
+  });
+}
+const OUTSIDE = { ok: false, out: 'That file points outside the brain and the team repository; not written' };
 const commitFile = async (p, msg) => {
   const { repo, rel } = locate(p);
   if (!repo || !rel) return;
@@ -82,7 +94,7 @@ async function teamWriteBack(kind, name, file) {
   const list = kind === 'skill' ? put.skills : put.agents;
   if (!Array.isArray(list) || !list.includes(name)) return null;        // the person's own or a marketplace item: theirs alone
   const dst = kind === 'skill' ? path.join(repo, `paas-brain-${team}`, 'skills', name, 'SKILL.md') : path.join(repo, `paas-brain-${team}`, 'agents', `${name}.md`);
-  if (!fs.existsSync(path.dirname(dst))) return null;
+  if (!fs.existsSync(path.dirname(dst)) || !inside(dst, [repo])) return null;
   fs.copyFileSync(file, dst);
   await teamCommit(repo, team, kind, name);
   return team;
@@ -344,6 +356,7 @@ const routes = {
       const t = String(b.text ?? '');
       if (t.length > 500000) return { ok: false, out: 'Too long' };
       fs.mkdirSync(CAPTURES, { recursive: true });
+      if (!inside(p, [BRAIN, repoDir()])) return OUTSIDE;
       if (fs.existsSync(p)) fs.copyFileSync(p, `${p}.bak`);
       fs.writeFileSync(p, t.endsWith('\n') ? t : `${t}\n`);
       await commitFile(p, `brain tab: ${b.name}`);
@@ -354,6 +367,7 @@ const routes = {
     const text = String(b.text ?? '');
     if (text.length > 500000) return { ok: false, out: 'Too long' };
     const p = MEMORY[b.name];
+    if (!inside(p, [BRAIN, repoDir()])) return OUTSIDE;
     if (fs.existsSync(p)) fs.copyFileSync(p, `${p}.bak`);            // one step back, next to the file
     fs.writeFileSync(p, text.endsWith('\n') ? text : `${text}\n`);
     await commitFile(p, `brain tab: ${b.name}`);
@@ -423,6 +437,7 @@ const routes = {
       if (b.create) return { ok: false, out: `"${b.name}" already exists` };
       const repo = repoDir();
       if (!repo || repo === BRAIN) return { ok: false, out: 'The team repository is not available' };
+      if (!inside(tf.file, [repo])) return OUTSIDE;
       fs.writeFileSync(tf.file, text.endsWith('\n') ? text : `${text}\n`);
       await teamCommit(repo, tf.team, b.kind, b.name);
       return { ok: true, team: tf.team };

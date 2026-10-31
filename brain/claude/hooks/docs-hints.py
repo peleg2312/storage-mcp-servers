@@ -221,8 +221,9 @@ def main():
 
 
 if __name__ == "__main__":
-    # a team plugin on a VM whose managed settings run this hook for every account: that copy is the enforced one
-    if len(sys.argv) == 1 and os.environ.get("CLAUDE_PLUGIN_ROOT"):
+    # a team plugin's copy on a VM whose managed settings run this hook for every account steps aside: the enforced copy
+    # under /opt/paas/hooks answers. The enforced copy itself never steps aside, whatever the environment says.
+    if len(sys.argv) == 1 and os.environ.get("CLAUDE_PLUGIN_ROOT") and not os.path.realpath(__file__).startswith("/opt/paas/hooks/"):
         try:
             if os.path.basename(__file__) in open(os.environ.get("PAAS_MANAGED_SETTINGS") or "/etc/claude-code/managed-settings.json").read():
                 sys.exit(0)

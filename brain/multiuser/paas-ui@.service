@@ -1,6 +1,7 @@
 [Unit]
 Description=Peleg As A Service web UI for %i
-After=network.target
+After=network.target nss-user-lookup.target
+Wants=nss-user-lookup.target
 
 [Service]
 User=%i

@@ -73,6 +73,11 @@ os.makedirs(os.path.join(brain, "incidents", "2026"))
 open(os.path.join(brain, "incidents", "2026", "x.md"), "w").write("- password=hunter2\n")
 rc, out = run("notes-check.py", args=["--scan"])
 assert rc == 1 and "incidents/2026/x.md:1" in out, (rc, out)
+assert run("notes-check.py", args=["--commit", "whole tree"]) == (0, "")   # a whole-tree commit leaves a file holding a secret out
+assert "incidents" not in git("ls-files"), git("ls-files")
+open(os.path.join(brain, "incidents", "2026", "x.md"), "w").write("- password=<REDACTED>\n")
+run("notes-check.py", args=["--commit", "incident redacted"])
+assert "incidents/2026/x.md" in git("ls-files"), git("ls-files")
 print("brain git history ok")
 
 # shared brain: a bare remote, a second person joins, hook commits push, --sync, conflict leaves a usable tree
@@ -114,6 +119,20 @@ assert rc == 0 and not os.path.isdir(os.path.join(brain, ".git", "rebase-merge")
 os.remove(leak); run("notes-check.py", args=["--commit", "leak gone"])   # the later add-docs case counts the notes pages
 assert run("notes-check.py", args=["--sync"], e=env2)[0] == 0      # the second person is current again for the conflict scenario
 print("secrets and stuck rebase ok")
+# two members save at the same time: the second push is rejected, the hook pulls (rebase) and pushes again; the generated
+# knowledge/INDEX.md, which both commits rewrote, clashes alone and is rebuilt instead of reported
+for b in (brain, brain2):
+    os.makedirs(os.path.join(b, "knowledge", "notes"), exist_ok=True)
+open(os.path.join(brain2, "knowledge", "notes", "two.md"), "w").write("# Two\n- from two\n")
+run("notes-check.py", args=["--commit", "two page"], e=env2)                  # pushed first (INDEX.md lists two.md)
+open(os.path.join(brain, "knowledge", "notes", "one.md"), "w").write("# One\n- from one\n")
+assert run("notes-check.py", args=["--commit", "one page"]) == (0, "")          # rejected, rebased over two's, pushed
+shared = gi(bare, "ls-tree", "--name-only", "main:knowledge/notes")
+assert "one.md" in shared and "two.md" in shared, shared
+assert gi(brain, "status", "--porcelain").strip() == "", gi(brain, "status")
+assert "one.md" in gi(bare, "show", "main:knowledge/INDEX.md") and "two.md" in gi(bare, "show", "main:knowledge/INDEX.md")
+assert run("notes-check.py", args=["--sync"], e=env2) == (0, "brain: in sync\n")
+print("concurrent pushes ok")
 # conflict: the same line changed on both sides (the second to sync loses nothing, the tree stays usable)
 nx2 = os.path.join(brain2, "notes", "x.md")
 open(nx2, "w").write("# X\n- line one\n- from two\n")

@@ -151,12 +151,12 @@ sock = socket.socket(); sock.bind(("127.0.0.1", 0)); port = sock.getsockname()[1
 tdir = os.path.join(root, "teams"); os.makedirs(os.path.join(tdir, "t1", "knowledge", "notes"))
 open(os.path.join(tdir, "t1", "team.json"), "w").write(json.dumps({"name": "t1", "title": "Team one"}))
 open(os.path.join(tdir, "t1", "knowledge", "notes", "powerscale.md"), "w").write("# PowerScale\n- 2026-10-31 smartconnect zone answers from pool0 verified isi\n")
-tok = os.path.join(root, "token"); open(tok, "w").write("s3cret-token\n")
+tok = os.path.join(root, "token"); open(tok, "w").write("s3cret-token-for-tests\n")
 state = os.path.join(root, "state")
 srv = subprocess.Popen([sys.executable, os.path.join(here, "mcp_stdio.py"), "--db", db, "--http", f"127.0.0.1:{port}", "--token-file", tok,
                         "--teams-dir", tdir, "--state-dir", state, "--refresh-minutes", "60"], stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
 try:
-    def req(path, body=None, token="s3cret-token"):
+    def req(path, body=None, token="s3cret-token-for-tests"):
         data = json.dumps(body).encode() if body is not None else None
         r = urllib.request.Request(f"http://127.0.0.1:{port}{path}", data=data, method="POST" if data else "GET",
                                    headers={"Content-Type": "application/json", **({"Authorization": "Bearer " + token} if token else {})})
@@ -172,10 +172,11 @@ try:
         except Exception:
             time.sleep(0.1)
     for _ in range(100):                      # the refresh thread builds t1's index at start
-        if os.path.exists(os.path.join(state, "t1.db.stamp")):
+        if os.path.exists(os.path.join(state, "index", "t1.db.stamp")):
             break
         time.sleep(0.1)
-    assert req("/health", token="")[1]["teams"] == ["t1"]
+    assert "teams" not in req("/health", token="")[1]          # the team list is for token holders only
+    assert req("/health")[1]["teams"] == ["t1"]
     assert req("/mcp", {"jsonrpc": "2.0", "id": 1, "method": "ping"}, token="")[0] == 401
     assert req("/mcp", {"jsonrpc": "2.0", "id": 1, "method": "ping"}, token="wrong")[0] == 401
     st, init = req("/mcp", {"jsonrpc": "2.0", "id": 1, "method": "initialize", "params": {"protocolVersion": "2025-06-18", "capabilities": {}}})
@@ -265,11 +266,11 @@ import shutil
 for f in os.listdir(os.path.join(tdir, "t1", "knowledge", "notes")):
     shutil.copy(os.path.join(tdir, "t1", "knowledge", "notes", f), os.path.join(member, "notes", f))
 own = os.path.join(root, "member.db")
-assert os.path.exists(os.path.join(state, "t1.db.stamp"))
-o = ask_stdio(["--db", db, "--knowledge", member, "--brain-db", own, "--shared-knowledge", state])
+assert os.path.exists(os.path.join(state, "index", "t1.db.stamp"))
+o = ask_stdio(["--db", db, "--knowledge", member, "--brain-db", own, "--shared-knowledge", os.path.join(state, "index")])
 assert [l["library"] for l in o[2]["libraries"]] == ["main", "team knowledge"] and o[2]["libraries"][1]["documents"] == 2, o[2]
 assert not os.path.exists(own), "the shared index served: no index of the member's own was built"
 open(os.path.join(member, "notes", "mine.md"), "w").write("# Mine\n- 2026-10-31 a fact only I have observed me\n")
-o = ask_stdio(["--db", db, "--knowledge", member, "--brain-db", own, "--shared-knowledge", state])
+o = ask_stdio(["--db", db, "--knowledge", member, "--brain-db", own, "--shared-knowledge", os.path.join(state, "index")])
 assert os.path.exists(own) and o[2]["libraries"][1]["documents"] == 3, "pages differ from the service's: own index"
 print("shared knowledge ok")

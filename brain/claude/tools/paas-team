@@ -227,8 +227,8 @@ def add(team, source=None, quiet=False):
     if plugin_dir(dest):
         return dest
     if os.path.exists(dest):
-        if os.path.isdir(os.path.join(dest, "knowledge")) or os.listdir(dest) and os.path.isdir(os.path.join(dest, ".git")) and \
-                git(dest, "rev-parse", "--verify", "-q", "HEAD", timeout=5)[0] == 0:
+        if os.path.isdir(os.path.join(dest, "knowledge")) or (os.path.isdir(os.path.join(dest, ".git")) and
+                                                               git(dest, "rev-parse", "--verify", "-q", "HEAD", timeout=5)[0] == 0):
             die(f"{dest} exists but holds no team plugin; remove it first")
         shutil.rmtree(dest, ignore_errors=True)                    # an interrupted clone: start again
     os.makedirs(TEAMS, exist_ok=True)
@@ -243,7 +243,7 @@ def add(team, source=None, quiet=False):
     if url:
         if not quiet:
             print(f"cloning team {team} from {url} ...")
-        rc, out = git(TEAMS, "clone", "-q", url, tmp, timeout=300)
+        rc, out = git(TEAMS, "clone", "-q", "--", url, tmp, timeout=300)
         if rc and plugin_dir(src_dir):                       # the remote is not reachable: the VM's copy, remote kept
             print(f"note: clone from {url} failed ({out.splitlines()[-1][:120] if out else 'no answer'}); using {src_dir}, "
                   "the remote is set for later syncs")
@@ -261,7 +261,7 @@ def add(team, source=None, quiet=False):
     if not plugin_dir(source):
         die(f"{source} is not a team repository (no paas-brain-<team>/team.json)")
     if os.path.isdir(os.path.join(source, ".git")):
-        rc, out = git(TEAMS, "clone", "-q", source, tmp, timeout=120)
+        rc, out = git(TEAMS, "clone", "-q", "--", source, tmp, timeout=120)
         if rc:
             shutil.rmtree(tmp, ignore_errors=True)
             die(f"clone of {source} failed: {out[-300:]}")
@@ -280,24 +280,52 @@ def add(team, source=None, quiet=False):
 
 # ---- use / refresh ---------------------------------------------------------------------------------------------
 
+def park(p):
+    """the person's own file or folder, kept beside the link as <name>.pre-team (never overwritten: a later one is numbered)"""
+    dst, n = p + ".pre-team", 1
+    while os.path.lexists(dst):
+        n += 1
+        dst = f"{p}.pre-team{n}"
+    os.replace(p, dst)
+    return dst
+
+
+def merge_dir(src, dst):
+    """the person's folder into the team's, recursively: files the team lacks move over, identical ones are dropped;
+    what stays behind in src differs from the team's copy and is the caller's to keep. Nothing is deleted."""
+    for name in sorted(os.listdir(src)):
+        a, b = os.path.join(src, name), os.path.join(dst, name)
+        if os.path.islink(a):
+            continue
+        if not os.path.lexists(b):
+            shutil.move(a, b)
+        elif os.path.isdir(a) and os.path.isdir(b):
+            merge_dir(a, b)
+            if not os.listdir(a):
+                os.rmdir(a)
+        elif os.path.isfile(a) and os.path.isfile(b) and read(a) == read(b):
+            os.remove(a)
+
+
 def link(brain_name, target, template=None):
     """~/.claude/brain/<name> -> target. A real file or directory there is moved into the team's knowledge the first
-    time a team is used (the person's own notes travel with them): a directory merges (files missing on the team side
-    move over), a file replaces a team file that is still the untouched template, else its '- ' lines the team file
-    lacks are appended; the person's file is kept as <name>.pre-team."""
+    time a team is used (the person's own notes travel with them): a directory merges (files the team lacks move over,
+    recursively), a file replaces a team file that is still the untouched template, else its '- ' lines the team file
+    lacks are appended. Whatever differs from the team's copy is kept as <name>.pre-team; nothing is deleted."""
     p = os.path.join(BRAIN, brain_name)
     if os.path.islink(p):
         if os.readlink(p) == target:
             return
-        os.remove(p)
+        os.remove(p)                                         # another team's link: its knowledge stays in its own clone
     elif os.path.exists(p):
         if not os.path.exists(target):
             shutil.move(p, target)
-        elif os.path.isdir(p) and os.path.isdir(target):     # merge: files missing on the team side move over
-            for name in os.listdir(p):
-                if not os.path.exists(os.path.join(target, name)):
-                    shutil.move(os.path.join(p, name), os.path.join(target, name))
-            shutil.rmtree(p)
+        elif os.path.isdir(p) and os.path.isdir(target):
+            merge_dir(p, target)
+            if os.listdir(p):
+                park(p)
+            else:
+                os.rmdir(p)
         elif os.path.isfile(p) and os.path.isfile(target):
             mine, theirs = read(p), read(target)
             if template and theirs.strip() == read(template).strip():
@@ -306,9 +334,9 @@ def link(brain_name, target, template=None):
                 missing = [l for l in mine.splitlines() if l.startswith("- ") and l not in theirs.splitlines()]
                 if missing:
                     write(target, theirs.rstrip("\n") + "\n" + "\n".join(missing) + "\n")
-            os.replace(p, p + ".pre-team")
+            park(p)
         else:
-            os.replace(p, p + ".pre-team")
+            park(p)
     os.makedirs(os.path.dirname(target), exist_ok=True)
     os.symlink(target, p)
 
@@ -380,6 +408,11 @@ def apply_mcp(t, old, tdir):
         if f"mcp/{m}" in mine and prev.get(m) != "market":
             continue                                              # the person added it themselves before any team: theirs
         cfg = servers.get(m) or {}
+        if cfg and cfg.get("command"):
+            print(f"note: MCP {m}: the team's mcp.json may only carry http servers (a command would run on every member's machine); skipped")
+            cfg = {}
+        if cfg and mcp_ready(cfg) and shutil.which("claude") and m not in prev and claude_mcp("get", m)[0] == 0:
+            continue                                              # registered by the person themselves: theirs, not replaced
         if cfg and mcp_ready(cfg) and shutil.which("claude"):
             claude_mcp("remove", "-s", "user", m)
             rc, out = claude_mcp("add-json", "-s", "user", m, json.dumps(cfg))
@@ -518,7 +551,7 @@ def strip_settings_hooks():
         write(p, json.dumps(s, indent=2) + "\n")
 
 
-def apply(team, say=True, skills=True, plugin_cmds=True):
+def apply(team, say=True, skills=True, plugin_cmds=True, persona=True):
     tdir = team_dir(team)
     plug = plugin_dir(tdir)
     if not plug:
@@ -534,8 +567,13 @@ def apply(team, say=True, skills=True, plugin_cmds=True):
     for name in ("notes.md", "environment.md", "tool-map.md"):    # the team's memory files start from the templates
         if not os.path.exists(os.path.join(k, name)):
             shutil.copy(os.path.join(plug, "brain", name), os.path.join(k, name))
-    copy_rule(os.path.join(plug, "brain", "persona.md"), os.path.join(BRAIN, "persona.md"))
+    if persona:
+        copy_rule(os.path.join(plug, "brain", "persona.md"), os.path.join(BRAIN, "persona.md"))
     copy_rule(os.path.join(plug, "brain", "storage.md"), os.path.join(BRAIN, "storage.md"))
+    mine, copy = os.path.join(plug, "bin", "paas-team"), os.path.join(HOME, "tools", "paas-team")
+    if os.path.isfile(mine) and os.path.isfile(copy) and read(mine) != read(copy):   # the copy follows the plugin's version
+        shutil.copy(mine, copy)
+        os.chmod(copy, 0o755)
     if not os.path.exists(os.path.join(BRAIN, "coding.md")):
         shutil.copy(os.path.join(plug, "brain", "coding.md"), os.path.join(BRAIN, "coding.md"))
     if not skills:
@@ -582,7 +620,7 @@ def bootstrap(team, source):
     and this tool in ~/.claude/tools. No `claude plugin` command (the plugin is installed and enabled already)."""
     add(team, source, quiet=True)
     write(os.path.join(BRAIN, "team-mode"), "plugin\n")
-    t = apply(team, say=False, skills=False)
+    t = apply(team, say=False, skills=False, persona=False)
     plug = plugin_dir(team_dir(team))
     shutil.copy(os.path.join(plug, "brain", "CLAUDE.md"), os.path.join(BRAIN, "main.md"))
     md = os.path.join(HOME, "CLAUDE.md")
@@ -593,6 +631,7 @@ def bootstrap(team, source):
     os.makedirs(tools, exist_ok=True)
     shutil.copy(os.path.abspath(__file__), os.path.join(tools, "paas-team"))
     os.chmod(os.path.join(tools, "paas-team"), 0o755)
+    copy_rule(os.path.join(plug, "brain", "persona.md"), os.path.join(BRAIN, "persona.md"))   # last: the hook's "done" mark
     print(f"team {team} ({t.get('title', team)}) set up from the plugin: knowledge in {os.path.join(team_dir(team), 'knowledge')}, "
           f"rules imported from ~/.claude/brain/main.md; tool: ~/.claude/tools/paas-team")
 
@@ -666,16 +705,20 @@ def off():
     if not t:
         print("no active team")
         return
-    k = os.path.join(team_dir(t), "knowledge")
-    for name in LINKS:
+    plug = plugin_dir(team_dir(t))
+    for name in LINKS:                 # the team's memory stays in its repository (a copy would travel into the next team's)
         p = os.path.join(BRAIN, name)
         if os.path.islink(p):
             os.remove(p)
-            src = os.path.join(k, name)
-            if os.path.isdir(src):
-                shutil.copytree(src, p)
-            elif os.path.isfile(src):
-                shutil.copy(src, p)
+        if os.path.lexists(p):
+            continue
+        if os.path.lexists(p + ".pre-team"):                   # the person's own, from before the first team
+            os.replace(p + ".pre-team", p)
+        elif name.endswith(".md"):
+            tpl = os.path.join(plug, "brain", name) if plug else ""
+            write(p, read(tpl) if os.path.isfile(tpl) else "")
+        else:
+            os.makedirs(p, exist_ok=True)
     old = installed()
     if mode() == "plugin" and shutil.which("claude"):
         claude("disable", f"paas-brain-{t}@paas-brain-{t}")

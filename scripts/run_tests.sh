@@ -18,8 +18,10 @@ for t in brain/test_*.py; do run brain "$(basename "$t")" "$PY"; done
 for t in docs-search-mcp/test_*.py powermax-mcp/test_*.py powerflex-mcp/test_*.py ucsc-mcp/test_*.py; do
   run "$(dirname "$t")" "$(basename "$t")" "$PY"; done
 for t in mds-mcp/test_*.py; do run mds-mcp "$(basename "$t")" "$MDS_PY"; done
-command -v node >/dev/null && run brain/ui/plugins/paas-schedule "server.js --self-test" node
-command -v node >/dev/null && run brain/multiuser "gate.js --self-test" node          # idle stop and allowed-groups logic
+if command -v node >/dev/null; then
+  run brain/ui/plugins/paas-schedule "server.js --self-test" node
+  run brain/multiuser "gate.js --self-test" node          # idle stop and allowed-groups logic
+else echo "SKIP  node self-tests (no node)"; S=$((S+1)); fi
 run brain/ui/plugins "sync-shared.py --check" "$PY"   # every tab carries the current shared block
 # real-index search quality, only when the built index exists
 DB=${DOCS_DB:-docs-search-mcp/work/index/docs.db}

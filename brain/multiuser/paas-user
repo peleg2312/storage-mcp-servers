@@ -72,17 +72,22 @@ next_port() {       # root: 41000; others: one above the highest port in use
   echo $((max + 1))
 }
 
-write_env() {       # the UI service settings of <name>: made once, port and secret kept afterwards
+write_env() {       # the UI service settings of <name>: made once, port and secret kept afterwards; one writer at a time
   f="$ETC/$1.env"
   [ -f "$f" ] && return
-  umask 077
-  cat > "$f" <<EOF
+  mkdir -p /run/paas
+  (
+    flock 9 || exit 1                                          # two first sign-ins at once would pick the same port
+    [ -f "$f" ] && exit 0
+    umask 077
+    cat > "$f" <<EOF
 SERVER_PORT=$(next_port "$1")
 JWT_SECRET=$(head -c 32 /dev/urandom | od -An -tx1 | tr -d ' \n')
 PAAS_LOGIN_USERS=$1
 CLAUDE_CLI_PATH=$(command -v claude || echo /usr/local/bin/claude)
 PATH=$P/ui/node/bin:/usr/local/bin:/usr/bin:/bin:/usr/local/sbin:/usr/sbin:/sbin
 EOF
+  ) 9>/run/paas/user-env.lock
 }
 
 provision() {       # links to the shared brain, own notes, UI plugins, default marketplace items
@@ -90,7 +95,7 @@ provision() {       # links to the shared brain, own notes, UI plugins, default 
   ensure_home "$u"
   # root's own settings.json "env" (proxy, CA file, model, ...; not keys or tokens): handed over in the environment, not on a command line
   PAAS_ROOT_ENV=$(python3 -c 'import json,re,sys
-try: print(json.dumps({k: v for k, v in json.load(open(sys.argv[1])).get("env", {}).items() if not re.search("KEY|TOKEN|SECRET|PASSWORD", k, re.I)}))
+try: print(json.dumps({k: v for k, v in json.load(open(sys.argv[1])).get("env", {}).items() if not re.search("KEY|TOKEN|SECRET|PASSWORD|PROXY|HEADERS|AUTH", k, re.I)}))
 except Exception: print("{}")' "$(home_of root)/.claude/settings.json") \
   runuser -u "$u" -- sh -s "$P" "$u" <<'EOS'
 set -eu

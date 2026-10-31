@@ -10,7 +10,8 @@ brain is also committed to the brain's git history ('brain: <path>') when ~/.cla
   notes-check.py --remote URL  set up the shared brain: origin = URL, pull what the team has, push ours (idempotent)
   notes-check.py --sync        pull --rebase and push the shared brain; 'brain: in sync' / 'N ahead, M behind'
   notes-check.py --stale N     list '- ' note lines whose first YYYY-MM-DD is older than N days (informational)
-  notes-check.py --index       rewrite knowledge/INDEX.md of the team repository (done at every commit too)"""
+  notes-check.py --index       rewrite knowledge/INDEX.md of the team repository (done at every commit too)
+  notes-check.py --check FILE  print the secrets / real locations in one file, exit 1 when there are any"""
 import datetime
 import glob
 import json
@@ -139,13 +140,21 @@ def commit(message, rel=None):
     try:
         idx = index()
         extra = ["--", rel, idx] if rel and idx else (["--", rel] if rel else [])
+        held = [] if rel else unclean()               # a whole-tree commit never carries a file that still holds a secret
+        if held:
+            extra = ["--", "."] + [":!" + h for h in held]
         for cmd in (["add", "-A"] + extra, ident + ["commit", "-q", "-m", message]):
             subprocess.run(["git", "-C", REPO] + cmd, stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL,
                            stderr=subprocess.DEVNULL, timeout=4)
         if upstream():       # a failed push is retried by the next --sync or session start; never a credential prompt
-            r = subprocess.run(["git", "-C", REPO, "push", "-q"], stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL,
-                               stderr=subprocess.DEVNULL, timeout=4, env=dict(os.environ, GIT_TERMINAL_PROMPT="0"))
-            if r.returncode == 0:
+            rc = git(["push", "-q"], 4)[0]
+            if rc not in (0, 124):                   # rejected: a teammate pushed first; take theirs, then push again
+                rc = git(["pull", "--rebase", "--autostash", "-q"], 10)[0]
+                if rc == 124 or (rc and not settle_index()):
+                    git(["rebase", "--abort"], 10)   # a real clash: the next --sync reports it
+                else:
+                    rc = git(["push", "-q"], 4)[0]
+            if rc == 0:
                 notify_docs()
     except Exception:
         pass
@@ -165,17 +174,24 @@ def notify_docs():
         base, team = url.split("/mcp", 1)[0], url.split("?team=", 1)[1].split("&")[0]
         headers = {"Content-Length": "0", **({"Authorization": cfg["headers"]["Authorization"]} if cfg.get("headers", {}).get("Authorization") else {})}
         req = urllib.request.Request(f"{base}/refresh?team={team}", data=b"", method="POST", headers=headers)
-        ctx = ssl.create_default_context()
-        for cert in ("/etc/paas/tls/paas-ui.crt", os.path.join(os.path.dirname(BRAIN), "paas-ui.crt")):
+        ctx = ssl.create_default_context()           # the VM's certificate: published by install-shared.sh, or copied beside the brain
+        for cert in ("/opt/paas/paas-ui.crt", os.path.join(os.path.dirname(BRAIN), "paas-ui.crt")):
             if os.path.isfile(cert):
                 ctx.load_verify_locations(cert)
-        try:
-            urllib.request.urlopen(req, timeout=3, context=ctx).read()
-        except ssl.SSLCertVerificationError:         # the VM's self-signed certificate not imported here: internal network, read-only token
-            ctx = ssl._create_unverified_context()
-            urllib.request.urlopen(req, timeout=3, context=ctx).read()
+        urllib.request.urlopen(req, timeout=3, context=ctx).read()   # a certificate that does not verify: no request, no token sent
     except Exception:
         pass
+
+
+def unclean():
+    """changed or new markdown files of the repository that still hold a secret: kept out of a whole-tree commit"""
+    rc, out = git(["status", "--porcelain", "--untracked-files=all"], 10)
+    held = []
+    for line in out.splitlines() if rc == 0 else []:
+        path = line[3:].strip().split(" -> ")[-1]
+        if path.endswith(".md") and os.path.basename(path) != "mcp.json" and findings(os.path.join(REPO, path)):
+            held.append(path)
+    return held
 
 
 def git(args, timeout=15):
@@ -191,6 +207,19 @@ def git(args, timeout=15):
 
 def upstream():
     return os.path.isdir(os.path.join(REPO, ".git")) and git(["rev-parse", "--abbrev-ref", "@{upstream}"], 3)[0] == 0
+
+
+def settle_index():
+    """A rebase stopped on knowledge/INDEX.md alone (two members committed at the same time; the page is generated at
+    every commit): rebuild it and go on. True when the rebase finished."""
+    for _ in range(50):
+        if git(["diff", "--name-only", "--diff-filter=U"], 5)[1].split() != ["knowledge/INDEX.md"]:
+            return False
+        index()
+        git(["add", "--", "knowledge/INDEX.md"], 5)
+        if git(["-c", "core.editor=true", "rebase", "--continue"], 15)[0] == 0:
+            return True
+    return False
 
 
 def conflict():
@@ -252,7 +281,7 @@ def sync():
         git(["rebase", "--abort"], 10)
         print("brain: sync timed out (remote slow or unreachable); nothing changed, the next sync retries")
         return 0
-    if rc and git(["diff", "--name-only", "--diff-filter=U"], 5)[1]:
+    if rc and git(["diff", "--name-only", "--diff-filter=U"], 5)[1] and not settle_index():
         return conflict()
     git(["push", "-q"], 15)                          # offline is not an error
     print(counts())
@@ -291,6 +320,10 @@ def main():
         return remote(a[1])
     if a[:1] == ["--sync"]:
         return sync()
+    if a[:1] == ["--check"] and len(a) > 1:          # the Brain tab asks before it saves a memory file
+        f = findings(a[1])
+        print("\n".join(f))
+        return 1 if f else 0
     if a[:1] == ["--index"]:
         print(index() or "index unchanged")
         return 0
@@ -301,8 +334,9 @@ def main():
 
 
 if __name__ == "__main__":
-    # a team plugin on a VM whose managed settings run this hook for every account: that copy is the enforced one
-    if len(sys.argv) == 1 and os.environ.get("CLAUDE_PLUGIN_ROOT"):
+    # a team plugin's copy on a VM whose managed settings run this hook for every account steps aside: the enforced copy
+    # under /opt/paas/hooks answers. The enforced copy itself never steps aside, whatever the environment says.
+    if len(sys.argv) == 1 and os.environ.get("CLAUDE_PLUGIN_ROOT") and not os.path.realpath(__file__).startswith("/opt/paas/hooks/"):
         try:
             if os.path.basename(__file__) in open(os.environ.get("PAAS_MANAGED_SETTINGS") or "/etc/claude-code/managed-settings.json").read():
                 sys.exit(0)

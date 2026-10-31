@@ -43,6 +43,8 @@ swap() {   # swap <source dir> <name>: copy beside, then rename in, so the read-
   mv "$P/$2.new" "$P/$2"; rm -rf "$P/$2.old"
 }
 for d in tools hooks banner themes; do swap "$BRAIN/claude/$d" "$d"; done
+cp "$BRAIN/../docs-search-mcp/docs_index.py" "$P/tools/docs_index.py"     # add-docs of every account runs it (the swap above replaced the folder)
+command -v setfacl >/dev/null 2>&1 || { echo "install-shared: the acl package is required (dnf install acl): directory groups and the services read /opt/paas through ACLs"; exit 1; }
 swap "$BRAIN/plugins" plugins                                   # Claude Code plugins, offered in the marketplace
 DEVTOOLS_VENV=$P/devtools-venv sh "$BRAIN/devtools/install-devtools.sh" || echo "devtools: skipped (see above)"
 chmod -R a+rX "$P/library" "$P/brain" "$P/tools" "$P/hooks" "$P/banner" "$P/themes" "$P/plugins"
@@ -72,7 +74,7 @@ install -m 644 "$HERE/paas-ui@.service" /etc/systemd/system/paas-ui@.service
 RAM_MB=$(awk '/MemTotal/ {print int($2/1024)}' /proc/meminfo); CORES=$(nproc 2>/dev/null || echo 2)
 [ -f "$ETC/limits.env" ] || cat > "$ETC/limits.env" <<EOF
 # People expected to work at the same time; the per-person memory budget is (RAM - 3 GB) / PAAS_PEOPLE, at least 1.5 GB.
-PAAS_PEOPLE=$(( CORES > 1 ? CORES : 2 ))
+PAAS_PEOPLE=$(( CORES * 2 > 6 ? CORES * 2 : 6 ))
 # Override the computed values here if you prefer fixed ones (systemd sizes: 2G, 1500M ...):
 # PAAS_MEMORY_HIGH=2G    soft limit: a person's processes are throttled and reclaimed above it
 # PAAS_MEMORY_MAX=3G     hard limit: above it the biggest process of that person is killed, the others live on
@@ -111,7 +113,7 @@ done
 # groups listed in /etc/paas/allowed-groups get the same read access through ACLs
 chgrp -R paas-users "$P/teams"; chmod -R u+rwX,g+rX,o-rwx "$P/teams"
 if [ -f "$ETC/allowed-groups" ] && command -v setfacl >/dev/null 2>&1; then
-  grep -v '^#' "$ETC/allowed-groups" | tr -d '[:blank:]' | grep -v '^$' | grep -vx paas-users | while read -r grp; do
+  grep -v '^#' "$ETC/allowed-groups" | sed 's/[[:blank:]]*$//; s/^[[:blank:]]*//' | grep -v '^$' | grep -vx paas-users | while read -r grp; do
     getent group "$grp" >/dev/null 2>&1 || { echo "note: group $grp (allowed-groups) is unknown here; skipped"; continue; }
     setfacl -R -m "g:$grp:rX" -m "d:g:$grp:rX" "$P/teams" "$P/marketplace" 2>/dev/null || echo "note: setfacl for $grp failed"
   done
@@ -150,6 +152,7 @@ install -d -m 750 -o root -g paas-market "$ETC/market"
 setfacl -m u:paas-market:rx "$P/marketplace" 2>/dev/null || echo "note: setfacl missing: the marketplace for other VMs cannot read $P/marketplace (dnf install acl)"
 [ -s "$ETC/market/token" ] || { umask 077; head -c 24 /dev/urandom | base64 | tr -d '/+=' > "$ETC/market/token"; umask 022; }
 [ -f "$ETC/tls/paas-ui.crt" ] && cp "$ETC/tls/paas-ui.crt" "$ETC/tls/paas-ui.key" "$ETC/market/"
+[ ! -f "$ETC/tls/paas-ui.crt" ] || { cp "$ETC/tls/paas-ui.crt" "$P/paas-ui.crt"; chmod 644 "$P/paas-ui.crt"; }   # the public certificate for members' hooks (TLS verification, never unverified)
 chown root:paas-market "$ETC/market"/*; chmod 640 "$ETC/market"/*
 install -m 755 "$HERE/paas-market-serve.py" "$P/bin/paas-market-serve"
 install -m 644 "$HERE/paas-market-serve.service" /etc/systemd/system/paas-market-serve.service

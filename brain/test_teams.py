@@ -242,9 +242,9 @@ h2 = os.path.join(bare, "h2")
 os.rename(src, src + "-gone")
 rc, o = run([sys.executable, os.path.join(bare, "plug", "hooks", "session-start.py")], e=dict(env, HOME=h2, PAAS_TEAMS=os.path.join(work, "nowhere")), inp="{}")
 os.rename(src + "-gone", src)
-assert "Plugin-only install" in o and "N1." in o and not os.path.exists(os.path.join(h2, ".claude", "brain", "team")), o
+assert "team repository could not be reached" in o and "N1." in o and not os.path.exists(os.path.join(h2, ".claude", "brain", "team")), o
 rc, o = run([sys.executable, os.path.join(bare, "plug", "hooks", "session-start.py")], inp="{}")   # a real brain: silent
-assert "Plugin-only" not in o and "set up from" not in o, o
+assert "could not be reached" not in o and "set up from" not in o, o
 print("marketplace, export and bare plugin ok")
 
 # 6. the team's MCP servers come from the VM's marketplace (a stand-in paas-market records the calls): san adds its four,
@@ -297,7 +297,8 @@ assert "zoning-audit" in json.load(open(os.path.join(nasdir, "paas-brain-nas", "
 assert os.path.isfile(os.path.join(nasdir, "paas-brain-nas", "skills", "zoning-audit", "SKILL.md"))
 assert not os.path.exists(os.path.join(nasdir, "paas-brain-nas", "agents", "ontap-analyst.md"))
 servers = json.load(open(os.path.join(nasdir, "mcp.json")))
-assert servers["ontap"]["headers"]["Authorization"] == "Bearer s3cr3t-token-value" and "HOST" in servers["harvest"].get("url", "") or servers["harvest"]["url"].startswith("http://h.example"), servers
+assert servers["ontap"]["headers"]["Authorization"] == "Bearer s3cr3t-token-value", servers
+assert servers["harvest"]["url"].startswith("http://h.example") and servers["harvest"]["headers"]["Authorization"] == "Bearer TOKEN", servers   # no token given: the placeholder stays
 assert "NAS person" in open(os.path.join(brain, "persona.md")).read() and "zoning-audit" in skills(), "active team re-applied"
 assert "brain tab: team nas edited" in git(os.path.join(work, "sources", "nas"), "log", "--format=%s")   # pushed to the remote
 log = open(os.path.join(home, "claude.log")).read()
@@ -320,10 +321,14 @@ run([sys.executable, PUBLISH, "nas", "--to", src, "--force"])
 assert "Team edit" not in open(os.path.join(src, "paas-brain-nas", "skills", "quota-report", "SKILL.md")).read()
 print("publish guard ok")
 
-# 8. no team: the team's skills and agents leave, the person's own and marketplace ones stay, plain files again, the clone stays
+# 8. no team: the team's skills and agents leave, the person's own and marketplace ones stay, plain files again (empty: the
+# team's memory stays in its clone, so it cannot travel into the next team), the clone stays
 team("use", "san")
 team("use", "none")
-assert not os.path.islink(os.path.join(brain, "notes")) and os.path.isfile(os.path.join(brain, "notes", "powermax.md"))
+assert not os.path.islink(os.path.join(brain, "notes")) and os.path.isdir(os.path.join(brain, "notes"))
+assert not os.path.exists(os.path.join(brain, "notes", "powermax.md"))
+assert os.path.isfile(os.path.join(brain, "teams", "san", "knowledge", "notes", "powermax.md"))
+assert os.path.isfile(os.path.join(brain, "notes.md")) and not os.path.islink(os.path.join(brain, "notes.md"))
 assert not os.path.exists(os.path.join(brain, "team")) and os.path.isdir(os.path.join(brain, "teams", "san", ".git"))
 assert skills() == ["docs-lookup", "mine"], skills()
 assert sorted(os.listdir(os.path.join(home, ".claude", "agents"))) == ["Explore.md"]

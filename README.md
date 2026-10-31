@@ -53,7 +53,7 @@ The MCP servers below (PowerMax, UCS, MDS, docs-search on OpenShift) are added o
 Any VM or laptop that has Claude Code, git and python3 3.9 or newer, and can reach the team's GitLab project:
 
 ```bash
-claude plugin marketplace add git@gitlab/storage/brain-nas.git        # the team repository (ssh or https url)
+claude plugin marketplace add git@gitlab.example.com:storage/brain-nas.git        # the team repository (ssh or https url)
 claude plugin install paas-brain-nas@paas-brain-nas
 claude                                                                 # first session: the plugin sets the team up
 ```

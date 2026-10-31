@@ -49,7 +49,7 @@ if (process.argv.includes('--self-test')) {
 const pty = require(`${APP}/node_modules/node-pty`);
 const PORT = Number(process.env.GATE_PORT || 3001);
 const KEY = fs.readFileSync(`${ETC}/gate.key`);
-const IDLE_MS = Math.max(0, Number(process.env.GATE_IDLE_MINUTES || 120) || 0) * 60000; // 0 = instances are never stopped for idleness
+const IDLE_MS = Math.max(0, Number(process.env.GATE_IDLE_MINUTES || 60) || 0) * 60000; // 0 = instances are never stopped for idleness
 const COOKIE = 'paas_gate';
 const SESSION_S = 12 * 3600;
 const USER_RE = /^[a-z_][a-z0-9_.-]{0,63}$/; // AD names; lower-cased before the check

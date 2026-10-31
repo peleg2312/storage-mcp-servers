@@ -153,15 +153,39 @@ option for a cluster-hosted copy; it serves the library only.
 All three read the same git repository, so what one person's Claude wrote down is what every other member searches,
 whichever machine they sit at. A laptop with the library installed (`install-laptop.sh`) behaves like a VM user.
 
+## Owner's checklist: multi-user VM with teams, in order
+
+As root on the RHEL 9 VM (packages first, offline from the satellite / local repo): `dnf install git python3 openssl acl
+diffutils hostname sssd realmd oddjob oddjob-mkhomedir adcli samba-common-tools`; Claude Code installed for root (`claude` in PATH).
+
+1. `sh install-vm.sh` (the brain, the library tools, the web UI; `--team` is not needed on the multi-user VM).
+2. `sh brain/multiuser/install-shared.sh` (shared library and brain under /opt/paas, every team published to `/opt/paas/teams/<team>`,
+   the docs service, the per-person CPU / memory budget; prints the sizing it chose, see "Sizing" below).
+3. `sh brain/multiuser/install-gate.sh` (the gate on 443 with its certificate, one UI per signed-in person), then
+   `sh brain/multiuser/install-shared.sh` again so the marketplace and the docs service use that certificate.
+4. Active Directory: join (section below), then `/etc/paas/allowed-groups` (who may sign in) and `/etc/paas/team-groups`
+   (`<team> <AD group>`: which team a first sign-in gets).
+5. GitLab: one empty project per team, default branch `main`, protected so that only the maintainers who run publish push to
+   `paas-brain-<team>/`, `team.json` and `mcp.json` (a CODEOWNERS file with those paths; members need Developer on `knowledge/`).
+   Then, from this checkout on the VM: `python3 brain/teams/publish.py san --to <san url>` and the same for `nas`, and
+   `sh brain/multiuser/install-shared.sh` once more (it records each team's url in /opt/paas/teams and republishes there on every update).
+6. The teams' MCP servers: Brain tab, Team card, Edit (address and token per server; saved into the team repository's `mcp.json`
+   and pushed, so every member gets them). Or `paas-team edit <team>` with the same JSON on stdin.
+7. Try it: sign in as a member of each AD group, check the Team card shows the team, ask one storage question, save one note and
+   see the commit in GitLab. Laptops: the three `claude plugin` lines in README.md with the team's url.
+
+Update later: `git pull && sh install-vm.sh && sh brain/multiuser/install-shared.sh` (members get the new plugin at their next
+session start; laptops when Claude Code checks the marketplace).
+
 ## Teams: one brain per team, one account per person
 
 1. Pick the team at install time: `sh install-vm.sh --team nas` (single VM; `san` is the default and needs no flag), `sh
    install-laptop.sh --team nas` (laptop). Everywhere the team is the Claude Code plugin `paas-brain-<team>`, installed
    from the person's clone of the team repository, so the VM and every laptop run the identical thing (skills are
-   `/paas-brain-<team>:<skill>`). `paas-team` shows the state, `paas-team use san` switches (under a second; start a new
+   `/paas-brain-<team>:<skill>`). `paas-team` shows the state, `paas-team use san` switches (a few seconds; start a new
    Claude session or a new chat afterwards), `paas-team list` the teams available.
 2. Publish each team's repository once in GitLab (an empty project, default branch `main`): `python3 brain/teams/publish.py
-   nas --to git@gitlab/storage/brain-nas.git`. It holds the plugin (`paas-brain-nas/`) and `knowledge/` (notes/, captures/,
+   nas --to git@gitlab.example.com:storage/brain-nas.git`. It holds the plugin (`paas-brain-nas/`) and `knowledge/` (notes/, captures/,
    incidents/, tool-map.md). Members join it with `paas-team remote nas <url>` (or `install.sh --team nas --brain-remote <url>`,
    or `--team-source <url>` to install straight from it); their notes hook pushes every saved note there and every session
    start pulls. Re-run the publish after a `git pull` of this repository: members get the new skills at their next sync.

@@ -51,20 +51,27 @@ def is_url(s):
 
 def readme(team, remote):
     t = team
-    url = remote or "<this repository>"
-    return (f"# Team brain: {t.get('title', t['name'])}\n\n{t.get('description', '')}\n\n"
-            f"- `paas-brain-{t['name']}/`: the brain as a Claude Code plugin ({len(t['skills'])} skills, {len(t['agents'])} agents, "
-            f"version {t['version']}); rebuilt by `brain/teams/publish.py` from the storage-mcp-servers repository\n"
-            "- `knowledge/`: what the team learns (notes/<topic>.md, captures/, incidents/, tool-map.md), written by every "
-            "member's brain and synced through this repository; notes.md and environment.md are personal and never committed\n\n"
-            "## Install on a laptop (Claude Code installed; macOS or Linux)\n\n"
-            f"```sh\ngit clone {url} brain-{t['name']} && sh brain-{t['name']}/install-team.sh\n```\n"
-            "Rules, skills, agents, hooks and the team's knowledge, synced with this repository; `paas-team` shows the state, "
-            "`paas-team use <other>` switches team. Without the docs library (`install-laptop.sh` of storage-mcp-servers adds it) "
-            "the docs-local MCP server stays disconnected and the brain says so.\n"
-            f"Plugin only (no rules, no knowledge): `claude plugin marketplace add {url} && claude plugin install "
-            f"paas-brain-{t['name']}@paas-brain-{t['name']}`.\n\n"
-            f"On the VM: `paas-team use {t['name']}` (or the Brain tab).\n")
+    url = remote or "<this repository's url>"
+    n = t["name"]
+    return (f"# Team brain: {t.get('title', n)}\n\n{t.get('description', '')}\n\n"
+            "## Install (any machine with Claude Code, git and python3)\n\n"
+            f"```sh\nclaude plugin marketplace add {url}\nclaude plugin install paas-brain-{n}@paas-brain-{n}\nclaude\n```\n"
+            "The first session sets the team up: it clones this repository into `~/.claude/brain/teams/" + n + "`, links the "
+            "memory files into it, writes the rules (persona, storage and coding rules; one import line in your `~/.claude/CLAUDE.md`) "
+            "and installs `paas-team`. From then on every saved note is committed and pushed here, every session start pulls, "
+            "and a new plugin version published here is applied at the next session start.\n"
+            f"Without network to a plugin marketplace: `git clone {url} brain-{n} && sh brain-{n}/install-team.sh` does the same from the clone.\n\n"
+            "## What is here\n\n"
+            f"- `paas-brain-{n}/`: the brain as a Claude Code plugin ({len(t['skills'])} skills, {len(t['agents'])} agents, "
+            f"version {t['version']}); rebuilt only by `brain/teams/publish.py` from the storage-mcp-servers repository, never edited here\n"
+            "- `knowledge/`: the team's shared memory, written by every member's brain and synced through this repository: "
+            "notes.md (the catalog loaded every session), environment.md, tool-map.md, notes/<topic>.md, captures/, incidents/\n"
+            "- `mcp.json`: the team's MCP servers (address and token), connected for every member; `team.json`: the team's lists\n"
+            "- `check.py` runs in CI (`.gitlab-ci.yml`) and refuses a push that carries a credential or breaks the notes format\n\n"
+            f"`paas-team` shows the state, `paas-team use <other>` switches team, `paas-team off` leaves team mode. "
+            "The docs library is the one thing this repository does not carry: the team's docs-search server (mcp.json) or "
+            "`install-laptop.sh` of storage-mcp-servers provides it; until then docs-local stays disconnected and the brain says so.\n"
+            f"On the VM: `paas-team use {n}` (or the Brain tab).\n")
 
 
 INSTALL_TEAM = r"""#!/bin/sh
@@ -197,7 +204,7 @@ def publish(team, dest, remote=None, hooks=True, commit=True, force=False):
 def publish_url(team, url, hooks, commit, force=False):
     tmp = tempfile.mkdtemp(prefix="paas-team-")
     try:
-        r = subprocess.run(["git", "clone", "-q", url, tmp], capture_output=True, text=True, timeout=300,
+        r = subprocess.run(["git", "clone", "-q", "--", url, tmp], capture_output=True, text=True, timeout=300,
                            env=dict(os.environ, GIT_TERMINAL_PROMPT="0"))
         if r.returncode:
             sys.exit(f"publish.py: cannot clone {url}: {r.stderr.strip()[-300:]}")

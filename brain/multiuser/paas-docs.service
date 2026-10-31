@@ -9,9 +9,12 @@ EnvironmentFile=-/etc/paas/docs.env
 ExecStart=/usr/bin/python3 /opt/paas/library/mcp_stdio.py --db /opt/paas/library/docs.db --http 0.0.0.0:${PAAS_DOCS_PORT} \
   --token-file /etc/paas/docs-token --tls-cert /etc/paas/market/paas-ui.crt --tls-key /etc/paas/market/paas-ui.key \
   --teams-dir /opt/paas/teams --state-dir /var/lib/paas-docs --refresh-minutes ${PAAS_DOCS_REFRESH}
+# clones of the team repositories (with their mcp.json tokens) stay private to the service (UMask 0077); only index/ is readable
 User=paas-market
 Group=paas-market
 StateDirectory=paas-docs
+StateDirectoryMode=0755
+UMask=0077
 ProtectSystem=strict
 ProtectHome=yes
 PrivateTmp=yes

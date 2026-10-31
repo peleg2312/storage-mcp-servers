@@ -227,7 +227,7 @@ def refresh_knowledge(brain_dir, db_path):
     db path, or None when there is nothing to index and no index exists."""
     import glob
     import shutil
-    files = sorted(glob.glob(os.path.join(brain_dir, "notes", "*.md"))) + sorted(glob.glob(os.path.join(brain_dir, "incidents", "**", "*.md"), recursive=True))
+    files = knowledge_files(brain_dir)
     stamp = db_path + ".stamp"
     state = knowledge_state(brain_dir, files)
 
@@ -279,6 +279,21 @@ def _rebuild(files, db_path, stamp, state, di, shutil):
     return db_path if os.path.exists(db_path) else None
 
 
+def knowledge_files(root):
+    """notes/*.md and incidents/**/*.md under a brain or knowledge folder: regular files inside it only (a symlink pushed
+    into a team repository could point at anything the indexing process can read: never followed)"""
+    import glob
+    real_root = os.path.realpath(root)
+    out = []
+    for f in sorted(glob.glob(os.path.join(root, "notes", "*.md"))) + sorted(glob.glob(os.path.join(root, "incidents", "**", "*.md"), recursive=True)):
+        if os.path.islink(f) or not os.path.isfile(f):
+            continue
+        if any(os.path.islink(os.path.join(root, part)) for part in ("notes", "incidents")) and not os.path.realpath(f).startswith(real_root + os.sep):
+            continue                                   # a symlinked folder is fine (the brain's own links) as long as the file sits inside the real root
+        out.append(f)
+    return out
+
+
 def knowledge_state(brain_dir, files):
     """a fingerprint of the knowledge pages that is the same in every clone of the same commit (names and contents, not
     mtimes), so the service's index and a member's clone can be compared; cheap: a team's pages are small"""
@@ -304,7 +319,7 @@ def shared_knowledge(brain_dir, shared_dir):
         return None
     db = os.path.join(shared_dir, team + ".db")
     try:
-        files = sorted(glob.glob(os.path.join(brain_dir, "notes", "*.md"))) + sorted(glob.glob(os.path.join(brain_dir, "incidents", "**", "*.md"), recursive=True))
+        files = knowledge_files(brain_dir)
         state = knowledge_state(brain_dir, files)
         if open(db + ".stamp").read().strip() == state and os.access(db, os.R_OK):
             return db
@@ -344,7 +359,7 @@ class Teams:
             return []
 
     def db(self, team):
-        return os.path.join(self.state, team + ".db")
+        return os.path.join(self.state, "index", team + ".db")      # index/: readable by members' docs-local; the clones are not
 
     def refresh(self, only=None):
         """pull every team's repository (its own clone under the state dir) and rebuild its index when the knowledge
@@ -370,14 +385,15 @@ class Teams:
                         subprocess.run(["git", "-C", clone, "pull", "-q", "--ff-only"], env=env, timeout=120, capture_output=True)
                     else:
                         os.makedirs(os.path.dirname(clone), exist_ok=True)
-                        r = subprocess.run(["git", "clone", "-q", remote, clone], env=env, timeout=300, capture_output=True, text=True)
+                        r = subprocess.run(["git", "clone", "-q", "--", remote, clone], env=dict(env, GIT_ALLOW_PROTOCOL="https:ssh:file"), timeout=300, capture_output=True, text=True)
                         if r.returncode:
-                            self.log(f"team {team}: clone of {remote} failed: {r.stderr.strip()[-160:]}")
+                            shown = re.sub(r"://[^/@]+@", "://", remote)          # never a credential in the journal
+                            self.log(f"team {team}: clone of {shown} failed: {re.sub(r'://[^/@]+@', '://', r.stderr.strip()[-160:])}")
                             clone = os.path.join(self.dir, team)
                 else:
                     clone = os.path.join(self.dir, team)       # no remote: the VM's copy is all there is
                 k = os.path.join(clone, "knowledge")
-                files = sorted(glob.glob(os.path.join(k, "notes", "*.md"))) + sorted(glob.glob(os.path.join(k, "incidents", "**", "*.md"), recursive=True))
+                files = knowledge_files(k)
                 state = knowledge_state(k, files)
                 stamp = self.db(team) + ".stamp"
                 try:
@@ -388,28 +404,37 @@ class Teams:
                 if di is None:
                     self.log("docs_index.py not found: team knowledge is not indexed")
                     return
+                index_dir = os.path.dirname(self.db(team))
+                os.makedirs(index_dir, exist_ok=True)
+                os.chmod(index_dir, 0o755)                 # members read the indexes; the clones (team folders) stay private
                 staging = os.path.join(self.state, "staging-" + team)
                 shutil.rmtree(staging, ignore_errors=True)
-                os.makedirs(os.path.join(staging, "local", "brain-notes"))
-                os.makedirs(os.path.join(staging, "local", "brain-incidents"))
-                for f in files:
-                    if os.sep + "notes" + os.sep in f:
-                        shutil.copy2(f, os.path.join(staging, "local", "brain-notes", os.path.basename(f)))
-                    else:
-                        shutil.copy2(f, os.path.join(staging, "local", "brain-incidents", os.path.basename(os.path.dirname(f)) + "-" + os.path.basename(f)))
-                os.makedirs(self.state, exist_ok=True)
-                di.build(staging, self.db(team), log=lambda *_: None, prefix="brain/")
-                shutil.rmtree(staging, ignore_errors=True)
+                try:
+                    os.makedirs(os.path.join(staging, "local", "brain-notes"))
+                    os.makedirs(os.path.join(staging, "local", "brain-incidents"))
+                    for f in files:
+                        if os.sep + "notes" + os.sep in f:
+                            shutil.copy2(f, os.path.join(staging, "local", "brain-notes", os.path.basename(f)), follow_symlinks=False)
+                        else:
+                            shutil.copy2(f, os.path.join(staging, "local", "brain-incidents", os.path.basename(os.path.dirname(f)) + "-" + os.path.basename(f)), follow_symlinks=False)
+                    di.build(staging, self.db(team), log=lambda *_: None, prefix="brain/")
+                finally:
+                    shutil.rmtree(staging, ignore_errors=True)
                 with open(stamp, "w") as f:
                     f.write(state + "\n")
+                for p in (self.db(team), stamp):
+                    os.chmod(p, 0o644)
                 self.log(f"team {team}: knowledge index rebuilt ({len(files)} pages)")
             except Exception as e:
                 self.log(f"team {team}: refresh failed: {e}")
 
-    def server(self, team, db):
+    def server(self, team, main):
+        """one Server per team: the library connection is the main server's (one cache for all teams), the team index its own"""
         with self.lock:
             if team not in self.servers:
-                self.servers[team] = Server(db, self.db(team) if team else os.path.join(self.state, "none.db"), shared=True)
+                srv = Server.__new__(Server)
+                srv.shared, srv.con, srv.brain_path, srv.brain_con, srv.brain_mtime = True, main.con, self.db(team), None, None
+                self.servers[team] = srv
             return self.servers[team]
 
 
@@ -422,18 +447,22 @@ def serve_http(db, bind, token_file=None, tls_cert=None, tls_key=None, teams_dir
 
     log = lambda m: print(time.strftime("%Y-%m-%dT%H:%M:%S ") + m, flush=True)
     token = open(token_file).read().strip() if token_file else ""
+    if token_file and len(token) < 16:
+        sys.exit(f"{token_file}: the token must be at least 16 characters (an empty file would mean no authentication)")
     state_dir = state_dir or os.path.join(os.path.expanduser("~"), ".cache", "paas-docs")
     teams = Teams(teams_dir, state_dir, log) if teams_dir else None
     lock = threading.Lock()                         # sqlite connections are used from one thread at a time
     main_srv = Server(db, os.path.join(state_dir, "none.db"), shared=True)   # no personal index in HTTP mode
+    refresh_pending = {"flag": False}
 
     def pick(team):
         if team and teams and team in teams.names():
-            return teams.server(team, db)
+            return teams.server(team, main_srv)
         return main_srv
 
     class H(BaseHTTPRequestHandler):
         server_version = "docs-search/1.2-http"
+        timeout = 30                                # an idle or slow client releases its thread
 
         def log_message(self, fmt, *a):            # one quiet line per request, never the body
             log(f"{self.client_address[0]} {self.command} {self.path.split('?')[0]} {a[1] if len(a) > 1 else ''}")
@@ -455,8 +484,8 @@ def serve_http(db, bind, token_file=None, tls_cert=None, tls_key=None, teams_dir
 
         def do_GET(self):
             path = urlparse(self.path).path
-            if path == "/health":
-                return self.send(200, {"ok": True, "teams": teams.names() if teams else []})
+            if path == "/health":                    # alive, and the team list only to a token holder
+                return self.send(200, {"ok": True, **({"teams": teams.names()} if teams and self.authorized() else {})})
             if path == "/mcp":
                 if not self.authorized():
                     return self.send(401, {"error": "bearer token required"})
@@ -471,7 +500,15 @@ def serve_http(db, bind, token_file=None, tls_cert=None, tls_key=None, teams_dir
                 return self.send(404, {"error": "no team knowledge on this server"})
             if team and team not in teams.names():
                 return self.send(404, {"error": f"unknown team {team}"})
-            threading.Thread(target=teams.refresh, args=(team or None,), daemon=True).start()
+            if not refresh_pending["flag"]:            # many pushes in a row: one refresh runs, the others ride on it
+                refresh_pending["flag"] = True
+
+                def go():
+                    try:
+                        teams.refresh(team or None)
+                    finally:
+                        refresh_pending["flag"] = False
+                threading.Thread(target=go, daemon=True).start()
             self.send(202, {"refreshing": [team] if team else teams.names()})
 
         def do_DELETE(self):
@@ -485,9 +522,12 @@ def serve_http(db, bind, token_file=None, tls_cert=None, tls_key=None, teams_dir
                 return self.send(404, {"error": "not found"})
             if not self.authorized():
                 return self.send(401, {"error": "bearer token required"})
-            n = int(self.headers.get("Content-Length") or 0)
-            if n > 1_000_000:
-                return self.send(413, {"error": "too large"})
+            try:
+                n = int(self.headers.get("Content-Length") or 0)
+            except ValueError:
+                n = -1
+            if n < 0 or n > 1_000_000:
+                return self.send(413 if n > 0 else 400, {"error": "bad or too large body"})
             try:
                 msg = json.loads(self.rfile.read(n) or b"null")
             except ValueError:
@@ -525,7 +565,7 @@ def serve_http(db, bind, token_file=None, tls_cert=None, tls_key=None, teams_dir
     if tls_cert:
         ctx = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
         ctx.load_cert_chain(tls_cert, tls_key)
-        httpd.socket = ctx.wrap_socket(httpd.socket, server_side=True)
+        httpd.socket = ctx.wrap_socket(httpd.socket, server_side=True, do_handshake_on_connect=False)   # the handshake runs in the request thread
     log(f"docs-search listening on {'https' if tls_cert else 'http'}://{host or '0.0.0.0'}:{port}/mcp"
         + (f" (token)" if token else " (no token)") + (f", teams from {teams_dir}" if teams_dir else ""))
     httpd.serve_forever()

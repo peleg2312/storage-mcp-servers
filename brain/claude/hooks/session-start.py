@@ -96,9 +96,10 @@ def bare_plugin_rules():
     if done:
         return (done + "First session: these are the brain's rules (from the next session they come from ~/.claude/CLAUDE.md).\n"
                 + text.strip() + "\n\n" + rules.strip() + "\n(No docs library yet: install-laptop.sh of storage-mcp-servers adds it.)")
-    return ("Plugin-only install (no ~/.claude/brain, team repository not reachable): these are the brain's rules for this session.\n"
-            + text.strip() + "\n\n" + rules.strip() + "\n(For notes, environment and the docs library run install-team.sh from the team "
-            "repository, or install-laptop.sh.)")
+    return ("The team repository could not be reached, so the team's memory is not set up yet (retried at the next session start); "
+            "these are the brain's rules for this session.\n"
+            + text.strip() + "\n\n" + rules.strip() + "\n(Offline for good? `git clone <team repository> && sh install-team.sh` "
+            "from a copy, or install-laptop.sh of storage-mcp-servers.)")
 
 
 def team_line():
@@ -114,8 +115,10 @@ def team_line():
     line = f"Team: {name} ({meta.get('title', name)}, {meta.get('version', '?')})"
     if BOOTSTRAPPED:
         return line + "."
-    tool = next((p for p in (os.path.join(USER_HOME, "tools", "paas-team"), "/opt/paas/bin/paas-team",
-                             os.path.expanduser("~/.local/bin/paas-team")) if os.path.exists(p)), "")
+    here = os.path.dirname(os.path.abspath(__file__))        # run from the plugin: its own bin/paas-team is the current one
+    own = os.path.join(os.path.dirname(here), "bin", "paas-team") if os.path.exists(os.path.join(here, "hooks.json")) else ""
+    tool = next((p for p in (own, os.path.join(USER_HOME, "tools", "paas-team"), "/opt/paas/bin/paas-team",
+                             os.path.expanduser("~/.local/bin/paas-team")) if p and os.path.exists(p)), "")
     if tool:
         try:
             if subprocess.run([sys.executable, tool, "needs-refresh"], stdin=subprocess.DEVNULL, capture_output=True,
@@ -308,8 +311,9 @@ def main():
 
 
 if __name__ == "__main__":
-    # a team plugin on a VM whose managed settings run this hook for every account: that copy is the enforced one
-    if len(sys.argv) == 1 and os.environ.get("CLAUDE_PLUGIN_ROOT"):
+    # a team plugin's copy on a VM whose managed settings run this hook for every account steps aside: the enforced copy
+    # under /opt/paas/hooks answers. The enforced copy itself never steps aside, whatever the environment says.
+    if len(sys.argv) == 1 and os.environ.get("CLAUDE_PLUGIN_ROOT") and not os.path.realpath(__file__).startswith("/opt/paas/hooks/"):
         try:
             if os.path.basename(__file__) in open(os.environ.get("PAAS_MANAGED_SETTINGS") or "/etc/claude-code/managed-settings.json").read():
                 sys.exit(0)

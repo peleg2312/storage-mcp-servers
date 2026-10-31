@@ -102,16 +102,17 @@ Code; few high-signal tools) and measured with `docs-search-mcp/eval_search.py`:
 
 ## Packaging and plugins
 
-- **Installer, not a marketplace plugin, delivers the brain.** A plugin cannot carry CLAUDE.md, the
-  editable environment / notes files, the banner or the library, and would rename every skill
-  (`/zoning-audit` -> `/storage-brain:zoning-audit`). `brain/claude/.claude-plugin/plugin.json` + `.mcp.json`
-  only let the same folder load with `--plugin-dir` for `claude plugin validate` and `claude plugin eval`
-  (`brain/claude/evals/`: skill-triggering cases, docs-local mocked).
+- **The team plugin delivers the brain everywhere (October 2026).** `paas-brain-<team>` (skills, agents, hooks, docs-local,
+  plus the persona, rules and templates a plugin cannot activate by itself) is installed from the team repository as a
+  marketplace, on the VM and on laptops alike; `paas-team` activates what a plugin cannot (the rules import in `~/.claude/CLAUDE.md`,
+  the memory links, the MCP servers). Cost: skills are namespaced (`/paas-brain-san:zoning-audit`). `brain/claude/.claude-plugin/`
+  also lets the raw folder load with `--plugin-dir` for `claude plugin validate` and `claude plugin eval` (`brain/claude/evals/`).
+  Files mode (copies into `~/.claude`) remains only for a machine without the `claude` command.
 - **Team profiles (`brain/teams/<team>`, October 2026).** One brain per team (`san` = the brain above, `nas` = PowerScale /
   VAST / ONTAP NAS): persona, rules file, skill and agent lists, starting MCP servers. `brain/plugin/build.py --team` resolves a
   team into the plugin `paas-brain-<team>` (skills, agents, hooks, docs-local, plus the persona / rules / templates a plugin
   cannot activate); `brain/teams/publish.py` wraps it into a team repository with `knowledge/` (notes/, captures/, incidents/,
-  tool-map.md), one git repository per team in GitLab. `paas-team use <team>` switches a person in under a second: persona.md and
+  tool-map.md), one git repository per team in GitLab. `paas-team use <team>` switches a person in a few seconds: persona.md and
   storage.md rewritten, the memory paths (`notes.md`, `environment.md`, `tool-map.md`, `notes/`, `captures/`, `incidents/`) linked
   into `~/.claude/brain/teams/<team>/knowledge/`, the team's plugin enabled and the others disabled (the same Claude Code
   plugin on the VM and on laptops; files mode, copies into `~/.claude`, only where `claude` is missing). Every hook, skill and the web UI keep reading the old paths; the notes hook commits and pushes into the team
@@ -124,12 +125,11 @@ Code; few high-signal tools) and measured with `docs-search-mcp/eval_search.py`:
   changed) and searches it with the library: chunk ids offset by 10^10 as server.py does for several indexes, results marked
   `library: team knowledge`, read_chunk / read_document / related_docs routed by id or `brain/` path, `list_sources` names
   both. The shared library stays read-only; nothing a person writes touches it.
-- **Laptop install is the exception: a plugin plus the rules.** `install-laptop.sh` publishes the team repositories and installs
-  the chosen team's plugin `paas-brain-<team>` (skills, agents, hooks, `docs-local`); its `hooks.json`
-  is produced by `merge_settings.py` itself, so matchers and timeouts cannot drift from the VM. The rules
-  (`main.md` import in `~/.claude/CLAUDE.md`), tools, notes and library stay in `~/.claude/brain` as on the VM. Cost: skills are
-  namespaced (`/paas-brain-san:zoning-audit`), and the guard is a plugin hook a person can disable; on the multi-user VM the
-  managed settings run every brain hook for every account (enforced) and the plugin's copies step aside, so each runs once.
+- **Laptop install: the same plugin plus the rules.** `install-laptop.sh` (or `claude plugin marketplace add <team url>` and a first
+  session) installs the team's plugin; its `hooks.json` is produced by `merge_settings.py` itself, so matchers and timeouts cannot
+  drift from the VM. The rules (`main.md` import in `~/.claude/CLAUDE.md`), tools, notes and library stay in `~/.claude/brain` as on
+  the VM. The guard is a plugin hook a person can disable on a laptop; on the multi-user VM the managed settings run every brain hook
+  for every account (enforced) and the plugin's copies step aside, so each runs once.
 - **Third-party plugins: curated.** Every enabled plugin's skill / agent / command descriptions sit in the
   context on every turn. Included: the 7 plugins `install.sh` installs from
   `brain/plugins` (marketplace `brain-dev`): pr-review-toolkit, feature-dev, commit-commands, security-guidance,

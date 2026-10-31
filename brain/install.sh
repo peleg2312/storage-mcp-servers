@@ -150,7 +150,7 @@ if [ -n "$TEAM" ]; then
     # A team taken from a published repository (--team-source, GitLab) is left to `paas-team sync`.
     rm -rf "$USER_DST/brain/teams/$TEAM/paas-brain-$TEAM"; cp -R "$USER_DST/brain/team-sources/$TEAM/paas-brain-$TEAM" "$USER_DST/brain/teams/$TEAM/"
     cp "$USER_DST/brain/team-sources/$TEAM/.claude-plugin/marketplace.json" "$USER_DST/brain/teams/$TEAM/.claude-plugin/"
-    ( cd "$USER_DST/brain/teams/$TEAM" \&\& git add -A >/dev/null 2>\&1 \&\& git -c user.name=brain -c user.email=brain@localhost commit -q -m "team $TEAM: plugin updated by install.sh" >/dev/null 2>\&1 ) || true
+    ( cd "$USER_DST/brain/teams/$TEAM" && git add -A >/dev/null 2>&1 && git -c user.name=brain -c user.email=brain@localhost commit -q -m "team $TEAM: plugin updated by install.sh" >/dev/null 2>&1 ) || true
   else
     python3 "$DST/tools/paas-team" add "$TEAM"
   fi

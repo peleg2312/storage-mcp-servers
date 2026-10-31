@@ -68,7 +68,7 @@ try:
     servers = json.load(open(os.path.join(home, ".claude", "brain", "teams", "san", "mcp.json")))
     assert servers["powermax"]["headers"]["Authorization"] == "Bearer tok-123456", servers
     assert call("GET", "team-show?name=san")["title"] == "SAN team"
-    assert "tok-123456" not in proc.stderr.read(0) if False else True
+    assert "tok-123456" not in r["out"], r      # the token travels on stdin, never in the tool's output
     r = call("POST", "team-sync")
     assert r["ok"] and "in sync" in r["out"], r
     r = call("POST", "team-add", {"name": "nas", "url": os.path.join(work, "sources", "nas")})

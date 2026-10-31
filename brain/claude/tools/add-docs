@@ -11,7 +11,7 @@
 # the inbox leaves the library. The library's own documents are never touched, and install.sh runs this again
 # after a library update, so your documents stay.
 set -eu
-TOOLS=$(dirname "$(readlink -f "$0")")
+ME=$0; while [ -L "$ME" ]; do ME=$(readlink "$ME"); done; TOOLS=$(cd "$(dirname "$ME")" && pwd -P)   # readlink -f is not on every macOS
 INBOX=${INBOX:-$HOME/.claude/brain/inbox}
 DB=${DOCS_DB:-$HOME/.claude/brain/library/docs.db}
 [ "${1:-}" = "--brain" ] || [ -f "$DB" ] || { echo "add-docs: no $DB (install the documentation library first)"; exit 1; }

@@ -35,7 +35,7 @@ and `team.json` with the resolved lists). `python3 brain/teams/publish.py nas --
 .claude-plugin/marketplace.json      paas-brain-nas/        knowledge/{notes,captures,incidents}/  knowledge/tool-map.md
 knowledge/notes.md, environment.md   mcp.json (the team's live MCP servers with address and token)   team.json   README.md
 ```
-One git repository per team, in GitLab: `python3 brain/teams/publish.py nas --to git@gitlab/storage/brain-nas.git`
+One git repository per team, in GitLab: `python3 brain/teams/publish.py nas --to git@gitlab.example.com:storage/brain-nas.git`
 (clone, rebuild the plugin, commit, push; the url is recorded as the team's remote). Members' brains push their notes,
 captures and incidents into `knowledge/`. The repository also carries `install-team.sh` and `bin/paas-team`, so a laptop
 needs nothing else: `git clone <url> brain-nas && sh brain-nas/install-team.sh` gives the plugin, the rules, the knowledge
