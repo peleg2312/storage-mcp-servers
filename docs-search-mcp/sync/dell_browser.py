@@ -550,6 +550,8 @@ def cmd_manuals(ctx, a):
         if not line:
             continue
         product, url = line.split(None, 1)
+        if a.only and product != a.only:
+            continue
         url = re.sub(r"/support/manuals/(?![a-z]{2}-[a-z]{2}/)", "/support/manuals/en-us/", url)   # index links: no locale
         m = re.search(r"(/support/manuals/[a-z]{2}-[a-z]{2}/[^/]+/[^/?]+)", url)
         if not m:
@@ -558,7 +560,10 @@ def cmd_manuals(ctx, a):
         guide = m.group(1).rstrip("/").rsplit("/", 1)[-1]
         d = os.path.join(a.dest, "dell", product, f"manual-{guide}")
         man, mf = load_manifest(d)
-        page.goto(url, wait_until="domcontentloaded")
+        try:
+            page.goto(url, wait_until="domcontentloaded")
+        except Exception as e:                           # network gone: next guide, the run goes on
+            log(f"{guide}: failed to open: {e}"); continue
         settle(page, 2000)
         first = html_of(page)
         for _ in range(30):                             # the table of contents is drawn by JavaScript, late
@@ -657,6 +662,7 @@ def main():
     ap.add_argument("--max-articles", type=int, default=0)
     ap.add_argument("--delay", type=float, default=1.0)
     ap.add_argument("--headless", action="store_true")
+    ap.add_argument("--only", default="", help="manuals command: only this product folder of sources/dell-manuals.txt")
     ap.add_argument("--wait-login", action="store_true",
                     help="open Dell sign-in first and continue in that session once you are signed in")
     a = ap.parse_args()
