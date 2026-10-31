@@ -21,6 +21,8 @@ home = os.path.join(work, "home")
 os.makedirs(home)
 env = dict(os.environ, HOME=home, PAAS_TEAMS=os.path.join(work, "sources"))
 env.pop("CLAUDE_HOME", None)
+os.makedirs(os.path.join(home, ".claude", "brain"), exist_ok=True)
+open(os.path.join(home, ".claude", "brain", "team-mode"), "w").write("files\n")   # the copy behaviour under test; plugin mode below
 
 
 def run(cmd, e=env, ok=True, inp=None):
@@ -54,7 +56,19 @@ for t in TEAMS:
     assert json.load(open(os.path.join(plug, ".claude-plugin", "plugin.json")))["name"] == "paas-brain-" + t
     assert os.path.isfile(os.path.join(plug, "skills", "coding-rules", "SKILL.md")) and "coding-rules" in meta["skills"], "coding rules travel as a skill"
     assert "Think before coding" in open(os.path.join(plug, "skills", "coding-rules", "SKILL.md")).read()
+    for f in ("mcp_stdio.py", "search_cli.py", "docs_text.py", "docs_index.py"):
+        assert os.path.isfile(os.path.join(plug, "lib", f)), f
 san_skills = json.load(open(os.path.join(out, "paas-brain-san", "team.json")))["skills"]
+# the plugin's docs-local on a machine without the library: the team knowledge is the index
+lh = tempfile.mkdtemp(); os.makedirs(os.path.join(lh, ".claude", "brain", "notes"))
+open(os.path.join(lh, ".claude", "brain", "notes", "vast.md"), "w").write("# VAST\n- 2026-10-31 view policy alpha squashes root observed vms\n")
+msgs = [{"jsonrpc": "2.0", "id": 1, "method": "initialize", "params": {"protocolVersion": "2025-06-18", "capabilities": {}}},
+        {"jsonrpc": "2.0", "id": 2, "method": "tools/call", "params": {"name": "search_docs", "arguments": {"query": "view policy alpha root"}}}]
+r = subprocess.run(["sh", os.path.join(out, "paas-brain-nas", "bin", "docs-local")], input="".join(json.dumps(m) + "\n" for m in msgs),
+                   capture_output=True, text=True, env=dict(env, HOME=lh), timeout=120)
+assert r.returncode == 0, r.stderr[-400:]
+ans = {m["id"]: m for m in (json.loads(l) for l in r.stdout.splitlines() if l.strip())}
+assert ans[1]["result"]["serverInfo"]["name"] == "docs-search" and "vast.md" in ans[2]["result"]["content"][0]["text"], ans[2]
 nas_skills = json.load(open(os.path.join(out, "paas-brain-nas", "team.json")))["skills"]
 assert "zoning-audit" in san_skills and "zoning-audit" not in nas_skills and "share-access-check" in nas_skills
 assert set(json.load(open(os.path.join(out, "paas-brain-nas", "team.json")))["agents"]) >= {"nas-analyst", "docs-researcher"}

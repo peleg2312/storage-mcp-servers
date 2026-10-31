@@ -26,6 +26,8 @@ for t in ("san", "nas"):   # the stand-in remotes accept pushes (GitLab is bare;
     subprocess.run(["git", "-C", os.path.join(work, "sources", t), "config", "receive.denyCurrentBranch", "updateInstead"], check=True)
 env = dict(os.environ, HOME=home, PAAS_TEAMS=os.path.join(work, "sources"), PAAS_MARKET=os.path.join(work, "nomarket"))
 env.pop("CLAUDE_HOME", None)
+os.makedirs(os.path.join(home, ".claude", "brain"), exist_ok=True)
+open(os.path.join(home, ".claude", "brain", "team-mode"), "w").write("files\n")
 proc = subprocess.Popen(["node", SERVER], env=env, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
 line = proc.stdout.readline()
 port = json.loads(line)["port"]

@@ -22,7 +22,9 @@ for f in (tmp, tmp + ".bak"):
         os.remove(f)
 if os.path.exists(path):
     shutil.copy(path, tmp)
-subprocess.run([sys.executable, os.path.join(here, "..", "merge_settings.py"), tmp,
+# the read-only guard is the one hook every account must run and cannot switch off; docs hints and leads, the notes
+# scan, lint, the capture nudge and session start come with the team plugin (the same for the VM and every laptop)
+subprocess.run([sys.executable, os.path.join(here, "..", "merge_settings.py"), tmp, "--guard-only",
                 "--hooks-dir", f"{paas}/hooks", "--banner-dir", f"{paas}/banner", *catalog], check=True,
                stdout=subprocess.DEVNULL)
 s = json.load(open(tmp))

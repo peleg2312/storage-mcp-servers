@@ -226,3 +226,33 @@ try:
     print("refresh on demand ok")
 finally:
     srv.kill()
+
+# --knowledge DIR: the brain folder's notes pages indexed at start (stamp: no rebuild when unchanged); knowledge-only without a library
+kb = os.path.join(root, "kbrain"); os.makedirs(os.path.join(kb, "notes")); os.makedirs(os.path.join(kb, "incidents", "2026"))
+open(os.path.join(kb, "notes", "fabric.md"), "w").write("# Fabric\n- 2026-10-31 slowdrain on mds9 port fc1/7 verified mds\n")
+open(os.path.join(kb, "incidents", "2026", "x.md"), "w").write("# Incident\n- zoning outage on fabric A\n")
+kdb = os.path.join(root, "kbrain.db")
+ask = [{"jsonrpc": "2.0", "id": 1, "method": "tools/call", "params": {"name": "search_docs", "arguments": {"query": "slowdrain mds9 fc1/7"}}},
+       {"jsonrpc": "2.0", "id": 2, "method": "tools/call", "params": {"name": "list_sources", "arguments": {}}},
+       {"jsonrpc": "2.0", "id": 3, "method": "tools/call", "params": {"name": "search_docs", "arguments": {"query": "zoning outage fabric"}}}]
+def ask_stdio(args):
+    p = subprocess.run([sys.executable, os.path.join(here, "mcp_stdio.py"), *args], input="".join(json.dumps(m) + "\n" for m in ask),
+                       capture_output=True, text=True, timeout=60)
+    assert p.returncode == 0, p.stderr[-500:]
+    return {m["id"]: json.loads(m["result"]["content"][0]["text"]) for m in (json.loads(l) for l in p.stdout.splitlines() if l.strip())}
+o = ask_stdio(["--db", db, "--knowledge", kb, "--brain-db", kdb])
+assert any(r.get("library") == "team knowledge" and "fabric.md" in r.get("path", "") for r in o[1]["results"]), o[1]
+assert [l["library"] for l in o[2]["libraries"]] == ["main", "team knowledge"] and o[2]["libraries"][1]["documents"] == 2, o[2]
+assert any("incidents" in r.get("path", "") for r in o[3]["results"]), o[3]
+m0 = os.path.getmtime(kdb)
+time.sleep(1.1)
+ask_stdio(["--db", db, "--knowledge", kb, "--brain-db", kdb])
+assert os.path.getmtime(kdb) == m0, "unchanged pages: no rebuild"
+open(os.path.join(kb, "notes", "fabric.md"), "a").write("- 2026-10-31 another fact verified mds\n")
+ask_stdio(["--db", db, "--knowledge", kb, "--brain-db", kdb])
+assert os.path.getmtime(kdb) > m0, "changed pages: rebuilt"
+# knowledge-only (no --db, no library anywhere near): the knowledge is the whole index
+o = ask_stdio(["--knowledge", kb, "--brain-db", kdb])
+assert o[1]["results"] and all(r.get("library", "main") == "main" for r in o[1]["results"]), o[1]
+assert [l["library"] for l in o[2]["libraries"]] == ["main"] and o[2]["libraries"][0]["documents"] == 2, o[2]
+print("knowledge at start ok")

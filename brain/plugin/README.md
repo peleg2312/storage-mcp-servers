@@ -22,7 +22,8 @@ plugin cannot: the rules (`~/.claude/brain/main.md` imported from `~/.claude/CLA
 persona and storage rules, tools in `~/.claude/tools`, the library. Check: `claude plugin list`, `/mcp` inside claude,
 `paas-team`.
 
-Limits of the laptop way: no web UI, no multi-user parts, no dev tools or banner; skills are namespaced
-(`/paas-brain-san:<skill>`); the read-only guard is a plugin hook, so a person can disable the plugin. The VM
-(`install-vm.sh`, multi-user setup) is the enforced setup; there `paas-team` runs in files mode (skills copied, no
-namespace, hooks from the settings). `session-start.py` recognises the guard inside the plugin.
+The VM runs the same plugin (`paas-team` in plugin mode wherever `claude` is installed), so one install exists for
+everyone: skills are `/paas-brain-<team>:<skill>` everywhere, hooks and docs-local come with the plugin. On the multi-user
+VM the managed settings keep the read-only guard enforced for every account and the plugin's copy of the guard steps
+aside (`CLAUDE_PLUGIN_ROOT` set and the managed settings naming it), so nothing runs twice. A laptop lacks the web UI,
+the multi-user parts, the dev tools and the banner. `session-start.py` recognises the guard inside the plugin.

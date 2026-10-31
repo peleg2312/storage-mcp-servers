@@ -10,6 +10,10 @@ for a VM that runs Claude Code but has no pip, no containers and no internet.
                       `add-docs --brain`), searched together with the library: --brain-db, else $BRAIN_DB, else
                       ~/.claude/brain/brain.db; opened when the file exists, so it may appear later. Its chunk ids are
                       offset by ID_BASE as server.py does for several indexes.
+    --knowledge DIR   the brain folder (~/.claude/brain): its notes/*.md and incidents are indexed into the --brain-db
+                      index at start when they changed since the last run (one or two seconds for a team's pages, nothing
+                      otherwise), so the team knowledge is searched with the library without any other step. Without a
+                      library (--db missing: a laptop) the knowledge index is the only index (knowledge-only mode).
     --http [HOST:]PORT  serve the same tools to other machines over MCP's Streamable HTTP (POST /mcp, JSON answers,
                       GET /health), still standard library only: the VM's docs-search for laptops and other VMs.
       --token-file F    bearer token every /mcp request must carry (one line; 401 otherwise)
@@ -214,6 +218,44 @@ def _docs_index():
             spec.loader.exec_module(mod)
             return mod
     return None
+
+
+def refresh_knowledge(brain_dir, db_path):
+    """notes/*.md and incidents/**/*.md of the brain folder into db_path (prefix brain/, products brain-notes and
+    brain-incidents), rebuilt only when the set of files or their newest mtime changed (stamp beside the db). Returns the
+    db path, or None when there is nothing to index and no index exists."""
+    import glob
+    import shutil
+    files = sorted(glob.glob(os.path.join(brain_dir, "notes", "*.md"))) + sorted(glob.glob(os.path.join(brain_dir, "incidents", "*", "*.md")))
+    stamp = db_path + ".stamp"
+    state = "%d:%d" % (len(files), int(max((os.path.getmtime(f) for f in files), default=0)))
+    try:
+        if open(stamp).read().strip() == state and os.path.exists(db_path):
+            return db_path
+    except OSError:
+        pass
+    di = _docs_index()
+    if di is None:
+        return db_path if os.path.exists(db_path) else None
+    staging = db_path + ".staging"
+    shutil.rmtree(staging, ignore_errors=True)
+    os.makedirs(os.path.join(staging, "local", "brain-notes"))
+    os.makedirs(os.path.join(staging, "local", "brain-incidents"))
+    for f in files:
+        if os.sep + "notes" + os.sep in f:
+            shutil.copy2(f, os.path.join(staging, "local", "brain-notes", os.path.basename(f)))
+        else:
+            shutil.copy2(f, os.path.join(staging, "local", "brain-incidents", os.path.basename(os.path.dirname(f)) + "-" + os.path.basename(f)))
+    os.makedirs(os.path.dirname(os.path.abspath(db_path)), exist_ok=True)
+    try:
+        di.build(staging, db_path, log=lambda *_: None, prefix="brain/")
+        with open(stamp, "w") as f:
+            f.write(state + "\n")
+    except Exception as e:
+        print(f"knowledge index not rebuilt: {e}", file=sys.stderr)
+    finally:
+        shutil.rmtree(staging, ignore_errors=True)
+    return db_path if os.path.exists(db_path) else None
 
 
 class Teams:
@@ -430,11 +472,33 @@ def main():
     ap.add_argument("--teams-dir")
     ap.add_argument("--state-dir")
     ap.add_argument("--refresh-minutes", type=int, default=10)
+    ap.add_argument("--knowledge", metavar="DIR")
     a = ap.parse_args()
+    if a.knowledge:
+        a.brain_db = refresh_knowledge(a.knowledge, a.brain_db or default_brain_db())
+        has_lib = a.db and os.path.isfile(a.db) or (not a.db and any(os.path.isfile(c) for c in (
+            os.getenv("INDEX_DB", "").split(",")[0], os.path.join(os.path.dirname(os.path.abspath(__file__)), "docs.db"),
+            os.path.join(os.path.dirname(a.knowledge), "brain", "library", "docs.db"), os.path.join(a.knowledge, "library", "docs.db")) if c))
+        if not has_lib:                                       # a laptop: the team knowledge is the whole index
+            if not a.brain_db:
+                di = _docs_index()
+                empty = os.path.join(a.knowledge, "brain.db")
+                if di is None:
+                    sys.exit("no library and no team knowledge to index yet")
+                os.makedirs(os.path.join(a.knowledge, ".empty"), exist_ok=True)
+                di.build(os.path.join(a.knowledge, ".empty"), empty, log=lambda *_: None, prefix="brain/")
+                a.brain_db = empty
+            srv = Server(a.brain_db, "/nonexistent-brain-db")
+            srv.knowledge_only = True
+            return serve_stdio(srv)
     if a.http:
         return serve_http(lib.find_db(a.db), a.http if ":" in a.http else "0.0.0.0:" + a.http, a.token_file, a.tls_cert, a.tls_key,
                           a.teams_dir, a.state_dir, a.refresh_minutes)
     srv = Server(lib.find_db(a.db), a.brain_db)
+    return serve_stdio(srv)
+
+
+def serve_stdio(srv):
     out = sys.stdout
     for line in sys.stdin:
         line = line.strip()

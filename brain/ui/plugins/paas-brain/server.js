@@ -84,12 +84,35 @@ async function teamWriteBack(kind, name, file) {
   const dst = kind === 'skill' ? path.join(repo, `paas-brain-${team}`, 'skills', name, 'SKILL.md') : path.join(repo, `paas-brain-${team}`, 'agents', `${name}.md`);
   if (!fs.existsSync(path.dirname(dst))) return null;
   fs.copyFileSync(file, dst);
-  if (TEAM_BIN) await run('python3', [TEAM_BIN, 'bump', team], 20000);   // a new version string: plugin-mode members get the copy
+  await teamCommit(repo, team, kind, name);
+  return team;
+}
+// bump the plugin version (plugin-mode members get the copy), commit the plugin folder, push when there is an upstream
+async function teamCommit(repo, team, kind, name) {
+  if (TEAM_BIN) await run('python3', [TEAM_BIN, 'bump', team], 20000);
   await git(repo, ['add', '-A', '--', `paas-brain-${team}`]);
   await git(repo, ['commit', '-q', '-m', `brain tab: team ${kind} ${name}`]);
   const up = await git(repo, ['rev-parse', '--abbrev-ref', '@{upstream}']);
   if (up.ok) await run('git', ['-C', repo, 'push', '-q'], 10000);
-  return team;
+}
+// plugin mode: the active team's skills and agents are read in place from the clone, not copied into ~/.claude.
+// "claude" on PATH is looked up once at startup; the team and its mode are read per call (they can change while the UI runs).
+const HAS_CLAUDE = [...(process.env.PATH || '').split(path.delimiter), path.join(HOME, '.local', 'bin'), '/usr/local/bin', '/usr/bin']
+  .some((d) => d && fs.existsSync(path.join(d, 'claude')));
+function pluginTeam() {
+  const team = (read(path.join(BRAIN, 'team'), 200) || '').trim();
+  if (!TEAM_NAME.test(team)) return null;
+  const mode = (read(path.join(BRAIN, 'team-mode'), 50) || '').trim();
+  if (!(mode === 'plugin' || (!mode && HAS_CLAUDE))) return null;
+  const dir = path.join(BRAIN, 'teams', team, `paas-brain-${team}`);
+  return fs.existsSync(dir) ? { team, dir } : null;
+}
+// the clone's file for a team skill or agent (null: no plugin mode, bad name, or not in the team)
+function teamFile(kind, name) {
+  const t = pluginTeam();
+  if (!t || !SKILL_NAME.test(String(name || ''))) return null;
+  const f = kind === 'skill' ? path.join(t.dir, 'skills', name, 'SKILL.md') : kind === 'agent' ? path.join(t.dir, 'agents', `${name}.md`) : null;
+  return f && fs.existsSync(f) ? { ...t, file: f } : null;
 }
 // the file behind a memory name or captures/<file>, and its repository and path inside it (null: outside it)
 function memPath(name) {
@@ -125,25 +148,51 @@ function sourceOf(kind, id, mine) {
 function skills() {
   const dir = path.join(C, 'skills');
   let names = [];
-  try { names = fs.readdirSync(dir); } catch { return []; }
-  return names.map((n) => {
+  try { names = fs.readdirSync(dir); } catch { /* none of your own */ }
+  const out = names.map((n) => {
     const text = read(path.join(dir, n, 'SKILL.md'), 60000) || '';
     const f = frontmatter(text);
     const mine = fs.existsSync(path.join(dir, n, '.user-skill'));
     return { dir: n, shared: sharedNow('skill', n), name: f.name || n, description: f.description || '', when: f.when_to_use || '', mine, source: sourceOf('skill', n, mine),
       body: mine ? text.replace(/^---\n[\s\S]*?\n---\n?/, '').trim() : undefined };
-  }).filter((s) => s.description).sort((a, b) => a.name.localeCompare(b.name));
+  }).filter((s) => s.description);
+  const t = pluginTeam();                                    // plugin mode: the team's own skills, once per name
+  if (t) {
+    let tn = [];
+    try { tn = fs.readdirSync(path.join(t.dir, 'skills')); } catch { /* no skills */ }
+    for (const n of tn) {
+      if (!SKILL_NAME.test(n) || names.includes(n)) continue;
+      const teamPath = path.join(t.dir, 'skills', n, 'SKILL.md');
+      const f = frontmatter(read(teamPath, 60000));
+      if (f.description) out.push({ dir: n, shared: false, name: f.name || n, description: f.description, when: f.when_to_use || '', mine: false, source: 'team', teamPath });
+    }
+  }
+  return out.sort((a, b) => a.name.localeCompare(b.name));
 }
 
 function agents() {
   const dir = path.join(C, 'agents');
   let names = [];
-  try { names = fs.readdirSync(dir).filter((n) => n.endsWith('.md')); } catch { return []; }
-  return names.map((n) => {
+  try { names = fs.readdirSync(dir).filter((n) => n.endsWith('.md')); } catch { /* none of your own */ }
+  const info = (f) => (f.tools || f.disallowedTools ? `${f.tools ? `tools: ${f.tools}` : `not: ${f.disallowedTools}`}` : 'all tools');
+  const out = names.map((n) => {
     const f = frontmatter(read(path.join(dir, n), 4000));
     const file = n.replace(/\.md$/, '');
-    return { file, mine: isMine('agent', file), source: sourceOf('agent', file, isMine('agent', file)), shared: sharedNow('agent', file), name: f.name || file, description: f.description || '', tools: f.tools || f.disallowedTools ? `${f.tools ? `tools: ${f.tools}` : `not: ${f.disallowedTools}`}` : 'all tools', model: f.model || '' };
+    return { file, mine: isMine('agent', file), source: sourceOf('agent', file, isMine('agent', file)), shared: sharedNow('agent', file), name: f.name || file, description: f.description || '', tools: info(f), model: f.model || '' };
   });
+  const t = pluginTeam();                                    // plugin mode: the team's own agents, once per name
+  if (t) {
+    let tn = [];
+    try { tn = fs.readdirSync(path.join(t.dir, 'agents')).filter((n) => n.endsWith('.md')); } catch { /* no agents */ }
+    for (const n of tn) {
+      const file = n.replace(/\.md$/, '');
+      if (!SKILL_NAME.test(file) || names.includes(n)) continue;
+      const teamPath = path.join(t.dir, 'agents', n);
+      const f = frontmatter(read(teamPath, 4000));
+      out.push({ file, mine: false, source: 'team', shared: false, name: f.name || file, description: f.description || '', tools: info(f), model: f.model || '', teamPath });
+    }
+  }
+  return out;
 }
 
 // the file behind a skill or agent name (null for anything else)
@@ -237,6 +286,7 @@ async function overview() {
   const src = await run('python3', [path.join(LIB, 'search.py'), 'sources'], 60000);
   return {
     library: { version: read(path.join(LIB, 'VERSION'))?.trim() || null, sources: src.ok ? src.out : null },
+    pluginTeam: pluginTeam()?.team || null,
     skills: skills(), agents: agents(), hooks: hooks(), mcp: mcpServers(), inbox: inbox(), captures: captures(),
     // multi-user VM: environment.md / tool-map.md are shared and only root writes them; the library too
     // CLAUDE.md is this account's own copy of the brain's rules, yours to change (a brain update replaces it)
@@ -343,6 +393,7 @@ const routes = {
     return { ok: true };
   },
   'POST /skill-delete': async (_q, b) => {
+    if (teamFile('skill', b.name) && !fs.existsSync(path.join(C, 'skills', String(b.name), 'SKILL.md'))) return { ok: false, out: 'Team skills are removed in the team editor' };
     const dir = path.join(C, 'skills', String(b.name || ''));
     if (!SKILL_NAME.test(String(b.name || '')) || !fs.existsSync(path.join(dir, '.user-skill'))) return { ok: false, out: 'Only your own skills can be deleted' };
     fs.rmSync(dir, { recursive: true, force: true });
@@ -353,6 +404,8 @@ const routes = {
   'GET /file': async (q) => {
     const p = defFile(q.get('kind'), q.get('name'));
     if (!p) return { ok: false, out: 'Unknown skill or agent' };
+    const tf = fs.existsSync(p) ? null : teamFile(q.get('kind'), q.get('name'));   // your ~/.claude copy wins
+    if (tf) return { ok: true, text: read(tf.file) ?? '', builtin: false, team: tf.team };
     return { ok: true, text: read(p) ?? '', builtin: !isMine(q.get('kind'), q.get('name')) };
   },
   'POST /file': async (_q, b) => {
@@ -363,6 +416,15 @@ const routes = {
     if (!f.name || !f.description) return { ok: false, out: 'The file must start with a --- header holding name: and description:' };
     if ((f.description || '').length + (f.when_to_use || '').length > 450) return { ok: false, out: 'Keep the description under ~450 characters: it is shown to Claude on every turn; put details in the body.' };
     if (text.length > 300000) return { ok: false, out: 'Too long' };
+    const tf = fs.existsSync(p) ? null : teamFile(b.kind, b.name);
+    if (tf) {                                                          // plugin mode: write into the clone, push for the team
+      if (b.create) return { ok: false, out: `"${b.name}" already exists` };
+      const repo = repoDir();
+      if (!repo || repo === BRAIN) return { ok: false, out: 'The team repository is not available' };
+      fs.writeFileSync(tf.file, text.endsWith('\n') ? text : `${text}\n`);
+      await teamCommit(repo, tf.team, b.kind, b.name);
+      return { ok: true, team: tf.team };
+    }
     const isNew = !fs.existsSync(p);
     if (isNew && !b.create) return { ok: false, out: 'Not found' };
     if (!isNew && b.create) return { ok: false, out: `"${b.name}" already exists` };
@@ -375,6 +437,7 @@ const routes = {
   },
   'POST /agent-delete': async (_q, b) => {
     const p = defFile('agent', b.name);
+    if (p && !fs.existsSync(p) && teamFile('agent', b.name)) return { ok: false, out: 'Team skills are removed in the team editor' };
     if (!p || !isMine('agent', b.name)) return { ok: false, out: 'Only your own agents can be deleted' };
     fs.rmSync(p, { force: true });
     return { ok: true };

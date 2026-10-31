@@ -4,7 +4,10 @@ into a Claude Code settings.json (keeps everything else).
 usage: merge_settings.py <settings.json> [--hooks-dir DIR] [--banner-dir DIR] [--mcpjson NAME] [mcp-server-name ...]
   --hooks-dir / --banner-dir  where the hook and banner scripts live (default ~/.claude/hooks, ~/.claude/banner;
                               a project install passes <dir>/.claude/hooks etc. as absolute paths)
-  --mcpjson NAME              pre-approve the .mcp.json server NAME (enabledMcpjsonServers; project install)"""
+  --mcpjson NAME              pre-approve the .mcp.json server NAME (enabledMcpjsonServers; project install)
+  --no-hooks                  no hook entries (team plugin mode: the plugin's hooks.json runs them); existing brain hook
+                              entries are removed so nothing runs twice
+  --guard-only                only the read-only guard (multi-user VM managed settings: enforced; the rest comes with the plugin)"""
 import copy
 import json
 import os
@@ -14,9 +17,14 @@ import sys
 args = sys.argv[1:]
 path = args.pop(0)
 hooks_dir, banner_dir, mcpjson, servers = "~/.claude/hooks", "~/.claude/banner", [], []
+no_hooks = guard_only = False
 while args:
     a = args.pop(0)
-    if a == "--hooks-dir":
+    if a == "--no-hooks":
+        no_hooks = True
+    elif a == "--guard-only":
+        guard_only = True
+    elif a == "--hooks-dir":
         hooks_dir = args.pop(0)
     elif a == "--banner-dir":
         banner_dir = args.pop(0)
@@ -50,13 +58,37 @@ def hook(groups, script, timeout, matcher=None):
     groups.append({"matcher": matcher, **e} if matcher else e)
 
 
-hook(pre, "block-write-tools.py", 10, "mcp__.*|Bash")   # a timed-out hook lets the call through: keep slack
-hook(post, "docs-hints.py", 5, "mcp__.*")                # meaning of EMS / alerts / codes seen in live results
-hook(post, "py-lint.py", 5, "Edit|Write|MultiEdit")      # ruff findings on every .py file Claude edits
-hook(post, "notes-check.py", 5, "Edit|Write|MultiEdit")  # secrets / real IPs written into notes and reports
-hook(stop, "capture-nudge.py", 10)                       # once per long session: anything worth capturing?
-hook(ups, "docs-leads.py", 5)                            # library leads for each request (silent when unrelated)
-hook(start, "session-start.py", 30)                      # a bare plugin install clones the team repository here once
+BRAIN_HOOKS = ("block-write-tools.py", "docs-hints.py", "py-lint.py", "notes-check.py", "capture-nudge.py", "docs-leads.py", "session-start.py")
+
+
+def drop(groups, scripts):
+    """remove the brain's hook entries named in scripts (they run from the team plugin instead)"""
+    for e in list(groups):
+        e["hooks"] = [h for h in e.get("hooks", []) if not any(h.get("command", "").endswith("/" + sc) for sc in scripts)]
+        if not e["hooks"]:
+            groups.remove(e)
+
+
+if not (no_hooks or guard_only):
+    hook(pre, "block-write-tools.py", 10, "mcp__.*|Bash")   # a timed-out hook lets the call through: keep slack
+if not no_hooks:
+    pass
+if guard_only:
+    hook(pre, "block-write-tools.py", 10, "mcp__.*|Bash")
+if no_hooks or guard_only:
+    rest = BRAIN_HOOKS if no_hooks else tuple(h for h in BRAIN_HOOKS if h != "block-write-tools.py")
+    for groups in (pre, post, ups, start, stop):
+        drop(groups, rest)
+else:
+    hook(post, "docs-hints.py", 5, "mcp__.*")                # meaning of EMS / alerts / codes seen in live results
+    hook(post, "py-lint.py", 5, "Edit|Write|MultiEdit")      # ruff findings on every .py file Claude edits
+    hook(post, "notes-check.py", 5, "Edit|Write|MultiEdit")  # secrets / real IPs written into notes and reports
+    hook(stop, "capture-nudge.py", 10)                       # once per long session: anything worth capturing?
+    hook(ups, "docs-leads.py", 5)                            # library leads for each request (silent when unrelated)
+    hook(start, "session-start.py", 30)                      # a bare plugin install clones the team repository here once
+for k in ("PreToolUse", "PostToolUse", "UserPromptSubmit", "SessionStart", "Stop"):
+    if not s["hooks"].get(k):
+        s["hooks"].pop(k, None)
 # security-guidance plugin: pattern warnings only (its LLM reviews would send every diff to Opus and pip-install
 # an SDK the air-gapped VM cannot fetch); set it to 1 in settings.json "env" to turn the reviews on.
 # No internet on the VM: no auto-update, telemetry or other background traffic.

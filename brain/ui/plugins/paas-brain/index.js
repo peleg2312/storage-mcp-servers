@@ -647,7 +647,7 @@ export function mount(container, api) {
       <div class="d" title="${esc(x.description)}">${esc(x.description)}</div><div class="row">${actions('skill', x.dir, x)}</div></div>`;
     pane.innerHTML = `<div class="row spread"><span class="sub">${data.skills.length} skills · ${mine.length} of them yours</span>
       ${editing ? '' : '<button class="btn new">New skill</button>'}</div>
-      <div class="sub" style="margin-top:6px">Team skills come and go with the team; your own and marketplace skills stay. Add more in the Market tab.</div>${form}
+      <div class="sub" style="margin-top:6px">Team skills come and go with the team; your own and marketplace skills stay. Add more in the Market tab.${data.pluginTeam ? ` In Claude they are called /paas-brain-${esc(data.pluginTeam)}:&lt;skill&gt;.` : ''}</div>${form}
       ${mine.length ? `<div class="sec-label">Your skills</div><div class="grid">${mine.map(card).join('')}</div><div class="sec-label">Built in</div>` : '<div style="height:12px"></div>'}
       <div class="grid">${data.skills.filter((x) => !x.mine).map(card).join('')}</div>`;
     pane.querySelector('.new')?.addEventListener('click', () => renderSkills({}));
@@ -740,6 +740,7 @@ export function mount(container, api) {
       const r = await api.rpc('POST', 'file', { kind, name: n, text: ta.value, create }).catch((x) => ({ out: String(x) }));
       done();
       if (!r.ok) { fst.error(`Not saved: ${r.out || 'unknown error'}`); return; }
+      say(true, r.team ? 'Saved for the whole team (pushed)' : 'Saved');
       await refresh(); back();
     });
   }

@@ -142,8 +142,17 @@ def build(out, team_name="san", hooks=True):
     os.makedirs(os.path.join(plug, "bin"), exist_ok=True)
     shutil.copy(os.path.join(SRC, "tools", "paas-team"), os.path.join(plug, "bin", "paas-team"))   # the hook's bootstrap runs it
     os.chmod(os.path.join(plug, "bin", "paas-team"), 0o755)
+    # the docs server and its indexer travel with the plugin (standard library, ~110 KB): docs-local serves the library plus the
+    # person's team knowledge where the library is installed, the team knowledge alone on a laptop (the VM's docs-search adds
+    # the library there); the knowledge index is refreshed at every server start when the pages changed
+    os.makedirs(os.path.join(plug, "lib"), exist_ok=True)
+    for f in ("mcp_stdio.py", "search_cli.py", "docs_text.py", "docs_index.py"):
+        shutil.copy(os.path.join(ROOT, "docs-search-mcp", f), os.path.join(plug, "lib", f))
     exe = os.path.join(plug, "bin", "docs-local")
-    write(exe, '#!/bin/sh\nexec python3 "$HOME/.claude/brain/library/mcp_stdio.py" --db "$HOME/.claude/brain/library/docs.db"\n')
+    write(exe, '#!/bin/sh\n# docs-local of the team plugin: the library (when installed) and the team knowledge of ~/.claude/brain\n'
+               'B="${CLAUDE_HOME:-$HOME/.claude}/brain"; L=$(cd "$(dirname "$0")/.." && pwd)/lib\n'
+               'if [ -f "$B/library/docs.db" ]; then exec python3 "$L/mcp_stdio.py" --db "$B/library/docs.db" --knowledge "$B"\n'
+               'else exec python3 "$L/mcp_stdio.py" --knowledge "$B"; fi\n')
     os.chmod(exe, 0o755)
     write(os.path.join(out, ".claude-plugin", "marketplace.json"), dump({
         "name": name, "owner": {"name": "paas"}, "description": team.get("title", team_name) + " brain: " + team.get("description", ""),

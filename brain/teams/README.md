@@ -101,12 +101,11 @@ the same file when they are committed, so a broken edit is caught at the push, n
    captures waiting and incidents; a topic file is read only when a question touches it. The session-start line also says
    when curation is due (5 captures or more, or one older than 14 days) and how many facts are older than 180 days.
 2. **Look up.** Before answering, Claude searches the offline library (docs-lookup, docs-leads) and the team's own
-   knowledge: notes pages and incidents are indexed into a small per-person index, `~/.claude/brain/brain.db`
-   (`add-docs --brain`, run in the background by the session-start hook whenever they changed; the shared library itself
-   is read-only on the multi-user VM). `docs-local` searches that index together with the library, so a teammate's page is
-   found by `search_docs` next to the vendor documents, marked `library: team knowledge`; it follows the active team. A
-   plugin user without the library searches the same knowledge through the VM's `docs-search` (`?team=<team>`), whose
-   service pulls every team repository and rebuilds the index every 10 minutes (`RUNBOOK.md`, "Docs search").
+   knowledge. The plugin's `docs-local` carries the docs server itself: at every start it indexes the brain folder's notes
+   pages and incidents into a small per-person index, `~/.claude/brain/brain.db` (a second or two when pages changed,
+   nothing otherwise; the shared library stays read-only), and searches it with the library, so a teammate's page is found
+   by `search_docs` next to the vendor documents, marked `library: team knowledge`. On a laptop without the library the
+   knowledge is the whole `docs-local` index and the VM's `docs-search` supplies the library. It follows the active team.
 3. **Learn.** A solved problem, a quirk, a corrected assumption is written down (golden rule 6): a dated line with a
    confidence word (verified / observed / hypothesis) and its source into notes/<topic>.md, a capture under captures/ when
    the topic is unclear, a page notes/<topic>-<slug>.md when it needs sections, an incident postmortem under incidents/.
@@ -151,10 +150,14 @@ writes a zip of the team repository (plugin, marketplace file, install-team.sh) 
 tab, for a laptop without GitLab access.
 
 A switch rewrites `~/.claude/brain/persona.md` and `storage.md`, repoints `notes.md`, `environment.md`, `tool-map.md`,
-`notes/`, `captures/`, `incidents/` (symlinks into `~/.claude/brain/teams/<team>/knowledge/`), and swaps the skills and
-agents: in **files mode** (VMs; hooks come from settings.json or the managed settings) they are copied into
-`~/.claude/skills` and `agents` without a namespace; in **plugin mode** (laptops, `install-laptop.sh`) the team's plugin
-is enabled and the other teams' disabled. Under a second. The first switch moves the person's existing notes into the
+`notes/`, `captures/`, `incidents/` (symlinks into `~/.claude/brain/teams/<team>/knowledge/`), and swaps the team's
+Claude Code plugin: `paas-brain-<team>` installed and enabled from the person's clone (a marketplace added from a local
+path loads in place, so a sync brings new skills to the next session with no update step), the other teams' plugins
+disabled. This is the same install on the VM and on every laptop: skills are `/paas-brain-<team>:<skill>`, the hooks and
+`docs-local` come with the plugin. On the multi-user VM the managed settings keep only the read-only guard (enforced for
+every account; the plugin's own copy of the guard steps aside when it sees that twin), so no hook runs twice. A machine
+without the `claude` command falls back to **files mode**: skills and agents copied into `~/.claude` and hooks from
+settings.json (`paas-team mode files|plugin`). Under a second either way. The first switch moves the person's existing notes into the
 team's knowledge folder; a person's own skills (`.user-skill`, `agents/.user-agents`) and the skills and agents they
 added from the marketplace (`paas-market add skill/<name>`, the Market tab; recorded in `~/.claude/paas-market.json`) are
 never removed or overwritten, so everyone has the team's set plus their own choices. Each team has its own memory:

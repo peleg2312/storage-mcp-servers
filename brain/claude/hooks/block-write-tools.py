@@ -401,7 +401,21 @@ def audit(data, decision, why=""):
         print(f"read-only guard: audit log not written ({e.__class__.__name__})", file=sys.stderr)
 
 
+def managed_twin():
+    """Run from a team plugin on a VM whose managed settings (/etc/claude-code/managed-settings.json) run this very hook
+    for every account: that copy is the enforced one, this run would only repeat its answer. One small file read."""
+    if not os.environ.get("CLAUDE_PLUGIN_ROOT"):
+        return False
+    try:
+        with open(os.environ.get("PAAS_MANAGED_SETTINGS") or "/etc/claude-code/managed-settings.json", encoding="utf-8") as f:
+            return "block-write-tools.py" in f.read()
+    except OSError:
+        return False
+
+
 def main():
+    if managed_twin():
+        return 0
     try:
         data = json.load(sys.stdin)
     except Exception:

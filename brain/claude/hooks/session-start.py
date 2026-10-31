@@ -185,27 +185,6 @@ def stale_count(mem):
     return n
 
 
-def index_knowledge():
-    """Team knowledge into the docs search: when notes pages or incidents changed since the last run, `add-docs --brain`
-    rebuilds the person's own small index (~/.claude/brain/brain.db) in the background (seconds); docs-local searches it
-    with the library, so teammates' pages are found by search_docs next to the vendor documents. A stamp file keeps it
-    from running when nothing changed."""
-    brain = os.path.join(USER_HOME, "brain")
-    files = glob.glob(os.path.join(brain, "notes", "*.md")) + glob.glob(os.path.join(brain, "incidents", "**", "*.md"), recursive=True)
-    add = next((p for p in (os.path.join(USER_HOME, "tools", "add-docs"), os.path.expanduser("~/.local/bin/add-docs"), "/opt/paas/tools/add-docs")
-                if os.path.exists(p)), "")
-    if not files or not add:
-        return
-    state = "%d:%d" % (len(files), int(max(os.path.getmtime(f) for f in files)))
-    stamp = os.path.join(brain, ".brain-index-stamp")
-    if read(stamp).strip() == state:
-        return
-    with open(stamp, "w") as f:
-        f.write(state + "\n")
-    subprocess.Popen(["sh", add, "--brain"], stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
-                     start_new_session=True)
-
-
 def memory_line():
     """The memory catalog: notes.md is always loaded; the topic files are listed here and read on demand."""
     # multi-user VM: hooks live in /opt/paas (no notes there), each person's notes in their own ~/.claude
@@ -316,10 +295,6 @@ def main():
         pass
     try:
         chats_rules()
-    except Exception:
-        pass
-    try:
-        index_knowledge()
     except Exception:
         pass
     lines = []

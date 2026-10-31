@@ -106,9 +106,9 @@ Try: `python3 ~/.claude/brain/library/search.py search "scsiblade.san.config.act
 ## Docs search: one library for every team, local or on OpenShift
 
 There is one documentation library for everyone; a team changes which rules and skills point into it, not the library.
-On the VM each Claude session searches it with `docs-local` (a stdio process over the shared read-only `docs.db`; the OS
-page cache is shared, so ten people cost one copy), plus the person's own `brain.db` with the active team's notes pages and
-incidents, rebuilt in the background when they change.
+On the VM each Claude session searches it with `docs-local` (the team plugin's own stdlib server over the shared read-only
+`docs.db`; the OS page cache is shared, so ten people cost one copy), plus the person's own `brain.db` with the active team's
+notes pages and incidents, which the server rebuilds at start when they changed.
 
 **The VM serves the same search to other machines over HTTPS** (`install-shared.sh` sets it up): the service `paas-docs`
 runs the same dependency-free server in HTTP mode on port 8001 with the gate's certificate and a bearer token
@@ -126,9 +126,9 @@ option for a cluster-hosted copy; it serves the library only.
 
 | Who | Knowledge clone | Index | Searched through | Fresh when |
 |---|---|---|---|---|
-| VM user (web UI or shell) | `~/.claude/brain/teams/<team>` (pulled at every session start and Brain tab opening) | `~/.claude/brain/brain.db`, rebuilt in the background when pages changed | `docs-local` | next session start after a teammate pushed |
-| Plugin user on a laptop or another VM | `~/.claude/brain/teams/<team>` (same clone, same pulls) | the VM indexes for them (no library on the machine) | `docs-search` on the VM, `?team=<team>` | seconds after a push: the notes hook asks the service to re-index that team (`POST /refresh`); every 10 minutes otherwise |
-| The VM's `paas-docs` service | `/var/lib/paas-docs/teams/<team>` | `/var/lib/paas-docs/<team>.db` | serves the row above | on request after a push, and every 10 minutes |
+| VM user (web UI or shell) | `~/.claude/brain/teams/<team>` (pulled at every session start and Brain tab opening) | `~/.claude/brain/brain.db`, rebuilt by `docs-local` at start when pages changed | `docs-local`: library + knowledge | next session start after a teammate pushed |
+| Plugin user on a laptop or another VM | `~/.claude/brain/teams/<team>` (same clone, same pulls) | `~/.claude/brain/brain.db`, the same way (the plugin carries the server) | `docs-local`: knowledge; `docs-search` on the VM: the library | next session start after a teammate pushed |
+| A client with neither (another tool, OpenShift) | none | `/var/lib/paas-docs/<team>.db` on the VM | `docs-search` with `?team=<team>` | seconds after a push (the notes hook asks the service to re-index); every 10 minutes otherwise |
 
 All three read the same git repository, so what one person's Claude wrote down is what every other member searches,
 whichever machine they sit at. A laptop with the library installed (`install-laptop.sh`) behaves like a VM user.
@@ -136,15 +136,19 @@ whichever machine they sit at. A laptop with the library installed (`install-lap
 ## Teams: one brain per team, one account per person
 
 1. Pick the team at install time: `sh install-vm.sh --team nas` (single VM; `san` is the default and needs no flag), `sh
-   install-laptop.sh --team nas` (laptop, plugin mode). `paas-team` shows the state, `paas-team use san` switches (under a
-   second; start a new Claude session or a new chat afterwards), `paas-team list` the teams available.
+   install-laptop.sh --team nas` (laptop). Everywhere the team is the Claude Code plugin `paas-brain-<team>`, installed
+   from the person's clone of the team repository, so the VM and every laptop run the identical thing (skills are
+   `/paas-brain-<team>:<skill>`). `paas-team` shows the state, `paas-team use san` switches (under a second; start a new
+   Claude session or a new chat afterwards), `paas-team list` the teams available.
 2. Publish each team's repository once in GitLab (an empty project, default branch `main`): `python3 brain/teams/publish.py
    nas --to git@gitlab/storage/brain-nas.git`. It holds the plugin (`paas-brain-nas/`) and `knowledge/` (notes/, captures/,
    incidents/, tool-map.md). Members join it with `paas-team remote nas <url>` (or `install.sh --team nas --brain-remote <url>`,
    or `--team-source <url>` to install straight from it); their notes hook pushes every saved note there and every session
    start pulls. Re-run the publish after a `git pull` of this repository: members get the new skills at their next sync.
-3. Multi-user VM: `sh brain/multiuser/install-shared.sh` publishes every team into `/opt/paas/teams/<team>` and installs
-   `paas-team`. Record a team's GitLab url there: `python3 brain/teams/publish.py nas --to /opt/paas/teams/nas --remote <url>`
+3. Multi-user VM: `sh brain/multiuser/install-shared.sh` publishes every team into `/opt/paas/teams/<team>`, republishes
+   each team that has a GitLab url recorded straight to that project (so `git pull && install-shared.sh` updates every
+   member's plugin at their next sync), and installs `paas-team`. The managed settings keep only the read-only guard;
+   everything else comes with the team plugin, as on a laptop. Record a team's GitLab url there: `python3 brain/teams/publish.py nas --to /opt/paas/teams/nas --remote <url>`
    (members then clone from GitLab, and fall back to the VM copy when it is unreachable). Give a person a team with
    `paas-user add dana --team nas`, `paas-user team dana nas`, or by AD group (step 3 of the next section). The Brain tab of
    the web UI has the same switch; a person may belong to one team at a time and change at will.

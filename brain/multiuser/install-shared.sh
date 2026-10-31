@@ -73,8 +73,15 @@ ln -sfn "$P/bin/paas-user" /usr/local/sbin/paas-user
 # A team's GitLab remote (members clone and push there): python3 brain/teams/publish.py <team> --to /opt/paas/teams/<team> --remote <url>
 install -m 755 "$BRAIN/claude/tools/paas-team" "$P/bin/paas-team"
 ln -sfn "$P/bin/paas-team" /usr/local/bin/paas-team
-python3 "$BRAIN/teams/publish.py" --all --to "$P/teams" --no-hooks > "$P/teams.log" 2>&1 || { cat "$P/teams.log"; echo "install-shared: publishing the teams failed (see above)"; exit 1; }
-sed 's/^/teams: /' "$P/teams.log"; rm -f "$P/teams.log"   # hooks are managed settings here
+python3 "$BRAIN/teams/publish.py" --all --to "$P/teams" > "$P/teams.log" 2>&1 || { cat "$P/teams.log"; echo "install-shared: publishing the teams failed (see above)"; exit 1; }
+sed 's/^/teams: /' "$P/teams.log"; rm -f "$P/teams.log"
+# a team with a GitLab project recorded: the new plugin goes there too, so every member (VM or laptop) gets it at the next sync
+for tj in "$P"/teams/*/team.json; do
+  [ -f "$tj" ] || continue
+  t=$(basename "$(dirname "$tj")"); remote=$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1])).get("remote") or "")' "$tj")
+  [ -n "$remote" ] || continue
+  python3 "$BRAIN/teams/publish.py" "$t" --to "$remote" 2>&1 | sed "s/^/teams: $t -> GitLab: /" || true
+done
 # a team's mcp.json may hold its servers' tokens: readable by the brain's users only, like the marketplace; directory (AD)
 # groups listed in /etc/paas/allowed-groups get the same read access through ACLs
 chgrp -R paas-users "$P/teams"; chmod -R u+rwX,g+rX,o-rwx "$P/teams"

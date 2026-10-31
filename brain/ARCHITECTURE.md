@@ -113,8 +113,8 @@ Code; few high-signal tools) and measured with `docs-search-mcp/eval_search.py`:
   cannot activate); `brain/teams/publish.py` wraps it into a team repository with `knowledge/` (notes/, captures/, incidents/,
   tool-map.md), one git repository per team in GitLab. `paas-team use <team>` switches a person in under a second: persona.md and
   storage.md rewritten, the memory paths (`notes.md`, `environment.md`, `tool-map.md`, `notes/`, `captures/`, `incidents/`) linked
-  into `~/.claude/brain/teams/<team>/knowledge/`, skills and agents swapped (copied without namespace on VMs, plugin enable /
-  disable on laptops). Every hook, skill and the web UI keep reading the old paths; the notes hook commits and pushes into the team
+  into `~/.claude/brain/teams/<team>/knowledge/`, the team's plugin enabled and the others disabled (the same Claude Code
+  plugin on the VM and on laptops; files mode, copies into `~/.claude`, only where `claude` is missing). Every hook, skill and the web UI keep reading the old paths; the notes hook commits and pushes into the team
   clone; session start pulls and re-applies a plugin the team updated. Each team is a separate context budget (`test_budgets.py`
   prints both: the NAS member pays 7.9 KB of rules and 6.5 KB of skill frontmatter against 10.4 / 10.2 KB for SAN). People stay
   individual accounts (Active Directory on the multi-user VM, the team picked by AD group at first sign-in); the team is a profile,
@@ -128,7 +128,8 @@ Code; few high-signal tools) and measured with `docs-search-mcp/eval_search.py`:
   the chosen team's plugin `paas-brain-<team>` (skills, agents, hooks, `docs-local`); its `hooks.json`
   is produced by `merge_settings.py` itself, so matchers and timeouts cannot drift from the VM. The rules
   (`main.md` import in `~/.claude/CLAUDE.md`), tools, notes and library stay in `~/.claude/brain` as on the VM. Cost: skills are
-  namespaced (`/paas-brain-san:zoning-audit`), and the guard is a plugin hook a person can disable; the VM stays the enforced setup.
+  namespaced (`/paas-brain-san:zoning-audit`), and the guard is a plugin hook a person can disable; on the multi-user VM the
+  managed settings keep the guard enforced for every account and the plugin's copy steps aside, so it runs once.
 - **Third-party plugins: curated.** Every enabled plugin's skill / agent / command descriptions sit in the
   context on every turn. Included: the 7 plugins `install.sh` installs from
   `brain/plugins` (marketplace `brain-dev`): pr-review-toolkit, feature-dev, commit-commands, security-guidance,

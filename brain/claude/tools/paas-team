@@ -22,8 +22,9 @@ persona.md and storage.md as before.
   paas-team edit <team>            change it from JSON on stdin (title, description, persona, rules, environment, skills,
                                    agents, mcp_servers {name: {url, type, token}}, remove_mcp): written into the team's
                                    repository, committed, pushed, re-applied; the Brain tab's team editor uses it
-  paas-team mode files|plugin      how skills reach Claude: copied into ~/.claude (VM, hooks managed by the
-                                   installer) or as the Claude Code plugin (laptop, hooks inside the plugin)
+  paas-team mode files|plugin      plugin (the default wherever claude is installed): the team is the Claude Code plugin
+                                   paas-brain-<team>, the same install as everyone's; files: skills copied into ~/.claude,
+                                   for a machine without the claude command
 Environment: PAAS_TEAMS (source directory: /opt/paas/teams on a multi-user VM, else ~/.claude/brain/team-sources,
 written by the installer), CLAUDE_HOME (default ~/.claude).
 Standard library, Python 3.9. The only credentials it handles are the team's MCP tokens, which `edit` writes into the
@@ -91,8 +92,13 @@ def active():
 
 
 def mode():
+    """plugin: the team is the Claude Code plugin paas-brain-<team>, the same install as everyone else's (skills, agents,
+    hooks and docs-local from the plugin); files: the skills and agents copied into ~/.claude, for a machine without the
+    claude command. Written by the installer (team-mode); without it: plugin when claude is in PATH."""
     m = read(os.path.join(BRAIN, "team-mode")).strip()
-    return m if m in ("files", "plugin") else "files"
+    if m in ("files", "plugin"):
+        return m
+    return "plugin" if shutil.which("claude") else "files"
 
 
 def team_dir(team):
@@ -365,7 +371,9 @@ def apply_mcp(t, old, tdir):
     have_library = os.path.exists(os.path.join(BRAIN, "library", "docs.db"))
     for m in want:
         if m == "docs-search" and have_library:
-            continue                                              # docs-local covers it here (and sees the person's knowledge index)
+            continue                                              # docs-local covers it here (library and knowledge)
+        if m == "docs-search" and servers.get(m) and "?team=" in servers[m].get("url", ""):
+            servers[m] = {**servers[m], "url": servers[m]["url"].split("?team=")[0]}   # docs-local has the knowledge: the VM gives the library
         if f"mcp/{m}" in mine and prev.get(m) != "market":
             continue                                              # the person added it themselves before any team: theirs
         cfg = servers.get(m) or {}
@@ -444,14 +452,16 @@ def claude(*args):
 
 
 def apply_plugin(team, tdir):
-    """plugin mode: this team's plugin enabled, every other local team's disabled"""
+    """plugin mode: this team's plugin installed and enabled from the person's clone (a marketplace added from a local
+    path loads in place, so a sync brings new skills to the next session with no update step), every other local team's
+    plugin disabled, the pre-team plugin and a user-scope docs-local (the plugin carries its own) removed"""
     if not shutil.which("claude"):
-        print("note: claude is not in PATH; the plugin is registered next time (paas-team refresh)")
+        print("note: claude is not in PATH; the plugin is registered next time (paas-team use " + team + ")")
         return
     name = "paas-brain-" + team
     rc, out = claude("marketplace", "add", tdir)
     if rc:
-        claude("marketplace", "update", name)
+        claude("marketplace", "update", name)                 # already there (this clone, or the team's GitLab url): fine
     rc, out = claude("list")
     if f"{name}@{name}" in out:
         claude("update", f"{name}@{name}")
@@ -468,9 +478,13 @@ def apply_plugin(team, tdir):
             claude("disable", f"{o}@{o}")
     if "paas-brain@paas-brain" in out:                        # the pre-team laptop plugin
         claude("uninstall", "paas-brain@paas-brain")
+    claude_mcp("remove", "-s", "user", "docs-local")           # one docs-local only: the plugin's (same library, plus the knowledge index)
+    old = installed()
+    if old.get("skills") or old.get("agents"):                 # copies left from files mode leave ~/.claude
+        remove_team_files(old)
 
 
-def apply(team, say=True, skills=True):
+def apply(team, say=True, skills=True, plugin_cmds=True):
     tdir = team_dir(team)
     plug = plugin_dir(tdir)
     if not plug:
@@ -493,7 +507,8 @@ def apply(team, say=True, skills=True):
     if not skills:
         pass                                                  # bootstrap from inside the plugin: it already provides them
     elif mode() == "plugin":
-        apply_plugin(team, tdir)
+        if plugin_cmds:                                       # a refresh after a sync needs none: the plugin loads in place
+            apply_plugin(team, tdir)
     else:
         apply_files(plug, t)
     if mode() == "plugin" or not skills:                      # files mode records the servers inside apply_files
@@ -550,7 +565,7 @@ def refresh():
     t = active()
     if not t:
         die("no active team (paas-team use <team>)")
-    apply(t, say=False)
+    apply(t, say=False, plugin_cmds=False)
     print(f"team {t}: files re-applied")
 
 
@@ -583,7 +598,7 @@ def sync():
         rc, out = git(team_dir(t), "pull", "--rebase", "--autostash", "-q", timeout=60)
         print("brain: in sync" if rc == 0 else out[-200:])
     if needs_refresh():
-        apply(t, say=False)
+        apply(t, say=False, plugin_cmds=False)
         print(f"team {t}: updated to version {info(team_dir(t)).get('version', '?')} (new session needed)")
     return 1 if rc else 0
 
