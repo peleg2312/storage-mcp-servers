@@ -14,12 +14,45 @@ const { execFile } = require('child_process');
 
 const ETC = '/etc/paas';
 const APP = '/opt/paas/ui/app';
+
+// ---- pure helpers (tested by --self-test, which runs before anything under /etc/paas is read) -------------------
+
+/** Users to stop: seen before, silent for more than idleMs, no open WebSocket, no claude process (running: a Set). 0 = never. */
+function idleUsers(now, lastSeen, sockets, running, idleMs) {
+  if (!idleMs) return [];
+  return [...lastSeen].filter(([u, t]) => now - t > idleMs && !(sockets.get(u) > 0) && !running.has(u)).map(([u]) => u);
+}
+
+/** /etc/paas/allowed-groups: one group per line, # comments; paas-users when nothing is listed. */
+function parseGroups(text) {
+  const list = String(text || '').split('\n').map((l) => l.replace(/#.*/, '').trim().toLowerCase()).filter(Boolean);
+  return list.length ? list : ['paas-users'];
+}
+
+if (process.argv.includes('--self-test')) {
+  const assert = require('assert');
+  const M = 60000;
+  const seen = new Map([['idle', 0], ['ws', 0], ['claude', 0], ['young', 100 * M]]);
+  const socks = new Map([['ws', 2], ['gone', 0]]);
+  const claude = new Set(['claude']);
+  assert.deepStrictEqual(idleUsers(120 * M + 1, seen, socks, claude, 120 * M), ['idle']);
+  assert.deepStrictEqual(idleUsers(130 * M, new Map([['young', 100 * M]]), socks, claude, 120 * M), []);
+  assert.deepStrictEqual(idleUsers(1e12, seen, socks, claude, 0), []);
+  assert.deepStrictEqual(idleUsers(1e12, new Map([['gone', 0]]), socks, new Set(), 1), ['gone']);
+  assert.deepStrictEqual(parseGroups(undefined), ['paas-users']);
+  assert.deepStrictEqual(parseGroups('# nothing\n\n  \n'), ['paas-users']);
+  assert.deepStrictEqual(parseGroups('paas-users\n# AD\nDomain-Admins  # all\n  eng@corp \n'), ['paas-users', 'domain-admins', 'eng@corp']);
+  console.log('gate self-test ok');
+  process.exit(0);
+}
+
 const pty = require(`${APP}/node_modules/node-pty`);
 const PORT = Number(process.env.GATE_PORT || 3001);
 const KEY = fs.readFileSync(`${ETC}/gate.key`);
+const IDLE_MS = Math.max(0, Number(process.env.GATE_IDLE_MINUTES || 120) || 0) * 60000; // 0 = instances are never stopped for idleness
 const COOKIE = 'paas_gate';
 const SESSION_S = 12 * 3600;
-const USER_RE = /^[a-z_][a-z0-9_.-]{0,31}$/;
+const USER_RE = /^[a-z_][a-z0-9_.-]{0,63}$/; // AD names; lower-cased before the check
 const WINDOW_MS = 10 * 60 * 1000;
 const MAX_FAILURES = 5;
 const MAX_IP_FAILURES = 30; // all names from one address (NAT users share it, so generous)
@@ -49,10 +82,23 @@ function recent(key) {
 const busy = new Map(); // ip -> password checks running
 setInterval(() => { for (const k of failures.keys()) if (!recent(k).length) failures.delete(k); }, WINDOW_MS).unref();
 
+let groupsCache = { t: 0, list: ['paas-users'] }; // /etc/paas/allowed-groups, read at most every 60 s
+function allowedGroups() {
+  if (Date.now() - groupsCache.t >= 60000) {
+    let text = '';
+    try { text = fs.readFileSync(`${ETC}/allowed-groups`, 'utf8'); } catch { /* missing: the default */ }
+    groupsCache = { t: Date.now(), list: parseGroups(text) };
+  }
+  return groupsCache.list;
+}
+
+/** root, or a member of any allowed group (local or AD through sssd: `id` sees both). */
 async function allowed(user) {
   if (user === 'root') return true;
-  const groups = await run('id', ['-nG', '--', user]);
-  return !!groups && groups.trim().split(/\s+/).includes('paas-users');
+  const out = await run('id', ['-nG', '--', user]);
+  if (!out) return false;
+  const have = out.trim().toLowerCase().split(/\s+/);
+  return allowedGroups().some((g) => have.includes(g));
 }
 
 /** The same check as the UI's system-auth.ts: su asks for the password in a pty (as root, drop to nobody first). */
@@ -131,6 +177,25 @@ const healthy = (port) => new Promise((resolve) => {
   req.on('error', () => resolve(false)).on('timeout', () => req.destroy());
 });
 
+/** First sign-in, or a home without the brain: paas-user provision (never fatal; one run per user at a time). */
+const provisioning = new Map();
+function provisionUser(user) {
+  if (!provisioning.has(user)) {
+    provisioning.set(user, new Promise((resolve) => {
+      log(`provisioning ${user}`);
+      execFile('/opt/paas/bin/paas-user', ['provision', user], { timeout: 60000 }, (err, stdout, stderr) => {
+        if (err) log(`provision ${user} failed: ${String(stderr || err.message).trim().split('\n').pop()}`);
+        resolve();
+      });
+    }).finally(() => provisioning.delete(user)));
+  }
+  return provisioning.get(user);
+}
+async function homeOf(user) {
+  const line = await run('getent', ['passwd', user]);
+  return line ? line.trim().split(':')[5] || null : null;
+}
+
 const starting = new Map(); // user -> promise of the port (one start at a time per user)
 function ensureInstance(user) {
   if (!starting.has(user)) {
@@ -184,6 +249,37 @@ async function connectUpstream(user) {
   return null;
 }
 
+// ---- idle stop: an instance nobody uses gives its RAM back; the next request starts it again (connectUpstream) ----
+
+const lastSeen = new Map(); // user -> time of the last forwarded request
+const sockets = new Map(); // user -> open upgraded (WebSocket) connections
+const touch = (user) => lastSeen.set(user, Date.now());
+
+const hasClaude = (user) => new Promise((resolve) => // pgrep: exit 1 = none; any other failure counts as "running" (do not stop)
+  execFile('pgrep', ['-u', user, '-x', 'claude'], { timeout: 5000 }, (err) => resolve(!err || err.code !== 1)));
+
+let sweeping = false;
+async function idleSweep() {
+  if (sweeping) return;
+  sweeping = true;
+  try {
+    const out = await run('systemctl', ['list-units', '--plain', '--no-legend', '--state=active', 'paas-ui@*.service']);
+    if (out === null) return;
+    const up = out.split('\n').map((l) => /^paas-ui@(.+)\.service\s/.exec(l.trim())).filter(Boolean).map((m) => m[1]);
+    for (const u of up) if (!lastSeen.has(u)) touch(u); // running before the gate started: the clock starts now
+    for (const u of [...lastSeen.keys()]) if (!up.includes(u)) lastSeen.delete(u);
+    const quiet = idleUsers(Date.now(), lastSeen, sockets, new Set(), IDLE_MS);
+    const busyClaude = new Set();
+    for (const u of quiet) if (await hasClaude(u)) busyClaude.add(u);
+    for (const u of idleUsers(Date.now(), lastSeen, sockets, busyClaude, IDLE_MS)) {
+      if (!idleUsers(Date.now(), lastSeen, sockets, busyClaude, IDLE_MS).includes(u)) continue; // used while we were checking
+      log(`stopping idle paas-ui@${u}`);
+      lastSeen.delete(u);
+      await run('systemctl', ['stop', `paas-ui@${u}`], 30000);
+    }
+  } finally { sweeping = false; }
+}
+
 // ---- session cookie: <user>.<expiry>.<hmac> --------------------------------------------------------------------
 
 const sign = (v) => crypto.createHmac('sha256', KEY).update(v).digest('hex');
@@ -207,7 +303,7 @@ function splitCookies(header) {
 }
 
 function sessionUser(req) {
-  const m = /^([a-z_][a-z0-9_.-]{0,31})\.(\d{1,12})\.([0-9a-f]{64})$/.exec(splitCookies(req.headers.cookie)[0] || '');
+  const m = /^([a-z_][a-z0-9_.-]{0,63})\.(\d{1,12})\.([0-9a-f]{64})$/.exec(splitCookies(req.headers.cookie)[0] || '');
   if (!m || Number(m[2]) < Date.now() / 1000) return null;
   if (!crypto.timingSafeEqual(Buffer.from(sign(`${m[1]}.${m[2]}`), 'hex'), Buffer.from(m[3], 'hex'))) return null;
   if (fs.existsSync(`${ETC}/users/${m[1]}.locked`)) return null; // paas-user lock: the cookie dies with the account
@@ -305,7 +401,8 @@ function credentials(req, body) {
 async function login(req, res, asJson) {
   const started = Date.now();
   const ip = clientIp(req);
-  const [username, password] = credentials(req, (await readBody(req, 8192)) || '');
+  const [rawName, password] = credentials(req, (await readBody(req, 8192)) || '');
+  const username = rawName.toLowerCase(); // sssd with case_sensitive = false resolves any case to one account
   const valid = USER_RE.test(username);
   const fail = async (status, msg, why, retryMin) => {
     log(`sign-in failed user=${valid ? username : '(invalid)'} ip=${ip}${why ? ` (${why})` : ''}`);
@@ -335,6 +432,10 @@ async function login(req, res, asJson) {
     return fail(503, 'The VM did not answer in time. Try again in a moment.', 'password check timed out');
   }
   if (!ok) return fail(401, BAD);
+  const first = !fs.existsSync(envPath(username));
+  const home = first ? null : await homeOf(username);
+  if (first || !home || !fs.existsSync(`${home}/.claude/brain`)) await provisionUser(username);
+  touch(username);
   const port = await ensureInstance(username);
   const r = port ? await instanceLogin(port, username, password) : { status: 502, token: null };
   if (!r.token) {
@@ -363,6 +464,8 @@ function forwardHeaders(req) {
 }
 
 async function proxy(req, res, user) {
+  touch(user);
+  res.on('close', () => touch(user)); // a long download or chat stream counts until it ends
   const sock = await connectUpstream(user);
   if (!sock) return sendJson(res, 502, { error: 'Your workspace did not start. Try again in a minute.' });
   const up = http.request({ method: req.method, path: req.url, headers: forwardHeaders(req), createConnection: () => sock }, (ur) => {
@@ -383,6 +486,7 @@ function upgrade(req, socket, head) {
   socket.on('error', () => socket.destroy());
   const user = sessionUser(req);
   if (!user) return socket.end('HTTP/1.1 401 Unauthorized\r\nContent-Length: 0\r\nConnection: close\r\n\r\n');
+  touch(user);
   connectUpstream(user).then((up) => {
     if (!up) return socket.end('HTTP/1.1 502 Bad Gateway\r\nContent-Length: 0\r\nConnection: close\r\n\r\n');
     if (socket.destroyed) return up.destroy();
@@ -391,7 +495,13 @@ function upgrade(req, socket, head) {
     for (const [k, v] of Object.entries(h)) for (const one of [].concat(v)) raw += `${k}: ${one}\r\n`;
     up.write(`${raw}\r\n`);
     if (head.length) up.write(head);
-    const close = () => { up.destroy(); socket.destroy(); };
+    sockets.set(user, (sockets.get(user) || 0) + 1);
+    let counted = true;
+    const close = () => {
+      if (counted) { counted = false; sockets.set(user, Math.max(0, sockets.get(user) - 1)); touch(user); }
+      up.destroy();
+      socket.destroy();
+    };
     up.on('close', close);
     socket.on('close', close);
     up.pipe(socket).pipe(up);
@@ -426,3 +536,4 @@ const server = https.createServer({
 }));
 server.on('upgrade', upgrade);
 server.listen(PORT, '0.0.0.0', () => log(`gate listening on https://0.0.0.0:${PORT}`));
+if (IDLE_MS) setInterval(() => idleSweep().catch((e) => log(`idle sweep: ${e.message}`)), 60000).unref();

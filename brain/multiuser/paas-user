@@ -3,7 +3,9 @@
 # group paas-users with their own home, sessions, notes and marketplace items, and their own web UI service
 # (paas-ui@<name>, 127.0.0.1, port in /etc/paas/users/<name>.env) that the sign-in gate on :3001 forwards them to.
 #
-#   paas-user add <name>          create the account (password read from stdin, or asked), set it up, start its UI
+#   paas-user add <name> [--team <team>]   create the account (password read from stdin, or asked; an AD account is kept
+#                                 as it is), set it up, start its UI, and choose the team profile when given
+#   paas-user team <name> [<team>]  set the team profile of <name> (paas-team use), or print the current team
 #   paas-user passwd <name>       new password (stdin, or asked)
 #   paas-user lock|unlock <name>  block / allow signing in (lock also ends their UI, sessions and processes)
 #   paas-user remove <name> [--delete-home]   remove the account and its UI (home kept unless --delete-home)
@@ -16,8 +18,35 @@ P=/opt/paas
 ETC=/etc/paas/users
 BASE_PORT=41000
 die() { echo "paas-user: $*" >&2; exit 1; }
-valid() { echo "$1" | grep -Eq '^[a-z_][a-z0-9_.-]{0,31}$' || die "'$1' is not a valid user name"; }
+valid() { echo "$1" | grep -Eq '^[a-z_][a-z0-9_.-]{0,63}$' || die "'$1' is not a valid user name"; }
+valid_team() { echo "$1" | grep -Eq '^[A-Za-z0-9_][A-Za-z0-9_.-]{0,63}$' || die "'$1' is not a valid team name"; }
 home_of() { getent passwd "$1" | cut -d: -f6; }
+lower() { printf '%s' "$1" | tr '[:upper:]' '[:lower:]'; }
+
+ensure_home() {     # an AD account (sssd) has no home until someone makes it
+  h=$(home_of "$1"); [ -n "$h" ] || return 0
+  [ -d "$h" ] && return 0
+  if command -v mkhomedir_helper >/dev/null 2>&1; then mkhomedir_helper "$1" 0077 >/dev/null 2>&1 || echo "note: mkhomedir_helper $1 failed"; fi
+  [ -d "$h" ] || install -d -o "$1" -g "$(id -g "$1")" -m 700 "$h"
+}
+
+set_team() {        # the team profile is the person's own (paas-team runs as them); a failure is a note, not an error
+  if runuser -u "$1" -- "$P/bin/paas-team" use "$2"; then return 0; fi
+  echo "note: team $2 not set for $1 (paas-team use failed)" >&2; return 1
+}
+
+team_of() { h=$(home_of "$1"); if [ -n "$h" ] && [ -s "$h/.claude/brain/team" ]; then head -n1 "$h/.claude/brain/team"; else echo none; fi; }
+
+team_from_groups() {   # /etc/paas/team-groups: "<team> <group>" per line; the first group the person is in picks the team
+  [ -f /etc/paas/team-groups ] || return 0
+  have=" $(lower "$(id -nG "$1" 2>/dev/null)") "
+  while read -r t grp _; do
+    case "$t" in ''|'#'*) continue ;; esac
+    [ -n "$grp" ] || continue
+    case "$have" in *" $(lower "$grp") "*) set_team "$1" "$t" || true; return 0 ;; esac
+  done < /etc/paas/team-groups
+  return 0
+}
 
 read_password() {   # one line from stdin when it is not a terminal; else asked twice
   if [ -t 0 ]; then
@@ -56,6 +85,7 @@ EOF
 
 provision() {       # links to the shared brain, own notes, UI plugins, default marketplace items
   u=$1; h=$(home_of "$u"); [ -n "$h" ] || die "no account $u"
+  ensure_home "$u"
   # root's own settings.json "env" (proxy, CA file, model, ...; not keys or tokens): handed over in the environment, not on a command line
   PAAS_ROOT_ENV=$(python3 -c 'import json,re,sys
 try: print(json.dumps({k: v for k, v in json.load(open(sys.argv[1])).get("env", {}).items() if not re.search("KEY|TOKEN|SECRET|PASSWORD", k, re.I)}))
@@ -66,13 +96,16 @@ P=$1; C=$HOME/.claude
 mkdir -p "$C/brain/notes" "$HOME/storage-reports" "$HOME/chats" "$HOME/.claude-code-ui/plugins"
 for l in brain/library:library brain/storage.md:brain/storage.md brain/coding.md:brain/coding.md tools:tools banner:banner themes:themes; do
   dst=$C/${l%%:*}; src=$P/${l#*:}
-  [ -L "$dst" ] || [ ! -e "$dst" ] || continue      # never replace a real file the person made
+  [ -L "$dst" ] || [ ! -e "$dst" ] || continue      # never replace a real file the person made (storage.md too)
   ln -sfn "$src" "$dst"
 done
+# root's default persona, once; after that it is theirs (or the team's)
+[ -e "$C/brain/persona.md" ] || [ -L "$C/brain/persona.md" ] || [ ! -f "$P/brain/persona.md" ] || cp "$P/brain/persona.md" "$C/brain/persona.md"
 # their own environment.md / tool-map.md / CLAUDE.md, started from root's default (root's are the default itself);
 # a copy they never edited follows the default on updates (.<file>.default = the default it was copied from)
 for f in environment.md tool-map.md CLAUDE.md; do
   [ "$2" = root ] && continue
+  case $f in environment.md|tool-map.md) [ ! -e "$C/brain/team" ] || continue ;; esac   # team mode: symlinks into the team folder, never replaced
   dst=$C/brain/$f; [ $f = CLAUDE.md ] && dst=$C/CLAUDE.md; seed=$C/brain/.$f.default
   if [ -L "$dst" ] || [ ! -e "$dst" ] || { [ -f "$seed" ] && [ "$(cat "$dst")" = "$(cat "$seed")" ]; }; then
     rm -f "$dst"; cp "$P/brain/$f" "$dst"; cp "$P/brain/$f" "$seed"
@@ -134,6 +167,9 @@ for p in "$P"/ui-plugins/*/; do
 done
 PAAS_MARKET=$P/marketplace "$P/bin/paas-market" defaults >/dev/null 2>&1 || echo "note: default marketplace items not added (is claude installed?)"
 EOS
+  # no team yet: the first mapped group of the person (AD membership) picks it
+  [ "$u" = root ] || [ -e "$h/.claude/brain/team" ] || team_from_groups "$u"
+  return 0
 }
 
 share_dir() {       # where <name> puts the skills / agents they share in the marketplace (only they write it)
@@ -145,16 +181,26 @@ kill_user() { loginctl terminate-user "$1" >/dev/null 2>&1 || true; pkill -KILL 
 
 start_ui() { systemctl enable --now "paas-ui@$1" >/dev/null 2>&1 || echo "note: could not start paas-ui@$1 (systemctl status paas-ui@$1)"; }
 
-cmd=${1:-}; shift || true
+cmd=${1:-}; [ $# -eq 0 ] || shift
+if [ $# -gt 0 ]; then first=$(lower "$1"); shift; set -- "$first" "$@"; fi     # AD names are lower case
 case "$cmd" in
   add)
-    u=${1:-}; valid "$u"
+    u=${1:-}; valid "$u"; shift; team=
+    while [ $# -gt 0 ]; do
+      case "$1" in --team) team=${2:-}; valid_team "$team"; shift 2 ;; *) die "unknown option '$1'" ;; esac
+    done
     if [ "$u" != root ]; then
-      if id "$u" >/dev/null 2>&1; then usermod -aG paas-users "$u"      # an existing account keeps its password
+      if id "$u" >/dev/null 2>&1; then   # an existing account keeps its password; AD accounts cannot join a local group
+        usermod -aG paas-users "$u" 2>/dev/null || echo "note: $u not added to paas-users (directory account?); /etc/paas/allowed-groups decides who may sign in"
       else useradd -m -G paas-users "$u"; read_password "$u"; fi
     fi
-    write_env "$u"; share_dir "$u"; provision "$u"; start_ui "$u"
+    write_env "$u"; share_dir "$u"; provision "$u"
+    [ -z "$team" ] || set_team "$u" "$team" || true
+    start_ui "$u"
     echo "added $u (UI port $(sed -n 's/^SERVER_PORT=//p' "$ETC/$u.env"))" ;;
+  team)
+    u=${1:-}; valid "$u"; id "$u" >/dev/null 2>&1 || die "no account $u"
+    if [ -n "${2:-}" ]; then valid_team "$2"; set_team "$u" "$2" && echo "team of $u: $2"; else team_of "$u"; fi ;;
   passwd)
     u=${1:-}; valid "$u"; id "$u" >/dev/null 2>&1 || die "no account $u"; read_password "$u"; echo "password changed for $u" ;;
   lock)
@@ -193,5 +239,5 @@ case "$cmd" in
       fi
     done
     if [ $json = 1 ]; then printf ']\n'; fi ;;
-  *) sed -n '2,13p' "$0" | sed 's/^# \{0,1\}//'; exit 1 ;;
+  *) sed -n '2,/^set -eu/{/^set -eu/!p;}' "$0" | sed 's/^# \{0,1\}//'; exit 1 ;;
 esac

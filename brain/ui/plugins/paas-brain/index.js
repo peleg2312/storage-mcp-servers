@@ -342,12 +342,48 @@ export function mount(container, api) {
     });
   }
 
+  // Team card (top of Memory): which team profile this chat uses, switch it, sync its knowledge (GET/POST team, team-sync)
+  let teamMsg = null;
+  async function renderTeam(box) {
+    const t = await api.rpc('GET', 'team').catch((e) => ({ installed: true, error: e.message || String(e) }));
+    if (!box.isConnected) return;
+    if (!t.installed) { box.innerHTML = '<div class="sub" style="margin-bottom:12px">Team profiles are not installed on this VM.</div>'; return; }
+    const teams = [...(t.teams || [])].sort((a, b) => Number(!!b.local) - Number(!!a.local));
+    const cur = teams.find((x) => x.name === t.active);
+    box.innerHTML = `<div class="card"><h3>Team</h3>${t.error ? `<div class="sub bad" role="alert">${esc(t.error)}</div>` : `
+      <div class="sub" style="margin-bottom:10px">${cur ? `<b>${esc(cur.title || cur.name)}</b> (${esc(cur.name)}) · ${esc(t.mode || 'files')} mode · ${esc(cur.skills ?? 0)} skills, ${esc(cur.agents ?? 0)} agents` : 'No team is active.'}</div>
+      ${teams.length ? field('Team', `<select class="tsel" aria-label="Team">${teams.map((x) => `<option value="${esc(x.name)}" ${x.name === (t.active || teams[0].name) ? 'selected' : ''}>${esc(x.title || x.name)} (${esc(x.name)})${x.local ? '' : ' (not added yet)'}</option>`).join('')}</select>`) : '<div class="sub">No teams are available.</div>'}
+      <div class="row">${teams.length ? '<button type="button" class="btn tsw">Switch</button>' : ''}${cur ? '<button type="button" class="btn ghost tsy">Sync knowledge</button>' : ''}<span class="stbox"></span></div>`}</div>`;
+    if (t.error) return;
+    const st = statusLine(box.querySelector('.stbox'));
+    if (teamMsg) { st.say(teamMsg); teamMsg = null; }
+    const sw = box.querySelector('.tsw');
+    sw?.addEventListener('click', async () => {
+      const name = box.querySelector('.tsel').value; const x = teams.find((y) => y.name === name);
+      if (name === t.active) { st.say('Already using this team.'); return; }
+      const r0 = await confirmInline(sw, { title: `Switch to ${x.title || name}?`, text: `Your next Claude chat uses this team's rules and skills.${dirty ? ' Unsaved edits below are lost.' : ''}${x.local ? '' : ' It is added first, which can take a few seconds.'}`, confirmLabel: 'Switch' });
+      if (!r0.ok) return;
+      const done = busy(sw, x.local ? 'Switching…' : 'Adding…'); st.say('');
+      const r = await api.rpc('POST', 'team', { name }).catch((e) => ({ out: String(e) }));
+      done();
+      if (!r.ok) { st.error(`Not switched: ${r.out || 'unknown error'}`); return; }
+      teamMsg = `Switched to ${x.title || name}. Start a new chat to use it.`;
+      refresh();
+    });
+    box.querySelector('.tsy')?.addEventListener('click', async (e) => {
+      const done = busy(e.currentTarget, 'Syncing…'); st.say('');
+      const r = await api.rpc('POST', 'team-sync').catch((x) => ({ out: String(x) }));
+      done();
+      if (r.ok) st.say(r.out || 'Synced.'); else st.error(`Not synced: ${r.out || 'unknown error'}`);
+    });
+  }
+
   // Memory: notes.md / environment.md / tool-map.md are yours (kept by every install); CLAUDE.md is your own copy too
   function renderMemory(i = 0, cap = null) {
     const m = cap || data.memory[i];
     if (!m) { pane.replaceChildren(emptyBlock('Claude creates them the first time it saves a note.', '', null, { icon: 'file', title: 'No memory files found' })); return; }
     dirty = false;
-    pane.innerHTML = `<div class="seg" role="group" aria-label="Memory file">${data.memory.map((x, k) => `<button data-i="${k}" aria-pressed="${k === i}">${esc(x.name)}</button>`).join('')}</div>
+    pane.innerHTML = `${cap ? '' : '<div class="teambox"></div>'}<div class="seg" role="group" aria-label="Memory file">${data.memory.map((x, k) => `<button data-i="${k}" aria-pressed="${k === i}">${esc(x.name)}</button>`).join('')}</div>
       <div class="sub" style="margin:12px 0 8px">${m.editable
         ? `What Claude reads at the start of every session. Edit and save; the previous version is kept as a .bak file.${m.name === 'CLAUDE.md' ? ' A brain update replaces this file: keep lasting facts in notes.md.' : ''}`
         : 'Shared file: only root changes it.'}</div>
@@ -357,6 +393,7 @@ export function mount(container, api) {
       ${(data.captures || []).length ? data.captures.map((c, k) => `<div class="row"><span class="grow">${esc(c.name)} <span class="sub">${esc(new Date(c.mtime).toLocaleDateString())} ${esc(c.text.split('\n')[0].replace(/^#+\s*/, '').slice(0, 80))}</span></span>
         <button class="btn ghost sm" data-open="${k}">Open</button><button class="btn danger sm" data-drop="${k}">Discard</button></div>`).join('')
         : '<div class="sub">Nothing captured yet. Claude writes a capture when it solves something worth keeping.</div>'}`}`;
+    if (!cap) renderTeam(pane.querySelector('.teambox'));
     pane.querySelectorAll('.seg button').forEach((b) => b.addEventListener('click', () => renderMemory(Number(b.dataset.i))));
     pane.querySelectorAll('[data-open]').forEach((b) => b.addEventListener('click', () => {
       const c = data.captures[Number(b.dataset.open)]; renderMemory(0, { name: `captures/${c.name}`, editable: true, text: c.text });

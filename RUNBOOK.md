@@ -103,7 +103,46 @@ re-extracted only when `library/VERSION` changed).
 Try: `python3 ~/.claude/brain/library/search.py search "scsiblade.san.config.active"` or, inside Claude,
 `explain EMS scsiblade.san.config.active`, `/zoning-audit fabric A`, `which KB covers FC link down after a switch reboot`.
 
-## Sharing the brain through GitLab
+## Teams: one brain per team, one account per person
+
+1. Pick the team at install time: `sh install-vm.sh --team nas` (single VM; `san` is the default and needs no flag), `sh
+   install-laptop.sh --team nas` (laptop, plugin mode). `paas-team` shows the state, `paas-team use san` switches (under a
+   second; start a new Claude session or a new chat afterwards), `paas-team list` the teams available.
+2. Publish each team's repository once in GitLab (an empty project, default branch `main`): `python3 brain/teams/publish.py
+   nas --to git@gitlab/storage/brain-nas.git`. It holds the plugin (`paas-brain-nas/`) and `knowledge/` (notes/, captures/,
+   incidents/, tool-map.md). Members join it with `paas-team remote nas <url>` (or `install.sh --team nas --brain-remote <url>`,
+   or `--team-source <url>` to install straight from it); their notes hook pushes every saved note there and every session
+   start pulls. Re-run the publish after a `git pull` of this repository: members get the new skills at their next sync.
+3. Multi-user VM: `sh brain/multiuser/install-shared.sh` publishes every team into `/opt/paas/teams/<team>` and installs
+   `paas-team`. Record a team's GitLab url there: `python3 brain/teams/publish.py nas --to /opt/paas/teams/nas --remote <url>`
+   (members then clone from GitLab, and fall back to the VM copy when it is unreachable). Give a person a team with
+   `paas-user add dana --team nas`, `paas-user team dana nas`, or by AD group (step 3 of the next section). The Brain tab of
+   the web UI has the same switch; a person may belong to one team at a time and change at will.
+4. A new team: a folder `brain/teams/<name>/` with `team.json` and `persona.md` (plus its own rules file, skills, agents),
+   `python3 brain/test_budgets.py` and `python3 brain/test_teams.py` green, then publish. `brain/teams/README.md` has the schema.
+
+## Active Directory accounts on the multi-user VM
+
+Everyone signs in to the web UI with their own domain account; nothing is created by hand, and the audit log, the chats and
+the notes stay per person.
+
+1. Join the VM (as root, RHEL 9): `dnf install sssd realmd oddjob oddjob-mkhomedir adcli samba-common-tools`, `realm join
+   <domain> -U <admin>`, then in `/etc/sssd/sssd.conf` under the domain: `use_fully_qualified_names = False`,
+   `case_sensitive = False`, `override_homedir = /home/%u`, `fallback_homedir = /home/%u`; `systemctl restart sssd`.
+   Home directories at first login: `authselect enable-feature with-mkhomedir && systemctl enable --now oddjobd`.
+   Check: `id <someone>` prints the domain groups, `getent passwd <someone>` a home under /home.
+2. Who may sign in: put the AD group(s) into `/etc/paas/allowed-groups` (one per line; `paas-users` stays for local
+   accounts). The gate lower-cases the typed name and checks membership with `id -nG`; the password check is `su` through
+   PAM, so it works for AD and local accounts alike.
+3. Which team: `/etc/paas/team-groups`, lines `<team> <AD group>`, e.g. `san storage-san-team` and `nas storage-nas-team`.
+   At a person's first sign-in the gate runs `paas-user provision <name>` (home, links to the shared brain, UI plugins,
+   marketplace defaults) and the team of the first matching group is switched on. Nothing else to do per person.
+4. RAM: the gate stops a person's UI instance after `GATE_IDLE_MINUTES` (default 120) without a request, an open WebSocket
+   or a running `claude`; the next request starts it again within seconds and the sign-in cookie stays valid. So the VM
+   carries the people active now (about 100-150 MB each), not the headcount. Set the minutes in `paas-gate.service`
+   (`Environment=GATE_IDLE_MINUTES=60`; 0 disables). Local accounts keep working as before (`paas-user add`).
+
+## Sharing the brain through GitLab (no team profile)
 
 1. In GitLab create an **empty** project (default branch `main`, no README). Give everyone who should see the team knowledge the **Developer** role.
 2. Install with its url: `sh install-vm.sh` then `sh brain/install.sh --brain-remote <url>` (or `BRAIN_REMOTE=<url>`; re-running is safe). Use an ssh url with the person's own key, or an https url with a token kept by git's credential helper (`git config --global credential.helper store`), never in the brain or the url written into notes.

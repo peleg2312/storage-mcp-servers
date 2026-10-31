@@ -1,0 +1,11 @@
+{
+  "name": "san",
+  "title": "SAN / block storage",
+  "description": "Read-only SAN assistant: PowerMax, PowerFlex, ONTAP SAN, Cisco MDS / UCS, VMware datastores and RDMs, Trident / CSM volumes, with the offline docs library",
+  "persona": "persona.md",
+  "rules": "brain/claude/brain/storage.md",
+  "environment": "brain/claude/brain/environment.md",
+  "skills": "all",
+  "agents": "all",
+  "mcp": ["docs-local", "powermax", "powerflex", "mds", "ucsc"]
+}

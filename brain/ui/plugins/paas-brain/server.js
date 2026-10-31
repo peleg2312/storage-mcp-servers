@@ -37,21 +37,44 @@ const run = (cmd, args, timeout = 120000) => new Promise((resolve) => {
     (err, stdout, stderr) => resolve({ ok: !err, out: `${stdout}${stderr}`.trim() }));
 });
 
-// history of the memory files: ~/.claude/brain may be a git repository (install.sh); never blocks a save
-const git = (args) => run('git', ['-C', BRAIN, '-c', 'user.name=brain', '-c', 'user.email=brain@localhost', ...args], 5000);
-const isRepo = () => fs.existsSync(path.join(BRAIN, '.git'));
+// history of the memory files: ~/.claude/brain (or the active team's repository inside it) may be a git repository;
+// never blocks a save. The repository is looked up per call: the team can change while the UI runs.
+const TEAM_NAME = /^[a-z][a-z0-9_-]{0,31}$/;
+const TEAM_BIN = [path.join(HOME, '.claude', 'tools', 'paas-team'), '/opt/paas/bin/paas-team', path.join(HOME, '.local', 'bin', 'paas-team')].find((p) => fs.existsSync(p));
+function repoDir() {
+  const team = (read(path.join(BRAIN, 'team'), 200) || '').trim();
+  if (TEAM_NAME.test(team)) {
+    const d = path.join(BRAIN, 'teams', team);
+    if (fs.existsSync(path.join(d, '.git'))) return d;
+  }
+  return fs.existsSync(path.join(BRAIN, '.git')) ? BRAIN : null;
+}
+const git = (repo, args) => run('git', ['-C', repo, '-c', 'user.name=brain', '-c', 'user.email=brain@localhost', ...args], 5000);
+// the repository holding file p and p's path inside it (null: no repository, or p lies outside it).
+// Memory files are symlinks into a team repository, so compare real paths; a deleted file keeps its real directory.
+function locate(p) {
+  const repo = repoDir();
+  if (!repo) return { repo: null, rel: null };
+  if (repo === BRAIN) { const rel = path.relative(BRAIN, p); return { repo, rel: rel.startsWith('..') ? null : rel }; }
+  try {
+    let real;
+    try { real = fs.realpathSync(p); } catch { real = path.join(fs.realpathSync(path.dirname(p)), path.basename(p)); }
+    const rel = path.relative(fs.realpathSync(repo), real);
+    return { repo, rel: rel.startsWith('..') || path.isAbsolute(rel) ? null : rel };
+  } catch { return { repo, rel: null }; }
+}
 const commitFile = async (p, msg) => {
-  if (!isRepo()) return;
-  await git(['add', '-A', '--', path.relative(BRAIN, p)]);
-  await git(['commit', '-q', '-m', msg]);
+  const { repo, rel } = locate(p);
+  if (!repo || !rel) return;
+  await git(repo, ['add', '-A', '--', rel]);
+  await git(repo, ['commit', '-q', '-m', msg]);
 };
-// the file behind a memory name or captures/<file>, and its path inside the repository (null: outside it)
+// the file behind a memory name or captures/<file>, and its repository and path inside it (null: outside it)
 function memPath(name) {
   const cap = CAPTURE.exec(String(name || ''));
   const p = cap ? path.join(CAPTURES, cap[1]) : Object.hasOwn(MEMORY, name) ? MEMORY[name] : null;
   if (!p) return null;
-  const rel = path.relative(BRAIN, p);
-  return { p, rel: rel.startsWith('..') ? null : rel, cap: !!cap };
+  return { p, ...locate(p), cap: !!cap };
 }
 
 function frontmatter(text) {
@@ -254,17 +277,17 @@ const routes = {
   },
   'GET /history': async (q) => {
     const m = memPath(q.get('name'));
-    if (!m || !m.rel || !isRepo()) return { repo: false, entries: [] };
-    const r = await git(['log', '--format=%h%x09%ct%x09%s', '-n', '25', '--', m.rel]);
+    if (!m || !m.rel || !m.repo) return { repo: false, entries: [] };
+    const r = await git(m.repo, ['log', '--format=%h%x09%ct%x09%s', '-n', '25', '--', m.rel]);
     const entries = r.ok ? r.out.split('\n').filter(Boolean).map((l) => { const [sha, when, ...s] = l.split('\t'); return { sha, when: Number(when), subject: s.join('\t') }; }) : [];
     return { repo: true, entries };
   },
   'POST /restore': async (_q, b) => {
     const m = memPath(b.name);
-    if (!m || !m.rel || !isRepo()) return { ok: false, out: 'No history for that file' };
+    if (!m || !m.rel || !m.repo) return { ok: false, out: 'No history for that file' };
     if (!/^[0-9a-f]{7,40}$/.test(String(b.sha || ''))) return { ok: false, out: 'Bad version' };
     if (fs.existsSync(m.p) && !writable(m.p)) return { ok: false, out: 'Shared file: only root changes it' };
-    const r = await git(['show', `${b.sha}:${m.rel.split(path.sep).join('/')}`]);
+    const r = await git(m.repo, ['show', `${b.sha}:${m.rel.split(path.sep).join('/')}`]);
     if (!r.ok) return { ok: false, out: 'That version is not in the history' };
     if (fs.existsSync(m.p)) fs.copyFileSync(m.p, `${m.p}.bak`);
     fs.writeFileSync(m.p, r.out ? `${r.out}\n` : '');
@@ -329,6 +352,18 @@ const routes = {
       { timeout: 60000, env: { ...process.env, PAAS_DESCRIPTION: oneLine(b.description, 1000) } },
       (err, stdout, stderr) => resolve({ ok: !err, out: `${stdout}${stderr}`.trim() })));
   },
+  // team profiles (paas-team): list, switch, sync the active team's knowledge with its git remote
+  'GET /team': async () => {
+    if (!TEAM_BIN) return { installed: false };
+    const r = await run('python3', [TEAM_BIN, 'list', '--json']);
+    try { return { installed: true, ...JSON.parse(r.out) }; } catch { return { installed: true, error: r.out.slice(0, 2000) || 'paas-team gave no answer' }; }
+  },
+  'POST /team': async (_q, b) => {
+    if (!TEAM_BIN) return { ok: false, out: 'Teams are not installed on this VM' };
+    if (!TEAM_NAME.test(String(b.name || ''))) return { ok: false, out: 'Bad team name' };
+    return run('python3', [TEAM_BIN, 'use', b.name]);
+  },
+  'POST /team-sync': async () => (TEAM_BIN ? run('python3', [TEAM_BIN, 'sync']) : { ok: false, out: 'Teams are not installed on this VM' }),
   'GET /mcp-status': () => run('claude', ['mcp', 'list'], 90000),
 };
 

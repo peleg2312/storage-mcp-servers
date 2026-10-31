@@ -1,0 +1,500 @@
+#!/usr/bin/env python3
+"""Team profiles of the brain: which brain (rules, skills, agents, knowledge) this account works with, switched in
+seconds. A team is a git repository published by brain/teams/publish.py: the plugin paas-brain-<team>/ plus
+knowledge/ (notes/, captures/, incidents/, tool-map.md). Each team the person added is a clone under
+~/.claude/brain/teams/<team>; the active one is linked into the brain's usual paths, so every skill, hook and the
+web UI keep reading ~/.claude/brain/notes.md, notes/, captures/, incidents/, tool-map.md, environment.md,
+persona.md and storage.md as before.
+
+  paas-team                        status: active team, mode, local teams, sync state
+  paas-team list [--json]          local teams and the ones a source offers
+  paas-team add <team> [<source>]  clone the team repository (git url or directory); default source: the VM's
+                                   /opt/paas/teams/<team> (its recorded remote when it has one)
+  paas-team use <team>             switch to it (added first when needed); then start a new Claude session
+  paas-team refresh                re-apply the active team's files (after its repository was updated)
+  paas-team sync                   pull / push the active team's knowledge, refresh if its plugin changed
+  paas-team remote <team> <url>    set (or change) the git remote of a local team
+  paas-team off                    stop using teams: the knowledge files become plain files again
+  paas-team mode files|plugin      how skills reach Claude: copied into ~/.claude (VM, hooks managed by the
+                                   installer) or as the Claude Code plugin (laptop, hooks inside the plugin)
+Environment: PAAS_TEAMS (source directory: /opt/paas/teams on a multi-user VM, else ~/.claude/brain/team-sources,
+written by the installer), CLAUDE_HOME (default ~/.claude).
+Standard library, Python 3.9; never writes passwords or tokens."""
+import glob
+import hashlib
+import json
+import os
+import re
+import shutil
+import subprocess
+import sys
+
+HOME = os.environ.get("CLAUDE_HOME") or os.path.expanduser("~/.claude")
+BRAIN = os.path.join(HOME, "brain")
+TEAMS = os.path.join(BRAIN, "teams")
+SOURCES = os.environ.get("PAAS_TEAMS") or ("/opt/paas/teams" if os.path.isdir("/opt/paas/teams")
+                                            else os.path.join(BRAIN, "team-sources"))   # multi-user VM, else the installer's copies
+STATE = os.path.join(TEAMS, ".installed.json")             # skills / agents the active team put into ~/.claude
+NAME = re.compile(r"^[a-z][a-z0-9_-]{0,31}$")
+LINKS = ("notes.md", "environment.md", "tool-map.md", "notes", "captures", "incidents")   # brain paths -> knowledge/
+IDENT = ["-c", "user.name=brain", "-c", "user.email=brain@localhost"]
+
+
+def die(msg):
+    sys.exit("paas-team: " + msg)
+
+
+def read(path, default=""):
+    try:
+        with open(path, encoding="utf-8") as f:
+            return f.read()
+    except OSError:
+        return default
+
+
+def write(path, text):
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    tmp = path + ".tmp"
+    with open(tmp, "w", encoding="utf-8") as f:
+        f.write(text)
+    os.replace(tmp, path)
+
+
+def jload(path, default=None):
+    try:
+        with open(path, encoding="utf-8") as f:
+            return json.load(f)
+    except (OSError, ValueError):
+        return default if default is not None else {}
+
+
+def git(repo, *args, timeout=60):
+    try:
+        r = subprocess.run(["git", "-C", repo] + IDENT + list(args), capture_output=True, text=True, timeout=timeout,
+                           stdin=subprocess.DEVNULL, env=dict(os.environ, GIT_TERMINAL_PROMPT="0"))
+        return r.returncode, (r.stdout + r.stderr).strip()
+    except Exception as e:                                   # no git, timeout
+        return 124, str(e)
+
+
+def active():
+    t = read(os.path.join(BRAIN, "team")).strip()
+    return t if t and NAME.match(t) and os.path.isdir(os.path.join(TEAMS, t)) else ""
+
+
+def mode():
+    m = read(os.path.join(BRAIN, "team-mode")).strip()
+    return m if m in ("files", "plugin") else "files"
+
+
+def team_dir(team):
+    return os.path.join(TEAMS, team)
+
+
+def plugin_dir(tdir):
+    """the plugin folder named by the repository's marketplace.json (paas-brain-<team>)"""
+    mk = jload(os.path.join(tdir, ".claude-plugin", "marketplace.json"))
+    for p in mk.get("plugins", []):
+        d = os.path.join(tdir, p.get("source", "").lstrip("./"))
+        if os.path.isfile(os.path.join(d, "team.json")):
+            return d
+    for d in glob.glob(os.path.join(tdir, "paas-brain-*")):
+        if os.path.isfile(os.path.join(d, "team.json")):
+            return d
+    return ""
+
+
+def info(tdir):
+    """the team's data: repository team.json over the plugin's"""
+    plug = plugin_dir(tdir)
+    t = jload(os.path.join(plug, "team.json")) if plug else {}
+    t.update({k: v for k, v in jload(os.path.join(tdir, "team.json")).items() if k != "skills" and k != "agents"})
+    t["plugin_dir"] = plug
+    return t
+
+
+def digest(folder):
+    """cheap fingerprint of a plugin folder: paths, sizes, mtimes (no hashing of content)"""
+    parts = []
+    for root, dirs, files in os.walk(folder):
+        dirs.sort()
+        for f in sorted(files):
+            p = os.path.join(root, f)
+            try:
+                st = os.stat(p)
+            except OSError:
+                continue
+            parts.append("%s:%d:%d" % (os.path.relpath(p, folder), st.st_size, int(st.st_mtime)))
+    return hashlib.sha1("\n".join(parts).encode()).hexdigest()[:16]
+
+
+def remote_of(tdir):
+    rc, out = git(tdir, "remote", "get-url", "origin", timeout=5)
+    return out if rc == 0 else ""
+
+
+def local_teams():
+    out = {}
+    if os.path.isdir(TEAMS):
+        for d in sorted(os.listdir(TEAMS)):
+            if NAME.match(d) and plugin_dir(os.path.join(TEAMS, d)):
+                out[d] = os.path.join(TEAMS, d)
+    return out
+
+
+def source_teams():
+    out = {}
+    if os.path.isdir(SOURCES):
+        for d in sorted(os.listdir(SOURCES)):
+            if NAME.match(d) and plugin_dir(os.path.join(SOURCES, d)):
+                out[d] = os.path.join(SOURCES, d)
+    return out
+
+
+def listing():
+    act = active()
+    teams = []
+    seen = set()
+    for name, tdir in local_teams().items():
+        t = info(tdir)
+        teams.append({"name": name, "title": t.get("title", name), "description": t.get("description", ""),
+                      "version": t.get("version", ""), "local": True, "active": name == act,
+                      "source": None, "remote": remote_of(tdir) or t.get("remote") or None,
+                      "skills": len(t.get("skills", [])), "agents": len(t.get("agents", []))})
+        seen.add(name)
+    for name, sdir in source_teams().items():
+        if name in seen:
+            continue
+        t = info(sdir)
+        teams.append({"name": name, "title": t.get("title", name), "description": t.get("description", ""),
+                      "version": t.get("version", ""), "local": False, "active": False,
+                      "source": sdir, "remote": t.get("remote") or None,
+                      "skills": len(t.get("skills", [])), "agents": len(t.get("agents", []))})
+    return {"active": act or None, "mode": mode(), "brain": BRAIN, "teams": teams}
+
+
+# ---- add -----------------------------------------------------------------------------------------------------
+
+def add(team, source=None, quiet=False):
+    if not NAME.match(team or ""):
+        die("team name: lower-case letters, digits, - and _")
+    dest = team_dir(team)
+    if plugin_dir(dest):
+        return dest
+    if os.path.exists(dest):
+        die(f"{dest} exists but holds no team repository; remove it first")
+    os.makedirs(TEAMS, exist_ok=True)
+    src_dir = os.path.join(SOURCES, team)
+    if not source:
+        if not plugin_dir(src_dir):
+            die(f"no team {team!r}: give its git url or directory (paas-team add {team} <source>)")
+        source = info(src_dir).get("remote") or src_dir
+    url = source if "://" in source or (":" in source and not os.path.exists(source)) else ""
+    if url:
+        if not quiet:
+            print(f"cloning team {team} from {url} ...")
+        rc, out = git(TEAMS, "clone", "-q", url, dest, timeout=300)
+        if rc and plugin_dir(src_dir):                       # the remote is not reachable: the VM's copy, remote kept
+            print(f"note: clone from {url} failed ({out.splitlines()[-1][:120] if out else 'no answer'}); using {src_dir}, "
+                  "the remote is set for later syncs")
+            shutil.rmtree(dest, ignore_errors=True)
+            source, url_later = src_dir, url
+        elif rc:
+            shutil.rmtree(dest, ignore_errors=True)
+            die(f"clone failed: {out[-300:]}")
+        else:
+            return dest
+    else:
+        url_later = ""
+    source = os.path.abspath(source)
+    if not plugin_dir(source):
+        die(f"{source} is not a team repository (no paas-brain-<team>/team.json)")
+    if os.path.isdir(os.path.join(source, ".git")):
+        rc, out = git(TEAMS, "clone", "-q", source, dest, timeout=120)
+        if rc:
+            die(f"clone of {source} failed: {out[-300:]}")
+        if url_later:
+            git(dest, "remote", "set-url", "origin", url_later, timeout=5)
+    else:
+        shutil.copytree(source, dest, ignore=shutil.ignore_patterns("__pycache__", "*.pyc", "._*"))
+        git(dest, "init", "-q", "-b", "main", timeout=10)
+        git(dest, "add", "-A", timeout=30)
+        git(dest, "commit", "-q", "-m", f"team {team}: added", timeout=30)
+        if url_later:
+            git(dest, "remote", "add", "origin", url_later, timeout=5)
+    return dest
+
+
+# ---- use / refresh ---------------------------------------------------------------------------------------------
+
+def link(brain_name, target):
+    """~/.claude/brain/<name> -> target. A real file or directory there is moved into the team's knowledge the first
+    time a team is used (the person's own notes travel with them); later a stray real file is kept as <name>.pre-team."""
+    p = os.path.join(BRAIN, brain_name)
+    if os.path.islink(p):
+        if os.readlink(p) == target:
+            return
+        os.remove(p)
+    elif os.path.exists(p):
+        if not os.path.exists(target):
+            shutil.move(p, target)
+        elif os.path.isdir(p) and os.path.isdir(target):     # merge: files missing on the team side move over
+            for name in os.listdir(p):
+                if not os.path.exists(os.path.join(target, name)):
+                    shutil.move(os.path.join(p, name), os.path.join(target, name))
+            shutil.rmtree(p)
+        else:
+            os.replace(p, p + ".pre-team")
+    os.makedirs(os.path.dirname(target), exist_ok=True)
+    os.symlink(target, p)
+
+
+def copy_rule(src, dst):
+    if os.path.islink(dst):                                   # multi-user VM: a link to root's shared copy
+        os.remove(dst)
+    shutil.copy(src, dst)
+
+
+def installed():
+    return jload(STATE, {"skills": [], "agents": []})
+
+
+def apply_files(plug, t):
+    """files mode: the team's skills / agents replace the previous team's in ~/.claude/{skills,agents}"""
+    old = installed()
+    for n in old.get("skills", []):
+        d = os.path.join(HOME, "skills", n)
+        if os.path.isdir(d) and not os.path.exists(os.path.join(d, ".user-skill")):
+            shutil.rmtree(d)
+    for n in old.get("agents", []):
+        f = os.path.join(HOME, "agents", n + ".md")
+        if os.path.isfile(f):
+            os.remove(f)
+    os.makedirs(os.path.join(HOME, "skills"), exist_ok=True)
+    os.makedirs(os.path.join(HOME, "agents"), exist_ok=True)
+    for n in t.get("skills", []):
+        src, dst = os.path.join(plug, "skills", n), os.path.join(HOME, "skills", n)
+        if os.path.isdir(src):
+            if os.path.exists(os.path.join(dst, ".user-skill")):
+                continue                                      # the person's own skill of that name wins
+            shutil.rmtree(dst, ignore_errors=True)
+            shutil.copytree(src, dst)
+    for n in t.get("agents", []):
+        src = os.path.join(plug, "agents", n + ".md")
+        if os.path.isfile(src):
+            shutil.copy(src, os.path.join(HOME, "agents", n + ".md"))
+    write(STATE, json.dumps({"skills": t.get("skills", []), "agents": t.get("agents", [])}, indent=2) + "\n")
+
+
+def claude(*args):
+    try:
+        r = subprocess.run(["claude", "plugin"] + list(args), capture_output=True, text=True, timeout=120, stdin=subprocess.DEVNULL)
+        return r.returncode, (r.stdout + r.stderr).strip()
+    except Exception as e:
+        return 127, str(e)
+
+
+def apply_plugin(team, tdir):
+    """plugin mode: this team's plugin enabled, every other local team's disabled"""
+    if not shutil.which("claude"):
+        print("note: claude is not in PATH; the plugin is registered next time (paas-team refresh)")
+        return
+    name = "paas-brain-" + team
+    rc, out = claude("marketplace", "add", tdir)
+    if rc:
+        claude("marketplace", "update", name)
+    rc, out = claude("list")
+    if f"{name}@{name}" in out:
+        claude("update", f"{name}@{name}")
+        claude("enable", f"{name}@{name}")
+    else:
+        rc, out = claude("install", f"{name}@{name}", "--scope", "user")
+        if rc:
+            rc, out = claude("install", f"{name}@{name}")
+        if rc:
+            print(f"note: plugin not installed: {out[-200:]}\n      run: claude plugin marketplace add {tdir} && claude plugin install {name}@{name}")
+    for other in local_teams():
+        if other != team:
+            o = "paas-brain-" + other
+            claude("disable", f"{o}@{o}")
+    if "paas-brain@paas-brain" in out:                        # the pre-team laptop plugin
+        claude("uninstall", "paas-brain@paas-brain")
+
+
+def apply(team, say=True):
+    tdir = team_dir(team)
+    plug = plugin_dir(tdir)
+    if not plug:
+        die(f"team {team} is not added (paas-team add {team} [<source>])")
+    t = info(tdir)
+    k = os.path.join(tdir, "knowledge")
+    for d in ("notes", "captures", "incidents"):
+        os.makedirs(os.path.join(k, d), exist_ok=True)
+    first = not read(os.path.join(BRAIN, "team")).strip()     # first team ever: the person's files move in
+    os.makedirs(BRAIN, exist_ok=True)
+    for name in LINKS:
+        link(name, os.path.join(k, name))
+    for name in ("notes.md", "environment.md", "tool-map.md"):    # personal (notes.md, environment.md) or shared templates
+        if not os.path.exists(os.path.join(k, name)):
+            shutil.copy(os.path.join(plug, "brain", name), os.path.join(k, name))
+    copy_rule(os.path.join(plug, "brain", "persona.md"), os.path.join(BRAIN, "persona.md"))
+    copy_rule(os.path.join(plug, "brain", "storage.md"), os.path.join(BRAIN, "storage.md"))
+    if not os.path.exists(os.path.join(BRAIN, "coding.md")):
+        shutil.copy(os.path.join(plug, "brain", "coding.md"), os.path.join(BRAIN, "coding.md"))
+    if mode() == "plugin":
+        apply_plugin(team, tdir)
+    else:
+        apply_files(plug, t)
+    write(os.path.join(BRAIN, "team"), team + "\n")
+    write(os.path.join(TEAMS, ".applied"), json.dumps({"team": team, "digest": digest(plug), "version": t.get("version", "")}) + "\n")
+    chats = os.path.expanduser("~/chats/CLAUDE.md")          # regenerated by the session-start hook from the new rules
+    if os.path.exists(chats) and read(chats)[:40].startswith("<!-- generated by the brain"):
+        os.utime(os.path.join(BRAIN, "storage.md"), None)
+    ignore = os.path.join(BRAIN, ".gitignore")                # the old whole-brain history never tracks the team clones
+    if os.path.isdir(os.path.join(BRAIN, ".git")):
+        lines = read(ignore).splitlines()
+        for l in ("teams/", "team-sources/", "team", "team-mode", "persona.md"):
+            if l not in lines:
+                lines.append(l)
+        write(ignore, "\n".join(lines) + "\n")
+    if say:
+        print(f"team {team} ({t.get('title', team)}) active, {mode()} mode: {len(t.get('skills', []))} skills, "
+              f"{len(t.get('agents', []))} agents, version {t.get('version', '?')}; knowledge in {k}"
+              + (" (your notes moved into it)" if first else ""))
+        print("Start a new Claude session (or a new chat in the web UI) to work with it.")
+    return t
+
+
+def use(team, source=None):
+    add(team, source)
+    apply(team)
+
+
+def refresh():
+    t = active()
+    if not t:
+        die("no active team (paas-team use <team>)")
+    apply(t, say=False)
+    print(f"team {t}: files re-applied")
+
+
+def needs_refresh():
+    """True when the active team's plugin changed since it was applied (after a sync pulled a new one)"""
+    t = active()
+    if not t:
+        return False
+    plug = plugin_dir(team_dir(t))
+    st = jload(os.path.join(TEAMS, ".applied"))
+    return bool(plug) and (st.get("team") != t or st.get("digest") != digest(plug))
+
+
+def sync():
+    t = active()
+    if not t:
+        print("brain: no active team")
+        return 0
+    nc = next((p for p in (os.path.join(HOME, "hooks", "notes-check.py"), "/opt/paas/hooks/notes-check.py",
+                           os.path.join(plugin_dir(team_dir(t)), "hooks", "notes-check.py")) if os.path.isfile(p)), "")
+    if nc:
+        r = subprocess.run([sys.executable, nc, "--sync"], capture_output=True, text=True, timeout=60, stdin=subprocess.DEVNULL)
+        print(r.stdout.strip() or r.stderr.strip()[-200:])
+        rc = r.returncode
+    else:
+        rc, out = git(team_dir(t), "pull", "--rebase", "--autostash", "-q", timeout=60)
+        print("brain: in sync" if rc == 0 else out[-200:])
+    if needs_refresh():
+        apply(t, say=False)
+        print(f"team {t}: updated to version {info(team_dir(t)).get('version', '?')} (new session needed)")
+    return 1 if rc else 0
+
+
+def set_remote(team, url):
+    tdir = team_dir(team)
+    if not plugin_dir(tdir):
+        die(f"team {team} is not added")
+    rc, _ = git(tdir, "remote", "get-url", "origin", timeout=5)
+    git(tdir, "remote", "set-url" if rc == 0 else "add", "origin", url, timeout=5)
+    print(f"team {team}: remote {url} (first sync: paas-team sync)")
+
+
+def off():
+    t = active()
+    if not t:
+        print("no active team")
+        return
+    k = os.path.join(team_dir(t), "knowledge")
+    for name in LINKS:
+        p = os.path.join(BRAIN, name)
+        if os.path.islink(p):
+            os.remove(p)
+            src = os.path.join(k, name)
+            if os.path.isdir(src):
+                shutil.copytree(src, p)
+            elif os.path.isfile(src):
+                shutil.copy(src, p)
+    if mode() == "plugin" and shutil.which("claude"):
+        claude("disable", f"paas-brain-{t}@paas-brain-{t}")
+    os.remove(os.path.join(BRAIN, "team"))
+    print(f"team {t} off: the knowledge files are plain copies in {BRAIN} again (the team clone stays in {team_dir(t)})")
+
+
+def status():
+    d = listing()
+    act = d["active"]
+    if not act:
+        print("team: none active" + (f" ({len(d['teams'])} available: " + ", ".join(x["name"] for x in d["teams"]) + ")" if d["teams"] else ""))
+        return
+    t = next(x for x in d["teams"] if x["name"] == act)
+    print(f"team: {act} ({t['title']}), version {t['version']}, {d['mode']} mode, {t['skills']} skills, {t['agents']} agents")
+    tdir = team_dir(act)
+    if t["remote"]:
+        rc, out = git(tdir, "rev-list", "--left-right", "--count", "HEAD...@{upstream}", timeout=5)
+        a, b = (out.split() + ["?", "?"])[:2] if rc == 0 else ("?", "?")
+        print(f"remote: {t['remote']} ({'in sync' if (a, b) == ('0', '0') else a + ' ahead, ' + b + ' behind'})")
+    else:
+        print("remote: none (paas-team remote %s <url>)" % act)
+    if needs_refresh():
+        print("the team repository changed since it was applied: paas-team refresh")
+    others = [x["name"] for x in d["teams"] if x["name"] != act]
+    if others:
+        print("other teams: " + ", ".join(others) + "   (paas-team use <team>)")
+
+
+def main(a):
+    cmd = a[0] if a else "status"
+    if cmd == "status":
+        status()
+    elif cmd == "list":
+        d = listing()
+        if "--json" in a:
+            print(json.dumps(d))
+        else:
+            for t in d["teams"]:
+                print("%s %-8s %-28s %s%s" % ("*" if t["active"] else " ", t["name"], t["title"][:28],
+                                             "local" if t["local"] else "available", f", {t['version']}" if t["version"] else ""))
+            if not d["teams"]:
+                print("no teams (paas-team add <team> <git url>)")
+    elif cmd == "add" and len(a) >= 2:
+        add(a[1], a[2] if len(a) > 2 else None)
+        print(f"team {a[1]} added ({team_dir(a[1])}); paas-team use {a[1]} switches to it")
+    elif cmd == "use" and len(a) >= 2:
+        use(a[1], a[2] if len(a) > 2 else None)
+    elif cmd == "refresh":
+        refresh()
+    elif cmd == "sync":
+        sys.exit(sync())
+    elif cmd == "remote" and len(a) >= 3:
+        set_remote(a[1], a[2])
+    elif cmd == "off":
+        off()
+    elif cmd == "mode" and len(a) >= 2 and a[1] in ("files", "plugin"):
+        write(os.path.join(BRAIN, "team-mode"), a[1] + "\n")
+        print(f"mode {a[1]}" + (" (paas-team refresh applies it)" if active() else ""))
+    elif cmd == "needs-refresh":
+        sys.exit(0 if needs_refresh() else 1)
+    else:
+        sys.exit(__doc__)
+
+
+if __name__ == "__main__":
+    main(sys.argv[1:])

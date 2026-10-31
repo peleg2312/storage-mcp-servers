@@ -38,6 +38,9 @@ def library_line():
 def shared_line():
     """Shared brain: the --sync of notes-check.py, 6 s at most (on timeout it is left to finish or fail on its own)."""
     brain = os.path.join(USER_HOME, "brain")
+    team = read(os.path.join(brain, "team")).strip()
+    if team and os.path.isdir(os.path.join(brain, "teams", team, ".git")):
+        brain = os.path.join(brain, "teams", team)          # team mode: the team's clone holds the history
     nc = os.path.join(os.path.dirname(os.path.abspath(__file__)), "notes-check.py")
     if not os.path.isdir(os.path.join(brain, ".git")) or not os.path.exists(nc):
         return ""
@@ -50,6 +53,30 @@ def shared_line():
     except subprocess.TimeoutExpired:
         return "shared brain: sync still running (offline?)"
     return "shared brain: " + out.replace("brain: ", "", 1) if out else ""
+
+
+def team_line():
+    """Team mode (paas-team): which team's brain this is, and a re-apply when its repository brought a new plugin."""
+    name = read(os.path.join(USER_HOME, "brain", "team")).strip()
+    if not name or not re.match(r"^[a-z][a-z0-9_-]{0,31}$", name):
+        return ""
+    tdir = os.path.join(USER_HOME, "brain", "teams", name)
+    try:
+        meta = json.loads(read(os.path.join(tdir, "team.json")) or "{}")
+    except ValueError:
+        meta = {}
+    line = f"Team: {name} ({meta.get('title', name)}, {meta.get('version', '?')})"
+    tool = next((p for p in (os.path.join(USER_HOME, "tools", "paas-team"), "/opt/paas/bin/paas-team",
+                             os.path.expanduser("~/.local/bin/paas-team")) if os.path.exists(p)), "")
+    if tool:
+        try:
+            if subprocess.run([sys.executable, tool, "needs-refresh"], stdin=subprocess.DEVNULL, capture_output=True,
+                              timeout=3).returncode == 0:
+                subprocess.run([sys.executable, tool, "refresh"], stdin=subprocess.DEVNULL, capture_output=True, timeout=10)
+                line += " - updated from the team repository: new skills apply to the next session"
+        except subprocess.TimeoutExpired:
+            pass
+    return line + "."
 
 
 def env_path():
@@ -196,7 +223,7 @@ def main():
     except Exception:
         pass
     lines = []
-    for fn in (library_line, environment_line, memory_line, shared_line, hook_line):
+    for fn in (team_line, library_line, environment_line, memory_line, shared_line, hook_line):
         try:
             lines.append(fn())
         except Exception:

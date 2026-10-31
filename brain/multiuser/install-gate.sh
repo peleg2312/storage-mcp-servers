@@ -13,6 +13,10 @@ chmod 755 /etc/paas; chmod 700 /etc/paas/users /etc/paas/tls
 [ -s /etc/paas/gate.key ] || head -c 32 /dev/urandom > /etc/paas/gate.key
 chmod 600 /etc/paas/gate.key
 getent group paas-users >/dev/null || groupadd paas-users
+[ -f /etc/paas/allowed-groups ] || printf '# groups whose members may sign in (one per line; local or AD groups); root always may\npaas-users\n' > /etc/paas/allowed-groups
+[ -f /etc/paas/team-groups ] || printf '# <team> <group>: a person without a team gets the team of the first group they are in, at first sign-in\n# sales sales-staff\n' > /etc/paas/team-groups
+chmod 644 /etc/paas/allowed-groups /etc/paas/team-groups
+echo "gate: who may sign in: /etc/paas/allowed-groups; AD group to team: /etc/paas/team-groups"
 if [ ! -f /etc/paas/tls/paas-ui.crt ]; then
   FQ=$(hostname -f 2>/dev/null || hostname)
   SAN="DNS:$FQ,DNS:$(hostname -s 2>/dev/null || hostname),DNS:localhost,IP:127.0.0.1"

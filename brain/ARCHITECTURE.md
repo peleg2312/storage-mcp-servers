@@ -107,11 +107,23 @@ Code; few high-signal tools) and measured with `docs-search-mcp/eval_search.py`:
   (`/zoning-audit` -> `/storage-brain:zoning-audit`). `brain/claude/.claude-plugin/plugin.json` + `.mcp.json`
   only let the same folder load with `--plugin-dir` for `claude plugin validate` and `claude plugin eval`
   (`brain/claude/evals/`: skill-triggering cases, docs-local mocked).
-- **Laptop install is the exception: a plugin plus the rules.** `install-laptop.sh` runs `brain/plugin/build.py`, which
-  builds the marketplace `paas-brain` (skills, agents, hooks, `docs-local`) from `brain/claude`; its `hooks.json`
+- **Team profiles (`brain/teams/<team>`, October 2026).** One brain per team (`san` = the brain above, `nas` = PowerScale /
+  VAST / ONTAP NAS): persona, rules file, skill and agent lists, starting MCP servers. `brain/plugin/build.py --team` resolves a
+  team into the plugin `paas-brain-<team>` (skills, agents, hooks, docs-local, plus the persona / rules / templates a plugin
+  cannot activate); `brain/teams/publish.py` wraps it into a team repository with `knowledge/` (notes/, captures/, incidents/,
+  tool-map.md), one git repository per team in GitLab. `paas-team use <team>` switches a person in under a second: persona.md and
+  storage.md rewritten, the memory paths (`notes.md`, `environment.md`, `tool-map.md`, `notes/`, `captures/`, `incidents/`) linked
+  into `~/.claude/brain/teams/<team>/knowledge/`, skills and agents swapped (copied without namespace on VMs, plugin enable /
+  disable on laptops). Every hook, skill and the web UI keep reading the old paths; the notes hook commits and pushes into the team
+  clone; session start pulls and re-applies a plugin the team updated. Each team is a separate context budget (`test_budgets.py`
+  prints both: the NAS member pays 7.9 KB of rules and 6.5 KB of skill frontmatter against 10.4 / 10.2 KB for SAN). People stay
+  individual accounts (Active Directory on the multi-user VM, the team picked by AD group at first sign-in); the team is a profile,
+  not a shared login, so the audit log, chats and personal notes stay per person.
+- **Laptop install is the exception: a plugin plus the rules.** `install-laptop.sh` publishes the team repositories and installs
+  the chosen team's plugin `paas-brain-<team>` (skills, agents, hooks, `docs-local`); its `hooks.json`
   is produced by `merge_settings.py` itself, so matchers and timeouts cannot drift from the VM. The rules
   (`main.md` import in `~/.claude/CLAUDE.md`), tools, notes and library stay in `~/.claude/brain` as on the VM. Cost: skills are
-  namespaced (`/paas-brain:zoning-audit`), and the guard is a plugin hook a person can disable; the VM stays the enforced setup.
+  namespaced (`/paas-brain-san:zoning-audit`), and the guard is a plugin hook a person can disable; the VM stays the enforced setup.
 - **Third-party plugins: curated.** Every enabled plugin's skill / agent / command descriptions sit in the
   context on every turn. Included: the 7 plugins `install.sh` installs from
   `brain/plugins` (marketplace `brain-dev`): pr-review-toolkit, feature-dev, commit-commands, security-guidance,
@@ -130,11 +142,23 @@ Code; few high-signal tools) and measured with `docs-search-mcp/eval_search.py`:
 - **Skills that need the user's pasted output (csm-health, powerflex-troubleshoot) are not forked**:
   a forked subagent cannot ask mid-way.
 
+## Multi-user VM: people, not shared logins
+
+One instance of the web UI per signed-in person (the gate forwards by a signed cookie), one `claude` per person, one audit
+trail per person. Accounts come from Active Directory through sssd (`RUNBOOK.md`); `/etc/paas/allowed-groups` says who may
+sign in, `/etc/paas/team-groups` which team a person gets at first sign-in, when the gate provisions the home. Idle
+instances are stopped by the gate (no request, no WebSocket, no running `claude` for `GATE_IDLE_MINUTES`, default 120) and
+restarted on the next request, so memory follows the people active now. A shared account per team was the alternative and
+was rejected: it loses the audit trail, mixes everyone's chats in one instance, and needs a password rotation whenever
+someone leaves.
+
 ## Known limits
 
 - `enabledMcpjsonServers` is honoured only after the folder is trusted: the first `claude` start in a
   `--project` folder shows the one-time trust dialog.
 - `omitClaudeMd` on the storage agents needs Claude Code >= 2.1.271; agents do not keep their own memory.
+- A team switch applies to the next Claude session (CLAUDE.md, skills and agents are read at start); the running one keeps
+  the old team. PowerScale and VAST have no MCP server yet: the NAS skills ask for pasted output and say so.
 - The Cisco MDS / UCS documentation is not in the library (not published in a crawlable form).
 
 ## Learning loop

@@ -20,6 +20,20 @@ import sys
 
 BRAIN = os.path.expanduser("~/.claude/brain")
 MAX_LINES = 15
+
+
+def team_repo():
+    """Team mode (paas-team): the knowledge files are links into ~/.claude/brain/teams/<team>, a clone of the team's
+    repository; that is the history to commit to and sync. Otherwise the brain folder itself."""
+    try:
+        t = open(os.path.join(BRAIN, "team"), encoding="utf-8").read().strip()
+    except OSError:
+        return BRAIN
+    d = os.path.join(BRAIN, "teams", t)
+    return d if t and os.path.isdir(os.path.join(d, ".git")) else BRAIN
+
+
+REPO = team_repo()
 SECRET = [
     (re.compile(r"-----BEGIN [A-Z ]*PRIVATE KEY-----"), "private key"),
     (re.compile(r"eyJhbGciOi[\w-]{5,}\.[\w-]+"), "JWT"),
@@ -83,24 +97,24 @@ def stale(days):
 
 def commit(message, rel=None):
     """Brain history: git add + commit, 4 s each, every error swallowed. Not a repository: nothing happens."""
-    if not os.path.isdir(os.path.join(BRAIN, ".git")):
+    if not os.path.isdir(os.path.join(REPO, ".git")):
         return
     ident = ["-c", "user.name=brain", "-c", "user.email=brain@localhost"]
     try:
         for cmd in (["add", "-A"] + (["--", rel] if rel else []), ident + ["commit", "-q", "-m", message]):
-            subprocess.run(["git", "-C", BRAIN] + cmd, stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL,
+            subprocess.run(["git", "-C", REPO] + cmd, stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL,
                            stderr=subprocess.DEVNULL, timeout=4)
         if upstream():       # a failed push is retried by the next --sync or session start
-            subprocess.run(["git", "-C", BRAIN, "push", "-q"], stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL,
+            subprocess.run(["git", "-C", REPO, "push", "-q"], stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL,
                            stderr=subprocess.DEVNULL, timeout=4)
     except Exception:
         pass
 
 
 def git(args, timeout=15):
-    """(exit code, stdout+stderr) of a git command in the brain; 124 on timeout."""
+    """(exit code, stdout+stderr) of a git command in the brain's repository; 124 on timeout."""
     try:
-        r = subprocess.run(["git", "-C", BRAIN, "-c", "user.name=brain", "-c", "user.email=brain@localhost"] + args,
+        r = subprocess.run(["git", "-C", REPO, "-c", "user.name=brain", "-c", "user.email=brain@localhost"] + args,
                            stdin=subprocess.DEVNULL, capture_output=True, text=True, timeout=timeout,
                            env=dict(os.environ, GIT_TERMINAL_PROMPT="0"))
         return r.returncode, (r.stdout + r.stderr).strip()
@@ -109,14 +123,15 @@ def git(args, timeout=15):
 
 
 def upstream():
-    return os.path.isdir(os.path.join(BRAIN, ".git")) and git(["rev-parse", "--abbrev-ref", "@{upstream}"], 3)[0] == 0
+    return os.path.isdir(os.path.join(REPO, ".git")) and git(["rev-parse", "--abbrev-ref", "@{upstream}"], 3)[0] == 0
 
 
 def conflict():
     """Abort the rebase and say which files clashed."""
     files = git(["diff", "--name-only", "--diff-filter=U"], 5)[1].split()
     git(["rebase", "--abort"], 10)
-    print("brain: conflict with the shared brain in: " + (", ".join(files) or "?") + "; resolve it in ~/.claude/brain "
+    where = REPO.replace(os.path.expanduser("~"), "~", 1)
+    print("brain: conflict with the shared brain in: " + (", ".join(files) or "?") + f"; resolve it in {where} "
           "with git, then run notes-check.py --sync")
     return 1
 
@@ -128,7 +143,7 @@ def counts():
 
 
 def remote(url):
-    if not os.path.isdir(os.path.join(BRAIN, ".git")):
+    if not os.path.isdir(os.path.join(REPO, ".git")):
         print("brain: ~/.claude/brain is not a git repository (run install.sh)")
         return 1
     git(["remote", "set-url", "origin", url] if git(["remote", "get-url", "origin"], 3)[0] == 0
@@ -170,9 +185,9 @@ def hook():
     if not path.startswith(tuple(roots)) or not os.path.isfile(path):
         return 0
     f = findings(path)
-    brain = os.path.realpath(BRAIN) + os.sep
-    if path.startswith(brain):
-        commit("brain: " + path[len(brain):], path[len(brain):])
+    repo = os.path.realpath(REPO) + os.sep         # team mode: the real file lives in the team clone
+    if path.startswith(repo):
+        commit("brain: " + path[len(repo):], path[len(repo):])
     if f:
         more = f"\n... and {len(f) - MAX_LINES} more" if len(f) > MAX_LINES else ""
         print(f"{os.path.basename(path)} holds {len(f)} secret(s) or real location(s); replace each value with "

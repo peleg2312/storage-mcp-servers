@@ -6,6 +6,8 @@
 #   /opt/paas/brain          environment.md + tool-map.md shared by everyone (notes.md stays per user)
 #   /opt/paas/tools, hooks   report tools and the brain's hooks
 #   /opt/paas/marketplace    every skill, agent and MCP server as its own item (paas-market)
+#   /opt/paas/teams/<team>   every team profile (brain/teams) as a team repository: plugin + empty knowledge folder;
+#                            people switch with paas-team use <team> (clone of it, or of its GitLab remote when recorded)
 #   /opt/paas/ui             the web UI, run once per user by systemd (paas-ui@<user>, 127.0.0.1 only)
 #   /etc/claude-code/        VM-wide Claude Code settings no user can override: the read-only guard and docs hooks,
 #                            the brain's rules (CLAUDE.md), the API key helper, auto mode's description of the VM
@@ -67,6 +69,12 @@ rm -rf "$P/ui-plugins"; cp -R "$BRAIN/ui/plugins" "$P/ui-plugins"; chmod -R a+rX
 install -m 644 "$HERE/paas-ui@.service" /etc/systemd/system/paas-ui@.service
 install -m 755 "$HERE/paas-user" "$P/bin/paas-user"
 ln -sfn "$P/bin/paas-user" /usr/local/sbin/paas-user
+# team profiles: one repository per team under /opt/paas/teams (plugin + knowledge skeleton), the switch tool for everyone.
+# A team's GitLab remote (members clone and push there): python3 brain/teams/publish.py <team> --to /opt/paas/teams/<team> --remote <url>
+install -m 755 "$BRAIN/claude/tools/paas-team" "$P/bin/paas-team"
+ln -sfn "$P/bin/paas-team" /usr/local/bin/paas-team
+python3 "$BRAIN/teams/publish.py" --all --to "$P/teams" --no-hooks | sed 's/^/teams: /'   # hooks are managed settings here
+chmod -R a+rX "$P/teams"
 systemctl daemon-reload 2>/dev/null || true
 
 # API key for everyone's Claude: root writes it once into /etc/paas/api-key (group paas-users may read it)
@@ -85,6 +93,7 @@ python3 "$HERE/managed_settings.py" /etc/claude-code/managed-settings.json "$P"
 sed -e "s#~/\.claude/brain/library#$P/library#g" "$BRAIN/claude/CLAUDE.md" > "$P/brain/CLAUDE.md"
 cp "$BRAIN/claude/brain/storage.md" "$P/brain/storage.md"; chmod 644 "$P/brain/storage.md"   # linked into every account
 cp "$BRAIN/claude/brain/coding.md" "$P/brain/coding.md"; chmod 644 "$P/brain/coding.md"
+cp "$BRAIN/teams/san/persona.md" "$P/brain/persona.md"; chmod 644 "$P/brain/persona.md"   # the default persona (no team chosen)
 install -m 755 "$HERE/setup-chats.sh" "$P/bin/paas-setup-chats"   # ~/chats: storage rules up front, 1-hour cache
 rm -f /etc/claude-code/CLAUDE.md                                  # earlier versions put them VM-wide
 [ -f "$RC/CLAUDE.md" ] || { [ -f "$RC/CLAUDE.md.single-user" ] && mv "$RC/CLAUDE.md.single-user" "$RC/CLAUDE.md"; }

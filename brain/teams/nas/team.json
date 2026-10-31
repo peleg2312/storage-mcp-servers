@@ -1,0 +1,15 @@
+{
+  "name": "nas",
+  "title": "NAS / file storage",
+  "description": "Read-only NAS assistant: Dell PowerScale (OneFS), VAST Data, NetApp ONTAP NFS / SMB - shares, exports, access zones, quotas, SmartConnect, replication, with the offline docs library",
+  "persona": "persona.md",
+  "rules": "storage-nas.md",
+  "environment": "environment.md",
+  "skills": [
+    "brain-setup", "brain-health", "brain-learn", "docs-lookup", "explain-error", "report-export", "handover-note",
+    "change-review", "code-version-check", "ontap-performance", "fastapi-service", "terraform",
+    "share-access-check", "export-policy-check", "quota-report", "nas-replication-check", "smartconnect-check", "vast-view-check"
+  ],
+  "agents": ["Explore", "docs-researcher", "ontap-analyst", "nas-analyst"],
+  "mcp": ["docs-local", "ontap", "harvest"]
+}

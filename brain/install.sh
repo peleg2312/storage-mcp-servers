@@ -7,6 +7,9 @@
 #   sh install.sh --brain-remote <url>  share the team knowledge (notes/, captures/, incidents/, tool-map.md) through a git
 #                                      remote, e.g. an internal GitLab project (or env BRAIN_REMOTE); notes.md and
 #                                      environment.md stay personal. Idempotent.
+#   sh install.sh --team <name>        a team profile (brain/teams/<name>: san, nas, ...; or env BRAIN_TEAM): its rules,
+#                                      skills, agents and knowledge folder, switchable later with `paas-team use <other>`
+#   sh install.sh --team-source <url|dir>  take the team from a published team repository (GitLab) instead of this clone
 # Re-run after every git pull; your environment.md, tool-map.md, notes.md, notes/ and allowed-tools.txt are kept.
 # The documentation library is always shared in ~/.claude/brain/library (also in project mode).
 set -eu
@@ -16,9 +19,15 @@ USER_DST=${CLAUDE_HOME:-$HOME/.claude}
 PROJECT=""
 NO_LIBRARY=0
 BRAIN_REMOTE=${BRAIN_REMOTE:-}
+TEAM=${BRAIN_TEAM:-}
+TEAM_SOURCE=""
 while [ $# -gt 0 ]; do
   case "$1" in
     --no-library) NO_LIBRARY=1 ;;
+    --team) [ $# -ge 2 ] || { echo "usage: install.sh --team <name>"; exit 1; }; shift; TEAM=$1 ;;
+    --team=*) TEAM=${1#--team=} ;;
+    --team-source) [ $# -ge 2 ] || { echo "usage: install.sh --team-source <url|dir>"; exit 1; }; shift; TEAM_SOURCE=$1 ;;
+    --team-source=*) TEAM_SOURCE=${1#--team-source=} ;;
     --brain-remote) [ $# -ge 2 ] || { echo "usage: install.sh --brain-remote <url>"; exit 1; }
                     shift; BRAIN_REMOTE=$1 ;;
     --brain-remote=*) BRAIN_REMOTE=${1#--brain-remote=} ;;
@@ -26,10 +35,12 @@ while [ $# -gt 0 ]; do
                shift; mkdir -p "$1"; PROJECT=$(cd "$1" && pwd) ;;
     --project=*) PROJECT=${1#--project=}; mkdir -p "$PROJECT"; PROJECT=$(cd "$PROJECT" && pwd) ;;
     -h|--help) sed -n '2,11p' "$0"; exit 0 ;;
-    *) echo "unknown option: $1 (usage: install.sh [--project <dir>] [--no-library])"; exit 1 ;;
+    *) echo "unknown option: $1 (usage: install.sh [--project <dir>] [--no-library] [--team <name>])"; exit 1 ;;
   esac
   shift
 done
+[ -z "$TEAM" ] || [ -z "$PROJECT" ] || { echo "install.sh: --team works with the user install only (not --project)"; exit 1; }
+[ -z "$TEAM" ] || [ -n "$TEAM_SOURCE" ] || [ -f "$HERE/teams/$TEAM/team.json" ] || { echo "install.sh: no team '$TEAM' in brain/teams"; exit 1; }
 if [ -n "$PROJECT" ]; then
   DST=$PROJECT/.claude                 # project scope: everything under <dir>/.claude
   CLAUDE_MD=$PROJECT/CLAUDE.md
@@ -61,12 +72,18 @@ if [ -z "$PROJECT" ] && [ -f "$CLAUDE_MD" ] && ! cmp -s "$TMP_MD" "$CLAUDE_MD"; 
   cp "$CLAUDE_MD" "$CLAUDE_MD.bak.$TS"; echo "backed up existing $CLAUDE_MD -> CLAUDE.md.bak.$TS"
 fi
 cp "$TMP_MD" "$BRAIN_MD"; rm -f "$TMP_MD"
-# the storage rules: loaded in plain chats (~/chats, see below) and in a project install; code projects read them on demand
-sed "s#@~/\.claude/brain/#$(esc "$IMPORT_PREFIX")#" "$SRC/brain/storage.md" > "$DST/brain/storage.md"
+# the storage rules: loaded in plain chats (~/chats, see below) and in a project install; code projects read them on demand.
+# The persona ("who you work for") is the team profile's (brain/teams/<team>/persona.md; san without --team).
+# With --team, paas-team (below) puts the team's persona, rules, skills and agents in place instead of these copies.
+if [ -z "$TEAM" ]; then
+  sed "s#@~/\.claude/brain/#$(esc "$IMPORT_PREFIX")#" "$SRC/brain/storage.md" > "$DST/brain/storage.md"
+  [ ! -L "$DST/brain/persona.md" ] || rm -f "$DST/brain/persona.md"
+  cp "$HERE/teams/san/persona.md" "$DST/brain/persona.md"
+  cp -R "$SRC/skills/." "$DST/skills/"
+  cp -R "$SRC/agents/." "$DST/agents/"
+fi
 cp "$SRC/brain/coding.md" "$DST/brain/coding.md"      # coding rules, read on demand by code work only
 [ -z "$PROJECT" ] || grep -q "^@.*storage\.md" "$BRAIN_MD" || printf '\n## Storage rules\n%sstorage.md\n' "$IMPORT_PREFIX" >> "$BRAIN_MD"
-cp -R "$SRC/skills/." "$DST/skills/"
-cp -R "$SRC/agents/." "$DST/agents/"
 if [ -n "$PROJECT" ]; then
   # project mode: every ~/.claude path in the brain text points into <dir>/.claude, except the shared library
   P_E=$(esc "$PROJECT"); D_E=$(esc "$DST"); L_E=$(esc "$LIBDST")
@@ -81,11 +98,11 @@ if [ -n "$PROJECT" ]; then
 fi
 cp "$SRC/hooks/block-write-tools.py" "$SRC/hooks/session-start.py" "$SRC/hooks/docs-hints.py" "$SRC/hooks/docs-leads.py" "$SRC/hooks/py-lint.py" "$SRC/hooks/notes-check.py" "$SRC/hooks/capture-nudge.py" "$DST/hooks/"
 [ -f "$DST/hooks/allowed-tools.txt" ] || printf '# exact MCP tool names or globs the read-only hook should allow, e.g. mcp__kuparashit__execute_query\n' > "$DST/hooks/allowed-tools.txt"
-for f in environment.md tool-map.md notes.md; do
+[ -n "$TEAM" ] || for f in environment.md tool-map.md notes.md; do
   [ -f "$DST/brain/$f" ] || cp "$SRC/brain/$f" "$DST/brain/$f"
 done
 cp "$SRC/banner/paas-banner.py" "$SRC/banner/paas-statusline.py" "$DST/banner/"
-mkdir -p "$DST/tools/vendor" && cp "$SRC/tools/report.py" "$SRC/tools/get-reports.ps1" "$SRC/tools/db_mcp.py" "$SRC/tools/add-docs" "$SRC/tools/paas-open" "$DST/tools/"
+mkdir -p "$DST/tools/vendor" && cp "$SRC/tools/report.py" "$SRC/tools/get-reports.ps1" "$SRC/tools/db_mcp.py" "$SRC/tools/add-docs" "$SRC/tools/paas-open" "$SRC/tools/paas-team" "$DST/tools/"
 cp "$HERE/../docs-search-mcp/docs_index.py" "$DST/tools/"     # add-docs: your own documents into the library
 [ -f "$USER_DST/brain/databases.json" ] || cp "$SRC/tools/databases.example.json" "$USER_DST/brain/databases.example.json"
 cp "$SRC/tools/vendor/"*.whl "$DST/tools/vendor/"   # charts + Excel (report-export skill); pure-Python wheels, no pip
@@ -101,13 +118,13 @@ mkdir -p "$USER_DST/brain/inbox"                   # your own documents (add-doc
 # the brain as a git history (notes-check.py commits each saved note); big or private things stay out of it
 if command -v git >/dev/null 2>&1 && [ ! -d "$USER_DST/brain/.git" ]; then
   ( cd "$USER_DST/brain" && git init -q \
-    && printf 'library/\ninbox/\nplugins/\n.nudged/\n.brain-index/\n*.bak\n*.db\n.DS_Store\nnotes.md\nenvironment.md\nmain.md\nstorage.md\ncoding.md\ndatabases.example.json\n' > .gitignore \
+    && printf 'library/\ninbox/\nplugins/\nteams/\nteam-sources/\nteam\nteam-mode\npersona.md\n.nudged/\n.brain-index/\n*.bak\n*.db\n.DS_Store\nnotes.md\nenvironment.md\nmain.md\nstorage.md\ncoding.md\ndatabases.example.json\n' > .gitignore \
     && git add -A >/dev/null 2>&1 \
     && git -c user.name=brain -c user.email=brain@localhost commit -q -m 'brain: initial' >/dev/null 2>&1 ) \
     || echo "note: could not start a git history in $USER_DST/brain (skipped)"
 fi
 if [ -d "$USER_DST/brain/.git" ]; then                 # an older history learns new ignore lines
-  for l in library/ inbox/ plugins/ .nudged/ .brain-index/ '*.bak' '*.db' .DS_Store notes.md environment.md main.md storage.md coding.md databases.example.json; do
+  for l in library/ inbox/ plugins/ teams/ team-sources/ team team-mode persona.md .nudged/ .brain-index/ '*.bak' '*.db' .DS_Store notes.md environment.md main.md storage.md coding.md databases.example.json; do
     grep -qxF -- "$l" "$USER_DST/brain/.gitignore" 2>/dev/null || echo "$l" >> "$USER_DST/brain/.gitignore"
   done
   # notes.md and environment.md are personal (management IPs, owners); main.md, storage.md, coding.md are the
@@ -117,7 +134,26 @@ if [ -d "$USER_DST/brain/.git" ]; then                 # an older history learns
       git -c user.name=brain -c user.email=brain@localhost commit -q -m 'brain: personal files leave the history' >/dev/null 2>&1 ) || true
   fi
 fi
-if [ -n "$BRAIN_REMOTE" ] && [ -d "$USER_DST/brain/.git" ]; then   # shared team knowledge (hooks are copied above)
+# Team profile: the team repository (plugin + knowledge) built from this clone, or taken from --team-source, is cloned
+# into ~/.claude/brain/teams/<team> and switched on; `paas-team use <other>` changes team later, `paas-team` shows the state.
+if [ -n "$TEAM" ]; then
+  mkdir -p "$HOME/.local/bin" && ln -sf "$DST/tools/paas-team" "$HOME/.local/bin/paas-team"
+  [ -f "$USER_DST/brain/team-mode" ] || echo files > "$USER_DST/brain/team-mode"    # skills copied; hooks from settings.json
+  # every team of this clone as a local source (~480 KB each), so `paas-team use <other>` works offline later
+  python3 "$HERE/teams/publish.py" --all --to "$USER_DST/brain/team-sources" >/dev/null
+  if [ -n "$TEAM_SOURCE" ]; then
+    python3 "$DST/tools/paas-team" add "$TEAM" "$TEAM_SOURCE"
+  elif [ -d "$USER_DST/brain/teams/$TEAM" ]; then          # added earlier from this clone: this clone's plugin replaces the old one
+    rm -rf "$USER_DST/brain/teams/$TEAM/paas-brain-$TEAM"; cp -R "$USER_DST/brain/team-sources/$TEAM/paas-brain-$TEAM" "$USER_DST/brain/teams/$TEAM/"
+    cp "$USER_DST/brain/team-sources/$TEAM/.claude-plugin/marketplace.json" "$USER_DST/brain/teams/$TEAM/.claude-plugin/"
+    python3 "$DST/hooks/notes-check.py" --commit "team $TEAM: plugin updated by install.sh" || true
+  else
+    python3 "$DST/tools/paas-team" add "$TEAM"
+  fi
+  python3 "$DST/tools/paas-team" use "$TEAM"
+  [ -z "$BRAIN_REMOTE" ] || { python3 "$DST/tools/paas-team" remote "$TEAM" "$BRAIN_REMOTE" \
+    && python3 "$DST/hooks/notes-check.py" --remote "$BRAIN_REMOTE" || echo "note: the shared team remote is not set up yet (see the line above)"; }
+elif [ -n "$BRAIN_REMOTE" ] && [ -d "$USER_DST/brain/.git" ]; then   # shared team knowledge (hooks are copied above)
   python3 "$DST/hooks/notes-check.py" --remote "$BRAIN_REMOTE" || echo "note: the shared brain is not set up yet (see the line above)"
 fi
 if [ "$NO_LIBRARY" = 0 ] && [ -f "$LIB/VERSION" ] && ls "$LIB"/docs-library-*.part-* >/dev/null 2>&1; then
@@ -260,7 +296,7 @@ fi
 
 echo
 python3 "$DST/banner/paas-banner.py"
-echo "Installed into $DST: CLAUDE.md ($CLAUDE_MD), $(ls "$SRC/skills" | wc -l | tr -d ' ') skills, $(ls "$SRC/agents" | wc -l | tr -d ' ') agents, read-only + session-start hooks, banner + status line."
+echo "Installed into $DST: CLAUDE.md ($CLAUDE_MD), $(ls "$DST/skills" | wc -l | tr -d ' ') skills, $(ls "$DST/agents"/*.md | wc -l | tr -d ' ') agents, read-only + session-start hooks, banner + status line.${TEAM:+ Team $TEAM active (paas-team use <team> switches).}"
 if [ -n "$PROJECT" ]; then
   echo "Project mode: the brain is active only inside $PROJECT (cd there, then: claude). docs-local (.mcp.json) is pre-approved in .claude/settings.json; answer yes to the one-time folder trust dialog."
 fi

@@ -29,6 +29,8 @@ and prints SKIP; runs the search evals when `docs-search-mcp/work/index/docs.db`
   `docs-search-mcp/tests/` (gates in `scripts/run_tests.sh`).
 - Five MCP servers (PowerMax, PowerFlex, UCS Central, docs-search, MDS), all read-only; the PreToolUse hook also
   blocks write-looking calls of other MCP servers and shell changes.
+- Team profiles (`brain/teams`: `san`, `nas`): one brain per team as a plugin + knowledge repository, `paas-team use <team>`
+  switches a person; multi-user VM on Active Directory accounts with idle-stopped UI instances (`RUNBOOK.md`, `brain/teams/README.md`).
 - Web UI (port 3001), multi-user gate (`brain/multiuser/install-gate.sh`) and marketplace are installed by
   `install-vm.sh` (`NO_UI=1` skips the UI).
 - Dell PDFs of `NEEDED.md` and the PowerFlex HTML manuals stay refused until the Dell account is linked to the
