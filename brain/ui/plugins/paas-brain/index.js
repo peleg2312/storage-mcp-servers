@@ -451,7 +451,19 @@ export function mount(container, api) {
       form(name, r);
     }
     det.addEventListener('toggle', () => { if (det.open) load(); else clean(); });
-    sel.addEventListener('change', () => { if (det.open) load(); });
+    // another team picked while the editor holds edits: ask first; "keep" puts the dropdown back on the edited team
+    let shown = sel.value;
+    sel.addEventListener('change', async () => {
+      if (!det.open) { shown = sel.value; return; }
+      if (edDirty) {
+        const picked = sel.value;
+        const r = await confirmInline(sel, { title: 'Discard the unsaved team edits?', text: 'You changed this team in the editor and did not save. Switching the dropdown throws those edits away.', confirmLabel: 'Discard' });
+        if (!r.ok) { sel.value = shown; return; }
+        sel.value = picked;
+      }
+      shown = sel.value;
+      load();
+    });
 
     function form(name, d) {
       const text = (k, label, hint, rows) => field(label, `<textarea class="mono" data-k="${k}" rows="${rows}" spellcheck="false" aria-label="${esc(label)}">${esc(d[k] || '')}</textarea>`, hint);
