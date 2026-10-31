@@ -18,7 +18,7 @@ import re
 import subprocess
 import sys
 
-BRAIN = os.path.expanduser("~/.claude/brain")
+BRAIN = os.path.join(os.environ.get("CLAUDE_HOME") or os.path.expanduser("~/.claude"), "brain")   # as the installers and paas-team
 MAX_LINES = 15
 
 
@@ -104,9 +104,9 @@ def commit(message, rel=None):
         for cmd in (["add", "-A"] + (["--", rel] if rel else []), ident + ["commit", "-q", "-m", message]):
             subprocess.run(["git", "-C", REPO] + cmd, stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL,
                            stderr=subprocess.DEVNULL, timeout=4)
-        if upstream():       # a failed push is retried by the next --sync or session start
+        if upstream():       # a failed push is retried by the next --sync or session start; never a credential prompt
             subprocess.run(["git", "-C", REPO, "push", "-q"], stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL,
-                           stderr=subprocess.DEVNULL, timeout=4)
+                           stderr=subprocess.DEVNULL, timeout=4, env=dict(os.environ, GIT_TERMINAL_PROMPT="0"))
     except Exception:
         pass
 
@@ -162,13 +162,30 @@ def remote(url):
     return 0 if rc == 0 else 1
 
 
+def unstick():
+    """a rebase left behind by a killed or crashed earlier run (rebase-merge / rebase-apply folder) is aborted first"""
+    gitdir = git(["rev-parse", "--git-dir"], 3)[1]
+    gitdir = gitdir if os.path.isabs(gitdir) else os.path.join(REPO, gitdir)
+    for d in ("rebase-merge", "rebase-apply"):
+        if os.path.isdir(os.path.join(gitdir, d)):
+            git(["rebase", "--abort"], 10)
+            if os.path.isdir(os.path.join(gitdir, d)):           # too broken for git to abort: git's own advice is to remove it
+                import shutil
+                shutil.rmtree(os.path.join(gitdir, d), ignore_errors=True)
+
+
 def sync():
     if not upstream():
         print("brain: no shared remote")
         return 0
+    unstick()
     commit("brain: update")                          # whatever is uncommitted goes in first
     rc, out = git(["pull", "--rebase", "--autostash", "-q"], 15)
-    if rc and rc != 124 and git(["diff", "--name-only", "--diff-filter=U"], 5)[1]:
+    if rc == 124:                                    # killed mid-rebase: leave a usable tree, try again next time
+        git(["rebase", "--abort"], 10)
+        print("brain: sync timed out (remote slow or unreachable); nothing changed, the next sync retries")
+        return 0
+    if rc and git(["diff", "--name-only", "--diff-filter=U"], 5)[1]:
         return conflict()
     git(["push", "-q"], 15)                          # offline is not an error
     print(counts())
@@ -186,7 +203,7 @@ def hook():
         return 0                                   # a team's mcp.json carries its servers' tokens by the owner's decision
     f = findings(path)
     repo = os.path.realpath(REPO) + os.sep         # team mode: the real file lives in the team clone
-    if path.startswith(repo):
+    if path.startswith(repo) and not f:            # a file holding a secret is not committed: the redacted save is
         commit("brain: " + path[len(repo):], path[len(repo):])
     if f:
         more = f"\n... and {len(f) - MAX_LINES} more" if len(f) > MAX_LINES else ""

@@ -13,7 +13,8 @@ import time
 # the .claude directory this hook was installed into: ~/.claude (user install) or <project>/.claude
 # (install-vm.sh --project <dir>); the documentation library is always shared in ~/.claude/brain/library
 HOME = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-USER_HOME = os.path.expanduser("~/.claude")
+USER_HOME = os.environ.get("CLAUDE_HOME") or os.path.expanduser("~/.claude")   # as the installers, paas-team and notes-check.py
+BOOTSTRAPPED = False                       # set when this very session set the team up from the plugin: sync and refresh then wait
 
 
 def read(path, limit=None):
@@ -35,12 +36,20 @@ def library_line():
     return f"Library: {version or 'version unknown'}{counts} in ~/.claude/brain/library (MCP docs-local / docs-search, or search.py)."
 
 
-def shared_line():
-    """Shared brain: the --sync of notes-check.py, 6 s at most (on timeout it is left to finish or fail on its own)."""
+def team_repo():
+    """the git history to sync: the active team's clone (same rule as notes-check.py), else the brain folder"""
     brain = os.path.join(USER_HOME, "brain")
     team = read(os.path.join(brain, "team")).strip()
-    if team and os.path.isdir(os.path.join(brain, "teams", team, ".git")):
-        brain = os.path.join(brain, "teams", team)          # team mode: the team's clone holds the history
+    if team and re.match(r"^[a-z][a-z0-9_-]{0,31}$", team) and os.path.isdir(os.path.join(brain, "teams", team, ".git")):
+        return os.path.join(brain, "teams", team)
+    return brain
+
+
+def shared_line():
+    """Shared brain: the --sync of notes-check.py, 6 s at most (on timeout it is left to finish or fail on its own)."""
+    if BOOTSTRAPPED:
+        return ""                                    # the clone is seconds old: nothing to sync, and the hook's budget is spent
+    brain = team_repo()                               # team mode: the team's clone holds the history
     nc = os.path.join(os.path.dirname(os.path.abspath(__file__)), "notes-check.py")
     if not os.path.isdir(os.path.join(brain, ".git")) or not os.path.exists(nc):
         return ""
@@ -71,11 +80,13 @@ def bare_plugin_rules():
         meta = json.loads(read(os.path.join(os.path.dirname(here), "team.json")) or "{}")   # remote recorded by publish.py,
         market = os.path.join(USER_HOME, "plugins", "marketplaces", "paas-brain-" + meta.get("name", ""))  # else the local clone)
         src = meta.get("remote") or (market if os.path.isdir(os.path.join(market, ".git")) else "")
-        if meta.get("name") and src and not os.path.exists(os.path.join(USER_HOME, "brain", "team")):
+        if meta.get("name") and src:               # persona.md missing is the whole condition: a clone that exists is re-applied
             r = subprocess.run([sys.executable, os.path.join(os.path.dirname(here), "bin", "paas-team"), "bootstrap", meta["name"], src],
                                stdin=subprocess.DEVNULL, capture_output=True, text=True, timeout=25)
             if r.returncode == 0:
                 done = r.stdout.strip() + "\n"
+                global BOOTSTRAPPED
+                BOOTSTRAPPED = True
     except Exception:
         pass
     text = read(os.path.join(b, "CLAUDE.md"))
@@ -101,6 +112,8 @@ def team_line():
     except ValueError:
         meta = {}
     line = f"Team: {name} ({meta.get('title', name)}, {meta.get('version', '?')})"
+    if BOOTSTRAPPED:
+        return line + "."
     tool = next((p for p in (os.path.join(USER_HOME, "tools", "paas-team"), "/opt/paas/bin/paas-team",
                              os.path.expanduser("~/.local/bin/paas-team")) if os.path.exists(p)), "")
     if tool:

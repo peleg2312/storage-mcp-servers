@@ -147,9 +147,18 @@ function instancePort(user) {
 }
 
 /** root: 41000; everyone else: one above the highest port in use, so a port is never reused while its file exists. */
-function createEnv(user) {
+/** The instance file is written by one program only, paas-user (`paas-user env <name>`: next free port, secret, PATH),
+ * so the gate and the Users page can never hand two people the same port. Without paas-user (a VM where only the gate
+ * was installed) the gate writes the same file itself. */
+async function createEnv(user) {
   ports.clear(); // read the files fresh: the port is picked from what is on disk now
   if (instancePort(user)) return;
+  if (fs.existsSync('/opt/paas/bin/paas-user')) {
+    const out = await run('/opt/paas/bin/paas-user', ['env', user], 20000);
+    ports.delete(user);
+    if (out !== null) { log(`created ${envPath(user)} (paas-user env)`); return; }
+    log(`paas-user env ${user} failed; writing the instance file here`);
+  }
   let port = 41000;
   if (user !== 'root') {
     for (const f of fs.readdirSync(`${ETC}/users`)) {
@@ -159,13 +168,14 @@ function createEnv(user) {
   }
   const claude = ['/usr/local/bin/claude', '/usr/bin/claude'].find((p) => fs.existsSync(p)) || '/usr/local/bin/claude';
   const env = `SERVER_PORT=${port}\nJWT_SECRET=${crypto.randomBytes(32).toString('hex')}\nPAAS_LOGIN_USERS=${user}\n`
-    + `CLAUDE_CLI_PATH=${claude}\nPATH=/opt/paas/ui/node/bin:/usr/local/bin:/usr/bin:/bin\n`; // paas-user's, without its sbin dirs
+    + `CLAUDE_CLI_PATH=${claude}\nPATH=/opt/paas/ui/node/bin:/usr/local/bin:/usr/bin:/bin:/usr/local/sbin:/usr/sbin:/sbin\n`;
   try {
     fs.writeFileSync(envPath(user), env, { flag: 'wx', mode: 0o600 });
-    ports.delete(user);
     log(`created ${envPath(user)} (port ${port})`);
   } catch (e) {
-    if (e.code !== 'EEXIST') throw e; // the Users page made it at the same moment
+    if (e.code !== 'EEXIST') throw e; // the Users page made it at the same moment: its file wins
+  } finally {
+    ports.delete(user); // never keep the "no file" answer cached past this point
   }
 }
 
@@ -200,7 +210,7 @@ const starting = new Map(); // user -> promise of the port (one start at a time 
 function ensureInstance(user) {
   if (!starting.has(user)) {
     starting.set(user, (async () => {
-      createEnv(user);
+      await createEnv(user);
       const port = instancePort(user);
       if (await healthy(port)) return port;
       log(`starting paas-ui@${user}`);
@@ -255,8 +265,10 @@ const lastSeen = new Map(); // user -> time of the last forwarded request
 const sockets = new Map(); // user -> open upgraded (WebSocket) connections
 const touch = (user) => lastSeen.set(user, Date.now());
 
-const hasClaude = (user) => new Promise((resolve) => // pgrep: exit 1 = none; any other failure counts as "running" (do not stop)
-  execFile('pgrep', ['-u', user, '-x', 'claude'], { timeout: 5000 }, (err) => resolve(!err || err.code !== 1)));
+// a running Claude Code of that user: the native binary (comm "claude") or the npm install (node .../claude-code/cli.js);
+// pgrep exit 1 = none; any other failure counts as "running" (do not stop)
+const hasClaude = (user) => new Promise((resolve) =>
+  execFile('pgrep', ['-u', user, '-f', '(^|/)claude( |$)|claude-code/cli\\.js'], { timeout: 5000 }, (err) => resolve(!err || err.code !== 1)));
 
 let sweeping = false;
 async function idleSweep() {

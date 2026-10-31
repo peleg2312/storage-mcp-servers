@@ -6,6 +6,7 @@
 #   paas-user add <name> [--team <team>]   create the account (password read from stdin, or asked; an AD account is kept
 #                                 as it is), set it up, start its UI, and choose the team profile when given
 #   paas-user team <name> [<team>]  set the team profile of <name> (paas-team use), or print the current team
+#   paas-user env <name>          the UI instance file (port, secret) if missing; the gate calls it at a first sign-in
 #   paas-user passwd <name>       new password (stdin, or asked)
 #   paas-user lock|unlock <name>  block / allow signing in (lock also ends their UI, sessions and processes)
 #   paas-user remove <name> [--delete-home]   remove the account and its UI (home kept unless --delete-home)
@@ -19,7 +20,7 @@ ETC=/etc/paas/users
 BASE_PORT=41000
 die() { echo "paas-user: $*" >&2; exit 1; }
 valid() { echo "$1" | grep -Eq '^[a-z_][a-z0-9_.-]{0,63}$' || die "'$1' is not a valid user name"; }
-valid_team() { echo "$1" | grep -Eq '^[A-Za-z0-9_][A-Za-z0-9_.-]{0,63}$' || die "'$1' is not a valid team name"; }
+valid_team() { echo "$1" | grep -Eq '^[a-z][a-z0-9_-]{0,31}$' || die "'$1' is not a valid team name (paas-team's rule: lower-case, digits, - and _)"; }
 home_of() { getent passwd "$1" | cut -d: -f6; }
 lower() { printf '%s' "$1" | tr '[:upper:]' '[:lower:]'; }
 
@@ -48,7 +49,7 @@ team_from_groups() {   # /etc/paas/team-groups: "<team> <group>" per line; the f
   return 0
 }
 
-read_password() {   # one line from stdin when it is not a terminal; else asked twice
+ask_password() {    # into $a: one line from stdin when it is not a terminal; else asked twice. Checked before any account is made
   if [ -t 0 ]; then
     stty -echo; trap 'stty echo 2>/dev/null' EXIT; trap 'exit 130' INT     # echo comes back on Ctrl-C too
     printf 'password for %s: ' "$1" >&2; IFS= read -r a; printf '\nagain: ' >&2; IFS= read -r b; stty echo; trap - EXIT INT; echo >&2
@@ -57,8 +58,9 @@ read_password() {   # one line from stdin when it is not a terminal; else asked 
     IFS= read -r a || true
   fi
   [ ${#a} -ge 8 ] || die "password: at least 8 characters"
-  printf '%s:%s\n' "$1" "$a" | chpasswd
 }
+
+read_password() { ask_password "$1"; printf '%s:%s\n' "$1" "$a" | chpasswd; }
 
 next_port() {       # root: 41000; others: one above the highest port in use
   [ "$1" = root ] && { echo $BASE_PORT; return; }
@@ -192,12 +194,14 @@ case "$cmd" in
     if [ "$u" != root ]; then
       if id "$u" >/dev/null 2>&1; then   # an existing account keeps its password; AD accounts cannot join a local group
         usermod -aG paas-users "$u" 2>/dev/null || echo "note: $u not added to paas-users (directory account?); /etc/paas/allowed-groups decides who may sign in"
-      else useradd -m -G paas-users "$u"; read_password "$u"; fi
+      else ask_password "$u"; useradd -m -G paas-users "$u"; printf '%s:%s\n' "$u" "$a" | chpasswd; fi   # a bad password leaves no half-made account
     fi
     write_env "$u"; share_dir "$u"; provision "$u"
     [ -z "$team" ] || set_team "$u" "$team" || true
     start_ui "$u"
     echo "added $u (UI port $(sed -n 's/^SERVER_PORT=//p' "$ETC/$u.env"))" ;;
+  env)
+    u=${1:-}; valid "$u"; id "$u" >/dev/null 2>&1 || die "no account $u"; write_env "$u"; echo "$ETC/$u.env" ;;
   team)
     u=${1:-}; valid "$u"; id "$u" >/dev/null 2>&1 || die "no account $u"
     if [ -n "${2:-}" ]; then valid_team "$2"; set_team "$u" "$2" && echo "team of $u: $2"; else team_of "$u"; fi ;;
@@ -205,10 +209,11 @@ case "$cmd" in
     u=${1:-}; valid "$u"; id "$u" >/dev/null 2>&1 || die "no account $u"; read_password "$u"; echo "password changed for $u" ;;
   lock)
     u=${1:-}; valid "$u"; [ "$u" != root ] || die "root cannot be locked here"
-    usermod -L "$u"; touch "$ETC/$u.locked"                   # the gate drops a live cookie of a locked user
+    usermod -L "$u" 2>/dev/null || echo "note: $u is a directory account: the gate's marker locks them here, the directory account itself stays as it is"
+    touch "$ETC/$u.locked"                                     # the gate drops a live cookie of a locked user
     systemctl stop "paas-ui@$u" 2>/dev/null || true; kill_user "$u"; echo "locked $u" ;;
   unlock)
-    u=${1:-}; valid "$u"; usermod -U "$u"; rm -f "$ETC/$u.locked"; start_ui "$u"; echo "unlocked $u" ;;
+    u=${1:-}; valid "$u"; usermod -U "$u" 2>/dev/null || true; rm -f "$ETC/$u.locked"; start_ui "$u"; echo "unlocked $u" ;;
   remove)
     u=${1:-}; valid "$u"; [ "$u" != root ] || die "root cannot be removed"
     systemctl disable --now "paas-ui@$u" >/dev/null 2>&1 || true
@@ -229,7 +234,7 @@ case "$cmd" in
     for f in "$ETC"/*.env; do
       [ -f "$f" ] || continue
       u=$(basename "$f" .env); port=$(sed -n 's/^SERVER_PORT=//p' "$f")
-      locked=false; passwd -S "$u" 2>/dev/null | grep -q ' L\| LK' && locked=true
+      locked=false; { [ -f "$ETC/$u.locked" ] || passwd -S "$u" 2>/dev/null | grep -q ' L\| LK'; } && locked=true
       running=false; systemctl is-active --quiet "paas-ui@$u" && running=true
       if [ $json = 1 ]; then
         [ $first = 1 ] || printf ','; first=0

@@ -143,7 +143,9 @@ if [ -n "$TEAM" ]; then
   python3 "$HERE/teams/publish.py" --all --to "$USER_DST/brain/team-sources" >/dev/null
   if [ -n "$TEAM_SOURCE" ]; then
     python3 "$DST/tools/paas-team" add "$TEAM" "$TEAM_SOURCE"
-  elif [ -d "$USER_DST/brain/teams/$TEAM" ]; then          # added earlier from this clone: this clone's plugin replaces the old one
+  elif [ -d "$USER_DST/brain/teams/$TEAM" ] && case "$(git -C "$USER_DST/brain/teams/$TEAM" remote get-url origin 2>/dev/null)" in ""|"$USER_DST/brain/team-sources/"*) true ;; *) false ;; esac; then
+    # added earlier from this clone (no remote, or this clone's team-sources): this clone's plugin replaces the old one.
+    # A team taken from a published repository (--team-source, GitLab) is left to `paas-team sync`.
     rm -rf "$USER_DST/brain/teams/$TEAM/paas-brain-$TEAM"; cp -R "$USER_DST/brain/team-sources/$TEAM/paas-brain-$TEAM" "$USER_DST/brain/teams/$TEAM/"
     cp "$USER_DST/brain/team-sources/$TEAM/.claude-plugin/marketplace.json" "$USER_DST/brain/teams/$TEAM/.claude-plugin/"
     ( cd "$USER_DST/brain/teams/$TEAM" \&\& git add -A >/dev/null 2>\&1 \&\& git -c user.name=brain -c user.email=brain@localhost commit -q -m "team $TEAM: plugin updated by install.sh" >/dev/null 2>\&1 ) || true

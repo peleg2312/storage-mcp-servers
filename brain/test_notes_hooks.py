@@ -109,6 +109,19 @@ rc, out = run("notes-check.py", args=["--sync"])        # two pushed first, so o
 assert rc == 1 and out.startswith("brain: conflict with the shared brain in: notes/x.md;"), (rc, out)
 assert gi(brain, "status", "--porcelain").strip() == "", gi(brain, "status")
 assert "<<<<" not in open(nx).read() and "from one" in open(nx).read()
+# a file holding a secret is reported, not committed (the redacted save is); a rebase left behind by a killed sync is aborted
+leak = os.path.join(brain, "notes", "leak.md")
+open(leak, "w").write("# L\n- login password=hunter2!\n")
+rc, out = run("notes-check.py", {"tool_input": {"file_path": leak}})
+assert rc == 0 and "credential value" in out and "notes/leak.md" not in gi(brain, "log", "--format=%s", "--", "notes/leak.md"), out
+open(leak, "w").write("# L\n- login password=<REDACTED>\n")
+assert run("notes-check.py", {"tool_input": {"file_path": leak}}) == (0, "")
+assert "brain: notes/leak.md" in gi(brain, "log", "--format=%s", "--", "notes/leak.md")
+os.makedirs(os.path.join(brain, ".git", "rebase-merge"))          # what a killed pull --rebase leaves behind
+open(os.path.join(brain, ".git", "rebase-merge", "head-name"), "w").write("refs/heads/main\n")
+rc, out = run("notes-check.py", args=["--sync"])
+assert rc == 0 and not os.path.isdir(os.path.join(brain, ".git", "rebase-merge")), (rc, out)
+print("secrets and stuck rebase ok")
 print("shared brain ok")
 
 # add-docs --brain: pages land as local/brain-notes and local/brain-incidents; a removed page leaves the index

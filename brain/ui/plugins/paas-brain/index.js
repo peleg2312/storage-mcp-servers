@@ -347,6 +347,12 @@ export function mount(container, api) {
   // Team card (top of Memory): which team profile this chat uses, switch it, sync its knowledge (GET/POST team, team-sync)
   let teamMsg = null;
   let teamSynced = false;                                   // the quiet background sync runs once per opening of Memory
+  let syncing = null;                                       // the one in-flight team-sync promise (git clone is shared)
+  function runSync() {
+    if (syncing) return syncing;
+    syncing = api.rpc('POST', 'team-sync').catch((x) => ({ out: x.message || String(x) })).finally(() => { syncing = null; });
+    return syncing;
+  }
   async function renderTeam(box) {
     const t = await api.rpc('GET', 'team').catch((e) => ({ installed: true, error: e.message || String(e) }));
     if (!box.isConnected) return;
@@ -377,6 +383,7 @@ export function mount(container, api) {
         : { title: `Switch to ${x.title || name}?`, text: `Your next Claude chat uses this team's rules and skills.${dirty ? ' Unsaved edits below are lost.' : ''}${x.local ? '' : ' It is added first, which can take a few seconds.'}`, confirmLabel: 'Switch' });
       if (!r0.ok) return;
       const done = busy(sw, x.local ? 'Switching…' : 'Adding…'); st.say('');
+      if (syncing) await syncing;                          // never run two git operations in the same clone
       const r = await api.rpc('POST', 'team', { name }).catch((e) => ({ out: String(e) }));
       done();
       if (!r.ok) { st.error(`Not switched: ${r.out || 'unknown error'}`); return; }
@@ -386,7 +393,7 @@ export function mount(container, api) {
     });
     box.querySelector('.tsy')?.addEventListener('click', async (e) => {
       const done = busy(e.currentTarget, 'Syncing…'); st.say('');
-      const r = await api.rpc('POST', 'team-sync').catch((x) => ({ out: String(x) }));
+      const r = await runSync();
       done();
       if (r.ok) st.say(r.out || 'Synced.'); else st.error(`Not synced: ${r.out || 'unknown error'}`);
     });
@@ -416,13 +423,13 @@ export function mount(container, api) {
       renderTeam(box);
     });
     teamEditor(box, t.active, st);
-    if (t.active && !teamSynced) {                       // quiet background sync: no spinner, no dialog
+    if (t.active && !teamSynced && !syncing) {           // quiet background sync: no spinner, no dialog
       teamSynced = true;
-      api.rpc('POST', 'team-sync').then((r) => {
+      runSync().then((r) => {
         if (!box.isConnected) return;
         const line = String(r.out || '').split('\n').filter(Boolean).pop() || (r.ok ? 'in sync' : 'no answer');
         st.say(`${lead}Sync: ${line}`);
-      }).catch((x) => { if (box.isConnected) st.say(`${lead}Sync: ${x.message || x}`); });
+      });
     }
   }
 
@@ -431,8 +438,11 @@ export function mount(container, api) {
   function teamEditor(box, active, st) {
     const det = box.querySelector('.ted'); const body = det.querySelector('.ted-body'); const sel = box.querySelector('.tsel');
     let seq = 0;
+    let edDirty = false;                                   // this editor has edits that mark the pane dirty
+    const clean = () => { if (edDirty) { edDirty = false; dirty = false; } };
     async function load() {
       const name = sel.value; const my = ++seq;
+      clean();                                             // fresh data replaces whatever was typed
       if (name === 'none') { body.innerHTML = '<div class="sub">Pick a team above to edit it.</div>'; return; }
       body.innerHTML = skeleton('list');
       const r = await api.rpc('GET', `team-show?name=${encodeURIComponent(name)}`).catch((e) => ({ ok: false, out: e.message || String(e) }));
@@ -440,7 +450,7 @@ export function mount(container, api) {
       if (!r.ok) { body.innerHTML = `<div class="sub bad" role="alert">${esc(r.out || 'Could not load the team')}</div>`; return; }
       form(name, r);
     }
-    det.addEventListener('toggle', () => { if (det.open) load(); });
+    det.addEventListener('toggle', () => { if (det.open) load(); else clean(); });
     sel.addEventListener('change', () => { if (det.open) load(); });
 
     function form(name, d) {
@@ -459,7 +469,7 @@ export function mount(container, api) {
           <td>${web ? `<input type="password" class="m-tok" aria-label="Token of ${esc(n)}" placeholder="${s.token_set ? 'token kept' : 'no token'}" autocomplete="new-password">${s.token_set ? ' <label class="sub"><input type="checkbox" class="m-clr"> Remove token</label>' : ''}` : ''}</td>
           <td>${s.configured ? 'yes' : 'no'}</td><td><button type="button" class="btn danger sm m-rm" aria-pressed="false">Remove</button></td></tr>`;
       };
-      body.innerHTML = `${field('Title', `<input type="text" data-k="title" value="${esc(d.title || '')}" aria-label="Title" autocomplete="off">`)}
+      body.innerHTML = `<div class="t-form">${field('Title', `<input type="text" data-k="title" value="${esc(d.title || '')}" aria-label="Title" autocomplete="off">`)}
         ${field('Description', `<input type="text" data-k="description" value="${esc(d.description || '')}" aria-label="Description" autocomplete="off">`)}
         ${text('persona', 'Persona', 'Who you work for', 8)}${text('rules', 'Rules', 'the storage rules file', 14)}${text('environment', 'Environment template', 'the template a new member starts from', 10)}
         ${pick('skills', d.skills || [], d.available_skills)}${pick('agents', d.agents || [], d.available_agents)}
@@ -469,7 +479,10 @@ export function mount(container, api) {
           <td><input type="text" class="n-url" aria-label="New server URL" placeholder="https://..." autocomplete="off" spellcheck="false"></td>
           <td><input type="password" class="n-tok" aria-label="New server token" placeholder="no token" autocomplete="new-password"></td><td></td><td></td></tr></table></div>
           <span class="hint">Tokens are stored in the team repository and visible to everyone with access to it; use read-only tokens.</span></div>
-        <div class="row"><button type="button" class="btn t-save">Save</button><button type="button" class="btn ghost t-cancel">Cancel</button></div>`;
+        <div class="row"><button type="button" class="btn t-save">Save</button><button type="button" class="btn ghost t-cancel">Cancel</button></div></div>`;
+      const root = body.firstElementChild;
+      const mark = (e) => { if (e.target.matches('.t-filter')) return; edDirty = true; dirty = true; };   // filtering is not an edit
+      root.addEventListener('input', mark); root.addEventListener('change', mark);
 
       body.querySelectorAll('.t-filter').forEach((f) => f.addEventListener('input', () => {
         const q = f.value.trim().toLowerCase();
@@ -480,7 +493,7 @@ export function mount(container, api) {
         b.setAttribute('aria-pressed', String(on)); b.textContent = on ? 'Undo remove' : 'Remove';
         b.closest('tr').style.textDecoration = on ? 'line-through' : '';
       }));
-      body.querySelector('.t-cancel').addEventListener('click', () => { det.open = false; det.querySelector('summary').focus(); });
+      body.querySelector('.t-cancel').addEventListener('click', () => { clean(); det.open = false; det.querySelector('summary').focus(); });
 
       const checked = (kind) => [...body.querySelectorAll(`[data-list="${kind}"] input:checked`)].map((i) => i.value);
       const same = (a, b) => a.length === b.length && [...a].sort().every((x, i) => x === [...b].sort()[i]);
@@ -519,10 +532,12 @@ export function mount(container, api) {
           if (!c.ok) return;
         }
         const done = busy(save, 'Saving…'); st.say('');
+        if (syncing) await syncing;                        // never run two git operations in the same clone
         const r = await api.rpc('POST', 'team-edit', { name, change }).catch((e) => ({ ok: false, out: e.message || String(e) }));
         done();
         if (!r.ok) { st.error(`Not saved: ${r.out || 'unknown error'}`); return; }
         teamMsg = String(r.out || '').split('\n').filter(Boolean).pop() || 'Saved.';
+        clean();
         renderTeam(box);
       });
     }

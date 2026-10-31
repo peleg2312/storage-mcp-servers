@@ -73,8 +73,17 @@ ln -sfn "$P/bin/paas-user" /usr/local/sbin/paas-user
 # A team's GitLab remote (members clone and push there): python3 brain/teams/publish.py <team> --to /opt/paas/teams/<team> --remote <url>
 install -m 755 "$BRAIN/claude/tools/paas-team" "$P/bin/paas-team"
 ln -sfn "$P/bin/paas-team" /usr/local/bin/paas-team
-python3 "$BRAIN/teams/publish.py" --all --to "$P/teams" --no-hooks | sed 's/^/teams: /'   # hooks are managed settings here
-chmod -R a+rX "$P/teams"
+python3 "$BRAIN/teams/publish.py" --all --to "$P/teams" --no-hooks > "$P/teams.log" 2>&1 || { cat "$P/teams.log"; echo "install-shared: publishing the teams failed (see above)"; exit 1; }
+sed 's/^/teams: /' "$P/teams.log"; rm -f "$P/teams.log"   # hooks are managed settings here
+# a team's mcp.json may hold its servers' tokens: readable by the brain's users only, like the marketplace; directory (AD)
+# groups listed in /etc/paas/allowed-groups get the same read access through ACLs
+chgrp -R paas-users "$P/teams"; chmod -R u+rwX,g+rX,o-rwx "$P/teams"
+if [ -f "$ETC/allowed-groups" ] && command -v setfacl >/dev/null 2>&1; then
+  grep -v '^#' "$ETC/allowed-groups" | tr -d '[:blank:]' | grep -v '^$' | grep -vx paas-users | while read -r grp; do
+    getent group "$grp" >/dev/null 2>&1 || { echo "note: group $grp (allowed-groups) is unknown here; skipped"; continue; }
+    setfacl -R -m "g:$grp:rX" -m "d:g:$grp:rX" "$P/teams" "$P/marketplace" 2>/dev/null || echo "note: setfacl for $grp failed"
+  done
+fi
 systemctl daemon-reload 2>/dev/null || true
 
 # API key for everyone's Claude: root writes it once into /etc/paas/api-key (group paas-users may read it)
