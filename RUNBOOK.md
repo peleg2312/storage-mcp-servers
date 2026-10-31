@@ -133,10 +133,17 @@ Try: `python3 ~/.claude/brain/library/search.py search "scsiblade.san.config.act
    captures/, incidents/, tool-map.md) is shared; reports never go to git. The team editor in the Brain tab ("Edit team")
    changes title, persona, rules, environment template, skills, agents and the MCP servers with their tokens (stored in the
    team repository's mcp.json by your decision: read-only tokens, rotate when someone leaves).
-7. Pushing is automatic on every path (the notes hook after each saved file, the Brain tab after each save, every session
+7. Rolling the plugin out to many laptops without each person typing the two commands: put the team marketplace into the
+   laptops' managed settings (`/etc/claude-code/managed-settings.json` on Linux, the equivalent path on macOS):
+   `{"extraKnownMarketplaces": {"paas-brain-nas": {"source": {"source": "git", "url": "<team url>"}, "autoUpdate": true}},
+   "enabledPlugins": {"paas-brain-nas@paas-brain-nas": true}}`. The plugin's version carries a fingerprint of its content, so a
+   republish always reaches the laptops (Claude Code hands out a new copy only when the version string changes); people
+   without auto-update run `claude plugin update paas-brain-nas@paas-brain-nas` or `/reload-plugins`. Each team repository
+   also carries `check.py` and a `.gitlab-ci.yml` that runs it: JSON, plugin shape, skills, no secrets in knowledge, caps.
+8. Pushing is automatic on every path (the notes hook after each saved file, the Brain tab after each save, every session
    start and Brain tab opening syncs); the shared GitLab repository is always current. Publish a new plugin version with
    `publish.py <team> --to <url>` after a `git pull` of this repository: members pick it up at their next sync.
-8. A new team: a folder `brain/teams/<name>/` with `team.json` and `persona.md` (plus its own rules file, skills, agents),
+9. A new team: a folder `brain/teams/<name>/` with `team.json` and `persona.md` (plus its own rules file, skills, agents),
    `python3 brain/test_budgets.py` and `python3 brain/test_teams.py` green, then publish. `brain/teams/README.md` has the schema.
 
 ## Active Directory accounts on the multi-user VM

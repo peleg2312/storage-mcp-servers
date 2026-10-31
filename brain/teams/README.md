@@ -85,6 +85,16 @@ brain re-applies it at their next sync or session start. A person's own or marke
 edit lives only in the team repository, `publish.py` refuses to overwrite it until it is ported into `brain/teams/<team>`
 (or `brain/claude`) in this repository, or `--force` is given.
 
+## Updates and the CI gate
+
+The plugin's `version` is the library version plus a fingerprint of the plugin's content (`2026.10.25b-7cbc8a20`): Claude
+Code hands a user a new copy from a git-hosted marketplace only when that string changes, so every publish with a change is
+delivered, and an unchanged republish adds no commit. A marketplace added from a local path (the VM, `paas-team` in plugin
+mode) loads the files in place at every session start. Every team repository carries `check.py` (JSON, plugin shape,
+hooks.json and .mcp.json wrappers, skills and agents with frontmatter, team.json lists resolvable, no secrets in knowledge,
+line caps on notes.md and tool-map.md) and a `.gitlab-ci.yml` that runs it on every push; the Brain tab's edits go through
+the same file when they are committed, so a broken edit is caught at the push, not at everyone's next session.
+
 ## Everything is pushed, by every path
 
 The notes hook commits and pushes each file Claude saves (notes, captures, incidents, tool map); the Brain tab pushes

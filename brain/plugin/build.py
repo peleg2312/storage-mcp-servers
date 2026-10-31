@@ -89,7 +89,7 @@ def hooks_json():
     with tempfile.TemporaryDirectory() as t:
         settings = os.path.join(t, "settings.json")
         subprocess.run([sys.executable, os.path.join(BRAIN, "merge_settings.py"), settings,
-                        "--hooks-dir", "${CLAUDE_PLUGIN_ROOT}/hooks"], check=True, stdout=subprocess.DEVNULL)
+                        "--hooks-dir", '"${CLAUDE_PLUGIN_ROOT}"/hooks'], check=True, stdout=subprocess.DEVNULL)   # quoted: a path with spaces stays one word
         with open(settings) as f:
             return {"hooks": json.load(f)["hooks"]}
 
@@ -129,7 +129,7 @@ def build(out, team_name="san", hooks=True):
         "mcp": team.get("mcp", ["docs-local"]), "hooks": hooks}))
     write(os.path.join(plug, ".claude-plugin", "plugin.json"), dump({
         "name": name, "version": version(), "description": team.get("description", "")}))
-    write(os.path.join(plug, ".mcp.json"), dump({"docs-local": {"command": "${CLAUDE_PLUGIN_ROOT}/bin/docs-local"}}))
+    write(os.path.join(plug, ".mcp.json"), dump({"mcpServers": {"docs-local": {"command": "${CLAUDE_PLUGIN_ROOT}/bin/docs-local"}}}))
     os.makedirs(os.path.join(plug, "bin"), exist_ok=True)
     shutil.copy(os.path.join(SRC, "tools", "paas-team"), os.path.join(plug, "bin", "paas-team"))   # the hook's bootstrap runs it
     os.chmod(os.path.join(plug, "bin", "paas-team"), 0o755)

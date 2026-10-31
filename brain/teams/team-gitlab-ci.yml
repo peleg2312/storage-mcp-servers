@@ -1,0 +1,6 @@
+# Team brain repository: the gate every push goes through. check.py is the same script people run locally
+# (python3 >= 3.9 on the runner image; point `image` at your internal registry mirror).
+image: python:3.12
+check:
+  script:
+    - python3 check.py

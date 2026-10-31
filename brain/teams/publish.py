@@ -18,6 +18,7 @@ Layout of a team repository:
   team.json (name, title, remote)   README.md   .gitignore
   install-team.sh + bin/paas-team   a laptop installs the team from the clone alone (no storage-mcp-servers checkout):
                                     git clone <url> && sh <clone>/install-team.sh
+  check.py + .gitlab-ci.yml         the repository's own gate (JSON, plugin shape, skills, no secrets in knowledge, caps)
 Standard library, Python 3.9."""
 import json
 import os
@@ -115,6 +116,26 @@ def publish(team, dest, remote=None, hooks=True, commit=True, force=False):
                      f"(Brain tab edits):\n  " + "\n  ".join(edits[:10]) + "\nPort them into brain/teams/" + team
                      + " (git -C <repo> show <sha>) or re-run with --force to drop them.")
     plug = build.build(dest, team, hooks)
+    # Claude Code gives a user a new copy of a plugin from a git-hosted marketplace only when plugin.json's version changes:
+    # the version is the library version plus a fingerprint of the plugin's content, so every publish with a change is one
+    import hashlib
+    h = hashlib.sha1()
+    for root, dirs, files in os.walk(plug):
+        dirs.sort()
+        for f in sorted(files):
+            if f == "plugin.json" or f == "team.json":
+                continue
+            h.update(os.path.relpath(os.path.join(root, f), plug).encode())
+            with open(os.path.join(root, f), "rb") as fh:
+                h.update(fh.read())
+    for name in ("team.json", os.path.join(".claude-plugin", "plugin.json")):
+        pj = os.path.join(plug, name)
+        with open(pj) as f:
+            d = json.load(f)
+        d["version"] = d["version"].split("-")[0] + "-" + h.hexdigest()[:8]
+        with open(pj, "w") as f:
+            json.dump(d, f, indent=2, sort_keys=True)
+            f.write("\n")
     with open(os.path.join(plug, "team.json")) as f:
         t = json.load(f)
     k = os.path.join(dest, "knowledge")
@@ -159,6 +180,10 @@ def publish(team, dest, remote=None, hooks=True, commit=True, force=False):
         f.write(readme(t, meta.get("remote")))
     with open(os.path.join(dest, "install-team.sh"), "w") as f:
         f.write(INSTALL_TEAM)
+    shutil.copy(os.path.join(HERE, "team-check.py"), os.path.join(dest, "check.py"))      # the repository's own CI gate
+    os.chmod(os.path.join(dest, "check.py"), 0o755)
+    if not os.path.exists(os.path.join(dest, ".gitlab-ci.yml")):
+        shutil.copy(os.path.join(HERE, "team-gitlab-ci.yml"), os.path.join(dest, ".gitlab-ci.yml"))
     os.chmod(os.path.join(dest, "install-team.sh"), 0o755)
     os.makedirs(os.path.join(dest, "bin"), exist_ok=True)
     shutil.copy(os.path.join(BRAIN, "claude", "tools", "paas-team"), os.path.join(dest, "bin", "paas-team"))
