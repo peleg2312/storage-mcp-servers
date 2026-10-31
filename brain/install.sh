@@ -33,31 +33,43 @@ else
   IMPORT_PREFIX='@~/.claude/brain/'
 fi
 LIBDST=$USER_DST/brain/library         # shared by every install on this VM
+[ ! -L "$LIBDST" ] || LIBDST=$(readlink -f "$LIBDST")   # multi-user VM: root's library is a link to /opt/paas/library
+esc() { printf '%s' "$1" | sed 's/[&#\\]/\\&/g'; }   # a path as a sed replacement ('#' is our delimiter)
 TS=$(date +%Y%m%d%H%M%S)
 mkdir -p "$DST/skills" "$DST/agents" "$DST/hooks" "$DST/brain" "$DST/brain/notes" "$DST/banner" "$USER_DST/brain" "$HOME/storage-reports"
 
 # CLAUDE.md (imports rewritten for the project layout), skills, agents, hooks, brain files
+# Project mode never replaces a CLAUDE.md that is not ours (no first-line marker): the brain text goes to
+# .claude/brain/main.md and CLAUDE.md only gets an import line.
+BRAIN_MD=$CLAUDE_MD
+MARK=$(head -n1 "$SRC/CLAUDE.md")
+if [ -n "$PROJECT" ] && [ -f "$CLAUDE_MD" ] && [ "$(head -n1 "$CLAUDE_MD")" != "$MARK" ]; then
+  BRAIN_MD=$DST/brain/main.md
+  grep -qF "${IMPORT_PREFIX}main.md" "$CLAUDE_MD" || printf '\n## Storage brain\n%smain.md\n' "$IMPORT_PREFIX" >> "$CLAUDE_MD"
+  echo "note: $CLAUDE_MD is your own; left as is, the brain rules are imported from $BRAIN_MD"
+fi
 TMP_MD=$(mktemp)
-sed "s#@~/\.claude/brain/#$IMPORT_PREFIX#" "$SRC/CLAUDE.md" > "$TMP_MD"
-if [ -f "$CLAUDE_MD" ] && ! cmp -s "$TMP_MD" "$CLAUDE_MD"; then
+sed "s#@~/\.claude/brain/#$(esc "$IMPORT_PREFIX")#" "$SRC/CLAUDE.md" > "$TMP_MD"
+if [ -z "$PROJECT" ] && [ -f "$CLAUDE_MD" ] && ! cmp -s "$TMP_MD" "$CLAUDE_MD"; then
   cp "$CLAUDE_MD" "$CLAUDE_MD.bak.$TS"; echo "backed up existing $CLAUDE_MD -> CLAUDE.md.bak.$TS"
 fi
-cp "$TMP_MD" "$CLAUDE_MD"; rm -f "$TMP_MD"
+cp "$TMP_MD" "$BRAIN_MD"; rm -f "$TMP_MD"
 # the storage rules: loaded in plain chats (~/chats, see below) and in a project install; code projects read them on demand
-sed "s#@~/\.claude/brain/#$IMPORT_PREFIX#" "$SRC/brain/storage.md" > "$DST/brain/storage.md"
+sed "s#@~/\.claude/brain/#$(esc "$IMPORT_PREFIX")#" "$SRC/brain/storage.md" > "$DST/brain/storage.md"
 cp "$SRC/brain/coding.md" "$DST/brain/coding.md"      # coding rules, read on demand by code work only
-[ -z "$PROJECT" ] || grep -q "^@.*storage\.md" "$CLAUDE_MD" || printf '\n## Storage rules\n%sstorage.md\n' "$IMPORT_PREFIX" >> "$CLAUDE_MD"
+[ -z "$PROJECT" ] || grep -q "^@.*storage\.md" "$BRAIN_MD" || printf '\n## Storage rules\n%sstorage.md\n' "$IMPORT_PREFIX" >> "$BRAIN_MD"
 cp -R "$SRC/skills/." "$DST/skills/"
 cp -R "$SRC/agents/." "$DST/agents/"
 if [ -n "$PROJECT" ]; then
   # project mode: every ~/.claude path in the brain text points into <dir>/.claude, except the shared library
+  P_E=$(esc "$PROJECT"); D_E=$(esc "$DST"); L_E=$(esc "$LIBDST")
   find "$DST/skills" "$DST/agents" -name '*.md' -print0 2>/dev/null | xargs -0 -r sed -i.paas-tmp \
     -e "s#~/\.claude/brain/library#__LIB__#g" \
-    -e "s#~/\.claude/CLAUDE\.md#$PROJECT/CLAUDE.md#g" \
-    -e "s#~/\.claude/#$DST/#g" \
-    -e "s#__LIB__#$LIBDST#g"
-  sed -i.paas-tmp -e "s#~/\.claude/brain/library#__LIB__#g" -e "s#~/\.claude/CLAUDE\.md#$PROJECT/CLAUDE.md#g" \
-    -e "s#~/\.claude/projects/#__PROJECTS__#g" -e "s#~/\.claude/#$DST/#g" -e "s#__LIB__#$LIBDST#g" -e "s#__PROJECTS__#~/.claude/projects/#g" "$CLAUDE_MD" "$DST/brain/storage.md"
+    -e "s#~/\.claude/CLAUDE\.md#$P_E/CLAUDE.md#g" \
+    -e "s#~/\.claude/#$D_E/#g" \
+    -e "s#__LIB__#$L_E#g"
+  sed -i.paas-tmp -e "s#~/\.claude/brain/library#__LIB__#g" -e "s#~/\.claude/CLAUDE\.md#$P_E/CLAUDE.md#g" \
+    -e "s#~/\.claude/projects/#__PROJECTS__#g" -e "s#~/\.claude/#$D_E/#g" -e "s#__LIB__#$L_E#g" -e "s#__PROJECTS__#~/.claude/projects/#g" "$BRAIN_MD" "$DST/brain/storage.md"
   find "$DST/skills" "$DST/agents" "$PROJECT" -maxdepth 3 -name '*.paas-tmp' -delete 2>/dev/null || true
 fi
 cp "$SRC/hooks/block-write-tools.py" "$SRC/hooks/session-start.py" "$SRC/hooks/docs-hints.py" "$SRC/hooks/docs-leads.py" "$SRC/hooks/py-lint.py" "$DST/hooks/"
@@ -223,4 +235,5 @@ echo "Installed into $DST: CLAUDE.md ($CLAUDE_MD), $(ls "$SRC/skills" | wc -l | 
 if [ -n "$PROJECT" ]; then
   echo "Project mode: the brain is active only inside $PROJECT (cd there, then: claude). docs-local (.mcp.json) is pre-approved in .claude/settings.json; answer yes to the one-time folder trust dialog."
 fi
+[ ! -f /etc/paas/gate.key ] || echo "multi-user VM: now run  sh $HERE/multiuser/install-shared.sh  (refreshes /opt/paas and strips the duplicate hooks)"
 echo "Next: start claude and run   /brain-setup"

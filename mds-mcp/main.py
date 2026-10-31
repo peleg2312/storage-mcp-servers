@@ -3,6 +3,7 @@
 Connects to one or more Cisco MDS switches over NX-API.
 """
 
+import json
 import os
 import re
 from typing import Any
@@ -152,6 +153,9 @@ def _validate_command(cmd: str) -> str:
     return normalized
 
 
+MAX_RESPONSE_CHARS = int(os.getenv("MDS_MAX_RESPONSE_CHARS", "60000"))
+
+
 def _run_cli(switch: str | None, cmd: str) -> dict[str, Any]:
     """Run a single NX-OS CLI command on the chosen switch via NX-API (JSON-RPC).
 
@@ -184,6 +188,11 @@ def _run_cli(switch: str | None, cmd: str) -> dict[str, Any]:
     )
     response.raise_for_status()
     data = response.json()
+    size = len(json.dumps(data))
+    if size > MAX_RESPONSE_CHARS:  # a sliced JSON string would be invalid: return a stub instead
+        return {"switch": name, "truncated": True, "chars": size,
+                "note": "Output too large; use run_show with grep/tail_lines or a vsan-scoped tool "
+                        "(e.g. show_zoneset_active_vsan)."}
     # Wrap the response so the LLM always knows which switch produced it.
     return {"switch": name, "response": data}
 

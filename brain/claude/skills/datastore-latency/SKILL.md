@@ -17,12 +17,13 @@ Ask (or infer) the time window. Use the same window on every layer; use max **an
 `identify-lun` → array, device/LUN, storage group / volume, the hosts' paths.
 
 ## 3. Array
-- **PowerMax**: `get_performance(category="StorageGroup", storage_group=<sg>, minutes_back=<window>)`, then
-  `category="FEPort"` (director + port) for the port group's ports: response time
+- **PowerMax**: `get_performance(category="StorageGroup", object_id=<sg>, array_id=<serial>, minutes_back=<window>)`, then
+  `category="FEPort"` with object_id "FA-1D:4" (director:port) for the port group's ports: response time
   read/write, IOPS, MB/s, I/O size; FA ports / directors used by the port group (utilization, queue);
   SRDF/Metro write latency if replicated (synchronous replication adds the link round trip).
 - **ONTAP** (Harvest): LUN and volume latency (read/write/other), IOPS; node CPU / utilization;
   aggregate / disk utilization; FC port / LIF throughput; QoS throttling.
+- **PowerFlex**: `get_statistics(object_type=..., object=..., samples=N)` or `get_performance_overview`; live samples only, no history; check the SDC side too.
 - Array latency ≈ VMware device latency → the array is the source. Array latency low but VMware device
   latency high → look at the fabric.
 

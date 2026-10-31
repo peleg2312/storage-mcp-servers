@@ -211,6 +211,8 @@ function busy(button, label) {
 // /preview route (signed-in only; only ports this account listens on). Claude opens pages here with `paas-open`.
 const SEEN = 'paas-browser-seen';
 const LAST = 'paas-browser-last';
+const isSelf = (p) => (/^\/preview\/(\d+)\//.exec(p) || [])[1] === location.port;   // the UI's own port: never worth restoring
+const keep = (p) => { if (!isSelf(p)) store.set(LAST, p); };
 const store = {
   get: (k) => { try { return localStorage.getItem(k); } catch { return null; } },
   set: (k, v) => { try { localStorage.setItem(k, v); } catch { /* private window */ } },
@@ -355,13 +357,13 @@ export function mount(container, api) {
         status.say('');
         try {
           const l = frame.contentWindow.location;
-          if (l.pathname.startsWith('/preview/')) { input.value = toShort(l.pathname + l.search + l.hash); store.set(LAST, l.pathname + l.search + l.hash); }
+          if (l.pathname.startsWith('/preview/')) { input.value = toShort(l.pathname + l.search + l.hash); keep(l.pathname + l.search + l.hash); }
         } catch { /* left /preview: nothing to show */ }
       });
     }
     frame.src = p;
     input.value = toShort(p);
-    store.set(LAST, p);
+    keep(p);
   }
 
   async function ports() {
@@ -397,7 +399,7 @@ export function mount(container, api) {
 
   ports();
   const last = store.get(LAST);
-  if (last) open(last);
+  if (last && !isSelf(last)) open(last);
   poll();
 }
 

@@ -73,7 +73,7 @@ MDS (FLOGI on the port-channel/interface, VSAN, FCNS, zone + device-alias) → a
 (PowerMax FA dir:port / ONTAP FC LIF WWPN) → masking view or igroup/LUN map → device/LUN.
 **End to end from any identifier**: the `trace-path` skill (kuparashit `locate` / `related`, then confirm each layer live).
 A healthy host: every vmhba logged in, zoned on its fabric to the array ports in its masking view /
-igroup, same number of paths on both fabrics, all paths active (ALUA: optimized + non-optimized).
+igroup, same number of paths on both fabrics, all paths active (ONTAP: ALUA, optimized on the owning node plus non-optimized via the partner; PowerMax: all paths active; compare path counts, not ALUA state).
 
 ## Agents
 For a cross-layer problem give each storage agent its layer and the identifiers, run them in parallel, and join

@@ -566,8 +566,8 @@ def get_system(system_id: str = "") -> dict:
     try:
         st = stats_of(g, "System", sid)
         s["counts"] = {k: v for k, v in st.items() if k.startswith("num") and isinstance(v, int)}
-    except Exception:
-        pass
+    except Exception as e:
+        s.setdefault("partial", []).append("counts: " + str(e))
     return s
 
 
@@ -854,16 +854,16 @@ def get_volume(volume: str, system_id: str = "", full: bool = False) -> dict:
         p = g.get(f"/api/instances/StoragePool::{v['storagePoolId']}")
         out["storage_pool"] = p.get("name")
         out["protection_domain"] = g.get(f"/api/instances/ProtectionDomain::{p['protectionDomainId']}").get("name")
-    except Exception:
-        pass
+    except Exception as e:
+        out.setdefault("partial", []).append("storage_pool: " + str(e))
     if v.get("vtreeId"):
         try:
             tree = related(g, "VTree", v["vtreeId"], "Volume")
             out["vtree"] = [{"id": x["id"], "name": x.get("name"), "type": x.get("volumeType"),
                              "parent": x.get("ancestorVolumeId"), "created_utc": ts_iso(x.get("creationTime"))}
                             for x in tree if x["id"] != v["id"]]
-        except Exception:
-            pass
+        except Exception as e:
+            out.setdefault("partial", []).append("vtree: " + str(e))
     try:
         st = stats_of(g, "Volume", v["id"])
         out["io"] = io_view(st)
@@ -953,8 +953,8 @@ def get_replication(system_id: str = "", rcg: str = "") -> dict:
                         for o in related(g, "ReplicationConsistencyGroup", r["id"], "ReplicationPair")]
         try:
             out["rcg_statistics"] = derive(stats_of(g, "ReplicationConsistencyGroup", r["id"]))
-        except Exception:
-            pass
+        except Exception as e:
+            out.setdefault("partial", []).append("rcg_statistics: " + str(e))
     if not any(out.get(k) for k in ("peer_systems", "rcgs", "sdrs")):
         out["note"] = "No replication configured on this system."
     return out

@@ -92,6 +92,8 @@ FIX_WORDS = {"pr", "fix", "fixed", "fixes", "bug", "bugs", "issue", "merged", "r
              "broken", "known", "workaround", "changelog", "version", "first"}
 INTENT = {"best", "practice", "practices", "recommend", "recommended", "recommendation", "recommendations",
           "guideline", "guidelines", "tips", "advice", "should", "work", "works", "explain", "overview", "difference"}
+# not required for "all words" / `unmatched` (weight unchanged: giving them INTENT_W lowered MRR on general_heldout)
+FILLER = {"find", "different", "differ", "using", "need", "want", "use", "get"}
 INTENT_W = 0.3   # measured: neutral on every eval set, fixes "<topic> design best practices" picking any BP title
 CODE_WORDS = {"code", "function", "func", "functions", "implementation", "implemented", "implement", "source",
               "golang", "method", "calls", "codebase", "exec", "runs"}
@@ -371,16 +373,20 @@ def _search_docs(c, q, vendor="", product="", limit=8):
         fam = FAMILY.match(r["product"])
         if fam and fam.group(1) in mine and r["product"] not in mine[fam.group(1)]:
             r["note"] = f"for {r['product']}; yours: {', '.join(mine[fam.group(1)])}"
+        elif r["product"] in mine:
+            r["note"] = f"unversioned copy, release unknown; yours: {', '.join(mine[r['product']])}"
     facet = {}
     for _, _, r in scored[:60]:                         # where the strong candidates live: the next product filter
         facet[r["product"]] = facet.get(r["product"], 0) + 1
-    full = bool(scored) and scored[0][1] == 1.0
+    core = [i for i, g in enumerate(groups) if g[0] not in INTENT | FILLER] or list(range(len(groups)))
+    top = found_in[0] if found_in else []
+    full = bool(scored) and all(top[i] for i in core)        # filler words ("should", "find") need not be present
     mode = "all words" if full else "partial: no chunk contains every word; best coverage first (see matched)"
     out = {"match_mode": mode, "results": rows}
     if not product and len(facet) > 1 and max(facet.values()) < 0.9 * sum(facet.values()):
         out["by_product"] = dict(sorted(facet.items(), key=lambda kv: -kv[1])[:6])
     # words no returned hit holds: the agent's cue to rephrase exactly those with the vendor's term
-    missing = [g[0] for i, g in enumerate(groups) if rows and not any(f[i] for f in found_in)]
+    missing = [g[0] for i, g in enumerate(groups) if i in core and rows and not any(f[i] for f in found_in)]
     if missing:
         out["unmatched"] = missing
     return out

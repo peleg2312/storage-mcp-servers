@@ -166,6 +166,13 @@ async def m():
     assert "fc1/7" in a["txwait"]["text"] and a["log_warnings_by_interface"][0]["interface"] == "fc1/7"
     print("slow drain:", a["log_warnings_by_interface"], list(a))
 
+    # oversize cap: a stub, never a sliced JSON string
+    main.MAX_RESPONSE_CHARS = 5
+    stub = main._run_cli("mds-fab-a", "show clock")
+    assert stub["truncated"] is True and "response" not in stub and stub["chars"] > 5, stub
+    main.MAX_RESPONSE_CHARS = 60000
+    assert "response" in main._run_cli("mds-fab-a", "show clock")
+
     # guard: never send anything but one plain show
     for ok_cmd in ("show running-config interface fc1/1", "show run zone"):  # sections stay allowed
         await call("run_show", command=ok_cmd, switch="mds-fab-a")

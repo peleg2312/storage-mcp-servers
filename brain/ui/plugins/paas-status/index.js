@@ -229,7 +229,7 @@ const CSS = `
 .paas .grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(320px,100%),1fr));gap:16px}
 .paas .meter{height:3px;border-radius:3px;background:var(--paas-gradient,hsl(var(--primary)));margin-top:6px}
 .paas .name{max-width:340px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-@media (max-width:640px){.paas td.g{width:auto}.paas .name{max-width:150px}}`;
+@media (max-width:640px){.paas td.g{width:auto}.paas .name{max-width:150px}.paas .checks td.g{display:none}.paas .checks td.s{width:auto}.paas .checks .sub,.paas .checks .fix code{overflow-wrap:anywhere}}`;
 
 const pill = (s) => `<span class="pill ${s}" title="${HINT[s]}">${LABEL[s]}</span>`;
 const fmtTok = (n) => (n >= 1e9 ? `${(n / 1e9).toFixed(1)}B` : n >= 1e6 ? `${(n / 1e6).toFixed(1)}M` : n >= 1e3 ? `${(n / 1e3).toFixed(1)}K` : `${n}`);
@@ -268,7 +268,9 @@ function mountHealth(container, api) {
     const summary = bad.length
       ? `<span class="pill ${bad.some((c) => c.status === 'fail') ? 'fail' : 'warn'}">${bad.length} need${bad.length === 1 ? 's' : ''} attention</span>`
       : '<span class="pill ok">All good</span>';
-    const fixOf = (c) => (c.fix ? `<div class="fix"><span>How to fix: ${esc(c.fix)}</span>${c.cmd ? `<code>${esc(c.cmd)}</code><button type="button" class="btn ghost sm" data-copy="${esc(c.cmd)}">${icon('copy')}Copy command</button>` : ''}</div>` : '');
+    const key = (c) => c.fix + '\n' + (c.cmd || '');
+    const dup = new Set(bad.filter((c) => c.fix && bad.filter((o) => key(o) === key(c)).length > 1).map(key));
+    const fixOf = (c, once) => (c.fix && (once || !dup.has(key(c))) ? `<div class="fix"><span>How to fix: ${esc(c.fix)}</span>${c.cmd ? `<code>${esc(c.cmd)}</code><button type="button" class="btn ghost sm" data-copy="${esc(c.cmd)}">${icon('copy')}Copy command</button>` : ''}</div>` : '');
     top.innerHTML = `
       <div class="tiles">
         <div class="tile"><div class="k">Host</div><div class="v sm">${esc(m.host)}</div><div class="sub">${esc(m.os)}</div></div>
@@ -276,7 +278,7 @@ function mountHealth(container, api) {
         <div class="tile"><div class="k">Load (1 min)</div><div class="v">${m.load[0].toFixed(2)}</div><div class="sub">${m.cpus} CPUs, ${m.load[0] / m.cpus > 1 ? 'busy' : 'ok'} (fine while load stays below this)</div></div>
         <div class="tile"><div class="k">Up</div><div class="v sm">${dur(m.uptime)}</div><div class="sub">since last restart</div></div>
       </div>
-      <div class="sec-label">Brain checks</div><div class="card" style="margin-top:0"><div class="row" style="margin-bottom:8px">${summary}</div><div class="table-wrap"><table>
+      <div class="sec-label">Brain checks</div><div class="card" style="margin-top:0"><div class="row" style="margin-bottom:8px">${summary}</div>${[...dup].map((k) => fixOf({ fix: k.split('\n')[0], cmd: k.split('\n')[1] || '' }, true)).join('')}<div class="table-wrap"><table class="checks">
         ${groups.map((g) => g.map((c, i) => `<tr><td class="g">${i ? '' : esc(c.group)}</td><td>${esc(c.name)}<div class="sub">${esc(c.detail)}</div>${fixOf(c)}</td><td class="s">${pill(c.status)}</td></tr>`).join('')).join('')}
       </table></div><div class="sub" style="margin-top:8px">Updated ${new Date().toLocaleTimeString()}</div></div>`;
     top.querySelectorAll('[data-copy]').forEach((b) => b.addEventListener('click', () => copy(b.dataset.copy, st)));

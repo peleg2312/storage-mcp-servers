@@ -107,4 +107,4 @@ Try: `python3 ~/.claude/brain/library/search.py search "scsiblade.san.config.act
 
 - Sign out of kb.netapp.com once the KB export is done (invalidates the token you used).
 - Vendor content remains the vendors' copyright, kept for internal reference.
-- The web UI is installed by `install-vm.sh` (`NO_UI=1` skips it); multi-user setup: `sh brain/multiuser/install-gate.sh`.
+- The web UI is installed by `install-vm.sh` (`NO_UI=1` skips it); multi-user setup, as root, in this order: `sh install-vm.sh`, `sh brain/multiuser/install-shared.sh`, `sh brain/multiuser/install-gate.sh`, then `install-shared.sh` again (starts the marketplace for other VMs once the gate made the certificate). Update a multi-user VM: `git pull && sh install-vm.sh && sh brain/multiuser/install-shared.sh`.

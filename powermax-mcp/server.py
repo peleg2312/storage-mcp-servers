@@ -285,6 +285,7 @@ def parse_time(t: str) -> int:
 
 
 def norm_wwn(w: str) -> str:
+    w = re.sub(r"^\s*(naa\.|0x)", "", w, flags=re.I)  # "naa." holds hex letters: drop it first
     return re.sub(r"[^0-9a-fA-F]", "", w).lower()
 
 
@@ -714,12 +715,16 @@ def get_alerts(array_id: str = "", severity: str = "", state: str = "", since_ho
         return row
 
     with ThreadPoolExecutor(max_workers=WORKERS) as ex:
-        alerts = [r for r in ex.map(detail, [(u, i) for u, ids in found for i in ids[:fetch]]) if r]
+        reqs = [(u, i) for u, ids in found for i in ids[:fetch]]
+        alerts = [r for r in ex.map(detail, reqs) if r]
+    failed = len(reqs) - len(alerts)
     alerts.sort(key=lambda x: x["_ts"] or 0, reverse=True)
     alerts = alerts[:lim]
     for r in alerts:
         r["created_utc"] = ms_to_iso(r.pop("_ts")) if r.get("_ts") else None
     out = {"total_matching": total, "returned": len(alerts), "filters": base, "alerts": alerts}
+    if failed:
+        out["detail_failed"] = failed  # alert details that could not be read; not in `alerts`
     if total > len(alerts):
         out["note"] = f"{total} matched; showing the newest {len(alerts)}"
     if errors:
@@ -963,8 +968,9 @@ def get_performance_overview(array_id: str = "", minutes_back: int = 60, top_n: 
         row["ResponseTime_max"] = sm.get("ResponseTime", {}).get("max")
         return row
 
+    scanned = sgs[:limit_sg]
     with ThreadPoolExecutor(max_workers=WORKERS) as ex:
-        sg_rows = [r for r in ex.map(sg_row, sgs[:limit_sg]) if r]
+        sg_rows = [r for r in ex.map(sg_row, scanned) if r]
     n = max(1, min(int(top_n), 50))
     out["top_storage_groups_by_iops"] = sorted(sg_rows, key=lambda r: r.get("HostIOs") or 0, reverse=True)[:n]
     busy = [r for r in sg_rows if (r.get("HostIOs") or 0) >= 50]
@@ -974,6 +980,9 @@ def get_performance_overview(array_id: str = "", minutes_back: int = 60, top_n: 
                     "Response times are in ms; IO rates per second; MB/s for HostMBs."]
     if len(sgs) > limit_sg:
         out["notes"].append(f"Only {limit_sg} of {len(sgs)} storage groups were scanned.")
+    if len(sg_rows) < len(scanned):
+        out["notes"].append(f"{len(scanned) - len(sg_rows)} of {len(scanned)} storage groups could not be read "
+                            "(query failed or timed out) and are missing from these lists.")
 
     fe_m = _pick(a, "FEDirector", ["PercentBusy", "HostIOs", "HostMBs"])
 
@@ -989,6 +998,9 @@ def get_performance_overview(array_id: str = "", minutes_back: int = 60, top_n: 
     dirs = [k.get("directorId") for k in first_list(u.perf_post("FEDirector", "keys", {"symmetrixId": a}))]
     with ThreadPoolExecutor(max_workers=WORKERS) as ex:
         fe = [r for r in ex.map(fe_row, dirs) if r]
+    if len(fe) < len(dirs):
+        out["notes"].append(f"{len(dirs) - len(fe)} of {len(dirs)} front-end directors could not be read "
+                            "(query failed or timed out) and are missing from fe_directors.")
     out["fe_directors"] = sorted(fe, key=lambda r: r.get("PercentBusy") or 0, reverse=True)
     return out
 

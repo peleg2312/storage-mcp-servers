@@ -45,7 +45,8 @@ claude                              # then type:  /brain-setup
 adds the safety, docs-hints, docs-leads and session-start hooks, allows your MCP servers' tools without a prompt each time, extracts the
 documentation library from `../library/` into `~/.claude/brain/library/` and registers it as the MCP
 server **docs-local** (`mcp_stdio.py`, standard library only: no pip, no container). Re-run it after
-every `git pull`; your `environment.md`, `tool-map.md`, `notes.md`, `notes/` and `allowed-tools.txt` are never overwritten; theme, status line, spinner, tips and bell are always reset to the brain's (settings.json is backed up first).
+every `git pull`; your `environment.md`, `tool-map.md`, `notes.md`, `notes/` and `allowed-tools.txt` are never overwritten (multi-user: root's list in `/opt/paas/hooks` is carried over by `install-shared.sh`, and each user's own `~/.claude/hooks/allowed-tools.txt` is read too); theme, status line, spinner, tips and bell are always reset to the brain's (settings.json is backed up first).
+**Multi-user VM** (as root): `sh install-vm.sh`, then `sh brain/multiuser/install-shared.sh`, then `sh brain/multiuser/install-gate.sh`, then `install-shared.sh` again (the marketplace for other VMs starts once the gate made the certificate). Update: `git pull && sh install-vm.sh && sh brain/multiuser/install-shared.sh`. The key in `/etc/paas/api-key` is readable by every user in `paas-users` by design (managed settings deny Claude's Read tool there); a real boundary would need a local proxy that holds the key.
 `sh install.sh --no-library` skips the library when docs-search runs on the cluster instead.
 `sh install-vm.sh --project <dir>` (or `sh brain/install.sh --project <dir>`) installs the brain **only inside
 that folder**: `<dir>/CLAUDE.md` (imports `@.claude/brain/...`), `<dir>/.claude/{skills,agents,hooks,brain,banner,

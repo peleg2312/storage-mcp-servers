@@ -57,7 +57,7 @@ _NOISE = re.compile(
     r"|this article is not tied to any specific product\.?|not all product versions are identified in this article\.?"
     r"|check out other resources|identify your product|find answers to your questions from other dell users"
     r"|visit community|support services|check if your device is covered by support services\.?|check support status"
-    r"|table of contents|detailed article|search articles|print|email|sign in|back to top"
+    r"|table of contents|detailed article|search articles|print|email|sign in|back to top|cookie settings|cancel|search"
     r"|some article numbers may have changed.*|(print\s+)?(email\s+)?english\s+česky.*"
     r"|[-*] \[[ x]\] i have .*|thank you for your feedback!?|download pdf|dell\.com|contact us|share|home|>"
     r"|rate this content|was this (article|page|content) helpful\??|send us feedback.*|yes|no"
@@ -87,7 +87,7 @@ def _clean(body):
     return "\n".join(lines)
 
 
-def _split(sections, title):
+def _split(sections, title, merge=False):
     """Split long sections into <= MAX_CHUNK pieces on paragraph boundaries (noise lines dropped)."""
     out, seen = [], set()
     for heading, body in sections:
@@ -100,6 +100,9 @@ def _split(sections, title):
         body = re.sub(r"\n{3,}", "\n\n", body).strip()
         if not body:
             continue
+        if merge and len(body) < 40 and out and len(out[-1][1]) + len(body) + len(heading or "") + 4 <= MAX_CHUNK:
+            out[-1] = (out[-1][0], f"{out[-1][1]}\n\n{heading or title}: {body}")    # field name / enum value: keep it
+            continue                                                                  # searchable, not a title-only chunk
         paras, cur = body.split("\n\n"), ""
         for p in paras:
             if len(cur) + len(p) > MAX_CHUNK and cur:
@@ -169,7 +172,7 @@ def parse_adoc(text, fallback):
         buf.append(_adoc_inline(s))
     sections.append((heading, "\n".join(buf)))
     title = title or fallback
-    return title, _split([(h or title, b) for h, b in sections], title)
+    return title, _split([(h or title, b) for h, b in sections], title, merge=True)
 
 
 def parse_md(text, fallback):
@@ -195,7 +198,7 @@ def parse_md(text, fallback):
         buf.append(line)
     sections.append((heading, "\n".join(buf)))
     title = title or fallback
-    return title, _split([(h or title, b) for h, b in sections], title)
+    return title, _split([(h or title, b) for h, b in sections], title, merge=True)
 
 
 class _HTMLText(HTMLParser):

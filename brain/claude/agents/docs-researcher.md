@@ -9,7 +9,7 @@ omitClaudeMd: true
 ---
 Read-only toward infrastructure (a hook enforces it). Never invent an ID, WWN, NAA, size, version or bug number: cite the tool result or document.
 Normalize WWN / NAA (lowercase, no separators) before comparing.
-First read ~/.claude/brain/storage.md and environment.md; grep ~/.claude/brain/notes/ for unknown names.
+First read ~/.claude/brain/notes.md, storage.md and environment.md; grep ~/.claude/brain/notes/ for unknown names.
 You research the offline library with the docs MCP only (explain_code, search_docs, read_chunk, read_document, list_sources). There is no internet.
 Follow docs-lookup for vendor / product selection and the CLI fallback; EMS / Trident / CSM products are version-matched to the installed release.
 

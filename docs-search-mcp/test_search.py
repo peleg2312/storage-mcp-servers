@@ -57,9 +57,11 @@ json.dump({"h8115.pdf": {"url": "https://example.dell/h8115.pdf", "title": "VAAI
 w("netapp/ontap-ems-9161/callhome-hm-events.adoc", "= callhome.hm events\n\n== callhome.hm.alert.critical\n*Severity*:: ALERT\nSystem health monitor alert.\n")
 w("netapp/ontap-ems-9181/callhome-hm-events.adoc", "= callhome.hm events\n\n== callhome.hm.alert.critical\n*Severity*:: ALERT\nSystem health monitor alert.\n")
 
+w("netapp/ontap-ems/quokka.md", "# Quokka events\n\nThe quokkaword event fires on a shelf fault.\n")
+
 import docs_index  # noqa: E402
 r = docs_index.build(docs, db, log=lambda *_: None)
-assert r["documents"] == 7 and r["errors"] == 0 and r["deduped"] == 2, r   # redirect stub skipped, 2 copies folded
+assert r["documents"] == 8 and r["errors"] == 0 and r["deduped"] == 2, r   # redirect stub skipped, 2 copies folded
 import sqlite3  # noqa: E402
 _c = sqlite3.connect(db)
 assert _c.execute("SELECT count(*) FROM docs WHERE dup_of IS NOT NULL").fetchone()[0] == 2
@@ -74,7 +76,7 @@ async def main():
         return (await server.mcp.call_tool(n, a)).structured_content
 
     src = await call("list_sources")
-    assert src["libraries"][0]["documents"] == 7 and src["libraries"][0]["library"] == "main", src
+    assert src["libraries"][0]["documents"] == 8 and src["libraries"][0]["library"] == "main", src
     assert src["libraries"][0]["by_vendor"]["netapp"].endswith("ontap 1") and len(json.dumps(src)) < 4000, src
     assert (await call("list_sources", vendor="runbooks"))["libraries"][0]["by_vendor"] == {"runbooks": "team 1"}
     s = await call("search_docs", query="lun mapping create igroup")
@@ -94,6 +96,9 @@ async def main():
         sorted(s["results"][0]["also_in"]) == ["netapp/ontap-ems-9161", "netapp/ontap-ems-9171"], s["results"][:1]
     assert s["results"][0]["note"] == "for ontap-ems-9181; yours: ontap-ems-9161", s["results"][0]   # environment.md version differs
     assert len([r for r in s["results"] if "callhome" in (r.get("path") or r.get("url") or "")]) == 1, "folded copies must not appear twice"
+    s = await call("search_docs", query="quokkaword should")   # filler words are not required for "all words"
+    assert s["results"] and "partial" not in s and "unmatched" not in s, s
+    assert s["results"][0]["note"].startswith("unversioned copy") and "ontap-ems-9161" in s["results"][0]["note"], s["results"][0]
     rd = await call("read_document", path="netapp/ontap-ems-9161/callhome-hm-events.adoc")  # alias path -> canonical
     assert rd["path"] == "netapp/ontap-ems-9181/callhome-hm-events.adoc" and rd["sections"], rd
     s = await call("search_docs", query="callhome.hm.alarm")  # near miss -> partial match, still found
@@ -204,7 +209,7 @@ for _n in ("_index.md", "_PARTNER_DOWN__TAKEOVER_IMPOSSIBLE_1a2b.html", ".hidden
     open(os.path.join(_d, _n), "w").write("x")
 assert sorted(os.path.basename(p) for p in docs_index.iter_files(_d)) == ["_PARTNER_DOWN__TAKEOVER_IMPOSSIBLE_1a2b.html", "_index.md"]
 print("underscore files OK")
-t, secs = docs_index.parse_md("# Features { #features }\n\nx\n\n## Sub part { #sub-part }\n\ny\n", "f")
+t, secs = docs_index.parse_md("# Features { #features }\n\nThe features text is long enough to stay alone.\n\n## Sub part { #sub-part }\n\nThe sub part text is long enough to stay alone as well.\n", "f")
 assert t == "Features" and [h for h, _ in secs] == ["Features", "Sub part"], (t, secs)                  # mkdocs anchors dropped
 print("mkdocs anchors OK")
 for h in ("Affected Products", "Article Properties", "Table of Contents", "Contents"):      # boilerplate sections
@@ -220,6 +225,11 @@ assert "path" in search_cli.for_agent({"results": [{"title": "t", "snippet": "s"
 t, ch = docs_index.parse_md("# T\n\nUse <dfn title='x'><strong>DI</strong></dfn>.\n\n```html\n<div>k</div>\n```\n", "f")
 assert "Use DI." in ch[0][1] and "<div>k</div>" in ch[0][1], ch                               # inline HTML out, code kept
 print("agent answer + inline html OK")
+t, ch = docs_index.parse_md("# KB\n\nCookie Settings\n\nsearch\n\ncancel\n\n## Symptom\n\nThe host loses all paths to the datastore after a reboot.\n", "f")
+assert all("Cookie Settings" not in b and b.strip() != "search" for _, b in ch) and len(ch) == 1, ch   # banner lines are noise
+t, ch = docs_index.parse_md("# Model\n\nThe long description of the model goes on here for a while.\n\n## additionalInformation_text\n\nstring\n", "f")
+assert len(ch) == 1 and "additionalInformation_text: string" in ch[0][1], ch                  # one-word field merged, not a chunk
+print("junk chunks OK")
 # --add (brain add-docs): the user's inbox goes INTO the library db; library documents are never removed or re-ranked
 _lib, _inbox, _adb = (os.path.join(root, n) for n in ("addlib", "inbox", "add.db"))
 for base, rel, text in ((_lib, "netapp/ontap/vol.md", "# Volumes\n\nvolume create makes a flexvol.\n"),

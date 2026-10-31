@@ -11,7 +11,7 @@ Input: one or more NAAs / devices / datastores. Run `identify-lun` first for eac
    recent use; list vCenters covered and the snapshot time)
 2. No VM files on the datastore (if it is a datastore): VMs (kuparashit `query` vms where datastore = it),
    templates, ISOs, logs (Aria; not in kuparashit)
-3. No I/O for ≥ 30 days on the array (PowerMax perf on device/SG, Harvest for ONTAP LUN)
+3. No I/O for ≥ 30 days on the array (PowerMax perf on device/SG at hourly/daily granularity; Harvest for ONTAP LUN; PowerFlex has no history here: NOT CHECKED, ask him for the PowerFlex Manager / Aria IOPS graph)
 4. Not mapped to non-ESX hosts; not a Trident / CSM (OpenShift) volume
 5. No replication: SRDF / Metro / SnapVX (PowerMax), SnapMirror / active sync (ONTAP), PowerFlex RCG (`get_replication`) and snapshot policies (`list_snapshot_policies`, `get_volume`); no snapshots
    or clones depending on it

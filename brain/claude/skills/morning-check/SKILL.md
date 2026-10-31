@@ -10,7 +10,7 @@ that is not OK. Window: last 24 h (or since the last check).
 
 | Layer | What |
 |---|---|
-| PowerMax | `get_array_health`, `list_srps`, `get_alerts` since_hours=24, `get_replication()` (RDF group state) |
+| PowerMax | `list_arrays`, then per array: `get_array_health(array_id)`, `list_srps(array_id)`, `get_replication(array_id=...)` (RDF group state); `get_alerts` since_hours=24 once |
 | ONTAP | cluster / node health, EMS errors and alerts, aggregates / volumes over threshold, SnapMirror lag |
 | Harvest | anomalies: latency peaks on top LUNs / volumes overnight |
 | PowerFlex | `get_health`, `get_alerts`, `get_events` since_hours=24, `get_replication()` |

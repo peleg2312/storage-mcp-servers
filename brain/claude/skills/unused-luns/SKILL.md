@@ -13,7 +13,8 @@ Work on files: `~/storage-reports/<date>-unused-luns/`. Compare in python, never
 ## 1. Collect (save each to CSV/JSON)
 1. **Arrays**: every volume/LUN with: array, device ID or LUN path, wwn/NAA (build `naa.` + wwn for
    PowerMax; for ONTAP `naa.600a0980` + hex(serial)), size, SG / volume, masking view / igroup, host
-   names + initiators, replication role, created date if available.
+   names + initiators, replication role, created date if available. PowerFlex: `list_volumes` (and
+   `unmapped_only=True`), match by kuparashit `eui.` NAA; skip Dell CSM `k8s-` volumes.
 2. **VMware (kuparashit)**: `luns(category="unused")` per vCenter (NAA seen by hosts, no datastore, no
    RDM) and `luns(issues_only=True)` (stale RDMs, conflicts); `overview` for the vCenters covered and the
    snapshot time. Unused here = unused **by VMware only**: the array side decides.

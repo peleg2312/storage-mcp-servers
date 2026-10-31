@@ -237,6 +237,9 @@ async def main():
     assert len(SENT) == n_before, "a blocked request reached the network"
     bad = [(m, p) for m, p, _ in SENT if m not in ("GET",) and not re.search(r"/performance/\w+/(keys|metrics)$", p)]
     assert not bad, bad
+    w = "60000970000197900123533030304142"
+    assert server.norm_wwn("naa." + w.upper()) == server.norm_wwn("0x" + w) == w, server.norm_wwn("naa." + w)
+    assert server.norm_wwn("50:00:09:73:AA:bb:cc:dd") == "50000973aabbccdd"
     print("methods sent:", sorted({m for m, _, _ in SENT}), "requests:", len(SENT))
     print("ALL TESTS PASSED")
 

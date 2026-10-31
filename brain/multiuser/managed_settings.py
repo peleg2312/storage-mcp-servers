@@ -27,6 +27,9 @@ subprocess.run([sys.executable, os.path.join(here, "..", "merge_settings.py"), t
                stdout=subprocess.DEVNULL)
 s = json.load(open(tmp))
 s["apiKeyHelper"] = f"{paas}/bin/paas-api-key"
+deny = s.setdefault("permissions", {}).setdefault("deny", [])
+if "Read(/etc/paas/**)" not in deny:                         # the shared API key lives there
+    deny.append("Read(/etc/paas/**)")
 with open(tmp, "w") as f:
     json.dump(s, f, indent=2)
     f.flush()

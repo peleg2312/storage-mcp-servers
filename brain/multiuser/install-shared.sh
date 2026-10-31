@@ -37,12 +37,14 @@ share brain/tool-map.md "$P/brain/tool-map.md" file
 swap() {   # swap <source dir> <name>: copy beside, then rename in, so the read-only guard is never missing mid-update
   rm -rf "$P/$2.new" "$P/$2.old"; cp -R "$1" "$P/$2.new" 2>/dev/null || mkdir -p "$P/$2.new"
   [ ! -e "$P/$2" ] || mv "$P/$2" "$P/$2.old"
+  [ "$2" != hooks ] || [ ! -f "$P/hooks.old/allowed-tools.txt" ] || [ -f "$P/hooks.new/allowed-tools.txt" ] || cp "$P/hooks.old/allowed-tools.txt" "$P/hooks.new/"   # root's allow-list survives
   mv "$P/$2.new" "$P/$2"; rm -rf "$P/$2.old"
 }
 for d in tools hooks banner themes; do swap "$BRAIN/claude/$d" "$d"; done
 swap "$BRAIN/plugins" plugins                                   # Claude Code plugins, offered in the marketplace
 DEVTOOLS_VENV=$P/devtools-venv sh "$BRAIN/devtools/install-devtools.sh" || echo "devtools: skipped (see above)"
-chmod -R a+rX "$P/library" "$P/brain" "$P/tools" "$P/hooks" "$P/banner" "$P/themes" "$P/plugins" "$P/devtools-venv"
+chmod -R a+rX "$P/library" "$P/brain" "$P/tools" "$P/hooks" "$P/banner" "$P/themes" "$P/plugins"
+[ ! -d "$P/devtools-venv" ] || chmod -R a+rX "$P/devtools-venv"   # optional: the venv may have been skipped
 chmod 644 "$P/brain/environment.md" "$P/brain/tool-map.md"   # root edits them; everyone reads
 ln -sfn "$P/tools/paas-open" /usr/local/bin/paas-open       # shows a page in the web UI's Browser tab
 ln -sfn "$P/plugins/chrome-devtools/bin/run.sh" /usr/local/bin/paas-chrome   # Chrome DevTools plugin: the Windows line, connected PCs
@@ -58,7 +60,7 @@ chgrp paas-users "$P/marketplace"; chmod 750 "$P/marketplace"
 
 # the single-user UI service (root's, on :3001) gives way to the gate and the per-user services
 systemctl --user disable --now paas-ui >/dev/null 2>&1 || true
-pkill -u root -f "paas-ui/app/dist-server/server/index.js" 2>/dev/null || true
+pkill -u root -f 'node dist-server/server/index.js' 2>/dev/null || true
 # the web UI files, the per-user plugins, the per-user service and the user tool
 UI_DIR="$P/ui" UI_SHARED=1 sh "$BRAIN/ui/install-ui.sh"
 rm -rf "$P/ui-plugins"; cp -R "$BRAIN/ui/plugins" "$P/ui-plugins"; chmod -R a+rX "$P/ui-plugins"
