@@ -51,7 +51,8 @@ first does not fully answer, or when another version or a KB may change the answ
 sections. Never answer from snippets. Cite title (PDF titled "pdf" / "View": the file name from the url, with
 the page) + url + the version it applies to; another version's document is a hint ("documented for 9.2;
 confirm for yours"). Quote verbatim when wording matters (states, thresholds, limits). Two versions disagree:
-show both, prefer the installed one.
+show both, prefer the installed one. A hit's `note` ("for trident-2410; yours: trident-2510") and `stale: true`
+(fetched over 18 months ago, `fetched` = YYYY-MM) go into the answer: say the document is for another version or old.
 
 ## Special cases
 - **Known bug / fixed in which version** - report affected versions, fixed version, workaround, and whether

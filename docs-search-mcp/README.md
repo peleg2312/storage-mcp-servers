@@ -108,7 +108,7 @@ Tip: save a vendor KB as PDF/HTML ("Print → Save as PDF") whenever you open on
 
 | Tool | Purpose |
 |---|---|
-| `search_docs(query, queries, vendor, product, limit, read_top)` | BM25 search over all libraries; all words first, any-word fallback; snippet with matches marked « ». Lean reply: `matched` only on partial hits, `partial: true` when no section holds every word, `library` only with two libraries |
+| `search_docs(query, queries, vendor, product, limit, read_top)` | BM25 search over all libraries; all words first, any-word fallback; snippet with matches marked « ». Lean reply: `matched` only on partial hits, `partial: true` when no section holds every word, `library` only with two libraries; every hit says `fetched` (YYYY-MM), `stale: true` after 18 months, and `note` when the document is for another version of a product than the one in `~/.claude/brain/environment.md` (backticked docs product names under Versions) |
 | `explain_code(code)` | exact lookup of an ONTAP EMS event, PowerMax `SYMAPI_*` alert, PowerFlex `SIO*` code, `CONTAP-*` bug, `DSA-*` advisory or KB number: severity, description, corrective action, url, and the KB's Symptoms / Cause / Resolution; `documented: false` when absent |
 | `read_chunk(chunk_id, context)` | the hit in full plus neighbouring sections |
 | `read_document(path or url, start, max_sections)` | read a whole document in order (PDFs page by page) |

@@ -10,6 +10,8 @@ import time
 root = tempfile.mkdtemp()
 docs, db = os.path.join(root, "docs"), os.path.join(root, "index", "docs.db")
 os.environ["INDEX_DB"] = db
+os.environ["DOCS_ENV_FILE"] = os.path.join(root, "environment.md")
+open(os.environ["DOCS_ENV_FILE"], "w").write("# My environment\n\n## Versions\n- ONTAP 9.16.1 → `ontap-ems-9161`\n\n## Fabrics\n`trident-2510`\n")
 here = os.path.dirname(os.path.abspath(__file__))
 
 
@@ -47,6 +49,7 @@ w("dell/powerflex/kb-eui.html", "<html><head><title>PowerFlex EUI identifier</ti
   "from scli --query_all_volumes.</p><script>var a=1;</script></body></html>")
 os.makedirs(os.path.join(docs, "dell", "powermax"), exist_ok=True)
 shutil.copy(os.path.join(here, "tests", "sample.pdf"), os.path.join(docs, "dell", "powermax", "h8115.pdf"))
+os.utime(os.path.join(docs, "dell", "powermax", "h8115.pdf"), (time.time() - 600 * 86400,) * 2)   # fetched 20 months ago: stale
 json.dump({"h8115.pdf": {"url": "https://example.dell/h8115.pdf", "title": "VAAI with PowerMax"}},
           open(os.path.join(docs, "dell", "powermax", "manifest.json"), "w"))
 
@@ -78,15 +81,18 @@ async def main():
     top = s["results"][0]
     assert top["url"] == "https://docs.netapp.com/us-en/ontap/san-admin/map-lun.html" and top["vendor"] == "netapp", top
     assert "matched" not in top and "library" not in top and s.get("partial") is None, s   # lean reply: only partial hits say matched
+    assert top["fetched"] == time.strftime("%Y-%m", time.gmtime()) and "stale" not in top and "note" not in top, top
     s = await call("search_docs", query="naa.600a0980 serial")
     assert s["results"] and s["results"][0]["section"] == "Find a LUN by NAA", s
     s = await call("search_docs", query="XCOPY transfer size", vendor="dell")
     assert s["results"][0]["title"] == "VAAI with PowerMax" and s["results"][0]["url"] == "https://example.dell/h8115.pdf"
+    assert s["results"][0]["stale"] is True and s["results"][0]["fetched"] < time.strftime("%Y-%m", time.gmtime()), s["results"][0]
     s = await call("search_docs", query="query_all_volumes eui", product="powerflex")
     assert s["results"] and "var a" not in s["results"][0]["snippet"] and "menu" not in s["results"][0]["snippet"]
     s = await call("search_docs", query="callhome.hm.alert.critical", product="ontap-ems-9161")  # alias product filter
     assert s["results"] and s["results"][0]["product"] == "ontap-ems-9181" and \
         sorted(s["results"][0]["also_in"]) == ["netapp/ontap-ems-9161", "netapp/ontap-ems-9171"], s["results"][:1]
+    assert s["results"][0]["note"] == "for ontap-ems-9181; yours: ontap-ems-9161", s["results"][0]   # environment.md version differs
     assert len([r for r in s["results"] if "callhome" in (r.get("path") or r.get("url") or "")]) == 1, "folded copies must not appear twice"
     rd = await call("read_document", path="netapp/ontap-ems-9161/callhome-hm-events.adoc")  # alias path -> canonical
     assert rd["path"] == "netapp/ontap-ems-9181/callhome-hm-events.adoc" and rd["sections"], rd

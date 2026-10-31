@@ -25,6 +25,7 @@ import math
 import re
 import sqlite3
 import sys
+import time
 from pathlib import Path
 
 
@@ -112,6 +113,28 @@ COVER_EXP = 2.0                 # how hard a missing query word costs
 POOL = (100, 150)               # candidates: all-words chunks, any-word chunks
 TYPE_W = 1.3     # boost of a page whose type matches the question type
 TITLE_W = 1.5    # weight of the share of query words in the title / section heading
+STALE_DAYS = 540         # a document fetched more than 18 months ago is flagged `stale` (an air-gapped library ages silently)
+ENV_FILE = os.environ.get("DOCS_ENV_FILE") or os.path.expanduser("~/.claude/brain/environment.md")
+FAMILY = re.compile(r"^(.+?)-(\d[\d.\-]*)$")      # product folder -> family, version: trident-2510, ontap-ems-9151, vsphere-8
+
+
+@functools.lru_cache(maxsize=1)
+def my_versions():
+    """{family: [products]} the user runs, from the backticked docs product names in environment.md's Versions
+    section (`ontap-ems-9151`, `trident-2510`); empty without the file. A hit from another version of such a
+    family carries a `note` (ranking is unchanged: the question's own version is what boosts a hit)."""
+    try:
+        text = open(ENV_FILE, encoding="utf-8").read()
+    except OSError:
+        return {}
+    sec = re.search(r"^## Versions.*?(?=^## |\Z)", text, re.M | re.S)
+    out = {}
+    for name in re.findall(r"`([a-z][\w.\-]*-\d[\d.\-]*)`", sec.group(0) if sec else ""):
+        m = FAMILY.match(name)
+        if m and name not in out.setdefault(m.group(1), []):
+            out[m.group(1)].append(name)
+    return out
+
 PROX_W = 0.3     # bonus when the matched words sit close together in the section
 STOP = set("a an the of for to in on with and or is are was were how what why when where which does do did "
            "my i it its from by at after be can could will this that there into vs via about please".split())
@@ -234,7 +257,7 @@ def _search_docs(c, q, vendor="", product="", limit=8):
         raise ValueError("empty query")
     phrase = lambda s: '"' + s + '"'  # noqa: E731
     sql = ("SELECT c.id AS chunk_id, d.id AS doc_id, d.vendor, d.product, d.title, chunks_fts.heading AS section, "
-           "d.url, d.path, "
+           "d.url, d.path, d.mtime, "
            f"bm25(chunks_fts, {W_TITLE}, {W_SECTION}, 1.0) AS score, chunks_fts.title AS ctx, chunks_fts.text AS body "
            "FROM chunks_fts JOIN chunks c ON c.id = chunks_fts.rowid JOIN docs d ON d.id = c.doc_id "
            "WHERE chunks_fts MATCH ?")
@@ -337,9 +360,17 @@ def _search_docs(c, q, vendor="", product="", limit=8):
         ids = [r["chunk_id"] for r in rows]
         snip = dict(c.execute("SELECT rowid, snippet(chunks_fts, 2, '«', '»', ' … ', 40) FROM chunks_fts WHERE chunks_fts "
                               f"MATCH ? AND rowid IN ({','.join('?' * len(ids))})", [any_match(groups)] + ids))
+    now, mine = time.time(), my_versions()
     for r in rows:
         r.pop("doc_id", None)
         r["snippet"] = snip[r["chunk_id"]]
+        mt = r.pop("mtime") or 0
+        r["fetched"] = time.strftime("%Y-%m", time.gmtime(mt))
+        if now - mt > STALE_DAYS * 86400:
+            r["stale"] = True
+        fam = FAMILY.match(r["product"])
+        if fam and fam.group(1) in mine and r["product"] not in mine[fam.group(1)]:
+            r["note"] = f"for {r['product']}; yours: {', '.join(mine[fam.group(1)])}"
     facet = {}
     for _, _, r in scored[:60]:                         # where the strong candidates live: the next product filter
         facet[r["product"]] = facet.get(r["product"], 0) + 1
