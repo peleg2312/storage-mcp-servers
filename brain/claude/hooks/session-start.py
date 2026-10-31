@@ -57,19 +57,36 @@ def shared_line():
 
 def bare_plugin_rules():
     """The hooks run from a team plugin (hooks.json beside this file) and nothing put the rules in place (no
-    ~/.claude/brain/persona.md: a plain `claude plugin install`): the plugin's own persona and storage rules are the context,
-    so the brain works from the plugin alone. Installed brains (persona.md present) pay nothing here."""
+    ~/.claude/brain/persona.md: a plain `claude plugin install`). First the plugin sets the team up itself (bin/paas-team
+    bootstrap: a clone of the team repository as the knowledge folder, links, rules, one import line in CLAUDE.md), so the
+    standard plugin install is the whole install and notes flow back to the team; unreachable repository: the plugin's own
+    persona and rules are printed as context. Installed brains (persona.md present) pay nothing here."""
     here = os.path.dirname(os.path.abspath(__file__))
     b = os.path.join(os.path.dirname(here), "brain")
     if os.path.exists(os.path.join(USER_HOME, "brain", "persona.md")) or not os.path.exists(os.path.join(here, "hooks.json")) \
             or not os.path.isdir(b):
         return ""
+    done = ""
+    try:                                   # set the team up from the plugin: knowledge clone (the team repository, from the
+        meta = json.loads(read(os.path.join(os.path.dirname(here), "team.json")) or "{}")   # remote recorded by publish.py,
+        market = os.path.join(USER_HOME, "plugins", "marketplaces", "paas-brain-" + meta.get("name", ""))  # else the local clone)
+        src = meta.get("remote") or (market if os.path.isdir(os.path.join(market, ".git")) else "")
+        if meta.get("name") and src and not os.path.exists(os.path.join(USER_HOME, "brain", "team")):
+            r = subprocess.run([sys.executable, os.path.join(os.path.dirname(here), "bin", "paas-team"), "bootstrap", meta["name"], src],
+                               stdin=subprocess.DEVNULL, capture_output=True, text=True, timeout=8)
+            if r.returncode == 0:
+                done = r.stdout.strip() + "\n"
+    except Exception:
+        pass
     text = read(os.path.join(b, "CLAUDE.md"))
     text = re.sub(r"^@~/\.claude/brain/persona\.md\s*$", read(os.path.join(b, "persona.md")).strip(), text, flags=re.M)
     text = re.sub(r"^@\S+\s*$\n?", "", text, flags=re.M)      # notes.md and the like do not exist yet
     rules = re.sub(r"^@\S+\s*$\n?", "", read(os.path.join(b, "storage.md")), flags=re.M)
-    return ("Plugin-only install (no ~/.claude/brain): these are the brain's rules for this session.\n" + text.strip()
-            + "\n\n" + rules.strip() + "\n(For notes, environment and the docs library run install-team.sh from the team "
+    if done:
+        return (done + "First session: these are the brain's rules (from the next session they come from ~/.claude/CLAUDE.md).\n"
+                + text.strip() + "\n\n" + rules.strip() + "\n(No docs library yet: install-laptop.sh of storage-mcp-servers adds it.)")
+    return ("Plugin-only install (no ~/.claude/brain, team repository not reachable): these are the brain's rules for this session.\n"
+            + text.strip() + "\n\n" + rules.strip() + "\n(For notes, environment and the docs library run install-team.sh from the team "
             "repository, or install-laptop.sh.)")
 
 

@@ -120,6 +120,14 @@ def publish(team, dest, remote=None, hooks=True, commit=True):
                  "plugin": "paas-brain-" + team})
     if remote:
         meta["remote"] = remote
+    if meta.get("remote"):                                   # into the plugin too: its session-start hook clones from it
+        pj = os.path.join(plug, "team.json")
+        with open(pj) as f:
+            pt = json.load(f)
+        pt["remote"] = meta["remote"]
+        with open(pj, "w") as f:
+            json.dump(pt, f, indent=2, sort_keys=True)
+            f.write("\n")
     with open(meta_path, "w") as f:
         json.dump(meta, f, indent=2, sort_keys=True)
         f.write("\n")

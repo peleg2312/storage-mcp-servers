@@ -40,8 +40,18 @@ One git repository per team, in GitLab: `python3 brain/teams/publish.py nas --to
 captures and incidents into `knowledge/`. The repository also carries `install-team.sh` and `bin/paas-team`, so a laptop
 needs nothing else: `git clone <url> brain-nas && sh brain-nas/install-team.sh` gives the plugin, the rules, the knowledge
 folder synced with the repository and `paas-team`; the docs library is the one thing it lacks (`install-laptop.sh` of this
-repository adds it). A plain `claude plugin marketplace add <url> && claude plugin install paas-brain-nas@paas-brain-nas`
-works too: the plugin's session-start hook then prints the persona and rules itself, since nothing else put them in place.
+repository adds it). The standard Claude Code way is the whole install too:
+
+```sh
+claude plugin marketplace add <url> && claude plugin install paas-brain-nas@paas-brain-nas
+```
+At the first session the plugin's session-start hook sets the team up itself (`bin/paas-team bootstrap`): it clones the
+team repository recorded in the plugin's `team.json` as `~/.claude/brain/teams/nas`, links the memory files into it, writes
+persona.md and storage.md, puts the core rules in `~/.claude/brain/main.md` with one import line in your `~/.claude/CLAUDE.md`,
+and copies `paas-team` to `~/.claude/tools`. From then on every note is committed and pushed to the team repository like on
+the VM; `git clone` is not needed. When the repository is unreachable, the hook prints the persona and rules as context
+instead and tries again next session. Plugins stay read-only content in Claude Code's cache; the hook is what lets this one
+contribute.
 
 ## Everything is pushed, by every path
 

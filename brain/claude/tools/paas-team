@@ -339,7 +339,7 @@ def apply_plugin(team, tdir):
         claude("uninstall", "paas-brain@paas-brain")
 
 
-def apply(team, say=True):
+def apply(team, say=True, skills=True):
     tdir = team_dir(team)
     plug = plugin_dir(tdir)
     if not plug:
@@ -359,7 +359,9 @@ def apply(team, say=True):
     copy_rule(os.path.join(plug, "brain", "storage.md"), os.path.join(BRAIN, "storage.md"))
     if not os.path.exists(os.path.join(BRAIN, "coding.md")):
         shutil.copy(os.path.join(plug, "brain", "coding.md"), os.path.join(BRAIN, "coding.md"))
-    if mode() == "plugin":
+    if not skills:
+        pass                                                  # bootstrap from inside the plugin: it already provides them
+    elif mode() == "plugin":
         apply_plugin(team, tdir)
     else:
         apply_files(plug, t)
@@ -386,6 +388,27 @@ def apply(team, say=True):
 def use(team, source=None):
     add(team, source)
     apply(team)
+
+
+def bootstrap(team, source):
+    """Called by the plugin's own session-start hook on a bare `claude plugin install`: the team's knowledge clone, the
+    links, persona / rules, the core rules as ~/.claude/brain/main.md with one import line in the person's CLAUDE.md,
+    and this tool in ~/.claude/tools. No `claude plugin` command (the plugin is installed and enabled already)."""
+    add(team, source, quiet=True)
+    write(os.path.join(BRAIN, "team-mode"), "plugin\n")
+    t = apply(team, say=False, skills=False)
+    plug = plugin_dir(team_dir(team))
+    shutil.copy(os.path.join(plug, "brain", "CLAUDE.md"), os.path.join(BRAIN, "main.md"))
+    md = os.path.join(HOME, "CLAUDE.md")
+    if "@~/.claude/brain/main.md" not in read(md).split():
+        with open(md, "a", encoding="utf-8") as f:
+            f.write("\n@~/.claude/brain/main.md\n")
+    tools = os.path.join(HOME, "tools")
+    os.makedirs(tools, exist_ok=True)
+    shutil.copy(os.path.abspath(__file__), os.path.join(tools, "paas-team"))
+    os.chmod(os.path.join(tools, "paas-team"), 0o755)
+    print(f"team {team} ({t.get('title', team)}) set up from the plugin: knowledge in {os.path.join(team_dir(team), 'knowledge')}, "
+          f"rules imported from ~/.claude/brain/main.md; tool: ~/.claude/tools/paas-team")
 
 
 def refresh():
@@ -535,6 +558,8 @@ def main(a):
         off()
     elif cmd == "use" and len(a) >= 2:
         use(a[1], a[2] if len(a) > 2 else None)
+    elif cmd == "bootstrap" and len(a) >= 3:
+        bootstrap(a[1], a[2])
     elif cmd == "export":
         export(a[1] if len(a) > 1 else None, a[2] if len(a) > 2 else None)
     elif cmd == "refresh":

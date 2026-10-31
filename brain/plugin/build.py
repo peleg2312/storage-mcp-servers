@@ -130,6 +130,9 @@ def build(out, team_name="san", hooks=True):
     write(os.path.join(plug, ".claude-plugin", "plugin.json"), dump({
         "name": name, "version": version(), "description": team.get("description", "")}))
     write(os.path.join(plug, ".mcp.json"), dump({"docs-local": {"command": "${CLAUDE_PLUGIN_ROOT}/bin/docs-local"}}))
+    os.makedirs(os.path.join(plug, "bin"), exist_ok=True)
+    shutil.copy(os.path.join(SRC, "tools", "paas-team"), os.path.join(plug, "bin", "paas-team"))   # the hook's bootstrap runs it
+    os.chmod(os.path.join(plug, "bin", "paas-team"), 0o755)
     exe = os.path.join(plug, "bin", "docs-local")
     write(exe, '#!/bin/sh\nexec python3 "$HOME/.claude/brain/library/mcp_stdio.py" --db "$HOME/.claude/brain/library/docs.db"\n')
     os.chmod(exe, 0o755)

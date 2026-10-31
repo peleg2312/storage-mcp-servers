@@ -167,13 +167,30 @@ assert o.startswith(os.path.join(work, "paas-brain-san-")) and os.path.getsize(o
 import zipfile
 names = zipfile.ZipFile(o.split("\n")[0]).namelist()
 assert "paas-brain-san/install-team.sh" in names and any(n.endswith("/skills/zoning-audit/SKILL.md") for n in names), names[:5]
-# a bare plugin install (no ~/.claude/brain/persona.md): the session-start hook prints the plugin's rules itself
+# a bare plugin install (claude plugin install from the team repository, nothing else): the session-start hook sets the
+# team up from the plugin itself (knowledge clone from the recorded remote, links, rules import) and prints the rules once
 bare = tempfile.mkdtemp()
+run([sys.executable, PUBLISH, "nas", "--to", os.path.join(work, "sources", "nas"), "--remote", os.path.join(work, "sources", "nas")])
+assert json.load(open(os.path.join(src, "paas-brain-nas", "team.json")))["remote"] == os.path.join(work, "sources", "nas")
 shutil.copytree(os.path.join(src, "paas-brain-nas"), os.path.join(bare, "plug"))
-rc, o = run([sys.executable, os.path.join(bare, "plug", "hooks", "session-start.py")], e=dict(env, HOME=os.path.join(bare, "h")), inp="{}")
-assert "Plugin-only install" in o and "NAS / file-storage expert" in o and "N1." in o and "@~/" not in o, o
+assert os.access(os.path.join(bare, "plug", "bin", "paas-team"), os.X_OK)
+h = os.path.join(bare, "h")
+rc, o = run([sys.executable, os.path.join(bare, "plug", "hooks", "session-start.py")], e=dict(env, HOME=h), inp="{}")
+assert "set up from the plugin" in o and "First session" in o and "N1." in o and "@~/" not in o.split("First session")[1], o
+assert open(os.path.join(h, ".claude", "brain", "team")).read().strip() == "nas"
+assert os.path.islink(os.path.join(h, ".claude", "brain", "notes")) and os.path.isdir(os.path.join(h, ".claude", "brain", "teams", "nas", ".git"))
+assert "@~/.claude/brain/main.md" in open(os.path.join(h, ".claude", "CLAUDE.md")).read()
+assert "NAS" in open(os.path.join(h, ".claude", "brain", "persona.md")).read() and os.path.isfile(os.path.join(h, ".claude", "tools", "paas-team"))
+rc, o = run([sys.executable, os.path.join(bare, "plug", "hooks", "session-start.py")], e=dict(env, HOME=h), inp="{}")
+assert o.startswith("Storage brain: Team: nas (") and "First session" not in o, o     # second session: the import carries the rules
+# the team repository unreachable (and no VM copy to fall back to): the rules are printed, nothing half-made
+h2 = os.path.join(bare, "h2")
+os.rename(src, src + "-gone")
+rc, o = run([sys.executable, os.path.join(bare, "plug", "hooks", "session-start.py")], e=dict(env, HOME=h2, PAAS_TEAMS=os.path.join(work, "nowhere")), inp="{}")
+os.rename(src + "-gone", src)
+assert "Plugin-only install" in o and "N1." in o and not os.path.exists(os.path.join(h2, ".claude", "brain", "team")), o
 rc, o = run([sys.executable, os.path.join(bare, "plug", "hooks", "session-start.py")], inp="{}")   # a real brain: silent
-assert "Plugin-only" not in o, o
+assert "Plugin-only" not in o and "set up from" not in o, o
 print("marketplace, export and bare plugin ok")
 
 # 6. no team: the team's skills and agents leave, the person's own and marketplace ones stay, plain files again, the clone stays

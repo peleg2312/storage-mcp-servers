@@ -118,8 +118,9 @@ Try: `python3 ~/.claude/brain/library/search.py search "scsiblade.san.config.act
    (members then clone from GitLab, and fall back to the VM copy when it is unreachable). Give a person a team with
    `paas-user add dana --team nas`, `paas-user team dana nas`, or by AD group (step 3 of the next section). The Brain tab of
    the web UI has the same switch; a person may belong to one team at a time and change at will.
-4. Laptop without this repository: `git clone <team url> brain-nas && sh brain-nas/install-team.sh` (Claude Code and
-   python3 installed) installs the team's plugin, rules and knowledge folder from the team repository alone; `paas-team
+4. Laptop without this repository: `claude plugin marketplace add <team url> && claude plugin install
+   paas-brain-nas@paas-brain-nas` (the standard way; the plugin sets the team up at its first session: knowledge clone, rules,
+   `paas-team`), or `git clone <team url> brain-nas && sh brain-nas/install-team.sh` for the same without a first session; `paas-team
    export nas` on the VM writes the same as a zip into the Reports tab for a laptop without GitLab access (unzip, run
    `install-team.sh` inside). The docs library is not part of it: `install-laptop.sh` adds it.
 5. Beyond the team: everyone adds skills and agents from the Market tab (`paas-market add skill/<name>`) or writes their own
