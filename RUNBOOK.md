@@ -157,7 +157,9 @@ the notes stay per person.
    Home directories at first login: `authselect enable-feature with-mkhomedir && systemctl enable --now oddjobd`.
    Check: `id <someone>` prints the domain groups, `getent passwd <someone>` a home under /home.
 2. Who may sign in: put the AD group(s) into `/etc/paas/allowed-groups` (one per line; `paas-users` stays for local
-   accounts). The gate lower-cases the typed name and checks membership with `id -nG`; the password check is `su` through
+   accounts), then re-run `sh brain/multiuser/install-shared.sh`: it gives those groups read access (ACLs) to
+   `/opt/paas/marketplace` and `/opt/paas/teams`, which are otherwise readable by `paas-users` only because they can hold
+   MCP tokens. The gate lower-cases the typed name and checks membership with `id -nG`; the password check is `su` through
    PAM, so it works for AD and local accounts alike.
 3. Which team: `/etc/paas/team-groups`, lines `<team> <AD group>`, e.g. `san storage-san-team` and `nas storage-nas-team`.
    At a person's first sign-in the gate runs `paas-user provision <name>` (home, links to the shared brain, UI plugins,
