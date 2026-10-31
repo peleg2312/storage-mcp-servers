@@ -33,16 +33,20 @@ def get(url):
 
 def sitemap_urls(cache, delay, prefixes):
     """The site's sitemap (800,000 pages) filtered to the chosen guides; cached a week next to the sources."""
+    # the cache holds only the pages of the guides it was built for: a new line in the sections file rebuilds it
+    key = "# prefixes " + " ".join(sorted(prefixes))
     if os.path.exists(cache) and time.time() - os.path.getmtime(cache) < 7 * 86400:
-        return open(cache, encoding="utf-8").read().split("\n")
-    urls = []
+        lines = open(cache, encoding="utf-8").read().split("\n")
+        if lines and lines[0] == key:
+            return lines[1:]
+    urls = [key]
     for index in ("/sitemap.xml", "/techdocs2-sitemap.xml"):
         subs = re.findall(r"<loc>([^<]+)</loc>", get(SITE + index))
         for s in subs:
             urls += [u for u in re.findall(r"<loc>([^<]+)</loc>", get(s)) if u.startswith(prefixes)]
             time.sleep(delay)
     open(cache, "w", encoding="utf-8").write("\n".join(urls))
-    return urls
+    return urls[1:]
 
 
 def topic_html(page):
