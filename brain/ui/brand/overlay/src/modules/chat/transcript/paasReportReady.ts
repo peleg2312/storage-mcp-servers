@@ -107,7 +107,24 @@ function openReports(): boolean {
   return Boolean(tab);
 }
 
-/** Under an assistant reply: the card once the reply is complete, plus the notification and the new-dot bump. */
+/** The Download button of one file: idle, saving, saved (2.5 s), then idle again; a failure shows beside it. */
+function DownloadButton(props: { file: string; name: string; projectId: string | null }) {
+  const [state, setState] = useState<'idle' | 'saving' | 'saved'>('idle');
+  const timer = useRef<number>();
+  useEffect(() => () => window.clearTimeout(timer.current), []);
+  const onClick = async (e: { currentTarget: HTMLButtonElement }) => {
+    if (state !== 'idle') return;
+    setState('saving');
+    const ok = await downloadChatFile(props.file, props.projectId, e.currentTarget);
+    setState(ok ? 'saved' : 'idle');
+    if (ok) timer.current = window.setTimeout(() => setState('idle'), 2500);
+  };
+  const label = state === 'saving' ? 'Saving…' : state === 'saved' ? '✓ Saved' : '↓ Download';
+  return h('button', { type: 'button', className: `paas-rr-btn primary ${state}`, 'aria-label': `Download ${props.name}`, 'aria-live': 'polite',
+    onClick: (e: { currentTarget: HTMLButtonElement }) => { void onClick(e); } }, label);
+}
+
+/** Under an assistant reply: one card for the files it made (a row per file), plus the notification and the new-dot bump. */
 export function PaasReportReady(props: { content: string; isStreaming: boolean }) {
   const projectId = useMarkdownWorkspaceProjectId();
   const files = useMemo(() => (props.isStreaming ? [] : reportFiles(props.content)), [props.content, props.isStreaming]);
@@ -133,19 +150,21 @@ export function PaasReportReady(props: { content: string; isStreaming: boolean }
   }, [files]);
 
   if (!files.length) return null;
+  const folder = files[0].includes('/') ? files[0].slice(0, files[0].lastIndexOf('/')).split('/').pop() : '';
   return h('div', { className: 'paas-rr', role: 'group', 'aria-label': 'Report ready' },
+    h('div', { className: 'paas-rr-head' },
+      h('span', { className: 'paas-rr-icon' }, icon()),
+      h('span', { className: 'paas-rr-text' },
+        h('span', { className: 'paas-rr-title' }, files.length > 1 ? `Report ready · ${files.length} files` : 'Report ready'),
+        folder ? h('span', { className: 'paas-rr-sub', title: files[0] }, folder) : null),
+      h('button', { type: 'button', className: 'paas-rr-btn',
+        onClick: () => { setNote(openReports() ? '' : 'The Reports tab is not available here.'); } }, 'Open in Reports')),
     files.map((f) => {
       const name = f.split('/').pop() || f;
       return h('div', { key: f, className: 'paas-rr-row' },
-        h('span', { className: 'paas-rr-icon' }, icon()),
-        h('span', { className: 'paas-rr-text' },
-          h('span', { className: 'paas-rr-title' }, 'Report ready'),
-          h('span', { className: 'paas-rr-name', title: f }, name, sizes[f] ? ` · ${formatSize(sizes[f])}` : '')),
-        h('span', { className: 'paas-rr-actions' },
-          h('button', { type: 'button', className: 'paas-rr-btn primary', 'aria-label': `Download ${name}`,
-            onClick: (e: { currentTarget: HTMLButtonElement }) => { void downloadChatFile(f, projectId, e.currentTarget); } }, '↓ Download'),
-          h('button', { type: 'button', className: 'paas-rr-btn',
-            onClick: () => { setNote(openReports() ? '' : 'The Reports tab is not available here.'); } }, 'Open in Reports')));
+        h('span', { className: 'paas-rr-name', title: f }, name),
+        sizes[f] ? h('span', { className: 'paas-rr-size' }, formatSize(sizes[f])) : null,
+        h(DownloadButton, { file: f, name, projectId }));
     }),
     note ? h('p', { role: 'status', className: 'paas-dl-note' }, note) : null);
 }

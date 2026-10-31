@@ -24,10 +24,10 @@ function showNote(button: HTMLElement | undefined, text: string): void {
 /**
  * Saves a file named in the chat to the browser's downloads: project-relative paths through the project files route,
  * absolute or ~ paths through /api/paas/download (home folder only, signed-in). The chip (`button`) is disabled and
- * marked busy while the file is fetched; a failure shows as a short line beside it.
+ * marked busy while the file is fetched; a failure shows as a short line beside it. Resolves true when the file was saved.
  */
-export async function downloadChatFile(reference: string, projectId: string | null, button?: HTMLButtonElement): Promise<void> {
-  if (button?.disabled) return;
+export async function downloadChatFile(reference: string, projectId: string | null, button?: HTMLButtonElement): Promise<boolean> {
+  if (button?.disabled) return false;
   const ref = reference.trim().replace(/:\d+(:\d+)?$/, '');
   const name = ref.split('/').pop() || 'download';
   if (button) { button.disabled = true; button.setAttribute('aria-busy', 'true'); }
@@ -37,7 +37,7 @@ export async function downloadChatFile(reference: string, projectId: string | nu
       : await api.readFileBlob(projectId, ref);
     if (!response.ok) {
       showNote(button, failureText(name, response.status, response.statusText));
-      return;
+      return false;
     }
     const url = URL.createObjectURL(await response.blob());
     const anchor = document.createElement('a');
@@ -47,8 +47,10 @@ export async function downloadChatFile(reference: string, projectId: string | nu
     anchor.click();
     anchor.remove();
     setTimeout(() => URL.revokeObjectURL(url), 60000);
+    return true;
   } catch {
     showNote(button, `Could not download ${name}. Check the connection and try again.`);
+    return false;
   } finally {
     if (button) { button.disabled = false; button.removeAttribute('aria-busy'); }
   }
