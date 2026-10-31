@@ -146,7 +146,7 @@ if [ -n "$TEAM" ]; then
   elif [ -d "$USER_DST/brain/teams/$TEAM" ]; then          # added earlier from this clone: this clone's plugin replaces the old one
     rm -rf "$USER_DST/brain/teams/$TEAM/paas-brain-$TEAM"; cp -R "$USER_DST/brain/team-sources/$TEAM/paas-brain-$TEAM" "$USER_DST/brain/teams/$TEAM/"
     cp "$USER_DST/brain/team-sources/$TEAM/.claude-plugin/marketplace.json" "$USER_DST/brain/teams/$TEAM/.claude-plugin/"
-    python3 "$DST/hooks/notes-check.py" --commit "team $TEAM: plugin updated by install.sh" || true
+    ( cd "$USER_DST/brain/teams/$TEAM" \&\& git add -A >/dev/null 2>\&1 \&\& git -c user.name=brain -c user.email=brain@localhost commit -q -m "team $TEAM: plugin updated by install.sh" >/dev/null 2>\&1 ) || true
   else
     python3 "$DST/tools/paas-team" add "$TEAM"
   fi

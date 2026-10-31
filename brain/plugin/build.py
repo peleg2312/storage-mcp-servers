@@ -128,7 +128,8 @@ def build(out, team_name="san", hooks=True):
         "version": version(), "skills": [n for n, _ in skills], "agents": [n for n, _ in agents],
         "mcp": team.get("mcp", ["docs-local"]), "hooks": hooks}))
     write(os.path.join(plug, ".claude-plugin", "plugin.json"), dump({
-        "name": name, "version": version(), "description": team.get("description", "")}))
+        "name": name, "version": version(), "description": team.get("description", ""),
+        "author": {"name": "storage team"}, "license": "Apache-2.0"}))
     write(os.path.join(plug, ".mcp.json"), dump({"mcpServers": {"docs-local": {"command": "${CLAUDE_PLUGIN_ROOT}/bin/docs-local"}}}))
     os.makedirs(os.path.join(plug, "bin"), exist_ok=True)
     shutil.copy(os.path.join(SRC, "tools", "paas-team"), os.path.join(plug, "bin", "paas-team"))   # the hook's bootstrap runs it
@@ -137,7 +138,7 @@ def build(out, team_name="san", hooks=True):
     write(exe, '#!/bin/sh\nexec python3 "$HOME/.claude/brain/library/mcp_stdio.py" --db "$HOME/.claude/brain/library/docs.db"\n')
     os.chmod(exe, 0o755)
     write(os.path.join(out, ".claude-plugin", "marketplace.json"), dump({
-        "name": name, "owner": {"name": "paas"},
+        "name": name, "owner": {"name": "paas"}, "description": team.get("title", team_name) + " brain: " + team.get("description", ""),
         "plugins": [{"name": name, "source": "./" + name, "description": team.get("title", team_name) + " brain"}]}))
     return plug
 

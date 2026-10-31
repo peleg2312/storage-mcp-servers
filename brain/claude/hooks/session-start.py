@@ -73,7 +73,7 @@ def bare_plugin_rules():
         src = meta.get("remote") or (market if os.path.isdir(os.path.join(market, ".git")) else "")
         if meta.get("name") and src and not os.path.exists(os.path.join(USER_HOME, "brain", "team")):
             r = subprocess.run([sys.executable, os.path.join(os.path.dirname(here), "bin", "paas-team"), "bootstrap", meta["name"], src],
-                               stdin=subprocess.DEVNULL, capture_output=True, text=True, timeout=8)
+                               stdin=subprocess.DEVNULL, capture_output=True, text=True, timeout=25)
             if r.returncode == 0:
                 done = r.stdout.strip() + "\n"
     except Exception:

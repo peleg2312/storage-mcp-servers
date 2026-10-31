@@ -75,7 +75,7 @@ INSTALL_TEAM = r"""#!/bin/sh
 # No docs library here (install-laptop.sh of storage-mcp-servers adds it); docs-local stays disconnected until then.
 set -eu
 HERE=$(cd "$(dirname "$0")" && pwd)
-TEAM=$(sed -n 's/^ *"name": *"\([a-z0-9_-]*\)".*//p' "$HERE/team.json" | head -n1)
+TEAM=$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1])).get("name", ""))' "$HERE/team.json" 2>/dev/null)
 [ -n "$TEAM" ] || { echo "install-team.sh: no team name in $HERE/team.json"; exit 1; }
 command -v python3 >/dev/null 2>&1 || { echo "python3 is required"; exit 1; }
 command -v claude >/dev/null 2>&1 || { echo "claude (Claude Code) is required: install it first, then run this again"; exit 1; }

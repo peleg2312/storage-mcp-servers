@@ -84,7 +84,11 @@ async function teamWriteBack(kind, name, file) {
   const dst = kind === 'skill' ? path.join(repo, `paas-brain-${team}`, 'skills', name, 'SKILL.md') : path.join(repo, `paas-brain-${team}`, 'agents', `${name}.md`);
   if (!fs.existsSync(path.dirname(dst))) return null;
   fs.copyFileSync(file, dst);
-  await commitFile(dst, `brain tab: team ${kind} ${name}`);
+  if (TEAM_BIN) await run('python3', [TEAM_BIN, 'bump', team], 20000);   // a new version string: plugin-mode members get the copy
+  await git(repo, ['add', '-A', '--', `paas-brain-${team}`]);
+  await git(repo, ['commit', '-q', '-m', `brain tab: team ${kind} ${name}`]);
+  const up = await git(repo, ['rev-parse', '--abbrev-ref', '@{upstream}']);
+  if (up.ok) await run('git', ['-C', repo, 'push', '-q'], 10000);
   return team;
 }
 // the file behind a memory name or captures/<file>, and its repository and path inside it (null: outside it)

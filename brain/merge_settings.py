@@ -56,7 +56,7 @@ hook(post, "py-lint.py", 5, "Edit|Write|MultiEdit")      # ruff findings on ever
 hook(post, "notes-check.py", 5, "Edit|Write|MultiEdit")  # secrets / real IPs written into notes and reports
 hook(stop, "capture-nudge.py", 10)                       # once per long session: anything worth capturing?
 hook(ups, "docs-leads.py", 5)                            # library leads for each request (silent when unrelated)
-hook(start, "session-start.py", 10)
+hook(start, "session-start.py", 30)                      # a bare plugin install clones the team repository here once
 # security-guidance plugin: pattern warnings only (its LLM reviews would send every diff to Opus and pip-install
 # an SDK the air-gapped VM cannot fetch); set it to 1 in settings.json "env" to turn the reviews on.
 # No internet on the VM: no auto-update, telemetry or other background traffic.

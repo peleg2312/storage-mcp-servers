@@ -166,6 +166,27 @@ src = os.path.join(work, "sources", "nas")
 assert os.access(os.path.join(src, "install-team.sh"), os.X_OK) and os.path.isfile(os.path.join(src, "bin", "paas-team"))
 assert os.path.isfile(os.path.join(src, "paas-brain-nas", "brain", "CLAUDE.md"))
 assert subprocess.run(["sh", "-n", os.path.join(src, "install-team.sh")]).returncode == 0
+# install-team.sh on a laptop: a clone of the team repository, a stand-in claude on PATH (records its calls), empty HOME
+lap = tempfile.mkdtemp()
+subprocess.run(["git", "clone", "-q", src, os.path.join(lap, "brain-nas")], check=True)
+fb = os.path.join(lap, "bin"); os.makedirs(fb)
+open(os.path.join(fb, "claude"), "w").write("#!/bin/sh\necho \"$@\" >> \"$HOME/claude.log\"\n"); os.chmod(os.path.join(fb, "claude"), 0o755)
+lh = os.path.join(lap, "h"); os.makedirs(lh)
+r = subprocess.run(["sh", os.path.join(lap, "brain-nas", "install-team.sh")], capture_output=True, text=True, env=dict(env, HOME=lh, PATH=fb + os.pathsep + env["PATH"]), timeout=120)
+assert r.returncode == 0 and "team nas" in r.stdout, (r.stdout, r.stderr)
+assert open(os.path.join(lh, ".claude", "brain", "team")).read().strip() == "nas" and "@~/.claude/brain/main.md" in open(os.path.join(lh, ".claude", "CLAUDE.md")).read()
+assert "plugin marketplace add" in open(os.path.join(lh, "claude.log")).read() and "plugin install paas-brain-nas@paas-brain-nas" in open(os.path.join(lh, "claude.log")).read()
+assert git(os.path.join(lh, ".claude", "brain", "teams", "nas"), "remote", "get-url", "origin").strip() == src
+# check.py: the gate passes on a fresh repository and catches a broken dot-file and a secret in the knowledge
+assert subprocess.run([sys.executable, os.path.join(src, "check.py")], capture_output=True, text=True).returncode == 0
+broken = tempfile.mkdtemp(); shutil.copytree(src, os.path.join(broken, "r"), ignore=shutil.ignore_patterns(".git"))
+open(os.path.join(broken, "r", "paas-brain-nas", ".mcp.json"), "w").write("{")
+open(os.path.join(broken, "r", "knowledge", "notes", "leak.md"), "w").write("- login password=hunter2\n- ok password=abc notes-check: allow\n")
+r = subprocess.run([sys.executable, os.path.join(broken, "r", "check.py")], capture_output=True, text=True)
+assert r.returncode == 1 and "FAIL json paas-brain-nas/.mcp.json" in r.stdout and "FAIL no secret in knowledge/notes/leak.md: line 1" in r.stdout and "all checks passed" not in r.stdout, r.stdout
+# the plugin version is a fingerprint of its content, identical from publish.py and from paas-team bump
+v0 = json.load(open(os.path.join(src, "paas-brain-nas", ".claude-plugin", "plugin.json")))["version"]
+assert "-" in v0 and team("bump", "nas").strip() == json.load(open(os.path.join(brain, "teams", "nas", "paas-brain-nas", ".claude-plugin", "plugin.json")))["version"]
 o = team("export", "san", work)
 assert o.startswith(os.path.join(work, "paas-brain-san-")) and os.path.getsize(o.split("\n")[0]) > 10000, o
 import zipfile
@@ -216,6 +237,7 @@ o = team("use", "san")
 assert "MCP powermax, powerflex, ontap, harvest, mds, ucsc" in o, o
 have = lambda: sorted(k for k in json.load(open(os.path.join(home, ".claude", "paas-market.json")))["installed"] if k.startswith("mcp/"))
 assert have() == ["mcp/harvest", "mcp/kuparashit", "mcp/mds", "mcp/ontap", "mcp/powerflex", "mcp/powermax", "mcp/ucsc"], have()
+assert "kuparashit" not in json.load(open(os.path.join(brain, "teams", ".installed.json")))["mcp"], "the person's own server is not the team's"
 lst = json.loads(team("list", "--json"))
 assert next(x for x in lst["teams"] if x["name"] == "san")["mcp_added"] == ["docs-local", "harvest", "mds", "ontap", "powerflex", "powermax", "ucsc"]
 team("use", "nas")
@@ -253,6 +275,8 @@ assert "mcp add-json -s user ontap" in log and "s3cr3t-token-value" in log and "
 assert json.load(open(os.path.join(brain, "teams", ".installed.json")))["mcp"] == {"ontap": "team", "harvest": "market"}
 sh = json.loads(team("show", "nas", "--json"))
 assert sh["title"] == "NAS team" and sh["mcp_servers"]["ontap"]["token_set"] and sh["mcp_servers"]["ontap"]["configured"]
+assert sh["version"] != d["version"] and "-" in sh["version"], (sh["version"], d["version"])          # bumped for plugin-mode members
+assert "harvest" in sh["mcp"] and "ontap" in sh["mcp"]
 print("team editor ok")
 
 # 7. an edit of a team skill made in the team repository (the Brain tab writes it there) is kept from the next publish

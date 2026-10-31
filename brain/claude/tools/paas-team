@@ -26,7 +26,8 @@ persona.md and storage.md as before.
                                    installer) or as the Claude Code plugin (laptop, hooks inside the plugin)
 Environment: PAAS_TEAMS (source directory: /opt/paas/teams on a multi-user VM, else ~/.claude/brain/team-sources,
 written by the installer), CLAUDE_HOME (default ~/.claude).
-Standard library, Python 3.9; never writes passwords or tokens."""
+Standard library, Python 3.9. The only credentials it handles are the team's MCP tokens, which `edit` writes into the
+team repository's mcp.json by the team's decision (see brain/teams/README.md); nothing else is ever written."""
 import glob
 import hashlib
 import json
@@ -120,6 +121,29 @@ def info(tdir):
     return t
 
 
+def bump_version(plug):
+    """plugin.json and team.json get the library version plus a fingerprint of the plugin's content (the same rule as
+    publish.py): Claude Code hands out a new copy of a plugin from a git-hosted marketplace only when the version string
+    changes, so every edit of the plugin folder must change it. Returns the new version."""
+    h = hashlib.sha1()
+    for root, dirs, files in os.walk(plug):
+        dirs.sort()
+        for f in sorted(files):
+            if f in ("plugin.json", "team.json") or "__pycache__" in root:
+                continue
+            h.update(os.path.relpath(os.path.join(root, f), plug).encode())
+            with open(os.path.join(root, f), "rb") as fh:
+                h.update(fh.read())
+    ver = ""
+    for name in ("team.json", os.path.join(".claude-plugin", "plugin.json")):
+        pj = os.path.join(plug, name)
+        d = jload(pj)
+        d["version"] = str(d.get("version", "0")).split("-")[0] + "-" + h.hexdigest()[:8]
+        write(pj, json.dumps(d, indent=2, sort_keys=True) + "\n")
+        ver = d["version"]
+    return ver
+
+
 def digest(folder):
     """cheap fingerprint of a plugin folder: paths, sizes, mtimes (no hashing of content)"""
     parts = []
@@ -194,8 +218,13 @@ def add(team, source=None, quiet=False):
     if plugin_dir(dest):
         return dest
     if os.path.exists(dest):
-        die(f"{dest} exists but holds no team repository; remove it first")
+        if os.path.isdir(os.path.join(dest, "knowledge")) or os.listdir(dest) and os.path.isdir(os.path.join(dest, ".git")) and \
+                git(dest, "rev-parse", "--verify", "-q", "HEAD", timeout=5)[0] == 0:
+            die(f"{dest} exists but holds no team plugin; remove it first")
+        shutil.rmtree(dest, ignore_errors=True)                    # an interrupted clone: start again
     os.makedirs(TEAMS, exist_ok=True)
+    tmp = dest + ".tmp"
+    shutil.rmtree(tmp, ignore_errors=True)
     src_dir = os.path.join(SOURCES, team)
     if not source:
         if not plugin_dir(src_dir):
@@ -205,16 +234,17 @@ def add(team, source=None, quiet=False):
     if url:
         if not quiet:
             print(f"cloning team {team} from {url} ...")
-        rc, out = git(TEAMS, "clone", "-q", url, dest, timeout=300)
+        rc, out = git(TEAMS, "clone", "-q", url, tmp, timeout=300)
         if rc and plugin_dir(src_dir):                       # the remote is not reachable: the VM's copy, remote kept
             print(f"note: clone from {url} failed ({out.splitlines()[-1][:120] if out else 'no answer'}); using {src_dir}, "
                   "the remote is set for later syncs")
-            shutil.rmtree(dest, ignore_errors=True)
+            shutil.rmtree(tmp, ignore_errors=True)
             source, url_later = src_dir, url
         elif rc:
-            shutil.rmtree(dest, ignore_errors=True)
+            shutil.rmtree(tmp, ignore_errors=True)
             die(f"clone failed: {out[-300:]}")
         else:
+            os.rename(tmp, dest)
             return dest
     else:
         url_later = ""
@@ -222,18 +252,20 @@ def add(team, source=None, quiet=False):
     if not plugin_dir(source):
         die(f"{source} is not a team repository (no paas-brain-<team>/team.json)")
     if os.path.isdir(os.path.join(source, ".git")):
-        rc, out = git(TEAMS, "clone", "-q", source, dest, timeout=120)
+        rc, out = git(TEAMS, "clone", "-q", source, tmp, timeout=120)
         if rc:
+            shutil.rmtree(tmp, ignore_errors=True)
             die(f"clone of {source} failed: {out[-300:]}")
         if url_later:
-            git(dest, "remote", "set-url", "origin", url_later, timeout=5)
+            git(tmp, "remote", "set-url", "origin", url_later, timeout=5)
     else:
-        shutil.copytree(source, dest, ignore=shutil.ignore_patterns("__pycache__", "*.pyc", "._*"))
-        git(dest, "init", "-q", "-b", "main", timeout=10)
-        git(dest, "add", "-A", timeout=30)
-        git(dest, "commit", "-q", "-m", f"team {team}: added", timeout=30)
+        shutil.copytree(source, tmp, ignore=shutil.ignore_patterns("__pycache__", "*.pyc", "._*"))
+        git(tmp, "init", "-q", "-b", "main", timeout=10)
+        git(tmp, "add", "-A", timeout=30)
+        git(tmp, "commit", "-q", "-m", f"team {team}: added", timeout=30)
         if url_later:
-            git(dest, "remote", "add", "origin", url_later, timeout=5)
+            git(tmp, "remote", "add", "origin", url_later, timeout=5)
+    os.rename(tmp, dest)
     return dest
 
 
@@ -331,16 +363,20 @@ def apply_mcp(t, old, tdir):
             market("remove", f"mcp/{m}")
     added = {}
     for m in want:
+        if f"mcp/{m}" in mine and prev.get(m) != "market":
+            continue                                              # the person added it themselves before any team: theirs
         cfg = servers.get(m) or {}
         if cfg and mcp_ready(cfg) and shutil.which("claude"):
             claude_mcp("remove", "-s", "user", m)
             rc, out = claude_mcp("add-json", "-s", "user", m, json.dumps(cfg))
             if rc == 0:
+                if prev.get(m) == "market" and market_bin() and f"mcp/{m}" in mine:
+                    market("remove", f"mcp/{m}")              # the team's own entry replaces the marketplace one
                 added[m] = "team"
                 continue
             print(f"note: MCP {m}: claude mcp add-json failed ({out.splitlines()[-1][:120] if out else 'no answer'})")
         if market_bin():
-            if f"mcp/{m}" in mine or prev.get(m) == "market":
+            if prev.get(m) == "market":
                 added[m] = "market"
                 continue
             rc, out = market("add", f"mcp/{m}")
@@ -457,6 +493,9 @@ def apply(team, say=True, skills=True):
         apply_plugin(team, tdir)
     else:
         apply_files(plug, t)
+    if mode() == "plugin" or not skills:                      # files mode records the servers inside apply_files
+        st = installed()
+        write(STATE, json.dumps({"skills": [], "agents": [], "mcp": apply_mcp(t, st, tdir)}, indent=2) + "\n")
     write(os.path.join(BRAIN, "team"), team + "\n")
     write(os.path.join(TEAMS, ".applied"), json.dumps({"team": team, "digest": digest(plug), "version": t.get("version", "")}) + "\n")
     chats = os.path.expanduser("~/chats/CLAUDE.md")          # regenerated by the session-start hook from the new rules
@@ -530,9 +569,13 @@ def sync():
     nc = next((p for p in (os.path.join(HOME, "hooks", "notes-check.py"), "/opt/paas/hooks/notes-check.py",
                            os.path.join(plugin_dir(team_dir(t)), "hooks", "notes-check.py")) if os.path.isfile(p)), "")
     if nc:
-        r = subprocess.run([sys.executable, nc, "--sync"], capture_output=True, text=True, timeout=60, stdin=subprocess.DEVNULL)
-        print(r.stdout.strip() or r.stderr.strip()[-200:])
-        rc = r.returncode
+        try:
+            r = subprocess.run([sys.executable, nc, "--sync"], capture_output=True, text=True, timeout=60, stdin=subprocess.DEVNULL)
+            print(r.stdout.strip() or r.stderr.strip()[-200:])
+            rc = r.returncode
+        except subprocess.TimeoutExpired:
+            print("brain: sync still running after 60 s (remote not answering?); try again later")
+            rc = 1
     else:
         rc, out = git(team_dir(t), "pull", "--rebase", "--autostash", "-q", timeout=60)
         print("brain: in sync" if rc == 0 else out[-200:])
@@ -617,7 +660,9 @@ def candidates(kind):
     ~/.claude copy (own or marketplace), the VM's marketplace, every team source and every local team"""
     out = []
     ext = "" if kind == "skills" else ".md"
+    act = active()
     roots = [(os.path.join(HOME, kind), "mine"), (os.path.join(os.environ.get("PAAS_MARKET", "/opt/paas/marketplace"), "items", kind), "marketplace")]
+    team_put = set(installed().get(kind, []))                 # files mode: the active team's copies sit in ~/.claude too
     for base in (SOURCES, TEAMS):
         for d in sorted(glob.glob(os.path.join(base, "*", "paas-brain-*", kind))):
             roots.append((d, "team " + d.split(os.sep)[-3]))
@@ -631,6 +676,10 @@ def candidates(kind):
             ok = os.path.isfile(os.path.join(path, "SKILL.md")) if kind == "skills" else (n.endswith(ext) and os.path.isfile(path))
             if ok and NAME.match(name.lower()) and name not in seen:
                 seen.add(name)
+                if src == "mine" and name in team_put and not personal(kind, name):
+                    src = "team " + act                       # the team's copy, not the person's
+                elif src == "mine" and f"{kind[:-1]}/{name}" in jload(os.path.join(HOME, "paas-market.json")).get("installed", {}):
+                    src = "marketplace"
                 out.append({"name": name, "source": src, "path": path})
     return out
 
@@ -663,10 +712,12 @@ def edit(team, change):
         git(tdir, "add", "-A", timeout=30)
         git(tdir, "commit", "-q", "-m", f"team {team}: before an edit", timeout=30)
         rc, out = git(tdir, "pull", "--rebase", "-q", timeout=60)
-        if rc and rc != 124:
+        if rc and git(tdir, "diff", "--name-only", "--diff-filter=U", timeout=5)[1]:
             git(tdir, "rebase", "--abort", timeout=10)
             die("the team repository changed in a way that clashes with this clone; run paas-team sync, resolve the "
                 "conflict it names, then edit again")
+        elif rc:
+            git(tdir, "rebase", "--abort", timeout=10)        # offline, or the remote did not answer: edit locally, push later
     plug = plugin_dir(tdir)
     b = os.path.join(plug, "brain")
     pj = os.path.join(plug, "team.json")
@@ -717,10 +768,12 @@ def edit(team, change):
             else:
                 cur.pop("headers", None)
         servers[n] = cur
-    t["mcp"] = ["docs-local"] + [n for n in servers if n != "docs-local"]
+    removed = {str(n) for n in change.get("remove_mcp") or []}
+    t["mcp"] = ["docs-local"] + [n for n in dict.fromkeys(list(t.get("mcp", [])) + list(servers)) if n != "docs-local" and n not in removed]
     r["mcp"] = t["mcp"]
     write(os.path.join(tdir, "mcp.json"), json.dumps(servers, indent=2, sort_keys=True) + "\n")
     write(pj, json.dumps(t, indent=2, sort_keys=True) + "\n")
+    r["version"] = bump_version(plug)                        # a new version string: plugin-mode members get the new copy
     write(rj, json.dumps(r, indent=2, sort_keys=True) + "\n")
     git(tdir, "add", "-A", timeout=30)
     git(tdir, "commit", "-q", "-m", f"brain tab: team {team} edited", timeout=30)
@@ -793,6 +846,10 @@ def main(a):
         except ValueError:
             die("edit: JSON expected on stdin")
         edit(a[1], change)
+    elif cmd == "bump" and len(a) >= 2:
+        plug = plugin_dir(team_dir(a[1]))
+        plug or die(f"team {a[1]} is not added")
+        print(bump_version(plug))
     elif cmd == "bootstrap" and len(a) >= 3:
         bootstrap(a[1], a[2])
     elif cmd == "export":
