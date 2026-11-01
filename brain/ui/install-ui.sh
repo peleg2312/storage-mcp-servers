@@ -29,6 +29,9 @@ if [ "$(cat "$B/SHA256SUMS")" != "$(cat "$DST/.bundle-sum" 2>/dev/null || true)"
   find "$TMP/paas-ui" -name '._*' -type f -delete
   rm -rf "$DST"; mkdir -p "$(dirname "$DST")"; mv "$TMP/paas-ui" "$DST"; rm -rf "$TMP"
   cp "$B/SHA256SUMS" "$DST/.bundle-sum"
+  # unpacked under /tmp and moved: the files keep /tmp's SELinux label, which systemd may not execute (RHEL 9 enforcing)
+  command -v restorecon >/dev/null 2>&1 && restorecon -R "$DST" 2>/dev/null || true
+  chmod -R a+rX "$DST/node/bin" 2>/dev/null || true
 fi
 [ "${UI_SHARED:-0}" = 1 ] && { chmod -R a+rX "$DST"; echo "ui: files in $DST (per-user services: brain/multiuser)"; exit 0; }
 # plugins (Brain, Reports, Schedule, Status): replaced on every run, other plugins you install are left alone

@@ -88,6 +88,12 @@ paas-user team nas nas
 Check the result in GitLab (the `knowledge/` folder of each project) or in `/opt/paas/teams/<team>/knowledge`. The accounts
 can stay as shared sign-ins; once people have their own accounts, lock them: `paas-user lock san` (their home stays).
 
+## If the gate does not start
+
+`journalctl -u paas-gate -n 50` saying "Failed at step EXEC ... Permission denied" means SELinux labels: the UI was unpacked
+under /tmp and moved, and the files kept /tmp's label. `restorecon -Rv /opt/paas && systemctl restart paas-gate`, then the
+upgrade command again. Installers from this version on relabel by themselves.
+
 ## Check
 
 - `https://<vm>:3001` shows the sign-in page; sign in as a person, the Brain tab shows the Team card with No team pressed.

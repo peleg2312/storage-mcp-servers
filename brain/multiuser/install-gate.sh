@@ -37,6 +37,7 @@ if [ ! -f /etc/paas/gate.env ]; then
 fi
 GATE_PORT=$(sed -n 's/^GATE_PORT=//p' /etc/paas/gate.env | head -1); GATE_PORT=${GATE_PORT:-3001}
 install -m 644 "$HERE/gate.js" /opt/paas/gate/gate.js
+command -v restorecon >/dev/null 2>&1 && restorecon -R /opt/paas/gate /opt/paas/ui /etc/paas 2>/dev/null || true   # SELinux: labels of their place
 install -m 644 "$HERE/paas-gate.service" "$HERE/paas-ui@.service" /etc/systemd/system/
 systemctl daemon-reload
 systemctl enable paas-gate >/dev/null 2>&1
