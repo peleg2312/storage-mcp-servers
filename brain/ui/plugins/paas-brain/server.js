@@ -388,8 +388,8 @@ const routes = {
   'GET /history': async (q) => {
     const m = memPath(q.get('name'));
     if (!m || !m.rel || !m.repo) return { repo: false, entries: [] };
-    const r = await git(m.repo, ['log', '--format=%h%x09%ct%x09%s', '-n', '25', '--', m.rel]);
-    const entries = r.ok ? r.out.split('\n').filter(Boolean).map((l) => { const [sha, when, ...s] = l.split('\t'); return { sha, when: Number(when), subject: s.join('\t') }; }) : [];
+    const r = await git(m.repo, ['log', '--format=%h%x09%ct%x09%an%x09%s', '-n', '25', '--', m.rel]);   // who saved it: commits carry the person
+    const entries = r.ok ? r.out.split('\n').filter(Boolean).map((l) => { const [sha, when, author, ...s] = l.split('\t'); return { sha, when: Number(when), author, subject: s.join('\t') }; }) : [];
     return { repo: true, entries };
   },
   'POST /restore': async (_q, b) => {

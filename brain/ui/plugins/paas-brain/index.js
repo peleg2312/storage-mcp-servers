@@ -211,6 +211,7 @@ function busy(button, label) {
 // (skills, agents, MCP servers, hooks, memory files). Data: server.js.
 
 const CSS = `
+.paas .texp summary{cursor:pointer;list-style:none}.paas .texp summary::-webkit-details-marker{display:none}
 .paas .trow{padding:10px 0;border-top:1px solid hsl(var(--border))}.paas .trow:first-of-type{border-top:0;padding-top:4px}.paas .trow.on{background:hsl(var(--accent)/.35);margin:0 -8px;padding:10px 8px;border-radius:8px}
 .paas .tchips{display:flex;flex-wrap:wrap;gap:4px;align-items:center;margin-top:6px}.paas .tchips b{margin-right:4px}.paas .tlist{margin:8px 0;padding-left:18px}.paas .tlist li{margin:4px 0}
 .paas .hk{display:flex;gap:16px;align-items:center;justify-content:space-between;padding:12px 8px;margin:0 -8px;border-top:1px solid hsl(var(--border));border-radius:8px}.paas .hk:hover{background:hsl(var(--accent)/.5)}
@@ -355,15 +356,16 @@ export function mount(container, api) {
     pane.innerHTML = `<div class="teambox" data-explain="1">${skeleton('cards')}</div>`;
     renderTeam(pane.querySelector('.teambox'));
   }
-  const EXPLAIN = `<div class="card"><h3>What a team is</h3>
-        <div class="sub">A team is a complete brain profile that you switch on with one click:</div>
+  const explainOpen = () => { try { return localStorage.getItem('paas-team-explain') !== 'closed'; } catch { return true; } };
+  const EXPLAIN = `<div class="card"><details class="texp" ${explainOpen() ? 'open' : ''}><summary><h3 style="display:inline">What a team is</h3> <span class="sub">(click to fold)</span></summary>
+        <div class="sub" style="margin-top:8px">A team is a complete brain profile that you switch on with one click:</div>
         <ul class="sub tlist">
           <li><b>Rules</b>: the persona and the storage rules Claude follows for that team's systems.</li>
           <li><b>Skills and agents</b>: the team's playbooks and helpers, listed in the Skills and Agents tabs with a <span class="tag">team</span> label.</li>
           <li><b>MCP servers</b>: the team's live tool servers, connected for you automatically.</li>
           <li><b>Shared memory</b>: notes, environment and tool map that every member writes and reads, kept in the team's git repository and synced at every save and every session start.</li>
         </ul>
-        <div class="sub">One team at a time; <b>No team</b> means your own rules, skills and notes. After a switch, start a new chat.</div></div>`;
+        <div class="sub">One team at a time; <b>No team</b> means your own rules, skills and notes. After a switch, start a new chat.</div></details></div>`;
 
   // Team card: which team profile this chat uses, switch it, sync its knowledge (GET/POST team, team-sync)
   let teamMsg = null;
@@ -384,7 +386,7 @@ export function mount(container, api) {
     const teamSkills = (data.skills || []).filter((x) => x.source === 'team');
     const teamAgents = (data.agents || []).filter((x) => x.source === 'team');
     const row = (x) => `<div class="trow${x.name === t.active ? ' on' : ''}">
-        <div class="t"><b>${esc(x.title || x.name)}</b> <span class="sub" title="${esc(x.version || '')}">(${esc(x.name)}${x.version ? `, ${esc(String(x.version).split('-')[0])}` : ''})</span>${x.name === t.active ? ' <span class="tag">your team now</span>' : x.local ? '' : ' <span class="tag" title="Cloned from the team repository at the first click">not added yet</span>'}</div>
+        <div class="t row spread"><span><b>${esc(x.title || x.name)}</b> <span class="sub" title="${esc(x.version || '')}">(${esc(x.name)}${x.version ? `, ${esc(String(x.version).split('-')[0])}` : ''})</span>${x.name === t.active ? ' <span class="tag">your team now</span>' : x.local ? '' : ' <span class="tag" title="Cloned from the team repository at the first click">not added yet</span>'}</span>${x.name === t.active ? '' : `<button type="button" class="btn ghost sm tuse" data-team="${esc(x.name)}">Switch to ${esc(x.title || x.name)}</button>`}</div>
         <div class="sub">${esc(x.description || '')}</div>
         <div class="sub">${esc(x.skills ?? 0)} skills, ${esc(x.agents ?? 0)} agents · MCP: ${mcpTags(x) || 'none'}${x.remote ? ` · shared memory in <code>${esc(x.remote)}</code>` : ' · shared memory on this VM'}</div>
         ${x.name === t.active && (teamSkills.length || teamAgents.length) ? `<div class="sub tchips"><b>Skills</b> ${teamSkills.map((k) => `<span class="tag" title="${esc(k.description)}">/${esc(k.name)}</span>`).join(' ')}</div>
@@ -410,12 +412,13 @@ export function mount(container, api) {
           <div class="ted-body"></div></details>
       </details></div>`}`;
     if (t.error) return;
+    box.querySelector('.texp')?.addEventListener('toggle', (e) => { try { localStorage.setItem('paas-team-explain', e.target.open ? 'open' : 'closed'); } catch { /* storage blocked */ } });
     const st = statusLine(box.querySelector('.stbox'));
     const lead = teamMsg ? `${teamMsg} ` : '';
     if (teamMsg) { st.say(teamMsg); teamMsg = null; }
     // one click switches; the only question is about edits below that would be lost
-    box.querySelectorAll('.tseg button').forEach((b) => b.addEventListener('click', async () => {
-      const name = b.dataset.team; const x = teams.find((y) => y.name === name) || { local: true, title: '' };
+    const switchTo = async (name, b) => {
+      const x = teams.find((y) => y.name === name) || { local: true, title: '' };
       if (name === (t.active || 'none')) return;
       if (dirty) {
         const r0 = await confirmInline(box.querySelector('.tanchor'), { title: 'Switch and drop the unsaved edits?', text: 'Something below is edited and not saved.', confirmLabel: 'Switch' });
@@ -429,7 +432,8 @@ export function mount(container, api) {
       teamMsg = name === 'none' ? 'No team now. Start a new chat to work with your own rules.' : `Now on ${x.title || name}. Start a new chat to use it.`;
       teamSynced = false;
       refresh();
-    }));
+    };
+    box.querySelectorAll('.tseg button, .trow .tuse').forEach((b) => b.addEventListener('click', () => switchTo(b.dataset.team, b)));
     box.querySelector('.tsy')?.addEventListener('click', async (e) => {
       const done = busy(e.currentTarget, 'Syncing…'); st.say('');
       const r = await runSync();
@@ -496,8 +500,8 @@ export function mount(container, api) {
       const text = (k, label, hint, rows) => field(label, `<textarea class="mono" data-k="${k}" rows="${rows}" spellcheck="false" aria-label="${esc(label)}">${esc(d[k] || '')}</textarea>`, hint);
       const pick = (kind, have, avail) => {
         const src = new Map((avail || []).map((x) => [x.name, x.source]));
-        const names = [...new Set([...src.keys(), ...have])].sort((a, b) => a.localeCompare(b));
-        return field(kind === 'skills' ? 'Skills' : 'Agents', `<input type="text" class="t-filter" data-for="${kind}" placeholder="Filter" aria-label="Filter ${kind}" autocomplete="off" spellcheck="false">
+        const names = [...new Set([...src.keys(), ...have])].sort((a, b) => (have.includes(b) - have.includes(a)) || a.localeCompare(b));   // chosen first
+        return field(`${kind === 'skills' ? 'Skills' : 'Agents'} <span class="sub t-count" data-count="${kind}">${have.length} of ${names.length} chosen</span>`, `<input type="text" class="t-filter" data-for="${kind}" placeholder="Filter" aria-label="Filter ${kind}" autocomplete="off" spellcheck="false">
           <div class="t-list" data-list="${kind}" style="max-height:220px;overflow:auto;border:1px solid hsl(var(--border));border-radius:10px;padding:6px 10px">${names.length ? names.map((n) => `<label class="row" data-n="${esc(n)}" style="padding:3px 0"><input type="checkbox" value="${esc(n)}" ${have.includes(n) ? 'checked' : ''}> <span>${esc(n)}</span>${src.has(n) ? ` <span class="tag">${esc(src.get(n))}</span>` : ' <span class="sub">(in the team only)</span>'}</label>`).join('') : '<div class="sub">None available.</div>'}</div>`);
       };
       const servers = Object.entries(d.mcp_servers || {});
@@ -520,7 +524,12 @@ export function mount(container, api) {
           <span class="hint">Tokens are stored in the team repository and visible to everyone with access to it; use read-only tokens.</span></div>
         <div class="row"><button type="button" class="btn t-save">Save</button><button type="button" class="btn ghost t-cancel">Cancel</button></div></div>`;
       const root = body.firstElementChild;
-      const mark = (e) => { if (e.target.matches('.t-filter')) return; edDirty = true; dirty = true; };   // filtering is not an edit
+      const mark = (e) => {
+        if (e.target.matches('.t-filter')) return;
+        edDirty = true; dirty = true;
+        const list = e.target.closest('.t-list');                                                 // the "n of m chosen" count follows the boxes
+        if (list) { const c = root.querySelector(`.t-count[data-count="${list.dataset.list}"]`); if (c) c.textContent = `${list.querySelectorAll('input:checked').length} of ${list.querySelectorAll('input').length} chosen`; }
+      };   // filtering is not an edit
       root.addEventListener('input', mark); root.addEventListener('change', mark);
 
       body.querySelectorAll('.t-filter').forEach((f) => f.addEventListener('input', () => {
@@ -620,7 +629,7 @@ export function mount(container, api) {
       if (r.error) { st.error(`No history: ${r.error}`); return; }
       if (!r.repo) { hb.innerHTML = '<div class="sub">No history: the brain is not a git repository yet (re-run install.sh on the VM).</div>'; return; }
       hb.innerHTML = r.entries.length ? r.entries.map((x, k) => { const d = new Date(x.when * 1000).toLocaleString();
-        return `<div class="row"><span class="grow">${esc(d)} <span class="sub">${esc(x.subject)}</span></span><button class="btn ghost sm" data-sha="${k}">Restore</button></div>`; }).join('')
+        return `<div class="row"><span class="grow">${esc(d)} <span class="sub">${esc(x.subject)}${x.author ? ` · by ${esc(x.author)}` : ''}</span></span><button class="btn ghost sm" data-sha="${k}">Restore</button></div>`; }).join('')
         : '<div class="sub">No changes recorded yet.</div>';
       hb.querySelectorAll('[data-sha]').forEach((b) => b.addEventListener('click', async () => {
         const x = r.entries[Number(b.dataset.sha)]; const d = new Date(x.when * 1000).toLocaleString();

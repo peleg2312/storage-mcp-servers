@@ -283,6 +283,8 @@ export function mount(container, api) {
     if (!r.ok) { grid.replaceChildren(errorBlock(r.out, load)); return; }
     items = r.items; root = r.root; me = r.me;
     const n = items.filter((i) => i.update).length;
+    const mineN = items.filter((i) => i.added || i.team || (i.author && i.author === me)).length;
+    container.querySelector('.mine').textContent = `Mine (${mineN})`;
     updAll.style.display = n ? '' : 'none';
     updAll.textContent = `Update all (${n})`;
     render();
