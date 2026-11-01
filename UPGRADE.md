@@ -39,11 +39,25 @@ is moving the old team accounts' notes into the team repositories, and the thing
 4. A backup of `/etc/paas`, `/opt/paas/brain` and the home directories is cheap insurance: `tar czf /root/paas-30.10.tgz
    /etc/paas /opt/paas/brain /home`.
 
+## Getting the new version onto the VM (no git access there)
+
+Two ways. The **ZIP of the repository** from GitHub (Code, Download ZIP: 1.2 GB, mostly the unchanged library and image
+parts): unpack it into a new folder next to the old one and run the command from there. Or the **update pack**, built where
+git is (a PC with the repository): `sh scripts/update-pack.sh c014fbf` writes
+`storage-mcp-servers-update-c014fbf-<head>.tar.gz` with every file that changed since 30.10 (about 190 MB with the rebuilt
+web UI bundle, half a megabyte without it: `--no-ui-bundle`), the list of removed files and an apply script. On the VM:
+
+```sh
+tar -xzf storage-mcp-servers-update-c014fbf-<head>.tar.gz
+sh update-c014fbf-<head>/apply-update.sh /path/to/storage-mcp-servers    # checks the checksums, copies, removes, records UPDATE-LEVEL
+```
+The folder then equals the new version (the pack is tested that way), and the command below runs from it.
+
 ## The upgrade
 
 ```sh
 cd /path/to/storage-mcp-servers
-git pull                                   # or copy the new checkout in (library/ and images/ may be skipped)
+git pull                                   # a git clone; otherwise the ZIP or the update pack above
 sh brain/multiuser/install-multiuser.sh --gitlab-host gitlab.example.com \
    --team san=https://gitlab.example.com/storage/brain-san.git \
    --team nas=https://gitlab.example.com/storage/brain-nas.git \
