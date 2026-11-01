@@ -108,7 +108,6 @@ Code; few high-signal tools) and measured with `docs-search-mcp/eval_search.py`:
   the memory links); the team's MCP servers are in the plugin's `.mcp.json`, built from the team repository's `mcp.json`, so
   they connect wherever the plugin is enabled and nothing is registered per person. Cost: skills are namespaced (`/paas-brain-san:zoning-audit`). `brain/claude/.claude-plugin/`
   also lets the raw folder load with `--plugin-dir` for `claude plugin validate` and `claude plugin eval` (`brain/claude/evals/`).
-  Files mode (copies into `~/.claude`) remains only for a machine without the `claude` command.
 - **Team profiles (`brain/teams/<team>`, October 2026).** One brain per team (`san` = the brain above, `nas` = PowerScale /
   VAST / ONTAP NAS): persona, rules file, skill and agent lists, starting MCP servers. `brain/plugin/build.py --team` resolves a
   team into the plugin `paas-brain-<team>` (skills, agents, hooks, docs-local, plus the persona / rules / templates a plugin
@@ -116,7 +115,7 @@ Code; few high-signal tools) and measured with `docs-search-mcp/eval_search.py`:
   tool-map.md), one git repository per team in GitLab. `paas-team use <team>` switches a person in a few seconds: persona.md and
   storage.md rewritten, the memory paths (`notes.md`, `environment.md`, `tool-map.md`, `notes/`, `captures/`, `incidents/`) linked
   into `~/.claude/brain/teams/<team>/knowledge/`, the team's plugin enabled and the others disabled (the same Claude Code
-  plugin on the VM and on laptops; files mode, copies into `~/.claude`, only where `claude` is missing). Every hook, skill and the web UI keep reading the old paths; the notes hook commits and pushes into the team
+  plugin on the VM and on laptops). Every hook, skill and the web UI keep reading the old paths; the notes hook commits and pushes into the team
   clone; session start pulls and re-applies a plugin the team updated. Each team is a separate context budget (`test_budgets.py`
   prints both: the NAS member pays 7.9 KB of rules and 6.5 KB of skill frontmatter against 10.4 / 10.2 KB for SAN). People stay
   individual accounts (Active Directory on the multi-user VM, the team picked by AD group at first sign-in); the team is a profile,

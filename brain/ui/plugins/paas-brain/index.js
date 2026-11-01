@@ -394,7 +394,7 @@ export function mount(container, api) {
     box.innerHTML = `<div class="card"><h3>Your brain now</h3>${t.error ? `<div class="sub bad" role="alert">${esc(t.error)}</div></div>` : `
       <div class="seg tseg" role="group" aria-label="Team"><button type="button" data-team="none" aria-pressed="${!t.active}">No team</button>${teams.map((x) => `<button type="button" data-team="${esc(x.name)}" aria-pressed="${x.name === t.active}" title="${esc(x.description || x.name)}">${esc(x.title || x.name)}</button>`).join('')}</div>
       <div class="sub tline" style="margin:10px 0">${cur
-        ? `<b>${esc(cur.title || cur.name)}</b>: ${cur.description ? `${esc(cur.description)} · ` : ''}${esc(cur.skills ?? 0)} skills, ${esc(cur.agents ?? 0)} agents, shared memory${t.mode === 'files' ? ' · files mode (no claude command)' : ''}.`
+        ? `<b>${esc(cur.title || cur.name)}</b>: ${cur.description ? `${esc(cur.description)} · ` : ''}${esc(cur.skills ?? 0)} skills, ${esc(cur.agents ?? 0)} agents, shared memory.`
         : 'Your own rules and skills, no shared team memory. Click a team to use its brain; the next chat uses it, and one click brings you back.'}</div>
       <div class="row"><span class="tanchor"></span><span class="stbox"></span></div></div>
       ${box.dataset.explain ? EXPLAIN : ''}

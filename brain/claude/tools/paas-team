@@ -2,9 +2,11 @@
 """Team profiles of the brain: which brain (rules, skills, agents, knowledge) this account works with, switched in
 seconds. A team is a git repository published by brain/teams/publish.py: the plugin paas-brain-<team>/ plus
 knowledge/ (notes/, captures/, incidents/, tool-map.md). Each team the person added is a clone under
-~/.claude/brain/teams/<team>; the active one is linked into the brain's usual paths, so every skill, hook and the
+~/.claude/brain/teams/<team>; the active one is the Claude Code plugin paas-brain-<team> (enabled from that clone, the
+same plugin everyone installs) and its knowledge is linked into the brain's usual paths, so every skill, hook and the
 web UI keep reading ~/.claude/brain/notes.md, notes/, captures/, incidents/, tool-map.md, environment.md,
-persona.md and storage.md as before.
+persona.md and storage.md as before. Needs the claude command for the plugin steps; without it the rules and the
+knowledge are still switched and the plugin is registered at the next `paas-team use`.
 
   paas-team                        status: active team, mode, local teams, sync state
   paas-team list [--json]          local teams and the ones a source offers
@@ -21,9 +23,6 @@ persona.md and storage.md as before.
                                    agents, mcp_servers {name: {url, type, token}}, remove_mcp): written into the team's
                                    repository (filled-in servers also into the plugin's .mcp.json), committed, pushed,
                                    re-applied; the Brain tab's team editor uses it
-  paas-team mode files|plugin      plugin (the default wherever claude is installed): the team is the Claude Code plugin
-                                   paas-brain-<team>, the same install as everyone's; files: skills copied into ~/.claude,
-                                   for a machine without the claude command
 Environment: PAAS_TEAMS (source directory: /opt/paas/teams on a multi-user VM, else ~/.claude/brain/team-sources,
 written by the installer), CLAUDE_HOME (default ~/.claude).
 Standard library, Python 3.9. The only credentials it handles are the team's MCP tokens, which `edit` writes into the
@@ -113,19 +112,6 @@ def git(repo, *args, timeout=60):
 def active():
     t = read(os.path.join(BRAIN, "team")).strip()
     return t if t and NAME.match(t) and os.path.isdir(os.path.join(TEAMS, t)) else ""
-
-
-def mode():
-    """plugin: the team is the Claude Code plugin paas-brain-<team>, the same install as everyone else's (skills, agents,
-    hooks and docs-local from the plugin); files: the skills and agents copied into ~/.claude, for a machine without the
-    claude command. Written by the installer (team-mode); without it: plugin when claude is in PATH."""
-    m = read(os.path.join(BRAIN, "team-mode")).strip()
-    if m in ("files", "plugin"):
-        return m
-    st = jload(STATE, {})
-    if st.get("skills") or st.get("agents"):
-        return "files"                                        # an install that copied its team before team-mode existed stays as it is
-    return "plugin" if shutil.which("claude") else "files"
 
 
 def team_dir(team):
@@ -237,7 +223,7 @@ def listing():
                       "source": sdir, "remote": t.get("remote") or None,
                       "skills": len(t.get("skills", [])), "agents": len(t.get("agents", [])),
                       "mcp": t.get("mcp", []), "mcp_added": []})
-    return {"active": act or None, "mode": mode(), "brain": BRAIN, "teams": teams}
+    return {"active": act or None, "brain": BRAIN, "teams": teams}
 
 
 # ---- add -----------------------------------------------------------------------------------------------------
@@ -445,49 +431,6 @@ def apply_mcp(t, old, tdir):
     return {}
 
 
-def personal(kind, name):
-    """A skill or agent the person made (web UI: .user-skill / agents/.user-agents) or added from the marketplace
-    (~/.claude/paas-market.json) is theirs: a team switch never removes or overwrites it."""
-    if kind == "skills" and os.path.exists(os.path.join(HOME, "skills", name, ".user-skill")):
-        return True
-    if kind == "agents" and name in read(os.path.join(HOME, "agents", ".user-agents")).split():
-        return True
-    return f"{kind[:-1]}/{name}" in jload(os.path.join(HOME, "paas-market.json")).get("installed", {})
-
-
-def remove_team_files(old):
-    """the previous team's skills and agents leave ~/.claude (never a personal one)"""
-    for n in old.get("skills", []):
-        d = os.path.join(HOME, "skills", n)
-        if os.path.isdir(d) and not personal("skills", n):
-            shutil.rmtree(d)
-    for n in old.get("agents", []):
-        f = os.path.join(HOME, "agents", n + ".md")
-        if os.path.isfile(f) and not personal("agents", n):
-            os.remove(f)
-
-
-def apply_files(plug, t):
-    """files mode: the team's skills / agents replace the previous team's in ~/.claude/{skills,agents}"""
-    remove_team_files(installed())
-    os.makedirs(os.path.join(HOME, "skills"), exist_ok=True)
-    os.makedirs(os.path.join(HOME, "agents"), exist_ok=True)
-    put = {"skills": [], "agents": []}
-    for n in t.get("skills", []):
-        src, dst = os.path.join(plug, "skills", n), os.path.join(HOME, "skills", n)
-        if os.path.isdir(src) and not personal("skills", n):     # the person's own or marketplace copy of that name wins
-            shutil.rmtree(dst, ignore_errors=True)
-            shutil.copytree(src, dst)
-            put["skills"].append(n)
-    for n in t.get("agents", []):
-        src = os.path.join(plug, "agents", n + ".md")
-        if os.path.isfile(src) and not personal("agents", n):
-            shutil.copy(src, os.path.join(HOME, "agents", n + ".md"))
-            put["agents"].append(n)
-    put["mcp"] = apply_mcp(t, installed(), os.path.dirname(plug))
-    write(STATE, json.dumps(put, indent=2) + "\n")
-
-
 def claude(*args):
     try:
         r = subprocess.run(["claude", "plugin"] + list(args), capture_output=True, text=True, timeout=120, stdin=subprocess.DEVNULL)
@@ -529,9 +472,6 @@ def apply_plugin(team, tdir):
     if "mcp/docs-local" in st.get("installed", {}):
         st["installed"].pop("mcp/docs-local")
         write(mp, json.dumps(st, indent=2) + "\n")
-    old = installed()
-    if old.get("skills") or old.get("agents"):                 # copies left from files mode leave ~/.claude
-        remove_team_files(old)
     strip_settings_hooks()
 
 
@@ -585,19 +525,10 @@ def apply(team, say=True, skills=True, plugin_cmds=True, persona=True):
         os.chmod(copy, 0o755)
     if not os.path.exists(os.path.join(BRAIN, "coding.md")):
         shutil.copy(os.path.join(plug, "brain", "coding.md"), os.path.join(BRAIN, "coding.md"))
-    if not skills:
-        pass                                                  # bootstrap from inside the plugin: it already provides them
-    elif mode() == "plugin":
-        if plugin_cmds:                                       # a refresh after a sync needs none: the plugin loads in place
-            apply_plugin(team, tdir)
-    else:
-        apply_files(plug, t)
-    if mode() == "plugin" or not skills:                      # files mode records the servers inside apply_files
-        st = installed()
-        write(STATE, json.dumps({"skills": [], "agents": [], "mcp": apply_mcp(t, st, tdir)}, indent=2) + "\n")
+    if skills and plugin_cmds:                                # a refresh after a sync needs none: the plugin loads in place;
+        apply_plugin(team, tdir)                              # a bootstrap from inside the plugin already provides them
+    write(STATE, json.dumps({"skills": [], "agents": [], "mcp": apply_mcp(t, installed(), tdir)}, indent=2) + "\n")
     write(os.path.join(BRAIN, "team"), team + "\n")
-    if not os.path.exists(os.path.join(BRAIN, "team-mode")):
-        write(os.path.join(BRAIN, "team-mode"), mode() + "\n")   # the mode this install runs in, written down once
     write(os.path.join(TEAMS, ".applied"), json.dumps({"team": team, "digest": digest(plug), "version": t.get("version", "")}) + "\n")
     chats = os.path.expanduser("~/chats/CLAUDE.md")          # regenerated by the session-start hook from the new rules
     if os.path.exists(chats) and read(chats)[:40].startswith("<!-- generated by the brain"):
@@ -605,13 +536,13 @@ def apply(team, say=True, skills=True, plugin_cmds=True, persona=True):
     ignore = os.path.join(BRAIN, ".gitignore")                # the old whole-brain history never tracks the team clones
     if os.path.isdir(os.path.join(BRAIN, ".git")):
         lines = read(ignore).splitlines()
-        for l in ("teams/", "team-sources/", "team", "team-mode", "persona.md"):
+        for l in ("teams/", "team-sources/", "team", "persona.md"):
             if l not in lines:
                 lines.append(l)
         write(ignore, "\n".join(lines) + "\n")
     if say:
         mcp = list(installed().get("mcp") or [])
-        print(f"team {team} ({t.get('title', team)}) active, {mode()} mode: {len(t.get('skills', []))} skills, "
+        print(f"team {team} ({t.get('title', team)}) active: {len(t.get('skills', []))} skills, "
               f"{len(t.get('agents', []))} agents" + (f", MCP {', '.join(mcp)}" if mcp else "")
               + f", version {t.get('version', '?')}; knowledge in {k}" + (" (your notes moved into it)" if first else ""))
         print("Start a new Claude session (or a new chat in the web UI) to work with it.")
@@ -628,7 +559,6 @@ def bootstrap(team, source):
     links, persona / rules, the core rules as ~/.claude/brain/main.md with one import line in the person's CLAUDE.md,
     and this tool in ~/.claude/tools. No `claude plugin` command (the plugin is installed and enabled already)."""
     add(team, source, quiet=True)
-    write(os.path.join(BRAIN, "team-mode"), "plugin\n")
     t = apply(team, say=False, skills=False, persona=False)
     plug = plugin_dir(team_dir(team))
     shutil.copy(os.path.join(plug, "brain", "CLAUDE.md"), os.path.join(BRAIN, "main.md"))
@@ -646,7 +576,7 @@ def bootstrap(team, source):
 
 
 def refresh():
-    """the whole apply again (after `paas-team mode plugin`, or a repository update): plugin commands included"""
+    """the whole apply again (after a repository update): plugin commands included"""
     t = active()
     if not t:
         die("no active team (paas-team use <team>)")
@@ -662,7 +592,7 @@ def relink():
     if not t:
         return
     apply(t, say=False, plugin_cmds=False)
-    if mode() == "plugin" and shutil.which("claude"):
+    if shutil.which("claude"):
         claude("update", f"paas-brain-{t}@paas-brain-{t}")
 
 
@@ -729,9 +659,8 @@ def off():
         else:
             os.makedirs(p, exist_ok=True)
     old = installed()
-    if mode() == "plugin" and shutil.which("claude"):
+    if shutil.which("claude"):
         claude("disable", f"paas-brain-{t}@paas-brain-{t}")
-    remove_team_files(old)                                     # copies of files mode, if any are left
     apply_mcp({"mcp": []}, old, team_dir(t))
     write(STATE, json.dumps({"skills": [], "agents": [], "mcp": {}}) + "\n")
     os.remove(os.path.join(BRAIN, "team"))
@@ -747,7 +676,6 @@ def candidates(kind):
     ext = "" if kind == "skills" else ".md"
     act = active()
     roots = [(os.path.join(HOME, kind), "mine"), (os.path.join(os.environ.get("PAAS_MARKET", "/opt/paas/marketplace"), "items", kind), "marketplace")]
-    team_put = set(installed().get(kind, []))                 # files mode: the active team's copies sit in ~/.claude too
     for base in (SOURCES, TEAMS):
         for d in sorted(glob.glob(os.path.join(base, "*", "paas-brain-*", kind))):
             roots.append((d, "team " + d.split(os.sep)[-3]))
@@ -761,9 +689,7 @@ def candidates(kind):
             ok = os.path.isfile(os.path.join(path, "SKILL.md")) if kind == "skills" else (n.endswith(ext) and os.path.isfile(path))
             if ok and NAME.match(name.lower()) and name not in seen:
                 seen.add(name)
-                if src == "mine" and name in team_put and not personal(kind, name):
-                    src = "team " + act                       # the team's copy, not the person's
-                elif src == "mine" and f"{kind[:-1]}/{name}" in jload(os.path.join(HOME, "paas-market.json")).get("installed", {}):
+                if src == "mine" and f"{kind[:-1]}/{name}" in jload(os.path.join(HOME, "paas-market.json")).get("installed", {}):
                     src = "marketplace"
                 out.append({"name": name, "source": src, "path": path})
     return out
@@ -882,7 +808,7 @@ def status():
         print("team: none active" + (f" ({len(d['teams'])} available: " + ", ".join(x["name"] for x in d["teams"]) + ")" if d["teams"] else ""))
         return
     t = next(x for x in d["teams"] if x["name"] == act)
-    print(f"team: {act} ({t['title']}), version {t['version']}, {d['mode']} mode, {t['skills']} skills, {t['agents']} agents")
+    print(f"team: {act} ({t['title']}), version {t['version']}, {t['skills']} skills, {t['agents']} agents")
     tdir = team_dir(act)
     if t["remote"]:
         rc, out = git(tdir, "rev-list", "--left-right", "--count", "HEAD...@{upstream}", timeout=5)
@@ -948,9 +874,6 @@ def main(a):
         set_remote(a[1], a[2])
     elif cmd == "off":
         off()
-    elif cmd == "mode" and len(a) >= 2 and a[1] in ("files", "plugin"):
-        write(os.path.join(BRAIN, "team-mode"), a[1] + "\n")
-        print(f"mode {a[1]}" + (" (paas-team refresh applies it)" if active() else ""))
     elif cmd == "needs-refresh":
         sys.exit(0 if needs_refresh() else 1)
     else:

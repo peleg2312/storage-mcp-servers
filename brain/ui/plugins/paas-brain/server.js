@@ -121,13 +121,9 @@ async function teamCommit(repo, team, kind, name) {
 }
 // plugin mode: the active team's skills and agents are read in place from the clone, not copied into ~/.claude.
 // "claude" on PATH is looked up once at startup; the team and its mode are read per call (they can change while the UI runs).
-const HAS_CLAUDE = [...(process.env.PATH || '').split(path.delimiter), path.join(HOME, '.local', 'bin'), '/usr/local/bin', '/usr/bin']
-  .some((d) => d && fs.existsSync(path.join(d, 'claude')));
 function pluginTeam() {
   const team = (read(path.join(BRAIN, 'team'), 200) || '').trim();
   if (!TEAM_NAME.test(team)) return null;
-  const mode = (read(path.join(BRAIN, 'team-mode'), 50) || '').trim();
-  if (!(mode === 'plugin' || (!mode && HAS_CLAUDE))) return null;
   const dir = path.join(BRAIN, 'teams', team, `paas-brain-${team}`);
   return fs.existsSync(dir) ? { team, dir } : null;
 }

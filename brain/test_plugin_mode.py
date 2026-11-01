@@ -48,7 +48,7 @@ def plugins():
 run(["claude", "mcp", "add", "docs-local", "-s", "user", "--", "python3", "/nonexistent/mcp_stdio.py"])
 assert "docs-local" in run(["claude", "mcp", "list"], ok=False)
 o = run([sys.executable, TOOL, "use", "nas"])
-assert "plugin mode" in o, o
+assert "team nas (NAS / file storage) active" in o, o
 st = plugins()
 assert st.get("paas-brain-nas@paas-brain-nas") == "enabled", st
 mcps = run(["claude", "mcp", "list"], ok=False)
@@ -80,7 +80,6 @@ r = subprocess.run(["sh", os.path.join(R, "brain", "install.sh"), "--no-library"
 assert r.returncode == 0, (r.stdout[-1500:], r.stderr[-800:])
 settings = json.load(open(os.path.join(home2, ".claude", "settings.json")))
 assert not settings.get("hooks"), settings.get("hooks")
-assert open(os.path.join(home2, ".claude", "brain", "team-mode")).read().strip() == "plugin"
 assert "paas-brain-nas@paas-brain-nas" in run(["claude", "plugin", "list"], e=env2)
 print("install.sh plugin mode ok")
 
@@ -113,6 +112,5 @@ subprocess.run([sys.executable, os.path.join(R, "brain", "merge_settings.py"), o
 assert json.load(open(os.path.join(home3, ".claude", "settings.json")))["hooks"]
 run([sys.executable, TOOL, "use", "san"], e=dict(env, HOME=home3))
 assert not json.load(open(os.path.join(home3, ".claude", "settings.json"))).get("hooks"), "settings hooks stripped: the plugin runs them"
-assert open(os.path.join(home3, ".claude", "brain", "team-mode")).read().strip() == "plugin"
 print("guard twin ok")
 shutil.rmtree(work, ignore_errors=True)

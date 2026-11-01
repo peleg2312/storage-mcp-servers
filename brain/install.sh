@@ -118,13 +118,13 @@ mkdir -p "$USER_DST/brain/inbox"                   # your own documents (add-doc
 # the brain as a git history (notes-check.py commits each saved note); big or private things stay out of it
 if command -v git >/dev/null 2>&1 && [ ! -d "$USER_DST/brain/.git" ]; then
   ( cd "$USER_DST/brain" && git init -q \
-    && printf 'library/\ninbox/\nplugins/\nteams/\nteam-sources/\nteam\nteam-mode\npersona.md\n.nudged/\n.brain-index/\n*.bak\n*.db\n.DS_Store\nnotes.md\nenvironment.md\nmain.md\nstorage.md\ncoding.md\ndatabases.example.json\n' > .gitignore \
+    && printf 'library/\ninbox/\nplugins/\nteams/\nteam-sources/\nteam\npersona.md\n.nudged/\n.brain-index/\n*.bak\n*.db\n.DS_Store\nnotes.md\nenvironment.md\nmain.md\nstorage.md\ncoding.md\ndatabases.example.json\n' > .gitignore \
     && git add -A >/dev/null 2>&1 \
     && git -c user.name=brain -c user.email=brain@localhost commit -q -m 'brain: initial' >/dev/null 2>&1 ) \
     || echo "note: could not start a git history in $USER_DST/brain (skipped)"
 fi
 if [ -d "$USER_DST/brain/.git" ]; then                 # an older history learns new ignore lines
-  for l in library/ inbox/ plugins/ teams/ team-sources/ team team-mode persona.md .nudged/ .brain-index/ '*.bak' '*.db' .DS_Store notes.md environment.md main.md storage.md coding.md databases.example.json; do
+  for l in library/ inbox/ plugins/ teams/ team-sources/ team persona.md .nudged/ .brain-index/ '*.bak' '*.db' .DS_Store notes.md environment.md main.md storage.md coding.md databases.example.json; do
     grep -qxF -- "$l" "$USER_DST/brain/.gitignore" 2>/dev/null || echo "$l" >> "$USER_DST/brain/.gitignore"
   done
   # notes.md and environment.md are personal (management IPs, owners); main.md, storage.md, coding.md are the
@@ -138,9 +138,8 @@ fi
 # into ~/.claude/brain/teams/<team> and switched on; `paas-team use <other>` changes team later, `paas-team` shows the state.
 if [ -n "$TEAM" ]; then
   mkdir -p "$HOME/.local/bin" && ln -sf "$DST/tools/paas-team" "$HOME/.local/bin/paas-team"
-  # the team is the Claude Code plugin wherever claude is installed (the same install as every laptop); without claude the
-  # skills are copied into ~/.claude and the hooks come from settings.json
-  if command -v claude >/dev/null 2>&1; then echo plugin > "$USER_DST/brain/team-mode"; else echo files > "$USER_DST/brain/team-mode"; fi
+  # the team is the Claude Code plugin paas-brain-<team>, the same install as every laptop (claude registers it; without
+  # claude the rules and knowledge are switched now and the plugin at the next `paas-team use`)
   # every team of this clone as a local source (~480 KB each), so `paas-team use <other>` works offline later
   python3 "$HERE/teams/publish.py" --all --to "$USER_DST/brain/team-sources" >/dev/null
   if [ -n "$TEAM_SOURCE" ]; then
@@ -275,7 +274,7 @@ if [ -n "$PROJECT" ]; then
   # shellcheck disable=SC2086
   python3 "$HERE/merge_settings.py" "$DST/settings.json" --hooks-dir '"$CLAUDE_PROJECT_DIR"/.claude/hooks' --banner-dir "$DST/banner" --mcpjson docs-local $SERVERS
 else
-  NOHOOKS=""; [ -n "$TEAM" ] && [ "$(cat "$USER_DST/brain/team-mode" 2>/dev/null)" = plugin ] && NOHOOKS="--no-hooks"   # the plugin runs them
+  NOHOOKS=""; [ -n "$TEAM" ] && NOHOOKS="--no-hooks"   # with a team the plugin paas-brain-<team> runs the hooks
   # shellcheck disable=SC2086
   python3 "$HERE/merge_settings.py" "$DST/settings.json" $NOHOOKS $SERVERS
   sh "$HERE/multiuser/setup-chats.sh" "$DST/hooks/session-start.py"

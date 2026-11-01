@@ -27,7 +27,9 @@ for t in ("san", "nas"):   # the stand-in remotes accept pushes (GitLab is bare;
 env = dict(os.environ, HOME=home, PAAS_TEAMS=os.path.join(work, "sources"), PAAS_MARKET=os.path.join(work, "nomarket"))
 env.pop("CLAUDE_HOME", None)
 os.makedirs(os.path.join(home, ".claude", "brain"), exist_ok=True)
-open(os.path.join(home, ".claude", "brain", "team-mode"), "w").write("files\n")
+fake = os.path.join(home, "fakebin"); os.makedirs(fake)                     # a stand-in claude: the plugin commands are logged, not run
+open(os.path.join(fake, "claude"), "w").write("#!/bin/sh\necho \"$@\" >> \"$HOME/claude.log\"\n"); os.chmod(os.path.join(fake, "claude"), 0o755)
+env["PATH"] = fake + os.pathsep + env["PATH"]
 proc = subprocess.Popen(["node", SERVER], env=env, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
 line = proc.stdout.readline()
 port = json.loads(line)["port"]
@@ -49,7 +51,8 @@ try:
     assert call("GET", "team")["active"] == "san"
     ov = call("GET", "overview")
     srcs = {s["dir"]: s["source"] for s in ov["skills"]}
-    assert srcs.get("zoning-audit") == "team", srcs
+    assert srcs.get("zoning-audit") == "team", srcs            # listed from the team's plugin in the clone, not copied
+    assert "plugin install paas-brain-san@paas-brain-san" in open(os.path.join(home, "claude.log")).read()
     # the team's git remote (the stand-in source) is reported
     san = next(x for x in call("GET", "team")["teams"] if x["name"] == "san")
     assert san["remote"] == os.path.join(work, "sources", "san") and "powermax" in san["mcp"], san

@@ -52,7 +52,7 @@ cp "$SRC/tools/vendor/"*.whl "$DST/tools/vendor/"
 
 # an older laptop install kept the whole brain as one git history; the team clone holds it now (teams/ never tracked there)
 if [ -d "$B/.git" ]; then
-  for l in teams/ team-sources/ team team-mode persona.md; do grep -qxF -- "$l" "$B/.gitignore" 2>/dev/null || echo "$l" >> "$B/.gitignore"; done
+  for l in teams/ team-sources/ team persona.md; do grep -qxF -- "$l" "$B/.gitignore" 2>/dev/null || echo "$l" >> "$B/.gitignore"; done
 fi
 
 # Documentation library: same steps as brain/install.sh (library/join.sh checks SHA256SUMS and unpacks the parts)
@@ -73,7 +73,6 @@ if [ -d "$B/library" ]; then      # this repo's server code over the library, as
 fi
 
 echo "== team $TEAM: the plugin paas-brain-$TEAM and the team's knowledge folder"
-echo plugin > "$B/team-mode"                          # skills and hooks come from the plugin (no managed settings on a laptop)
 python3 "$HERE/brain/teams/publish.py" --all --to "$B/team-sources" >/dev/null   # every team of this clone, for `paas-team use <other>` offline
 if [ -n "$TEAM_SOURCE" ]; then
   python3 "$DST/tools/paas-team" add "$TEAM" "$TEAM_SOURCE"

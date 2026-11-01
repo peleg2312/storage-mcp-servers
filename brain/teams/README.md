@@ -175,9 +175,7 @@ path loads in place, so a sync brings new skills to the next session with no upd
 disabled. This is the same install on the VM and on every laptop: skills are `/paas-brain-<team>:<skill>`, the hooks and
 `docs-local` come with the plugin. On the multi-user VM the managed settings run every brain hook for every account
 (enforced, cannot be switched off) and the plugin's own copies step aside when they see that twin, so no hook runs twice
-and an account without a team is covered too. A machine
-without the `claude` command falls back to **files mode**: skills and agents copied into `~/.claude` and hooks from
-settings.json (`paas-team mode files|plugin`). Under a second either way. The first switch moves the person's existing notes into the
+and an account without a team is covered too. A switch takes a few seconds. The first switch moves the person's existing notes into the
 team's knowledge folder; a person's own skills (`.user-skill`, `agents/.user-agents`) and the skills and agents they
 added from the marketplace (`paas-market add skill/<name>`, the Market tab; recorded in `~/.claude/paas-market.json`) are
 never removed or overwritten, so everyone has the team's set plus their own choices. Each team has its own memory:

@@ -905,11 +905,7 @@ def defaults():
         ids = []
     st = load_state()
     given = set(st.get("defaults_given", []))              # offered once: what a person removed stays removed
-    try:                                                   # team plugin mode: the plugin carries docs-local itself
-        plugin_mode = open(os.path.join(CLAUDE, "brain", "team-mode")).read().strip() == "plugin"
-    except OSError:
-        plugin_mode = os.path.exists(os.path.join(CLAUDE, "brain", "team")) and bool(shutil.which("claude"))
-    skip = {"mcp/docs-local"} if plugin_mode else set()
+    skip = {"mcp/docs-local"} if os.path.exists(os.path.join(CLAUDE, "brain", "team")) else set()   # a team plugin carries docs-local
     add(parse_ids([i for i in ids if i not in st["installed"] and i not in given and i not in skip]), token="")
     st = load_state()                                      # add() saved its own copy
     st["defaults_given"] = sorted(given | (set(ids) - skip))

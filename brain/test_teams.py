@@ -22,7 +22,14 @@ os.makedirs(home)
 env = dict(os.environ, HOME=home, PAAS_TEAMS=os.path.join(work, "sources"))
 env.pop("CLAUDE_HOME", None)
 os.makedirs(os.path.join(home, ".claude", "brain"), exist_ok=True)
-open(os.path.join(home, ".claude", "brain", "team-mode"), "w").write("files\n")   # the copy behaviour under test; plugin mode below
+# a stand-in claude on the PATH records the plugin commands (marketplace add, install, enable, disable, mcp remove) instead
+# of running them; the real plugin mechanics are covered by test_plugin_mode.py
+fake_claude = os.path.join(home, "fakebin")
+os.makedirs(fake_claude)
+open(os.path.join(fake_claude, "claude"), "w").write("#!/bin/sh\necho \"$@\" >> \"$HOME/claude.log\"\n")
+os.chmod(os.path.join(fake_claude, "claude"), 0o755)
+env["PATH"] = fake_claude + os.pathsep + env["PATH"]
+claude_log = lambda: open(os.path.join(home, "claude.log")).read() if os.path.exists(os.path.join(home, "claude.log")) else ""
 
 
 def run(cmd, e=env, ok=True, inp=None):
@@ -120,19 +127,22 @@ assert git(os.path.join(brain, "teams", "san"), "remote", "get-url", "origin").s
 assert open(os.path.join(brain, "team")).read().strip() == "san"
 assert "SAN expert" in open(os.path.join(brain, "persona.md")).read()
 skills = lambda: sorted(os.listdir(os.path.join(home, ".claude", "skills")))
-assert "zoning-audit" in skills() and "mine" in skills() and "share-access-check" not in skills()
-assert os.path.isfile(os.path.join(home, ".claude", "agents", "powermax-analyst.md"))
+assert skills() == ["mine"], skills()                        # the plugin carries the team's skills: nothing is copied into ~/.claude
+assert not os.path.exists(os.path.join(home, ".claude", "agents", "powermax-analyst.md"))
+log = claude_log()
+assert f"plugin marketplace add {os.path.join(brain, 'teams', 'san')}" in log and "plugin install paas-brain-san@paas-brain-san --scope user" in log, log
+assert "mcp remove -s user docs-local" in log, log            # one docs-local only: the plugin's
 o = team("use", "nas")
 assert "team nas" in o, o
 assert "NAS" in open(os.path.join(brain, "persona.md")).read() and "NAS" in open(os.path.join(brain, "storage.md")).read().split("\n")[0]
-assert "share-access-check" in skills() and "zoning-audit" not in skills() and "mine" in skills()
-assert not os.path.exists(os.path.join(home, ".claude", "agents", "powermax-analyst.md"))
-assert os.path.isfile(os.path.join(home, ".claude", "agents", "nas-analyst.md"))
+assert skills() == ["mine"]
+log = claude_log()
+assert "plugin install paas-brain-nas@paas-brain-nas --scope user" in log and "plugin disable paas-brain-san@paas-brain-san" in log, log
 assert "my core fact" not in open(os.path.join(brain, "notes.md")).read(), "nas has its own personal notes"
 assert not os.path.exists(os.path.join(brain, "notes", "powermax.md"))
 team("use", "san")
 assert open(os.path.join(brain, "notes.md")).read() == "- my core fact\n" and os.path.exists(os.path.join(brain, "notes", "powermax.md"))
-assert "zoning-audit" in skills() and "share-access-check" not in skills()
+assert "plugin disable paas-brain-nas@paas-brain-nas" in claude_log()
 st = team()
 assert st.startswith("team: san (") and "other teams: nas" in st, st
 print("switch ok")
@@ -178,17 +188,18 @@ subprocess.run(["git", "-C", clone, "-c", "user.name=t", "-c", "user.email=t@x",
 subprocess.run(["git", "-C", clone, "push", "-q"], check=True)
 o = team("sync")
 assert "team san: updated to version" in o, o
-assert "New line from the team." in open(os.path.join(home, ".claude", "skills", "zoning-audit", "SKILL.md")).read()
+assert "New line from the team." in open(os.path.join(brain, "teams", "san", "paas-brain-san", "skills", "zoning-audit", "SKILL.md")).read()   # the plugin loads in place
+assert "plugin update paas-brain-san@paas-brain-san" in claude_log()
 assert run([sys.executable, TOOL, "needs-refresh"], ok=False)[0] == 1
 print("hook, sync and refresh ok")
 
-# 5. a marketplace skill of a team-skill name is the person's: never overwritten or removed by a switch
+# 5. a marketplace skill of a team-skill name is the person's: a switch or refresh never touches ~/.claude/skills
 os.makedirs(os.path.join(home, ".claude", "skills", "docs-lookup"), exist_ok=True)
 open(os.path.join(home, ".claude", "skills", "docs-lookup", "SKILL.md"), "w").write("---\nname: docs-lookup\ndescription: market copy\n---\n")
 open(os.path.join(home, ".claude", "paas-market.json"), "w").write(json.dumps({"installed": {"skill/docs-lookup": "1", "agent/Explore": "1"}}))
 team("refresh")
 assert "market copy" in open(os.path.join(home, ".claude", "skills", "docs-lookup", "SKILL.md")).read()
-assert "docs-lookup" not in json.load(open(os.path.join(brain, "teams", ".installed.json")))["skills"]
+assert skills() == ["docs-lookup", "mine"], skills()
 # the team repository carries what a laptop needs on its own: bin/paas-team and the core rules in the plugin (no installer script)
 src = os.path.join(work, "sources", "nas")
 assert os.path.isfile(os.path.join(src, "bin", "paas-team")) and not os.path.exists(os.path.join(src, "install-team.sh"))
@@ -257,6 +268,7 @@ json.dump(d0, open(os.path.join(home, ".claude", "paas-market.json"), "w"))
 os.makedirs(os.path.join(brain, "library"), exist_ok=True); open(os.path.join(brain, "library", "docs.db"), "w").close()   # this machine has the library
 # the team's servers ride in the plugin's .mcp.json (built from the team's mcp.json; only filled-in ones): nothing per person,
 # the person's own marketplace server stays theirs, servers still on placeholders are named in a note
+open(os.path.join(home, "claude.log"), "w").close()
 o = team("use", "san")
 assert "note: MCP powermax: no address or token" in o and "docs-local" not in o.split("note:")[1], o
 have = lambda: sorted(k for k in json.load(open(os.path.join(home, ".claude", "paas-market.json")))["installed"] if k.startswith("mcp/"))
@@ -270,13 +282,9 @@ assert next(x for x in lst["teams"] if x["name"] == "san")["mcp_added"] == ["doc
 json.dump({"skills": [], "agents": [], "mcp": {"powermax": "team", "mds": "market"}}, open(os.path.join(brain, "teams", ".installed.json"), "w"))
 d0 = json.load(open(os.path.join(home, ".claude", "paas-market.json"))); d0["installed"]["mcp/mds"] = "1"
 json.dump(d0, open(os.path.join(home, ".claude", "paas-market.json"), "w"))
-fake_claude = os.path.join(home, "fakebin")
-os.makedirs(fake_claude, exist_ok=True)
-open(os.path.join(fake_claude, "claude"), "w").write("#!/bin/sh\necho \"$@\" >> \"$HOME/claude.log\"\n")
-os.chmod(os.path.join(fake_claude, "claude"), 0o755)
-env_c = dict(env, PATH=fake_claude + os.pathsep + env["PATH"])
+env_c = env
 subprocess.run([sys.executable, TOOL, "use", "nas"], capture_output=True, text=True, env=env_c, timeout=120, check=True)
-assert "mcp remove -s user powermax" in open(os.path.join(home, "claude.log")).read()
+assert "mcp remove -s user powermax" in claude_log()
 assert have() == ["mcp/kuparashit"], have()
 print("team mcp ok")
 
@@ -301,9 +309,9 @@ assert not os.path.exists(os.path.join(nasdir, "paas-brain-nas", "agents", "onta
 servers = json.load(open(os.path.join(nasdir, "mcp.json")))
 assert servers["ontap"]["headers"]["Authorization"] == "Bearer s3cr3t-token-value", servers
 assert servers["harvest"]["url"].startswith("http://h.example") and servers["harvest"]["headers"]["Authorization"] == "Bearer TOKEN", servers   # no token given: the placeholder stays
-assert "NAS person" in open(os.path.join(brain, "persona.md")).read() and "zoning-audit" in skills(), "active team re-applied"
+assert "NAS person" in open(os.path.join(brain, "persona.md")).read(), "active team re-applied"
 assert "brain tab: team nas edited" in git(os.path.join(work, "sources", "nas"), "log", "--format=%s")   # pushed to the remote
-assert "mcp" not in open(os.path.join(home, "claude.log")).read(), open(os.path.join(home, "claude.log")).read()
+assert "mcp add-json" not in claude_log(), claude_log()   # the re-apply enables the plugin; no server is registered per person
 pm = plug_mcp("nas")
 assert sorted(pm) == ["docs-local", "ontap"] and pm["ontap"] == {"type": "http", "url": "http://ontap.example:8000/mcp", "headers": {"Authorization": "Bearer s3cr3t-token-value"}}, pm
 assert json.load(open(os.path.join(brain, "teams", ".installed.json")))["mcp"] == {}
@@ -335,15 +343,10 @@ assert os.path.isfile(os.path.join(brain, "teams", "san", "knowledge", "notes", 
 assert os.path.isfile(os.path.join(brain, "notes.md")) and not os.path.islink(os.path.join(brain, "notes.md"))
 assert not os.path.exists(os.path.join(brain, "team")) and os.path.isdir(os.path.join(brain, "teams", "san", ".git"))
 assert skills() == ["docs-lookup", "mine"], skills()
-assert sorted(os.listdir(os.path.join(home, ".claude", "agents"))) == ["Explore.md"]
+assert not os.path.exists(os.path.join(home, ".claude", "agents", "nas-analyst.md"))
 assert have() == ["mcp/kuparashit"], have()
 assert json.loads(team("list", "--json"))["active"] is None
-# an install that copied its team before team-mode existed stays in files mode when the file is missing
-os.remove(os.path.join(brain, "team-mode"))
-json.dump({"skills": ["zoning-audit"], "agents": [], "mcp": {}}, open(os.path.join(brain, "teams", ".installed.json"), "w"))
-assert json.loads(team("list", "--json"))["mode"] == "files"
-json.dump({"skills": [], "agents": [], "mcp": {}}, open(os.path.join(brain, "teams", ".installed.json"), "w"))
-open(os.path.join(brain, "team-mode"), "w").write("files\n")
+assert "plugin disable paas-brain-san@paas-brain-san" in claude_log()
 print("no team ok")
 
 # 9. the marketplace: every team's skills and agents are items; the active team's items read as added "from your team";
