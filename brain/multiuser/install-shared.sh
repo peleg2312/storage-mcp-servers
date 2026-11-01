@@ -95,6 +95,8 @@ TasksMax=${PAAS_TASKS_MAX:-512}
 EOF
 echo "per-person budget: memory high ${PAAS_MEMORY_HIGH:-${HIGH_MB}M}, max ${PAAS_MEMORY_MAX:-${MAX_MB}M} for ${PEOPLE} concurrent people (edit $ETC/limits.env, re-run)"
 install -m 755 "$HERE/paas-user" "$P/bin/paas-user"
+install -m 755 "$HERE/paas-git-credential" "$P/bin/paas-git-credential"   # the team's GitLab token (paas-user git-token) for every account's git
+mkdir -p "$ETC/git"; chmod 755 "$ETC/git"
 ln -sfn "$P/bin/paas-user" /usr/local/sbin/paas-user
 # team profiles: one repository per team under /opt/paas/teams (plugin + knowledge skeleton), the switch tool for everyone.
 # docs-search for other machines (the service below): one token for everyone, written into every team's mcp.json by the
@@ -136,6 +138,7 @@ if [ -f "$ETC/allowed-groups" ] && command -v setfacl >/dev/null 2>&1; then
     getent group "$grp" >/dev/null 2>&1 || { echo "note: group $grp (allowed-groups) is unknown here; skipped"; continue; }
     setfacl -R -m "g:$grp:rX" -m "d:g:$grp:rX" "$P/teams" "$P/marketplace" 2>/dev/null || echo "note: setfacl for $grp failed"
     setfacl -m "g:$grp:r" "$ETC/api-key" 2>/dev/null || echo "note: setfacl for $grp on the API key failed"
+    for tf in "$ETC"/git/*.token; do [ -f "$tf" ] && { setfacl -m "g:$grp:r" "$tf" 2>/dev/null || echo "note: setfacl for $grp on $tf failed"; }; done
   done
 fi
 systemctl daemon-reload 2>/dev/null || true
@@ -180,6 +183,7 @@ fi
 # team's knowledge index refreshed from the team repositories (clones under /var/lib/paas-docs). Laptops put it into the team's
 # mcp.json (the editor); VM users keep docs-local.
 setfacl -R -m u:paas-market:rX "$P/teams" "$P/library" 2>/dev/null || chmod -R o+rX "$P/library"
+for tf in "$ETC"/git/*.token; do [ -f "$tf" ] && { chown root:paas-users "$tf"; chmod 640 "$tf"; setfacl -m u:paas-market:r "$tf" 2>/dev/null || true; }; done   # the docs service pulls the team repositories with it
 cp "$BRAIN/../docs-search-mcp/docs_index.py" "$P/library/docs_index.py" 2>/dev/null || true   # the HTTP server indexes team knowledge with it
 install -m 644 "$HERE/paas-docs.service" /etc/systemd/system/paas-docs.service
 if [ -f "$ETC/market/paas-ui.crt" ]; then

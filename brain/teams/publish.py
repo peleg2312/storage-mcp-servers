@@ -42,12 +42,11 @@ CERTS = ("/opt/paas/paas-ui.crt", "/etc/paas/market/paas-ui.crt")   # the VM's c
 
 IGNORE = "*.bak\n.DS_Store\n._*\n__pycache__/\n"
 CATALOG = os.path.join(BRAIN, "marketplace", "mcp.json")        # the servers' shapes (HOST / TOKEN placeholders)
-IDENT = ["-c", "user.name=brain", "-c", "user.email=brain@localhost"]
 
 
 def git(repo, *args, check=False, timeout=120):
-    r = subprocess.run(["git", "-C", repo] + IDENT + list(args), capture_output=True, text=True, timeout=timeout,
-                       env=dict(os.environ, GIT_TERMINAL_PROMPT="0"))
+    r = subprocess.run(["git", "-C", repo] + list(args), capture_output=True, text=True, timeout=timeout,
+                       env=dict(os.environ, GIT_TERMINAL_PROMPT="0", **paas_team.identity(repo)))
     if check and r.returncode:
         sys.exit(f"publish.py: git {' '.join(args)} failed: {(r.stderr or r.stdout).strip()[-300:]}")
     return r

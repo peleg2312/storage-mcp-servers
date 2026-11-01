@@ -79,7 +79,7 @@ and reclaims their own processes first and, at the hard limit, ends their larges
   3. Provision on first use: when `/etc/paas/users/<user>.env` did not exist yet (first sign-in) or the home has no
      `.claude/brain`, run `/opt/paas/bin/paas-user provision <user>` (60 s timeout; a failure is logged, never fatal).
      It makes the home when sssd has not (`mkhomedir_helper`), links the brain, installs the UI plugins and default
-     marketplace items. No team is chosen: the person starts with their own rules and picks a team in the Brain tab.
+     marketplace items, and adds the team GitLab credential helper to the account's git config (`paas-user git-token`). No team is chosen: the person starts with their own rules and picks a team in the Brain tab.
      Then make sure the user's instance runs: create `/etc/paas/users/<user>.env` if missing, `systemctl start
      paas-ui@<user>`, poll `http://127.0.0.1:<port>/health` up to 60 s.
   4. Get the browser token: `POST http://127.0.0.1:<port>/api/auth/login` with the same username + password

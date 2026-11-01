@@ -32,8 +32,8 @@ const oneLine = (v, max) => String(v || '').replace(/\s+/g, ' ').trim().slice(0,
 
 const read = (p, max = 200000) => { try { return fs.readFileSync(p, 'utf8').slice(0, max); } catch { return null; } };
 const json = (p) => { try { return JSON.parse(fs.readFileSync(p, 'utf8')); } catch { return null; } };
-const run = (cmd, args, timeout = 120000) => new Promise((resolve) => {
-  execFile(cmd, args, { timeout, maxBuffer: 20 * 1024 * 1024, env: { ...process.env, GIT_TERMINAL_PROMPT: '0', PATH: `${HOME}/.local/bin:${process.env.PATH}` } },
+const run = (cmd, args, timeout = 120000, extraEnv = {}) => new Promise((resolve) => {
+  execFile(cmd, args, { timeout, maxBuffer: 20 * 1024 * 1024, env: { ...process.env, GIT_TERMINAL_PROMPT: '0', PATH: `${HOME}/.local/bin:${process.env.PATH}`, ...extraEnv } },
     (err, stdout, stderr) => resolve({ ok: !err, out: `${stdout}${stderr}`.trim() }));
 });
 
@@ -49,7 +49,19 @@ function repoDir() {
   }
   return fs.existsSync(path.join(BRAIN, '.git')) ? BRAIN : null;
 }
-const git = (repo, args) => run('git', ['-C', repo, '-c', 'user.name=brain', '-c', 'user.email=brain@localhost', ...args], 5000);
+// who commits from here: the person's own git identity when configured, else <login>@<host>, so the team repository's
+// history says who wrote each note (the push may authenticate as the team's GitLab token through their credential helper)
+let identEnv = null;
+async function identity() {
+  if (identEnv) return identEnv;
+  const r = await run('git', ['config', '--get-regexp', '^user\\.(name|email)$'], 3000);
+  const have = new Set(r.out.split('\n').map((l) => l.split(' ')[0]));
+  const name = os.userInfo().username; const email = `${name}@${os.hostname()}`;
+  identEnv = { ...(have.has('user.name') ? {} : { GIT_AUTHOR_NAME: name, GIT_COMMITTER_NAME: name }),
+    ...(have.has('user.email') ? {} : { GIT_AUTHOR_EMAIL: email, GIT_COMMITTER_EMAIL: email }) };
+  return identEnv;
+}
+const git = async (repo, args) => run('git', ['-C', repo, ...args], 5000, await identity());
 // the repository holding file p and p's path inside it (null: no repository, or p lies outside it).
 // Memory files are symlinks into a team repository, so compare real paths; a deleted file keeps its real directory.
 function locate(p) {

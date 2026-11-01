@@ -19,6 +19,7 @@ import os
 import re
 import subprocess
 import sys
+from urllib.parse import urlparse
 
 BRAIN = os.path.join(os.environ.get("CLAUDE_HOME") or os.path.expanduser("~/.claude"), "brain")   # as the installers and paas-team
 MAX_LINES = 15
@@ -132,28 +133,92 @@ def index():
     return "knowledge/INDEX.md"
 
 
+_IDENT = None
+
+
+def identity():
+    """Who commits: the person's own git identity when they configured one, else <login>@<host>, so the team repository's
+    history says who wrote each note (the push itself may authenticate as the team's GitLab token)."""
+    global _IDENT
+    if _IDENT is None:
+        try:
+            r = subprocess.run(["git", "-C", REPO, "config", "--get-regexp", r"^user\.(name|email)$"], stdin=subprocess.DEVNULL,
+                               capture_output=True, text=True, timeout=5)
+            have = {l.split()[0] for l in r.stdout.splitlines() if l.strip()}
+        except Exception:
+            have = set()
+        import pwd
+        import socket
+        try:
+            name = pwd.getpwuid(os.getuid()).pw_name
+        except KeyError:
+            name = os.environ.get("USER") or "brain"
+        env = {}
+        if "user.name" not in have:
+            env.update(GIT_AUTHOR_NAME=name, GIT_COMMITTER_NAME=name)
+        if "user.email" not in have:
+            env.update(GIT_AUTHOR_EMAIL=f"{name}@{socket.gethostname()}", GIT_COMMITTER_EMAIL=f"{name}@{socket.gethostname()}")
+        _IDENT = env
+    return _IDENT
+
+
+MARKER = os.path.join(REPO, ".git", "paas-push-failed")      # the last push failure's reason; session start and the Team card show it
+
+
+def push(timeout=4):
+    """git push; a failure that is not a timeout leaves its reason in .git/paas-push-failed, a success removes it"""
+    rc, out = git(["push", "-q"], timeout)
+    try:
+        if rc == 0:
+            if os.path.exists(MARKER):
+                os.remove(MARKER)
+        elif rc != 124:
+            with open(MARKER, "w", encoding="utf-8") as f:
+                f.write(push_reason(out) + "\n")
+    except OSError:
+        pass
+    return rc
+
+
+def push_reason(out):
+    """one line a person can act on, from git's complaint"""
+    low = out.lower()
+    rc, url = git(["remote", "get-url", "origin"], 3)
+    u = url.strip() if rc == 0 else ""
+    host = (urlparse(u).hostname or "") if "://" in u else (u.split("@", 1)[1].split(":", 1)[0] if "@" in u and ":" in u else "")
+    last = re.sub(r"://[^/@]+@", "://", (out.strip().splitlines() or ["no answer"])[-1])[:160]
+    if any(k in low for k in ("authentication failed", "could not read username", "terminal prompts disabled", "permission denied",
+                              "access denied", "http basic", " 403", " 401")):
+        return (f"no GitLab credential for {host or 'the remote'}: root runs `paas-user git-token {host or '<host>'}` once for everyone, "
+                "or you store your own git credential")
+    if any(k in low for k in ("could not resolve host", "unable to access", "connection refused", "timed out", "network is unreachable",
+                              "does not appear to be a git repository", "no such file")):
+        return f"team repository unreachable ({host or u or 'no remote'}): {last}"
+    if "rejected" in low or "non-fast-forward" in low or "protected branch" in low:
+        return f"rejected by GitLab: {last}"
+    return last
+
+
 def commit(message, rel=None):
     """Brain history: git add + commit, 4 s each, every error swallowed. Not a repository: nothing happens."""
     if not os.path.isdir(os.path.join(REPO, ".git")):
         return
-    ident = ["-c", "user.name=brain", "-c", "user.email=brain@localhost"]
     try:
         idx = index()
         extra = ["--", rel, idx] if rel and idx else (["--", rel] if rel else [])
         held = [] if rel else unclean()               # a whole-tree commit never carries a file that still holds a secret
         if held:
             extra = ["--", "."] + [":!" + h for h in held]
-        for cmd in (["add", "-A"] + extra, ident + ["commit", "-q", "-m", message]):
-            subprocess.run(["git", "-C", REPO] + cmd, stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL,
-                           stderr=subprocess.DEVNULL, timeout=4)
+        git(["add", "-A"] + extra, 4)
+        git(["commit", "-q", "-m", message], 4)
         if upstream():       # a failed push is retried by the next --sync or session start; never a credential prompt
-            rc = git(["push", "-q"], 4)[0]
+            rc = push(4)
             if rc not in (0, 124):                   # rejected: a teammate pushed first; take theirs, then push again
                 rc = git(["pull", "--rebase", "--autostash", "-q"], 10)[0]
                 if rc == 124 or (rc and not settle_index()):
                     git(["rebase", "--abort"], 10)   # a real clash: the next --sync reports it
                 else:
-                    rc = git(["push", "-q"], 4)[0]
+                    rc = push(4)
             if rc == 0:
                 notify_docs()
     except Exception:
@@ -198,9 +263,8 @@ def unclean():
 def git(args, timeout=15):
     """(exit code, stdout+stderr) of a git command in the brain's repository; 124 on timeout."""
     try:
-        r = subprocess.run(["git", "-C", REPO, "-c", "user.name=brain", "-c", "user.email=brain@localhost"] + args,
-                           stdin=subprocess.DEVNULL, capture_output=True, text=True, timeout=timeout,
-                           env=dict(os.environ, GIT_TERMINAL_PROMPT="0"))
+        r = subprocess.run(["git", "-C", REPO] + args, stdin=subprocess.DEVNULL, capture_output=True, text=True, timeout=timeout,
+                           env=dict(os.environ, GIT_TERMINAL_PROMPT="0", **identity()))
         return r.returncode, (r.stdout + r.stderr).strip()
     except Exception as e:
         return 124, str(e)
@@ -284,8 +348,14 @@ def sync():
         return 0
     if rc and git(["diff", "--name-only", "--diff-filter=U"], 5)[1] and not settle_index():
         return conflict()
-    git(["push", "-q"], 15)                          # offline is not an error
-    print(counts())
+    rc = push(15)                                    # offline is not an error, but it is said
+    line = counts()
+    if rc not in (0, 124):
+        try:
+            line += "; push failed: " + open(MARKER, encoding="utf-8").read().strip()
+        except OSError:
+            line += "; push failed"
+    print(line)
     return 0
 
 

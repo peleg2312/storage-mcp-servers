@@ -53,6 +53,16 @@ the VM; `git clone` is not needed. When the repository is unreachable, the hook 
 instead and tries again next session. Plugins stay read-only content in Claude Code's cache; the hook is what lets this one
 contribute.
 
+## GitLab access from the VM
+
+Nobody signs in to GitLab on the VM. Root stores one project (or group) access token per GitLab host with `paas-user git-token
+<host>` (role Developer, scope write_repository); `paas-user provision` puts the shared credential helper
+(`/opt/paas/bin/paas-git-credential`) into every account's git config, so the notes hook's pushes, `paas-team` and the Brain
+tab's commits, and the docs service's pulls all authenticate with it (https urls). A person's own helper, listed first, wins.
+Commits carry the person (`<login>@<vm>`, or their own git identity when configured), so GitLab history says who wrote each
+note. A failed push leaves its reason in `.git/paas-push-failed`; `--sync` prints it, so the Team card and session start show it.
+Laptops use the person's own GitLab login.
+
 ## MCP servers per team
 
 The team repository's `mcp.json` holds the team's live MCP servers with address and token (`{"powermax": {"type": "http",

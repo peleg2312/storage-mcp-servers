@@ -11,6 +11,8 @@
 #   paas-user lock|unlock <name>  block / allow signing in (lock also ends their UI, sessions and processes)
 #   paas-user remove <name> [--delete-home]   remove the account and its UI (home kept unless --delete-home)
 #   paas-user provision <name>|--all          re-apply the shared links, UI plugins and default items (after updates)
+#   paas-user git-token <host> [<user>]   store the team's GitLab token for <host> (stdin, or asked): every account's git, the
+#                                 hooks and the docs service push and pull the team repositories with it (https urls)
 #   paas-user list [--json]       everyone, with port, locked and running
 set -eu
 export PATH="/usr/local/sbin:/usr/sbin:/sbin:$PATH"     # useradd / usermod / chpasswd live in sbin; the UI calls this with a short PATH
@@ -37,6 +39,16 @@ set_team() {        # the team profile is the person's own (paas-team runs as th
 }
 
 team_of() { h=$(home_of "$1"); if [ -n "$h" ] && [ -s "$h/.claude/brain/team" ]; then head -n1 "$h/.claude/brain/team"; else echo none; fi; }
+
+git_token_acl() {   # a token file: root writes it; group paas-users, the allowed directory groups and the docs service read it
+  chown root:paas-users "$1"; chmod 640 "$1"
+  command -v setfacl >/dev/null 2>&1 || return 0
+  setfacl -m u:paas-market:r "$1" 2>/dev/null || true
+  [ -f /etc/paas/allowed-groups ] || return 0
+  grep -v '^#' /etc/paas/allowed-groups | sed 's/[[:blank:]]*$//; s/^[[:blank:]]*//' | grep -v '^$' | grep -vx paas-users | while read -r grp; do
+    getent group "$grp" >/dev/null 2>&1 && setfacl -m "g:$grp:r" "$1" 2>/dev/null || true
+  done
+}
 
 ask_password() {    # into $a: one line from stdin when it is not a terminal; else asked twice. Checked before any account is made
   if [ -t 0 ]; then
@@ -162,6 +174,10 @@ for p in "$P"/ui-plugins/*/; do
   rm -rf "$HOME/.claude-code-ui/plugins/$n"; cp -R "$p" "$HOME/.claude-code-ui/plugins/$n"
 done
 PAAS_MARKET=$P/marketplace "$P/bin/paas-market" defaults >/dev/null 2>&1 || echo "note: default marketplace items not added (is claude installed?)"
+# GitLab: the team token root stored (paas-user git-token) answers for its hosts through this helper, after any helper of their own
+if command -v git >/dev/null 2>&1 && [ -x "$P/bin/paas-git-credential" ] && ! git config --global --get-all credential.helper 2>/dev/null | grep -qxF "$P/bin/paas-git-credential"; then
+  git config --global --add credential.helper "$P/bin/paas-git-credential"
+fi
 EOS
   # no team is chosen for anyone: a person starts with their own rules and picks a team in the Brain tab (or root: paas-user team)
   return 0
@@ -216,6 +232,17 @@ case "$cmd" in
     rm -f "$ETC/$u.env" "$ETC/$u.locked"
     rm -rf "$P/marketplace/contrib/$u"                        # what they shared leaves the marketplace (copies people added stay)
     echo "removed $u${2:+ (home deleted)}" ;;
+  git-token)
+    host=${1:-}; echo "$host" | grep -Eq '^[a-z0-9][a-z0-9.:_-]*$' || die "usage: paas-user git-token <gitlab host[:port]> [<user name>]   (the token on stdin, or asked)"
+    user=${2:-paas}
+    if [ -t 0 ]; then
+      printf 'GitLab token for %s (not shown): ' "$host"; stty -echo 2>/dev/null || true; IFS= read -r tok; stty echo 2>/dev/null || true; echo
+    else IFS= read -r tok; fi
+    tok=$(printf '%s' "$tok" | tr -d '[:space:]'); [ -n "$tok" ] || die "no token given"
+    mkdir -p /etc/paas/git; chmod 755 /etc/paas/git
+    ( umask 077; printf '%s:%s\n' "$user" "$tok" > "/etc/paas/git/$host.token" )
+    git_token_acl "/etc/paas/git/$host.token"
+    echo "GitLab token for $host stored (/etc/paas/git/$host.token): every account, the hooks and the docs service push and pull with it (https urls with that host)" ;;
   provision)
     if [ "${1:-}" = --all ]; then for f in "$ETC"/*.env; do [ -f "$f" ] && { share_dir "$(basename "$f" .env)"; provision "$(basename "$f" .env)"; }; done
     else valid "${1:-}"; share_dir "$1"; provision "$1"; fi

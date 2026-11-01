@@ -165,10 +165,17 @@ diffutils hostname sssd realmd oddjob oddjob-mkhomedir adcli samba-common-tools`
    `sh brain/multiuser/install-shared.sh` again so the marketplace and the docs service use that certificate.
 4. Active Directory: join (section below), then `/etc/paas/allowed-groups` (who may sign in). Nobody gets a team at sign-in:
    each person picks one in the Brain tab (Team card, one click) or works without one.
-5. GitLab: one empty project per team, default branch `main`, protected so that only the maintainers who run publish push to
-   `paas-brain-<team>/`, `team.json` and `mcp.json` (a CODEOWNERS file with those paths; members need Developer on `knowledge/`).
-   Then, from this checkout on the VM: `python3 brain/teams/publish.py san --to <san url>` and the same for `nas`, and
-   `sh brain/multiuser/install-shared.sh` once more (it records each team's url in /opt/paas/teams and republishes there on every update).
+5. GitLab: one empty project per team, default branch `main`, every member Developer. (On GitLab Free a Developer can then also
+   change the plugin folder: CODEOWNERS gates merge requests only, path rules are a paid feature. Keep publish.py as the only
+   writer of `paas-brain-<team>/` by habit, or split the plugin into its own repository later.) One token for the VM: in the
+   project (or the group) Settings, Access tokens, role Developer, scope `write_repository`; store it with
+   `paas-user git-token gitlab.example.com` (paste the token; the host exactly as in the https clone url, with the port if any).
+   From then on every account's git, the notes hooks and the docs service push and pull with it, and nobody signs in to GitLab on
+   the VM; each commit still carries the person's name (`<login>@<vm>`, or their own git identity when they set one). Laptops use
+   the person's own GitLab login, as for any clone.
+   Then, from this checkout on the VM: `python3 brain/teams/publish.py san --to https://gitlab.example.com/storage/brain-san.git`
+   and the same for `nas`, and `sh brain/multiuser/install-shared.sh` once more (it records each team's url in /opt/paas/teams and
+   republishes there on every update). A push that fails shows its reason in the Team card's sync line and at session start.
 6. The teams' MCP servers: Brain tab, Team card, Edit (address and token per server; saved into the team repository's `mcp.json`,
    built into the plugin's `.mcp.json` and pushed, so every member's Claude connects them at the next session). Or `paas-team edit
    <team>` with the same JSON on stdin. A server left on its placeholders is not connected and is named in a note at a switch.

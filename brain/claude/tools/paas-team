@@ -46,7 +46,32 @@ SOURCES = os.environ.get("PAAS_TEAMS") or ("/opt/paas/teams" if os.path.isdir("/
 STATE = os.path.join(TEAMS, ".installed.json")             # skills / agents the active team put into ~/.claude
 NAME = re.compile(r"^[a-z][a-z0-9_-]{0,31}$")
 LINKS = ("notes.md", "environment.md", "tool-map.md", "notes", "captures", "incidents")   # brain paths -> knowledge/
-IDENT = ["-c", "user.name=brain", "-c", "user.email=brain@localhost"]
+_IDENT = {}
+
+
+def identity(repo):
+    """Who commits: the person's own git identity when configured, else <login>@<host>, so the team repository's history
+    says who wrote what (the push may authenticate as the team's GitLab token)."""
+    if repo not in _IDENT:
+        try:
+            r = subprocess.run(["git", "-C", repo, "config", "--get-regexp", r"^user\.(name|email)$"], stdin=subprocess.DEVNULL,
+                               capture_output=True, text=True, timeout=5)
+            have = {l.split()[0] for l in r.stdout.splitlines() if l.strip()}
+        except Exception:
+            have = set()
+        import pwd
+        import socket
+        try:
+            name = pwd.getpwuid(os.getuid()).pw_name
+        except KeyError:
+            name = os.environ.get("USER") or "brain"
+        env = {}
+        if "user.name" not in have:
+            env.update(GIT_AUTHOR_NAME=name, GIT_COMMITTER_NAME=name)
+        if "user.email" not in have:
+            env.update(GIT_AUTHOR_EMAIL=f"{name}@{socket.gethostname()}", GIT_COMMITTER_EMAIL=f"{name}@{socket.gethostname()}")
+        _IDENT[repo] = env
+    return _IDENT[repo]
 
 
 def die(msg):
@@ -79,8 +104,8 @@ def jload(path, default=None):
 
 def git(repo, *args, timeout=60):
     try:
-        r = subprocess.run(["git", "-C", repo] + IDENT + list(args), capture_output=True, text=True, timeout=timeout,
-                           stdin=subprocess.DEVNULL, env=dict(os.environ, GIT_TERMINAL_PROMPT="0"))
+        r = subprocess.run(["git", "-C", repo] + list(args), capture_output=True, text=True, timeout=timeout,
+                           stdin=subprocess.DEVNULL, env=dict(os.environ, GIT_TERMINAL_PROMPT="0", **identity(repo)))
         return r.returncode, (r.stdout + r.stderr).strip()
     except Exception as e:                                   # no git, timeout
         return 124, str(e)
