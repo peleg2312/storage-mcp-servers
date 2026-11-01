@@ -34,7 +34,9 @@ ensure_home() {     # an AD account (sssd) has no home until someone makes it
 }
 
 set_team() {        # the team profile is the person's own (paas-team runs as them); a failure is a note, not an error
-  if runuser -u "$1" -- "$P/bin/paas-team" use "$2"; then return 0; fi
+  # from the account's own home: root's current directory (the checkout under /root) is closed to other accounts, and git
+  # refuses to start in a directory it cannot stat
+  if runuser -u "$1" -- sh -c 'cd "$HOME" 2>/dev/null || cd /; exec "$0" use "$1"' "$P/bin/paas-team" "$2"; then return 0; fi
   echo "note: team $2 not set for $1 (paas-team use failed)" >&2; return 1
 }
 
@@ -100,6 +102,7 @@ try: print(json.dumps({k: v for k, v in json.load(open(sys.argv[1])).get("env", 
 except Exception: print("{}")' "$(home_of root)/.claude/settings.json") \
   runuser -u "$u" -- sh -s "$P" "$u" <<'EOS'
 set -eu
+cd "$HOME" 2>/dev/null || cd /       # never root's checkout under /root: other accounts cannot stat it and git would refuse to run
 P=$1; C=$HOME/.claude
 mkdir -p "$C/brain/notes" "$HOME/storage-reports" "$HOME/chats" "$HOME/.claude-code-ui/plugins"
 for l in brain/library:library brain/storage.md:brain/storage.md brain/coding.md:brain/coding.md tools:tools banner:banner themes:themes; do
