@@ -209,7 +209,7 @@ start; laptops when Claude Code checks the marketplace. Nobody gets a team at si
 
 ## Teams: one brain per team, one account per person
 
-1. Pick the team at install time: `sh install-vm.sh --team nas` (single VM; `san` is the default and needs no flag), `sh
+1. Pick the team at install time: `sh install-vm.sh --team nas` (single VM; without the flag you get the SAN brain as plain files, no team repository), `sh
    install-laptop.sh --team nas` (laptop). Everywhere the team is the Claude Code plugin `paas-brain-<team>`, installed
    from the person's clone of the team repository, so the VM and every laptop run the identical thing (skills are
    `/paas-brain-<team>:<skill>`). `paas-team` shows the state, `paas-team use san` switches (a few seconds; start a new
@@ -237,8 +237,8 @@ start; laptops when Claude Code checks the marketplace. Nobody gets a team at si
    off leaves the teams. A change someone pushes to the team repository reaches you at your next session start or Brain tab
    opening; nothing to re-add. `paas-team use none` (Brain tab: "No team") leaves
    the teams: the team's skills go, your own stay, the rules become your own editable copies.
-6. MCP servers per team: root sets each server's address and shared token once in the Market tab; a switch adds the team's
-   servers (`team.json` "mcp") for the person and drops the previous team's. A team skill edited in the Brain tab is pushed
+6. MCP servers per team: address and token live in the team repository's `mcp.json` and are built into the plugin's
+   `.mcp.json`, so a switch connects the team's servers and drops the previous team's; nothing is registered per person. A team skill edited in the Brain tab is pushed
    to the team repository and reaches every member at their next sync; `publish.py` then refuses to overwrite it until it is
    ported into `brain/teams/<team>` (or run with `--force`). The whole team memory (notes.md, environment.md, notes/,
    captures/, incidents/, tool-map.md) is shared; reports never go to git. The team editor in the Brain tab ("Edit team")

@@ -76,7 +76,7 @@ def readme(team, remote):
             "- `mcp.json`: the team's MCP servers (address and token), built into the plugin's `.mcp.json` so every member's Claude "
             "connects them; `team.json`: the team's lists\n"
             "- `check.py` runs in CI (`.gitlab-ci.yml`) and refuses a push that carries a credential or breaks the notes format\n\n"
-            f"`paas-team` shows the state, `paas-team use <other>` switches team, `paas-team off` leaves team mode. "
+            f"`paas-team` shows the state, `paas-team use <other>` switches team, `paas-team off` leaves the teams. "
             "The docs library is not in this repository: where it is not installed (a laptop), the plugin's docs-local reaches the VM's "
             "docs-search instead (address and token come with the plugin), so the docs search works the same everywhere.\n"
             f"On the VM: `paas-team use {n}` (or the Brain tab).\n")

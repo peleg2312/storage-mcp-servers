@@ -5,7 +5,7 @@ description: Check whether a user or group can reach an SMB share or NFS export 
 # Share access check
 
 Read-only: never change a share, ACL, export rule, mapping or user. Cover every access zone / SVM / tenant
-and both protocols (storage-nas.md N1); say which were not checked.
+and both protocols (storage.md N1); say which were not checked.
 
 ## Inputs
 User or group (name and, if known, SID / UID / GID), share or export path, cluster, protocol. Missing one: ask.

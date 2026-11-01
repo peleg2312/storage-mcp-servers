@@ -28,11 +28,11 @@ environment, how to use each MCP server, and your procedures. Read-only by desig
 | Docs-leads hook | `claude/hooks/docs-leads.py` | before Claude answers a request that names a vendor, product or storage term (troubleshooting, design, best practices, "an app like NetApp snapshots", automation): up to 4 matching library documents as leads; silent for anything else |
 | Session-start hook | `claude/hooks/session-start.py` | prints the library version and document count, whether `environment.md` is filled, the notes count, whether the guard is active and a read-only reminder into every session |
 
-Skills: `brain-setup`, `brain-health`, `docs-lookup`, `identify-lun`, `unused-luns`, `decommission-check`,
+Skills: `brain-setup`, `brain-health`, `brain-learn`, `docs-lookup`, `identify-lun`, `unused-luns`, `decommission-check`,
 `trace-path`, `zoning-audit`, `fabric-health`, `datastore-latency`, `powermax-performance`,
 `ontap-performance`, `capacity-report`, `rdm-inventory`, `k8s-volume-troubleshoot`, `csm-health`,
 `powerflex-troubleshoot`, `replication-check`, `code-version-check`, `new-lun-checklist`, `morning-check`,
-`explain-error`, `change-review`, `fastapi-service`, `report-export`, `skill-creator`, `terraform` (all in `claude/skills/`).
+`explain-error`, `change-review`, `fastapi-service`, `report-export`, `handover-note`, `terraform` (all in `claude/skills/`).
 
 ## Install (on the VM that runs Claude Code)
 

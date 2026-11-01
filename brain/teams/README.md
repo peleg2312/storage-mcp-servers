@@ -7,8 +7,8 @@ their own audit trail; the team is a profile on top of the person, not a shared 
 
 | Team | Rules | Skills | Agents | Live MCP |
 |---|---|---|---|---|
-| `san` (default) | `brain/claude/brain/storage.md` | all of `brain/claude/skills` (28) | all of `brain/claude/agents` (9) | docs-local, powermax, powerflex, mds, ucsc |
-| `nas` | `brain/teams/nas/storage-nas.md` | 12 shared + 6 NAS: share-access-check, export-policy-check, quota-report, nas-replication-check, smartconnect-check, vast-view-check | Explore, docs-researcher, ontap-analyst, nas-analyst | docs-local, ontap, harvest. **No PowerScale or VAST MCP exists yet**: those skills work from output the person pastes (isi, VAST CLI / VMS) and the docs library, and say so |
+| `san` (default) | `brain/claude/brain/storage.md` | all of `brain/claude/skills` (28) | all of `brain/claude/agents` (9) | docs-local, powermax, powerflex, ontap, harvest, mds, ucsc |
+| `nas` | `brain/teams/nas/storage-nas.md` (installed as `storage.md`) | 12 shared + 6 NAS: share-access-check, export-policy-check, quota-report, nas-replication-check, smartconnect-check, vast-view-check | Explore, docs-researcher, ontap-analyst, nas-analyst | docs-local, ontap, harvest. **No PowerScale or VAST MCP exists yet**: those skills work from output the person pastes (isi, VAST CLI / VMS) and the docs library, and say so |
 
 ## Definition: `brain/teams/<team>/team.json`
 
@@ -110,8 +110,7 @@ multi-user VM shares one knowledge index per team (`/var/lib/paas-docs/<team>.db
 
 The plugin's `version` is the library version plus a fingerprint of the plugin's content (`2026.10.25b-7cbc8a20`): Claude
 Code hands a user a new copy from a git-hosted marketplace only when that string changes, so every publish with a change is
-delivered, and an unchanged republish adds no commit. A marketplace added from a local path (the VM, `paas-team` in plugin
-mode) loads the files in place at every session start. Every team repository carries `check.py` (JSON, plugin shape,
+delivered, and an unchanged republish adds no commit. A marketplace added from a local path (the VM) loads the files in place at every session start. Every team repository carries `check.py` (JSON, plugin shape,
 hooks.json and .mcp.json wrappers, skills and agents with frontmatter, team.json lists resolvable, no secrets in knowledge,
 line caps on notes.md and tool-map.md) and a `.gitlab-ci.yml` that runs it on every push; the Brain tab's edits go through
 the same file when they are committed, so a broken edit is caught at the push, not at everyone's next session.
@@ -159,13 +158,13 @@ sync retries. A conflict on the same line is aborted and named; `RUNBOOK.md` has
 `~/.claude/tools/paas-team` (laptop, single VM) or `/opt/paas/bin/paas-team` (multi-user VM; `paas-team` in PATH):
 
 ```
-paas-team                   active team, mode, remote state, other teams
+paas-team                   active team, remote state, other teams
 paas-team use nas           switch (clones the team first when needed; then start a new Claude session)
 paas-team list [--json]     local teams and the ones the VM offers
 paas-team sync              pull / push the team's knowledge; re-applies the plugin when the team updated it
-paas-team remote nas <url>  the team's GitLab repository; paas-team off: back to plain files
+paas-team remote nas <url>  the team's GitLab repository; paas-team off: no team
 ```
-`paas-team use none` leaves every team: the team's skills and agents go, the person's own and marketplace ones stay,
+`paas-team use none` leaves every team: the team's plugin is disabled (its skills, agents and MCP servers with it), the person's own and marketplace ones stay,
 the memory files become plain files and persona.md / storage.md stay as editable copies.
 
 A switch rewrites `~/.claude/brain/persona.md` and `storage.md`, repoints `notes.md`, `environment.md`, `tool-map.md`,
@@ -190,8 +189,8 @@ NAS rules and skill list are shorter, `test_budgets.py` prints both).
 - `sh install-vm.sh --team nas` / `sh brain/install.sh --team nas`: every team of the clone is published into
   `~/.claude/brain/team-sources/` (so `paas-team use <other>` works offline), the chosen one is added and switched on.
   `--team-source <git-url>` takes the team repository from GitLab instead. Without `--team` the install is the SAN brain
-  as before (plain files, no symlinks).
-- `sh install-laptop.sh [--team nas] [--team-source <url>]`: plugin mode; the pre-team `paas-brain` plugin is removed.
+  alone: plain files, no team repository, no plugin.
+- `sh install-laptop.sh [--team nas] [--team-source <url>]`: the pre-team `paas-brain` plugin is removed.
 - Multi-user VM: `install-shared.sh` publishes every team into `/opt/paas/teams/<team>` (plugins without hooks, the
   hooks are managed settings) and installs `paas-team`. Everyone starts without a team; the Team tab of the Brain tab
   switches with one click (No team / SAN / NAS), root can also set it with `paas-user team dana nas` or `paas-user add

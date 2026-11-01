@@ -17,12 +17,12 @@
 `brain/teams/publish.py` wraps the plugin into a team repository (plugin + `knowledge/`), the thing people clone and
 `claude plugin marketplace add` installs from. `sh install-laptop.sh [--team <name>]` (repository root) does it for a
 laptop: builds the team repositories into `~/.claude/brain/team-sources`, adds the chosen team
-(`~/.claude/brain/teams/<team>`), installs and enables its plugin (`paas-team` in plugin mode), and does what a
+(`~/.claude/brain/teams/<team>`), installs and enables its plugin (`paas-team use`), and does what a
 plugin cannot: the rules (`~/.claude/brain/main.md` imported from `~/.claude/CLAUDE.md`, never replacing your own),
 persona and storage rules, tools in `~/.claude/tools`, the library. Check: `claude plugin list`, `/mcp` inside claude,
 `paas-team`.
 
-The VM runs the same plugin (`paas-team` in plugin mode wherever `claude` is installed), so one install exists for
+The VM runs the same plugin (`paas-team` wherever `claude` is installed), so one install exists for
 everyone: skills are `/paas-brain-<team>:<skill>` everywhere, hooks and docs-local come with the plugin. On the multi-user
 VM the managed settings run every brain hook for every account (enforced) and the plugin's copies step aside
 (`CLAUDE_PLUGIN_ROOT` set and the managed settings naming the script), so nothing runs twice. A laptop lacks the web UI,
