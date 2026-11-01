@@ -14,8 +14,8 @@ is moving the old team accounts' notes into the team repositories, and the thing
   git repository; every saved note is committed with the person's name and pushed, every session start pulls.
 - Idle web UI instances stop after 60 minutes and restart on the next request; each person has a CPU and memory budget.
 - The packed docs library in git is still version 2026.10.25b (indexed 24 October): Dell, NetApp, Cisco, Kubernetes, five
-  VMware KB pages, no VAST. The VAST documentation, the VMware KB pages and vSphere guides, and the PowerScale Info Hub
-  papers were synced and tested on the PC on 31 October but not repacked, so a VM does not have them yet (see "Later").
+  VMware KB pages, the PowerScale Info Hub papers, no VAST. The VAST documentation and the VMware KB pages and vSphere
+  guides were synced and tested on the PC on 31 October but not repacked, so a VM does not have them yet (see "Later").
   The MCP server images are unchanged.
 
 ## What you do not need to do
@@ -81,11 +81,10 @@ can stay as shared sign-ins; once people have their own accounts, lock them: `pa
 
 ## Later, when you want
 
-- The VAST, VMware and PowerScale documents on the VM: on the PC, RUNBOOK section 1 (`sync_vast.py`, `sync_techdocs.py`,
-  `sync_web.py`, the Dell browser collector for the PowerScale Info Hub), then `docs_index.py`, `scripts/run_tests.sh` (the
-  VAST + VMware and PowerScale retrieval sets must pass) and `bundle/pack-library.sh`; commit the new `library/` parts. On the
-  VM the same upgrade command installs the new version into `/opt/paas/library` for everyone (a minute); the NAS team's
-  PowerScale and VAST skills answer from the library only from then on.
+- The VAST and VMware documents on the VM: on the PC, RUNBOOK section 1 (`sync_vast.py`, `sync_techdocs.py`, `sync_web.py`),
+  then `docs_index.py`, `scripts/run_tests.sh` (the VAST + VMware retrieval set must pass) and `bundle/pack-library.sh`; commit
+  the new `library/` parts. On the VM the same upgrade command installs the new version into `/opt/paas/library` for everyone
+  (a minute); the NAS team's VAST skills answer from the library only from then on.
 
 - AD accounts: join, then `sh brain/multiuser/install-multiuser.sh --groups "<AD groups>"` (the other flags are remembered).
 - Laptops: the three `claude plugin` lines in README.md with the team's url, with the person's own GitLab login.
