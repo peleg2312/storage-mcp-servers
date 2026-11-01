@@ -19,7 +19,8 @@ persona.md and storage.md as before.
   paas-team show <team> [--json]   the team's definition: persona, rules, skills, agents, MCP servers, what could be added
   paas-team edit <team>            change it from JSON on stdin (title, description, persona, rules, environment, skills,
                                    agents, mcp_servers {name: {url, type, token}}, remove_mcp): written into the team's
-                                   repository, committed, pushed, re-applied; the Brain tab's team editor uses it
+                                   repository (filled-in servers also into the plugin's .mcp.json), committed, pushed,
+                                   re-applied; the Brain tab's team editor uses it
   paas-team mode files|plugin      plugin (the default wherever claude is installed): the team is the Claude Code plugin
                                    paas-brain-<team>, the same install as everyone's; files: skills copied into ~/.claude,
                                    for a machine without the claude command

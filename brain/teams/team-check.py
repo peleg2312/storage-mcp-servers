@@ -72,6 +72,18 @@ for plug in plugs:
     mcp = parsed.get(os.path.join(plug, ".mcp.json"))
     if os.path.isfile(os.path.join(plug, ".mcp.json")):
         ok(".mcp.json wrapped in mcpServers", isinstance(mcp, dict) and "mcpServers" in mcp)
+        # the plugin's servers are built from the repository's mcp.json (publish.py and the team editor): docs-local plus every
+        # http server whose address and token are filled in. A hand edit of either file shows up here as a mismatch.
+        team_mcp = parsed.get(os.path.join(ROOT, "mcp.json"))
+        if isinstance(mcp, dict) and isinstance(mcp.get("mcpServers"), dict) and isinstance(team_mcp, dict):
+            def ready(c):
+                return isinstance(c, dict) and c.get("url") and not c.get("command") and "HOST" not in c["url"] and "TOKEN" not in json.dumps(c.get("headers", {}))
+            want = {"docs-local"} | {n for n, c in team_mcp.items() if n not in ("docs-local", "docs-search") and ready(c)}
+            have = set(mcp["mcpServers"])
+            ok("plugin .mcp.json matches mcp.json", want == have,
+               f"plugin has {sorted(have - want) or 'nothing extra'}, lacks {sorted(want - have) or 'nothing'}: run publish.py or the team editor, do not edit .mcp.json by hand")
+            for n in want & have - {"docs-local"}:
+                ok(f"plugin .mcp.json {n} address", mcp["mcpServers"][n].get("url") == team_mcp[n].get("url"), "the two files disagree: republish")
     for sk in files("SKILL.md", os.path.join(plug, "skills")):
         fm = front(sk)
         ok("skill " + os.path.basename(os.path.dirname(sk)), "name:" in fm and "description:" in fm, "frontmatter needs name and description")

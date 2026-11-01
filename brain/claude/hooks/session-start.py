@@ -110,7 +110,9 @@ def team_line():
     """Team mode (paas-team): which team's brain this is, and a re-apply when its repository brought a new plugin."""
     name = read(os.path.join(USER_HOME, "brain", "team")).strip()
     if not name or not re.match(r"^[a-z][a-z0-9_-]{0,31}$", name):
-        return ""
+        shared = os.environ.get("PAAS_TEAMS") or "/opt/paas/teams"           # a VM that offers teams: say how to pick one, once per session
+        offered = sorted(d for d in (os.listdir(shared) if os.path.isdir(shared) else []) if re.match(r"^[a-z][a-z0-9_-]{0,31}$", d))
+        return f"Team: none (your own rules; {', '.join(offered)} available: Brain tab, Team, one click)." if offered else ""
     tdir = os.path.join(USER_HOME, "brain", "teams", name)
     try:
         meta = json.loads(read(os.path.join(tdir, "team.json")) or "{}")

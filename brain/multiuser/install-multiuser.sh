@@ -135,6 +135,11 @@ say "[9/10] accounts"
 /opt/paas/bin/paas-user provision --all >/dev/null && note "every existing account re-provisioned (helper, plugins, rules)"
 
 say "[10/10] checks"
+for t in $(ls /opt/paas/teams 2>/dev/null); do          # an account named after a team (the old one-account-per-team setup): its notes belong to the team now
+  [ -d "/opt/paas/teams/$t" ] && id "$t" >/dev/null 2>&1 || continue
+  h=$(getent passwd "$t" | cut -d: -f6)
+  [ -n "$h" ] && [ -f "$h/.claude/brain/notes.md" ] && [ ! -s "$h/.claude/brain/team" ] && todo "paas-user team $t $t   (moves the notes of the shared account '$t' into the $t team's shared memory, once)"
+done
 for s in paas-gate paas-docs paas-market-serve; do systemctl is-active --quiet "$s" && note "$s: running" || { note "$s: NOT running (journalctl -u $s -n 30)"; todo "systemctl status $s"; }; done
 http() { python3 - "$1" <<'EOF'
 import ssl, sys, urllib.request
