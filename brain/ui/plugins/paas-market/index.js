@@ -218,7 +218,8 @@ const ACT_TEXT = { add: ['Adding...', 'Added'], remove: ['Removing...', 'Removed
 const CSS = `
 .mk .bar{margin:0 0 14px}
 .mk .bar .field{flex:1 1 280px;margin:0}
-.mk .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:12px}
+.mk .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:12px;align-items:start}
+.mk .grid.plugs{grid-template-columns:repeat(auto-fill,minmax(340px,1fr));margin-bottom:14px}.mk .sec-label{font-size:12px;font-weight:600;color:hsl(var(--muted-foreground));text-transform:uppercase;letter-spacing:.04em;margin:12px 0 8px}
 .mk .item{border:1px solid hsl(var(--border));border-radius:12px;padding:16px;background:hsl(var(--card));display:flex;flex-direction:column;gap:8px;transition:border-color .15s}
 .mk .t{font-size:14px;font-weight:600}.mk .d{color:hsl(var(--muted-foreground));font-size:13px;display:-webkit-box;-webkit-line-clamp:4;-webkit-box-orient:vertical;overflow:hidden}
 .mk .bar .mine[aria-pressed=true]{background:hsl(var(--accent));color:hsl(var(--foreground))}
@@ -242,7 +243,7 @@ const CSS = `
 .mk .tm button[aria-checked=true]::before{content:'\\2713  '}
 .mk .sec{margin-bottom:10px}.mk .sec>.sh{display:flex;align-items:center;gap:10px;width:100%;text-align:left;background:none;border:0;border-bottom:1px solid hsl(var(--border));color:inherit;font:inherit;padding:10px 2px;cursor:pointer;min-height:44px}
 .mk .sec>.sh b{font-size:14px}.mk .sec>.sh .car{display:inline-flex;transition:transform .15s;color:hsl(var(--muted-foreground))}
-.mk .sec.open>.sh .car{transform:rotate(90deg)}.mk .sec>.grid{margin-top:12px}.mk .sec:not(.open)>.grid{display:none}
+.mk .sec.open>.sh .car{transform:rotate(90deg)}.mk .sec>.body{margin-top:12px}.mk .sec:not(.open)>.body{display:none}
 .mk .viewer{width:100%;font:12.5px/1.55 ui-monospace,Menlo,monospace;min-height:260px;background:hsl(var(--background));color:inherit;border:1px solid hsl(var(--input));border-radius:10px;padding:8px 12px}
 @media (pointer:coarse){.mk .tm button{min-height:44px}.mk .acts{gap:10px}}
 @media (max-width:640px){.mk .grid,.mk .fields,.mk .types{grid-template-columns:1fr}}`;
@@ -315,7 +316,12 @@ export function mount(container, api) {
       const added = shown.filter((i) => i.added).length;
       return `<div class="sec${open ? ' open' : ''}" data-s="${esc(s)}"><button type="button" class="sh" aria-expanded="${!!open}"><span class="car" aria-hidden="true">${icon('chevron')}</span><b>${esc(title(s))}</b>
         <span class="sub">${shown.length === total ? total : `${shown.length} of ${total}`} items${added ? ` · ${added} added` : ''}${s ? ` · ${esc(s)}` : ''}</span></button>
-        <div class="grid">${shown.some((i) => i.team && i.kind === 'plugin') ? `<div class="sub" style="grid-column:1/-1">${esc(TEAM_NOTE)}</div>` : ''}${shown.map(card).join('') || `<div class="sub" style="padding:8px 0">${total ? 'Nothing matches' : 'The marketplace is empty'}</div>`}</div></div>`;
+        <div class="body">${(() => {
+          const plugs = shown.filter((i) => i.team && i.kind === 'plugin'); const rest = shown.filter((i) => !(i.team && i.kind === 'plugin'));
+          if (!shown.length) return `<div class="sub" style="padding:8px 0">${total ? 'Nothing matches' : 'The marketplace is empty'}</div>`;
+          return `${plugs.length ? `<div class="sec-label">Team plugins</div><div class="sub" style="margin-bottom:8px">${esc(TEAM_NOTE)}</div><div class="grid plugs">${plugs.map(card).join('')}</div>` : ''}
+            ${rest.length ? `${plugs.length ? '<div class="sec-label">Skills, agents and MCP servers</div>' : ''}<div class="grid">${rest.map(card).join('')}</div>` : ''}`;
+        })()}</div></div>`;
     }).join('') || emptyBlock('Try fewer words, or pick All above.', '', null, { icon: 'search', title: 'Nothing matches' }).outerHTML;
     grid.querySelectorAll('.sec>.sh').forEach((h) => h.addEventListener('click', () => {
       const sec = h.parentElement; const s = sec.dataset.s;
