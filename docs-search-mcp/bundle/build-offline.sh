@@ -19,7 +19,7 @@ HERE=$(cd "$(dirname "$0")/.." && pwd)
 WORK=${WORK:-$HERE/work}
 LIB=${LIB:-$HERE/../library}
 ENGINE=${ENGINE:-$(command -v podman || command -v docker)}
-BASE_IMAGE=${BASE_IMAGE:-docs-search-mcp:1.1}
+BASE_IMAGE=${BASE_IMAGE:-docs-search-mcp:1.2}
 FROM_LIB=0; SYNC=1
 for arg in "$@"; do
   case "$arg" in

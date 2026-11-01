@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
       - name: powermax-mcp
-        image: <registry>/powermax-mcp:2.0
+        image: <registry>/powermax-mcp:2.1
         ports:
         - containerPort: 8000
           name: http

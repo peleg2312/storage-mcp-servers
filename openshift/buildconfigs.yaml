@@ -32,7 +32,7 @@ items:
       contextDir: powermax-mcp
       sourceSecret: {name: github-source}
     strategy: {type: Docker, dockerStrategy: {dockerfilePath: Dockerfile}}
-    output: {to: {kind: ImageStreamTag, name: "powermax-mcp:2.0"}}
+    output: {to: {kind: ImageStreamTag, name: "powermax-mcp:2.1"}}
 - apiVersion: build.openshift.io/v1
   kind: BuildConfig
   metadata: {name: powerflex-mcp}
@@ -42,7 +42,7 @@ items:
       contextDir: powerflex-mcp
       sourceSecret: {name: github-source}
     strategy: {type: Docker, dockerStrategy: {dockerfilePath: Dockerfile}}
-    output: {to: {kind: ImageStreamTag, name: "powerflex-mcp:1.0"}}
+    output: {to: {kind: ImageStreamTag, name: "powerflex-mcp:1.1"}}
 - apiVersion: build.openshift.io/v1
   kind: BuildConfig
   metadata: {name: ucsc-mcp}
@@ -52,7 +52,7 @@ items:
       contextDir: ucsc-mcp
       sourceSecret: {name: github-source}
     strategy: {type: Docker, dockerStrategy: {dockerfilePath: Dockerfile}}
-    output: {to: {kind: ImageStreamTag, name: "ucsc-mcp:2.2"}}
+    output: {to: {kind: ImageStreamTag, name: "ucsc-mcp:2.3"}}
 - apiVersion: build.openshift.io/v1
   kind: BuildConfig
   metadata: {name: mds-mcp}
@@ -62,4 +62,4 @@ items:
       contextDir: mds-mcp
       sourceSecret: {name: github-source}
     strategy: {type: Docker, dockerStrategy: {dockerfilePath: Dockerfile}}
-    output: {to: {kind: ImageStreamTag, name: "mds-mcp:2.2"}}
+    output: {to: {kind: ImageStreamTag, name: "mds-mcp:2.3"}}

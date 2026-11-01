@@ -63,8 +63,8 @@ signs in again on its own.
 ## Run
 
 ```bash
-docker load -i powerflex-mcp-1.0.tar.gz     # or: docker build -t powerflex-mcp:1.0 .
-docker run -d -p 8000:8000 --env-file .env powerflex-mcp:1.0
+docker load -i powerflex-mcp-1.1.tar.gz     # or: docker build -t powerflex-mcp:1.1 .
+docker run -d -p 8000:8000 --env-file .env powerflex-mcp:1.1
 ```
 
 OpenShift:

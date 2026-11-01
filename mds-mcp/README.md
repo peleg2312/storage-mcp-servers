@@ -49,7 +49,7 @@ account. Note `MDS_<N>_VERIFY_SSL` defaults to false.
 
 ## Run
 ```bash
-docker load -i mds-mcp-2.2.tar.gz
+docker load -i mds-mcp-2.3.tar.gz
 oc create secret generic mds-mcp-env --from-env-file=.env
 oc apply -f openshift.yaml    # set the image first
 claude mcp add --transport http mds http://HOST:8000/mcp --header "Authorization: Bearer $TOKEN"

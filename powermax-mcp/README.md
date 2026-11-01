@@ -62,8 +62,8 @@ alert summaries are merged across all Unispheres and tagged with the Unisphere n
 ## Run
 
 ```bash
-docker build -t powermax-mcp:2.0 .          # or: docker load -i powermax-mcp-2.0.tar.gz
-docker run -d -p 8000:8000 --env-file .env powermax-mcp:2.0
+docker build -t powermax-mcp:2.1 .          # or: docker load -i powermax-mcp-2.1.tar.gz
+docker run -d -p 8000:8000 --env-file .env powermax-mcp:2.1
 ```
 
 OpenShift:

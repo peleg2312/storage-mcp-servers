@@ -126,7 +126,7 @@ terms, read before answering, cite title + URL and the version, and to check the
 
 ```bash
 oc create secret generic docs-search-env --from-env-file=.env    # MCP_AUTH_TOKENS, GITHUB_TOKEN
-# set <registry>/docs-search-mcp:1.1 in openshift.yaml (3 places)
+# set <registry>/docs-search-mcp:1.2 in openshift.yaml (3 places)
 oc apply -f openshift.yaml && oc create job docs-sync-now --from=cronjob/docs-sync
 ```
 Needs HTTPS to github.com, api.github.com, www.dell.com, dl.dell.com, www.delltechnologies.com.

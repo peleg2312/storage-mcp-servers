@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
       - name: ucsc-mcp
-        image: <registry>/ucsc-mcp:2.2
+        image: <registry>/ucsc-mcp:2.3
         ports:
         - containerPort: 8000
           name: http

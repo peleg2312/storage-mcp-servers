@@ -72,8 +72,8 @@ Local / stdio (no token): `MCP_TRANSPORT=stdio python3.12 server.py` (fastmcp ne
 not the VM's system Python 3.9; use the container there).
 
 ```bash
-docker load -i ucsc-mcp-2.2.tar.gz     # or: docker build -t ucsc-mcp:2.2 .
-docker run -d -p 8000:8000 --env-file .env ucsc-mcp:2.2
+docker load -i ucsc-mcp-2.3.tar.gz     # or: docker build -t ucsc-mcp:2.3 .
+docker run -d -p 8000:8000 --env-file .env ucsc-mcp:2.3
 ```
 
 OpenShift:
