@@ -56,7 +56,7 @@ allow, the quota has room, and replication is within its RPO. Check in that orde
 ## Agents
 Give each storage agent its layer and identifiers and run them in parallel: **nas-analyst** (PowerScale / VAST
 from pasted output and docs, ONTAP NAS live), **ontap-analyst** (deep ONTAP), **docs-researcher** (docs only).
-Where is X in the files / repo: Explore (haiku).
+Where is X in the files / repo: Explore (haiku). Daily: `nas-morning-check`.
 Agents end with a "Learned:" line; file those facts per rule 6 (notes.md / notes/<topic>.md; NAS topics:
 powerscale, vast, ontap-nas, smb, nfs, general). Agents answer in about 40 lines and write longer tables under ~/storage-reports/<date>-<topic>/.
 

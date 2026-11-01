@@ -80,7 +80,7 @@ run("notes-check.py", args=["--commit", "incident redacted"])
 assert "incidents/2026/x.md" in git("ls-files"), git("ls-files")
 print("brain git history ok")
 
-# shared brain: a bare remote, a second person joins, hook commits push, --sync, conflict leaves a usable tree
+# a git remote on the brain folder (the team-join step): a bare remote, a second person joins, hook commits push, --sync, conflict leaves a usable tree
 gi = lambda d, *a: subprocess.run(["git", "-C", d, *a], capture_output=True, text=True).stdout
 bare = os.path.join(home, "shared.git")
 subprocess.run(["git", "init", "-q", "--bare", "-b", "main", bare], check=True)

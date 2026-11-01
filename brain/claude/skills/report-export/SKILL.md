@@ -1,6 +1,6 @@
 ---
 name: report-export
-description: Charts, graphs and Excel files from any storage data - throughput / IOPS / latency over time, capacity per array / aggregate / pool, top talkers, any table (unused LUNs, zoning audit, paths) as a formatted .xlsx. Draws a text chart in the answer and writes an HTML report (hover for values) and an Excel workbook with native charts. Triggers - "graph", "chart", "plot", "trend", "over the last N days", "excel", "xlsx", "export", "report I can send"
+description: Charts, graphs and Excel files from any storage data - throughput / IOPS / latency over time, capacity per array / aggregate / pool, top talkers, any table (unused LUNs, zoning audit, paths, quotas, shares) as a formatted .xlsx. Draws a text chart in the answer and writes an HTML report (hover for values) and an Excel workbook with native charts. Triggers - "graph", "chart", "plot", "trend", "over the last N days", "excel", "xlsx", "export", "report I can send"
 ---
 # Charts and Excel (`~/.claude/tools/report.py`)
 

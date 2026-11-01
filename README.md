@@ -32,7 +32,7 @@ UCS  trace_service_profile_san   vHBA WWPN, fabric, VSAN, adapter link, FI uplin
 | Single VM (python3 + the git clone, nothing else): brain, library, `docs-local`, web UI | `sh install-vm.sh` | `git pull && sh install-vm.sh` |
 | Multi-user VM (shared `/opt/paas`, read-only guard enforced, one Linux or Active Directory account per person) | `sh brain/multiuser/install-multiuser.sh --gitlab-host ... --team san=<url> --team nas=<url> --groups ...` (as root; every step in order, asks for the API key and the GitLab token once) | `git pull`, then the same command without flags |
 
-Then start `claude` and run `/brain-setup`. `install-laptop.sh --no-library` skips the library; `--brain-remote <url>` shares the brain's git history.
+Then start `claude` and run `/brain-setup`. `install-laptop.sh --no-library` skips the library.
 
 **Teams.** `--team san` (default) or `--team nas` on any install picks a team profile ([`brain/teams`](brain/teams/README.md)): its
 persona, storage rules, skills, agents and a knowledge folder the team shares through one git repository per team

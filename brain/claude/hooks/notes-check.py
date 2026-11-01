@@ -7,7 +7,7 @@ IPs) is skipped; environment.md and tool-map.md may hold management IPs. A file 
 brain is also committed to the brain's git history ('brain: <path>') when ~/.claude/brain/.git exists; silent.
   notes-check.py --scan        scan all notes, captures and incidents, exit 1 on findings
   notes-check.py --commit MSG  commit everything changed in the brain (silent, exit 0)
-  notes-check.py --remote URL  set up the shared brain: origin = URL, pull what the team has, push ours (idempotent)
+  notes-check.py --remote URL  join the team repository at URL: origin = URL, pull what the team has, push ours (idempotent)
   notes-check.py --sync        pull --rebase and push the shared brain; 'brain: in sync' / 'N ahead, M behind'
   notes-check.py --stale N     list '- ' note lines whose first YYYY-MM-DD is older than N days (informational)
   notes-check.py --index       rewrite knowledge/INDEX.md of the team repository (done at every commit too)

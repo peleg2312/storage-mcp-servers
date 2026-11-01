@@ -23,7 +23,8 @@
     "quota-report",
     "nas-replication-check",
     "smartconnect-check",
-    "vast-view-check"
+    "vast-view-check",
+    "nas-morning-check"
   ],
   "agents": [
     "Explore",

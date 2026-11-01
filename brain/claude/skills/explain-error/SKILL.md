@@ -1,6 +1,6 @@
 ---
 name: explain-error
-description: Explain an error, alert, event or log line (PowerMax, ONTAP EMS, PowerFlex, MDS, UCS, ESXi, Trident, CSM) and give its fix, from the docs and bug trackers; the live system is checked only when he asks. Triggers - "what does this error mean", "explain EMS ...", "what is SIO02...", a pasted alert or log line
+description: Explain an error, alert, event or log line (PowerMax, ONTAP EMS, PowerFlex, OneFS, VAST, MDS, UCS, ESXi, Trident, CSM) and give its fix, from the docs and bug trackers; the live system is checked only when he asks. Triggers - "what does this error mean", "explain EMS ...", "what is SIO02...", a pasted alert or log line
 ---
 # Explain an error
 
@@ -12,6 +12,7 @@ description: Explain an error, alert, event or log line (PowerMax, ONTAP EMS, Po
    - ONTAP EMS: product `ontap-ems-<version>` matching the cluster version (9.15.1 → `ontap-ems-9151`,
      `ontap-ems-9111` … `ontap-ems-9181`; `ontap-ems` when unknown); the symptom: `kb-ontap`
      (NetApp KB incl. CONTAP-* bugs; "Partial article" = solution needs a support login).
+   - PowerScale / OneFS events and `isi` errors: `dell` / `powerscale`, `infohub-powerscale`, `kb`; VAST alarms: `vast` / `docs`, `kb`.
    - Trident: `trident-issues`, `trident-changelog`, `trident-<release>` of the installed version.
    - CSM / CSI: `dell/kb`, `dell/csm` (the url version matching the installed CSM), `csi-powermax`,
      `csi-powerflex`, `csi-powerscale`, `csm-replication`, `csm-operator` and their fixes: the `*-prs` products (see docs-lookup).

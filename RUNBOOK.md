@@ -209,53 +209,32 @@ start; laptops when Claude Code checks the marketplace. Nobody gets a team at si
 
 ## Teams: one brain per team, one account per person
 
-1. Pick the team at install time: `sh install-vm.sh --team nas` (single VM; without the flag you get the SAN brain as plain files, no team repository), `sh
-   install-laptop.sh --team nas` (laptop). Everywhere the team is the Claude Code plugin `paas-brain-<team>`, installed
-   from the person's clone of the team repository, so the VM and every laptop run the identical thing (skills are
-   `/paas-brain-<team>:<skill>`). `paas-team` shows the state, `paas-team use san` switches (a few seconds; start a new
-   Claude session or a new chat afterwards), `paas-team list` the teams available.
-2. Publish each team's repository once in GitLab (an empty project, default branch `main`): `python3 brain/teams/publish.py
-   nas --to git@gitlab.example.com:storage/brain-nas.git`. It holds the plugin (`paas-brain-nas/`) and `knowledge/` (notes/, captures/,
-   incidents/, tool-map.md). Members join it with `paas-team remote nas <url>` (or `install.sh --team nas --brain-remote <url>`,
-   or `--team-source <url>` to install straight from it); their notes hook pushes every saved note there and every session
-   start pulls. Re-run the publish after a `git pull` of this repository: members get the new skills at their next sync.
-3. Multi-user VM: `sh brain/multiuser/install-shared.sh` publishes every team into `/opt/paas/teams/<team>`, republishes
-   each team that has a GitLab url recorded straight to that project (so `git pull && install-shared.sh` updates every
-   member's plugin at their next sync), and installs `paas-team`. The managed settings run every brain hook for every
-   account (enforced); the team plugin's own copies step aside on the VM, so a person has the same plugin as on a laptop and
-   nothing runs twice. Record a team's GitLab url there: `python3 brain/teams/publish.py nas --to /opt/paas/teams/nas --remote <url>`
-   (members then clone from GitLab, and fall back to the VM copy when it is unreachable). Nobody gets a team automatically:
-   people pick one in the Brain tab (one click), or root sets it with `paas-user team dana nas` / `paas-user add dana --team nas`;
-   a person is on one team at a time and changes at will.
-4. Laptop without this repository: `claude plugin marketplace add <team url> && claude plugin install
-   paas-brain-nas@paas-brain-nas` (the standard way; the plugin sets the team up at its first session: knowledge clone, rules,
-   `paas-team`). No GitLab from the laptop: copy a clone of the team repository over and add its folder as the marketplace. The
-   docs library is not part of it: the plugin's docs-local bridges to the VM's docs-search, or `install-laptop.sh` installs it.
-5. Beyond the team: everyone adds skills and agents from the Market tab (`paas-market add skill/<name>`) or writes their own
-   in the Brain tab; a team switch never removes or overwrites those. The Market tab shows what the team plugin already
-   gives you as added ("from your team") and lists every team as a plugin item: turning one on switches your team, turning it
-   off leaves the teams. A change someone pushes to the team repository reaches you at your next session start or Brain tab
-   opening; nothing to re-add. `paas-team use none` (Brain tab: "No team") leaves
-   the teams: the team's skills go, your own stay, the rules become your own editable copies.
-6. MCP servers per team: address and token live in the team repository's `mcp.json` and are built into the plugin's
-   `.mcp.json`, so a switch connects the team's servers and drops the previous team's; nothing is registered per person. A team skill edited in the Brain tab is pushed
-   to the team repository and reaches every member at their next sync; `publish.py` then refuses to overwrite it until it is
-   ported into `brain/teams/<team>` (or run with `--force`). The whole team memory (notes.md, environment.md, notes/,
-   captures/, incidents/, tool-map.md) is shared; reports never go to git. The team editor in the Brain tab ("Edit team")
-   changes title, persona, rules, environment template, skills, agents and the MCP servers with their tokens (stored in the
-   team repository's mcp.json by your decision: read-only tokens, rotate when someone leaves).
-7. Rolling the plugin out to many laptops without each person typing the two commands: put the team marketplace into the
-   laptops' managed settings (`/etc/claude-code/managed-settings.json` on Linux, the equivalent path on macOS):
-   `{"extraKnownMarketplaces": {"paas-brain-nas": {"source": {"source": "git", "url": "<team url>"}, "autoUpdate": true}},
-   "enabledPlugins": {"paas-brain-nas@paas-brain-nas": true}}`. The plugin's version carries a fingerprint of its content, so a
-   republish always reaches the laptops (Claude Code hands out a new copy only when the version string changes); people
-   without auto-update run `claude plugin update paas-brain-nas@paas-brain-nas` or `/reload-plugins`. Each team repository
-   also carries `check.py` and a `.gitlab-ci.yml` that runs it: JSON, plugin shape, skills, no secrets in knowledge, caps.
-8. Pushing is automatic on every path (the notes hook after each saved file, the Brain tab after each save, every session
-   start and Brain tab opening syncs); the shared GitLab repository is always current. Publish a new plugin version with
-   `publish.py <team> --to <url>` after a `git pull` of this repository: members pick it up at their next sync.
-9. A new team: a folder `brain/teams/<name>/` with `team.json` and `persona.md` (plus its own rules file, skills, agents),
-   `python3 brain/test_budgets.py` and `python3 brain/test_teams.py` green, then publish. `brain/teams/README.md` has the schema.
+Everywhere the team is the Claude Code plugin `paas-brain-<team>`, enabled from the person's clone of the team repository (the
+plugin plus `knowledge/`), so the VM and every laptop run the identical thing: skills are `/paas-brain-<team>:<skill>`, the hooks
+and `docs-local` come with the plugin, every saved note is committed and pushed, every session start pulls. A person is on one
+team at a time; a switch takes seconds and never touches the skills and agents they added themselves (Market tab, Brain tab).
+Only the way a machine gets the team differs:
+
+| Machine | Get the team | Switch, state |
+|---|---|---|
+| Multi-user VM | the owner's checklist above; nobody has a team at sign-in | Brain tab, Team, one click (No team / SAN / NAS), then a new chat; root: `paas-user team dana nas` |
+| Single VM from this repository | `sh install-vm.sh --team nas` (without `--team`: the SAN brain as plain files, no team repository); join the team's GitLab project with `paas-team remote nas <url>` | `paas-team` (state), `paas-team use san`, `paas-team list`, then a new Claude session |
+| Laptop | `claude plugin marketplace add <team url> && claude plugin install paas-brain-nas@paas-brain-nas && claude`, with the person's own GitLab login; no GitLab there: copy a clone of the team repository over and add its folder instead of the url. `sh install-laptop.sh --team nas` from this repository adds the docs library; without it the plugin's `docs-local` bridges to the VM's `docs-search` | the same `paas-team` (copied to `~/.claude/tools` at the first session) |
+
+**Publishing and updates.** Once per team: an empty GitLab project (default branch `main`, every member Developer) and
+`python3 brain/teams/publish.py nas --to <url>`. After every `git pull` of this repository run it again (the multi-user installer
+does it for every team): members get the new plugin at their next session start, laptops when Claude Code checks the marketplace
+(`claude plugin update paas-brain-nas@paas-brain-nas`, `/reload-plugins`, or auto-update; the plugin's version carries a fingerprint
+of its content, so every change is delivered). Many laptops without anyone typing: the team marketplace in the laptops' managed
+settings (`/etc/claude-code/managed-settings.json` on Linux, the equivalent path on macOS):
+`{"extraKnownMarketplaces": {"paas-brain-nas": {"source": {"source": "git", "url": "<team url>"}, "autoUpdate": true}},
+"enabledPlugins": {"paas-brain-nas@paas-brain-nas": true}}`.
+
+**The team's MCP servers** are set once in the Brain tab, Team, More, Edit a team (address and token per server, into the team
+repository's `mcp.json` and the plugin's `.mcp.json`; readable by the team's GitLab members by your decision, so read-only tokens,
+rotated when someone leaves). **A new team**: a folder `brain/teams/<name>/` with `team.json` and `persona.md` (plus its own rules,
+skills, agents), `python3 brain/test_budgets.py` and `python3 brain/test_teams.py` green, then publish. The team definition, the
+Brain tab's team editor, what the Market tab shows, the CI gate and the knowledge flow: `brain/teams/README.md`.
 
 ## Active Directory accounts on the multi-user VM
 
@@ -289,15 +268,6 @@ the notes stay per person.
    carries the people active now (about 100-150 MB each), not the headcount. The minutes and the gate's port are in
    `/etc/paas/gate.env` (`GATE_IDLE_MINUTES`, 0 disables; `GATE_PORT`), kept across updates; `systemctl restart paas-gate`
    after a change. Local accounts keep working as before (`paas-user add`).
-
-## Sharing the brain through GitLab (no team profile)
-
-1. In GitLab create an **empty** project (default branch `main`, no README). Give everyone who should see the team knowledge the **Developer** role.
-2. Install with its url: `sh install-vm.sh` then `sh brain/install.sh --brain-remote <url>` (or `BRAIN_REMOTE=<url>`; re-running is safe). Use an ssh url with the person's own key, or an https url with a token kept by git's credential helper (`git config --global credential.helper store`), never in the brain or the url written into notes.
-3. Shared: `notes/<topic>.md`, `captures/`, `incidents/`, `tool-map.md`. Personal, never in the history: `notes.md` and `environment.md` (management IPs, owners). The library, inbox and plugins stay local.
-4. Every saved note is committed and pushed (offline is fine, the next sync retries); every session start pulls with rebase and says `shared brain: in sync` or `N ahead, M behind`. By hand: `python3 ~/.claude/hooks/notes-check.py --sync`. The Status tab shows the same under Notes.
-5. Conflict (two people changed the same line): the sync aborts and names the files. In `~/.claude/brain` run `git pull --rebase`, edit the marked files, `git add` them, `git rebase --continue`, then `notes-check.py --sync`.
-6. The code repository itself: `git remote add gitlab <url> && git push --mirror gitlab`, or GitLab's pull mirroring from GitHub. It is about 10 GB because the library parts are in its history.
 
 ## 3. Afterwards
 

@@ -4,9 +4,6 @@
 #   sh install.sh --project <dir>      into <dir> only: <dir>/CLAUDE.md, <dir>/.claude/{skills,agents,hooks,brain,banner,
 #                                      settings.json} and <dir>/.mcp.json - the brain exists only inside that folder
 #   sh install.sh --no-library         skip the documentation library (when docs-search runs on the cluster)
-#   sh install.sh --brain-remote <url>  share the team knowledge (notes/, captures/, incidents/, tool-map.md) through a git
-#                                      remote, e.g. an internal GitLab project (or env BRAIN_REMOTE); notes.md and
-#                                      environment.md stay personal. Idempotent.
 #   sh install.sh --team <name>        a team profile (brain/teams/<name>: san, nas, ...; or env BRAIN_TEAM): its rules,
 #                                      skills, agents and knowledge folder, switchable later with `paas-team use <other>`
 #   sh install.sh --team-source <url|dir>  take the team from a published team repository (GitLab) instead of this clone
@@ -18,7 +15,6 @@ SRC=$HERE/claude
 USER_DST=${CLAUDE_HOME:-$HOME/.claude}
 PROJECT=""
 NO_LIBRARY=0
-BRAIN_REMOTE=${BRAIN_REMOTE:-}
 TEAM=${BRAIN_TEAM:-}
 TEAM_SOURCE=""
 while [ $# -gt 0 ]; do
@@ -28,9 +24,6 @@ while [ $# -gt 0 ]; do
     --team=*) TEAM=${1#--team=} ;;
     --team-source) [ $# -ge 2 ] || { echo "usage: install.sh --team-source <url|dir>"; exit 1; }; shift; TEAM_SOURCE=$1 ;;
     --team-source=*) TEAM_SOURCE=${1#--team-source=} ;;
-    --brain-remote) [ $# -ge 2 ] || { echo "usage: install.sh --brain-remote <url>"; exit 1; }
-                    shift; BRAIN_REMOTE=$1 ;;
-    --brain-remote=*) BRAIN_REMOTE=${1#--brain-remote=} ;;
     --project) [ $# -ge 2 ] || { echo "usage: install.sh [--project <dir>] [--no-library]"; exit 1; }
                shift; mkdir -p "$1"; PROJECT=$(cd "$1" && pwd) ;;
     --project=*) PROJECT=${1#--project=}; mkdir -p "$PROJECT"; PROJECT=$(cd "$PROJECT" && pwd) ;;
@@ -154,10 +147,6 @@ if [ -n "$TEAM" ]; then
     python3 "$DST/tools/paas-team" add "$TEAM"
   fi
   python3 "$DST/tools/paas-team" use "$TEAM"
-  [ -z "$BRAIN_REMOTE" ] || { python3 "$DST/tools/paas-team" remote "$TEAM" "$BRAIN_REMOTE" \
-    && python3 "$DST/hooks/notes-check.py" --remote "$BRAIN_REMOTE" || echo "note: the shared team remote is not set up yet (see the line above)"; }
-elif [ -n "$BRAIN_REMOTE" ] && [ -d "$USER_DST/brain/.git" ]; then   # shared team knowledge (hooks are copied above)
-  python3 "$DST/hooks/notes-check.py" --remote "$BRAIN_REMOTE" || echo "note: the shared brain is not set up yet (see the line above)"
 fi
 if [ "$NO_LIBRARY" = 0 ] && [ -f "$LIB/VERSION" ] && ls "$LIB"/docs-library-*.part-* >/dev/null 2>&1; then
   if [ "$(cat "$LIB/VERSION")" != "$(cat "$LIBDST/VERSION" 2>/dev/null || true)" ]; then

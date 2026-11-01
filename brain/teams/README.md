@@ -8,7 +8,7 @@ their own audit trail; the team is a profile on top of the person, not a shared 
 | Team | Rules | Skills | Agents | Live MCP |
 |---|---|---|---|---|
 | `san` (default) | `brain/claude/brain/storage.md` | all of `brain/claude/skills` (28) | all of `brain/claude/agents` (9) | docs-local, powermax, powerflex, ontap, harvest, mds, ucsc |
-| `nas` | `brain/teams/nas/storage-nas.md` (installed as `storage.md`) | 12 shared + 6 NAS: share-access-check, export-policy-check, quota-report, nas-replication-check, smartconnect-check, vast-view-check | Explore, docs-researcher, ontap-analyst, nas-analyst | docs-local, ontap, harvest. **No PowerScale or VAST MCP exists yet**: those skills work from output the person pastes (isi, VAST CLI / VMS) and the docs library, and say so |
+| `nas` | `brain/teams/nas/storage-nas.md` (installed as `storage.md`) | 12 shared + 7 NAS: nas-morning-check, share-access-check, export-policy-check, quota-report, nas-replication-check, smartconnect-check, vast-view-check | Explore, docs-researcher, ontap-analyst, nas-analyst | docs-local, ontap, harvest. **No PowerScale or VAST MCP exists yet**: those skills work from output the person pastes (isi, VAST CLI / VMS) and the docs library, and say so |
 
 ## Definition: `brain/teams/<team>/team.json`
 

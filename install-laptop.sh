@@ -4,7 +4,6 @@
 # No web UI, no dev tools, no multi-user parts (that is install-vm.sh).
 #   git clone <this repo> && cd <it> && sh install-laptop.sh        update: git pull && sh install-laptop.sh
 #   sh install-laptop.sh --no-library           skip the documentation library
-#   sh install-laptop.sh --brain-remote <url>   share the team's knowledge through its git remote (or BRAIN_REMOTE=<url>)
 #   sh install-laptop.sh --team <name>          the team profile (brain/teams: san, nas; default san, or BRAIN_TEAM=<name>)
 #   sh install-laptop.sh --team-source <url|dir>  take the team from a published team repository (GitLab) instead of this clone
 # The team's brain is the Claude Code plugin paas-brain-<team>; `paas-team use <other>` switches team later.
@@ -15,13 +14,11 @@ DST=${CLAUDE_HOME:-$HOME/.claude}
 B=$DST/brain
 LIB=$HERE/library
 NO_LIBRARY=0
-REMOTE=${BRAIN_REMOTE:-}
 TEAM=${BRAIN_TEAM:-san}
 TEAM_SOURCE=""
 while [ $# -gt 0 ]; do
   case "$1" in
     --no-library) NO_LIBRARY=1 ;;
-    --brain-remote) [ $# -ge 2 ] || { echo "usage: --brain-remote <url>"; exit 1; }; shift; REMOTE=$1 ;;
     --team) [ $# -ge 2 ] || { echo "usage: --team <name>"; exit 1; }; shift; TEAM=$1 ;;
     --team-source) [ $# -ge 2 ] || { echo "usage: --team-source <url|dir>"; exit 1; }; shift; TEAM_SOURCE=$1 ;;
     -h|--help) sed -n '2,11p' "$0"; exit 0 ;;
@@ -87,8 +84,6 @@ else
 fi
 python3 "$DST/tools/paas-team" use "$TEAM"
 rm -rf "$B/plugin-market"                            # the pre-team marketplace (paas-brain@paas-brain is uninstalled by paas-team)
-[ -z "$REMOTE" ] || { python3 "$DST/tools/paas-team" remote "$TEAM" "$REMOTE" \
-  && python3 "$B/teams/$TEAM/paas-brain-$TEAM/hooks/notes-check.py" --remote "$REMOTE" || echo "note: the team remote is not set up yet (see the line above)"; }
 
 echo
 echo "Done. Brain: $B   rules: @~/.claude/brain/main.md in $DST/CLAUDE.md   team: $TEAM ($B/teams/$TEAM)"

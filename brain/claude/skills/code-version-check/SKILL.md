@@ -1,6 +1,6 @@
 ---
 name: code-version-check
-description: Compare running versions (PowerMaxOS, Unisphere, ONTAP, Trident, CSM / CSI, PowerFlex, Harvest, NX-OS, UCS, ESXi) from environment.md and live tools with release notes, advisories (DSA-*) and recommended releases in the library: table component | running | recommended | advisories | notes. Use for "are we current", upgrade planning, "which version fixes X", advisory exposure.
+description: Compare running versions (PowerMaxOS, Unisphere, ONTAP, OneFS, VAST, Trident, CSM / CSI, PowerFlex, Harvest, NX-OS, UCS, ESXi) from environment.md and live tools with release notes, advisories (DSA-*) and recommended releases in the library: table component | running | recommended | advisories | notes. Use for "are we current", upgrade planning, "which version fixes X", advisory exposure.
 disable-model-invocation: true
 ---
 # Code version check
