@@ -3,7 +3,10 @@
 Three places: **your PC** (has internet; pushes to GitHub), **GitHub**, **the offline VM** (runs Claude
 Code). Every command you need, in order.
 
-## 1. PC: complete the library (Dell PDFs, Dell KB, bug trackers, the rest of the NetApp KB)
+## 1. PC: complete the library (Dell PDFs, Dell KB, bug trackers, the rest of the NetApp KB, VAST, VMware)
+
+The packed library in `library/` is what every VM installs. Its `library/VERSION` and `MANIFEST.md` say what is in it; a
+document synced on the PC reaches the VMs only after step f repacks and the parts are committed.
 
 Needs: `git`, `python3` (3.10+), a venv with `pip install pypdf cryptography fonttools` (macOS: `python3 -m venv work/venv && source work/venv/bin/activate` first), and for the bug trackers any read-only GitHub token.
 Dell's site blocks cloud IPs, so this step has to run from a normal office/home PC.
@@ -21,6 +24,8 @@ sh ../library/join.sh work && mv work/docs-library/docs work/docs && mkdir -p wo
 #    back as Dell's redirect page instead of the document.
 python3 sync/sync_dell.py --dest work/docs/dell --browser-cookies --retry
 python3 sync/sync_web.py  --dest work/docs               # KB pages (Dell, VMware, NetApp) one URL per line
+python3 sync/sync_vast.py --dest work/docs               # VAST Data docs, KB and API reference (kb.vastdata.com, Markdown)
+python3 sync/sync_techdocs.py --dest work/docs           # VMware vSphere guides from techdocs.broadcom.com (sources/techdocs-sections.txt)
 python3 sync/sync_dell_kb.py --dest work/docs --browser-cookies   # Dell KB articles of PowerMax / PowerFlex / CSM-CSI
                                                          #   (seed list + related-article links; login-only ones with your session)
 
@@ -59,6 +64,7 @@ sh sync/sync-git.sh work/docs
 # f) index, check search quality, pack -> library/ (45 MB parts), then commit and push
 python3 docs_index.py --docs work/docs --db work/index/docs.db
 python3 eval_search.py --min-hit5 0.9 && python3 eval_search.py --cases tests/retrieval_heldout.json --min-hit5 0.9
+sh ../scripts/run_tests.sh      # every retrieval set with its floor (VAST + VMware, PowerScale, NAS ... need the syncs above)
 sh bundle/pack-library.sh
 cd .. && git add library && git commit -m "Library $(cat library/VERSION)" && git push origin main
 ```

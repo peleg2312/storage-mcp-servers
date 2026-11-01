@@ -13,12 +13,15 @@ is moving the old team accounts' notes into the team repositories, and the thing
   team's MCP servers. Its memory (notes, environment, tool map, captures, incidents) is shared by the whole team through a
   git repository; every saved note is committed with the person's name and pushed, every session start pulls.
 - Idle web UI instances stop after 60 minutes and restart on the next request; each person has a CPU and memory budget.
-- The docs library is unchanged (version 2026.10.25b), and so are the MCP server images.
+- The packed docs library in git is still version 2026.10.25b (indexed 24 October): Dell, NetApp, Cisco, Kubernetes, five
+  VMware KB pages, no VAST. The VAST documentation, the VMware KB pages and vSphere guides, and the PowerScale Info Hub
+  papers were synced and tested on the PC on 31 October but not repacked, so a VM does not have them yet (see "Later").
+  The MCP server images are unchanged.
 
 ## What you do not need to do
 
-- No library rebuild or re-import: `library/` and `images/` did not change since 30.10. When you copy the repository to
-  the VM instead of pulling, those two folders (1.3 GB) can be skipped.
+- No library work on the VM: `library/` and `images/` in git did not change since 30.10. When you copy the repository to
+  the VM instead of pulling, those two folders (1.3 GB) can be skipped, unless you repack the library first (below).
 - No account re-creation, no edits to hooks, managed settings or systemd units by hand: the installer regenerates them.
 - No `claude mcp add` for anyone: the team's servers come with the plugin; servers an earlier version registered per
   person are removed automatically at the first team switch.
@@ -77,6 +80,12 @@ can stay as shared sign-ins; once people have their own accounts, lock them: `pa
 - `sh scripts/run_tests.sh` passes on the VM (the retrieval evals run when the built index exists).
 
 ## Later, when you want
+
+- The VAST, VMware and PowerScale documents on the VM: on the PC, RUNBOOK section 1 (`sync_vast.py`, `sync_techdocs.py`,
+  `sync_web.py`, the Dell browser collector for the PowerScale Info Hub), then `docs_index.py`, `scripts/run_tests.sh` (the
+  VAST + VMware and PowerScale retrieval sets must pass) and `bundle/pack-library.sh`; commit the new `library/` parts. On the
+  VM the same upgrade command installs the new version into `/opt/paas/library` for everyone (a minute); the NAS team's
+  PowerScale and VAST skills answer from the library only from then on.
 
 - AD accounts: join, then `sh brain/multiuser/install-multiuser.sh --groups "<AD groups>"` (the other flags are remembered).
 - Laptops: the three `claude plugin` lines in README.md with the team's url, with the person's own GitLab login.
