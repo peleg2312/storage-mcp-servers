@@ -153,37 +153,49 @@ option for a cluster-hosted copy; it serves the library only.
 All three read the same git repository, so what one person's Claude wrote down is what every other member searches,
 whichever machine they sit at. A laptop with the library installed (`install-laptop.sh`) behaves like a VM user.
 
-## Owner's checklist: multi-user VM with teams, in order
+## Owner's checklist: the multi-user VM with teams, end to end
 
-As root on the RHEL 9 VM (packages first, offline from the satellite / local repo): `dnf install git python3 openssl acl
-diffutils hostname sssd realmd oddjob oddjob-mkhomedir adcli samba-common-tools`; Claude Code installed for root (`claude` in PATH).
+Three things are yours to do by hand; everything else is one command that you re-run for every update.
 
-1. `sh install-vm.sh` (the brain, the library tools, the web UI; `--team` is not needed on the multi-user VM).
-2. `sh brain/multiuser/install-shared.sh` (shared library and brain under /opt/paas, every team published to `/opt/paas/teams/<team>`,
-   the docs service, the per-person CPU / memory budget; prints the sizing it chose, see "Sizing" below).
-3. `sh brain/multiuser/install-gate.sh` (the gate on 443 with its certificate, one UI per signed-in person), then
-   `sh brain/multiuser/install-shared.sh` again so the marketplace and the docs service use that certificate.
-4. Active Directory: join (section below), then `/etc/paas/allowed-groups` (who may sign in). Nobody gets a team at sign-in:
-   each person picks one in the Brain tab (Team card, one click) or works without one.
-5. GitLab: one empty project per team, default branch `main`, every member Developer. (On GitLab Free a Developer can then also
-   change the plugin folder: CODEOWNERS gates merge requests only, path rules are a paid feature. Keep publish.py as the only
-   writer of `paas-brain-<team>/` by habit, or split the plugin into its own repository later.) One token for the VM: in the
-   project (or the group) Settings, Access tokens, role Developer, scope `write_repository`; store it with
-   `paas-user git-token gitlab.example.com` (paste the token; the host exactly as in the https clone url, with the port if any).
-   From then on every account's git, the notes hooks and the docs service push and pull with it, and nobody signs in to GitLab on
-   the VM; each commit still carries the person's name (`<login>@<vm>`, or their own git identity when they set one). Laptops use
-   the person's own GitLab login, as for any clone.
-   Then, from this checkout on the VM: `python3 brain/teams/publish.py san --to https://gitlab.example.com/storage/brain-san.git`
-   and the same for `nas`, and `sh brain/multiuser/install-shared.sh` once more (it records each team's url in /opt/paas/teams and
-   republishes there on every update). A push that fails shows its reason in the Team card's sync line and at session start.
-6. The teams' MCP servers: Brain tab, Team card, Edit (address and token per server; saved into the team repository's `mcp.json`,
-   built into the plugin's `.mcp.json` and pushed, so every member's Claude connects them at the next session). Or `paas-team edit
-   <team>` with the same JSON on stdin. A server left on its placeholders is not connected and is named in a note at a switch.
-7. Try it: sign in as an AD member, pick a team in the Team card, start a new chat, ask one storage question, save one note and
-   see the commit in GitLab. Laptops: the three `claude plugin` lines in README.md with the team's url.
+**Before the command**
 
-Update later: `git pull && sh install-vm.sh && sh brain/multiuser/install-shared.sh` (members get the new plugin at their next
-session start; laptops when Claude Code checks the marketplace).
+1. Packages, as root, from your satellite / local repo: `dnf install git python3 openssl acl diffutils hostname sssd realmd oddjob
+   oddjob-mkhomedir adcli samba-common-tools`, and Claude Code installed so that `claude` is in root's PATH.
+2. Active Directory: join the VM (`realm join`, sssd settings, mkhomedir; the "Active Directory accounts" section below). The
+   AD group(s) whose members may sign in must resolve: `getent group storage-san-team`.
+3. GitLab: one empty project per team (default branch `main`, every member Developer), and one access token for the VM: in the
+   project or the group, Settings, Access tokens, role Developer, scope `write_repository`. Copy the token; you paste it once.
+   On GitLab Free a Developer can also change the plugin folder (CODEOWNERS gates merge requests only): keep publish.py as the
+   only writer of `paas-brain-<team>/` by habit, or split the plugin into its own repository later.
+
+**The command** (as root, from this checkout on the VM; it asks for the API key and the GitLab token when they are missing):
+
+```sh
+sh brain/multiuser/install-multiuser.sh --gitlab-host gitlab.example.com \
+   --team san=https://gitlab.example.com/storage/brain-san.git --team nas=https://gitlab.example.com/storage/brain-nas.git \
+   --groups "storage-san-team,storage-nas-team"
+```
+It runs, in order: `install-vm.sh` (root's brain, the library, the web UI), `install-shared.sh` (shared library and brain under
+/opt/paas, every team under `/opt/paas/teams/<team>`, the per-person CPU / memory budget, the docs token), `install-gate.sh` (the
+gate on 3001 with its certificate, one UI per signed-in person), the API key into `/etc/paas/api-key`, the groups into
+`/etc/paas/allowed-groups`, the GitLab token (`paas-user git-token`) and each team's url (recorded in `/opt/paas/teams/<team>`),
+`install-shared.sh` again (now with the certificate: the marketplace and the docs service start, each team repository is pushed
+to GitLab with `docs-search` and the docs token in its `mcp.json`), `paas-user provision --all`, then checks: the three services,
+the gate, the docs service and each team repository reachable with the token. It ends with "left for you" when something is
+missing (the AD join, a GitLab project, the key). Flags are remembered in `/etc/paas/multiuser.conf`; `--people 8` sizes the
+per-person budget; `--dry-run` prints the plan. Nothing in it needs the internet.
+
+**After the command**
+
+4. The teams' MCP servers: Brain tab, Team card, More, Edit a team (address and token per server; saved into the team repository's
+   `mcp.json`, built into the plugin's `.mcp.json` and pushed, so every member's Claude connects them at the next session). A
+   server left on its placeholders is not connected and is named in a note at a switch.
+5. Try it: sign in at `https://<vm>:3001` as an AD member, pick a team in the Team card, start a new chat, ask one storage
+   question, save one note and see the commit in GitLab with your name on it. Laptops: `claude plugin marketplace add <team url>
+   && claude plugin install paas-brain-<team>@paas-brain-<team> && claude`, with the person's own GitLab login.
+
+**Updates**: `git pull && sh brain/multiuser/install-multiuser.sh` (no flags). Members get the new plugin at their next session
+start; laptops when Claude Code checks the marketplace. Nobody gets a team at sign-in; everyone picks one in the Brain tab.
 
 ## Teams: one brain per team, one account per person
 
@@ -272,4 +284,4 @@ the notes stay per person.
 - Every suite: `sh scripts/run_tests.sh`. Installers end to end: `sh brain/e2e/run.sh` (Rocky Linux 9 containers, docker).
 - Sign out of kb.netapp.com once the KB export is done (invalidates the token you used).
 - Vendor content remains the vendors' copyright, kept for internal reference.
-- The web UI is installed by `install-vm.sh` (`NO_UI=1` skips it); multi-user setup, as root, in this order: `sh install-vm.sh`, `sh brain/multiuser/install-shared.sh`, `sh brain/multiuser/install-gate.sh`, then `install-shared.sh` again (starts the marketplace for other VMs once the gate made the certificate). Update a multi-user VM: `git pull && sh install-vm.sh && sh brain/multiuser/install-shared.sh`.
+- The web UI is installed by `install-vm.sh` (`NO_UI=1` skips it). Multi-user VM: `sh brain/multiuser/install-multiuser.sh` runs every step in order (the "Owner's checklist" section); an update is `git pull` and the same command.

@@ -24,6 +24,7 @@ if command -v node >/dev/null; then
   run brain/ui/plugins/paas-brain "test_team_card.cjs" node   # the Team card in headless Chromium (SKIP without playwright)
 else echo "SKIP  node self-tests (no node)"; S=$((S+1)); fi
 run brain/ui/plugins "sync-shared.py --check" "$PY"   # every tab carries the current shared block
+run brain/multiuser "install-multiuser.sh --dry-run --team san=https://gl.example/storage/brain-san.git --groups A,b" sh   # the one-command install plans without root
 # real-index search quality, only when the built index exists
 DB=${DOCS_DB:-docs-search-mcp/work/index/docs.db}
 if [ -f "$DB" ]; then

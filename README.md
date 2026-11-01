@@ -30,7 +30,7 @@ UCS  trace_service_profile_san   vHBA WWPN, fabric, VSAN, adapter link, FI uplin
 |---|---|---|
 | Laptop with Claude Code (macOS or Linux, connected or not): a plugin + the rules + the library, no web UI ([`brain/plugin`](brain/plugin/README.md)) | `git clone https://github.com/peleg2312/storage-mcp-servers.git && cd storage-mcp-servers && sh install-laptop.sh` | `git pull && sh install-laptop.sh` |
 | Single VM (python3 + the git clone, nothing else): brain, library, `docs-local`, web UI | `sh install-vm.sh` | `git pull && sh install-vm.sh` |
-| Multi-user VM (shared `/opt/paas`, read-only guard enforced, one Linux or Active Directory account per person) | `sh install-vm.sh` then `sh brain/multiuser/install-shared.sh` (as root) | `git pull`, then the same two lines |
+| Multi-user VM (shared `/opt/paas`, read-only guard enforced, one Linux or Active Directory account per person) | `sh brain/multiuser/install-multiuser.sh --gitlab-host ... --team san=<url> --team nas=<url> --groups ...` (as root; every step in order, asks for the API key and the GitLab token once) | `git pull`, then the same command without flags |
 
 Then start `claude` and run `/brain-setup`. `install-laptop.sh --no-library` skips the library; `--brain-remote <url>` shares the brain's git history.
 
