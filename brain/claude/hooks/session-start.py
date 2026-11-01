@@ -79,7 +79,11 @@ def bare_plugin_rules():
     try:                                   # set the team up from the plugin: knowledge clone (the team repository, from the
         meta = json.loads(read(os.path.join(os.path.dirname(here), "team.json")) or "{}")   # remote recorded by publish.py,
         market = os.path.join(USER_HOME, "plugins", "marketplaces", "paas-brain-" + meta.get("name", ""))  # else the local clone)
-        src = meta.get("remote") or (market if os.path.isdir(os.path.join(market, ".git")) else "")
+        local = os.path.dirname(os.path.dirname(here))            # the plugin runs in place from a clone of the team repository?
+        if os.path.isdir(os.path.join(local, ".git")) and os.path.isdir(os.path.join(local, "knowledge")):
+            src = local                                           # offline-safe; paas-team keeps GitLab as origin for the syncs
+        else:
+            src = meta.get("remote") or (market if os.path.isdir(os.path.join(market, ".git")) else "")
         if meta.get("name") and src:               # persona.md missing is the whole condition: a clone that exists is re-applied
             r = subprocess.run([sys.executable, os.path.join(os.path.dirname(here), "bin", "paas-team"), "bootstrap", meta["name"], src],
                                stdin=subprocess.DEVNULL, capture_output=True, text=True, timeout=25)
@@ -98,8 +102,8 @@ def bare_plugin_rules():
                 + text.strip() + "\n\n" + rules.strip() + "\n(No docs library yet: install-laptop.sh of storage-mcp-servers adds it.)")
     return ("The team repository could not be reached, so the team's memory is not set up yet (retried at the next session start); "
             "these are the brain's rules for this session.\n"
-            + text.strip() + "\n\n" + rules.strip() + "\n(Offline for good? `git clone <team repository> && sh install-team.sh` "
-            "from a copy, or install-laptop.sh of storage-mcp-servers.)")
+            + text.strip() + "\n\n" + rules.strip() + "\n(No GitLab from here? Copy a clone of the team repository over and run "
+            "`claude plugin marketplace add <that folder>`: the plugin sets the team up from it.)")
 
 
 def team_line():

@@ -37,10 +37,9 @@ knowledge/notes.md, environment.md   mcp.json (the team's live MCP servers with 
 ```
 One git repository per team, in GitLab: `python3 brain/teams/publish.py nas --to git@gitlab.example.com:storage/brain-nas.git`
 (clone, rebuild the plugin, commit, push; the url is recorded as the team's remote). Members' brains push their notes,
-captures and incidents into `knowledge/`. The repository also carries `install-team.sh` and `bin/paas-team`, so a laptop
-needs nothing else: `git clone <url> brain-nas && sh brain-nas/install-team.sh` gives the plugin, the rules, the knowledge
-folder synced with the repository and `paas-team`; the docs library is the one thing it lacks (`install-laptop.sh` of this
-repository adds it). The standard Claude Code way is the whole install too:
+captures and incidents into `knowledge/`. The repository also carries `bin/paas-team`, so a clone of it is a complete install source: the standard Claude
+Code way is the whole install (the plugin sets the team up at its first session; without GitLab, add the copied clone's folder
+as the marketplace):
 
 ```sh
 claude plugin marketplace add <url> && claude plugin install paas-brain-nas@paas-brain-nas
@@ -167,9 +166,7 @@ paas-team sync              pull / push the team's knowledge; re-applies the plu
 paas-team remote nas <url>  the team's GitLab repository; paas-team off: back to plain files
 ```
 `paas-team use none` leaves every team: the team's skills and agents go, the person's own and marketplace ones stay,
-the memory files become plain files and persona.md / storage.md stay as editable copies. `paas-team export [team]`
-writes a zip of the team repository (plugin, marketplace file, install-team.sh) into `~/storage-reports`, the Reports
-tab, for a laptop without GitLab access.
+the memory files become plain files and persona.md / storage.md stay as editable copies.
 
 A switch rewrites `~/.claude/brain/persona.md` and `storage.md`, repoints `notes.md`, `environment.md`, `tool-map.md`,
 `notes/`, `captures/`, `incidents/` (symlinks into `~/.claude/brain/teams/<team>/knowledge/`), and swaps the team's

@@ -495,13 +495,6 @@ const routes = {
     if (url.length > 300 || /\s/.test(url) || !/^(https:\/\/|http:\/\/|ssh:\/\/|git@|\/)/.test(url)) return { ok: false, out: 'Give a git url (https://, ssh://, git@ or a folder path)' };
     return run('python3', [TEAM_BIN, 'add', name, url], 180000);
   },
-  'POST /team-export': async (_q, b) => {
-    if (!TEAM_BIN) return { ok: false, out: 'Teams are not installed on this VM' };
-    const args = [TEAM_BIN, 'export'];
-    if (b.name) { if (!TEAM_NAME.test(String(b.name))) return { ok: false, out: 'Bad team name' }; args.push(b.name); }
-    const r = await run('python3', args);
-    return r.ok ? { ...r, file: r.out.split('\n')[0].trim() } : r;
-  },
   // one team in full, for the editor
   'GET /team-show': async (q) => {
     if (!TEAM_BIN) return { ok: false, out: 'Teams are not installed on this VM' };

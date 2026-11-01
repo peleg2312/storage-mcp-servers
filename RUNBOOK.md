@@ -202,14 +202,13 @@ session start; laptops when Claude Code checks the marketplace).
    member's plugin at their next sync), and installs `paas-team`. The managed settings run every brain hook for every
    account (enforced); the team plugin's own copies step aside on the VM, so a person has the same plugin as on a laptop and
    nothing runs twice. Record a team's GitLab url there: `python3 brain/teams/publish.py nas --to /opt/paas/teams/nas --remote <url>`
-   (members then clone from GitLab, and fall back to the VM copy when it is unreachable). Give a person a team with
-   `paas-user add dana --team nas`, `paas-user team dana nas`, or by AD group (step 3 of the next section). The Brain tab of
-   the web UI has the same switch; a person may belong to one team at a time and change at will.
+   (members then clone from GitLab, and fall back to the VM copy when it is unreachable). Nobody gets a team automatically:
+   people pick one in the Brain tab (one click), or root sets it with `paas-user team dana nas` / `paas-user add dana --team nas`;
+   a person is on one team at a time and changes at will.
 4. Laptop without this repository: `claude plugin marketplace add <team url> && claude plugin install
    paas-brain-nas@paas-brain-nas` (the standard way; the plugin sets the team up at its first session: knowledge clone, rules,
-   `paas-team`), or `git clone <team url> brain-nas && sh brain-nas/install-team.sh` for the same without a first session; `paas-team
-   export nas` on the VM writes the same as a zip into the Reports tab for a laptop without GitLab access (unzip, run
-   `install-team.sh` inside). The docs library is not part of it: `install-laptop.sh` adds it.
+   `paas-team`). No GitLab from the laptop: copy a clone of the team repository over and add its folder as the marketplace. The
+   docs library is not part of it: the plugin's docs-local bridges to the VM's docs-search, or `install-laptop.sh` installs it.
 5. Beyond the team: everyone adds skills and agents from the Market tab (`paas-market add skill/<name>`) or writes their own
    in the Brain tab; a team switch never removes or overwrites those. The Market tab shows what the team plugin already
    gives you as added ("from your team") and lists every team as a plugin item: turning one on switches your team, turning it
@@ -270,6 +269,7 @@ the notes stay per person.
 
 ## 3. Afterwards
 
+- Every suite: `sh scripts/run_tests.sh`. Installers end to end: `sh brain/e2e/run.sh` (Rocky Linux 9 containers, docker).
 - Sign out of kb.netapp.com once the KB export is done (invalidates the token you used).
 - Vendor content remains the vendors' copyright, kept for internal reference.
 - The web UI is installed by `install-vm.sh` (`NO_UI=1` skips it); multi-user setup, as root, in this order: `sh install-vm.sh`, `sh brain/multiuser/install-shared.sh`, `sh brain/multiuser/install-gate.sh`, then `install-shared.sh` again (starts the marketplace for other VMs once the gate made the certificate). Update a multi-user VM: `git pull && sh install-vm.sh && sh brain/multiuser/install-shared.sh`.

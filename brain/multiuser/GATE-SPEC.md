@@ -128,7 +128,8 @@ and reclaims their own processes first and, at the hard limit, ends their larges
 
 ## 6. Acceptance tests (Rocky Linux 9 container, x86_64)
 
-Run alongside `brain/ui/test-ui.sh`. Users: `root`, `peleg` and `dana` in `paas-users`, `eve` not in it.
+Scripts: `brain/ui/test-gate.sh` (a Rocky Linux 9 container with systemd, docker) and `brain/multiuser/test-multiuser.sh`
+(on the VM itself, as root). Run alongside `brain/ui/test-ui.sh`. Users: `root`, `peleg` and `dana` in `paas-users`, `eve` not in it.
 
 | # | Test | Expected |
 |---|---|---|

@@ -23,7 +23,6 @@ UCS  trace_service_profile_san   vHBA WWPN, fabric, VSAN, adapter link, FI uplin
 ```
 
 **Every command for your PC and the VM, in order: [`RUNBOOK.md`](RUNBOOK.md).**
-**Continuing the work with Claude Code on a PC: [`HANDOFF.md`](HANDOFF.md).**
 
 ## Install the brain: three ways
 
@@ -68,7 +67,8 @@ paas-brain-nas@paas-brain-nas` or auto-update. Not in the plugin: the documentat
 the library, the plugin's `docs-local` bridges to the VM's `docs-search` service over HTTPS (library plus the team's knowledge
 index, `?team=nas`; the address and token come with the plugin once the VM's install-shared.sh published the team), so the docs
 search works on a laptop as on the VM. `sh install-laptop.sh --team nas` from this repository installs the library locally instead.
-No GitLab access: `paas-team export nas` on the VM gives a zip; unzip and run `install-team.sh` inside it.
+No GitLab from the laptop: copy a clone of the team repository over and give its folder to the first command
+(`claude plugin marketplace add ./brain-nas`); the plugin runs from it and the knowledge stays in it.
 
 ## Get the images
 

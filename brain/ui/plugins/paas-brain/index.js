@@ -367,10 +367,10 @@ export function mount(container, api) {
       <div class="sub" style="margin:10px 0">${cur
         ? `<b>${esc(cur.title || cur.name)}</b>: ${esc(cur.skills ?? 0)} skills, ${esc(cur.agents ?? 0)} agents, shared memory${mcpLine}${t.mode === 'files' ? ' · files mode (no claude command)' : ''}.`
         : 'Your own rules and skills, no shared team memory. Click a team to use its brain; the next chat uses it, and one click brings you back.'}</div>
-      <div class="row"><span class="tanchor"></span><span class="stbox"></span><span class="opn"></span></div>
-      <details class="tmore" style="margin-top:12px"><summary>More: sync, git, download, edit a team</summary>
+      <div class="row"><span class="tanchor"></span><span class="stbox"></span></div>
+      <details class="tmore" style="margin-top:12px"><summary>More: sync, git, edit a team</summary>
         <div class="row" style="margin:10px 0"><span class="sub grow">${cur ? (cur.remote ? `Git remote: <code>${esc(cur.remote)}</code>` : 'No git remote: the knowledge stays on this VM') : 'No team active.'}</span>${cur?.remote ? '<button type="button" class="btn ghost sm tcp">Copy</button>' : ''}</div>
-        ${cur ? '<div class="row" style="margin-bottom:10px"><button type="button" class="btn ghost sm tsy">Sync knowledge</button><button type="button" class="btn ghost sm tdl">Download plugin (zip)</button></div>' : ''}
+        ${cur ? '<div class="row" style="margin-bottom:10px"><button type="button" class="btn ghost sm tsy">Sync knowledge</button></div>' : ''}
         <details class="tadd" style="margin-top:8px"><summary>Add a team from a git url</summary>
           ${field('Name', '<input class="ta-name" aria-label="Team name" placeholder="san" autocomplete="off" spellcheck="false">', 'lower-case letters, digits, dashes')}
           ${field('Git url', '<input class="ta-url" aria-label="Git url" placeholder="https://gitlab.example.com/team/brain.git" autocomplete="off" spellcheck="false">')}
@@ -408,18 +408,6 @@ export function mount(container, api) {
     });
     box.querySelector('.tcp')?.addEventListener('click', async () => {
       try { await navigator.clipboard.writeText(cur.remote); st.say('Copied'); } catch { st.say('Could not copy: select the url and copy it by hand.'); }
-    });
-    box.querySelector('.tdl')?.addEventListener('click', async (e) => {
-      const done = busy(e.currentTarget, 'Preparing…'); st.say('');
-      const r = await api.rpc('POST', 'team-export', { name: cur.name }).catch((x) => ({ out: String(x) }));
-      done();
-      if (!r.ok) { st.error(`Not saved: ${r.out || 'unknown error'}`); return; }
-      st.say(`Saved ${String(r.file || '').split('/').pop()} under Reports`);
-      if (typeof api.openTab === 'function') {
-        const o = el('<button type="button" class="btn link sm">Open Reports</button>');
-        o.addEventListener('click', () => api.openTab?.('paas-reports'));
-        box.querySelector('.opn').replaceChildren(o);
-      }
     });
     box.querySelector('.ta-go')?.addEventListener('click', async (e) => {
       const name = box.querySelector('.ta-name').value.trim(); const url = box.querySelector('.ta-url').value.trim();

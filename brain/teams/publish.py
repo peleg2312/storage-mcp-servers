@@ -16,8 +16,7 @@ Layout of a team repository:
   mcp.json   the team's live MCP servers with address and token (the owner's decision: readable by everyone in the
              project; use read-only tokens and rotate them when someone leaves); HOST / TOKEN placeholders until filled
   team.json (name, title, remote)   README.md   .gitignore
-  install-team.sh + bin/paas-team   a laptop installs the team from the clone alone (no storage-mcp-servers checkout):
-                                    git clone <url> && sh <clone>/install-team.sh
+  bin/paas-team                     the team tool, so a clone of this repository is a complete install source
   check.py + .gitlab-ci.yml         the repository's own gate (JSON, plugin shape, skills, no secrets in knowledge, caps)
 Standard library, Python 3.9."""
 import json
@@ -67,7 +66,8 @@ def readme(team, remote):
             "memory files into it, writes the rules (persona, storage and coding rules; one import line in your `~/.claude/CLAUDE.md`) "
             "and installs `paas-team`. From then on every saved note is committed and pushed here, every session start pulls, "
             "and a new plugin version published here is applied at the next session start.\n"
-            f"Without network to a plugin marketplace: `git clone {url} brain-{n} && sh brain-{n}/install-team.sh` does the same from the clone.\n\n"
+            f"No GitLab from that machine? Copy a clone of this repository over and give its folder to the first command "
+            f"(`claude plugin marketplace add ./brain-{n}`): the plugin runs from it and the knowledge stays in it.\n\n"
             "## What is here\n\n"
             f"- `paas-brain-{n}/`: the brain as a Claude Code plugin ({len(t['skills'])} skills, {len(t['agents'])} agents, "
             f"version {t['version']}); rebuilt only by `brain/teams/publish.py` from the storage-mcp-servers repository, never edited here\n"
@@ -77,42 +77,9 @@ def readme(team, remote):
             "connects them; `team.json`: the team's lists\n"
             "- `check.py` runs in CI (`.gitlab-ci.yml`) and refuses a push that carries a credential or breaks the notes format\n\n"
             f"`paas-team` shows the state, `paas-team use <other>` switches team, `paas-team off` leaves team mode. "
-            "The docs library is the one thing this repository does not carry: the team's docs-search server (mcp.json) or "
-            "`install-laptop.sh` of storage-mcp-servers provides it; until then docs-local stays disconnected and the brain says so.\n"
+            "The docs library is not in this repository: where it is not installed (a laptop), the plugin's docs-local reaches the VM's "
+            "docs-search instead (address and token come with the plugin), so the docs search works the same everywhere.\n"
             f"On the VM: `paas-team use {n}` (or the Brain tab).\n")
-
-
-INSTALL_TEAM = r"""#!/bin/sh
-# Install this team's brain on a laptop from this clone alone: the plugin paas-brain-<team> (skills, agents, hooks,
-# docs-local), the rules (persona + storage rules + core CLAUDE.md as ~/.claude/brain/main.md, one import line in your own
-# ~/.claude/CLAUDE.md) and the team's knowledge folder, kept in sync with this repository. Needs: claude, python3, git.
-#   git clone <url> brain-<team> && sh brain-<team>/install-team.sh        update: git -C brain-<team> pull && sh .../install-team.sh
-# No docs library here (install-laptop.sh of storage-mcp-servers adds it); docs-local stays disconnected until then.
-set -eu
-HERE=$(cd "$(dirname "$0")" && pwd)
-TEAM=$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1])).get("name", ""))' "$HERE/team.json" 2>/dev/null)
-[ -n "$TEAM" ] || { echo "install-team.sh: no team name in $HERE/team.json"; exit 1; }
-command -v python3 >/dev/null 2>&1 || { echo "python3 is required"; exit 1; }
-command -v claude >/dev/null 2>&1 || { echo "claude (Claude Code) is required: install it first, then run this again"; exit 1; }
-DST=${CLAUDE_HOME:-$HOME/.claude}; B=$DST/brain
-mkdir -p "$DST/tools" "$B" "$HOME/storage-reports"
-cp "$HERE/bin/paas-team" "$DST/tools/paas-team"; chmod 755 "$DST/tools/paas-team"
-mkdir -p "$HOME/.local/bin" && ln -sf "$DST/tools/paas-team" "$HOME/.local/bin/paas-team"
-cp "$HERE/paas-brain-$TEAM/brain/CLAUDE.md" "$B/main.md"
-cp "$HERE/paas-brain-$TEAM/brain/coding.md" "$B/coding.md"
-touch "$DST/CLAUDE.md"
-grep -qxF '@~/.claude/brain/main.md' "$DST/CLAUDE.md" || printf '
-@~/.claude/brain/main.md
-' >> "$DST/CLAUDE.md"
-echo plugin > "$B/team-mode"
-if [ -d "$B/teams/$TEAM/.git" ]; then git -C "$B/teams/$TEAM" pull -q --rebase --autostash || echo "note: pull of the team clone failed (offline?)"
-else python3 "$DST/tools/paas-team" add "$TEAM" "$HERE"; fi
-ORIGIN=$(git -C "$HERE" remote get-url origin 2>/dev/null || true)
-[ -z "$ORIGIN" ] || python3 "$DST/tools/paas-team" remote "$TEAM" "$ORIGIN" >/dev/null
-python3 "$DST/tools/paas-team" use "$TEAM"
-echo "Rules: @~/.claude/brain/main.md in $DST/CLAUDE.md. Check: claude plugin list (paas-brain-$TEAM enabled); in claude: /brain-setup"
-"""
-
 
 
 def publish(team, dest, remote=None, hooks=True, commit=True, force=False, docs_search=None, docs_token=None):
@@ -191,13 +158,13 @@ def publish(team, dest, remote=None, hooks=True, commit=True, force=False, docs_
         f.write(IGNORE)
     with open(os.path.join(dest, "README.md"), "w") as f:
         f.write(readme(t, meta.get("remote")))
-    with open(os.path.join(dest, "install-team.sh"), "w") as f:
-        f.write(INSTALL_TEAM)
+    for stale in ("install-team.sh",):                                 # earlier publishes wrote it; the plugin install replaced it
+        if os.path.exists(os.path.join(dest, stale)):
+            os.remove(os.path.join(dest, stale))
     shutil.copy(os.path.join(HERE, "team-check.py"), os.path.join(dest, "check.py"))      # the repository's own CI gate
     os.chmod(os.path.join(dest, "check.py"), 0o755)
     if not os.path.exists(os.path.join(dest, ".gitlab-ci.yml")):
         shutil.copy(os.path.join(HERE, "team-gitlab-ci.yml"), os.path.join(dest, ".gitlab-ci.yml"))
-    os.chmod(os.path.join(dest, "install-team.sh"), 0o755)
     os.makedirs(os.path.join(dest, "bin"), exist_ok=True)
     shutil.copy(os.path.join(BRAIN, "claude", "tools", "paas-team"), os.path.join(dest, "bin", "paas-team"))
     os.chmod(os.path.join(dest, "bin", "paas-team"), 0o755)

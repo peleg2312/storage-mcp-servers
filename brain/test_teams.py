@@ -189,22 +189,19 @@ open(os.path.join(home, ".claude", "paas-market.json"), "w").write(json.dumps({"
 team("refresh")
 assert "market copy" in open(os.path.join(home, ".claude", "skills", "docs-lookup", "SKILL.md")).read()
 assert "docs-lookup" not in json.load(open(os.path.join(brain, "teams", ".installed.json")))["skills"]
-# the team repository carries what a laptop needs on its own: install-team.sh, bin/paas-team, the core rules in the plugin
+# the team repository carries what a laptop needs on its own: bin/paas-team and the core rules in the plugin (no installer script)
 src = os.path.join(work, "sources", "nas")
-assert os.access(os.path.join(src, "install-team.sh"), os.X_OK) and os.path.isfile(os.path.join(src, "bin", "paas-team"))
+assert os.path.isfile(os.path.join(src, "bin", "paas-team")) and not os.path.exists(os.path.join(src, "install-team.sh"))
 assert os.path.isfile(os.path.join(src, "paas-brain-nas", "brain", "CLAUDE.md"))
-assert subprocess.run(["sh", "-n", os.path.join(src, "install-team.sh")]).returncode == 0
-# install-team.sh on a laptop: a clone of the team repository, a stand-in claude on PATH (records its calls), empty HOME
+# a laptop without GitLab: a copy of the team repository added as the marketplace; the plugin's own session-start hook sets the
+# team up from that clone (knowledge clone, links, rules import), no network and no VM copy needed
 lap = tempfile.mkdtemp()
 subprocess.run(["git", "clone", "-q", src, os.path.join(lap, "brain-nas")], check=True)
-fb = os.path.join(lap, "bin"); os.makedirs(fb)
-open(os.path.join(fb, "claude"), "w").write("#!/bin/sh\necho \"$@\" >> \"$HOME/claude.log\"\n"); os.chmod(os.path.join(fb, "claude"), 0o755)
 lh = os.path.join(lap, "h"); os.makedirs(lh)
-r = subprocess.run(["sh", os.path.join(lap, "brain-nas", "install-team.sh")], capture_output=True, text=True, env=dict(env, HOME=lh, PATH=fb + os.pathsep + env["PATH"]), timeout=120)
-assert r.returncode == 0 and "team nas" in r.stdout, (r.stdout, r.stderr)
+rc, o = run([sys.executable, os.path.join(lap, "brain-nas", "paas-brain-nas", "hooks", "session-start.py")], e=dict(env, HOME=lh, PAAS_TEAMS=os.path.join(work, "nowhere")), inp="{}")
+assert "set up from the plugin" in o and "First session" in o, o
 assert open(os.path.join(lh, ".claude", "brain", "team")).read().strip() == "nas" and "@~/.claude/brain/main.md" in open(os.path.join(lh, ".claude", "CLAUDE.md")).read()
-assert "plugin marketplace add" in open(os.path.join(lh, "claude.log")).read() and "plugin install paas-brain-nas@paas-brain-nas" in open(os.path.join(lh, "claude.log")).read()
-assert git(os.path.join(lh, ".claude", "brain", "teams", "nas"), "remote", "get-url", "origin").strip() == src
+assert git(os.path.join(lh, ".claude", "brain", "teams", "nas"), "remote", "get-url", "origin").strip() == os.path.join(lap, "brain-nas")
 # check.py: the gate passes on a fresh repository and catches a broken dot-file and a secret in the knowledge
 assert subprocess.run([sys.executable, os.path.join(src, "check.py")], capture_output=True, text=True).returncode == 0
 broken = tempfile.mkdtemp(); shutil.copytree(src, os.path.join(broken, "r"), ignore=shutil.ignore_patterns(".git"))
@@ -216,11 +213,6 @@ assert r.returncode == 1 and "FAIL json paas-brain-nas/.mcp.json" in r.stdout an
 # the plugin version is a fingerprint of its content, identical from publish.py and from paas-team bump
 v0 = json.load(open(os.path.join(src, "paas-brain-nas", ".claude-plugin", "plugin.json")))["version"]
 assert "-" in v0 and team("bump", "nas").strip() == json.load(open(os.path.join(brain, "teams", "nas", "paas-brain-nas", ".claude-plugin", "plugin.json")))["version"]
-o = team("export", "san", work)
-assert o.startswith(os.path.join(work, "paas-brain-san-")) and os.path.getsize(o.split("\n")[0]) > 10000, o
-import zipfile
-names = zipfile.ZipFile(o.split("\n")[0]).namelist()
-assert "paas-brain-san/install-team.sh" in names and any(n.endswith("/skills/zoning-audit/SKILL.md") for n in names), names[:5]
 # a bare plugin install (claude plugin install from the team repository, nothing else): the session-start hook sets the
 # team up from the plugin itself (knowledge clone from the recorded remote, links, rules import) and prints the rules once
 bare = tempfile.mkdtemp()
@@ -245,7 +237,7 @@ os.rename(src + "-gone", src)
 assert "team repository could not be reached" in o and "N1." in o and not os.path.exists(os.path.join(h2, ".claude", "brain", "team")), o
 rc, o = run([sys.executable, os.path.join(bare, "plug", "hooks", "session-start.py")], inp="{}")   # a real brain: silent
 assert "could not be reached" not in o and "set up from" not in o, o
-print("marketplace, export and bare plugin ok")
+print("marketplace and bare plugin ok")
 
 # 6. the team's MCP servers come from the VM's marketplace (a stand-in paas-market records the calls): san adds its four,
 # nas drops them and adds its own; a server the person added themselves is left alone
