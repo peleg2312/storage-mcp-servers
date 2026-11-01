@@ -5,6 +5,7 @@ plugin's, no team disables it; brain/install.sh --team writes no brain hooks int
 the guard run from a plugin steps aside when the VM's managed settings run it. Needs the claude command: exit 77 without."""
 import json
 import os
+import re
 import shutil
 import subprocess
 import sys
@@ -18,6 +19,10 @@ TOOL = os.path.join(R, "brain", "claude", "tools", "paas-team")
 work = tempfile.mkdtemp()
 home = os.path.join(work, "home")
 os.makedirs(os.path.join(home, ".claude", "tools"))
+ext = os.path.expanduser("~/.vscode/extensions")         # this Mac's claude launcher finds its binary under $HOME; a normal install needs no link
+if os.path.isdir(ext):
+    os.makedirs(os.path.join(home, ".vscode"))
+    os.symlink(ext, os.path.join(home, ".vscode", "extensions"))
 shutil.copy(TOOL, os.path.join(home, ".claude", "tools", "paas-team"))
 subprocess.run([sys.executable, os.path.join(R, "brain", "teams", "publish.py"), "--all", "--to", os.path.join(work, "sources")], check=True, capture_output=True)
 env = dict(os.environ, HOME=home, PAAS_TEAMS=os.path.join(work, "sources"))
@@ -33,7 +38,7 @@ def run(cmd, ok=True, e=env, inp=None):
 def plugins():
     out = run(["claude", "plugin", "list"])
     state = {}
-    for block in out.split("\n  > ")[1:]:
+    for block in re.split(r"\n\s*[>\u276f]\s+", out)[1:]:    # the marker is > or a heavy arrow, by claude version
         name = block.split("\n", 1)[0].strip()
         state[name] = "enabled" if "enabled" in block and "disabled" not in block else "disabled"
     return state

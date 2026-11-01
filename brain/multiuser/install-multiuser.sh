@@ -27,8 +27,8 @@ while [ $# -gt 0 ]; do
     --gitlab-host) GITLAB_HOST=$(printf '%s' "$2" | tr 'A-Z' 'a-z'); shift 2 ;;
     --team) t=$2; case "$t" in *=*) ;; *) echo "install-multiuser: --team wants <name>=<git url>"; exit 1 ;; esac
             n=${t%%=*}; u=${t#*=}
-            TEAM_URLS=$(for x in $TEAM_URLS; do case "$x" in "$n="*) ;; *) printf '%s ' "$x" ;; esac; done | sed 's/ *$//')
-            TEAM_URLS="${TEAM_URLS:+$TEAM_URLS }$n=$u"; shift 2 ;;
+            kept=""; for x in $TEAM_URLS; do case "$x" in "$n="*) ;; *) kept="${kept:+$kept }$x" ;; esac; done   # no case inside $(): bash 3.2 (macOS) misparses it
+            TEAM_URLS="${kept:+$kept }$n=$u"; shift 2 ;;
     --groups) GROUPS_CSV=$(printf '%s' "$2" | tr 'A-Z' 'a-z' | tr -d ' '); shift 2 ;;
     --people) case "$2" in ''|*[!0-9]*) echo "install-multiuser: --people wants a number"; exit 1 ;; esac; PEOPLE=$2; shift 2 ;;
     --api-key-file) API_KEY_FILE=$2; shift 2 ;;
