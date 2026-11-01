@@ -200,7 +200,7 @@ fi
 # every file under /opt/paas with the label its place calls for (files moved in from /tmp or /root keep theirs; systemd and
 # other accounts are refused on those under SELinux enforcing), executable where it must be
 command -v restorecon >/dev/null 2>&1 && restorecon -R "$P" /etc/paas 2>/dev/null || true
-chmod -R a+rX "$P/bin" "$P/ui/node/bin" 2>/dev/null || true
+chmod -R a+rx "$P/bin" "$P/ui/node/bin" 2>/dev/null || true
 # root as the first user (its UI on 127.0.0.1; the gate puts it on :3001)
 "$P/bin/paas-user" add root
 # an update: everyone's UI plugins, rules they never edited and default items, then their running UIs restart on the new files
