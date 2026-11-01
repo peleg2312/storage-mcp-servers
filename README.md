@@ -22,7 +22,7 @@ UCS  trace_service_profile_san   vHBA WWPN, fabric, VSAN, adapter link, FI uplin
  -> PowerMax  find_wwpn           initiator -> host -> masking view -> storage group -> array ports
 ```
 
-**Every command for your PC and the VM, in order: [`RUNBOOK.md`](RUNBOOK.md).**
+**Every command for your PC and the VM, in order: [`RUNBOOK.md`](RUNBOOK.md). A VM installed from the 30.10 version: [`UPGRADE.md`](UPGRADE.md).**
 
 ## Install the brain: three ways
 

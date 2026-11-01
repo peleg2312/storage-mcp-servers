@@ -155,6 +155,8 @@ whichever machine they sit at. A laptop with the library installed (`install-lap
 
 ## Owner's checklist: the multi-user VM with teams, end to end
 
+(A VM that already runs the 30.10 version: `UPGRADE.md`, which is this checklist plus moving the old team accounts' notes.)
+
 Three things are yours to do by hand; everything else is one command that you re-run for every update.
 
 **Before the command**
