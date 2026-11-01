@@ -221,6 +221,7 @@ const CSS = `
 .mk .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:12px}
 .mk .item{border:1px solid hsl(var(--border));border-radius:12px;padding:16px;background:hsl(var(--card));display:flex;flex-direction:column;gap:8px;transition:border-color .15s}
 .mk .t{font-size:14px;font-weight:600}.mk .d{color:hsl(var(--muted-foreground));font-size:13px;display:-webkit-box;-webkit-line-clamp:4;-webkit-box-orient:vertical;overflow:hidden}
+.mk .bar .mine[aria-pressed=true]{background:hsl(var(--accent));color:hsl(var(--foreground))}
 .mk .item details.pc{margin:6px 0 2px}.mk .item details.pc summary{cursor:pointer;list-style:none}.mk .item details.pc summary::-webkit-details-marker{display:none}.mk .item .pcl{margin:6px 0;display:flex;flex-wrap:wrap;gap:4px;align-items:center}.mk .item .pcl b{margin-right:4px}
 .mk .acts{display:flex;gap:8px;margin-top:auto;padding-top:4px;flex-wrap:wrap;align-items:center}
 .mk .setup{display:grid;gap:6px;margin-top:6px}
@@ -260,11 +261,13 @@ export function mount(container, api) {
   let root = false;
   let me = '';
   let kind = 'all';
+  let mineOnly = false;                 // "Mine": what is added, comes with your team, or is yours; combines with the type
   container.innerHTML = `<style>${PAAS_CSS}${CSS}</style><div class="paas mk">${header('Marketplace', 'Skills, agents, MCP servers and plugins on this VM. Add what you need: it goes into your own Claude only.', '<span class="slot"></span>')}
     <div class="stwrap"></div>
     <div class="newform"></div>
     <div class="row bar"><div class="field"><label for="mkq">Search the marketplace</label><input id="mkq" class="q" type="search" placeholder="Search: ontap, latency, zoning, capacity..."></div>
-    <div class="seg" role="group" aria-label="Show">${[['all', 'All'], ['skill', 'Skills'], ['agent', 'Agents'], ['mcp', 'MCP servers'], ['plugin', 'Plugins'], ['have', 'Mine']].map(([v, l]) => `<button type="button" data-k="${v}" aria-pressed="${v === kind}">${l}</button>`).join('')}</div></div>
+    <div class="seg" role="group" aria-label="Type">${[['all', 'All types'], ['skill', 'Skills'], ['agent', 'Agents'], ['mcp', 'MCP servers'], ['plugin', 'Plugins']].map(([v, l]) => `<button type="button" data-k="${v}" aria-pressed="${v === kind}">${l}</button>`).join('')}</div>
+    <button type="button" class="btn ghost sm mine" aria-pressed="false" title="Only what is added, comes with your team, or is yours">Mine</button></div>
     <div class="groups">${skeleton('cards')}</div></div>`;
   container.querySelector('.actions').insertAdjacentHTML('beforeend', `<button type="button" class="btn ghost upd-all" style="display:none">Update all</button><button type="button" class="btn new">${icon('plus')} New</button>`);
   const st = statusLine(container.querySelector('.stwrap'));
@@ -286,7 +289,7 @@ export function mount(container, api) {
 
   function render() {
     const words = q.value.toLowerCase().split(/\s+/).filter(Boolean);
-    const shown0 = items.filter((i) => (kind === 'all' || (kind === 'have' ? i.added || i.team || (i.author && i.author === me) : i.kind === kind))
+    const shown0 = items.filter((i) => (kind === 'all' || i.kind === kind) && (!mineOnly || i.added || i.team || (i.author && i.author === me))
       && words.every((w) => `${i.name} ${i.description} ${KIND[i.kind]} ${i.source_title || ''}`.toLowerCase().includes(w)));
     const card = (i) => { const mine = i.author && i.author === me; const teamItem = !!i.team && i.kind !== 'plugin'; const teamPlug = !!i.team && i.kind === 'plugin'; return `<div class="item${i.added || i.team || mine ? ' have' : ''}" data-id="${esc(i.id)}">
       ${tags([KIND[i.kind], mine ? 'yours' : i.author ? `by ${i.author}` : '', teamItem ? ['from your team', `Comes with the ${i.team} team plugin`] : teamPlug ? [`team ${i.team}`, 'Your team profile: switching it changes rules, skills, agents and MCP servers'] : i.added ? 'added' : '', !teamItem && !teamPlug && (i.teams || []).length ? [`in team ${i.teams.map((t) => t.toUpperCase()).join(', ')}`, 'Part of that team plugin: it comes with the team when the team is on'] : '', i.update && !teamItem ? ['update available', 'A newer version is available'] : '', i.added && i.kind === 'plugin' && !i.enabled ? ['off', 'Added but switched off'] : '', i.ready ? '' : i.kind === 'plugin' ? ['needs internet', 'This VM is offline, so plugins cannot be fetched'] : ['waiting for admin', 'An admin has to enter the server address first'], i.token_mode === 'personal' ? ['asks for your token', 'Each person uses their own token'] : '', i.risky ? ['can run commands', i.risky] : ''], 3)}
@@ -307,7 +310,7 @@ export function mount(container, api) {
     grid.innerHTML = secs.map((s) => {
       const shown = shown0.filter((i) => (i.source || '') === s);
       const total = items.filter((i) => (i.source || '') === s).length;
-      if (!shown.length && (words.length || kind !== 'all') && s) return '';
+      if (!shown.length && (words.length || kind !== 'all' || mineOnly) && s) return '';
       const open = opened.has(s) || (words.length && shown.length);
       const added = shown.filter((i) => i.added).length;
       return `<div class="sec${open ? ' open' : ''}" data-s="${esc(s)}"><button type="button" class="sh" aria-expanded="${!!open}"><span class="car" aria-hidden="true">${icon('chevron')}</span><b>${esc(title(s))}</b>
@@ -518,6 +521,11 @@ export function mount(container, api) {
     container.querySelectorAll('.seg button').forEach((x) => x.setAttribute('aria-pressed', String(x === b)));
     render();
   }));
+  container.querySelector('.mine').addEventListener('click', (e) => {
+    mineOnly = !mineOnly;
+    e.currentTarget.setAttribute('aria-pressed', String(mineOnly));
+    render();
+  });
   updAll.addEventListener('click', async () => {
     const done = busy(updAll, 'Updating...');
     const r = await api.rpc('POST', 'update', {}).catch(msgOf);
