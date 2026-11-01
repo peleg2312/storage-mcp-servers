@@ -273,7 +273,7 @@ the notes stay per person.
 3. At a person's first sign-in the gate runs `paas-user provision <name>` (home, links to the shared brain, UI plugins,
    marketplace defaults). No team is switched on: the person picks one in the Brain tab, Team card (No team / SAN / NAS, one
    click, then a new chat), or root sets it with `paas-user team <name> <team>`. Nothing else to do per person.
-4. RAM: the gate stops a person's UI instance after `GATE_IDLE_MINUTES` (default 120) without a request, an open WebSocket
+4. RAM: the gate stops a person's UI instance after `GATE_IDLE_MINUTES` (default 60) without a request, an open WebSocket
    or a running `claude`; the next request starts it again within seconds and the sign-in cookie stays valid. So the VM
    carries the people active now (about 100-150 MB each), not the headcount. Set the minutes in `paas-gate.service`
    (`Environment=GATE_IDLE_MINUTES=60`; 0 disables). Local accounts keep working as before (`paas-user add`).
