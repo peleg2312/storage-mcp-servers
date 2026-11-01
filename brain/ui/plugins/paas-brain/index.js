@@ -381,7 +381,7 @@ export function mount(container, api) {
     const teamSkills = (data.skills || []).filter((x) => x.source === 'team');
     const teamAgents = (data.agents || []).filter((x) => x.source === 'team');
     const row = (x) => `<div class="trow${x.name === t.active ? ' on' : ''}">
-        <div class="t"><b>${esc(x.title || x.name)}</b> <span class="sub">(${esc(x.name)}${x.version ? `, ${esc(x.version)}` : ''})</span>${x.name === t.active ? ' <span class="tag">your team now</span>' : x.local ? '' : ' <span class="tag" title="Cloned from the team repository at the first click">not added yet</span>'}</div>
+        <div class="t"><b>${esc(x.title || x.name)}</b> <span class="sub" title="${esc(x.version || '')}">(${esc(x.name)}${x.version ? `, ${esc(String(x.version).split('-')[0])}` : ''})</span>${x.name === t.active ? ' <span class="tag">your team now</span>' : x.local ? '' : ' <span class="tag" title="Cloned from the team repository at the first click">not added yet</span>'}</div>
         <div class="sub">${esc(x.description || '')}</div>
         <div class="sub">${esc(x.skills ?? 0)} skills, ${esc(x.agents ?? 0)} agents · MCP: ${mcpTags(x) || 'none'}${x.remote ? ` · shared memory in <code>${esc(x.remote)}</code>` : ' · shared memory on this VM'}</div>
         ${x.name === t.active && (teamSkills.length || teamAgents.length) ? `<div class="sub tchips"><b>Skills</b> ${teamSkills.map((k) => `<span class="tag" title="${esc(k.description)}">/${esc(k.name)}</span>`).join(' ')}</div>
@@ -451,7 +451,7 @@ export function mount(container, api) {
       teamSynced = true;
       runSync().then((r) => {
         if (!box.isConnected) return;
-        const line = String(r.out || '').split('\n').filter(Boolean).pop() || (r.ok ? 'in sync' : 'no answer');
+        const line = (String(r.out || '').split('\n').filter(Boolean).pop() || (r.ok ? 'in sync' : 'no answer')).replace(/^brain: /, '');
         st.say(`${lead}Sync: ${line}`);
       });
     }
