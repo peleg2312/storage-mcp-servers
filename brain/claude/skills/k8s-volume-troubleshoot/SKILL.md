@@ -4,7 +4,7 @@ description: Troubleshoot an OpenShift / Kubernetes volume on Trident or Dell CS
 ---
 # Kubernetes volume troubleshooting (Trident / CSM)
 
-There is no Kubernetes MCP: ask the user for (read-only commands he runs):
+There is no Kubernetes MCP: ask the user for (read-only commands the user runs):
 `oc describe pvc <pvc> -n <ns>`, `oc describe pod <pod> -n <ns>` (events),
 Trident: `tridentctl -n trident get backend`, `tridentctl -n trident logs` (or the trident controller /
 node pod logs); CSM: the driver controller + node pod logs; the node: `oc debug node/<node>` then
@@ -27,4 +27,4 @@ node pod logs); CSM: the driver controller + node pod logs; the node: `oc debug 
 4. Classify: provisioning (backend / capacity / credentials), attach (mapping, zoning, igroup), mount
    (filesystem, multipath, stale devices), resize, replication.
 
-Output: cause (with evidence), fix steps for him to run, and the bug / doc references with versions.
+Output: cause (with evidence), fix steps for the user to run, and the bug / doc references with versions.

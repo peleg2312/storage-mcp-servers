@@ -12,7 +12,7 @@ The library is a snapshot (version in `~/.claude/brain/library/VERSION`): "lates
 From `~/.claude/brain/environment.md` first, then live where a tool exists (prefer live, note
 disagreements): PowerMax `list_arrays` / `get_array` (PowerMaxOS / microcode), `test_connection`
 (Unisphere version); ONTAP cluster version (ontap MCP); Harvest (harvest MCP); MDS `run_show "show version"`;
-UCS `list_centrals` / `list_domains`; ESXi / vCenter from Aria (kuparashit has no versions). Ask him for what no tool
+UCS `list_centrals` / `list_domains`; ESXi / vCenter from Aria (kuparashit has no versions). Ask the user for what no tool
 shows: Solutions Enabler (`symcli -def`), Trident (`tridentctl -n trident version`), CSM
 (`oc get csm -A`, driver image tags), PowerFlex (`scli --version`, `scli --query_all` header).
 
@@ -35,5 +35,5 @@ whether the running version is inside.
 | component | running (source) | recommended / latest in library (source, version) | security advisories | notes |
 Notes: known issues matching symptoms seen here, dependencies (Unisphere ↔ PowerMaxOS, CSM ↔ OpenShift
 ↔ array OS, Trident ↔ ONTAP ↔ OpenShift, ESXi ↔ array host-connectivity guide), and "not verifiable from
-the library". Finish with the upgrade order that the documented dependencies impose, as a plan for him.
+the library". Finish with the upgrade order that the documented dependencies impose, as a plan for the user.
 Save the table under `~/storage-reports/<date>-code-versions.md`.

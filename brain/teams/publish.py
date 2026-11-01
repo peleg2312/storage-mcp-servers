@@ -79,7 +79,8 @@ def readme(team, remote):
             f"`paas-team` shows the state, `paas-team use <other>` switches team, `paas-team off` leaves the teams. "
             "The docs library is not in this repository: where it is not installed (a laptop), the plugin's docs-local reaches the VM's "
             "docs-search instead (address and token come with the plugin), so the docs search works the same everywhere.\n"
-            f"On the VM: `paas-team use {n}` (or the Brain tab).\n")
+            f"On the VM: `paas-team use {n}` (or the Brain tab). On a laptop add `\"env\": {{\"ENABLE_TOOL_SEARCH\": \"true\"}}` to `~/.claude/settings.json`: "
+            "the team's MCP tool schemas then load when a task needs them instead of into every session.\n")
 
 
 def publish(team, dest, remote=None, hooks=True, commit=True, force=False, docs_search=None, docs_token=None):

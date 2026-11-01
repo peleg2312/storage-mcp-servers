@@ -1,19 +1,19 @@
 ---
 name: brain-health
-description: Self-check of the brain installation: MCP servers answer, docs MCP list_sources vs MANIFEST.md, library version, hooks in settings.json, environment.md / tool-map.md / notes.md, skills and agents installed; a table with what to fix. Use for "is the brain healthy", after install.sh or git pull, a missing tool, a stale answer, or an unresponsive docs MCP.
+description: Self-check of the brain installation: MCP servers answer, docs MCP list_sources vs MANIFEST.md, library version, hooks in settings.json, environment.md / tool-map.md / notes.md, skills and agents installed, the team (clone in sync, plugin on, MCP servers filled in); a table with what to fix. Use for "is the brain healthy", after install.sh or git pull, a missing tool, a stale answer, or an unresponsive docs MCP.
 disable-model-invocation: true
 ---
 # Brain health
 
 Read-only and cheap: one list call per server, local files read with the shell. Fix nothing yourself:
-tell him what to run.
+tell the user what to run.
 
 ## 1. MCP servers
 For each server in your tool list (`mcp__<server>__…`): one cheap call - powermax `test_connection` / powerflex `list_systems` /
 `list_arrays`, ontap (cluster or SVM list), harvest (any list / metric-name call), mds `list_switches`,
 ucsc `list_centrals`, kuparashit `overview` (snapshot age and warnings), Aria (any list), docs `list_sources`. Record:
 reachable · answer time · tool count · the call that failed and its error. Servers named in the
-"Sources" table of CLAUDE.md but absent from the tool list = missing (he adds them with `claude mcp add`).
+"Sources" table of CLAUDE.md but absent from the tool list = missing (the user adds them with `claude mcp add`).
 Note which docs server answered (docs-search or docs-local); if neither, test the shell fallback
 `python3 ~/.claude/brain/library/search.py sources`.
 
@@ -39,7 +39,7 @@ Note which docs server answered (docs-search or docs-local); if neither, test th
   prints the wafl.vol.full meaning (nothing = library missing on this VM); `allowed-tools.txt` exists
   (list its non-comment entries: each one is a tool the guard skips - are they really read-only?).
 - The session-start lines appeared at the top of this session (library version, document count,
-  environment status). If not, the hook is not wired: he re-runs `sh brain/install.sh`.
+  environment status). If not, the hook is not wired: the user re-runs `sh brain/install.sh`.
 - `permissions.allow` lists `mcp__<server>` for each connected server (otherwise every call prompts).
 - Never test the guard by calling a write tool.
 
@@ -53,7 +53,7 @@ filled (arrays, versions, fabrics, thresholds - count empty table rows and `__` 
 Run `/doctor prompt-audit` if this Claude Code has it (audits CLAUDE.md, the imported brain files, skills
 and agents under `~/.claude/`). Report its findings - contradictions between files, references to tools,
 files or commands that do not exist, instructions written for older models - as WARN rows with the
-proposed edit; apply nothing (he decides). If the command is unavailable, say so and compare by hand the
+proposed edit; apply nothing (the user decides). If the command is unavailable, say so and compare by hand the
 rules in CLAUDE.md and brain/storage.md with the skills that cite them (read-only rule, answer format, notes.md as memory).
 
 ## 6. Context size
@@ -65,6 +65,15 @@ shorten tool-map.md to the tools actually used). A topic file over ~150 lines: s
 Project install (`install-vm.sh --project <dir>`): the same files live in `<dir>/.claude/` and `<dir>/CLAUDE.md`;
 only the library stays in `~/.claude/brain/library`.
 
+## 7. Team (when `~/.claude/brain/team` exists)
+`paas-team` (in PATH, else `~/.claude/tools/paas-team`): the active team, its remote and the sync state (`in sync`, `N ahead,
+M behind`, or a push failure with its reason from `.git/paas-push-failed`); `paas-team needs-refresh` says whether the clone
+holds a newer plugin than the one applied. `claude plugin list`: `paas-brain-<team>` enabled, the other teams' plugins
+disabled. `paas-team show <team> --json`: every MCP server with `configured: false` is still on its HOST / TOKEN placeholders
+and is not connected; name them. Where `docs-local` bridges to the VM's `docs-search` (its env in the plugin's `.mcp.json`
+has `PAAS_DOCS_URL`), `curl -sk <that url without /mcp>/health` must answer. Rows: WARN for a push failure, a pending
+refresh or a placeholder server; FAIL for a disabled plugin or a team folder that is not a git clone.
+
 ## Output
-Table: component | status (OK / WARN / FAIL) | detail | fix (command or skill for him: `/brain-setup`,
+Table: component | status (OK / WARN / FAIL) | detail | fix (command or skill for the user: `/brain-setup`,
 `sh brain/install.sh`, `claude mcp add …`, edit environment.md). Then the three most useful fixes first.

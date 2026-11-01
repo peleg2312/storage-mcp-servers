@@ -9,7 +9,7 @@ suspend, swap, failover, quiesce, break or resync anything.
 
 ## PowerMax SRDF
 - Live: powermax MCP `get_replication` (per SG / RDF group), `get_performance` category RDFDirector (busy groups),
-  `get_alerts` text='RDF', `get_audit_log` (recent changes). If he is at the CLI: `symrdf -sid <sid> list` or `symrdf -sid <sid> -sg <sg> -rdfg <n>
+  `get_alerts` text='RDF', `get_audit_log` (recent changes). At the CLI: `symrdf -sid <sid> list` or `symrdf -sid <sid> -sg <sg> -rdfg <n>
   query [-rdf_metro]`, `symcfg -sid <sid> list -rdfg all` (RDF groups, link state), `symrdf -sid <sid>
   -rdfg <n> ping`, Unisphere › Data Protection › SRDF (groups, pairs, witness).
 - Per RDF group: mode (Sync / Async / Metro), link status (Online / Offline), pairs by state, and for
@@ -25,7 +25,7 @@ suspend, swap, failover, quiesce, break or resync anything.
   version (9.2) when the array runs a newer PowerMaxOS.
 
 ## ONTAP SnapMirror (incl. SnapMirror active sync)
-- Live: ontap MCP relationships; CLI for him: `snapmirror show -fields source-path,destination-path,
+- Live: ontap MCP relationships; CLI for the user: `snapmirror show -fields source-path,destination-path,
   type,policy-type,state,status,healthy,unhealthy-reason,lag-time,last-transfer-error,last-transfer-
   end-timestamp` on the destination cluster, `snapmirror show -expand` for SVM-DR, `snapmirror
   config-replication status show`, `cluster peer show`, `vserver peer show`.
@@ -39,12 +39,12 @@ suspend, swap, failover, quiesce, break or resync anything.
 
 ## PowerFlex replication
 - Live: powerflex MCP `get_replication` (peer systems, RCGs: state, direction, RPO, activity, errors; `rcg=` for
-  pairs), `get_alerts` text='replication'. Not connected: he runs the RCG queries from the CLI Reference Guide of
-  his version (`dell/powerflex`) or reads PowerFlex Manager › Protection. Dial-home codes from `dell/kb`.
+  pairs), `get_alerts` text='replication'. Not connected: the user runs the RCG queries from the CLI Reference Guide of
+  their version (`dell/powerflex`) or reads PowerFlex Manager › Protection. Dial-home codes from `dell/kb`.
 - OpenShift volumes replicated through CSM: `oc get dellcsireplicationgroup -A` and the `dell/csm`
   `replication/` pages for the group states (`csm-health`).
 
 ## Output
 Table: array / cluster | group (RDF group / SM relationship / RCG) | mode | state | status | lag or invalid
 tracks | last change | OK or finding. Then findings by severity (with the documented meaning and its
-source + version), what he should run next, and what was not checked.
+source + version), what the user should run next, and what was not checked.

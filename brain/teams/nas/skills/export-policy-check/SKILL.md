@@ -9,9 +9,9 @@ Read-only: never create, edit or delete an export, policy or rule. Say which clu
 ## Collect
 - **ONTAP (live, ontap MCP)**: per SVM the export policies, their rules (index order, client match, protocol,
   ro / rw / superuser rule, anon user), and which volumes and qtrees use each policy.
-- **PowerScale (no MCP: he pastes)**, to be run by you: `isi nfs exports list --zone <zone> --verbose`,
+- **PowerScale (no MCP: the user pastes)**, to be run by you: `isi nfs exports list --zone <zone> --verbose`,
   `isi nfs exports view <id> --zone <zone>`, `isi nfs settings export view --zone <zone>`.
-- **VAST (no MCP: he pastes)**: the NFS view policies (host lists, read-write / read-only, root squash) from the VAST CLI / VMS.
+- **VAST (no MCP: the user pastes)**: the NFS view policies (host lists, read-write / read-only, root squash) from the VAST CLI / VMS.
 - Compare in python when there are more than ~20 rules.
 
 ## Findings
@@ -31,5 +31,5 @@ Meanings of options (superuser, anon, map-root, security flavors): `netapp` / `o
 
 ## Output
 Summary counts per cluster / zone, then the findings table (cluster, zone / SVM, export or policy, rule,
-finding, severity), sources with versions, fixes as commands for him to run (with rollback), and what was not
+finding, severity), sources with versions, fixes as commands for the user to run (with rollback), and what was not
 checked (clients actually mounting, other zones, clusters not pasted). Nothing is "orphaned" without N3's list.

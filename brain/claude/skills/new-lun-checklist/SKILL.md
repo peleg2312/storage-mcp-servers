@@ -1,6 +1,6 @@
 ---
 name: new-lun-checklist
-description: Prepare a new LUN / datastore / RDM or host addition read-only - verify hosts, WWPNs, zoning, masking, headroom, naming - and produce the commands and post-checks for him to run. Triggers - "I need a new 2TB datastore for cluster X", "add a host to the cluster", "new RDM for VM Y"
+description: Prepare a new LUN / datastore / RDM or host addition read-only - verify hosts, WWPNs, zoning, masking, headroom, naming - and produce the commands and post-checks for the user to run. Triggers - "I need a new 2TB datastore for cluster X", "add a host to the cluster", "new RDM for VM Y"
 ---
 # New LUN checklist (preparation only)
 
@@ -15,10 +15,10 @@ by capacity and standards).
    hosts? ONTAP igroup with all WWPNs, correct OS type (vmware), portset if used? Missing → list.
 4. **Capacity**: SRP / aggregate headroom after the new LUN vs thresholds.
 5. **Naming**: next name per the conventions in the environment file.
-6. **Plan**: exact commands / steps for him (PowerMax: Unisphere or symcli; ONTAP: `lun create`,
+6. **Plan**: exact commands / steps for the user (PowerMax: Unisphere or symcli; ONTAP: `lun create`,
    `lun mapping create`; MDS zoning if needed), each labelled "to be run by you", in order, with
    pre-checks.
-7. **Post-checks** after he runs it: rescan, the new NAA visible on every host, path count equal on both
+7. **Post-checks** after the user runs it: rescan, the new NAA visible on every host, path count equal on both
    fabrics, multipathing policy per the vendor's ESXi host configuration guide (docs MCP: netapp
    `ontap-sanhost`; `dell/powermax` "Host Connectivity Guide for VMware ESXi" and `dell/kb` "native
    multipathing round robin"), datastore created on the right NAA.

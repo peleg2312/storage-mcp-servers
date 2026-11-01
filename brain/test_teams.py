@@ -125,7 +125,7 @@ assert open(os.path.join(brain, "notes.md")).read() == "- my core fact\n"
 assert os.path.isfile(os.path.join(brain, "teams", "san", "knowledge", "notes", "powermax.md"))
 assert git(os.path.join(brain, "teams", "san"), "remote", "get-url", "origin").strip() == "git@gitlab.example:san/brain.git", "remote kept for later syncs"
 assert open(os.path.join(brain, "team")).read().strip() == "san"
-assert "SAN expert" in open(os.path.join(brain, "persona.md")).read()
+assert "The SAN team" in open(os.path.join(brain, "persona.md")).read()
 skills = lambda: sorted(os.listdir(os.path.join(home, ".claude", "skills")))
 assert skills() == ["mine"], skills()                        # the plugin carries the team's skills: nothing is copied into ~/.claude
 assert not os.path.exists(os.path.join(home, ".claude", "agents", "powermax-analyst.md"))

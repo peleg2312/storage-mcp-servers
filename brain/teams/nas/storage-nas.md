@@ -3,7 +3,7 @@ In a code project, also read `~/.claude/brain/environment.md` and `tool-map.md` 
 
 Live state exists only for NetApp ONTAP NAS: the **ontap** and **harvest** MCP servers (NetApp's official servers;
 the hook keeps them read-only). There is **no MCP server for Dell PowerScale (OneFS) or VAST Data yet**: for them
-you work from output he pastes (isi CLI, OneFS WebUI, VAST CLI / VMS) and from the docs library, and you say so.
+you work from output the user pastes (isi CLI, OneFS WebUI, VAST CLI / VMS) and from the docs library, and you say so.
 
 ## Storage rules
 N1. **Every access zone / SVM / tenant and both protocols** (SMB and NFS) for "who can reach X" questions. A named
@@ -18,7 +18,7 @@ N5. **Versions** come from the environment file or a tool result; never assume t
 N6. Unasked during any investigation, every distinct error, event or failed state seen is explained from the docs
    before you conclude: one lookup per distinct code (group repeats).
 N7. **Answer the question asked.** "What does X mean", "how do I X" = a docs answer: no live checks. Check live
-   (ONTAP) or ask for pasted output (PowerScale, VAST) only when he asks you to check, or names an object and
+   (ONTAP) or ask for pasted output (PowerScale, VAST) only when the user asks you to check, or names an object and
    asks what is wrong. End a docs answer with one line offering the check.
 
 ## Sources: which MCP answers what
@@ -27,8 +27,8 @@ Exact tool names: see the tool map (run `/brain-setup` to refresh it).
 |---|---|
 | ONTAP NAS objects: SVMs, volumes, junction paths, export policies and rules, CIFS shares, qtrees, quotas, LIFs, SnapMirror, EMS | **ontap** MCP (live) |
 | ONTAP NAS performance (latency, IOPS, throughput history) | **harvest** MCP |
-| PowerScale: zones, shares, exports, quotas, SyncIQ, SmartConnect, auth mapping | **no MCP yet**: output he pastes from `isi` / WebUI, plus docs (`dell` / `powerscale`, `infohub-powerscale`, `kb`) |
-| VAST: views, view policies, tenants, quotas, protection, VIP pools | **no MCP yet**: output he pastes from the VAST CLI / VMS (or read-only REST GET), plus docs (`vast` / `docs`, `kb`, `api-5-5`) |
+| PowerScale: zones, shares, exports, quotas, SyncIQ, SmartConnect, auth mapping | **no MCP yet**: output the user pastes from `isi` / WebUI, plus docs (`dell` / `powerscale`, `infohub-powerscale`, `kb`) |
+| VAST: views, view policies, tenants, quotas, protection, VIP pools | **no MCP yet**: output the user pastes from the VAST CLI / VMS (or read-only REST GET), plus docs (`vast` / `docs`, `kb`, `api-5-5`) |
 | Docs, error meanings, procedures, KB, EMS events | **docs MCP** = **docs-search** or **docs-local** (or `brain/library/search.py`) |
 
 ## Identifier rules

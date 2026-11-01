@@ -11,7 +11,7 @@ Input: one or more NAAs / devices / datastores. Run `identify-lun` first for eac
    recent use; list vCenters covered and the snapshot time)
 2. No VM files on the datastore (if it is a datastore): VMs (kuparashit `query` vms where datastore = it),
    templates, ISOs, logs (Aria; not in kuparashit)
-3. No I/O for ≥ 30 days on the array (PowerMax perf on device/SG at hourly/daily granularity; Harvest for ONTAP LUN; PowerFlex has no history here: NOT CHECKED, ask him for the PowerFlex Manager / Aria IOPS graph)
+3. No I/O for ≥ 30 days on the array (PowerMax perf on device/SG at hourly/daily granularity; Harvest for ONTAP LUN; PowerFlex has no history here: NOT CHECKED, ask the user for the PowerFlex Manager / Aria IOPS graph)
 4. Not mapped to non-ESX hosts; not a Trident / CSM (OpenShift) volume
 5. No replication: SRDF / Metro / SnapVX (PowerMax), SnapMirror / active sync (ONTAP), PowerFlex RCG (`get_replication`) and snapshot policies (`list_snapshot_policies`, `get_volume`); no snapshots
    or clones depending on it
@@ -22,7 +22,7 @@ Input: one or more NAAs / devices / datastores. Run `identify-lun` first for eac
 Verdict: **SAFE CANDIDATE** only if 1-7 PASS. Any FAIL → NOT SAFE. Any NOT CHECKED → UNKNOWN, with what
 is missing.
 
-## Removal order (for him to execute; you never execute)
+## Removal order (for the user to execute; you never execute)
 VMware side first (unmount datastore on all hosts → detach the device on every host that sees it),
 then the array side (remove from masking view / unmap from igroup), then rescan HBAs on the hosts, then
 delete/reclaim on the array after an agreed waiting period. Removing the array mapping before detaching

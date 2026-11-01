@@ -38,8 +38,8 @@ Using only list tools, collect:
 - versions: ONTAP version per cluster, PowerMaxOS / Unisphere version (from the tools); ask for Trident,
   CSM / CSI driver, NX-OS and ESXi versions (no tool shows them) - they select the versioned doc products
 
-Show the draft to the user, ask him to confirm or correct the uncertain items (fabric A/B, thresholds,
-prefixes, ownership), then write `~/.claude/brain/environment.md`, keeping anything he already filled in.
+Show the draft to the user, ask the user to confirm or correct the uncertain items (fabric A/B, thresholds,
+prefixes, ownership), then write `~/.claude/brain/environment.md`, keeping anything the user already filled in.
 
 ## 3. Smoke test
 Run one cheap call per server (e.g. list arrays, list switches, docs list_sources) and report a table:

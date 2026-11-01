@@ -4,16 +4,16 @@ description: Check VAST views, view policies, tenants, protection policies and q
 ---
 # VAST view check
 
-There is **no VAST MCP server yet**. Everything here comes from output he pastes or from the docs. Read-only:
+There is **no VAST MCP server yet**. Everything here comes from output the user pastes or from the docs. Read-only:
 never create or change a view, policy, tenant, quota or protection policy.
 
 ## Get the data (to be run by you)
 Use the VAST CLI or VMS GUI (Views, View Policies, Tenants, Quotas, Protection) and paste the output. Or read-only
-REST GET calls against the VMS (confirm the exact paths for his version in `vast` / `api-5-5`, N5):
+REST GET calls against the VMS (confirm the exact paths for their version in `vast` / `api-5-5`, N5):
 - `GET https://<vms>/api/views/?path=<path>` and `GET https://<vms>/api/viewpolicies/?name=<policy>`
 - `GET https://<vms>/api/tenants/`, `GET https://<vms>/api/quotas/?path=<path>`
 - `GET https://<vms>/api/protectionpolicies/`
-with a read-only token held by him (never paste it to me). Do not run POST, PATCH or DELETE.
+with a read-only token held by the user (never paste it to me). Do not run POST, PATCH or DELETE.
 
 ## Steps
 1. View: path, tenant, protocols (NFS / SMB / S3 flavours), bucket or share name, policy, state.
@@ -29,4 +29,4 @@ with a read-only token held by him (never paste it to me). Do not run POST, PATC
 |---|---|---|---|
 Then answer first, findings by severity (open host list, root squash off, no protection policy, quota near
 limit), sources: pasted command + time, doc title, url, version (`vast` / `docs`, `kb`, `api-5-5`), fixes as
-commands for him to run, and what was not checked (other tenants, other clusters, live client state).
+commands for the user to run, and what was not checked (other tenants, other clusters, live client state).

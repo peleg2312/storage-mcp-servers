@@ -11,9 +11,9 @@ thresholds); none set there: ask, do not guess.
 - **ONTAP (live, ontap MCP)**: the quota report per SVM (tree, user and group quotas on volumes and qtrees:
   used, hard limit, soft limit, files) and whether quota is enabled on the volume. Growth: harvest MCP volume
   space history, if present.
-- **PowerScale (no MCP: he pastes)**, to be run by you: `isi quota quotas list --zone <zone> --verbose`
+- **PowerScale (no MCP: the user pastes)**, to be run by you: `isi quota quotas list --zone <zone> --verbose`
   (directory, user, group; hard, soft, advisory, grace), `isi quota quotas view <type> --path <path>`.
-- **VAST (no MCP: he pastes)**: quotas on paths from the VAST CLI / VMS (hard and soft limit, used).
+- **VAST (no MCP: the user pastes)**: quotas on paths from the VAST CLI / VMS (hard and soft limit, used).
 - Docs for the type and state meanings: `dell` / `powerscale`, `netapp` / `ontap`, `vast` / `docs`; cite versions.
 
 ## Steps
@@ -28,5 +28,5 @@ thresholds); none set there: ask, do not guess.
 | Cluster | Path | Type | Used | Hard | % | State |
 |---|---|---|---|---|---|---|
 Over 15 rows: export with `report-export` and show the top ones. Then findings by severity, sources, fixes as
-commands for him to run (raise a limit, clean up) with rollback, and what was not checked (clusters not pasted,
+commands for the user to run (raise a limit, clean up) with rollback, and what was not checked (clusters not pasted,
 snapshot space counting, user quotas not listed).

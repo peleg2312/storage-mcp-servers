@@ -16,7 +16,7 @@ Without it, evidence comes from (a) what the user runs and pastes, (b) vCenter-s
 Everything is read-only: only
 `--query_*` commands, never `--set`, `--remove`, `--add` or anything in PowerFlex Manager that changes state.
 
-## 1. Collect (commands for him; PowerFlex 3.x: on the primary MDM; 4.x / 5.x: `scli` on the MDM or
+## 1. Collect (commands for the user; PowerFlex 3.x: on the primary MDM; 4.x / 5.x: `scli` on the MDM or
 the PowerFlex Manager UI / REST API)
 - Cluster: `scli --login --username <ro-user>` then `scli --query_cluster`, `scli --query_all`
   (summary of protection domains, pools, SDS/SDC counts, capacity, rebuild / rebalance state),
@@ -50,5 +50,5 @@ latency and alerts of those datastores in the window.
 ## Output
 Answer first (what is wrong, since when, blast radius: pools / volumes / datastores / VMs), evidence
 table (command | object | value), findings by severity, the documented meaning and recommended action
-with citations (guide file name + page or KB number, version), then the next read-only commands for him.
-Say explicitly that the array side was not checked live if he could not run the commands.
+with citations (guide file name + page or KB number, version), then the next read-only commands for the user.
+Say explicitly that the array side was not checked live if the user could not run the commands.

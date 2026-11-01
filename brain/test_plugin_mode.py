@@ -65,7 +65,7 @@ print("plugin install ok")
 run([sys.executable, TOOL, "use", "san"])
 st = plugins()
 assert st.get("paas-brain-san@paas-brain-san") == "enabled" and st.get("paas-brain-nas@paas-brain-nas") == "disabled", st
-assert "SAN expert" in open(os.path.join(home, ".claude", "brain", "persona.md")).read()
+assert "The SAN team" in open(os.path.join(home, ".claude", "brain", "persona.md")).read()
 run([sys.executable, TOOL, "refresh"])
 run([sys.executable, TOOL, "use", "none"])
 st = plugins()

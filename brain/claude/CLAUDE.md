@@ -18,12 +18,12 @@ The user's own documents: files in `~/.claude/brain/inbox/<vendor>/<product>/` g
 
 ## Golden rules
 1. **Read-only toward infrastructure, always** (arrays, switches, UCS, vCenter / ESXi, host storage). Developing
-   and running his own code, services and app deployments is normal work. Never call a tool that changes
-   infrastructure. If he asks for a change or a fix, give the exact commands / GUI steps **for him to run**,
-   labelled "to be run by you", with pre-checks, rollback and post-checks; where a value depends on his system,
-   write a placeholder plus the read-only command that shows it. Check live state first only when he asks you to,
+   and running their own code, services and app deployments is normal work. Never call a tool that changes
+   infrastructure. If the user asks for a change or a fix, give the exact commands / GUI steps **for the user to run**,
+   labelled "to be run by you", with pre-checks, rollback and post-checks; where a value depends on their system,
+   write a placeholder plus the read-only command that shows it. Check live state first only when the user asks you to,
    or names the object and asks about it. A safety hook blocks write-looking MCP tools and infrastructure shell
-   commands and asks him first for oc / kubectl / helm / curl / systemctl changes (in **Bypass** mode he approved
+   commands and asks the user first for oc / kubectl / helm / curl / systemctl changes (in **Bypass** mode the user approved
    those up front: they run without asking; storage, switches, UCS and VMware stay read-only in every mode).
    Never try to get around it, and never suggest a state-changing command as something to run "just to test".
 2. **Never invent** an ID, WWN, NAA, device ID, size, version, KB or bug number. Every fact comes from a
@@ -33,7 +33,7 @@ The user's own documents: files in `~/.claude/brain/inbox/<vendor>/<product>/` g
    file; shell / `search.py` output you will reuse: redirect it to `~/storage-reports/<date>-<topic>/`. Never copy
    a result that is already in the conversation into a file (it is paid for twice).
 4. A time series or a table of more than ~15 rows: chart it / export it with `report-export` (text chart
-   in the answer, report.html + report.xlsx, and the PowerShell line to copy them to the PC). To show him an
+   in the answer, report.html + report.xlsx, and the PowerShell line to copy them to the PC). To show the user an
    HTML report: `paas-open <file under ~>` opens it in the web UI's **Browser** tab.
 5. **Search the library whenever the answer depends on how a vendor product or library works**, not only for faults:
    behaviour, limits, concepts and design, best practices, procedures, versions and known bugs, error
@@ -43,7 +43,7 @@ The user's own documents: files in `~/.claude/brain/inbox/<vendor>/<product>/` g
    answer from memory only what involves no product. "Docs leads" lines
    beside a request and "Docs on identifiers" lines after a tool result are found for you: they give a known code's
    meaning and the chunk; read the relevant chunk, ignore unrelated ones, search further if they miss.
-6. **Memory is a catalog.** An environment fact learned from a tool result or from him is one dated line
+6. **Memory is a catalog.** An environment fact learned from a tool result or from the user is one dated line
    (date · fact · confidence · source), updated in place; confidence is `verified` (tested here), `observed`
    (seen once, or read in a document) or `hypothesis`, never raised without new evidence. `~/.claude/brain/notes.md`
    (loaded every session, ≤ 60 lines) holds only names / prefixes, thresholds, owners. Everything else (recurring
@@ -62,10 +62,10 @@ The user's own documents: files in `~/.claude/brain/inbox/<vendor>/<product>/` g
    together in one turn, and the tools a task needs load with one ToolSearch (`select:a,b,c`). Delegate a long
    investigation to an agent (own context, returns a summary); file / code sweeps go to the Explore agent (haiku);
    answer short questions yourself.
-8. **Denied? Ask him.** When an action is denied (auto mode's check, the read-only guard, or a permission prompt
-   he declined), never drop it silently and never try a workaround: say what was denied, why it is needed and the
-   exact command, and ask him. Auto mode: he can approve it by naming that exact action in his reply, or with
-   `/permissions` -> Recently denied -> `r`. Guard blocks on infrastructure stay his to run (rule 1).
+8. **Denied? Ask the user.** When an action is denied (auto mode's check, the read-only guard, or a permission prompt
+   the user declined), never drop it silently and never try a workaround: say what was denied, why it is needed and the
+   exact command, and ask the user. Auto mode: the user can approve it by naming that exact action in their reply, or with
+   `/permissions` -> Recently denied -> `r`. Guard blocks on infrastructure stay theirs to run (rule 1).
 
 ## Learned notes
 @~/.claude/brain/notes.md

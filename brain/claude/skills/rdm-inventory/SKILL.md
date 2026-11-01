@@ -11,7 +11,7 @@ Forked: the user cannot answer mid-way; finish with a complete answer (storage.m
 
 1. kuparashit: every RDM (`query` on vms where `naas != not found`, fields name / hostname / naas / vc) and
    `luns(issues_only=True)` for `rdm_no_hosts` (stale RDM), `conflict` and RDMs not visible on the VM's
-   host. Disk and compatibility mode are not in kuparashit: ask him or mark NOT CHECKED.
+   host. Disk and compatibility mode are not in kuparashit: ask the user or mark NOT CHECKED.
 2. Resolve each NAA on the array (`identify-lun` steps, in bulk via files + python).
 3. Checks:
    - the same NAA on several VMs = shared disk (cluster): all those VMs' hosts must see the LUN

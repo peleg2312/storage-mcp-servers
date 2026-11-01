@@ -8,7 +8,7 @@ Companion to `k8s-volume-troubleshoot` (one PVC / pod / mount problem): this ski
 **installation** - versions, support, modules, known issues. For a failing volume, run that skill and come
 back here only for the version / known-issue part. No Kubernetes MCP: the user runs read-only `oc` commands.
 
-## 1. Collect (commands for him)
+## 1. Collect (commands for the user)
 - Operator and CSM CRs: `oc get csv -A | grep -i dell`, `oc get csm -A`, `oc get csm <name> -n <ns> -o yaml`
   (spec: driver type + configVersion, modules enabled; status: state, conditions).
 - Driver: `oc get pods -n <driver-ns> -o wide`, `oc get deploy,ds -n <driver-ns> -o
@@ -44,5 +44,5 @@ symptom · secrets / certificates (expiry if visible).
 ## Output
 Table: component | running | documented for this CSM version | status | reference. Then findings by
 severity (with the DSA / known-issue / changelog citations and versions), then the recommended target
-version with its supported-OpenShift / array-OS constraints, as a plan for him (no commands that change
+version with its supported-OpenShift / array-OS constraints, as a plan for the user (no commands that change
 anything).

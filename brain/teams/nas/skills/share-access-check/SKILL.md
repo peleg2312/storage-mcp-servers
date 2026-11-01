@@ -14,11 +14,11 @@ User or group (name and, if known, SID / UID / GID), share or export path, clust
 - **ONTAP (live, ontap MCP)**: the SVM, CIFS share and its share ACL, volume/qtree security style, export policy
   and rules for the volume, name-mapping rules, the UNIX user, the junction path. The effective file ACL
   (`vserver security file-directory show`) may have no tool: then give it as a command "to be run by you".
-- **PowerScale (no MCP: he pastes)**, to be run by you, placeholders in <>:
+- **PowerScale (no MCP: the user pastes)**, to be run by you, placeholders in <>:
   `isi zone zones view <zone>`, `isi smb shares view <share> --zone <zone>`,
   `isi nfs exports view <id> --zone <zone>`, `isi auth users view <user> --zone <zone>`,
   `isi auth mapping token <user> --zone <zone>`, `ls -led /ifs/<path>` on the node.
-- **VAST (no MCP: he pastes)**: the view, its view policy, tenant and the user / group from the VAST CLI or VMS.
+- **VAST (no MCP: the user pastes)**: the view, its view policy, tenant and the user / group from the VAST CLI or VMS.
 - Docs: `dell` / `powerscale` (OneFS 9.10), `infohub-powerscale`, `vast` / `docs`, `netapp` / `ontap`, `kb`,
   `kb-ontap`. Cite title, url and version.
 
@@ -34,5 +34,5 @@ User or group (name and, if known, SID / UID / GID), share or export path, clust
 ## Output
 | Layer | Setting | Effect on X | Source |
 |---|---|---|---|
-Then the answer first (reachable or not, and why), findings by severity, the fix as commands for him to run
+Then the answer first (reachable or not, and why), findings by severity, the fix as commands for the user to run
 (pre-check, rollback, post-check), and what was not checked (other zones, the other protocol, clients not named).

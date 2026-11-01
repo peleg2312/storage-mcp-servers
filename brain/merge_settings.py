@@ -85,6 +85,11 @@ for k in ("PreToolUse", "PostToolUse", "UserPromptSubmit", "SessionStart", "Stop
 # No internet on the VM: no auto-update, telemetry or other background traffic.
 env = s.setdefault("env", {})
 env.setdefault("ENABLE_CODE_SECURITY_REVIEW", "0")
+# MCP tool search: the tool schemas stay out of the context until a task loads them (ToolSearch, golden rule 7). The four
+# storage servers plus docs-local hand Claude about 13k tokens of schemas (scripts/mcp_context_size.py), under the 10 percent
+# threshold of Claude Code's "auto" mode, so without this they would load into every session; the server instructions
+# (about 4k tokens) and the tool names still load. A laptop with the plugin alone sets the same line in its settings.json.
+env.setdefault("ENABLE_TOOL_SEARCH", "true")
 for k in ("CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC", "DISABLE_AUTOUPDATER"):
     env.setdefault(k, "1")
 allow = s.setdefault("permissions", {}).setdefault("allow", [])

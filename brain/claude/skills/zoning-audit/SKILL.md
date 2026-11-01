@@ -32,5 +32,5 @@ Scope: all VSANs on both fabrics unless the user narrows it. Save raw outputs to
 
 ## Output
 Summary counts per fabric/VSAN, then the table of findings (fabric, VSAN, zone/alias, WWPN, owner,
-finding, suggested fix). Fix suggestions are commands for him to run, grouped per switch, with
+finding, suggested fix). Fix suggestions are commands for the user to run, grouped per switch, with
 `zone commit` / `zoneset activate` notes if enhanced zoning is used. Save the CSV.

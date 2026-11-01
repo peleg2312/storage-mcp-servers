@@ -68,7 +68,8 @@ the library, the plugin's `docs-local` bridges to the VM's `docs-search` service
 index, `?team=nas`; the address and token come with the plugin once the VM's install-shared.sh published the team), so the docs
 search works on a laptop as on the VM. `sh install-laptop.sh --team nas` from this repository installs the library locally instead.
 No GitLab from the laptop: copy a clone of the team repository over and give its folder to the first command
-(`claude plugin marketplace add ./brain-nas`); the plugin runs from it and the knowledge stays in it.
+(`claude plugin marketplace add ./brain-nas`); the plugin runs from it and the knowledge stays in it. One line the plugin cannot set:
+`"env": {"ENABLE_TOOL_SEARCH": "true"}` in `~/.claude/settings.json` keeps the team's MCP tool schemas out of every session (the VM installers set it).
 
 ## Get the images
 

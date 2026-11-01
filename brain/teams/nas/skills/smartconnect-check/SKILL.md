@@ -7,7 +7,7 @@ description: Check SmartConnect zones, pools, IP allocation, DNS delegation and 
 Read-only: never change a pool, zone, subnet, DNS record or LIF. Cover every cluster and access zone; say which
 were not checked.
 
-## PowerScale (no MCP: he pastes)
+## PowerScale (no MCP: the user pastes)
 To be run by you, placeholders in <>:
 - `isi network subnets list` and `isi network subnets view <groupnet>.<subnet>` (SSIP, SmartConnect service IP)
 - `isi network pools list` and `isi network pools view <groupnet>.<subnet>.<pool>` (SmartConnect zone name, aliases,
@@ -20,7 +20,7 @@ Docs: `dell` / `powerscale` (OneFS 9.10), `infohub-powerscale`, `kb`; cite title
 ## ONTAP and VAST equivalents
 - ONTAP (live, ontap MCP): LIFs per SVM (home node and port, current node, is-home, status, failover group and
   policy, DNS load balancing zone). Docs: `netapp` / `ontap`.
-- VAST (no MCP: he pastes): VIP pools, their ranges, tenant binding and CNodes from the VAST CLI / VMS.
+- VAST (no MCP: the user pastes): VIP pools, their ranges, tenant binding and CNodes from the VAST CLI / VMS.
 
 ## Findings
 | Check | Severity |
@@ -34,5 +34,5 @@ Docs: `dell` / `powerscale` (OneFS 9.10), `infohub-powerscale`, `kb`; cite title
 
 ## Output
 Table: cluster | pool or LIF | zone name | IPs | members | allocation | access zone / SVM | finding. Then answer first,
-findings by severity, sources with versions, fixes as commands for him to run, and what was not checked
+findings by severity, sources with versions, fixes as commands for the user to run, and what was not checked
 (clients behind other resolvers, nodes not pasted).

@@ -1,6 +1,6 @@
 ---
 name: explain-error
-description: Explain an error, alert, event or log line (PowerMax, ONTAP EMS, PowerFlex, OneFS, VAST, MDS, UCS, ESXi, Trident, CSM) and give its fix, from the docs and bug trackers; the live system is checked only when he asks. Triggers - "what does this error mean", "explain EMS ...", "what is SIO02...", a pasted alert or log line
+description: Explain an error, alert, event or log line (PowerMax, ONTAP EMS, PowerFlex, OneFS, VAST, MDS, UCS, ESXi, Trident, CSM) and give its fix, from the docs and bug trackers; the live system is checked only when the user asks. Triggers - "what does this error mean", "explain EMS ...", "what is SIO02...", a pasted alert or log line
 ---
 # Explain an error
 
@@ -27,6 +27,6 @@ description: Explain an error, alert, event or log line (PowerMax, ONTAP EMS, Po
    Read the best hit fully (read_chunk) before answering; the next ones too when it does not fully explain the
    error, or another version or a KB may differ.
 3. Live check: storage.md S7.
-4. Answer: meaning · likely causes · fix (commands for him, placeholders + the read-only command that finds each value) · whether
+4. Answer: meaning · likely causes · fix (commands for the user, placeholders + the read-only command that finds each value) · whether
    a known bug / fixed version applies · sources with versions. If the docs don't cover it, say so and
    suggest saving the relevant vendor KB into the local library once found.
