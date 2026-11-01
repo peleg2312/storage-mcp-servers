@@ -30,13 +30,6 @@ if [ "$(cat "$B/SHA256SUMS")" != "$(cat "$DST/.bundle-sum" 2>/dev/null || true)"
   rm -rf "$DST"; mkdir -p "$(dirname "$DST")"; mv "$TMP/paas-ui" "$DST"; rm -rf "$TMP"
   cp "$B/SHA256SUMS" "$DST/.bundle-sum"
 fi
-# small update tar: only the UI files that changed (bundle-patch/), for the bundles listed in its BASES
-PT=$HERE/bundle-patch
-if [ -f "$PT/ui-patch.tar.gz" ] && grep -qxF "$(cut -c1-64 "$B/SHA256SUMS")" "$PT/BASES" \
-   && [ "$(cat "$PT/SHA256SUM")" != "$(cat "$DST/.patch-sum" 2>/dev/null || true)" ]; then
-  (cd "$PT" && sha256sum -c SHA256SUM >/dev/null) || { echo "ui: patch checksum mismatch"; exit 1; }
-  tar -xzf "$PT/ui-patch.tar.gz" -C "$DST" && cp "$PT/SHA256SUM" "$DST/.patch-sum" && echo "ui: update applied ($(cat "$PT/LABEL"))"
-fi
 [ "${UI_SHARED:-0}" = 1 ] && { chmod -R a+rX "$DST"; echo "ui: files in $DST (per-user services: brain/multiuser)"; exit 0; }
 # plugins (Brain, Reports, Schedule, Status): replaced on every run, other plugins you install are left alone
 mkdir -p "$HOME/.claude-code-ui/plugins"
