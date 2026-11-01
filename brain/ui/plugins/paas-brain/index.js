@@ -242,6 +242,9 @@ const CSS = `
 .paas .grow{flex:1 1 220px}
 .paas .ted td input:not([type=checkbox]),.paas .ted .t-filter{width:100%;min-width:110px;min-height:32px;padding:5px 10px;border:1px solid hsl(var(--input));border-radius:10px;background:hsl(var(--background));color:inherit;font:inherit}
 .paas .ted .t-filter{margin-bottom:6px}
+.paas .field input[type=checkbox],.paas .ted td input[type=checkbox]{width:16px;height:16px;min-height:0;padding:0;margin:0;flex:none;accent-color:hsl(var(--primary))}
+.paas .t-list label{display:flex;gap:8px;align-items:center;padding:4px 0;flex-wrap:nowrap}.paas .t-list label .tag,.paas .t-list label .sub{margin-left:auto;flex:none}
+.paas .ted td input.m-url{min-width:240px}.paas .ted td label.sub{display:inline-flex;gap:6px;align-items:center;margin-left:8px;white-space:nowrap}
 @media (max-width:640px){.paas{padding:16px}.paas .grid,.paas .two{grid-template-columns:1fr}.paas pre{max-height:none}}`;
 
 const TABS = [['docs', 'Docs library'], ['team', 'Team'], ['skills', 'Skills'], ['agents', 'Agents'], ['mcp', 'MCP & hooks'], ['memory', 'Memory']];
@@ -507,7 +510,7 @@ export function mount(container, api) {
       };
       body.innerHTML = `<div class="t-form">${field('Title', `<input type="text" data-k="title" value="${esc(d.title || '')}" aria-label="Title" autocomplete="off">`)}
         ${field('Description', `<input type="text" data-k="description" value="${esc(d.description || '')}" aria-label="Description" autocomplete="off">`)}
-        ${text('persona', 'Persona', 'Who you work for', 8)}${text('rules', 'Rules', 'the storage rules file', 14)}${text('environment', 'Environment template', 'the template a new member starts from', 10)}
+        ${text('persona', 'Persona', 'Who you work for', 6)}${text('rules', 'Rules', 'the storage rules file', 8)}${text('environment', 'Environment template', 'the template a new member starts from', 10)}
         ${pick('skills', d.skills || [], d.available_skills)}${pick('agents', d.agents || [], d.available_agents)}
         <div class="field"><label>MCP servers</label><div class="table-wrap"><table><tr><th>Name</th><th>Type</th><th>URL</th><th>Token</th><th>Configured</th><th><span class="sr">Actions</span></th></tr>
           ${servers.map(mrow).join('')}
@@ -671,7 +674,7 @@ export function mount(container, api) {
     pane.innerHTML = `<div class="row spread"><span class="sub">${data.skills.length} skills · ${mine.length} of them yours</span>
       ${editing ? '' : '<button class="btn new">New skill</button>'}</div>
       <div class="sub" style="margin-top:6px">Team skills come and go with the team; your own and marketplace skills stay. Add more in the Market tab.${data.pluginTeam ? ` In Claude they are called /paas-brain-${esc(data.pluginTeam)}:&lt;skill&gt;.` : ''}</div>${form}
-      ${mine.length ? `<div class="sec-label">Your skills</div><div class="grid">${mine.map(card).join('')}</div><div class="sec-label">Built in</div>` : '<div style="height:12px"></div>'}
+      ${mine.length ? `<div class="sec-label">Your skills</div><div class="grid">${mine.map(card).join('')}</div><div class="sec-label">${data.pluginTeam ? `From your team (${esc(data.pluginTeam.toUpperCase())})` : 'Built in'}</div>` : '<div style="height:12px"></div>'}
       <div class="grid">${data.skills.filter((x) => !x.mine).map(card).join('')}</div>`;
     pane.querySelector('.new')?.addEventListener('click', () => renderSkills({}));
     pane.querySelector('.f-cancel')?.addEventListener('click', () => renderSkills());
