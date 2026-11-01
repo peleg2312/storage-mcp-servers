@@ -187,7 +187,9 @@ def publish_url(team, url, hooks, commit, force=False, docs_search=None, docs_to
         if commit:
             r = git(tmp, "push", "-u", "origin", "HEAD:main", timeout=300)
             if r.returncode:
-                sys.exit(f"publish.py: push failed: {(r.stderr or r.stdout).strip()[-300:]}")
+                out = (r.stderr or r.stdout).strip()
+                reason = "\n  ".join(l.strip() for l in out.splitlines() if l.startswith("remote:") or l.startswith("!") or l.startswith("error:"))
+                sys.exit("publish.py: push failed:\n  " + (reason or out[-300:]))      # GitLab's own sentence, not only git's summary
         print(f"team {team}: plugin {t['version']} ({len(t['skills'])} skills, {len(t['agents'])} agents) pushed to {url}")
     finally:
         shutil.rmtree(tmp, ignore_errors=True)
