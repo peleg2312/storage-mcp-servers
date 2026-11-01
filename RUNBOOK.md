@@ -265,6 +265,15 @@ the notes stay per person.
    `case_sensitive = False`, `override_homedir = /home/%u`, `fallback_homedir = /home/%u`; `systemctl restart sssd`.
    Home directories at first login: `authselect enable-feature with-mkhomedir && systemctl enable --now oddjobd`.
    Check: `id <someone>` prints the domain groups, `getent passwd <someone>` a home under /home.
+   If the join fails, test the domain with `kinit` first (`dnf install krb5-workstation`; from a real terminal, not a
+   script; the realm in capitals exactly as `realm discover <domain>` prints it): "KDC has no support for encryption type"
+   means the domain controllers speak RC4 only and RHEL 9 refuses it: `update-crypto-policies --set DEFAULT:AD-SUPPORT-LEGACY`
+   (`DEFAULT:AD-SUPPORT` on 9.0 / 9.1) and, if `/etc/crypto-policies/back-ends/krb5.config` still lists no `rc4-hmac`, a file
+   `/etc/krb5.conf.d/00-ad-rc4.conf` with `[libdefaults]` / `permitted_enctypes = aes256-cts-hmac-sha1-96 aes128-cts-hmac-sha1-96
+   rc4-hmac`; in FIPS mode RC4 is impossible and the AD team must enable AES on the domain. "KDC reply did not match
+   expectations" means the realm is spelled differently: use the discovered spelling, or `kinit -C` and `canonicalize = true`
+   under `[libdefaults]`. `KRB5_TRACE=/dev/stderr kinit ...` shows what was offered and what the KDC answered. Then
+   `systemctl restart realmd` before `realm join`, and `kdestroy` afterwards.
 2. Who may sign in: put the AD group(s) into `/etc/paas/allowed-groups` (one per line; `paas-users` stays for local
    accounts), then re-run `sh brain/multiuser/install-shared.sh`: it gives those groups read access (ACLs) to
    `/opt/paas/marketplace` and `/opt/paas/teams`, which are otherwise readable by `paas-users` only because they can hold
