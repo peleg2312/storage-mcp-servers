@@ -67,7 +67,7 @@ const HTML = `<!doctype html><meta charset="utf-8"><title>smoke</title><style>:r
   const status = await page.locator('.teambox .live').first().textContent();
   if (!/Now on NAS/.test(status)) throw new Error('status: ' + status);
   const sub1 = await page.locator('.tline').innerHTML();
-  if (!/NAS<\/b>: NAS team 18 skills, 4 agents, shared memory/.test(sub1)) throw new Error('team line: ' + sub1);
+  if (!/NAS<\/b>: NAS team · 18 skills, 4 agents, shared memory/.test(sub1)) throw new Error('team line: ' + sub1);
   const rowOn = await page.locator('.trow.on').innerHTML();
   if (!/your team now/.test(rowOn) || !/\/share-access-check/.test(rowOn) || !/nas-analyst/.test(rowOn)) throw new Error('active row: ' + rowOn);
   if (await page.locator('.confirm').count() !== 0) throw new Error('a confirm dialog appeared');

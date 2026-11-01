@@ -349,8 +349,10 @@ export function mount(container, api) {
 
   // Team tab: what a team is, which one this chat uses (one click switches), what each team carries, sync and editing
   function renderTeamTab() {
-    pane.innerHTML = `<div class="teambox">${skeleton('cards')}</div>
-      <div class="card"><h3>What a team is</h3>
+    pane.innerHTML = `<div class="teambox" data-explain="1">${skeleton('cards')}</div>`;
+    renderTeam(pane.querySelector('.teambox'));
+  }
+  const EXPLAIN = `<div class="card"><h3>What a team is</h3>
         <div class="sub">A team is a complete brain profile that you switch on with one click:</div>
         <ul class="sub tlist">
           <li><b>Rules</b>: the persona and the storage rules Claude follows for that team's systems.</li>
@@ -359,8 +361,6 @@ export function mount(container, api) {
           <li><b>Shared memory</b>: notes, environment and tool map that every member writes and reads, kept in the team's git repository and synced at every save and every session start.</li>
         </ul>
         <div class="sub">One team at a time; <b>No team</b> means your own rules, skills and notes. After a switch, start a new chat.</div></div>`;
-    renderTeam(pane.querySelector('.teambox'));
-  }
 
   // Team card: which team profile this chat uses, switch it, sync its knowledge (GET/POST team, team-sync)
   let teamMsg = null;
@@ -389,9 +389,10 @@ export function mount(container, api) {
     box.innerHTML = `<div class="card"><h3>Your brain now</h3>${t.error ? `<div class="sub bad" role="alert">${esc(t.error)}</div></div>` : `
       <div class="seg tseg" role="group" aria-label="Team"><button type="button" data-team="none" aria-pressed="${!t.active}">No team</button>${teams.map((x) => `<button type="button" data-team="${esc(x.name)}" aria-pressed="${x.name === t.active}" title="${esc(x.description || x.name)}">${esc(x.title || x.name)}</button>`).join('')}</div>
       <div class="sub tline" style="margin:10px 0">${cur
-        ? `<b>${esc(cur.title || cur.name)}</b>: ${esc(cur.description || '')} ${esc(cur.skills ?? 0)} skills, ${esc(cur.agents ?? 0)} agents, shared memory${t.mode === 'files' ? ' · files mode (no claude command)' : ''}.`
+        ? `<b>${esc(cur.title || cur.name)}</b>: ${cur.description ? `${esc(cur.description)} · ` : ''}${esc(cur.skills ?? 0)} skills, ${esc(cur.agents ?? 0)} agents, shared memory${t.mode === 'files' ? ' · files mode (no claude command)' : ''}.`
         : 'Your own rules and skills, no shared team memory. Click a team to use its brain; the next chat uses it, and one click brings you back.'}</div>
       <div class="row"><span class="tanchor"></span><span class="stbox"></span></div></div>
+      ${box.dataset.explain ? EXPLAIN : ''}
       <div class="card"><h3>Teams on this VM</h3>${teams.length ? teams.map(row).join('') : '<div class="sub">No team published here yet (root: install-shared.sh).</div>'}</div>
       <div class="card">
       <details class="tmore"><summary>More: sync, git, edit a team</summary>
