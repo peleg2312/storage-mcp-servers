@@ -197,10 +197,10 @@ per-person budget; `--dry-run` prints the plan. Nothing in it needs the internet
 
 **After the command**
 
-4. The teams' MCP servers: Brain tab, Team card, More, Edit a team (address and token per server; saved into the team repository's
+4. The teams' MCP servers: Brain tab, Team, More, Edit a team (address and token per server; saved into the team repository's
    `mcp.json`, built into the plugin's `.mcp.json` and pushed, so every member's Claude connects them at the next session). A
    server left on its placeholders is not connected and is named in a note at a switch.
-5. Try it: sign in at `https://<vm>:3001` as an AD member, pick a team in the Team card, start a new chat, ask one storage
+5. Try it: sign in at `https://<vm>:3001` as an AD member, pick a team in the Brain tab, Team, start a new chat, ask one storage
    question, save one note and see the commit in GitLab with your name on it. Laptops: `claude plugin marketplace add <team url>
    && claude plugin install paas-brain-<team>@paas-brain-<team> && claude`, with the person's own GitLab login.
 
@@ -282,7 +282,7 @@ the notes stay per person.
    MCP tokens. The gate lower-cases the typed name and checks membership with `id -nG`; the password check is `su` through
    PAM, so it works for AD and local accounts alike.
 3. At a person's first sign-in the gate runs `paas-user provision <name>` (home, links to the shared brain, UI plugins,
-   marketplace defaults). No team is switched on: the person picks one in the Brain tab, Team card (No team / SAN / NAS, one
+   marketplace defaults). No team is switched on: the person picks one in the Brain tab, Team (No team / SAN / NAS, one
    click, then a new chat), or root sets it with `paas-user team <name> <team>`. Nothing else to do per person.
 4. RAM: the gate stops a person's UI instance after `GATE_IDLE_MINUTES` (default 60) without a request, an open WebSocket
    or a running `claude`; the next request starts it again within seconds and the sign-in cookie stays valid. So the VM

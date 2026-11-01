@@ -59,7 +59,7 @@ Nobody signs in to GitLab on the VM. Root stores one project (or group) access t
 (`/opt/paas/bin/paas-git-credential`) into every account's git config, so the notes hook's pushes, `paas-team` and the Brain
 tab's commits, and the docs service's pulls all authenticate with it (https urls). A person's own helper, listed first, wins.
 Commits carry the person (`<login>@<vm>`, or their own git identity when configured), so GitLab history says who wrote each
-note. A failed push leaves its reason in `.git/paas-push-failed`; `--sync` prints it, so the Team card and session start show it.
+note. A failed push leaves its reason in `.git/paas-push-failed`; `--sync` prints it, so the Team tab and session start show it.
 Laptops use the person's own GitLab login.
 
 ## MCP servers per team
@@ -69,7 +69,7 @@ The team repository's `mcp.json` holds the team's live MCP servers with address 
 placeholders at the first publish and filled in the Brain tab's team editor (or by hand). Every filled-in http server is
 written into the plugin's `.mcp.json` (publish.py and the editor both do it, through `paas-team`'s `plugin_mcp`), so Claude
 Code connects it wherever the plugin is enabled, VM or laptop, and nothing is registered per person; a server still on its
-placeholders is left out and named in a note at a switch; a server the person added themselves is theirs. The Team card
+placeholders is left out and named in a note at a switch; a server the person added themselves is theirs. The Team tab
 shows which servers the plugin connects. `docs-search` is not listed twice: its address and token ride in `docs-local`'s
 environment, and `docs-local` bridges to it (stdio to HTTPS, the VM's certificate from `lib/paas-ui.crt`) on a machine without
 the library. The owner's decision: the tokens in `mcp.json` and `.mcp.json` are readable by everyone with access to the team's
@@ -78,7 +78,7 @@ asks to redact those files.
 
 ## Editing a team in the Brain tab
 
-The Team card's "Edit team" opens the team's definition: title, description, persona, rules, environment template, the
+The Team tab's "More, Edit a team" opens the team's definition: title, description, persona, rules, environment template, the
 skills and agents (checkboxes over everything on this machine: your own, the marketplace's, the other teams'), and the MCP
 servers with their tokens. Saving writes into the team repository (`paas-team edit <team>` with JSON on stdin), commits
 `brain tab: team <team> edited`, pushes, and re-applies the team if it is the active one; every member picks the change up at
@@ -195,6 +195,6 @@ NAS rules and skill list are shorter, `test_budgets.py` prints both).
   as before (plain files, no symlinks).
 - `sh install-laptop.sh [--team nas] [--team-source <url>]`: plugin mode; the pre-team `paas-brain` plugin is removed.
 - Multi-user VM: `install-shared.sh` publishes every team into `/opt/paas/teams/<team>` (plugins without hooks, the
-  hooks are managed settings) and installs `paas-team`. Everyone starts without a team; the Team card of the Brain tab
+  hooks are managed settings) and installs `paas-team`. Everyone starts without a team; the Team tab of the Brain tab
   switches with one click (No team / SAN / NAS), root can also set it with `paas-user team dana nas` or `paas-user add
   dana --team nas`.

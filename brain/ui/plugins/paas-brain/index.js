@@ -211,6 +211,8 @@ function busy(button, label) {
 // (skills, agents, MCP servers, hooks, memory files). Data: server.js.
 
 const CSS = `
+.paas .trow{padding:10px 0;border-top:1px solid hsl(var(--border))}.paas .trow:first-of-type{border-top:0;padding-top:4px}.paas .trow.on{background:hsl(var(--accent)/.35);margin:0 -8px;padding:10px 8px;border-radius:8px}
+.paas .tchips{display:flex;flex-wrap:wrap;gap:4px;align-items:center;margin-top:6px}.paas .tchips b{margin-right:4px}.paas .tlist{margin:8px 0;padding-left:18px}.paas .tlist li{margin:4px 0}
 .paas .hk{display:flex;gap:16px;align-items:center;justify-content:space-between;padding:12px 8px;margin:0 -8px;border-top:1px solid hsl(var(--border));border-radius:8px}.paas .hk:hover{background:hsl(var(--accent)/.5)}
 .paas .hk-t{min-width:0}
 .paas .sw{position:relative;width:40px;height:22px;flex:none;cursor:pointer}.paas .sw input{opacity:0;width:0;height:0;position:absolute}
@@ -242,7 +244,7 @@ const CSS = `
 .paas .ted .t-filter{margin-bottom:6px}
 @media (max-width:640px){.paas{padding:16px}.paas .grid,.paas .two{grid-template-columns:1fr}.paas pre{max-height:none}}`;
 
-const TABS = [['docs', 'Docs library'], ['skills', 'Skills'], ['agents', 'Agents'], ['mcp', 'MCP & hooks'], ['memory', 'Memory']];
+const TABS = [['docs', 'Docs library'], ['team', 'Team'], ['skills', 'Skills'], ['agents', 'Agents'], ['mcp', 'MCP & hooks'], ['memory', 'Memory']];
 const kb = (n) => (n > 1048576 ? `${(n / 1048576).toFixed(1)} MB` : `${Math.max(1, Math.round(n / 1024))} KB`);
 const field = (label, input, hint) => `<div class="field"><label>${label}${hint ? ` <span class="sub">${hint}</span>` : ''}</label>${input}</div>`;
 
@@ -312,6 +314,7 @@ export function mount(container, api) {
     if (!data) return;
     dirty = false;
     if (tab === 'docs') return renderDocs();
+    if (tab === 'team') return renderTeamTab();
     if (tab === 'skills') return renderSkills();
     if (tab === 'agents') return renderAgents();
     if (tab === 'memory') return renderMemory();
@@ -344,7 +347,22 @@ export function mount(container, api) {
     });
   }
 
-  // Team card (top of Memory): which team profile this chat uses, switch it, sync its knowledge (GET/POST team, team-sync)
+  // Team tab: what a team is, which one this chat uses (one click switches), what each team carries, sync and editing
+  function renderTeamTab() {
+    pane.innerHTML = `<div class="teambox">${skeleton('cards')}</div>
+      <div class="card"><h3>What a team is</h3>
+        <div class="sub">A team is a complete brain profile that you switch on with one click:</div>
+        <ul class="sub tlist">
+          <li><b>Rules</b>: the persona and the storage rules Claude follows for that team's systems.</li>
+          <li><b>Skills and agents</b>: the team's playbooks and helpers, listed in the Skills and Agents tabs with a <span class="tag">team</span> label.</li>
+          <li><b>MCP servers</b>: the team's live tool servers, connected for you automatically.</li>
+          <li><b>Shared memory</b>: notes, environment and tool map that every member writes and reads, kept in the team's git repository and synced at every save and every session start.</li>
+        </ul>
+        <div class="sub">One team at a time; <b>No team</b> means your own rules, skills and notes. After a switch, start a new chat.</div></div>`;
+    renderTeam(pane.querySelector('.teambox'));
+  }
+
+  // Team card: which team profile this chat uses, switch it, sync its knowledge (GET/POST team, team-sync)
   let teamMsg = null;
   let teamSynced = false;                                   // the quiet background sync runs once per opening of Memory
   let syncing = null;                                       // the one in-flight team-sync promise (git clone is shared)
@@ -359,16 +377,24 @@ export function mount(container, api) {
     if (!t.installed) { box.innerHTML = '<div class="sub" style="margin-bottom:12px">Team profiles are not installed on this VM.</div>'; return; }
     const teams = [...(t.teams || [])].sort((a, b) => Number(!!b.local) - Number(!!a.local));
     const cur = teams.find((x) => x.name === t.active);
-    const mcpLine = cur && (cur.mcp || []).length
-      ? ` · MCP: ${(cur.mcp || []).map((m) => (cur.mcp_added || []).includes(m) ? esc(m) : `<span class="tag" title="No address or token yet: More, Edit team">${esc(m)}: not set up</span>`).join(', ')}`
-      : '';
-    box.innerHTML = `<div class="card"><h3>Team</h3>${t.error ? `<div class="sub bad" role="alert">${esc(t.error)}</div>` : `
+    const mcpTags = (x) => (x.mcp || []).map((m) => (x.mcp_added || []).includes(m) ? `<span class="tag">${esc(m)}</span>` : `<span class="tag" title="No address or token yet: More, Edit a team">${esc(m)}: not set up</span>`).join(' ');
+    const teamSkills = (data.skills || []).filter((x) => x.source === 'team');
+    const teamAgents = (data.agents || []).filter((x) => x.source === 'team');
+    const row = (x) => `<div class="trow${x.name === t.active ? ' on' : ''}">
+        <div class="t"><b>${esc(x.title || x.name)}</b> <span class="sub">(${esc(x.name)}${x.version ? `, ${esc(x.version)}` : ''})</span>${x.name === t.active ? ' <span class="tag">your team now</span>' : x.local ? '' : ' <span class="tag" title="Cloned from the team repository at the first click">not added yet</span>'}</div>
+        <div class="sub">${esc(x.description || '')}</div>
+        <div class="sub">${esc(x.skills ?? 0)} skills, ${esc(x.agents ?? 0)} agents · MCP: ${mcpTags(x) || 'none'}${x.remote ? ` · shared memory in <code>${esc(x.remote)}</code>` : ' · shared memory on this VM'}</div>
+        ${x.name === t.active && (teamSkills.length || teamAgents.length) ? `<div class="sub tchips"><b>Skills</b> ${teamSkills.map((k) => `<span class="tag" title="${esc(k.description)}">/${esc(k.name)}</span>`).join(' ')}</div>
+        <div class="sub tchips"><b>Agents</b> ${teamAgents.map((k) => `<span class="tag" title="${esc(k.description)}">${esc(k.name)}</span>`).join(' ') || 'none'}</div>` : ''}</div>`;
+    box.innerHTML = `<div class="card"><h3>Your brain now</h3>${t.error ? `<div class="sub bad" role="alert">${esc(t.error)}</div></div>` : `
       <div class="seg tseg" role="group" aria-label="Team"><button type="button" data-team="none" aria-pressed="${!t.active}">No team</button>${teams.map((x) => `<button type="button" data-team="${esc(x.name)}" aria-pressed="${x.name === t.active}" title="${esc(x.description || x.name)}">${esc(x.title || x.name)}</button>`).join('')}</div>
-      <div class="sub" style="margin:10px 0">${cur
-        ? `<b>${esc(cur.title || cur.name)}</b>: ${esc(cur.skills ?? 0)} skills, ${esc(cur.agents ?? 0)} agents, shared memory${mcpLine}${t.mode === 'files' ? ' · files mode (no claude command)' : ''}.`
+      <div class="sub tline" style="margin:10px 0">${cur
+        ? `<b>${esc(cur.title || cur.name)}</b>: ${esc(cur.description || '')} ${esc(cur.skills ?? 0)} skills, ${esc(cur.agents ?? 0)} agents, shared memory${t.mode === 'files' ? ' · files mode (no claude command)' : ''}.`
         : 'Your own rules and skills, no shared team memory. Click a team to use its brain; the next chat uses it, and one click brings you back.'}</div>
-      <div class="row"><span class="tanchor"></span><span class="stbox"></span></div>
-      <details class="tmore" style="margin-top:12px"><summary>More: sync, git, edit a team</summary>
+      <div class="row"><span class="tanchor"></span><span class="stbox"></span></div></div>
+      <div class="card"><h3>Teams on this VM</h3>${teams.length ? teams.map(row).join('') : '<div class="sub">No team published here yet (root: install-shared.sh).</div>'}</div>
+      <div class="card">
+      <details class="tmore"><summary>More: sync, git, edit a team</summary>
         <div class="row" style="margin:10px 0"><span class="sub grow">${cur ? (cur.remote ? `Git remote: <code>${esc(cur.remote)}</code>` : 'No git remote: the knowledge stays on this VM') : 'No team active.'}</span>${cur?.remote ? '<button type="button" class="btn ghost sm tcp">Copy</button>' : ''}</div>
         ${cur ? '<div class="row" style="margin-bottom:10px"><button type="button" class="btn ghost sm tsy">Sync knowledge</button></div>' : ''}
         <details class="tadd" style="margin-top:8px"><summary>Add a team from a git url</summary>
@@ -378,7 +404,7 @@ export function mount(container, api) {
         <details class="ted" style="margin-top:8px"><summary>Edit a team (for the whole team)</summary>
           ${field('Team to edit', `<select class="tsel" aria-label="Team to edit">${teams.map((x) => `<option value="${esc(x.name)}" ${x.name === (t.active || teams[0]?.name) ? 'selected' : ''}>${esc(x.title || x.name)} (${esc(x.name)})</option>`).join('') || '<option value="none">No team available</option>'}</select>`)}
           <div class="ted-body"></div></details>
-      </details>`}</div>`;
+      </details></div>`}`;
     if (t.error) return;
     const st = statusLine(box.querySelector('.stbox'));
     const lead = teamMsg ? `${teamMsg} ` : '';
@@ -558,7 +584,7 @@ export function mount(container, api) {
     const m = cap || data.memory[i];
     if (!m) { pane.replaceChildren(emptyBlock('Claude creates them the first time it saves a note.', '', null, { icon: 'file', title: 'No memory files found' })); return; }
     dirty = false;
-    pane.innerHTML = `${cap ? '' : '<div class="teambox"></div>'}<div class="seg" role="group" aria-label="Memory file">${data.memory.map((x, k) => `<button data-i="${k}" aria-pressed="${k === i}">${esc(x.name)}</button>`).join('')}</div>
+    pane.innerHTML = `${cap ? '' : `<div class="sub" style="margin-bottom:10px">${data.pluginTeam ? `Team <b>${esc(data.pluginTeam.toUpperCase())}</b>: notes, environment and tool map are the team's shared memory, synced through the team repository at every save. Switch in the Team tab.` : 'Your own memory files. Pick a team in the Team tab to share notes, environment and tool map with that team.'}</div>`}<div class="seg" role="group" aria-label="Memory file">${data.memory.map((x, k) => `<button data-i="${k}" aria-pressed="${k === i}">${esc(x.name)}</button>`).join('')}</div>
       <div class="sub" style="margin:12px 0 8px">${m.editable
         ? `What Claude reads at the start of every session. Edit and save; the previous version is kept as a .bak file.${m.name === 'CLAUDE.md' ? ' A brain update replaces this file: keep lasting facts in notes.md.' : ''}`
         : 'Shared file: only root changes it.'}</div>
@@ -568,7 +594,6 @@ export function mount(container, api) {
       ${(data.captures || []).length ? data.captures.map((c, k) => `<div class="row"><span class="grow">${esc(c.name)} <span class="sub">${esc(new Date(c.mtime).toLocaleDateString())} ${esc(c.text.split('\n')[0].replace(/^#+\s*/, '').slice(0, 80))}</span></span>
         <button class="btn ghost sm" data-open="${k}">Open</button><button class="btn danger sm" data-drop="${k}">Discard</button></div>`).join('')
         : '<div class="sub">Nothing captured yet. Claude writes a capture when it solves something worth keeping.</div>'}`}`;
-    if (!cap) renderTeam(pane.querySelector('.teambox'));
     pane.querySelectorAll('.seg:not(.tseg) button').forEach((b) => b.addEventListener('click', () => renderMemory(Number(b.dataset.i))));
     pane.querySelectorAll('[data-open]').forEach((b) => b.addEventListener('click', () => {
       const c = data.captures[Number(b.dataset.open)]; renderMemory(0, { name: `captures/${c.name}`, editable: true, text: c.text });
@@ -612,7 +637,7 @@ export function mount(container, api) {
   }
 
   // a quiet tag for where a skill or agent came from (nothing for the brain's own); "mine" reads "yours" like the rest of this tab
-  const srcTag = (x) => { const l = { team: ['team', 'Comes with the active team'], market: ['market', 'Added from the Market tab'], mine: ['yours', ''] }[x.source || (x.mine ? 'mine' : '')];
+  const srcTag = (x) => { const l = { team: [data?.pluginTeam ? `team ${data.pluginTeam.toUpperCase()}` : 'team', 'Comes with your team: it leaves when you switch team (Team tab)'], market: ['market', 'Added from the Market tab'], mine: ['yours', ''] }[x.source || (x.mine ? 'mine' : '')];
     return l ? ` <span class="tag"${l[1] ? ` title="${esc(l[1])}"` : ''}>${l[0]}</span>` : ''; };
   const actions = (kind, id, o) => `<button class="btn ghost sm" data-edit="${esc(id)}">${icon('edit')} Edit</button>${o.mine && data.canShare ? `<button class="btn link sm" data-share="${kind}:${esc(id)}:${o.shared ? 1 : 0}">${o.shared ? 'Unshare' : 'Share with everyone'}</button>` : ''}${o.mine ? `<button class="btn danger sm" data-del="${esc(id)}">${icon('trash')} Delete</button>` : ''}`;
 

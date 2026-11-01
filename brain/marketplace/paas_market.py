@@ -587,23 +587,37 @@ def team_provides():
             | {f"mcp/{n}" for n in meta.get("mcp", [])}), t
 
 
-def team_plugin_items():
-    """the team profiles as plugin items: every team this VM offers or the person has cloned; added = cloned, enabled = active"""
+def team_metas():
+    """{name: meta} of every team this VM offers or the person has cloned (the person's clone first)"""
     names = {}
     for base in (TEAMS_SHARED, TEAMS_HOME):
         if os.path.isdir(base):
             for d in sorted(os.listdir(base)):
                 if re.match(r"^[a-z][a-z0-9_-]{0,31}$", d) and team_meta(os.path.join(base, d)):
                     names[d] = os.path.join(base, d)
+    return {n: (team_meta(os.path.join(TEAMS_HOME, n)) if os.path.isdir(os.path.join(TEAMS_HOME, n)) else team_meta(f)) for n, f in sorted(names.items())}
+
+
+def team_plugin_items():
+    """the team profiles as plugin items, with what each one carries (skills, agents, MCP servers by name): every team this VM
+    offers or the person has cloned; added = cloned, enabled = active"""
     act = active_team()
     out = []
-    for name, folder in sorted(names.items()):
-        meta = team_meta(os.path.join(TEAMS_HOME, name)) if os.path.isdir(os.path.join(TEAMS_HOME, name)) else team_meta(folder)
-        out.append({"kind": "plugin", "name": f"paas-brain-{name}", "team": name, "source": "", "author": None,
-                    "description": f"{meta.get('title', name)}: {meta.get('description', '')} ({len(meta.get('skills', []))} skills, "
-                                   f"{len(meta.get('agents', []))} agents, MCP {', '.join(meta.get('mcp', []))})",
-                    "version": meta.get("version", ""), "id": f"plugin/paas-brain-{name}",
+    for name, meta in team_metas().items():
+        out.append({"kind": "plugin", "name": f"paas-brain-{name}", "team": name, "title": meta.get("title", name), "source": "", "author": None,
+                    "description": meta.get("description", ""), "skills": meta.get("skills", []), "agents": meta.get("agents", []),
+                    "mcp": meta.get("mcp", []), "version": meta.get("version", ""), "id": f"plugin/paas-brain-{name}",
                     "added": os.path.isdir(os.path.join(TEAMS_HOME, name)), "enabled": name == act, "update": False, "ready": True})
+    return out
+
+
+def team_membership():
+    """{"skill/<n>" | "agent/<n>" | "mcp/<n>": [team names]}: which team plugins carry an item, active or not"""
+    out = {}
+    for name, meta in team_metas().items():
+        for kind, key in (("skills", "skill"), ("agents", "agent"), ("mcp", "mcp")):
+            for n in meta.get(kind, []):
+                out.setdefault(f"{key}/{n}", []).append(name)
     return out
 
 
@@ -627,6 +641,7 @@ def listing(words=None):
     state = load_state()["installed"]
     plugins = installed_plugins() if os.path.isdir(PLUGINS) or source_names() else {}
     provided, team = team_provides()
+    in_teams = team_membership()
     out = []
     for it in team_plugin_items() + load_index() + source_items():
         it.setdefault("source", "")
@@ -651,6 +666,7 @@ def listing(words=None):
                     "ready": it["kind"] != "mcp" or mcp_ready(mcp_entry), "risky": risky(it),
                     "local": it["kind"] == "mcp" and mcp.get("type", "stdio") == "stdio",   # runs on this VM: no address
                     **({"team": team} if from_team else {}),
+                    **({"teams": in_teams[key]} if key in in_teams else {}),      # the team plugins that carry it
                     **({"token_mode": token_mode(mcp_entry), "url": "" if "HOST" in mcp.get("url", "") else mcp.get("url", "")}
                        if it["kind"] == "mcp" else {})})
     return out

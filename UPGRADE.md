@@ -7,8 +7,8 @@ is moving the old team accounts' notes into the team repositories, and the thing
 
 ## What changes for the people on the VM
 
-- Everyone signs in with their own account (local or Active Directory). Nobody gets a team at sign-in; the Team card at
-  the top of Brain, Memory switches between No team, SAN and NAS with one click, then a new chat.
+- Everyone signs in with their own account (local or Active Directory). Nobody gets a team at sign-in; the Team tab of
+  Brain switches between No team, SAN and NAS with one click, then a new chat.
 - A team is a Claude Code plugin (`paas-brain-san`, `paas-brain-nas`) with its skills, agents, hooks, rules and the
   team's MCP servers. Its memory (notes, environment, tool map, captures, incidents) is shared by the whole team through a
   git repository; every saved note is committed with the person's name and pushed, every session start pulls.
@@ -97,7 +97,7 @@ upgrade command again. Installers from this version on relabel by themselves.
 
 ## Check
 
-- `https://<vm>:3001` shows the sign-in page; sign in as a person, the Brain tab shows the Team card with No team pressed.
+- `https://<vm>:3001` shows the sign-in page; sign in as a person, the Brain tab, Team, shows No team pressed and what each team carries.
 - Click SAN, start a new chat: the session-start line reads `Team: san (...)`; ask one storage question; save one note and
   see its commit in GitLab with that person's name.
 - `systemctl is-active paas-gate paas-docs paas-market-serve` all `active`; `journalctl -u paas-gate -n 20` quiet.
@@ -112,7 +112,7 @@ upgrade command again. Installers from this version on relabel by themselves.
 
 - AD accounts: join, then `sh brain/multiuser/install-multiuser.sh --groups "<AD groups>"` (the other flags are remembered).
 - Laptops: the three `claude plugin` lines in README.md with the team's url, with the person's own GitLab login.
-- The teams' MCP servers (address and token per server): Brain tab, Team card, More, Edit a team.
+- The teams' MCP servers (address and token per server): Brain tab, Team, More, Edit a team.
 
 ## Rollback
 

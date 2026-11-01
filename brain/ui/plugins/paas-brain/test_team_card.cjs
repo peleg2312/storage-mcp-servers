@@ -21,17 +21,19 @@ const HTML = `<!doctype html><meta charset="utf-8"><title>smoke</title><style>:r
   const api = {
     rpc: async (method, route, body) => {
       calls.push([method, route, body]);
-      if (route === 'overview') return { library: { sources: '', version: '' }, skills: [], agents: [], mcp: [], hooks: [],
+      if (route === 'overview') return { library: { sources: '', version: '' }, pluginTeam: active, hooks: [], mcp: [],
+        skills: active ? [{ name: 'share-access-check', description: 'SMB/NFS access', source: 'team', dir: 'share-access-check' }] : [],
+        agents: active ? [{ name: 'nas-analyst', description: 'NAS analyst', source: 'team', file: 'nas-analyst.md' }] : [],
         memory: [{ name: 'notes.md', text: '# Notes', editable: true }], captures: [], canShare: false };
       if (method === 'GET' && route === 'team') return { installed: true, active, mode: 'plugin', teams };
       if (route === 'team-sync') return { ok: true, out: 'brain: in sync' };
       if (method === 'POST' && route === 'team') { active = body.name === 'none' ? null : body.name; return { ok: true, out: '' }; }
-      if (route.startsWith('team-show')) return { ok: true, name: 'nas', title: 'NAS', skills: [], agents: [], mcp: [], mcp_servers: {}, available_skills: [], available_agents: [] };
+      if (route.startsWith('team-show')) return { ok: true, name: 'nas', title: 'NAS', description: 'NAS team', persona: 'p', rules: 'r', environment: 'e', skills: [], agents: [], mcp: [], mcp_servers: {}, available_skills: [], available_agents: [] };
       return { ok: true, out: '' };
     },
   };
   window.__calls = calls;
-  location.hash = '#brain-memory';
+  location.hash = '#brain-team';
   mount(document.getElementById('root'), api);
 </script>`;
 
@@ -53,8 +55,10 @@ const HTML = `<!doctype html><meta charset="utf-8"><title>smoke</title><style>:r
   const labels = await seg.allTextContents();
   if (labels.join('|') !== 'No team|SAN|NAS') throw new Error('segments: ' + labels.join('|'));
   if (await seg.nth(0).getAttribute('aria-pressed') !== 'true') throw new Error('No team should be pressed at start');
-  const sub0 = await page.locator('.teambox .sub').first().textContent();
+  const sub0 = await page.locator('.tline').textContent();
   if (!/Your own rules and skills/.test(sub0)) throw new Error('intro text: ' + sub0);
+  if (!/What a team is/.test(await page.locator('.pane').textContent())) throw new Error('explainer missing');
+  if (await page.locator('.trow').count() !== 2) throw new Error('two team rows expected');
   // one click switches to NAS, no dialog
   await seg.nth(2).click();
   await page.locator('.tseg button[aria-pressed="true"]', { hasText: 'NAS' }).waitFor({ timeout: 10000 });
@@ -62,13 +66,15 @@ const HTML = `<!doctype html><meta charset="utf-8"><title>smoke</title><style>:r
   if (post.length !== 1 || post[0][2].name !== 'nas') throw new Error('POST team calls: ' + JSON.stringify(post));
   const status = await page.locator('.teambox .live').first().textContent();
   if (!/Now on NAS/.test(status)) throw new Error('status: ' + status);
-  const sub1 = await page.locator('.teambox .sub').first().innerHTML();
-  if (!/NAS<\/b>: 18 skills, 4 agents, shared memory · MCP: docs-local, ontap/.test(sub1)) throw new Error('team line: ' + sub1);
+  const sub1 = await page.locator('.tline').innerHTML();
+  if (!/NAS<\/b>: NAS team 18 skills, 4 agents, shared memory/.test(sub1)) throw new Error('team line: ' + sub1);
+  const rowOn = await page.locator('.trow.on').innerHTML();
+  if (!/your team now/.test(rowOn) || !/\/share-access-check/.test(rowOn) || !/nas-analyst/.test(rowOn)) throw new Error('active row: ' + rowOn);
   if (await page.locator('.confirm').count() !== 0) throw new Error('a confirm dialog appeared');
   // SAN shows the server still on placeholders as not set up
   await page.locator('.tseg button', { hasText: 'SAN' }).click();
   await page.locator('.tseg button[aria-pressed="true"]', { hasText: 'SAN' }).waitFor({ timeout: 10000 });
-  const sub2 = await page.locator('.teambox .sub').first().innerHTML();
+  const sub2 = await page.locator('.trow.on').innerHTML();
   if (!/powermax: not set up/.test(sub2)) throw new Error('not set up tag missing: ' + sub2);
   // the editor keeps its own team dropdown under More, preset to the active team
   await page.locator('.tmore > summary').click();
@@ -80,8 +86,11 @@ const HTML = `<!doctype html><meta charset="utf-8"><title>smoke</title><style>:r
   await page.locator('.tseg button[aria-pressed="true"]', { hasText: 'No team' }).waitFor({ timeout: 10000 });
   const status2 = await page.locator('.teambox .live').first().textContent();
   if (!/No team now/.test(status2)) throw new Error('status2: ' + status2);
-  // an unsaved edit in the memory file asks before switching
-  await page.locator('.mt').fill('# Notes\nchanged');
+  // an unsaved edit in the team editor asks before switching (More closed again with the re-render: open it first)
+  await page.locator('.tmore > summary').click();
+  await page.locator('.ted > summary').click();
+  await page.locator('textarea[data-k="persona"]').waitFor({ timeout: 10000 });
+  await page.locator('textarea[data-k="persona"]').fill('changed persona');
   await page.locator('.tseg button', { hasText: 'NAS' }).click();
   await page.locator('.confirm').waitFor({ timeout: 5000 });
   await page.locator('.confirm .c-no').click();

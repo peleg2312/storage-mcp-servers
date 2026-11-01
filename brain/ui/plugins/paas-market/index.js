@@ -221,6 +221,7 @@ const CSS = `
 .mk .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:12px}
 .mk .item{border:1px solid hsl(var(--border));border-radius:12px;padding:16px;background:hsl(var(--card));display:flex;flex-direction:column;gap:8px;transition:border-color .15s}
 .mk .t{font-size:14px;font-weight:600}.mk .d{color:hsl(var(--muted-foreground));font-size:13px;display:-webkit-box;-webkit-line-clamp:4;-webkit-box-orient:vertical;overflow:hidden}
+.mk .item details.pc{margin:6px 0 2px}.mk .item details.pc summary{cursor:pointer;list-style:none}.mk .item details.pc summary::-webkit-details-marker{display:none}.mk .item .pcl{margin:6px 0;display:flex;flex-wrap:wrap;gap:4px;align-items:center}.mk .item .pcl b{margin-right:4px}
 .mk .acts{display:flex;gap:8px;margin-top:auto;padding-top:4px;flex-wrap:wrap;align-items:center}
 .mk .setup{display:grid;gap:6px;margin-top:6px}
 .mk .nf{margin:0 0 14px;gap:14px}
@@ -245,7 +246,7 @@ const CSS = `
 @media (pointer:coarse){.mk .tm button{min-height:44px}.mk .acts{gap:10px}}
 @media (max-width:640px){.mk .grid,.mk .fields,.mk .types{grid-template-columns:1fr}}`;
 
-const TEAM_NOTE = "Team plugins carry the team's skills, agents and MCP servers; turning one on switches your team (Brain tab shows the details).";
+const TEAM_NOTE = "A team plugin is a whole brain profile: rules, skills, agents, MCP servers and a shared team memory. Open \"What is inside\" on a card to see its contents; turning one on makes it your team (the Brain tab, Team, has the full picture).";
 let seq = 0;
 // label + control with a real for/id pair; extra is the hint text
 const field = (label, control, cls = '', hint = '') => { const id = `mk${++seq}`; return `<div class="field ${cls}"><label for="${id}">${label}</label>${control.replace(/^<(\w+)/, `<$1 id="${id}"`)}${hint ? `<span class="hint" id="${id}h">${hint}</span>` : ''}</div>`; };
@@ -288,8 +289,13 @@ export function mount(container, api) {
     const shown0 = items.filter((i) => (kind === 'all' || (kind === 'have' ? i.added || i.team || (i.author && i.author === me) : i.kind === kind))
       && words.every((w) => `${i.name} ${i.description} ${KIND[i.kind]} ${i.source_title || ''}`.toLowerCase().includes(w)));
     const card = (i) => { const mine = i.author && i.author === me; const teamItem = !!i.team && i.kind !== 'plugin'; const teamPlug = !!i.team && i.kind === 'plugin'; return `<div class="item${i.added || i.team || mine ? ' have' : ''}" data-id="${esc(i.id)}">
-      ${tags([KIND[i.kind], mine ? 'yours' : i.author ? `by ${i.author}` : '', teamItem ? ['from your team', `Comes with the ${i.team} team plugin`] : teamPlug ? [`team ${i.team}`, 'Your team profile: switching it changes rules, skills, agents and MCP servers'] : i.added ? 'added' : '', i.update && !teamItem ? ['update available', 'A newer version is available'] : '', i.added && i.kind === 'plugin' && !i.enabled ? ['off', 'Added but switched off'] : '', i.ready ? '' : i.kind === 'plugin' ? ['needs internet', 'This VM is offline, so plugins cannot be fetched'] : ['waiting for admin', 'An admin has to enter the server address first'], i.token_mode === 'personal' ? ['asks for your token', 'Each person uses their own token'] : '', i.risky ? ['can run commands', i.risky] : ''], 3)}
-      <div class="t">${i.kind === 'skill' ? '/' : ''}${esc(i.name.split('@')[0])}</div><div class="d" title="${esc(i.description)}">${esc(i.description)}</div>
+      ${tags([KIND[i.kind], mine ? 'yours' : i.author ? `by ${i.author}` : '', teamItem ? ['from your team', `Comes with the ${i.team} team plugin`] : teamPlug ? [`team ${i.team}`, 'Your team profile: switching it changes rules, skills, agents and MCP servers'] : i.added ? 'added' : '', !teamItem && !teamPlug && (i.teams || []).length ? [`in team ${i.teams.map((t) => t.toUpperCase()).join(', ')}`, 'Part of that team plugin: it comes with the team when the team is on'] : '', i.update && !teamItem ? ['update available', 'A newer version is available'] : '', i.added && i.kind === 'plugin' && !i.enabled ? ['off', 'Added but switched off'] : '', i.ready ? '' : i.kind === 'plugin' ? ['needs internet', 'This VM is offline, so plugins cannot be fetched'] : ['waiting for admin', 'An admin has to enter the server address first'], i.token_mode === 'personal' ? ['asks for your token', 'Each person uses their own token'] : '', i.risky ? ['can run commands', i.risky] : ''], 3)}
+      <div class="t">${teamPlug ? esc(i.title || i.name) : `${i.kind === 'skill' ? '/' : ''}${esc(i.name.split('@')[0], 3)}`}</div><div class="d" title="${esc(i.description)}">${esc(i.description)}</div>
+      ${teamPlug ? `<details class="pc"><summary class="sub">What is inside: ${(i.skills || []).length} skills, ${(i.agents || []).length} agents, ${(i.mcp || []).length} MCP servers · ${i.enabled ? 'your team now' : i.added ? 'added, off' : 'not added'}</summary>
+        <div class="sub pcl"><b>Skills</b> ${(i.skills || []).map((s) => `<span class="tag">/${esc(s)}</span>`).join(' ') || 'none'}</div>
+        <div class="sub pcl"><b>Agents</b> ${(i.agents || []).map((s) => `<span class="tag">${esc(s)}</span>`).join(' ') || 'none'}</div>
+        <div class="sub pcl"><b>MCP servers</b> ${(i.mcp || []).map((s) => `<span class="tag">${esc(s)}</span>`).join(' ') || 'none'}</div>
+        <div class="sub">Turning the plugin on makes this your team: its rules, these skills and agents, its MCP servers and the team's shared memory. One team at a time; the next chat uses it.</div></details>` : ''}
       <div class="acts">${mine ? '<button type="button" class="btn ghost sm" data-a="edit">Edit</button><button type="button" class="btn ghost sm" data-a="unshare">Unshare</button>'
         : `${i.added && i.kind === 'plugin' ? `<button type="button" class="btn ghost sm" data-a="toggle" data-on="${i.enabled ? 0 : 1}">${i.enabled ? 'Turn off' : 'Turn on'}</button>` : ''}${i.added && !i.team ? `<button type="button" class="btn ghost danger sm" data-a="remove">Remove</button>${i.update ? '<button type="button" class="btn sm" data-a="add">Update</button>' : ''}`
         : i.added ? '' : i.ready ? '<button type="button" class="btn sm" data-a="add">Add</button>' : `<span class="sub">${i.kind === 'plugin' ? 'Needs internet (this VM is offline)' : root ? '' : 'Ask root to set it up'}</span>`}
