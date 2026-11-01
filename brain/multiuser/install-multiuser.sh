@@ -97,12 +97,30 @@ for g in $(grep -v '^#' "$ETC/allowed-groups" | grep -v '^$' | grep -vx paas-use
 done
 [ -n "$GROUPS_CSV" ] || note "no AD groups given (--groups): only local accounts in paas-users may sign in (paas-user add <name>)"
 
-say "[7/10] GitLab: the team token and each team's repository"
+say "[7/10] GitLab: the tokens and each team's repository"
+# a token file for a repository url: /etc/paas/git/<host>__<group>__<project>.git.token (as paas-user git-token names it)
+repo_token_file() { h=$(printf '%s' "$1" | sed -E 's#^[a-z]+://([^/@]*@)?([^/]+)/.*#\2#' | tr 'A-Z' 'a-z'); p=$(printf '%s' "$1" | sed -E 's#^[a-z]+://[^/]+/##'); printf '%s/git/%s__%s.token' "$ETC" "$h" "$(printf '%s' "$p" | tr '/' '_' | sed 's/_/__/g')"; }
 if [ -n "$GITLAB_HOST" ]; then
-  if [ -s "$ETC/git/$GITLAB_HOST.token" ]; then note "token for $GITLAB_HOST: already stored"
+  if [ -s "$ETC/git/$GITLAB_HOST.token" ]; then note "token for every repository on $GITLAB_HOST: already stored"
   elif [ -n "$GIT_TOKEN_FILE" ]; then head -n1 "$GIT_TOKEN_FILE" | /opt/paas/bin/paas-user git-token "$GITLAB_HOST" >/dev/null && note "token for $GITLAB_HOST: stored from $GIT_TOKEN_FILE"
-  elif [ -t 0 ]; then /opt/paas/bin/paas-user git-token "$GITLAB_HOST" >/dev/null && note "token for $GITLAB_HOST: stored" || todo "paas-user git-token $GITLAB_HOST  (a project or group access token: Developer, write_repository)"
-  else todo "paas-user git-token $GITLAB_HOST  (a project or group access token: Developer, write_repository), or --git-token-file"; fi
+  else
+    missing=""; for tu in $TEAM_URLS; do [ -s "$(repo_token_file "${tu#*=}")" ] || missing="$missing $tu"; done
+    if [ -z "$missing" ] && [ -n "$TEAM_URLS" ]; then note "a token per team repository: already stored"
+    elif [ -t 0 ]; then
+      echo "   One GitLab token for everything on $GITLAB_HOST (a group access token), or one per team repository (project access tokens)?"
+      for tu in $missing; do
+        n=${tu%%=*}; u=${tu#*=}
+        printf '   token for team %s, %s (Enter = use one token for all of %s): ' "$n" "$u" "$GITLAB_HOST"; stty -echo 2>/dev/null || true; IFS= read -r tok; stty echo 2>/dev/null || true; echo
+        tok=$(printf '%s' "$tok" | tr -d '[:space:]')
+        if [ -z "$tok" ]; then
+          /opt/paas/bin/paas-user git-token "$GITLAB_HOST" >/dev/null && note "token for every repository on $GITLAB_HOST: stored" || todo "paas-user git-token $GITLAB_HOST"
+          break
+        fi
+        printf '%s' "$tok" | /opt/paas/bin/paas-user git-token "${u#https://}" >/dev/null && note "token for team $n: stored"
+      done
+      [ -n "$TEAM_URLS" ] || { /opt/paas/bin/paas-user git-token "$GITLAB_HOST" >/dev/null && note "token for every repository on $GITLAB_HOST: stored" || todo "paas-user git-token $GITLAB_HOST"; }
+    else todo "paas-user git-token $GITLAB_HOST (a group token), or paas-user git-token <host>/<group>/<project>.git per team, or --git-token-file"; fi
+  fi
 else note "no --gitlab-host: the team repositories stay on this VM only (members' notes sync to /opt/paas/teams clones, not to GitLab)"; fi
 for tu in $TEAM_URLS; do
   n=${tu%%=*}; u=${tu#*=}
@@ -132,8 +150,8 @@ DP=$(sed -n 's/^PAAS_DOCS_PORT=//p' "$ETC/docs.env" 2>/dev/null); DP=${DP:-8001}
 d=$(http "https://127.0.0.1:$DP/health"); [ "$d" = 200 ] && note "docs service answers: https://$FQ:$DP/mcp (one token for everyone, in each team's mcp.json)" || { note "docs service answered $d"; todo "check the docs service: journalctl -u paas-docs -n 50"; }
 for tu in $TEAM_URLS; do
   n=${tu%%=*}; u=${tu#*=}
-  if GIT_TERMINAL_PROMPT=0 git -c credential.helper=/opt/paas/bin/paas-git-credential ls-remote --exit-code -q -- "$u" HEAD >/dev/null 2>&1; then note "team $n: $u reachable with the stored token"
-  else note "team $n: $u NOT reachable with the stored token"; todo "team $n: create the project in GitLab (empty, branch main), store the token (paas-user git-token $GITLAB_HOST), re-run this command"; fi
+  if GIT_TERMINAL_PROMPT=0 git -c credential.helper=/opt/paas/bin/paas-git-credential -c credential.useHttpPath=true ls-remote --exit-code -q -- "$u" HEAD >/dev/null 2>&1; then note "team $n: $u reachable with the stored token"
+  else note "team $n: $u NOT reachable with the stored token"; todo "team $n: create the project in GitLab (empty, branch main), store its token (paas-user git-token ${u#https://}, or one for the host: paas-user git-token $GITLAB_HOST), re-run this command"; fi
 done
 echo
 echo "done. Sign in: https://$FQ:$GP (AD or local account). Everyone starts without a team and picks one in the Brain tab."

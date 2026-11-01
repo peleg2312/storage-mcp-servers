@@ -36,8 +36,9 @@ is moving the old team accounts' notes into the team repositories, and the thing
 2. Packages: `dnf install acl` (new requirement: the per-team ACLs). If people will sign in with AD accounts, also
    `dnf install sssd realmd oddjob oddjob-mkhomedir adcli samba-common-tools` and join the VM (RUNBOOK, "Active Directory
    accounts"). Local accounts keep working without it.
-3. GitLab (recommended, can be done later): one empty project per team (branch `main`, members Developer) and one access
-   token (project or group, role Developer, scope `write_repository`). Without GitLab the teams work on the VM only and the
+3. GitLab (recommended, can be done later): one empty project per team (branch `main`, members Developer) and a token with
+   role Developer and scope `write_repository`: one group access token for both projects, or one project access token per team
+   (the installer then asks for each). Without GitLab the teams work on the VM only and the
    knowledge stays in `/opt/paas/teams/<team>`.
 4. A backup of `/etc/paas`, `/opt/paas/brain` and the home directories is cheap insurance: `tar czf /root/paas-30.10.tgz
    /etc/paas /opt/paas/brain /home`.

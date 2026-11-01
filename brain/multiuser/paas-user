@@ -11,8 +11,9 @@
 #   paas-user lock|unlock <name>  block / allow signing in (lock also ends their UI, sessions and processes)
 #   paas-user remove <name> [--delete-home]   remove the account and its UI (home kept unless --delete-home)
 #   paas-user provision <name>|--all          re-apply the shared links, UI plugins and default items (after updates)
-#   paas-user git-token <host> [<user>]   store the team's GitLab token for <host> (stdin, or asked): every account's git, the
-#                                 hooks and the docs service push and pull the team repositories with it (https urls)
+#   paas-user git-token <host>[/<group>/<project>.git] [<user>]   store a GitLab token (stdin, or asked): for the whole
+#                                 host (a group token) or for one repository (a project token); every account's git, the
+#                                 hooks and the docs service push and pull with it (https urls)
 #   paas-user list [--json]       everyone, with port, locked and running
 set -eu
 export PATH="/usr/local/sbin:/usr/sbin:/sbin:$PATH"     # useradd / usermod / chpasswd live in sbin; the UI calls this with a short PATH
@@ -178,8 +179,12 @@ for p in "$P"/ui-plugins/*/; do
 done
 PAAS_MARKET=$P/marketplace "$P/bin/paas-market" defaults >/dev/null 2>&1 || echo "note: default marketplace items not added (is claude installed?)"
 # GitLab: the team token root stored (paas-user git-token) answers for its hosts through this helper, after any helper of their own
-if command -v git >/dev/null 2>&1 && [ -x "$P/bin/paas-git-credential" ] && ! git config --global --get-all credential.helper 2>/dev/null | grep -qxF "$P/bin/paas-git-credential"; then
-  git config --global --add credential.helper "$P/bin/paas-git-credential"
+if command -v git >/dev/null 2>&1 && [ -x "$P/bin/paas-git-credential" ]; then
+  git config --global --get-all credential.helper 2>/dev/null | grep -qxF "$P/bin/paas-git-credential" || git config --global --add credential.helper "$P/bin/paas-git-credential"
+  for tf in /etc/paas/git/*.token; do        # a token per repository needs the path: git hands it over for these hosts
+    [ -f "$tf" ] || continue; h=$(basename "$tf" .token); h=${h%%__*}
+    git config --global "credential.https://$h.useHttpPath" true 2>/dev/null || true
+  done
 fi
 EOS
   # no team is chosen for anyone: a person starts with their own rules and picks a team in the Brain tab (or root: paas-user team)
@@ -236,16 +241,21 @@ case "$cmd" in
     rm -rf "$P/marketplace/contrib/$u"                        # what they shared leaves the marketplace (copies people added stay)
     echo "removed $u${2:+ (home deleted)}" ;;
   git-token)
-    host=${1:-}; echo "$host" | grep -Eq '^[a-z0-9][a-z0-9.:_-]*$' || die "usage: paas-user git-token <gitlab host[:port]> [<user name>]   (the token on stdin, or asked)"
+    where=${1:-}; where=${where#https://}; where=${where#http://}
+    host=${where%%/*}; rpath=${where#"$host"}; rpath=${rpath#/}
+    echo "$host" | grep -Eq '^[a-z0-9][a-z0-9.:_-]*$' || die "usage: paas-user git-token <gitlab host[:port]>[/<group>/<project>.git] [<user name>]   (the token on stdin, or asked)"
+    [ -z "$rpath" ] || echo "$rpath" | grep -Eq '^[A-Za-z0-9._/-]+$' || die "the repository path may hold letters, digits, . _ - and /"
     user=${2:-paas}
+    if [ -n "$rpath" ]; then f="/etc/paas/git/${host}__$(printf '%s' "$rpath" | tr '/' '_' | sed 's/_/__/g').token"; what="$host/$rpath"; else f="/etc/paas/git/$host.token"; what="every repository on $host"; fi
     if [ -t 0 ]; then
-      printf 'GitLab token for %s (not shown): ' "$host"; stty -echo 2>/dev/null || true; IFS= read -r tok; stty echo 2>/dev/null || true; echo
+      printf 'GitLab token for %s (not shown): ' "$what"; stty -echo 2>/dev/null || true; IFS= read -r tok; stty echo 2>/dev/null || true; echo
     else IFS= read -r tok; fi
     tok=$(printf '%s' "$tok" | tr -d '[:space:]'); [ -n "$tok" ] || die "no token given"
     mkdir -p /etc/paas/git; chmod 755 /etc/paas/git
-    ( umask 077; printf '%s:%s\n' "$user" "$tok" > "/etc/paas/git/$host.token" )
-    git_token_acl "/etc/paas/git/$host.token"
-    echo "GitLab token for $host stored (/etc/paas/git/$host.token): every account, the hooks and the docs service push and pull with it (https urls with that host)" ;;
+    ( umask 077; printf '%s:%s\n' "$user" "$tok" > "$f" )
+    git_token_acl "$f"
+    git config --global "credential.https://$host.useHttpPath" true 2>/dev/null || true   # root now; every account at provision
+    echo "GitLab token for $what stored ($f): every account, the hooks and the docs service push and pull with it (https urls)" ;;
   provision)
     if [ "${1:-}" = --all ]; then for f in "$ETC"/*.env; do [ -f "$f" ] && { share_dir "$(basename "$f" .env)"; provision "$(basename "$f" .env)"; }; done
     else valid "${1:-}"; share_dir "$1"; provision "$1"; fi

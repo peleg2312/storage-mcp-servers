@@ -7,7 +7,7 @@ After=network-online.target
 # that team's knowledge index, /health. TLS: the gate's certificate. Settings: /etc/paas/docs.env (PAAS_DOCS_PORT, PAAS_DOCS_REFRESH)
 EnvironmentFile=-/etc/paas/docs.env
 # the team repositories are pulled with the team's GitLab token (paas-user git-token) through the shared credential helper
-Environment=GIT_CONFIG_COUNT=1 GIT_CONFIG_KEY_0=credential.helper GIT_CONFIG_VALUE_0=/opt/paas/bin/paas-git-credential
+Environment=GIT_CONFIG_COUNT=2 GIT_CONFIG_KEY_0=credential.helper GIT_CONFIG_VALUE_0=/opt/paas/bin/paas-git-credential GIT_CONFIG_KEY_1=credential.useHttpPath GIT_CONFIG_VALUE_1=true
 ExecStart=/usr/bin/python3 /opt/paas/library/mcp_stdio.py --db /opt/paas/library/docs.db --http 0.0.0.0:${PAAS_DOCS_PORT} \
   --token-file /etc/paas/docs-token --tls-cert /etc/paas/market/paas-ui.crt --tls-key /etc/paas/market/paas-ui.key \
   --teams-dir /opt/paas/teams --state-dir /var/lib/paas-docs --refresh-minutes ${PAAS_DOCS_REFRESH}

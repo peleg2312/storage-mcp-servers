@@ -172,7 +172,9 @@ Three things are yours to do by hand; everything else is one command that you re
 2. Active Directory: join the VM (`realm join`, sssd settings, mkhomedir; the "Active Directory accounts" section below). The
    AD group(s) whose members may sign in must resolve: `getent group storage-san-team`.
 3. GitLab: one empty project per team (default branch `main`, every member Developer), and one access token for the VM: in the
-   project or the group, Settings, Access tokens, role Developer, scope `write_repository`. Copy the token; you paste it once.
+   group that holds both projects, Settings, Access tokens, role Developer, scope `write_repository`: one group token covers
+   every team repository and the installer asks for it once. Project tokens, one per team, work too: the installer asks per
+   team (or `paas-user git-token gitlab.example.com/storage/brain-nas.git` by hand). Copy the token; you paste it once.
    On GitLab Free a Developer can also change the plugin folder (CODEOWNERS gates merge requests only): keep publish.py as the
    only writer of `paas-brain-<team>/` by habit, or split the plugin into its own repository later.
 
