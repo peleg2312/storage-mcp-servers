@@ -126,7 +126,8 @@ try:
 except Exception as e: print(getattr(e, "code", None) or type(e).__name__)
 EOF
 }
-g=$(http https://127.0.0.1:3001/); [ "$g" = 200 ] && note "gate answers: https://$FQ:3001" || { note "gate on 3001 answered $g"; todo "check the gate: journalctl -u paas-gate -n 50"; }
+GP=$(sed -n 's/^GATE_PORT=//p' "$ETC/gate.env" 2>/dev/null | head -1); GP=${GP:-3001}
+g=$(http "https://127.0.0.1:$GP/"); [ "$g" = 200 ] && note "gate answers: https://$FQ:$GP" || { note "gate on $GP answered $g"; todo "check the gate: journalctl -u paas-gate -n 50"; }
 DP=$(sed -n 's/^PAAS_DOCS_PORT=//p' "$ETC/docs.env" 2>/dev/null); DP=${DP:-8001}
 d=$(http "https://127.0.0.1:$DP/health"); [ "$d" = 200 ] && note "docs service answers: https://$FQ:$DP/mcp (one token for everyone, in each team's mcp.json)" || { note "docs service answered $d"; todo "check the docs service: journalctl -u paas-docs -n 50"; }
 for tu in $TEAM_URLS; do
@@ -135,7 +136,7 @@ for tu in $TEAM_URLS; do
   else note "team $n: $u NOT reachable with the stored token"; todo "team $n: create the project in GitLab (empty, branch main), store the token (paas-user git-token $GITLAB_HOST), re-run this command"; fi
 done
 echo
-echo "done. Sign in: https://$FQ:3001 (AD or local account). Everyone starts without a team and picks one in the Brain tab."
+echo "done. Sign in: https://$FQ:$GP (AD or local account). Everyone starts without a team and picks one in the Brain tab."
 echo "Laptops: claude plugin marketplace add <team url> && claude plugin install paas-brain-<team>@paas-brain-<team> && claude"
 echo "Update later: git pull && sh brain/multiuser/install-multiuser.sh"
 [ -z "$TODO" ] || { echo; echo "left for you:$TODO"; }

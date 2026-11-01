@@ -122,7 +122,7 @@ from `/etc/paas/limits.env`, sized from the VM's RAM and cores for `PAAS_PEOPLE`
 starts (Claude Code, hooks, docs-local, shells) live in that cgroup, so one person's runaway cannot starve the others:
 above the soft limit their processes are slowed and reclaimed first, above the hard limit their largest process is ended,
 nobody else notices. Edit `/etc/paas/limits.env` and re-run `install-shared.sh` to change it; `systemctl status paas-ui@<name>`
-shows a person's use. Idle instances stop after `GATE_IDLE_MINUTES` (default 120), so RAM follows the people active now.
+shows a person's use. Idle instances stop after `GATE_IDLE_MINUTES` (default 60, in `/etc/paas/gate.env`), so RAM follows the people active now.
 
 Rule of thumb: 1.5 to 2 GB of RAM per concurrent person plus 4 GB for the system, one core per two or three concurrent
 people, 20 GB of disk plus 1 GB per person for chats and reports. Teams add nothing per person beyond a small clone: the
@@ -275,8 +275,9 @@ the notes stay per person.
    click, then a new chat), or root sets it with `paas-user team <name> <team>`. Nothing else to do per person.
 4. RAM: the gate stops a person's UI instance after `GATE_IDLE_MINUTES` (default 60) without a request, an open WebSocket
    or a running `claude`; the next request starts it again within seconds and the sign-in cookie stays valid. So the VM
-   carries the people active now (about 100-150 MB each), not the headcount. Set the minutes in `paas-gate.service`
-   (`Environment=GATE_IDLE_MINUTES=60`; 0 disables). Local accounts keep working as before (`paas-user add`).
+   carries the people active now (about 100-150 MB each), not the headcount. The minutes and the gate's port are in
+   `/etc/paas/gate.env` (`GATE_IDLE_MINUTES`, 0 disables; `GATE_PORT`), kept across updates; `systemctl restart paas-gate`
+   after a change. Local accounts keep working as before (`paas-user add`).
 
 ## Sharing the brain through GitLab (no team profile)
 

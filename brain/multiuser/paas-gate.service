@@ -1,9 +1,12 @@
 [Unit]
-Description=Peleg As A Service sign-in gate (https port 3001)
+Description=Peleg As A Service sign-in gate (https; port and idle stop in /etc/paas/gate.env)
 After=network-online.target
 Wants=network-online.target
 
 [Service]
+# GATE_PORT (default 3001) and GATE_IDLE_MINUTES (default 60; 0 = never stop an idle UI) live in /etc/paas/gate.env, which
+# the installers never overwrite
+EnvironmentFile=-/etc/paas/gate.env
 ExecStart=/opt/paas/ui/node/bin/node /opt/paas/gate/gate.js
 Restart=on-failure
 RestartSec=2

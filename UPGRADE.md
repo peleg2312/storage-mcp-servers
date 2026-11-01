@@ -23,6 +23,9 @@ is moving the old team accounts' notes into the team repositories, and the thing
 - No library work on the VM: `library/` and `images/` in git did not change since 30.10. When you copy the repository to
   the VM instead of pulling, those two folders (1.3 GB) can be skipped, unless you repack the library first (below).
 - No account re-creation, no edits to hooks, managed settings or systemd units by hand: the installer regenerates them.
+  Your own settings stay: the accounts and their ports, the API key, who may sign in, the marketplace servers you set up
+  and the items people shared, the per-person budget, the docs port, the Chrome block list. A gate port or idle time you
+  had put into `paas-gate.service` is carried into `/etc/paas/gate.env`, which later updates never touch.
 - No `claude mcp add` for anyone: the team's servers come with the plugin; servers an earlier version registered per
   person are removed automatically at the first team switch.
 - No change on the OpenShift side.

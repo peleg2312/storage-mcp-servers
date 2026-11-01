@@ -53,7 +53,8 @@ and reclaims their own processes first and, at the hard limit, ends their larges
 
 ### 4.1 Listener
 - HTTPS on `0.0.0.0:3001` with the certificate above. Runs as root (it must start other users' services and check
-  passwords). Its own systemd unit `paas-gate.service`, enabled at boot.
+  passwords). Its own systemd unit `paas-gate.service`, enabled at boot; `GATE_PORT` and `GATE_IDLE_MINUTES` come from
+  `/etc/paas/gate.env`, which the installers create once and never overwrite.
 - Suggested implementation: Node 22 standard library only (`https`, `http`, `net`, `crypto`, `child_process`),
   run with `/opt/paas/ui/node/bin/node`; `node-pty` is available in `/opt/paas/ui/app/node_modules` for the `su`
   check. Another language is fine if it meets the same rules and needs nothing from the internet.

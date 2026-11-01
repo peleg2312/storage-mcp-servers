@@ -27,14 +27,23 @@ if [ ! -f /etc/paas/tls/paas-ui.crt ]; then
 fi
 chmod 600 /etc/paas/tls/paas-ui.key; chmod 644 /etc/paas/tls/paas-ui.crt
 umask 022
+# the gate's own settings, kept across updates: /etc/paas/gate.env. Made once; values an earlier version had you put into
+# paas-gate.service itself (Environment=GATE_PORT=... / GATE_IDLE_MINUTES=...) are carried over before that file is replaced
+if [ ! -f /etc/paas/gate.env ]; then
+  OLD=/etc/systemd/system/paas-gate.service
+  P=$(grep -ho 'GATE_PORT=[0-9]*' "$OLD" 2>/dev/null | head -1 | cut -d= -f2); I=$(grep -ho 'GATE_IDLE_MINUTES=[0-9]*' "$OLD" 2>/dev/null | head -1 | cut -d= -f2)
+  printf '# the sign-in gate (paas-gate.service reads this; systemctl restart paas-gate after a change)\nGATE_PORT=%s\n# minutes without a request, an open WebSocket or a running claude before a person'"'"'s UI instance is stopped (0 = never)\nGATE_IDLE_MINUTES=%s\n' "${P:-3001}" "${I:-60}" > /etc/paas/gate.env
+  chmod 644 /etc/paas/gate.env
+fi
+GATE_PORT=$(sed -n 's/^GATE_PORT=//p' /etc/paas/gate.env | head -1); GATE_PORT=${GATE_PORT:-3001}
 install -m 644 "$HERE/gate.js" /opt/paas/gate/gate.js
 install -m 644 "$HERE/paas-gate.service" "$HERE/paas-ui@.service" /etc/systemd/system/
 systemctl daemon-reload
 systemctl enable paas-gate >/dev/null 2>&1
 systemctl restart paas-gate
 if command -v firewall-cmd >/dev/null 2>&1 && firewall-cmd --state >/dev/null 2>&1; then
-  firewall-cmd -q --permanent --add-port=3001/tcp && firewall-cmd -q --reload
+  firewall-cmd -q --permanent --add-port="$GATE_PORT/tcp" && firewall-cmd -q --reload
 fi
 sleep 1
-systemctl is-active --quiet paas-gate && echo "gate running: https://$(hostname -f 2>/dev/null || hostname):3001" \
+systemctl is-active --quiet paas-gate && echo "gate running: https://$(hostname -f 2>/dev/null || hostname):$GATE_PORT (settings: /etc/paas/gate.env)" \
   || { echo "gate: did not start: journalctl -u paas-gate -n 50"; exit 1; }
