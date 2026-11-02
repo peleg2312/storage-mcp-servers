@@ -261,8 +261,8 @@ the notes stay per person.
    Possible without any ticket: sssd without a join, as an LDAP directory plus a Kerberos password check, with the read-only
    account. `/etc/sssd/sssd.conf` (mode 600): `id_provider = ldap`, `auth_provider = krb5`, `ldap_uri = ldaps://<dc1>,
    ldaps://<dc2>`, `ldap_search_base = DC=...`, `ldap_schema = ad`, `ldap_id_mapping = True`, `ldap_referrals = False`,
-   `ldap_default_bind_dn = <account>@<domain>`, `ldap_default_authtok_type = obfuscated_password` (filled by
-   `sss_obfuscate -d <domain>`), `ldap_tls_cacert = <the domain CA, from the AD team or openssl s_client -showcerts>`,
+   `ldap_default_bind_dn = <account>@<domain>` (or its full DN), `ldap_default_authtok_type = password`, `ldap_default_authtok =
+   <its password>` (the file is root-only, mode 600; sssd's obfuscation is deprecated and only cosmetic), `ldap_tls_cacert = <the domain CA, from the AD team or openssl s_client -showcerts>`,
    `krb5_realm = <REALM>`, `krb5_server = <dc1>, <dc2>`, `krb5_canonicalize = true`, plus the same `use_fully_qualified_names`,
    `case_sensitive`, `override_homedir` / `fallback_homedir` lines as above; then `authselect select sssd with-mkhomedir --force`
    and `systemctl enable --now sssd oddjobd`. The gate needs only `id -nG` and `su`, which both work this way; what the join
