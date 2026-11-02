@@ -22,6 +22,9 @@ root only:
   paas-market setup-mcp <name> <url> [shared|personal|none]  set where an MCP server is; the token: shared = one
                                                            for everyone (on stdin), personal = each person adds
                                                            their own when they add it, none = no token
+  paas-market setup-docs <https://vm:8001/mcp>              one docs item per team, docs-http-<team> (url ?team=<team>:
+                                                           the team's library, general or its own, plus its knowledge);
+                                                           the docs token on stdin
   paas-market import-mcp [<item>=<your server>...]        set up the marketplace's MCP items from your own Claude's
                                                            servers of the same name (or the names you map)
   paas-market source add <git-url|folder> [<name>]        another marketplace (e.g. a copy of anthropics/skills or
@@ -584,7 +587,7 @@ def team_provides():
     if not meta:
         return set(), ""
     return ({f"skill/{n}" for n in meta.get("skills", [])} | {f"agent/{n}" for n in meta.get("agents", [])}
-            | {f"mcp/{n}" for n in meta.get("mcp", [])}), t
+            | {f"mcp/{n}" for n in meta.get("mcp", [])} | {f"mcp/docs-http-{t}"}), t     # the plugin's docs-local is the team's docs
 
 
 def team_metas():
@@ -618,6 +621,7 @@ def team_membership():
         for kind, key in (("skills", "skill"), ("agents", "agent"), ("mcp", "mcp")):
             for n in meta.get(kind, []):
                 out.setdefault(f"{key}/{n}", []).append(name)
+        out.setdefault(f"mcp/docs-http-{name}", []).append(name)
     return out
 
 
@@ -722,6 +726,37 @@ def setup_mcp(name, url, token, mode="shared"):
     json.dump(entry, open(p, "w"), indent=2)
     reindex()
     print(f"mcp/{name} set up: {url} ({ {'shared': 'one token for everyone', 'personal': 'each person adds their own token', 'none': 'no token'}[mode] })")
+
+
+def setup_docs(base, token):
+    """root: one Market item per team, docs-http-<team>, the VM's docs service for that team (its library, the general one or
+    its own, plus its knowledge). Everyone sees and may add every team's; a team's plugin carries its own as docs-local.
+    Items of teams that are gone, and the old single docs-search item, are removed."""
+    if not re.match(r"^https://[\w.-]+(:\d+)?/mcp$", base):
+        sys.exit("paas-market: the address must look like https://vm:8001/mcp")
+    if len(token) < 16:
+        sys.exit("paas-market: the docs token (stdin) is missing or shorter than 16 characters")
+    d = os.path.join(MARKET, "items", "mcp")
+    os.makedirs(d, exist_ok=True)
+    teams = {}
+    for t in sorted(os.listdir(TEAMS_SHARED)) if os.path.isdir(TEAMS_SHARED) else []:
+        try:
+            teams[t] = json.load(open(os.path.join(TEAMS_SHARED, t, "team.json")))
+        except (OSError, ValueError):
+            continue
+    for t, meta in teams.items():
+        title = meta.get("title") or t
+        own = meta.get("library")
+        desc = (f"Docs search for team {title} over HTTPS: " + (f"its own library '{own}' (not the general one)" if own else
+                "the general documentation library") + f" plus {title}'s knowledge pages and incidents. Same tools as docs-local")
+        json.dump({"description": desc, "token": "shared", "team": t,
+                   "server": {"type": "http", "url": f"{base}?team={t}", "headers": {"Authorization": f"Bearer {token}"}}},
+                  open(os.path.join(d, f"docs-http-{t}.json"), "w"), indent=2)
+    for n in os.listdir(d):
+        if (n.startswith("docs-http-") and n[len("docs-http-"):-5] not in teams) or n == "docs-search.json":
+            os.remove(os.path.join(d, n))
+    reindex()
+    print(f"docs items: {', '.join('docs-http-' + t for t in teams) or 'none (no teams in ' + TEAMS_SHARED + ')'}")
 
 
 def import_mcp(pairs):
@@ -942,6 +977,8 @@ def publish(brain, mcp_file=None):
             if n.endswith(".md"):
                 shutil.copy(os.path.join(teams, t, "agents", n), item_path("agent", n[:-3]))
     for name, entry in (json.load(open(mcp_file)) if mcp_file else {}).items():
+        if name == "docs-search":                       # one docs-http-<team> item per team instead (setup-docs)
+            continue
         dst = item_path("mcp", name)
         if not os.path.exists(dst):                     # root's edited address / headers win over the template
             json.dump(entry, open(dst, "w"), indent=2)
@@ -1081,7 +1118,7 @@ def main(argv):
         return source_cmd(args)
     if cmd == "pull":
         return pull() if REMOTE else sys.exit("paas-market: not connected to another VM (paas-market connect)")
-    if REMOTE and cmd in ("share", "unshare", "new", "edit", "publish", "setup-mcp", "import-mcp", "reindex", "source"):
+    if REMOTE and cmd in ("share", "unshare", "new", "edit", "publish", "setup-mcp", "setup-docs", "import-mcp", "reindex", "source"):
         sys.exit(f"paas-market: the marketplace here is {REMOTE['url']} (read-only): create and share there")
     fresh()
     as_json = "--json" in args
@@ -1141,6 +1178,10 @@ def main(argv):
             setup_mcp(args[0], args[1], mode, "shared")
         else:
             setup_mcp(args[0], args[1], read_secret("shared token: ") if mode == "shared" else "", mode)
+    elif cmd == "setup-docs":
+        if len(args) != 1:
+            sys.exit("usage: paas-market setup-docs <https://vm:8001/mcp>   (root; the docs token on stdin)")
+        setup_docs(args[0], read_secret("docs token: "))
     elif cmd == "import-mcp":
         if os.geteuid() != 0:
             sys.exit("paas-market: import-mcp is for root")

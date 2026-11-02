@@ -21,6 +21,8 @@ for a VM that runs Claude Code but has no pip, no containers and no internet.
                       GET /health), still standard library only: the VM's docs-search for laptops and other VMs.
       --token-file F    bearer token every /mcp request must carry (one line; 401 otherwise)
       --tls-cert C --tls-key K   HTTPS with the gate's certificate
+      --libraries-dir D a team whose team.json names its own library ("library": "<name>") is served D/<name>/docs.db instead of
+                        the general one (built by paas-library); the other teams keep the general library
       --teams-dir D     /mcp?team=<name> searches that team's knowledge too: D/<name>/team.json names the team's git
                         remote, the server keeps its own clone and index under --state-dir, pulled and rebuilt every
                         --refresh-minutes (default 10) and at once on POST /refresh?team=<name> (the notes hook sends it
@@ -33,6 +35,7 @@ tools/call, and empty prompts/resources lists. Read-only.
 import argparse
 import json
 import os
+import re
 import sys
 import time
 import traceback
@@ -146,6 +149,8 @@ class Server:
                                  lambda cid: lib.read_chunk(self.where(cid)[0], self.where(cid)[1], 0)["sections"][0]["text"])
 
     def call(self, name, args):
+        if getattr(self, "missing", ""):                    # a team library that is named but not built yet: say so, never fall back
+            raise RuntimeError(self.missing)
         if name == "search_docs":
             if not (args.get("query") or args.get("queries")):
                 raise ValueError("give query or queries")
@@ -174,7 +179,7 @@ class Server:
                 return lib.related_docs(self.brain_con, cid - ID_BASE if cid else 0, path, args.get("url", ""), args.get("limit", 10))
             return lib.related_docs(self.con, cid, path, args.get("url", ""), args.get("limit", 10))
         if name == "list_sources":
-            libs = [{"library": "main", **lib.sources(self.con, args.get("vendor", ""))}]
+            libs = [{"library": getattr(self, "libname", "main"), **lib.sources(self.con, args.get("vendor", ""))}]
             if self.brain():
                 libs.append({"library": "team knowledge", **lib.sources(self.brain_con, args.get("vendor", ""))})
             return {"libraries": libs}
@@ -346,9 +351,10 @@ def empty_index(db_path):
 class Teams:
     """Team knowledge for the HTTP server: one clone and one small index per team, refreshed from the team repository."""
 
-    def __init__(self, teams_dir, state_dir, log):
-        self.dir, self.state, self.log = teams_dir, state_dir, log
+    def __init__(self, teams_dir, state_dir, log, libraries_dir=None):
+        self.dir, self.state, self.log, self.libraries = teams_dir, state_dir, log, libraries_dir
         self.servers = {}
+        self.libcons = {}                                   # library name -> (mtime, connection): one per library, reopened when rebuilt
         self.lock = __import__("threading").Lock()
         self.refresh_lock = __import__("threading").Lock()
 
@@ -428,17 +434,52 @@ class Teams:
             except Exception as e:
                 self.log(f"team {team}: refresh failed: {e}")
 
+    def library(self, team):
+        """the team's own library name from its team.json ("library"), or "" for the general one"""
+        try:
+            name = str(json.load(open(os.path.join(self.dir, team, "team.json"))).get("library") or "")
+        except (OSError, ValueError):
+            return ""
+        return name if re.match(r"^[a-z0-9][a-z0-9_-]{0,31}$", name) else ""
+
+    def _libcon(self, name):
+        """(connection, missing message) of a team library: D/<name>/docs.db, reopened when paas-library rebuilt it"""
+        path = os.path.join(self.libraries or "", name, "docs.db")
+        try:
+            mt = os.stat(path).st_mtime
+        except OSError:
+            empty = os.path.join(self.state, "empty-library.db")
+            if not os.path.exists(empty):
+                empty_index(empty)
+            return lib.connect(empty, True), (f"library '{name}' is not built yet ({path}): root runs paas-library build {name}"
+                                              if self.libraries else "this server has no --libraries-dir for team libraries")
+        cur = self.libcons.get(name)
+        if not cur or cur[0] != mt:
+            cur = (mt, lib.connect(path, True))
+            self.libcons[name] = cur
+            self.log(f"library {name}: opened {path}")
+        return cur[1], ""
+
     def server(self, team, main):
-        """one Server per team: the library connection is the main server's (one cache for all teams), the team index its own"""
+        """one Server per team: the general library connection is the main server's (one cache for all teams), a team with its
+        own library gets that one instead; the team knowledge index is its own either way"""
         with self.lock:
-            if team not in self.servers:
+            name = self.library(team)
+            srv = self.servers.get(team)
+            if srv is None:
                 srv = Server.__new__(Server)
-                srv.shared, srv.con, srv.brain_path, srv.brain_con, srv.brain_mtime = True, main.con, self.db(team), None, None
+                srv.shared, srv.brain_path, srv.brain_con, srv.brain_mtime = True, self.db(team), None, None
                 self.servers[team] = srv
-            return self.servers[team]
+            if name:
+                srv.con, srv.missing = self._libcon(name)
+                srv.libname = name
+            else:
+                srv.con, srv.missing, srv.libname = main.con, "", "main"
+            return srv
 
 
-def serve_http(db, bind, token_file=None, tls_cert=None, tls_key=None, teams_dir=None, state_dir=None, refresh_minutes=10):
+def serve_http(db, bind, token_file=None, tls_cert=None, tls_key=None, teams_dir=None, state_dir=None, refresh_minutes=10,
+               libraries_dir=None):
     import hmac
     import ssl
     import threading
@@ -450,7 +491,7 @@ def serve_http(db, bind, token_file=None, tls_cert=None, tls_key=None, teams_dir
     if token_file and len(token) < 16:
         sys.exit(f"{token_file}: the token must be at least 16 characters (an empty file would mean no authentication)")
     state_dir = state_dir or os.path.join(os.path.expanduser("~"), ".cache", "paas-docs")
-    teams = Teams(teams_dir, state_dir, log) if teams_dir else None
+    teams = Teams(teams_dir, state_dir, log, libraries_dir) if teams_dir else None
     lock = threading.Lock()                         # sqlite connections are used from one thread at a time
     main_srv = Server(db, os.path.join(state_dir, "none.db"), shared=True)   # no personal index in HTTP mode
     refresh_pending = {"flag": False}
@@ -580,9 +621,12 @@ def main():
     ap.add_argument("--tls-cert")
     ap.add_argument("--tls-key")
     ap.add_argument("--teams-dir")
+    ap.add_argument("--libraries-dir", help="team libraries: <dir>/<name>/docs.db for a team whose team.json names one")
     ap.add_argument("--state-dir")
     ap.add_argument("--refresh-minutes", type=int, default=10)
     ap.add_argument("--knowledge", metavar="DIR")
+    ap.add_argument("--no-library", action="store_true",
+                    help="never look for the general library (a team with its own library that is not installed here)")
     ap.add_argument("--shared-knowledge", metavar="DIR")
     ap.add_argument("--proxy", metavar="URL", help="stdio bridge to a docs-search server (token: PAAS_DOCS_TOKEN or --token-file)")
     ap.add_argument("--ca", metavar="FILE", help="certificate the --proxy server is verified against (the VM's)")
@@ -597,7 +641,7 @@ def main():
         knowledge = a.knowledge or os.path.dirname(a.brain_db or default_brain_db())
         shared = shared_knowledge(knowledge, a.shared_knowledge) if a.shared_knowledge else None
         a.brain_db = shared or refresh_knowledge(knowledge, a.brain_db or default_brain_db())
-        lib_db = lib.locate_db(a.db)
+        lib_db = None if a.no_library else lib.locate_db(a.db)
         if not lib_db:                                        # a laptop: the team knowledge is the whole index
             if not a.brain_db:
                 a.brain_db = empty_index(os.path.join(knowledge, "brain.db"))
@@ -605,7 +649,7 @@ def main():
         a.db = lib_db
     if a.http:
         return serve_http(lib.find_db(a.db), a.http if ":" in a.http else "0.0.0.0:" + a.http, a.token_file, a.tls_cert, a.tls_key,
-                          a.teams_dir, a.state_dir, a.refresh_minutes)
+                          a.teams_dir, a.state_dir, a.refresh_minutes, a.libraries_dir)
     srv = Server(lib.find_db(a.db), a.brain_db)
     return serve_stdio(srv)
 

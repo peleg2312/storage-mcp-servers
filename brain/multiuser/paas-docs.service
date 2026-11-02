@@ -4,13 +4,14 @@ After=network-online.target
 
 [Service]
 # the same stdlib server Claude Code runs over stdio as docs-local, in HTTP mode: /mcp (bearer token), /mcp?team=<team> adds
-# that team's knowledge index, /health. TLS: the gate's certificate. Settings: /etc/paas/docs.env (PAAS_DOCS_PORT, PAAS_DOCS_REFRESH)
+# that team's knowledge index (and a team with its own library gets /opt/paas/libraries/<name>/docs.db instead of the general
+# one), /health. TLS: the gate's certificate. Settings: /etc/paas/docs.env (PAAS_DOCS_PORT, PAAS_DOCS_REFRESH)
 EnvironmentFile=-/etc/paas/docs.env
 # the team repositories are pulled with the team's GitLab token (paas-user git-token) through the shared credential helper
 Environment=GIT_CONFIG_COUNT=2 GIT_CONFIG_KEY_0=credential.helper GIT_CONFIG_VALUE_0=/opt/paas/bin/paas-git-credential GIT_CONFIG_KEY_1=credential.useHttpPath GIT_CONFIG_VALUE_1=true
 ExecStart=/usr/bin/python3 /opt/paas/library/mcp_stdio.py --db /opt/paas/library/docs.db --http 0.0.0.0:${PAAS_DOCS_PORT} \
   --token-file /etc/paas/docs-token --tls-cert /etc/paas/market/paas-ui.crt --tls-key /etc/paas/market/paas-ui.key \
-  --teams-dir /opt/paas/teams --state-dir /var/lib/paas-docs --refresh-minutes ${PAAS_DOCS_REFRESH}
+  --teams-dir /opt/paas/teams --libraries-dir /opt/paas/libraries --state-dir /var/lib/paas-docs --refresh-minutes ${PAAS_DOCS_REFRESH}
 # clones of the team repositories (with their mcp.json tokens) stay private to the service (UMask 0077); only index/ is readable
 User=paas-market
 Group=paas-market

@@ -18,7 +18,20 @@ import sys
 import tempfile
 
 LIB = os.environ.get("DOCS_LEADS_LIB") or os.path.expanduser("~/.claude/brain/library")
-DB = os.environ.get("DOCS_LEADS_DB") or os.path.join(LIB, "docs.db")
+def team_library_db(default):
+    """the active team's own library (its plugin's team.json names one: ~/.claude/brain/libraries/<name>/docs.db) instead of
+    the general one, so a team with its own documents never gets leads from the general library"""
+    b = os.path.expanduser("~/.claude/brain")
+    try:
+        team = open(os.path.join(b, "team")).read().strip()
+        with open(os.path.join(b, "teams", team, "paas-brain-" + team, "team.json")) as f:
+            name = str(json.load(f).get("library") or "")
+    except (OSError, ValueError):
+        return default
+    return os.path.join(b, "libraries", name, "docs.db") if re.match(r"^[a-z0-9][a-z0-9_-]{0,31}$", name) else default
+
+
+DB = os.environ.get("DOCS_LEADS_DB") or team_library_db(os.path.join(LIB, "docs.db"))
 MAX_LEADS, MIN_WORDS, MIN_COVER, MAX_QUERY_WORDS = 4, 2, 0.6, 30
 # the library's world: a request gets leads only when it names one of these (plus every product name in the
 # library, read from it) or pastes an identifier; "ok continue" or "center a div in css" never does

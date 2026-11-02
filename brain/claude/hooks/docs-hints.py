@@ -22,7 +22,20 @@ MAX_HINTS = 3
 MAX_ERR_HINTS = 2      # free-text error messages (CSI / Kubernetes / driver logs) looked up by their fixed words
 ERR = re.compile(r"(?:desc = |\b(?:error|Error|ERROR|failed|Failed|FAILED)(?: to [a-z]+)?: )([^\n\"]{12,240})")
 MAX_CANDIDATES = 60
-DB = os.environ.get("DOCS_HINTS_DB") or os.path.expanduser("~/.claude/brain/library/docs.db")
+def team_library_db(default):
+    """the active team's own library (its plugin's team.json names one: ~/.claude/brain/libraries/<name>/docs.db) instead of
+    the general one, so a team with its own documents never gets leads from the general library"""
+    b = os.path.expanduser("~/.claude/brain")
+    try:
+        team = open(os.path.join(b, "team")).read().strip()
+        with open(os.path.join(b, "teams", team, "paas-brain-" + team, "team.json")) as f:
+            name = str(json.load(f).get("library") or "")
+    except (OSError, ValueError):
+        return default
+    return os.path.join(b, "libraries", name, "docs.db") if re.match(r"^[a-z0-9][a-z0-9_-]{0,31}$", name) else default
+
+
+DB = os.environ.get("DOCS_HINTS_DB") or team_library_db(os.path.expanduser("~/.claude/brain/library/docs.db"))
 
 try:   # the shared lookups live in the library's search engine (search.py next to docs.db; search_cli.py in the repo)
     sys.path[:0] = [os.path.dirname(os.path.abspath(DB)), os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "..", "docs-search-mcp")]

@@ -477,7 +477,7 @@ def decide(data):
     # only lets it open this server's own pages
     if re.match(r"mcp__(plugin_[\w-]+_)?chrome-devtools__", name):
         return 0
-    if re.match(r"mcp__docs-(local|search)__", name):    # read-only documentation search: the query text may say "create view" / "grant"
+    if re.match(r"mcp__docs-(local|search|http-[a-z0-9_-]+)__", name):    # read-only documentation search: the query text may say "create view" / "grant"
         return 0
     tool_input = data.get("tool_input") or {}
     if re.fullmatch(r"mcp__databases__(pg_execute|mongo_write)", name):

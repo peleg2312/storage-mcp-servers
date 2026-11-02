@@ -230,6 +230,10 @@ settings (`/etc/claude-code/managed-settings.json` on Linux, the equivalent path
 `{"extraKnownMarketplaces": {"paas-brain-nas": {"source": {"source": "git", "url": "<team url>"}, "autoUpdate": true}},
 "enabledPlugins": {"paas-brain-nas@paas-brain-nas": true}}`.
 
+**A team with its own documents** instead of the general library: `"library": "<name>"` in its `team.json`, then on the VM
+`paas-library add <name> <folder of their documents> --to <vendor>/<product>` and the installer command (publishes the team,
+adds its `docs-http-<team>` Market item). `brain/teams/README.md`, "A team with its own library".
+
 **The team's MCP servers** are set once in the Brain tab, Team, More, Edit a team (address and token per server, into the team
 repository's `mcp.json` and the plugin's `.mcp.json`; readable by the team's GitLab members by your decision, so read-only tokens,
 rotated when someone leaves). **A new team**: a folder `brain/teams/<name>/` with `team.json` and `persona.md` (plus its own rules,

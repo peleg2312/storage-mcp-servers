@@ -1,0 +1,130 @@
+#!/usr/bin/env python3
+"""Team libraries: a team whose team.json names its own library ("library": "<name>") searches that library instead of the
+general one, through the same docs-local and the same docs-search address (?team=<team>). Each library is a folder of
+documents and its index:
+
+  <libraries>/<name>/docs/<vendor>/<product>/...   PDF, HTML, Markdown, text (the same layout as the general library)
+  <libraries>/<name>/docs.db                         built by this tool; the docs service and docs-local open it as is
+
+  paas-library list                                   every library: documents, size, when it was built
+  paas-library add <name> <file|folder>... --to <vendor>/<product>   copy documents in, then index them
+  paas-library build <name> [--full]                  index the documents (changed files only; --full from scratch)
+  paas-library path <name>                            print the library's folder
+
+<libraries>: $PAAS_LIBRARIES, else /opt/paas/libraries on a multi-user VM (root writes, everyone reads), else
+~/.claude/brain/libraries. A rebuilt index is picked up by the docs service and every docs-local at their next request, no
+restart. Standard library, Python 3.9."""
+import glob
+import os
+import re
+import shutil
+import sys
+import time
+
+NAME = re.compile(r"^[a-z0-9][a-z0-9_-]{0,31}$")
+PART = re.compile(r"^[a-z0-9][a-z0-9_.-]{0,63}$")
+
+
+def root():
+    if os.environ.get("PAAS_LIBRARIES"):
+        return os.environ["PAAS_LIBRARIES"]
+    if os.path.isdir("/opt/paas/libraries"):
+        return "/opt/paas/libraries"
+    return os.path.join(os.environ.get("CLAUDE_HOME") or os.path.expanduser("~/.claude"), "brain", "libraries")
+
+
+def indexer():
+    here = os.path.dirname(os.path.realpath(__file__))
+    for p in (os.path.join(here, "docs_index.py"), os.path.join(here, "..", "lib", "docs_index.py"),
+              "/opt/paas/library/docs_index.py", os.path.expanduser("~/.claude/tools/docs_index.py"),
+              os.path.expanduser("~/.claude/brain/library/docs_index.py"),
+              os.path.join(here, "..", "..", "..", "docs-search-mcp", "docs_index.py")):
+        if os.path.isfile(p):
+            sys.path.insert(0, os.path.dirname(os.path.abspath(p)))
+            import docs_index
+            return docs_index
+    sys.exit("paas-library: docs_index.py not found (it comes with the brain's install)")
+
+
+def lib_dir(name):
+    if not NAME.match(name or ""):
+        sys.exit(f"paas-library: '{name}' is not a library name (lower-case letters, digits, - and _)")
+    return os.path.join(root(), name)
+
+
+def readable(d):
+    """libraries are read by every account and by the docs service: folders 755, files 644"""
+    for dp, dn, fn in os.walk(d):
+        os.chmod(dp, 0o755)
+        for f in fn:
+            os.chmod(os.path.join(dp, f), 0o644)
+
+
+def build(name, full=False):
+    d = lib_dir(name)
+    docs = os.path.join(d, "docs")
+    if not os.path.isdir(docs) or not any(os.scandir(docs)):
+        sys.exit(f"paas-library: no documents in {docs} yet (paas-library add {name} <files> --to <vendor>/<product>)")
+    os.makedirs(d, exist_ok=True)
+    t = time.time()
+    indexer().build(docs, os.path.join(d, "docs.db"), full=full, log=lambda *a: None)
+    readable(d)
+    print(f"library {name}: indexed {count(docs)} documents in {time.time() - t:.0f} s ({os.path.join(d, 'docs.db')})")
+
+
+def count(docs):
+    return sum(1 for f in glob.glob(os.path.join(docs, "**", "*"), recursive=True) if os.path.isfile(f))
+
+
+def add(name, paths, to):
+    parts = (to or "").strip("/").split("/")
+    if len(parts) != 2 or not all(PART.match(p) for p in parts):
+        sys.exit("paas-library: --to <vendor>/<product>, lower-case, e.g. --to acme/backup")
+    dst = os.path.join(lib_dir(name), "docs", *parts)
+    os.makedirs(dst, exist_ok=True)
+    n = 0
+    for p in paths:
+        if os.path.isdir(p):
+            for dp, dn, fn in os.walk(p):
+                for f in fn:
+                    rel = os.path.relpath(os.path.join(dp, f), p)
+                    os.makedirs(os.path.dirname(os.path.join(dst, rel)), exist_ok=True)
+                    shutil.copy2(os.path.join(dp, f), os.path.join(dst, rel))
+                    n += 1
+        elif os.path.isfile(p):
+            shutil.copy2(p, dst)
+            n += 1
+        else:
+            sys.exit(f"paas-library: {p}: no such file or folder")
+    print(f"library {name}: {n} files copied into {dst}")
+    build(name)
+
+
+def listing():
+    r = root()
+    names = sorted(n for n in (os.listdir(r) if os.path.isdir(r) else []) if NAME.match(n))
+    if not names:
+        print(f"no team libraries in {r} (paas-library add <name> <files> --to <vendor>/<product>)")
+    for n in names:
+        db = os.path.join(r, n, "docs.db")
+        built = time.strftime("%Y-%m-%d %H:%M", time.localtime(os.path.getmtime(db))) if os.path.exists(db) else "not built"
+        size = f"{os.path.getsize(db) / 1e6:.1f} MB" if os.path.exists(db) else "-"
+        print(f"{n:<20} {count(os.path.join(r, n, 'docs')):>6} documents  {size:>9}  {built}")
+
+
+def main(a):
+    if a[:1] == ["list"] or not a:
+        return listing()
+    if a[:1] == ["build"] and len(a) >= 2:
+        return build(a[1], "--full" in a)
+    if a[:1] == ["path"] and len(a) == 2:
+        return print(lib_dir(a[1]))
+    if a[:1] == ["add"] and len(a) >= 3 and "--to" in a:
+        i = a.index("--to")
+        return add(a[1], [x for x in a[2:i] + a[i + 2:]], a[i + 1] if i + 1 < len(a) else "")
+    print(__doc__)
+    return 1
+
+
+if __name__ == "__main__":
+    sys.exit(main(sys.argv[1:]) or 0)

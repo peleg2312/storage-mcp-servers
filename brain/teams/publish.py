@@ -142,6 +142,10 @@ def publish(team, dest, remote=None, hooks=True, commit=True, force=False, docs_
             meta = json.load(f)
     meta.update({"name": team, "title": t["title"], "description": t["description"], "version": t["version"],
                  "plugin": "paas-brain-" + team})
+    if t.get("library"):                                     # the docs service serves this team its own library (mcp_stdio.py)
+        meta["library"] = t["library"]
+    else:
+        meta.pop("library", None)
     if remote:
         meta["remote"] = remote
     if meta.get("remote"):                                   # into the plugin too: its session-start hook clones from it

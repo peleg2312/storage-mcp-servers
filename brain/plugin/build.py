@@ -21,7 +21,7 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 BRAIN = os.path.dirname(HERE)
 ROOT = os.path.dirname(BRAIN)
 SRC = os.path.join(BRAIN, "claude")
-TEAMS = os.path.join(BRAIN, "teams")
+TEAMS = os.environ.get("PAAS_TEAM_DEFS") or os.path.join(BRAIN, "teams")   # another folder of team definitions: the tests' mock teams
 IGNORE = shutil.ignore_patterns("__pycache__", "*.pyc", "._*", ".user-skill")
 
 
@@ -46,6 +46,8 @@ def load_team(name):
     with open(path) as f:
         t = json.load(f)
     t["name"] = name
+    if t.get("library") and not re.match(r"^[a-z0-9][a-z0-9_-]{0,31}$", str(t["library"])):
+        sys.exit(f"build.py: team {name}: library {t['library']!r}: lower-case letters, digits, - and _")
     return t
 
 
@@ -141,7 +143,7 @@ def build(out, team_name="san", hooks=True):
     write(os.path.join(plug, "team.json"), dump({
         "name": team_name, "title": team.get("title", team_name), "description": team.get("description", ""),
         "version": version(), "skills": [n for n, _ in skills], "agents": [n for n, _ in agents],
-        "mcp": team.get("mcp", ["docs-local"]), "hooks": hooks}))
+        "mcp": team.get("mcp", ["docs-local"]), "hooks": hooks, **({"library": team["library"]} if team.get("library") else {})}))
     write(os.path.join(plug, ".claude-plugin", "plugin.json"), dump({
         "name": name, "version": version(), "description": team.get("description", ""),
         "author": {"name": "storage team"}, "license": "Apache-2.0"}))
@@ -156,14 +158,19 @@ def build(out, team_name="san", hooks=True):
     for f in ("mcp_stdio.py", "search_cli.py", "docs_text.py", "docs_index.py"):
         shutil.copy(os.path.join(ROOT, "docs-search-mcp", f), os.path.join(plug, "lib", f))
     exe = os.path.join(plug, "bin", "docs-local")
+    # a team with its own library ("library" in team.json) opens ~/.claude/brain/libraries/<name>/docs.db and never the general
+    # one; where it is not installed the bridge to the VM's docs-search serves it (?team=<team> picks it there)
+    db = f'$B/libraries/{team["library"]}/docs.db' if team.get("library") else "$B/library/docs.db"
+    nolib = " --no-library" if team.get("library") else ""            # knowledge alone, never the general library by default
     write(exe, '#!/bin/sh\n# docs-local of the team plugin: the library (when installed) and the team knowledge of ~/.claude/brain.\n'
                '# No library but the team\'s docs-search address in the environment (.mcp.json, from the team\'s mcp.json): a stdio bridge to\n'
                '# that server (the VM\'s library and the team\'s knowledge index, over its certificate). Neither: the knowledge folder alone.\n'
                'B="${CLAUDE_HOME:-$HOME/.claude}/brain"; L=$(cd "$(dirname "$0")/.." && pwd)/lib\n'
                'S=""; [ -d /var/lib/paas-docs/index ] && S="--shared-knowledge /var/lib/paas-docs/index"   # multi-user VM: one index per team, built by the docs service\n'
-               'if [ -f "$B/library/docs.db" ]; then exec python3 "$L/mcp_stdio.py" --db "$B/library/docs.db" --knowledge "$B" $S\n'
+               f'DB="{db}"\n'
+               'if [ -f "$DB" ]; then exec python3 "$L/mcp_stdio.py" --db "$DB" --knowledge "$B" $S\n'
                'elif [ -n "${PAAS_DOCS_URL:-}" ]; then CA=""; [ -f "$L/paas-ui.crt" ] && CA="--ca $L/paas-ui.crt"; exec python3 "$L/mcp_stdio.py" --proxy "$PAAS_DOCS_URL" $CA\n'
-               'else exec python3 "$L/mcp_stdio.py" --knowledge "$B" $S; fi\n')
+               f'else exec python3 "$L/mcp_stdio.py" --knowledge "$B" $S{nolib}; fi\n')
     os.chmod(exe, 0o755)
     write(os.path.join(out, ".claude-plugin", "marketplace.json"), dump({
         "name": name, "owner": {"name": "paas"}, "description": team.get("title", team_name) + " brain: " + team.get("description", ""),

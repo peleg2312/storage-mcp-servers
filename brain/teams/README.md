@@ -18,6 +18,7 @@ their own audit trail; the team is a profile on top of the person, not a shared 
  "skills": ["brain-setup", "docs-lookup", "share-access-check", "..."],   "agents": ["Explore", "nas-analyst"],
  "mcp": ["docs-local", "ontap", "harvest"]}
 ```
+`library` (optional): the team's own documentation library instead of the general one (see "A team with its own library").
 `skills` / `agents`: names, looked up in `brain/teams/<team>/skills|agents` first, then in `brain/claude/skills|agents`
 (so a team adds its own and reuses the shared ones), or `"all"`. File paths are relative to the team folder, or to the
 repository when they start with `brain/`. A new team = a folder with `team.json` and `persona.md`; `python3
@@ -78,6 +79,33 @@ asks to redact those files. Claude Code names a plugin's tools `mcp__plugin_paas
 that form into the agents' `tools:` lists for the team's servers, `paas-team use` puts the matching `permissions.allow` rules into the
 person's settings.json (the previous team's go), and the read-only guard reads the form as the bare name, so a server added
 to a team in the editor is usable by the agents and needs no permission prompt at the next session.
+
+## A team with its own library
+
+By default every team searches the one general library, plus its own knowledge. A team that needs other documents, and none
+of the general ones, names its own library in `team.json`: `"library": "ops"`. Then, for that team only:
+
+- the docs service answers `https://<vm>:8001/mcp?team=<team>` from `/opt/paas/libraries/ops/docs.db` (plus the team's
+  knowledge), never from the general library; a library that is named but not built yet gives a clear error, no fallback;
+- the team plugin's `docs-local` opens `~/.claude/brain/libraries/ops/docs.db` (on the multi-user VM a link to
+  `/opt/paas/libraries`); where that is not installed it bridges to the docs service, and without that it searches the team's
+  knowledge alone, never the general library;
+- the docs-leads and docs-hints hooks take their leads from the same library.
+
+Fill it as root with `paas-library` (stdlib, on the VM in `/opt/paas/bin`):
+
+```sh
+paas-library add ops /path/to/their/documents --to <vendor>/<product>     # copies them in and indexes (PDF, HTML, Markdown, text)
+paas-library build ops [--full]                                           # re-index after files changed in the folder
+paas-library list                                                         # every library: documents, size, when built
+```
+The documents live in `/opt/paas/libraries/<name>/docs/<vendor>/<product>/`, the index next to them; a rebuilt index is
+used at the next request, no restart. Single VM: `~/.claude/brain/libraries` instead.
+
+**The Market** offers one docs item per team, `docs-http-<team>` (the docs service with `?team=<team>`, one token for all):
+everyone sees every team's and may add another team's docs to their own Claude; a team's plugin carries only its own (as
+`docs-local`), so the active team's item shows as "from your team". `install-shared.sh` (re)creates the items for every team
+under `/opt/paas/teams` and removes those of teams that are gone.
 
 ## Editing a team in the Brain tab
 

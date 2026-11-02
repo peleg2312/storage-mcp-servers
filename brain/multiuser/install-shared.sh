@@ -108,6 +108,10 @@ DOCS_URL="https://$(hostname -f 2>/dev/null || hostname):$(sed -n 's/^PAAS_DOCS_
 DOCS_OPTS="--docs-search $DOCS_URL --docs-token-file $ETC/docs-token"
 # A team's GitLab remote (members clone and push there): python3 brain/teams/publish.py <team> --to /opt/paas/teams/<team> --remote <url>
 install -m 755 "$BRAIN/claude/tools/paas-team" "$P/bin/paas-team"
+# team libraries (a team whose team.json names "library": its own documents instead of the general library): root fills them
+# with paas-library; every account reads them (~/.claude/brain/libraries links here), the docs service serves them
+install -m 755 "$BRAIN/claude/tools/paas-library" "$P/bin/paas-library"
+mkdir -p "$P/libraries" && chmod 755 "$P/libraries"
 ln -sfn "$P/bin/paas-team" /usr/local/bin/paas-team
 python3 "$BRAIN/teams/publish.py" --all --to "$P/teams" $DOCS_OPTS > "$P/teams.log" 2>&1 || { cat "$P/teams.log"; echo "install-shared: publishing the teams failed (see above)"; exit 1; }
 sed 's/^/teams: /' "$P/teams.log"; rm -f "$P/teams.log"
@@ -191,7 +195,7 @@ if [ -f "$ETC/market/paas-ui.crt" ]; then
   if command -v firewall-cmd >/dev/null 2>&1 && firewall-cmd --state >/dev/null 2>&1; then
     firewall-cmd -q --permanent --add-port="$(sed -n 's/^PAAS_DOCS_PORT=//p' "$ETC/docs.env")/tcp" && firewall-cmd -q --reload
   fi
-  PAAS_MARKET="$P/marketplace" python3 "$P/bin/paas-market" setup-mcp docs-search "$DOCS_URL" shared < "$ETC/docs-token" >/dev/null 2>&1 || true
+  PAAS_MARKET="$P/marketplace" PAAS_TEAMS="$P/teams" python3 "$P/bin/paas-market" setup-docs "$DOCS_URL" < "$ETC/docs-token" || true   # docs-http-<team> per team
   echo "docs-search for other machines: $DOCS_URL (one token for everyone, in every team's mcp.json; laptops reach it through the team plugin); health: $DOCS_URL/../health"
 else
   echo "docs-search for other machines: starts after install-gate.sh made the certificate (re-run this script then)"
