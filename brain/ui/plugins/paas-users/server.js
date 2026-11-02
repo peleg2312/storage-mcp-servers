@@ -7,7 +7,7 @@ import { execFile } from 'node:child_process';
 const BIN = process.env.PAAS_USER_BIN || ['/opt/paas/bin/paas-user', '/usr/local/sbin/paas-user'].find((p) => fs.existsSync(p)) || 'paas-user';
 const NAME = /^[a-z_][a-z0-9_.-]{0,31}$/;
 const run = (args, input) => new Promise((resolve) => {
-  const p = execFile(BIN, args, { timeout: 120000, maxBuffer: 4 << 20 }, (err, stdout, stderr) => resolve({ ok: !err, out: `${stdout}${stderr}`.trim() }));
+  const p = execFile(BIN, args, { timeout: 120000, maxBuffer: 4 << 20 }, (err, stdout, stderr) => resolve({ ok: !err, out: `${stdout}${stderr}`.trim(), stdout: String(stdout) }));
   p.stdin.end(input ? `${input}\n` : '');
 });
 
@@ -24,7 +24,9 @@ const name = (b) => (NAME.test(String(b.name || '')) ? b.name : null);
 const routes = {
   'GET /list': async () => {
     const r = await run(['list', '--json']);
-    return r.ok ? { ok: true, users: JSON.parse(r.out || '[]') } : r;
+    if (!r.ok) return r;
+    // the JSON is on stdout; a stray line on stderr (a locale warning, a note) must not turn the page into an error 500
+    try { return { ok: true, users: JSON.parse(r.stdout.trim() || '[]') }; } catch { return { ok: false, out: `paas-user list gave no JSON: ${r.out.slice(0, 600)}` }; }
   },
   'POST /add': async (b) => {
     if (!name(b)) return { ok: false, out: 'Name: lower-case letters, digits, . _ - (e.g. dana)' };

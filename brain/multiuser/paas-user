@@ -266,9 +266,9 @@ case "$cmd" in
     first=1
     for f in "$ETC"/*.env; do
       [ -f "$f" ] || continue
-      u=$(basename "$f" .env); port=$(sed -n 's/^SERVER_PORT=//p' "$f")
+      u=$(basename "$f" .env); port=$(sed -n 's/^SERVER_PORT=//p' "$f" | head -n1); echo "$port" | grep -Eq '^[0-9]+$' || port=null   # valid JSON even for an odd file
       locked=false; { [ -f "$ETC/$u.locked" ] || passwd -S "$u" 2>/dev/null | grep -q ' L\| LK'; } && locked=true
-      running=false; systemctl is-active --quiet "paas-ui@$u" && running=true
+      running=false; systemctl is-active --quiet "paas-ui@$u" 2>/dev/null && running=true
       if [ $json = 1 ]; then
         [ $first = 1 ] || printf ','; first=0
         printf '{"name":"%s","port":%s,"locked":%s,"running":%s,"home":"%s"}' "$u" "$port" $locked $running "$(home_of "$u")"
