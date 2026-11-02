@@ -105,11 +105,15 @@ async function allowed(user) {
 function checkPassword(user, password) {
   if (/[\r\n]/.test(password) || password.length > 512) return Promise.resolve(false);
   return new Promise((resolve) => {
-    const proc = pty.spawn('runuser', ['-u', 'nobody', '--', 'su', user, '-c', 'exit 0'], {
-      name: 'dumb', cols: 80, rows: 24, env: { PATH: '/usr/sbin:/usr/bin:/sbin:/bin', LANG: 'C', LC_ALL: 'C' },
-    });
+    let proc;
+    try {
+      proc = pty.spawn('runuser', ['-u', 'nobody', '--', 'su', user, '-c', 'exit 0'], {
+        name: 'dumb', cols: 80, rows: 24, env: { PATH: '/usr/sbin:/usr/bin:/sbin:/bin', LANG: 'C', LC_ALL: 'C' },
+      });
+    } catch (e) { log(`password check cannot start su in a pty: ${e.message}`); return resolve(false); }
     let sent = false;
     let done = false;
+    let seen = '';
     const finish = (ok) => {
       if (done) return;
       done = true;
@@ -119,12 +123,16 @@ function checkPassword(user, password) {
     };
     const timer = setTimeout(() => finish('timeout'), 15000); // slow, not wrong: the caller does not count it
     proc.onData((data) => {
+      if (!sent) seen += data;
       if (!sent && /password/i.test(data)) {
         sent = true;
         proc.write(`${password}\r`);
       }
     });
-    proc.onExit(({ exitCode }) => finish(sent && exitCode === 0));
+    proc.onExit(({ exitCode }) => {
+      if (!sent) log(`password check: su printed no password prompt for ${user} (exit ${exitCode}; output: ${seen.slice(0, 200).replace(/\s+/g, ' ')})`);
+      finish(sent && exitCode === 0);
+    });
   });
 }
 
@@ -422,7 +430,7 @@ async function login(req, res, asJson) {
     if (retryMin) res.setHeader('retry-after', String(retryMin * 60));
     if (asJson) sendJson(res, status, { error: msg }); else sendPage(res, status, msg, valid ? username : '');
   };
-  if (!valid || !password) return fail(401, BAD);
+  if (!valid || !password) return fail(401, BAD, valid ? 'empty password' : 'name not valid');
   const key = `${username}|${ip}`;
   const attempts = recent(key);
   if (attempts.length >= MAX_FAILURES) return fail(429, lockedUser(minutesLeft(attempts)), 'locked', minutesLeft(attempts));
@@ -435,7 +443,11 @@ async function login(req, res, asJson) {
   perIp.push(Date.now());
   busy.set(ip, (busy.get(ip) || 0) + 1);
   let ok = false;
-  try { ok = (await allowed(username)) && (await checkPassword(username, password)); } finally {
+  let why = '';
+  try { // the journal says which of the two checks refused (the page says the same thing for both, on purpose)
+    if (!(await allowed(username))) why = `not in an allowed group (id -nG: ${(await run('id', ['-nG', '--', username]) || 'no such user').trim()}; allowed: ${allowedGroups().join(' ')})`;
+    else { ok = await checkPassword(username, password); if (ok === false) why = 'password refused by su'; }
+  } finally {
     if (busy.get(ip) > 1) busy.set(ip, busy.get(ip) - 1); else busy.delete(ip);
   }
   if (ok === 'timeout') { // the VM was slow, the password was not judged: no strike against the user
@@ -443,7 +455,7 @@ async function login(req, res, asJson) {
     recent(ip).pop();
     return fail(503, 'The VM did not answer in time. Try again in a moment.', 'password check timed out');
   }
-  if (!ok) return fail(401, BAD);
+  if (!ok) return fail(401, BAD, why);
   const first = !fs.existsSync(envPath(username));
   const home = first ? null : await homeOf(username);
   if (first || !home || !fs.existsSync(`${home}/.claude/brain`)) await provisionUser(username);
