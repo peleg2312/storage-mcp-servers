@@ -424,11 +424,29 @@ def apply_mcp(t, old, tdir):
             claude_mcp("remove", "-s", "user", m)
         elif via == "market" and market_bin() and f"mcp/{m}" in mine:
             market("remove", f"mcp/{m}")
+    allow_plugin_tools(t.get("name"), t.get("mcp", []))
     servers = jload(os.path.join(tdir, "mcp.json"))
     for m in t.get("mcp", []):
         if m != "docs-local" and not mcp_ready(servers.get(m) or {}):
             print(f"note: MCP {m}: no address or token in the team's mcp.json yet (Brain tab, Team, Edit)")
     return {}
+
+
+def allow_plugin_tools(team, mcp):
+    """~/.claude/settings.json permissions.allow: the active team plugin's MCP servers. Claude Code names a plugin's tools
+    mcp__plugin_paas-brain-<team>_<server>__<tool>, so a bare `mcp__<server>` rule never matches them and a session in the
+    default permission mode would ask before every read. The previous teams' rules go; a file that does not parse is left alone."""
+    p = os.path.join(HOME, "settings.json")
+    try:
+        s = json.load(open(p)) if os.path.exists(p) else {}
+    except Exception:
+        print(f"note: {p} is not valid JSON; the team's permission rules were not written into it")
+        return
+    allow = s.setdefault("permissions", {}).setdefault("allow", [])
+    allow[:] = [r for r in allow if not str(r).startswith("mcp__plugin_paas-brain-")]
+    if team:
+        allow += [f"mcp__plugin_paas-brain-{team}_{m}" for m in mcp if m != "docs-search"]
+    write(p, json.dumps(s, indent=2) + "\n")
 
 
 def claude(*args):

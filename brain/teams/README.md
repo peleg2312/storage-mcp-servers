@@ -74,7 +74,10 @@ shows which servers the plugin connects. `docs-search` is not listed twice: its 
 environment, and `docs-local` bridges to it (stdio to HTTPS, the VM's certificate from `lib/paas-ui.crt`) on a machine without
 the library. The owner's decision: the tokens in `mcp.json` and `.mcp.json` are readable by everyone with access to the team's
 GitLab project, so use read-only tokens for the read-only servers and rotate them when someone leaves; the notes hook never
-asks to redact those files.
+asks to redact those files. Claude Code names a plugin's tools `mcp__plugin_paas-brain-<team>_<server>__<tool>`: `build.py` writes
+that form into the agents' `tools:` lists for the team's servers, `paas-team use` puts the matching `permissions.allow` rules into the
+person's settings.json (the previous team's go), and the read-only guard reads the form as the bare name, so a server added
+to a team in the editor is usable by the agents and needs no permission prompt at the next session.
 
 ## Editing a team in the Brain tab
 

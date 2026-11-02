@@ -434,9 +434,24 @@ def main():
     return rc
 
 
+def plain(name):
+    """mcp__plugin_paas-brain-<team>_<server>__<tool> (a server the team plugin carries) read as mcp__<server>__<tool>, so the
+    server rules below and allowed-tools.txt patterns written for the bare name keep working"""
+    m = re.match(r"^mcp__plugin_paas-brain-([a-z][a-z0-9_-]*?)_([A-Za-z0-9.-][A-Za-z0-9_.-]*)__(.+)$", name)
+    if not m:
+        return name
+    try:
+        team = open(os.path.expanduser("~/.claude/brain/team")).read().strip()      # exact split when the team is known
+    except Exception:
+        team = ""
+    if team and name.startswith(f"mcp__plugin_paas-brain-{team}_"):
+        return "mcp__" + name[len(f"mcp__plugin_paas-brain-{team}_"):]
+    return f"mcp__{m.group(2)}__{m.group(3)}"
+
+
 def decide(data):
     decide.asked, decide.why = False, ""
-    name = str(data.get("tool_name") or "")
+    name = plain(str(data.get("tool_name") or ""))
     # Bypass mode: the user has approved every change on this server, so the questions below are skipped; the blocks
     # (storage, switches, UCS, VMware) stay in every mode
     bypass = data.get("permission_mode") == "bypassPermissions"

@@ -66,6 +66,8 @@ for t in TEAMS:
     for f in ("mcp_stdio.py", "search_cli.py", "docs_text.py", "docs_index.py"):
         assert os.path.isfile(os.path.join(plug, "lib", f)), f
 san_skills = json.load(open(os.path.join(out, "paas-brain-san", "team.json")))["skills"]
+pm_agent = open(os.path.join(out, "paas-brain-san", "agents", "powermax-analyst.md")).read()
+assert "mcp__plugin_paas-brain-san_powermax__*" in pm_agent and "mcp__plugin_paas-brain-san_docs-local__*" in pm_agent and "mcp__kuparashit__*" in pm_agent, pm_agent[:400]   # team servers in the plugin's form, a personal one bare
 # the plugin's docs-local on a machine without the library: the team knowledge is the index
 lh = tempfile.mkdtemp(); os.makedirs(os.path.join(lh, ".claude", "brain", "notes"))
 open(os.path.join(lh, ".claude", "brain", "notes", "vast.md"), "w").write("# VAST\n- 2026-10-31 view policy alpha squashes root observed vms\n")
@@ -120,6 +122,8 @@ listing = json.loads(team("list", "--json"))
 assert listing["active"] is None and [t["name"] for t in listing["teams"]] == TEAMS and not listing["teams"][0]["local"]
 o = team("use", "san")
 assert "team san" in o and "your notes moved into it" in o, o
+allow = json.load(open(os.path.join(home, ".claude", "settings.json")))["permissions"]["allow"]
+assert "mcp__plugin_paas-brain-san_powermax" in allow and "mcp__plugin_paas-brain-san_docs-local" in allow and not any("docs-search" in r for r in allow), allow
 assert os.readlink(os.path.join(brain, "notes")) == os.path.join(brain, "teams", "san", "knowledge", "notes")
 assert open(os.path.join(brain, "notes.md")).read() == "- my core fact\n"
 assert os.path.isfile(os.path.join(brain, "teams", "san", "knowledge", "notes", "powermax.md"))

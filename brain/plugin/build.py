@@ -11,6 +11,7 @@ Same output on every run. Standard library, Python 3.9."""
 import datetime
 import json
 import os
+import re
 import shutil
 import subprocess
 import sys
@@ -109,8 +110,14 @@ def build(out, team_name="san", hooks=True):
     for n, p in skills:
         shutil.copytree(p, os.path.join(plug, "skills", n), ignore=IGNORE)
     os.makedirs(os.path.join(plug, "agents"), exist_ok=True)
+    # Claude Code names a plugin's MCP tools mcp__plugin_<plugin>_<server>__<tool>: an agent's `tools:` list written for the
+    # bare server names would not let it call the team's servers, so the team's servers are renamed here (a server the
+    # person adds themselves, kuparashit or aria outside the team, keeps the bare form and still matches)
+    plugin_servers = {m for m in team.get("mcp", []) if m != "docs-search"} | {"docs-local"}
     for n, p in agents:
-        shutil.copy(p, os.path.join(plug, "agents", n + ".md"))
+        text = open(p, encoding="utf-8").read()
+        text = re.sub(r"\bmcp__([A-Za-z0-9_.-]+)__\*", lambda m: (f"mcp__plugin_{name}_{m.group(1)}__*" if m.group(1) in plugin_servers else m.group(0)), text, count=0)
+        write(os.path.join(plug, "agents", n + ".md"), text)
     # the coding rules as a skill too (one source: brain/claude/brain/coding.md), so a plugin-only install has them and
     # Claude loads them by itself before code work; the file copy under brain/ stays for the installed brains
     coding = open(os.path.join(SRC, "brain", "coding.md"), encoding="utf-8").read()

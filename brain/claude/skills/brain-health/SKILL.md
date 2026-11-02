@@ -9,7 +9,7 @@ Read-only and cheap: one list call per server, local files read with the shell. 
 tell the user what to run.
 
 ## 1. MCP servers
-For each server in your tool list (`mcp__<server>__…`): one cheap call - powermax `test_connection` / powerflex `list_systems` /
+For each server in your tool list (`mcp__<server>__…`, or `mcp__plugin_paas-brain-<team>_<server>__…` when the team plugin carries it): one cheap call - powermax `test_connection` / powerflex `list_systems` /
 `list_arrays`, ontap (cluster or SVM list), harvest (any list / metric-name call), mds `list_switches`,
 ucsc `list_centrals`, kuparashit `overview` (snapshot age and warnings), Aria (any list), docs `list_sources`. Record:
 reachable · answer time · tool count · the call that failed and its error. Servers named in the
@@ -40,7 +40,7 @@ Note which docs server answered (docs-search or docs-local); if neither, test th
   (list its non-comment entries: each one is a tool the guard skips - are they really read-only?).
 - The session-start lines appeared at the top of this session (library version, document count,
   environment status). If not, the hook is not wired: the user re-runs `sh brain/install.sh`.
-- `permissions.allow` lists `mcp__<server>` for each connected server (otherwise every call prompts).
+- `permissions.allow` lists `mcp__<server>` for each server added by hand and `mcp__plugin_paas-brain-<team>_<server>` for each of the team's (paas-team writes those at a switch; otherwise every call prompts).
 - Never test the guard by calling a write tool.
 
 ## 4. Brain files (`~/.claude/`)
