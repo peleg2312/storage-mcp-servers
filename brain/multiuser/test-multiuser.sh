@@ -21,7 +21,8 @@ signin() {   # signin <user> <password> -> "<cookie value> <token>"
 }
 api() { curl -ks -H "Cookie: paas_gate=$1" -H "Authorization: Bearer $2" "$G$3"; }
 
-check "managed settings deny Read(/etc/paas/**)" "$(grep -c 'Read(/etc/paas/\*\*)' /etc/claude-code/managed-settings.json)" 1
+check "managed settings deny Read(//etc/paas/**)" "$(grep -c 'Read(//etc/paas/\*\*)' /etc/claude-code/managed-settings.json)" 1
+check "managed settings deny Edit(~/.claude/hooks/**)" "$(grep -c 'Edit(~/.claude/hooks/\*\*)' /etc/claude-code/managed-settings.json)" 1
 check "root allow-list survives an update" "$([ -f /opt/paas/hooks/allowed-tools.txt ] || [ ! -f /root/.claude/hooks/allowed-tools.txt ] && echo yes)" yes
 check "sign-in page"                 "$(curl -ks $G/ | grep -c "Sign in with this VM")" 1
 check "wrong password"               "$(code -H "$J" -d "$(cred peleg wrong-password)" $G/api/auth/login)" 401

@@ -30,8 +30,11 @@ subprocess.run([sys.executable, os.path.join(here, "..", "merge_settings.py"), t
 s = json.load(open(tmp))
 s["apiKeyHelper"] = f"{paas}/bin/paas-api-key"
 deny = s.setdefault("permissions", {}).setdefault("deny", [])
-if "Read(/etc/paas/**)" not in deny:                         # the shared API key lives there
-    deny.append("Read(/etc/paas/**)")
+# "//" is an absolute path in permission rules ("/x" is relative to this settings file): the shared API key lives there
+deny[:] = [r for r in deny if r != "Read(/etc/paas/**)"]
+for rule in ("Read(//etc/paas/**)", "Edit(~/.claude/hooks/**)"):   # Edit also covers Write: no editing the guard's allow-list
+    if rule not in deny:
+        deny.append(rule)
 with open(tmp, "w") as f:
     json.dump(s, f, indent=2)
     f.flush()

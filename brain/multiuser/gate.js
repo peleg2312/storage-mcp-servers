@@ -98,7 +98,15 @@ async function allowed(user) {
   const out = await run('id', ['-nG', '--', user]);
   if (!out) return false;
   const have = out.trim().toLowerCase().split(/\s+/);
-  return allowedGroups().some((g) => have.includes(g));
+  const want = allowedGroups();
+  if (want.some((g) => have.includes(g))) return true;
+  // a group name with spaces ("Storage SAN Team") cannot match the space-separated names above: compare group ids instead
+  const ids = ((await run('id', ['-G', '--', user])) || '').trim().split(/\s+/);
+  for (const g of want.filter((x) => /\s/.test(x))) {
+    const gid = ((await run('getent', ['group', g])) || '').split(':')[2];
+    if (gid && ids.includes(gid.trim())) return true;
+  }
+  return false;
 }
 
 /** The same check as the UI's system-auth.ts: su asks for the password in a pty (as root, drop to nobody first). */

@@ -94,8 +94,17 @@ EOF
   ) 9>/run/paas/user-env.lock
 }
 
+unit_user() {       # an all-digit name in User=%i is read by systemd as a numeric UID: give that instance the account's real UID
+  case "$1" in *[!0-9]*) return 0 ;; esac
+  uid=$(id -u "$1" 2>/dev/null) || return 0; gid=$(id -g "$1")
+  d=/etc/systemd/system/paas-ui@$1.service.d; want=$(printf '[Service]\nUser=%s\nGroup=%s\n' "$uid" "$gid")
+  [ "$(cat "$d/user.conf" 2>/dev/null)" = "$want" ] && return 0
+  mkdir -p "$d" && printf '%s\n' "$want" > "$d/user.conf" && systemctl daemon-reload 2>/dev/null || true
+}
+
 provision() {       # links to the shared brain, own notes, UI plugins, default marketplace items
   u=$1; h=$(home_of "$u"); [ -n "$h" ] || die "no account $u"
+  unit_user "$u"
   ensure_home "$u"
   # root's own settings.json "env" (proxy, CA file, model, ...; not keys or tokens): handed over in the environment, not on a command line
   PAAS_ROOT_ENV=$(python3 -c 'import json,re,sys
@@ -218,7 +227,7 @@ case "$cmd" in
     start_ui "$u"
     echo "added $u (UI port $(sed -n 's/^SERVER_PORT=//p' "$ETC/$u.env"))" ;;
   env)
-    u=${1:-}; valid "$u"; id "$u" >/dev/null 2>&1 || die "no account $u"; write_env "$u"; echo "$ETC/$u.env" ;;
+    u=${1:-}; valid "$u"; id "$u" >/dev/null 2>&1 || die "no account $u"; write_env "$u"; unit_user "$u"; echo "$ETC/$u.env" ;;
   team)
     u=${1:-}; valid "$u"; id "$u" >/dev/null 2>&1 || die "no account $u"
     if [ -n "${2:-}" ]; then valid_team "$2"; set_team "$u" "$2" && echo "team of $u: $2"; else team_of "$u"; fi ;;
@@ -257,7 +266,10 @@ case "$cmd" in
     git config --global "credential.https://$host.useHttpPath" true 2>/dev/null || true   # root now; every account at provision
     echo "GitLab token for $what stored ($f): every account, the hooks and the docs service push and pull with it (https urls)" ;;
   provision)
-    if [ "${1:-}" = --all ]; then for f in "$ETC"/*.env; do [ -f "$f" ] && { share_dir "$(basename "$f" .env)"; provision "$(basename "$f" .env)"; }; done
+    if [ "${1:-}" = --all ]; then     # one account that is gone (left AD, sssd offline) is skipped, the others still get the update
+      for f in "$ETC"/*.env; do [ -f "$f" ] || continue; n=$(basename "$f" .env)
+        ( share_dir "$n"; provision "$n" ) || echo "note: $n skipped (account not found or provisioning failed); the others continue" >&2
+      done
     else valid "${1:-}"; share_dir "$1"; provision "$1"; fi
     echo "provisioned" ;;
   list)

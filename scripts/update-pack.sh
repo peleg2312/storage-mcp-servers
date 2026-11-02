@@ -23,7 +23,9 @@ W=$(mktemp -d); mkdir -p "$W/$NAME"
 # changed and added files (renames as their new name); the library and image parts are left out unless they changed
 EXCL=':!docs-search-mcp/work'
 git diff --name-only --diff-filter=AMRC "$BASE" HEAD -- . $EXCL > "$W/changed"
-if [ "$UI" = 0 ]; then grep -v '^brain/ui/bundle/' "$W/changed" > "$W/changed.2" || true; mv "$W/changed.2" "$W/changed"; fi
+if [ "$UI" = 0 ] && grep -q '^brain/ui/bundle/' "$W/changed"; then
+  rm -rf "$W"; echo "update-pack: the web UI bundle changed since $B: leaving it out would keep the old UI on the VM; build without --no-ui-bundle"; exit 1
+fi
 git diff --name-only --diff-filter=D "$BASE" HEAD -- . $EXCL > "$W/$NAME/REMOVED.txt"
 while IFS= read -r f; do
   [ -e "$f" ] || continue

@@ -37,7 +37,10 @@ share brain/library "$P/library"
 share brain/environment.md "$P/brain/environment.md" file
 share brain/tool-map.md "$P/brain/tool-map.md" file
 swap() {   # swap <source dir> <name>: copy beside, then rename in, so the read-only guard is never missing mid-update
-  rm -rf "$P/$2.new" "$P/$2.old"; cp -R "$1" "$P/$2.new" 2>/dev/null || mkdir -p "$P/$2.new"
+  rm -rf "$P/$2.new" "$P/$2.old"
+  if [ -d "$1" ]; then   # a failed copy (disk full) stops here and keeps the old folder: an empty hooks folder blocks every prompt
+    cp -R "$1" "$P/$2.new" || { rm -rf "$P/$2.new"; echo "install-shared: copying $2 failed (disk full?); the installed $2 is kept"; exit 1; }
+  else mkdir -p "$P/$2.new"; fi
   [ ! -e "$P/$2" ] || mv "$P/$2" "$P/$2.old"
   [ "$2" != hooks ] || [ ! -f "$P/hooks.old/allowed-tools.txt" ] || [ -f "$P/hooks.new/allowed-tools.txt" ] || cp "$P/hooks.old/allowed-tools.txt" "$P/hooks.new/"   # root's allow-list survives
   mv "$P/$2.new" "$P/$2"; rm -rf "$P/$2.old"
@@ -101,6 +104,7 @@ ln -sfn "$P/bin/paas-user" /usr/local/sbin/paas-user
 # team profiles: one repository per team under /opt/paas/teams (plugin + knowledge skeleton), the switch tool for everyone.
 # docs-search for other machines (the service below): one token for everyone, written into every team's mcp.json by the
 # publish, so a laptop's docs-local reaches the VM's library and the team's knowledge index through the team plugin
+getent passwd paas-market >/dev/null || useradd -r -M -d / -s /sbin/nologin paas-market   # before the first chown to it (a new VM)
 [ -s "$ETC/docs-token" ] || { umask 077; head -c 24 /dev/urandom | base64 | tr -d '/+=' > "$ETC/docs-token"; umask 022; }
 chown root:paas-market "$ETC/docs-token"; chmod 640 "$ETC/docs-token"
 [ -f "$ETC/docs.env" ] || printf 'PAAS_DOCS_PORT=8001\nPAAS_DOCS_REFRESH=10\n' > "$ETC/docs.env"
@@ -186,7 +190,9 @@ fi
 # docs-search for other machines: the stdlib docs server in HTTP mode on 8001 (token, the gate's certificate), with every
 # team's knowledge index refreshed from the team repositories (clones under /var/lib/paas-docs). Laptops put it into the team's
 # mcp.json (the editor); VM users keep docs-local.
-setfacl -R -m u:paas-market:rX "$P/teams" "$P/library" 2>/dev/null || chmod -R o+rX "$P/library"
+setfacl -R -m u:paas-market:rX "$P/teams" "$P/library" "$P/libraries" 2>/dev/null || chmod -R o+rX "$P/library"
+# default ACLs too: files the publish, paas-library or a member's clone make later stay readable by the docs service
+find "$P/teams" "$P/library" "$P/libraries" -type d -exec setfacl -m d:u:paas-market:rX {} + 2>/dev/null || true
 for tf in "$ETC"/git/*.token; do [ -f "$tf" ] && { chown root:paas-users "$tf"; chmod 640 "$tf"; setfacl -m u:paas-market:r "$tf" 2>/dev/null || true; }; done   # the docs service pulls the team repositories with it
 cp "$BRAIN/../docs-search-mcp/docs_index.py" "$P/library/docs_index.py" 2>/dev/null || true   # the HTTP server indexes team knowledge with it
 install -m 644 "$HERE/paas-docs.service" /etc/systemd/system/paas-docs.service

@@ -80,10 +80,11 @@ print("databases guard ok")
 # (cluster sign-in / context switch, delete, drain, adm, helm uninstall, reboot, terraform apply / destroy); the blocks stay
 BP = {"permission_mode": "bypassPermissions"}
 for c in ("kubectl apply -f a.yaml", "oc scale deploy/x --replicas=2", "systemctl restart myapp", "helm upgrade x ./c",
-          "curl -X POST https://api.example/v1/x", "python3 build.py"):
+          "curl -X POST http://localhost:8000/api/x", "python3 build.py"):
     assert run_hook({"tool_name": "Bash", "tool_input": {"command": c}, **BP}) == (0, ""), c
 for c in ("oc login https://api.x:6443 -u me", "kubectl delete pod x", "oc adm drain node1", "kubectl config use-context prod",
-          "helm uninstall x", "reboot", "terraform destroy"):
+          "helm uninstall x", "reboot", "terraform destroy", "curl -X POST https://api.example/v1/x",
+          "curl -X DELETE https://unisphere:8443/univmax/restapi/100/sloprovisioning/symmetrix/1/volume/0A1"):
     for mode in (BP, {}):
         rc, out = run_hook({"tool_name": "Bash", "tool_input": {"command": c}, **mode})
         assert rc == 0 and '"ask"' in out and "Read-only guard: CRITICAL:" in out, (c, mode, out)
@@ -172,3 +173,39 @@ with tempfile.TemporaryDirectory() as d_:
 for c_ in ("cat /etc/paas/api-key", "base64 /etc/paas/gate.key", "env | grep paas-api-key"):
     assert h.shell_check(c_)[0] == "block", c_
 print("review findings ok")
+
+# council round: the holes found by feeding real hook inputs, each closed
+# (1) the shared copy on a multi-user VM ignores the user's own allow-list (one echo would whitelist anything)
+with tempfile.TemporaryDirectory() as d_:
+    os.environ["HOME"] = d_
+    try:
+        os.makedirs(os.path.join(d_, ".claude", "hooks"))
+        open(os.path.join(d_, ".claude", "hooks", "allowed-tools.txt"), "w").write("Bash:*\nmcp__x__lun_delete\n")
+        h.SHARED = True
+        assert not h.allowed("mcp__x__lun_delete") and not h.allowed_bash("symconfigure -sid 1 commit")
+        h.SHARED = False
+        assert h.allowed("mcp__x__lun_delete")
+        # (1b) an allowed Bash pattern covers a command only when every piece matches it
+        open(os.path.join(d_, ".claude", "hooks", "allowed-tools.txt"), "w").write("Bash:ls *\n")
+        assert h.allowed_bash("ls /tmp") and not h.allowed_bash("ls /tmp; symconfigure -sid 1 commit")
+        assert not h.allowed_bash("ls $(symconfigure -sid 1 commit)")
+    finally:
+        h.SHARED = False
+        os.environ["HOME"] = _home
+# (3) sshpass / plink / text piped into ssh are judged like ssh
+for c_ in ("sshpass -p x ssh admin@mds1 'conf t'", "echo 'conf t' | ssh admin@mds1", "plink -pw x admin@mds1 'copy run start'",
+           "printf 'zone name z1 vsan 10\\n' | ssh admin@mds1"):
+    assert h.shell_check(c_)[0] == "block", (c_, h.shell_check(c_))
+for c_ in ("sshpass -p x ssh admin@mds1 'show zoneset active'", "plink -batch admin@mds1 show version",
+           "printf 'show flogi database\\n' | ssh admin@mds1"):
+    assert h.shell_check(c_)[0] is None, (c_, h.shell_check(c_))
+assert h.shell_check("cat cmds.txt | ssh admin@mds1")[0] == "ask"
+# (5) a third-party MCP tool named for an action asks in every mode; CLI arguments are checked statement by statement
+for t_ in ("mcp__ontap__snapmirror_break", "mcp__ontap__invoke_api", "mcp__aria__run_action"):
+    rc, out = run_hook({"tool_name": t_, "tool_input": {}, **BP})
+    assert rc == 0 and "Read-only guard: CRITICAL: MCP" in out, (t_, out)
+for t_ in ("mcp__ontap__get_volumes", "mcp__kuparashit__locate", "mcp__mds__run_show", "mcp__docs-local__search_docs"):
+    assert run_hook({"tool_name": t_, "tool_input": {"command": "show version"}, **BP}) == (0, ""), t_
+assert h.reason_for("mcp__ontap__cli", {"command": "show version; volume offline vol1"})
+assert h.reason_for("mcp__ontap__snapmirror_quiesce", {})
+print("council guard fixes ok")

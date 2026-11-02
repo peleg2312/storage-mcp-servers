@@ -26,7 +26,7 @@ READ_FIRST = {"get", "list", "show", "describe", "search", "query", "read", "fin
               "count", "explain", "resolve", "trace", "check", "audit", "report", "summarize", "summary",
               "inventory", "health", "status", "stats", "metrics", "performance", "investigate", "scan",
               "validate", "diff", "compare", "what", "test", "ping", "ls", "cat", "display", "view"}
-WRITE = {"create", "delete", "destroy", "remove", "rm", "update", "modify", "set", "patch", "put", "apply",
+WRITE = {"create", "delete", "destroy", "remove", "rm", "update", "modify", "set", "patch", "put", "apply", "quiesce", "resync",
          "add", "provision", "unmap", "resize", "expand", "shrink", "rename", "move", "migrate", "restore",
          "revert", "rollback", "clone", "enable", "disable", "reboot", "restart", "shutdown", "poweron",
          "poweroff", "power", "attach", "detach", "mount", "unmount", "write", "edit", "assign",
@@ -34,7 +34,11 @@ WRITE = {"create", "delete", "destroy", "remove", "rm", "update", "modify", "set
          "clear", "kill", "terminate", "start", "stop", "suspend", "resume", "failover", "failback",
          "establish", "split", "swap", "unlink", "offline", "online", "purge", "format", "wipe", "acknowledge",
          "ack", "cancel", "sync", "flush"}
-CLI_KEYS = {"command", "cmd", "cli", "cli_command", "commands"}
+CLI_KEYS = {"command", "cmd", "cli", "cli_command", "commands", "cmd_line", "command_line", "operation"}
+# the in-house servers refuse writes in their own code (HTTP method checks); every other server is judged by its tool names
+IN_HOUSE = {"powermax", "powerflex", "ucsc", "mds", "docs-local", "docs-search", "databases"}
+ACTION = {"break", "quiesce", "resync", "invoke", "execute", "exec", "run", "action", "trigger", "perform", "call", "send",
+          "post", "takeover", "giveback", "abort", "release", "script", "rest", "api", "raw", "passthrough"}
 CLI_READ = {"show", "get", "list", "display", "dir", "ls", "cat", "describe", "terminal"}
 METHOD_KEYS = {"method", "http_method", "verb", "request_method", "http_verb", "action"}
 SQL_KEYS = {"sql", "query", "statement"}
@@ -50,17 +54,34 @@ def tokens(name):
     return [t for t in re.split(r"[_\-.\s]+", name.lower()) if t]
 
 
+SHARED = os.path.realpath(__file__).startswith("/opt/paas/")   # the multi-user VM's enforced copy (managed settings)
+
+
 def allowed(tool):
-    pats = []     # next to this hook (~/.claude or <project>/.claude) and the user's ~/.claude/hooks: the union of both
-    for f in {os.path.join(os.path.dirname(os.path.abspath(__file__)), "allowed-tools.txt"),
-              os.path.expanduser("~/.claude/hooks/allowed-tools.txt")}:
+    """allowed-tools.txt next to this hook; the user's own ~/.claude/hooks/allowed-tools.txt too, except for the shared
+    copy on a multi-user VM: there the person (and Claude, with one echo) could otherwise allow anything to itself;
+    root's list in /opt/paas/hooks is the only one"""
+    files = {os.path.join(os.path.dirname(os.path.abspath(__file__)), "allowed-tools.txt")}
+    if not SHARED:
+        files.add(os.path.expanduser("~/.claude/hooks/allowed-tools.txt"))
+    pats = []
+    for f in files:
         if os.path.exists(f):
             pats += [line.strip() for line in open(f) if line.strip() and not line.startswith("#")]
     return any(fnmatch.fnmatch(tool, p) for p in pats)
 
 
+def allowed_bash(cmd):
+    """a Bash allow-list pattern covers a command only when every piece of it matches one: "Bash:ls *" must not let
+    "ls /tmp; symconfigure commit" (or "ls $(...)") through"""
+    segs = [seg.strip() for _, seg in _split(cmd) if seg.strip()]
+    return bool(segs) and all(allowed("Bash:" + seg) for seg in segs)
+
+
 # ---------------------------------------------------------------- shell commands
-WRAPPERS = {"sudo", "time", "nohup", "env", "nice", "ionice", "timeout", "watch", "xargs", "exec", "command", "stdbuf"}
+WRAPPERS = {"sudo", "time", "nohup", "env", "nice", "ionice", "timeout", "watch", "xargs", "exec", "command", "stdbuf",
+            "sshpass"}
+PLINK_VAL = {"-P", "-l", "-pw", "-i", "-m", "-L", "-R", "-D", "-hostkey", "-sercfg", "-proxycmd"}
 K8S_CHANGE = {"apply", "create", "delete", "edit", "patch", "replace", "scale", "set", "label", "annotate", "drain",
               "cordon", "uncordon", "taint", "expose", "run", "autoscale", "new-app", "new-build", "start-build",
               "import-image", "tag", "rsync", "cp"}
@@ -69,7 +90,8 @@ HELM_CHANGE = {"install", "upgrade", "uninstall", "delete", "del", "un", "rollba
 # the few changes that ask in every mode, Bypass too: signing in to a cluster or switching kubeconfig context, deleting or
 # draining, cluster admin, helm uninstall / rollback, rebooting the VM, terraform apply / destroy (shell_check's reasons)
 CRITICAL = re.compile(r"^(oc|kubectl) (login|delete|drain|adm|config|certificate)\b|^helm (uninstall|delete|del|un|rollback)\b|"
-                      r"^(reboot|shutdown|poweroff|halt)$|^systemctl (reboot|poweroff|halt|isolate)\b|^terraform (destroy|apply)\b")
+                      r"^(reboot|shutdown|poweroff|halt)$|^systemctl (reboot|poweroff|halt|isolate)\b|^terraform (destroy|apply)\b|"
+                      r"^(curl|wget) (POST|PUT|PATCH|DELETE)\b")
 SYM_CHANGE = WRITE | {"convert", "link", "relink", "establish", "terminate", "sync", "activate", "deactivate",
                       "setup", "compress", "uncompress", "ready", "not_ready", "write_disable", "rw_enable", "half_swap"}
 SCLI_CHANGE = re.compile(r"^--(add|remove|map|unmap|modify|set|rename|delete|create|clear|reset|start|stop|activate|"
@@ -123,7 +145,7 @@ def _words(seg):
 WRAP_VAL = {"sudo": {"-u", "-g", "-h", "-p", "-C", "-D", "-R", "-T", "-U", "--user", "--group", "--host"},
             "xargs": {"-a", "-I", "-d", "-L", "-l", "-n", "-P", "-E", "-s"}, "timeout": {"-s", "-k"},
             "env": {"-u", "-C", "-S"}, "nice": {"-n"}, "ionice": {"-c", "-n", "-p"}, "stdbuf": {"-i", "-o", "-e"},
-            "watch": {"-n", "-d"}}
+            "watch": {"-n", "-d"}, "sshpass": {"-p", "-f", "-d", "-P"}}
 SHELL_C = re.compile(r"""(?<![\w.-])(?:(?:bash|sh|zsh|dash|ksh)\s+(?:-\w+\s+)*?-\w*c\w*|eval)\s+("[^"]*"|'[^']*'|\S+)""")
 
 
@@ -280,14 +302,22 @@ def shell_check(cmd, depth=0):
             urls = [a for a in args if re.match(r"^(https?://|[\w.-]+:\d+/|localhost)", a, re.I)]
             if method in ("POST", "PUT", "PATCH", "DELETE") and not (urls and all(LOCAL_HOST.match(u) for u in urls)):
                 r = ("ask", f"{prog} {method} to {urls[0] if urls else 'a remote host'}")
-        elif prog == "ssh":
+        elif prog in ("ssh", "plink"):
             i = 0
             while i < len(args) and args[i].startswith("-"):
-                i += 2 if len(args[i]) == 2 and args[i][1] in SSH_ARG_OPTS else 1
+                if prog == "plink":
+                    i += 2 if args[i] in PLINK_VAL else 1
+                else:
+                    i += 2 if len(args[i]) == 2 and args[i][1] in SSH_ARG_OPTS else 1
             remote = " ".join(args[i + 1:])
+            if not remote and sep == "|":                  # echo 'conf t' | ssh mds1: the piped text is the remote command
+                pprog, pargs = _program(prev)
+                remote = (" ".join(pargs).replace("\\n", "\n") if pprog in ("echo", "printf") else "")
+                if not remote:
+                    r = ("ask", f"text piped into {prog} runs as remote commands")
             if remote:
                 if REMOTE_CONFIG.search(remote):
-                    r = ("block", f"configuration change over ssh: {remote[:80]!r}")
+                    r = ("block", f"configuration change over {prog}: {remote[:80]!r}")
                 else:
                     r = _remote_check(remote, depth)
         elif prog == "scli":
@@ -373,9 +403,10 @@ def reason_for(tool_name, tool_input):
                 return "SQL statement that changes data"
             if k.lower() in CLI_KEYS:
                 for cmd in (v if isinstance(v, list) else [v]):
-                    first = str(cmd).strip().split(None, 1)[0].lower() if str(cmd).strip() else ""
-                    if first and first not in CLI_READ:
-                        return f"CLI command does not start with show/get/list: {str(cmd)[:80]!r}"
+                    for st in re.split(r"[;\n]", str(cmd)):      # "show x; conf t": every statement must read
+                        first = st.strip().split(None, 1)[0].lower() if st.strip() else ""
+                        if first and first not in CLI_READ:
+                            return f"CLI command does not start with show/get/list: {st.strip()[:80]!r}"
     return None
 
 
@@ -463,7 +494,7 @@ def decide(data):
     bypass = data.get("permission_mode") == "bypassPermissions"
     if name == "Bash":
         cmd = str((data.get("tool_input") or {}).get("command", ""))
-        if allowed("Bash:" + cmd):
+        if allowed_bash(cmd):
             return 0
         level, why = shell_check(cmd)
         if level == "block":
@@ -500,6 +531,14 @@ def decide(data):
         print(json.dumps({"hookSpecificOutput": {"hookEventName": "PreToolUse", "permissionDecision": "ask",
                                                  "permissionDecisionReason": f"Read-only guard: database write on "
                                                                              f"{tool_input.get('connection')}: {warn}{shown}"}}))
+        return 0
+    server = name.split("__")[1] if name.count("__") >= 2 else ""
+    toks = tokens(name.split("__", 2)[-1])
+    if server not in IN_HOUSE and toks and toks[0] not in READ_FIRST and set(toks) & ACTION and not reason_for(name, tool_input):
+        # an action tool on a server whose code we do not control: always the user's call, Bypass included
+        decide.asked, decide.why = True, f"{name} runs an action ({', '.join(sorted(set(toks) & ACTION))})"
+        print(json.dumps({"hookSpecificOutput": {"hookEventName": "PreToolUse", "permissionDecision": "ask",
+                                                 "permissionDecisionReason": f"Read-only guard: CRITICAL: MCP {decide.why}. Allow?"}}))
         return 0
     r = reason_for(name, tool_input)
     if r and name.startswith("mcp__databases__"):

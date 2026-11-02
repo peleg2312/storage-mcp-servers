@@ -110,6 +110,14 @@ Tool counts: `grep -c '@mcp.tool' <server>/*.py` (mds: 27 visible, 70 registered
 - **MDS**: only one plain `show` command per call (upstream show-only check plus a block on `;`, `|`,
   `>`, backticks and newlines); every tool argument is validated.
 
+- **Everything else** (the ONTAP / Harvest servers, kuparashit, Aria, shell commands Claude runs) is covered by the brain's
+  read-only guard (`brain/claude/hooks/block-write-tools.py`): it blocks write-looking MCP tools and infrastructure-changing
+  shell commands, and asks in every mode, Bypass included, before a third-party MCP action tool (snapmirror_break,
+  invoke_api...) or a remote `curl` / `wget` POST / PUT / PATCH / DELETE. The guard is a safety net against mistakes, not a
+  wall: a script Claude writes and runs can still reach an API. The real guarantee is a **read-only account on every
+  backend** (Unisphere Monitor, ONTAP readonly role, UCS Central read-only, MDS network-operator, Aria read-only) and no
+  write credentials on the VM.
+
 `mcp_auth.py` is identical in the five server folders so each image builds on its own.
 
 ## License

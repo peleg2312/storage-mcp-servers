@@ -151,14 +151,21 @@ fi
 if [ "$NO_LIBRARY" = 0 ] && [ -f "$LIB/VERSION" ] && ls "$LIB"/docs-library-*.part-* >/dev/null 2>&1; then
   if [ "$(cat "$LIB/VERSION")" != "$(cat "$LIBDST/VERSION" 2>/dev/null || true)" ]; then
     echo "installing documentation library $(cat "$LIB/VERSION") into $LIBDST (a minute)..."
-    TMP=$(mktemp -d)
-    sh "$LIB/join.sh" "$TMP" >/dev/null
-    rm -rf "$LIBDST"; mv "$TMP/docs-library" "$LIBDST"; rm -rf "$TMP"
-    find "$LIBDST" -name '._*' -type f -delete 2>/dev/null || true     # macOS metadata in archives packed on a Mac
-    # the tools read docs.db only; the source files (~1.3 GB) are there to rebuild the index on the PC
-    [ "${KEEP_LIBRARY_DOCS:-0}" = 1 ] || rm -rf "$LIBDST/docs"
-    cp "$LIB/VERSION" "$LIBDST/VERSION"
-    NEW_LIB=1
+    # unpacked beside the installed one (same filesystem), swapped in only when complete: a full disk or a failed join
+    # keeps the old library instead of leaving none
+    NEWD="$LIBDST.new"; rm -rf "$NEWD" "$LIBDST.old"; mkdir -p "$NEWD"
+    if sh "$LIB/join.sh" "$NEWD" >/dev/null && [ -f "$NEWD/docs-library/docs.db" ]; then
+      [ ! -e "$LIBDST" ] || mv "$LIBDST" "$LIBDST.old"
+      mv "$NEWD/docs-library" "$LIBDST"; rm -rf "$NEWD" "$LIBDST.old"
+      find "$LIBDST" -name '._*' -type f -delete 2>/dev/null || true     # macOS metadata in archives packed on a Mac
+      # the tools read docs.db only; the source files (~1.3 GB) are there to rebuild the index on the PC
+      [ "${KEEP_LIBRARY_DOCS:-0}" = 1 ] || rm -rf "$LIBDST/docs"
+      cp "$LIB/VERSION" "$LIBDST/VERSION"
+      NEW_LIB=1
+    else
+      rm -rf "$NEWD"
+      echo "library: unpacking $(cat "$LIB/VERSION") failed (disk space? df -h $(dirname "$LIBDST")); the installed library is kept"
+    fi
   fi
 fi
 [ -f "$LIBDST/docs.db" ] && HAVE_LIB=1
