@@ -217,7 +217,7 @@ const CSS = `
 .paas .us-legend{padding:10px 0 4px}
 .paas .us-show{display:flex;align-items:center;gap:8px;font-size:13px;margin-bottom:8px}`;
 
-const NAME_RULE = 'Lower-case letters, digits, . _ - ; up to 32, starting with a letter or _';
+const NAME_RULE = 'Lower-case letters, digits, . _ - ; up to 32 (a local account cannot start with a digit; an AD one may)';
 const STATE = { Locked: ['fail', 'Cannot sign in'], Active: ['ok', 'Their chat is running now'], Idle: ['warn', 'Idle; starts at their next sign-in'] };
 
 export function mount(container, api) {
@@ -267,7 +267,7 @@ export function mount(container, api) {
       const n = q('.f-n').value.trim();
       const p = q('.f-p').value;
       if (adding && !n) return err('Enter a name');
-      if (adding && !/^[a-z_][a-z0-9_.-]{0,31}$/.test(n)) return err(`Name: ${NAME_RULE}`);
+      if (adding && !/^[a-z0-9_][a-z0-9_.-]{0,31}$/.test(n)) return err(`Name: ${NAME_RULE}`);
       if (p.length < 8 || /[\r\n:]/.test(p)) return err('Password: at least 8 characters, no colons');
       if (p !== q('.f-p2').value) return err('The two passwords differ');
       const restore = busy(q('.f-s'), 'Saving…');

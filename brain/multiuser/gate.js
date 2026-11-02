@@ -52,7 +52,7 @@ const KEY = fs.readFileSync(`${ETC}/gate.key`);
 const IDLE_MS = Math.max(0, Number(process.env.GATE_IDLE_MINUTES || 60) || 0) * 60000; // 0 = instances are never stopped for idleness
 const COOKIE = 'paas_gate';
 const SESSION_S = 12 * 3600;
-const USER_RE = /^[a-z_][a-z0-9_.-]{0,63}$/; // AD names; lower-cased before the check
+const USER_RE = /^[a-z0-9_][a-z0-9_.-]{0,63}$/; // AD names (a digit may come first: 897xxx); lower-cased before the check
 const WINDOW_MS = 10 * 60 * 1000;
 const MAX_FAILURES = 5;
 const MAX_IP_FAILURES = 30; // all names from one address (NAT users share it, so generous)
@@ -323,7 +323,7 @@ function splitCookies(header) {
 }
 
 function sessionUser(req) {
-  const m = /^([a-z_][a-z0-9_.-]{0,63})\.(\d{1,12})\.([0-9a-f]{64})$/.exec(splitCookies(req.headers.cookie)[0] || '');
+  const m = /^([a-z0-9_][a-z0-9_.-]{0,63})\.(\d{1,12})\.([0-9a-f]{64})$/.exec(splitCookies(req.headers.cookie)[0] || '');
   if (!m || Number(m[2]) < Date.now() / 1000) return null;
   if (!crypto.timingSafeEqual(Buffer.from(sign(`${m[1]}.${m[2]}`), 'hex'), Buffer.from(m[3], 'hex'))) return null;
   if (fs.existsSync(`${ETC}/users/${m[1]}.locked`)) return null; // paas-user lock: the cookie dies with the account

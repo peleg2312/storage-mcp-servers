@@ -22,7 +22,7 @@ P=/opt/paas
 ETC=/etc/paas/users
 BASE_PORT=41000
 die() { echo "paas-user: $*" >&2; exit 1; }
-valid() { echo "$1" | grep -Eq '^[a-z_][a-z0-9_.-]{0,63}$' || die "'$1' is not a valid user name"; }
+valid() { echo "$1" | grep -Eq '^[a-z0-9_][a-z0-9_.-]{0,63}$' || die "'$1' is not a valid user name"; }
 valid_team() { echo "$1" | grep -Eq '^[a-z][a-z0-9_-]{0,31}$' || die "'$1' is not a valid team name (paas-team's rule: lower-case, digits, - and _)"; }
 home_of() { getent passwd "$1" | cut -d: -f6; }
 lower() { printf '%s' "$1" | tr '[:upper:]' '[:lower:]'; }

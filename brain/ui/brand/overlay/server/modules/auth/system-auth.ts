@@ -35,7 +35,7 @@ export function recordFailure(username: string): void {
 export type PasswordCheck = 'ok' | 'bad' | 'timeout';
 
 export function checkSystemPassword(username: string, password: string): Promise<PasswordCheck> {
-  if (!/^[a-z_][a-z0-9_.-]*$/.test(username) || /[\r\n]/.test(password) || password.length > 512) {
+  if (!/^[a-z0-9_][a-z0-9_.-]*$/.test(username) || /[\r\n]/.test(password) || password.length > 512) {
     return Promise.resolve('bad');
   }
   return new Promise((resolve) => {

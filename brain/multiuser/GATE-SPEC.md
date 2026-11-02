@@ -66,7 +66,7 @@ and reclaims their own processes first and, at the hard limit, ends their larges
 - Accounts may come from Active Directory through sssd: `id` sees their groups, so an AD group in the file works like
   a local one. People need no `paas-user add` first (4.3 step 3).
 - The submitted username is lower-cased first (sssd with `case_sensitive = false` resolves it) and must match
-  `^[a-z_][a-z0-9_.-]{0,63}$` before it is used anywhere. Same error and same timing as for any wrong password.
+  `^[a-z0-9_][a-z0-9_.-]{0,63}$` (a digit may come first, as in AD names like 897xxx) before it is used anywhere. Same error and same timing as for any wrong password.
 
 ### 4.3 Sign-in
 - One sign-in page at `GET /` when there is no valid gate session, styled like the current UI sign-in (logo, title
