@@ -33,6 +33,10 @@ if [ "$(cat "$B/SHA256SUMS")" != "$(cat "$DST/.bundle-sum" 2>/dev/null || true)"
   command -v restorecon >/dev/null 2>&1 && restorecon -R "$DST" 2>/dev/null || true
   chmod -R a+rx "$DST/node/bin" 2>/dev/null || true   # every file there is a program
 fi
+# user names may start with a digit (AD accounts such as 897xxx): the bundled sign-in check (built before that rule changed)
+# is widened in place, on every run, so an installed bundle gets it without being rebuilt; a no-op once it has the new rule
+SA="$DST/app/dist-server/server/modules/auth/system-auth.js"
+[ ! -f "$SA" ] || sed -i 's#/^\[a-z_\]\[a-z0-9_.-\]\*\$/#/^[a-z0-9_][a-z0-9_.-]*$/#' "$SA"
 [ "${UI_SHARED:-0}" = 1 ] && { chmod -R a+rX "$DST"; echo "ui: files in $DST (per-user services: brain/multiuser)"; exit 0; }
 # plugins (Brain, Reports, Schedule, Status): replaced on every run, other plugins you install are left alone
 mkdir -p "$HOME/.claude-code-ui/plugins"

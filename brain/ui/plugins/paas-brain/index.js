@@ -326,8 +326,8 @@ export function mount(container, api) {
   }
 
   function renderMcp() {
-    pane.innerHTML = `<div class="card"><h3>MCP servers</h3><div class="sub" style="margin-bottom:8px">${data.mcp.length} connected tool servers</div>${data.mcp.length
-      ? `<div class="table-wrap"><table><tr><th>Name</th><th>Type</th><th>Runs</th><th><span class="sr">Actions</span></th></tr>${data.mcp.map((m) => `<tr><td><b>${esc(m.name)}</b></td><td>${esc(m.type)}</td><td><code>${esc(m.target)}</code></td>
+    pane.innerHTML = `<div class="card"><h3>MCP servers</h3><div class="sub" style="margin-bottom:8px">${data.mcp.length} tool servers (${data.mcp.filter((m) => m.source === 'team').length} from your team); Check connections shows which answer</div>${data.mcp.length
+      ? `<div class="table-wrap"><table><tr><th>Name</th><th>Type</th><th>Runs</th><th><span class="sr">Actions</span></th></tr>${data.mcp.map((m) => `<tr><td><b>${esc(m.name)}</b>${m.source === 'team' ? ` <span class="tag" title="Comes with your team: it leaves when you switch team (Team tab)">team ${esc(String(data.pluginTeam || '').toUpperCase())}</span>` : ''}</td><td>${esc(m.type)}</td><td><code>${esc(m.target)}</code></td>
         <td>${data.canShare ? `<button class="btn link sm" data-share="mcp:${esc(m.name)}:0">Share with everyone</button>` : ''}</td></tr>`).join('')}</table></div>`
       : emptyBlock('Ask your admin to connect a tool server, or add one from the Marketplace.', '', null, { icon: 'box', title: 'No MCP servers configured' }).outerHTML}
       <div class="row" style="margin-top:10px"><button class="btn ghost sm chk">${icon('play')} Check connections</button><span class="sub">runs <code>claude mcp list</code></span></div><pre class="st" role="status" style="display:none"></pre></div>

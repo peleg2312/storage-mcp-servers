@@ -71,6 +71,8 @@ try:
     servers = json.load(open(os.path.join(home, ".claude", "brain", "teams", "san", "mcp.json")))
     assert servers["powermax"]["headers"]["Authorization"] == "Bearer tok-123456", servers
     assert call("GET", "team-show?name=san")["title"] == "SAN team"
+    mcp = {m["name"]: m for m in call("GET", "overview")["mcp"]}      # the team plugin's servers are listed, not only ~/.claude.json's
+    assert mcp.get("docs-local", {}).get("source") == "team" and mcp.get("powermax", {}).get("target") == "http://pm.example:8000/mcp", mcp
     assert "tok-123456" not in r["out"], r      # the token travels on stdin, never in the tool's output
     r = call("POST", "team-sync")
     assert r["ok"] and "in sync" in r["out"], r

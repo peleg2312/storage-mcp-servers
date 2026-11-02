@@ -269,12 +269,22 @@ function hooks() {
   return out;
 }
 
+// the servers this person's Claude connects: the active team plugin's (its .mcp.json, built from the team repository's
+// mcp.json; Claude Code starts them while the plugin is enabled) and their own user-scope ones in ~/.claude.json
 function mcpServers() {
-  const cfg = json(path.join(HOME, '.claude.json')) || {};
-  return Object.entries(cfg.mcpServers || {}).map(([name, s]) => ({
-    name, type: s.type || (s.url ? 'http' : 'stdio'),
+  const row = (name, s, source) => ({
+    name, source, type: s.type || (s.url ? 'http' : 'stdio'),
     target: s.url || [s.command, ...(s.args || [])].join(' ').replace(new RegExp(HOME, 'g'), '~'),
-  }));
+  });
+  const out = [];
+  const t = pluginTeam();
+  if (t) {
+    const pj = json(path.join(t.dir, '.mcp.json')) || {};
+    for (const [name, s] of Object.entries(pj.mcpServers || pj)) if (s && typeof s === 'object') out.push(row(name, s, 'team'));
+  }
+  const cfg = json(path.join(HOME, '.claude.json')) || {};
+  for (const [name, s] of Object.entries(cfg.mcpServers || {})) if (!out.some((m) => m.name === name)) out.push(row(name, s, 'mine'));
+  return out;
 }
 
 function inbox() {
