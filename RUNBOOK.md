@@ -255,6 +255,18 @@ the notes stay per person.
    expectations" means the realm is spelled differently: use the discovered spelling, or `kinit -C` and `canonicalize = true`
    under `[libdefaults]`. `KRB5_TRACE=/dev/stderr kinit ...` shows what was offered and what the KDC answered. Then
    `systemctl restart realmd` before `realm join`, and `kdestroy` afterwards.
+   "Insufficient permissions to join the domain" means the account may not create or change the computer object (most
+   domains set the join quota to 0; the OCUM / NetApp account is read-only). Best: the AD team pre-creates the object for
+   this host in their OU with a one-time password, then `realm join <domain> --one-time-password='...'` needs no rights at all.
+   Possible without any ticket: sssd without a join, as an LDAP directory plus a Kerberos password check, with the read-only
+   account. `/etc/sssd/sssd.conf` (mode 600): `id_provider = ldap`, `auth_provider = krb5`, `ldap_uri = ldaps://<dc1>,
+   ldaps://<dc2>`, `ldap_search_base = DC=...`, `ldap_schema = ad`, `ldap_id_mapping = True`, `ldap_referrals = False`,
+   `ldap_default_bind_dn = <account>@<domain>`, `ldap_default_authtok_type = obfuscated_password` (filled by
+   `sss_obfuscate -d <domain>`), `ldap_tls_cacert = <the domain CA, from the AD team or openssl s_client -showcerts>`,
+   `krb5_realm = <REALM>`, `krb5_server = <dc1>, <dc2>`, `krb5_canonicalize = true`, plus the same `use_fully_qualified_names`,
+   `case_sensitive`, `override_homedir` / `fallback_homedir` lines as above; then `authselect select sssd with-mkhomedir --force`
+   and `systemctl enable --now sssd oddjobd`. The gate needs only `id -nG` and `su`, which both work this way; what the join
+   would add (site-based DC discovery, a computer identity) the brain does not use.
 2. Who may sign in: put the AD group(s) into `/etc/paas/allowed-groups` (one per line; `paas-users` stays for local
    accounts), then re-run `sh brain/multiuser/install-shared.sh`: it gives those groups read access (ACLs) to
    `/opt/paas/marketplace` and `/opt/paas/teams`, which are otherwise readable by `paas-users` only because they can hold
