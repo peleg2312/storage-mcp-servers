@@ -314,10 +314,22 @@ function captures() {
   } catch { return []; }
 }
 
+// the active team's own library ("library" in its plugin's team.json: ~/.claude/brain/libraries/<name>/docs.db), or null for
+// the general one: the Docs section shows and searches the library this person's Claude searches
+function teamLibrary() {
+  const t = pluginTeam();
+  const name = t && String((json(path.join(t.dir, 'team.json')) || {}).library || '');
+  if (!name || !/^[a-z0-9][a-z0-9_-]{0,31}$/.test(name)) return null;
+  const db = path.join(BRAIN, 'libraries', name, 'docs.db');
+  return { name, db, built: fs.existsSync(db) ? fs.statSync(db).mtimeMs : null };
+}
+
 async function overview() {
-  const src = await run('python3', [path.join(LIB, 'search.py'), 'sources'], 60000);
+  const tl = teamLibrary();
+  const src = tl && !tl.built ? { ok: false } : await run('python3', [path.join(LIB, 'search.py'), ...(tl ? ['--db', tl.db] : []), 'sources'], 60000);
   return {
-    library: { version: read(path.join(LIB, 'VERSION'))?.trim() || null, sources: src.ok ? src.out : null },
+    library: tl ? { team: tl.name, built: tl.built, version: null, sources: src.ok ? src.out : null }
+      : { version: read(path.join(LIB, 'VERSION'))?.trim() || null, sources: src.ok ? src.out : null },
     pluginTeam: pluginTeam()?.team || null,
     skills: skills(), agents: agents(), hooks: hooks(), mcp: mcpServers(), inbox: inbox(), captures: captures(),
     // multi-user VM: environment.md / tool-map.md are shared and only root writes them; the library too
@@ -326,7 +338,7 @@ async function overview() {
       .map((name) => ({ name, editable: writable(MEMORY[name]) || (MULTI && name === 'CLAUDE.md'),
         text: read(MEMORY[name]) ?? (MULTI && name === 'CLAUDE.md' ? '' : null) })).filter((m) => m.text !== null),
     canShare: !!MARKET_BIN && writable(MINE),
-    canAddDocs: writable(LIB),
+    canAddDocs: !teamLibrary() && writable(LIB),           // a team library is filled by root (paas-library), not from here
   };
 }
 
@@ -344,7 +356,9 @@ const routes = {
   'GET /search': async (q) => {
     const query = (q.get('q') || '').slice(0, 300);
     if (!query.trim()) return { results: [] };
-    const args = [path.join(LIB, 'search.py'), '--json', 'search', query, '--limit', '15'];
+    const tl = teamLibrary();
+    if (tl && !tl.built) return { error: `Your team's library "${tl.name}" is not built yet: root runs paas-library build ${tl.name}` };
+    const args = [path.join(LIB, 'search.py'), ...(tl ? ['--db', tl.db] : []), '--json', 'search', query, '--limit', '15'];
     if (/^[\w.-]{1,40}$/.test(q.get('vendor') || '')) args.push('--vendor', q.get('vendor'));
     const r = await run('python3', args, 60000);
     try { return JSON.parse(r.out); } catch { return { error: r.out.slice(0, 2000) }; }

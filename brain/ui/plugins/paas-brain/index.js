@@ -310,7 +310,8 @@ export function mount(container, api) {
     cnt.innerHTML = [['Skills', data.skills.length, `incl. ${data.skills.filter((x) => x.mine).length} yours`], ['Agents', data.agents.length, ''], ['MCP servers', data.mcp.length, ''], ['Hooks', data.hooks.length, `${data.hooks.filter((h) => h.on).length} on`]]
       .map(([k, v, u]) => `<div class="tile"><div class="k">${k}</div><div class="v">${esc(v)}</div>${u ? `<div class="u">${u}</div>` : ''}</div>`).join('');
     cnt.hidden = false;
-    sub.textContent = data.library.version ? `Library ${data.library.version}${docs ? ` · ${docs} documents` : ''}` : 'Docs library not installed on this VM';
+    sub.textContent = data.library.team ? (data.library.built ? `Team library ${data.library.team}${docs ? ` · ${docs} documents` : ''} (not the general library)` : `Team library ${data.library.team} is not built yet`)
+      : data.library.version ? `Library ${data.library.version}${docs ? ` · ${docs} documents` : ''}` : 'Docs library not installed on this VM';
     render();
   }
 
@@ -785,7 +786,7 @@ export function mount(container, api) {
       <div class="card"><div class="row" style="align-items:flex-end"><div class="field grow" style="margin:0"><label for="bq">Search the docs</label><input id="bq" class="q" placeholder="An error, an event, an API, a task…"></div>
         <div class="field" style="margin:0;flex:0 1 180px"><label for="bv">Vendor <span class="sub">optional</span></label><input id="bv" class="v"></div>
         <button class="btn s">${icon('search')} Search</button></div><div class="out" aria-live="polite"></div></div>
-      ${data.canAddDocs === false ? '<div class="card"><h3>Add documents</h3><div class="sub">The docs library is shared by everyone on this VM: root adds documents to it (root\'s Brain tab).</div></div>' : `<div class="two">
+      ${data.canAddDocs === false ? `<div class="card"><h3>Add documents</h3><div class="sub">${data.library.team ? `Your team searches its own library, <b>${esc(data.library.team)}</b>, plus the team's knowledge pages. Root adds documents to it with <code>paas-library add ${esc(data.library.team)} &lt;files&gt; --to &lt;vendor&gt;/&lt;product&gt;</code>.` : 'The docs library is shared by everyone on this VM: root adds documents to it (root\'s Brain tab).'}</div></div>` : `<div class="two">
         <div class="card"><h3>Add pages or PDFs by URL</h3><div class="sub" style="margin-bottom:10px">Any URL this VM can reach. Claude can do it too: “add this to your docs: …”</div>
           ${field('Web addresses', '<textarea class="urls" rows="3" placeholder="https://wiki.corp/san/zoning-standard"></textarea>', 'one per line')}
           ${field('Put it under', '<input class="to" placeholder="cisco/mds">', 'vendor/product')}

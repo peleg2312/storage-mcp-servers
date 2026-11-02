@@ -21,7 +21,7 @@ import docs_index  # noqa: E402
 
 work = tempfile.mkdtemp()
 TOKEN = "lab-docs-token-for-tests"
-GENERAL_WORD, LAB_WORD = "Zephyrgeneral", "Quokkavault"
+GENERAL_WORD, LAB_WORD, LAB_KNOW, SAN_KNOW, MY_KNOW = "Zephyrgeneral", "Quokkavault", "Wombatlabnote", "Numbatsannote", "Bilbymynote"
 
 
 def write(p, text):
@@ -88,7 +88,11 @@ try:
     assert "libraries/labdocs/docs.db" in open(os.path.join(lab_plug, "bin", "docs-local")).read()
     print("publish ok")
 
-    # the docs service: lab from its own library only, san from the general one
+    # each team's knowledge pages (in its repository), searched on top of its library
+    write(os.path.join(teams, "lab", "knowledge", "notes", "lab-runbook.md"), f"# Lab runbook\n\n## Vault\nThe {LAB_KNOW} check runs first.\n")
+    write(os.path.join(teams, "san", "knowledge", "notes", "san-runbook.md"), f"# SAN runbook\n\n## Zones\nThe {SAN_KNOW} zone is ours.\n")
+
+    # the docs service: lab from its own library only, san from the general one; each with its own knowledge on top
     write(os.path.join(work, "token"), TOKEN)
     s = socket.socket(); s.bind(("127.0.0.1", 0)); port = s.getsockname()[1]; s.close()
     srv = subprocess.Popen([sys.executable, os.path.join(DOCS, "mcp_stdio.py"), "--db", os.path.join(work, "general", "docs.db"),
@@ -102,6 +106,14 @@ try:
                 break
             except OSError:
                 time.sleep(0.1)
+        for _ in range(200):                          # the service indexes every team's knowledge at start
+            if "lab-runbook.md" in search(port, "lab", LAB_KNOW)[1] and "san-runbook.md" in search(port, "san", SAN_KNOW)[1]:
+                break
+            time.sleep(0.1)
+        lab_know = search(port, "lab", LAB_KNOW)[1]
+        assert "lab-runbook.md" in lab_know and "team knowledge" in lab_know, lab_know          # lab: its knowledge on its library
+        assert "san-runbook.md" in search(port, "san", SAN_KNOW)[1]                              # san: its knowledge on the general one
+        assert "lab-runbook.md" not in search(port, "san", LAB_KNOW)[1] and "san-runbook.md" not in search(port, "lab", SAN_KNOW)[1]
         _, lab_hit = search(port, "lab", LAB_WORD)
         _, lab_general = search(port, "lab", GENERAL_WORD)
         _, san_general = search(port, "san", GENERAL_WORD)
@@ -139,6 +151,9 @@ try:
     os.symlink(os.path.join(work, "libs", "labdocs"), os.path.join(brain, "libraries", "labdocs"))
     assert "vault.md" in stdio(exe, henv, LAB_WORD)
     assert "intro.md" not in stdio(exe, henv, GENERAL_WORD)
+    write(os.path.join(brain, "notes", "my-page.md"), f"# My page\n\n## Fact\nThe {MY_KNOW} fact.\n")   # the person's team knowledge
+    mine = stdio(exe, henv, MY_KNOW)
+    assert "my-page.md" in mine and "team knowledge" in mine, mine                     # on top of the team library
     san_exe = [os.path.join(teams, "san", "paas-brain-san", "bin", "docs-local")]
     assert "intro.md" in stdio(san_exe, henv, GENERAL_WORD)            # san keeps the general library
     print("plugin docs-local ok")
@@ -157,6 +172,24 @@ try:
                             capture_output=True, text=True).stdout.strip()
         assert db == os.path.join(brain, "libraries", "labdocs", "docs.db"), (hook, db)
     print("docs hooks ok")
+
+    # the Brain tab's Docs section: shows and searches the team library, offers no upload into the general one
+    if shutil.which("node"):
+        for f, dst in (("search_cli.py", "search.py"), ("docs_text.py", "docs_text.py")):
+            shutil.copy(os.path.join(DOCS, f), os.path.join(brain, "library", dst))
+        ui = subprocess.Popen(["node", os.path.join(R, "brain", "ui", "plugins", "paas-brain", "server.js")], env=henv,
+                              stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+        try:
+            uport = json.loads(ui.stdout.readline())["port"]
+            get = lambda path: json.loads(urllib.request.urlopen(f"http://127.0.0.1:{uport}/{path}", timeout=120).read())
+            ov = get("overview")
+            assert ov["library"]["team"] == "labdocs" and ov["library"]["built"] and ov["canAddDocs"] is False, ov["library"]
+            assert "1 documents" in (ov["library"]["sources"] or "") or "lab" in (ov["library"]["sources"] or ""), ov["library"]
+            hits = json.dumps(get(f"search?q={LAB_WORD}")) + json.dumps(get(f"search?q={GENERAL_WORD}"))
+            assert "vault.md" in hits and "intro.md" not in hits, hits
+        finally:
+            ui.kill()
+        print("brain tab docs ok")
 
     # the marketplace: docs-http-<team> for every team, with ?team=; the old docs-search item goes
     market = os.path.join(work, "market")
