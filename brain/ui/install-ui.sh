@@ -35,6 +35,19 @@ if [ "$(cat "$B/SHA256SUMS")" != "$(cat "$DST/.bundle-sum" 2>/dev/null || true)"
 fi
 # user names may start with a digit (AD accounts such as 897xxx): the bundled sign-in check (built before that rule changed)
 # is widened in place, on every run, so an installed bundle gets it without being rebuilt; a no-op once it has the new rule
+# Bypass for every account emulated by the UI (Claude in default mode, every approval allowed by the UI except the read-only
+# guard's CRITICAL ones: cluster sign-in, delete, reboot...); brand.py does it for new builds, this for an installed one
+CR="$DST/app/dist-server/server/modules/providers/list/claude/claude-runtime.provider.js"
+[ ! -f "$CR" ] || python3 - "$CR" <<'EOP'
+import sys
+p = sys.argv[1]; s = open(p).read(); o = s
+s = s.replace("if (sdkOptions.permissionMode === 'bypassPermissions' && process.getuid?.() === 0) {",
+              "if (sdkOptions.permissionMode === 'bypassPermissions') {")
+s = s.replace("TOOLS_REQUIRING_INTERACTION.has(toolName) || (guardAsk && !bypass);",
+              "TOOLS_REQUIRING_INTERACTION.has(toolName) || (guardAsk && (!bypass || /^Read-only guard: CRITICAL/.test(String(context?.decisionReason || ''))));")
+if s != o:
+    open(p, "w").write(s)
+EOP
 SA="$DST/app/dist-server/server/modules/auth/system-auth.js"
 [ ! -f "$SA" ] || sed -i 's#/^\[a-z_\]\[a-z0-9_.-\]\*\$/#/^[a-z0-9_][a-z0-9_.-]*$/#' "$SA"
 [ "${UI_SHARED:-0}" = 1 ] && { chmod -R a+rX "$DST"; echo "ui: files in $DST (per-user services: brain/multiuser)"; exit 0; }

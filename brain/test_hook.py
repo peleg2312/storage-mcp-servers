@@ -76,9 +76,17 @@ out = run_hook({"tool_name": "mcp__databases__pg_execute", "tool_input": {"conne
 assert "LONG/DESTRUCTIVE" in out and "more chars not shown" in out, out
 print("databases guard ok")
 
-# Bypass mode: the guard's questions are skipped (the user approved changes on the server); the blocks stay
+# Bypass mode: the guard's questions are skipped (the user approved changes on the server) except the CRITICAL few
+# (cluster sign-in / context switch, delete, drain, adm, helm uninstall, reboot, terraform apply / destroy); the blocks stay
 BP = {"permission_mode": "bypassPermissions"}
-assert run_hook({"tool_name": "Bash", "tool_input": {"command": "kubectl delete pod x"}, **BP}) == (0, "")
+for c in ("kubectl apply -f a.yaml", "oc scale deploy/x --replicas=2", "systemctl restart myapp", "helm upgrade x ./c",
+          "curl -X POST https://api.example/v1/x", "python3 build.py"):
+    assert run_hook({"tool_name": "Bash", "tool_input": {"command": c}, **BP}) == (0, ""), c
+for c in ("oc login https://api.x:6443 -u me", "kubectl delete pod x", "oc adm drain node1", "kubectl config use-context prod",
+          "helm uninstall x", "reboot", "terraform destroy"):
+    for mode in (BP, {}):
+        rc, out = run_hook({"tool_name": "Bash", "tool_input": {"command": c}, **mode})
+        assert rc == 0 and '"ask"' in out and "Read-only guard: CRITICAL:" in out, (c, mode, out)
 assert run_hook({"tool_name": "mcp__databases__pg_execute", "tool_input": {"connection": "dev", "sql": "DELETE FROM t"}, **BP}) == (0, "")
 _s.stderr, _err = io.StringIO(), _s.stderr
 try:
@@ -86,7 +94,7 @@ try:
     assert run_hook({"tool_name": "mcp__ontap__create_volume", "tool_input": {}, **BP})[0] == 2
 finally:
     _s.stderr = _err
-assert '"ask"' in run_hook({"tool_name": "Bash", "tool_input": {"command": "kubectl delete pod x"}})[1]
+assert "changes something" in run_hook({"tool_name": "Bash", "tool_input": {"command": "kubectl apply -f a.yaml"}})[1]   # default: every change asks
 print("bypass guard ok")
 
 # review findings: each bypass input from the review, plus the read commands that must keep passing

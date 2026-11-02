@@ -221,8 +221,11 @@ edit("src/modules/chat/transcript/Markdown.tsx",
      ("    [openFileInEditor, openDirectory],\n", "    [openFileInEditor, openDirectory, paasProjectId],\n"))
 # the read-only guard's "ask" (cluster changes, database writes) must reach the user, except in bypass (the user
 # approved every change on the server; the guard's blocks on storage stay): the allowed-tools shortcut must not
-# answer it. Auto and bypass run as themselves; only root's bypass is emulated in canUseTool (Claude Code refuses
-# bypass as root, and the guard then sees "default" and asks, so the emulation answers that too)
+# answer it. Bypass is emulated in canUseTool for every account (Claude Code refuses bypass as root, and its own
+# bypass would also approve the guard's CRITICAL questions without showing them): Claude runs in default mode, every
+# approval comes here and is allowed, except the guard's "Read-only guard: CRITICAL:" ones (cluster sign-in, delete,
+# reboot...), which reach the user in every mode. Auto runs as itself. install-ui.sh applies the same two edits to an
+# installed bundle built before this rule.
 P = "server/modules/providers/list/claude/claude-runtime.provider.js"
 edit(P,
      ("function mapCliOptionsToSDK(options = {}) {",
@@ -230,7 +233,7 @@ edit(P,
       "const PAAS_BYPASS = new WeakSet();\n\nfunction mapCliOptionsToSDK(options = {}) {"),
      ("  if (settings.skipPermissions && permissionMode !== 'plan') {\n    sdkOptions.permissionMode = 'bypassPermissions';\n  }\n",
       "  if (settings.skipPermissions && permissionMode !== 'plan') {\n    sdkOptions.permissionMode = 'bypassPermissions';\n  }\n"
-      "  if (sdkOptions.permissionMode === 'bypassPermissions' && process.getuid?.() === 0) {\n"
+      "  if (sdkOptions.permissionMode === 'bypassPermissions') {\n"
       "    PAAS_BYPASS.add(sdkOptions);\n    sdkOptions.permissionMode = 'default';\n"
       "  } else if (sdkOptions.permissionMode === 'bypassPermissions') {\n"
       "    sdkOptions.allowDangerouslySkipPermissions = true;\n  }\n"),
@@ -239,7 +242,7 @@ edit(P,
       "        if (sdkOptions.permissionMode === 'bypassPermissions') {",
       "      const guardAsk = /^Read-only guard:/.test(String(context?.decisionReason || ''));\n"
       "      const bypass = PAAS_BYPASS.has(sdkOptions) || sdkOptions.permissionMode === 'bypassPermissions';\n"
-      "      const requiresInteraction = TOOLS_REQUIRING_INTERACTION.has(toolName) || (guardAsk && !bypass);\n\n"
+      "      const requiresInteraction = TOOLS_REQUIRING_INTERACTION.has(toolName) || (guardAsk && (!bypass || /^Read-only guard: CRITICAL/.test(String(context?.decisionReason || ''))));\n\n"
       "      if (!requiresInteraction) {\n"
       "        if (PAAS_BYPASS.has(sdkOptions)) {"))
 # prompt bar like Claude desktop: a clear "/" commands button instead of a speech bubble with a count badge

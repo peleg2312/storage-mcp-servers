@@ -66,6 +66,10 @@ K8S_CHANGE = {"apply", "create", "delete", "edit", "patch", "replace", "scale", 
               "import-image", "tag", "rsync", "cp"}
 K8S_ADM_READ = {"top", "must-gather", "inspect", "node-logs", "release", "who-can"}
 HELM_CHANGE = {"install", "upgrade", "uninstall", "delete", "del", "un", "rollback"}
+# the few changes that ask in every mode, Bypass too: signing in to a cluster or switching kubeconfig context, deleting or
+# draining, cluster admin, helm uninstall / rollback, rebooting the VM, terraform apply / destroy (shell_check's reasons)
+CRITICAL = re.compile(r"^(oc|kubectl) (login|delete|drain|adm|config|certificate)\b|^helm (uninstall|delete|del|un|rollback)\b|"
+                      r"^(reboot|shutdown|poweroff|halt)$|^systemctl (reboot|poweroff|halt|isolate)\b|^terraform (destroy|apply)\b")
 SYM_CHANGE = WRITE | {"convert", "link", "relink", "establish", "terminate", "sync", "activate", "deactivate",
                       "setup", "compress", "uncompress", "ready", "not_ready", "write_disable", "rw_enable", "half_swap"}
 SCLI_CHANGE = re.compile(r"^--(add|remove|map|unmap|modify|set|rename|delete|create|clear|reset|start|stop|activate|"
@@ -240,7 +244,9 @@ def shell_check(cmd, depth=0):
                 r = r if r[0] == "block" else ("ask", f"{prog} runs a shell command")
         elif prog in ("oc", "kubectl"):
             sub = _k8s_verb(low)
-            if sub in K8S_CHANGE:
+            if sub == "login":
+                r = ("ask", f"{prog} login signs in to a cluster")
+            elif sub in K8S_CHANGE:
                 r = ("ask", f"{prog} {sub} changes the cluster")
             elif sub == "rollout" and any(a in ("restart", "undo", "pause", "resume") for a in low):
                 r = ("ask", f"{prog} rollout restart / undo changes the cluster")
@@ -452,8 +458,8 @@ def plain(name):
 def decide(data):
     decide.asked, decide.why = False, ""
     name = plain(str(data.get("tool_name") or ""))
-    # Bypass mode: the user has approved every change on this server, so the questions below are skipped; the blocks
-    # (storage, switches, UCS, VMware) stay in every mode
+    # Bypass mode: the user has approved every change on this server, so the questions below are skipped except the
+    # CRITICAL few (cluster sign-in, delete, reboot...); the blocks (storage, switches, UCS, VMware) stay in every mode
     bypass = data.get("permission_mode") == "bypassPermissions"
     if name == "Bash":
         cmd = str((data.get("tool_input") or {}).get("command", ""))
@@ -466,10 +472,12 @@ def decide(data):
                   f"read-only here; give the command for the user to run, labelled 'to be run by you'.",
                   file=sys.stderr)
             return 2
-        if level == "ask" and not bypass:
+        critical = level == "ask" and bool(CRITICAL.search(why))
+        if level == "ask" and (critical or not bypass):     # Bypass: only the critical few still ask
             decide.asked, decide.why = True, why
+            what = f"CRITICAL: {why}" if critical else f"changes something: {why}"
             print(json.dumps({"hookSpecificOutput": {"hookEventName": "PreToolUse", "permissionDecision": "ask",
-                                                     "permissionDecisionReason": f"Read-only guard: changes something: {why}. Allow?"}}))
+                                                     "permissionDecisionReason": f"Read-only guard: {what}. Allow?"}}))
         return 0
     if not name.startswith("mcp__") or allowed(name):
         return 0

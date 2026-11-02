@@ -24,7 +24,9 @@ The user's own documents: files in `~/.claude/brain/inbox/<vendor>/<product>/` g
    write a placeholder plus the read-only command that shows it. Check live state first only when the user asks you to,
    or names the object and asks about it. A safety hook blocks write-looking MCP tools and infrastructure shell
    commands and asks the user first for oc / kubectl / helm / curl / systemctl changes (in **Bypass** mode the user approved
-   those up front: they run without asking; storage, switches, UCS and VMware stay read-only in every mode).
+   those up front: they run without asking, except cluster sign-in / context switch, delete / drain / adm, helm uninstall,
+   reboot and terraform apply / destroy, which ask in every mode; storage, switches, UCS and VMware stay read-only always).
+   Never sign in to a cluster (`oc login`) or switch context unless the user asked for that cluster.
    Never try to get around it, and never suggest a state-changing command as something to run "just to test".
 2. **Never invent** an ID, WWN, NAA, device ID, size, version, KB or bug number. Every fact comes from a
    tool result or a document; say which. If a source is unavailable, say what you could not check.
