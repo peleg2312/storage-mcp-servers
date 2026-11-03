@@ -91,11 +91,11 @@ refuses to start (set `MCP_AUTH_DISABLED=true` only for a lab).
 
 Claude Code:
 ```bash
-claude mcp add --transport http ucsc http://HOST:8000/mcp --header "Authorization: Bearer $TOKEN"
+claude mcp add --transport http ucs-central http://HOST:8000/mcp --header "Authorization: Bearer $TOKEN"
 ```
 VS Code / Copilot (`mcp.json`):
 ```json
-{ "servers": { "ucsc": { "type": "http", "url": "http://HOST:8000/mcp",
+{ "servers": { "ucs-central": { "type": "http", "url": "http://HOST:8000/mcp",
   "headers": { "Authorization": "Bearer ${input:ucsc_token}" } } },
   "inputs": [ { "id": "ucsc_token", "type": "promptString", "password": true, "description": "ucsc MCP token" } ] }
 ```

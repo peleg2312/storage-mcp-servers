@@ -3,7 +3,7 @@ In a code project, also read `~/.claude/brain/environment.md` and `tool-map.md` 
 
 Live state comes from eight MCP servers: **powermax**, **powerflex**, **ontap** and **harvest** (NetApp's official
 servers; ONTAP ones expose write tools too, kept read-only by the hook and a read-only ONTAP account), **mds**,
-**ucsc** (UCS Central), **VMware Aria Operations**, and **kuparashit**, the map that joins them end to end.
+**ucs-central** (UCS Central), **VMware Aria Operations**, and **kuparashit**, the map that joins them end to end.
 The library holds NetApp ONTAP / EMS / SAN-host / Trident / Harvest docs and KB, Dell PowerMax / PowerFlex /
 PowerScale / CSM docs and KB, Trident / Harvest bugs, Dell CSM / CSI fixes (pull requests with their first
 release), CSI driver and sidecar source code, Cisco MDS / NDFC / Nexus (vendor `cisco`). Not in it: Cisco UCS
@@ -38,7 +38,7 @@ Exact tool names per server: see the tool map (run `/brain-setup` to refresh it)
 | ONTAP: SVMs, volumes, LUNs (serial), igroups, LUN maps, LIFs/FC targets, aggregates, EMS events | **ontap** MCP |
 | ONTAP performance history (LUN/volume/node/port latency, IOPS, throughput) | **harvest** MCP |
 | MDS: flogi, fcns, zones/zonesets, device-alias, interfaces, counters, port-channels, slow drain, logs | **mds** MCP |
-| UCS Central: domains, FIs, service profiles, vHBAs + WWPNs, VSANs, FC uplinks / port-channels, pinning, faults | **ucsc** MCP |
+| UCS Central: domains, FIs, service profiles, vHBAs + WWPNs, VSANs, FC uplinks / port-channels, pinning, faults | **ucs-central** MCP |
 | Docs, error meanings, procedures, best practices, Trident / Harvest bugs and changelogs, NetApp / Dell / VMware KB articles, CSM docs | **docs MCP** = **docs-search** or **docs-local** (or `brain/library/search.py`) |
 | PowerFlex: health, capacity, PDs / pools, SDS / SDC, volumes (emc-vol / eui ids), devices, rebuild, replication, alerts, live statistics (IOPS, MB/s, latency) | **powerflex** MCP (`get_health` first); when it is not connected: vCenter-side data + docs (`dell/powerflex`, `dell/kb`) and say so |
 

@@ -11,7 +11,7 @@ tell the user what to run.
 ## 1. MCP servers
 For each server in your tool list (`mcp__<server>__…`, or `mcp__plugin_paas-brain-<team>_<server>__…` when the team plugin carries it): one cheap call - powermax `test_connection` / powerflex `list_systems` /
 `list_arrays`, ontap (cluster or SVM list), harvest (any list / metric-name call), mds `list_switches`,
-ucsc `list_centrals`, kuparashit `overview` (snapshot age and warnings), Aria (any list), docs `list_sources`. Record:
+ucs-central `list_centrals`, kuparashit `overview` (snapshot age and warnings), Aria (any list), docs `list_sources`. Record:
 reachable · answer time · tool count · the call that failed and its error. Servers named in the
 "Sources" table of CLAUDE.md but absent from the tool list = missing (the user adds them with `claude mcp add`).
 Note which docs server answered (docs-search or docs-local); if neither, test the shell fallback

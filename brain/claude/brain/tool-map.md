@@ -9,5 +9,5 @@ Not generated yet: run `/brain-setup`.
 - docs-search / docs-local: see the docs-lookup skill.
 - Not tools: daily_health_check, capacity_report, srdf_health, what_changed, troubleshoot_host_latency (powermax),
   fabric_health_check, check_host_connectivity, investigate_slow_drain, port_history (mds), ucs_health_check,
-  troubleshoot_server, trace_san_path, domain_san_health (ucsc) are MCP prompts (/ recipes for the person); call
+  troubleshoot_server, trace_san_path, domain_san_health (ucs-central) are MCP prompts (/ recipes for the person); call
   the tools they name instead.

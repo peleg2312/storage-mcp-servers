@@ -976,6 +976,9 @@ def publish(brain, mcp_file=None):
         for n in sorted(os.listdir(os.path.join(teams, t, "agents"))) if os.path.isdir(os.path.join(teams, t, "agents")) else []:
             if n.endswith(".md"):
                 shutil.copy(os.path.join(teams, t, "agents", n), item_path("agent", n[:-3]))
+    for old, new in (("ucsc", "ucs-central"),):            # renamed in the brain: root's address and token move with it
+        if os.path.exists(item_path("mcp", old)) and not os.path.exists(item_path("mcp", new)):
+            os.replace(item_path("mcp", old), item_path("mcp", new))
     for name, entry in (json.load(open(mcp_file)) if mcp_file else {}).items():
         if name == "docs-search":                       # one docs-http-<team> item per team instead (setup-docs)
             continue

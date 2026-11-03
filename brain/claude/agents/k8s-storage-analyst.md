@@ -28,7 +28,7 @@ array MCPs (ontap, powermax, powerflex: `find_volume` for the `emc-vol-` / `eui.
 - Search the exact error string first (`docs-lookup`); report issue number, affected and fixed versions,
   workaround; say whether the installed version is affected.
 - Worker node connectivity (WWPNs / IQNs / NQNs logged in, zoned, mapped, multipath) is the
-  `trace-path` procedure: list the worker's WWPNs / IQNs / NQNs and ask the caller to run it via fabric-investigator (no mds / ucsc tools here).
+  `trace-path` procedure: list the worker's WWPNs / IQNs / NQNs and ask the caller to run it via fabric-investigator (no mds / ucs-central tools here).
 Return: PVC | PV | StorageClass | backend / array | array object (name, size, mapping, replication) |
 status, then findings with evidence and citations (title, url, version), then the read-only commands
 the user should run next.

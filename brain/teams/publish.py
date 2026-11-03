@@ -43,6 +43,9 @@ IGNORE = "*.bak\n.DS_Store\n._*\n__pycache__/\n"
 CATALOG = os.path.join(BRAIN, "marketplace", "mcp.json")        # the servers' shapes (HOST / TOKEN placeholders)
 
 
+# MCP servers renamed in the brain: old name -> new name (the team's filled-in entry moves to the new name at the next publish)
+RENAMED = {"ucsc": "ucs-central"}
+
 def git(repo, *args, check=False, timeout=120):
     r = subprocess.run(["git", "-C", repo] + list(args), capture_output=True, text=True, timeout=timeout,
                        env=dict(os.environ, GIT_TERMINAL_PROMPT="0", **paas_team.identity(repo)))
@@ -109,6 +112,9 @@ def publish(team, dest, remote=None, hooks=True, commit=True, force=False, docs_
     else:
         with open(mcp_path) as f:
             servers = json.load(f)
+        for old, new in RENAMED.items():                          # a server renamed in the brain keeps its address and token
+            if old in servers and new not in servers:
+                servers[new] = servers.pop(old)
     if docs_search:                                                    # the VM's docs service: every member's docs-local reaches the library
         url = docs_search if "?team=" in docs_search else docs_search + "?team=" + team
         servers["docs-search"] = {"type": "http", "url": url, **({"headers": {"Authorization": "Bearer " + docs_token}} if docs_token else {})}

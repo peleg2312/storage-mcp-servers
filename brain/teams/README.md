@@ -7,7 +7,7 @@ their own audit trail; the team is a profile on top of the person, not a shared 
 
 | Team | Rules | Skills | Agents | Live MCP |
 |---|---|---|---|---|
-| `san` (default) | `brain/claude/brain/storage.md` | all of `brain/claude/skills` (28) | all of `brain/claude/agents` (9) | docs-local, powermax, powerflex, ontap, harvest, mds, ucsc |
+| `san` (default) | `brain/claude/brain/storage.md` | all of `brain/claude/skills` (28) | all of `brain/claude/agents` (9) | docs-local, powermax, powerflex, ontap, harvest, mds, ucs-central |
 | `nas` | `brain/teams/nas/storage-nas.md` (installed as `storage.md`) | 12 shared + 7 NAS: nas-morning-check, share-access-check, export-policy-check, quota-report, nas-replication-check, smartconnect-check, vast-view-check | Explore, docs-researcher, ontap-analyst, nas-analyst | docs-local, ontap, harvest. **No PowerScale or VAST MCP exists yet**: those skills work from output the person pastes (isi, VAST CLI / VMS) and the docs library, and say so |
 
 ## Definition: `brain/teams/<team>/team.json`
@@ -215,7 +215,7 @@ notes hook, pushed to the team remote, pulled at every session start).
 Cost: a team clone is about 0.5 MB plus the knowledge; a NAS member's context is smaller than a SAN member's (the
 NAS rules and skill list are shorter, `test_budgets.py` prints both). What a session start costs, measured: the rules
 (CLAUDE.md, persona, notes.md, storage.md, environment, tool map) and the skill and agent frontmatter are about 32 KB, about
-8k tokens, for SAN; the MCP tool schemas of powermax, powerflex, ucsc, mds and docs-local are about 13k tokens more
+8k tokens, for SAN; the MCP tool schemas of powermax, powerflex, ucs-central, mds and docs-local are about 13k tokens more
 (`python3 scripts/mcp_context_size.py` on a machine with the servers' Python packages), which is why the installer sets
 `ENABLE_TOOL_SEARCH=true`: Claude sees the tool names and the servers' instructions (about 4k tokens) and loads a tool's
 schema when a task needs it. On the VM `python3 ~/.claude/tools/token-report.py` shows the real per-session numbers.

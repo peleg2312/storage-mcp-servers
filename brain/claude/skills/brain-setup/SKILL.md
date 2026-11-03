@@ -9,7 +9,7 @@ Goal: Claude knows the exact tool names of every storage MCP and the shape of th
 Read-only: only list/get/show tools.
 
 ## 1. Tool map
-For every connected MCP server (kuparashit, Aria/vROps, ontap, harvest, mds, ucsc, powermax, the docs MCP
+For every connected MCP server (kuparashit, Aria/vROps, ontap, harvest, mds, ucs-central, powermax, the docs MCP
 (docs-search or docs-local, whichever is connected) and any other), list its tools from your own tool list. The
 map is loaded in every session of every user, and Claude Code already shows each tool's own description, so write
 only what the descriptions do not say (about 3-6 lines per server, the whole file under ~60 lines):
@@ -30,7 +30,7 @@ Using only list tools, collect:
 - arrays: PowerMax (list_arrays: serials, models), ONTAP clusters/SVMs, PowerFlex if visible anywhere
 - fabrics: MDS switches (list_switches), VSANs, which switch is fabric A/B (ask if unclear)
 - vCenters / clusters (kuparashit or Aria)
-- UCS domains, FIs and VSANs (ucsc)
+- UCS domains, FIs and VSANs (ucs-central)
 - naming patterns: sample 10-20 names each of ESX hosts, storage groups, igroups, zones, device-aliases,
   datastores, and describe the pattern you see
 - Trident / CSM: look for volume / LUN names starting with `trident` or other CSI-looking prefixes and

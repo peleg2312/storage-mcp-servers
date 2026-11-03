@@ -7,7 +7,7 @@ description: Trace the SAN path end to end (VM / datastore / NAA / host, UCS vHB
 ## 1. Starting point → host WWPNs
 - Any starting identifier (VM, datastore, NAA, ESX, host pWWN) → kuparashit `locate` + `related`: ESX
   host(s), their pWWNs and FI, NAAs, datastore / RDM, VMs (snapshot data: confirm each hop live below).
-- ESX host → UCS service profile: `ucsc` find_wwpn / trace_service_profile_san → vHBA name, fabric A/B,
+- ESX host → UCS service profile: `ucs-central` find_wwpn / trace_service_profile_san → vHBA name, fabric A/B,
   VSAN, WWPN, pinning (get_vhba_pinning) to FC uplink / SAN port-channel.
 
 ## 2. Fabric (per fabric A and B)
