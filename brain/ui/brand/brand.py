@@ -397,8 +397,9 @@ edit("src/modules/chat/transcript/ProviderSelectionEmptyState.tsx",
      ("className=\"group mx-auto max-w-xs cursor-pointer", "className=\"hidden group mx-auto max-w-xs cursor-pointer"),
      ("<p className=\"mt-4 text-center text-sm text-muted-foreground/70\">", "<p className=\"hidden\">"),
      ("<p className=\"mt-3 flex items-center justify-center gap-1.5 text-center text-xs text-muted-foreground/60\">", "<p className=\"hidden\">"))
+# the token / context counter stays in the composer (how full the session is: the team watches its tokens); the
+# schedule popover goes (the Schedule tab does that)
 edit("src/modules/chat/composer/ChatComposer.tsx",
-     ("            <TokenUsageSummary usage={tokenBudget} onClick={onShowTokenUsage} />\n", ""),
      ("            <ScheduleMessagePopover\n              disabled={!input.trim()}\n              onSchedule={onScheduleMessage}\n            />\n", ""))
 # projects can clone from the GitLab server; the GitHub token card is gone
 edit("src/modules/project-creation-wizard/StepConfiguration.tsx",
