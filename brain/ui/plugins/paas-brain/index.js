@@ -328,15 +328,15 @@ export function mount(container, api) {
 
   function renderMcp() {
     pane.innerHTML = `<div class="card"><h3>MCP servers</h3><div class="sub" style="margin-bottom:8px">${data.mcp.length} tool servers (${data.mcp.filter((m) => m.source === 'team').length} from your team); Check connections shows which answer</div>${data.mcp.length
-      ? `<div class="table-wrap"><table><tr><th>Name</th><th>Type</th><th>Runs</th><th><span class="sr">Actions</span></th></tr>${data.mcp.map((m) => `<tr><td><b>${esc(m.name)}</b>${m.source === 'team' ? ` <span class="tag" title="Comes with your team: it leaves when you switch team (Team tab)">team ${esc(String(data.pluginTeam || '').toUpperCase())}</span>` : ''}</td><td>${esc(m.type)}</td><td><code>${esc(m.target)}</code></td>
+      ? `<div class="table-wrap"><table><tr><th>Name</th><th>Type</th><th>Runs</th><th><span class="sr">Actions</span></th></tr>${data.mcp.map((m) => `<tr><td><b>${esc(m.name)}</b>${m.source === 'team' ? ` <span class="tag" title="Comes with your team: it leaves when you switch team (Team tab)">team ${esc(String(data.pluginTeam || '').toUpperCase())}</span>` : m.source === 'plugin' ? ` <span class="tag" title="Comes with the ${esc(m.plugin || '')} plugin">plugin ${esc(m.plugin || '')}</span>` : ''}</td><td>${esc(m.type)}</td><td><code>${esc(m.target)}</code></td>
         <td>${data.canShare ? `<button class="btn link sm" data-share="mcp:${esc(m.name)}:0">Share with everyone</button>` : ''}</td></tr>`).join('')}</table></div>`
       : emptyBlock('Ask your admin to connect a tool server, or add one from the Marketplace.', '', null, { icon: 'box', title: 'No MCP servers configured' }).outerHTML}
       <div class="row" style="margin-top:10px"><button class="btn ghost sm chk">${icon('play')} Check connections</button><span class="sub">runs <code>claude mcp list</code></span></div><pre class="st" role="status" style="display:none"></pre></div>
       <div class="card"><h3>Hooks</h3><div class="sub" style="margin-bottom:10px">Small helpers that run around Claude's steps. Switching one off applies to your chats only.</div>${data.hooks.length ? data.hooks.map((h) => `<div class="hk">
-        <div class="hk-t"><b>${esc(h.title)}</b> <span class="badge">${h.source === 'shared' ? 'shared' : 'yours'}</span>
+        <div class="hk-t"><b>${esc(h.title)}</b> <span class="badge">${h.source === 'shared' ? 'shared' : String(h.source || '').startsWith('plugin ') ? esc(h.source) : 'yours'}</span>
         <div class="sub">${esc(h.about || h.command)}</div><div class="sub">${esc(h.when)}${h.matcher !== '*' ? ` · <code>${esc(h.matcher)}</code>` : ''}</div></div>
         ${h.canToggle ? `<label class="sw"><input type="checkbox" role="switch" aria-label="${esc(h.title)}" data-hk="${esc(h.id)}" ${h.on ? 'checked' : ''}><span></span></label>`
-          : `<span class="sub">${h.id === 'block-write-tools' ? 'Always on: keeps your storage read-only' : 'Set by root'}</span>`}</div>`).join('')
+          : `<span class="sub">${h.id === 'block-write-tools' ? 'Always on: keeps your storage read-only' : String(h.source || '').startsWith('plugin ') ? 'Comes with the plugin' : 'Set by root'}</span>`}</div>`).join('')
         : emptyBlock('Hooks are small helpers that run around Claude\'s steps.', '', null, { icon: 'play', title: 'No hooks set up' }).outerHTML}</div>`;
     wireShare(renderMcp);
     pane.querySelectorAll('[data-hk]').forEach((cb) => cb.addEventListener('change', async () => {
@@ -651,9 +651,10 @@ export function mount(container, api) {
   }
 
   // a quiet tag for where a skill or agent came from (nothing for the brain's own); "mine" reads "yours" like the rest of this tab
-  const srcTag = (x) => { const l = { team: [data?.pluginTeam ? `team ${data.pluginTeam.toUpperCase()}` : 'team', 'Comes with your team: it leaves when you switch team (Team tab)'], market: ['market', 'Added from the Market tab'], mine: ['yours', ''] }[x.source || (x.mine ? 'mine' : '')];
+  const srcTag = (x) => { if (x.source === 'plugin') return ` <span class="tag" title="Comes with the ${esc(x.plugin || '')} plugin (installed with claude plugin install or the Market); read-only here">plugin ${esc(x.plugin || '')}</span>`;
+    const l = { team: [data?.pluginTeam ? `team ${data.pluginTeam.toUpperCase()}` : 'team', 'Comes with your team: it leaves when you switch team (Team tab)'], market: ['market', 'Added from the Market tab'], mine: ['yours', ''] }[x.source || (x.mine ? 'mine' : '')];
     return l ? ` <span class="tag"${l[1] ? ` title="${esc(l[1])}"` : ''}>${l[0]}</span>` : ''; };
-  const actions = (kind, id, o) => `<button class="btn ghost sm" data-edit="${esc(id)}">${icon('edit')} Edit</button>${o.mine && data.canShare ? `<button class="btn link sm" data-share="${kind}:${esc(id)}:${o.shared ? 1 : 0}">${o.shared ? 'Unshare' : 'Share with everyone'}</button>` : ''}${o.mine ? `<button class="btn danger sm" data-del="${esc(id)}">${icon('trash')} Delete</button>` : ''}`;
+  const actions = (kind, id, o) => o.source === 'plugin' ? '<span class="sub">From a plugin: change it in the plugin itself</span>' : `<button class="btn ghost sm" data-edit="${esc(id)}">${icon('edit')} Edit</button>${o.mine && data.canShare ? `<button class="btn link sm" data-share="${kind}:${esc(id)}:${o.shared ? 1 : 0}">${o.shared ? 'Unshare' : 'Share with everyone'}</button>` : ''}${o.mine ? `<button class="btn danger sm" data-del="${esc(id)}">${icon('trash')} Delete</button>` : ''}`;
 
   function wireDelete(kind, rpcName, back) {
     pane.querySelectorAll('[data-del]').forEach((b) => b.addEventListener('click', async () => {

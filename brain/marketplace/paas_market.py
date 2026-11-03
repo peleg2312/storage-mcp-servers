@@ -137,13 +137,32 @@ def plugin_items():
             for p in m["plugins"] if os.path.isdir(os.path.join(PLUGINS, p["source"]))]
 
 
+def plugin_records():
+    """[{"id": "<name>@<marketplace>", "enabled": bool}] from Claude Code's own files: ~/.claude/plugins/installed_plugins.json
+    (what is installed) and enabledPlugins in the managed and the user settings (what is on; installed and not named = on).
+    None when the record is missing (then the claude command is asked)."""
+    try:
+        rec = json.load(open(os.path.join(CLAUDE, "plugins", "installed_plugins.json")))
+    except (OSError, ValueError):
+        return None
+    on = {}
+    for f in (os.path.join(CLAUDE, "settings.json"), "/etc/claude-code/managed-settings.json"):   # managed last: it wins
+        try:
+            on.update(json.load(open(f)).get("enabledPlugins") or {})
+        except (OSError, ValueError, AttributeError):
+            pass
+    return [{"id": pid, "enabled": on.get(pid, True) is not False} for pid in (rec.get("plugins") or {})]
+
+
 def installed_plugins():
     """{plugin id: enabled}: '<name>' for this VM's plugin marketplace, '<name>@<source>' for a source's, from Claude Code"""
-    r = claude_cmd("plugin", "list", "--json")
-    try:
-        rows = json.loads(r.stdout) if r.returncode == 0 else []
-    except ValueError:
-        rows = []
+    rows = plugin_records()
+    if rows is None:
+        r = claude_cmd("plugin", "list", "--json")
+        try:
+            rows = json.loads(r.stdout) if r.returncode == 0 else []
+        except ValueError:
+            rows = []
     to_id = {plugin_market()["name"]: ""} if plugin_market()["name"] else {}
     for src in source_names():
         mk = source_market(src)["name"]
@@ -789,7 +808,8 @@ def import_mcp(pairs):
 
 
 def claude_cmd(*args, cwd=None):
-    claude = shutil.which("claude") or os.path.expanduser("~/.local/bin/claude")
+    # the claude the web UI itself runs (CLAUDE_CLI_PATH), so the Market and the chats see the same plugins
+    claude = os.environ.get("CLAUDE_CLI_PATH") or shutil.which("claude") or os.path.expanduser("~/.local/bin/claude")
     try:
         return subprocess.run([claude, *args], capture_output=True, text=True, timeout=120, cwd=cwd)
     except (OSError, subprocess.TimeoutExpired) as e:

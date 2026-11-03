@@ -165,6 +165,21 @@ function sourceOf(kind, id, mine) {
   return 'brain';
 }
 
+// every other installed Claude Code plugin that is on (not the team plugins, listed through pluginTeam): Claude Code's own
+// record (~/.claude/plugins/installed_plugins.json) and enabledPlugins in the user and managed settings, managed winning
+function otherPlugins() {
+  const rec = json(path.join(C, 'plugins', 'installed_plugins.json')) || {};
+  const on = { ...((json(path.join(C, 'settings.json')) || {}).enabledPlugins || {}), ...((json(MANAGED) || {}).enabledPlugins || {}) };
+  const out = [];
+  for (const [id, v] of Object.entries(rec.plugins || {})) {
+    const e = Array.isArray(v) ? (v.find((x) => x && x.scope === 'user') || v[0]) : v;
+    const name = id.split('@')[0];
+    if (!e || !e.installPath || on[id] === false || name.startsWith('paas-brain-') || !fs.existsSync(e.installPath)) continue;
+    out.push({ id, name, dir: e.installPath });
+  }
+  return out;
+}
+
 function skills() {
   const dir = path.join(C, 'skills');
   let names = [];
@@ -186,6 +201,14 @@ function skills() {
       const teamPath = path.join(t.dir, 'skills', n, 'SKILL.md');
       const f = frontmatter(read(teamPath, 60000));
       if (f.description) out.push({ dir: n, shared: false, name: f.name || n, description: f.description, when: f.when_to_use || '', mine: false, source: 'team', teamPath });
+    }
+  }
+  for (const p of otherPlugins()) {                          // other plugins' skills: read-only here, /<plugin>:<skill> in a chat
+    let pn = [];
+    try { pn = fs.readdirSync(path.join(p.dir, 'skills')); } catch { /* no skills */ }
+    for (const n of pn) {
+      const f = frontmatter(read(path.join(p.dir, 'skills', n, 'SKILL.md'), 60000) || '');
+      if (f.description) out.push({ dir: n, shared: false, name: `${p.name}:${f.name || n}`, description: f.description, when: f.when_to_use || '', mine: false, source: 'plugin', plugin: p.name });
     }
   }
   return out.sort((a, b) => a.name.localeCompare(b.name));
@@ -212,6 +235,14 @@ function agents() {
       const teamPath = path.join(t.dir, 'agents', n);
       const f = frontmatter(read(teamPath, 4000));
       out.push({ file, mine: false, source: 'team', shared: false, name: f.name || file, description: f.description || '', tools: info(f), model: f.model || '', teamPath });
+    }
+  }
+  for (const p of otherPlugins()) {                          // other plugins' agents, read-only here
+    let pn = [];
+    try { pn = fs.readdirSync(path.join(p.dir, 'agents')).filter((n) => n.endsWith('.md')); } catch { /* no agents */ }
+    for (const n of pn) {
+      const f = frontmatter(read(path.join(p.dir, 'agents', n), 4000) || '');
+      out.push({ file: n.replace(/\.md$/, ''), mine: false, source: 'plugin', plugin: p.name, shared: false, name: `${p.name}:${f.name || n.replace(/\.md$/, '')}`, description: f.description || '', tools: info(f), model: f.model || '' });
     }
   }
   return out;
@@ -253,15 +284,18 @@ const WHEN = { PreToolUse: 'Before a tool runs', PostToolUse: 'After a tool runs
 function hooks() {
   const off = hooksOff();
   const out = [];
-  for (const [source, file] of [['shared', MANAGED], ['yours', path.join(C, 'settings.json')]]) {
+  const files = [['shared', MANAGED], ['yours', path.join(C, 'settings.json')],
+    ...otherPlugins().map((pl) => [`plugin ${pl.name}`, path.join(pl.dir, 'hooks', 'hooks.json')])];   // other plugins' hooks too
+  for (const [source, file] of files) {
     const s = json(file) || {};
+    const fromPlugin = source.startsWith('plugin ');
     for (const [event, groups] of Object.entries(s.hooks || {})) {
       for (const g of groups || []) {
         for (const h of g.hooks || []) {
           const command = String(h.command || '').replace(HOME, '~');
           const id = (/([\w-]+)\.py\b/.exec(command) || [])[1] || '';
           const [title, about, canToggle] = HOOK_INFO[id] || [command.length > 70 ? `${command.slice(0, 69)}…` : command, '', false];
-          out.push({ id, title, about, canToggle, on: !off.has(id), source, when: WHEN[event] || event, matcher: g.matcher || '*', command });
+          out.push({ id, title, about, canToggle: canToggle && !fromPlugin, on: fromPlugin || !off.has(id), source, when: WHEN[event] || event, matcher: g.matcher || '*', command });
         }
       }
     }
@@ -281,6 +315,10 @@ function mcpServers() {
   if (t) {
     const pj = json(path.join(t.dir, '.mcp.json')) || {};
     for (const [name, s] of Object.entries(pj.mcpServers || pj)) if (s && typeof s === 'object') out.push(row(name, s, 'team'));
+  }
+  for (const p of otherPlugins()) {                          // other plugins' MCP servers
+    const pj = json(path.join(p.dir, '.mcp.json')) || {};
+    for (const [name, s] of Object.entries(pj.mcpServers || pj)) if (s && typeof s === 'object') out.push({ ...row(name, s, 'plugin'), plugin: p.name });
   }
   const cfg = json(path.join(HOME, '.claude.json')) || {};
   for (const [name, s] of Object.entries(cfg.mcpServers || {})) if (!out.some((m) => m.name === name)) out.push(row(name, s, 'mine'));

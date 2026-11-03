@@ -30,6 +30,24 @@ os.makedirs(os.path.join(home, ".claude", "brain"), exist_ok=True)
 fake = os.path.join(home, "fakebin"); os.makedirs(fake)                     # a stand-in claude: the plugin commands are logged, not run
 open(os.path.join(fake, "claude"), "w").write("#!/bin/sh\necho \"$@\" >> \"$HOME/claude.log\"\n"); os.chmod(os.path.join(fake, "claude"), 0o755)
 env["PATH"] = fake + os.pathsep + env["PATH"]
+# plugins installed with claude plugin install (Claude Code's own record): one on, one switched off; the Brain tab lists the
+# first one's skills, agents, MCP servers and hooks read-only, and the Market reads the same record without running claude
+plug_on = os.path.join(work, "plug-on")
+os.makedirs(os.path.join(plug_on, "skills", "tidy-up")); os.makedirs(os.path.join(plug_on, "agents")); os.makedirs(os.path.join(plug_on, "hooks"))
+open(os.path.join(plug_on, "skills", "tidy-up", "SKILL.md"), "w").write("---\nname: tidy-up\ndescription: Tidy a folder\n---\nbody\n")
+open(os.path.join(plug_on, "agents", "helper.md"), "w").write("---\nname: helper\ndescription: A helper agent\n---\nbody\n")
+open(os.path.join(plug_on, ".mcp.json"), "w").write(json.dumps({"mcpServers": {"tidy-mcp": {"command": "tidy-server"}}}))
+open(os.path.join(plug_on, "hooks", "hooks.json"), "w").write(json.dumps({"hooks": {"PostToolUse": [{"matcher": "Edit", "hooks": [{"type": "command", "command": "tidy-hook.sh"}]}]}}))
+plug_off = os.path.join(work, "plug-off"); os.makedirs(os.path.join(plug_off, "skills", "hidden-skill"))
+open(os.path.join(plug_off, "skills", "hidden-skill", "SKILL.md"), "w").write("---\nname: hidden-skill\ndescription: Off\n---\n")
+os.makedirs(os.path.join(home, ".claude", "plugins"))
+json.dump({"version": 2, "plugins": {"tidy@brain-dev": [{"scope": "user", "installPath": plug_on}],
+                                     "hidden@brain-dev": [{"scope": "user", "installPath": plug_off}]}},
+          open(os.path.join(home, ".claude", "plugins", "installed_plugins.json"), "w"))
+st = os.path.join(home, ".claude", "settings.json")
+cur = json.load(open(st)) if os.path.exists(st) else {}
+cur["enabledPlugins"] = {"hidden@brain-dev": False}
+json.dump(cur, open(st, "w"))
 proc = subprocess.Popen(["node", SERVER], env=env, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
 line = proc.stdout.readline()
 port = json.loads(line)["port"]
@@ -74,6 +92,21 @@ try:
     mcp = {m["name"]: m for m in call("GET", "overview")["mcp"]}      # the team plugin's servers are listed, not only ~/.claude.json's
     assert mcp.get("docs-local", {}).get("source") == "team" and mcp.get("powermax", {}).get("target") == "http://pm.example:8000/mcp", mcp
     assert "tok-123456" not in r["out"], r      # the token travels on stdin, never in the tool's output
+    ov = call("GET", "overview")
+    sk = {x["name"]: x for x in ov["skills"]}; ag = {x["name"]: x for x in ov["agents"]}; mc = {x["name"]: x for x in ov["mcp"]}
+    assert sk.get("tidy:tidy-up", {}).get("source") == "plugin" and "tidy:hidden-skill" not in sk and "hidden:hidden-skill" not in sk, sorted(sk)
+    assert ag.get("tidy:helper", {}).get("plugin") == "tidy" and mc.get("tidy-mcp", {}).get("plugin") == "tidy", (sorted(ag), sorted(mc))
+    hk = [h for h in ov["hooks"] if h["source"] == "plugin tidy"]
+    assert hk and hk[0]["command"] == "tidy-hook.sh" and hk[0]["canToggle"] is False, ov["hooks"]
+    sys.path.insert(0, os.path.join(R, "brain", "marketplace"))     # the Market reads the same record, without running claude
+    os.environ["HOME"], _old_home = home, os.environ.get("HOME")
+    try:
+        import importlib; pm = importlib.import_module("paas_market"); pm.CLAUDE = os.path.join(home, ".claude")
+        pm.PLUGINS = os.path.join(R, "brain", "plugins")                # this VM's plugin marketplace: brain-dev
+        pm.claude_cmd = lambda *a, **k: (_ for _ in ()).throw(AssertionError("claude must not be run"))
+        assert pm.installed_plugins() == {"tidy": True, "hidden": False}, pm.installed_plugins()   # no claude call needed
+    finally:
+        os.environ["HOME"] = _old_home or ""
     r = call("POST", "team-sync")
     assert r["ok"] and "in sync" in r["out"], r
     r = call("POST", "team-add", {"name": "nas", "url": os.path.join(work, "sources", "nas")})
