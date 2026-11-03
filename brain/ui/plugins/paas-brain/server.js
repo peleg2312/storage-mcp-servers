@@ -33,7 +33,7 @@ const oneLine = (v, max) => String(v || '').replace(/\s+/g, ' ').trim().slice(0,
 const read = (p, max = 200000) => { try { return fs.readFileSync(p, 'utf8').slice(0, max); } catch { return null; } };
 const json = (p) => { try { return JSON.parse(fs.readFileSync(p, 'utf8')); } catch { return null; } };
 const run = (cmd, args, timeout = 120000, extraEnv = {}) => new Promise((resolve) => {
-  execFile(cmd, args, { timeout, maxBuffer: 20 * 1024 * 1024, env: { ...process.env, GIT_TERMINAL_PROMPT: '0', PATH: `${HOME}/.local/bin:${process.env.PATH}`, ...extraEnv } },
+  execFile(cmd, args, { timeout, cwd: HOME || '/', maxBuffer: 20 * 1024 * 1024, env: { ...process.env, GIT_TERMINAL_PROMPT: '0', PATH: `${HOME}/.local/bin:${process.env.PATH}`, ...extraEnv } },
     (err, stdout, stderr) => resolve({ ok: !err, out: `${stdout}${stderr}`.trim() }));
 });
 
@@ -532,7 +532,7 @@ const routes = {
   'POST /share': async (_q, b) => {
     if (!MARKET_BIN || !['skill', 'agent', 'mcp'].includes(b.kind) || !/^[a-z0-9][a-z0-9_.-]{0,60}$/.test(String(b.name || ''))) return { ok: false, out: 'Cannot share that' };
     return new Promise((resolve) => execFile('python3', [MARKET_BIN, b.unshare ? 'unshare' : 'share', `${b.kind}/${b.name}`],
-      { timeout: 60000, env: { ...process.env, PAAS_DESCRIPTION: oneLine(b.description, 1000) } },
+      { timeout: 60000, cwd: HOME || '/', env: { ...process.env, PAAS_DESCRIPTION: oneLine(b.description, 1000) } },
       (err, stdout, stderr) => resolve({ ok: !err, out: `${stdout}${stderr}`.trim() })));
   },
   // team profiles (paas-team): list, switch, sync the active team's knowledge with its git remote
@@ -571,7 +571,7 @@ const routes = {
     if (Buffer.byteLength(payload) > 2 * 1024 * 1024) return { ok: false, out: 'The change is too large (2 MB at most)' };
     return new Promise((resolve) => {
       const child = execFile('python3', [TEAM_BIN, 'edit', name],
-        { timeout: 180000, maxBuffer: 20 * 1024 * 1024, env: { ...process.env, PATH: `${HOME}/.local/bin:${process.env.PATH}` } },
+        { timeout: 180000, cwd: HOME || '/', maxBuffer: 20 * 1024 * 1024, env: { ...process.env, PATH: `${HOME}/.local/bin:${process.env.PATH}` } },
         (err, stdout, stderr) => resolve({ ok: !err, out: `${stdout}${stderr}`.trim() }));
       child.stdin.on('error', () => { /* the child exited before reading: its exit code reports it */ });
       child.stdin.end(payload);

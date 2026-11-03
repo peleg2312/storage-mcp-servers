@@ -811,7 +811,7 @@ def claude_cmd(*args, cwd=None):
     # the claude the web UI itself runs (CLAUDE_CLI_PATH), so the Market and the chats see the same plugins
     claude = os.environ.get("CLAUDE_CLI_PATH") or shutil.which("claude") or os.path.expanduser("~/.local/bin/claude")
     try:
-        return subprocess.run([claude, *args], capture_output=True, text=True, timeout=120, cwd=cwd)
+        return subprocess.run([claude, *args], capture_output=True, text=True, timeout=120, cwd=cwd or os.path.expanduser("~"))
     except (OSError, subprocess.TimeoutExpired) as e:
         return subprocess.CompletedProcess(args, 1, "", str(e))
 

@@ -60,7 +60,7 @@ function brain() {
   }
   const nc = path.join(CL, 'hooks', 'notes-check.py');
   if (fs.existsSync(nc)) {
-    const run = (arg) => spawnSync('python3', [nc, ...arg], { encoding: 'utf8', timeout: 10000 });
+    const run = (arg) => spawnSync('python3', [nc, ...arg], { encoding: 'utf8', timeout: 10000, cwd: HOME });
     const sc = run(['--scan']);
     add('Notes', 'No secrets', sc.status === 0 ? 'ok' : 'fail', sc.status === 0 ? 'notes and captures are clean' : (sc.stdout || '').split('\n')[0] || `check failed (exit ${sc.status ?? 'timeout'})`,
       'Open the file in the Brain tab, Memory, and replace the value with <REDACTED>.');

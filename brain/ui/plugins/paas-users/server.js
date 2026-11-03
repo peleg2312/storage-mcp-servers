@@ -7,7 +7,7 @@ import { execFile } from 'node:child_process';
 const BIN = process.env.PAAS_USER_BIN || ['/opt/paas/bin/paas-user', '/usr/local/sbin/paas-user'].find((p) => fs.existsSync(p)) || 'paas-user';
 const NAME = /^[a-z0-9_][a-z0-9_.-]{0,31}$/;
 const run = (args, input) => new Promise((resolve) => {
-  const p = execFile(BIN, args, { timeout: 120000, maxBuffer: 4 << 20 }, (err, stdout, stderr) => resolve({ ok: !err, out: `${stdout}${stderr}`.trim(), stdout: String(stdout) }));
+  const p = execFile(BIN, args, { timeout: 120000, cwd: '/', maxBuffer: 4 << 20 }, (err, stdout, stderr) => resolve({ ok: !err, out: `${stdout}${stderr}`.trim(), stdout: String(stdout) }));
   p.stdin.end(input ? `${input}\n` : '');
 });
 
