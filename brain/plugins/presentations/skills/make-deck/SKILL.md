@@ -1,11 +1,14 @@
 ---
 name: make-deck
-description: Designed PowerPoint decks (.pptx, editable, native charts and tables) from any topic, investigation, report or data - you write a short JSON outline, ~/.claude/tools/deck.py does the design (themes or the company template). Triggers - "presentation", "PowerPoint", "pptx", "slides", "deck", "make it a presentation for management / the team"
+description: Designed PowerPoint decks (.pptx, editable, native charts and tables) from any topic, investigation, report, document or data - you write a short JSON outline, the deck MCP tools do the design (a look per deck, or the company template) and check it. Triggers - "presentation", "PowerPoint", "pptx", "slides", "deck", "make it a presentation for management / the team", "restyle this deck"
 ---
-# Designed decks (`~/.claude/tools/deck.py`)
+# Designed decks (the `deck` MCP server of this plugin)
 
-You write the **content** as a JSON outline; the tool does the **design**: layout, fonts, colours, native charts
+You write the **content** as a JSON outline; the tools do the **design**: layout, fonts, colours, native charts
 with their data, styled tables, text fitted to its box, page numbers. Never draw slides with python-pptx yourself.
+Tools: `deck_guide` (rules, types, example), `deck_build`, `deck_read` (any .pptx back as text), `deck_icons`,
+`deck_deliver`. A long deck from many facts: hand the facts to the `deck-designer` agent (its own context).
+Without the MCP server (not loaded): the same with `python3 ~/.claude/tools/deck.py <outline.json> [--json]`.
 
 ## 1. Content first
 - Facts only from tool results, reports or documents in this session (golden rule 2); numbers you chart come from
@@ -17,8 +20,9 @@ with their data, styled tables, text fitted to its box, page numbers. Never draw
 - Short: 3-6 bullets of one line each; card / step / milestone texts are one sentence.
 
 ## 2. Write the outline
-`python3 ~/.claude/tools/deck.py --example` prints a spec with every slide type: start from it. Save yours as
-`~/storage-reports/<date>-<topic>/deck.json` (no spaces in the folder name).
+`deck_guide` returns the rules and an example with every slide type: start from it. `deck_build` saves the outline
+as `~/storage-reports/<date>-<title>/deck.json` and the deck beside it. To restyle the user's own deck: `deck_read`
+it, rewrite its content as an outline, build.
 
 | type | fields | use for |
 |---|---|---|
@@ -59,17 +63,15 @@ Every slide takes `notes` (speaker notes). Deck fields: `title`, `footer`, `styl
   themselves; `heat` tints a numeric column by value (used %, latency); `total: true` styles the last row as a total.
 - Rhythm: vary the slide types (a hero after the stats, a chart, then cards); never three bullet slides in a row.
 
-## 3. Build, then fix every WARN
-```bash
-python3 ~/.claude/tools/deck.py ~/storage-reports/<dir>/deck.json --out ~/storage-reports/<dir>/ [--template <company.pptx>] [--preview]
-```
-- `WARN` lines (text that does not fit, too many bullets, long titles, crowded charts): shorten or split in the
-  JSON and run again until `checks: ok`. Never deliver with WARN lines left.
-- **Company look**: `--template` with the company deck or .potx (its master, logo, colours, fonts and layouts).
-  Ask the user for the path once and keep it in `notes/tools.md`.
-- `--preview` (when LibreOffice is installed) writes `preview/contact-sheet.png` and one PNG per slide: if you can
-  view images, look at the sheet and fix what looks wrong; else rely on the WARN checks.
+## 3. Build, then fix every warning
+`deck_build {spec, style, template?, look?, preview?}` returns the path, the look number, the slide list and
+`warnings` (text that does not fit, too many bullets, long titles, crowded charts): shorten or split in the outline
+and build again until `warnings` is empty. Never deliver with warnings left.
+- **Company look**: `template` = the company deck or .potx (its master, logo, colours, fonts and layouts). Ask the
+  user for the path once and keep it in `notes/tools.md`.
+- `preview: true` (LibreOffice installed) renders `preview/contact-sheet.png`: if you can view images, look at it and
+  fix what looks wrong; else `deck_read` the result and check the text.
 
 ## 4. Deliver
-`python3 ~/.claude/tools/report.py --send <file>.pptx` (to the PC / Reports tab), then answer with the file as a
-Markdown link to its full path, the slide list (one line each) and what the user should check (numbers, names).
+`deck_deliver` the path (to the PC / Reports tab), then answer with the file as a Markdown link to its full path, the
+look number, the slide list (one line each) and what the user should check (numbers, names).

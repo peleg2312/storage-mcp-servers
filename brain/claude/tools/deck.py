@@ -1598,6 +1598,31 @@ def preview(path):
         return pngs, None
 
 
+def outline(path):
+    """every slide's texts (titles first, tables as rows), its layout name and notes: to read a deck back, a text-only check"""
+    prs = Presentation(os.path.expanduser(path))
+    out = []
+    for i, s in enumerate(prs.slides, 1):
+        texts, tables, charts = [], [], []
+        for sh in s.shapes:
+            if sh.has_text_frame and sh.text_frame.text.strip() and not sh.name.startswith(("icon ", "decor")):
+                texts.append(sh.text_frame.text.strip())
+            if getattr(sh, "has_table", False) and sh.has_table:
+                tables.append([[c.text for c in r.cells] for r in sh.table.rows])
+            if getattr(sh, "has_chart", False) and sh.has_chart:
+                p = sh.chart.plots[0]
+                charts.append({"categories": [str(c) for c in p.categories], "series": [{"name": se.name, "values": list(se.values)} for se in p.series]})
+        row = {"n": i, "layout": s.slide_layout.name, "texts": texts}
+        if tables:
+            row["tables"] = tables
+        if charts:
+            row["charts"] = charts
+        if s.has_notes_slide and s.notes_slide.notes_text_frame.text.strip():
+            row["notes"] = s.notes_slide.notes_text_frame.text.strip()
+        out.append(row)
+    return {"path": path, "slides": len(out), "size": [round(prs.slide_width / 914400, 2), round(prs.slide_height / 914400, 2)], "deck": out}
+
+
 def main(argv):
     import argparse
     ap = argparse.ArgumentParser(prog="deck.py", description=__doc__.split("\n")[0])
@@ -1611,7 +1636,12 @@ def main(argv):
     ap.add_argument("--preview", action="store_true")
     ap.add_argument("--example", action="store_true")
     ap.add_argument("--themes", action="store_true")
+    ap.add_argument("--json", action="store_true", help="the result as one JSON object (the deck MCP server reads it)")
+    ap.add_argument("--outline", metavar="PPTX", help="the text of every slide of any .pptx, as JSON")
     a = ap.parse_args(argv)
+    if a.outline:
+        print(json.dumps(outline(a.outline), indent=1, ensure_ascii=False))
+        return 0
     if a.example:
         print(json.dumps(EXAMPLE, indent=1, ensure_ascii=False))
         return 0
@@ -1637,6 +1667,15 @@ def main(argv):
     path = out if out.endswith(".pptx") else os.path.join(out, name + ".pptx")
     os.makedirs(os.path.dirname(path) or ".", exist_ok=True)
     prs.save(path)
+    if a.json:
+        res = {"path": path, "slides": d.n, "look": d.look["seed"], "style": d.style, "palette": d.theme_name, "fonts": d.t["head"],
+               "warnings": d.warn, "outline": [{"n": i + 1, "type": sl.get("type", "bullets"), "title": plain(sl.get("title", sl.get("value", "")))}
+                                               for i, sl in enumerate(spec["slides"])]}
+        if a.preview:
+            files, why = preview(path)
+            res["preview"] = files[0] if files else why
+        print(json.dumps(res, ensure_ascii=False))
+        return 0
     print(f"deck: {path} ({d.n} slides)")
     print(f"look: {d.look['seed']} ({d.style}, {d.theme_name}, {d.t['head']}); the same again: \"look\": {d.look['seed']}, another: \"look\": \"random\"")
     for w in d.warn:

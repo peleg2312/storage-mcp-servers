@@ -7,6 +7,15 @@
   },
   "plugins": [
     {
+      "name": "presentations",
+      "description": "Designed, editable PowerPoint decks offline: the deck MCP server (outline in, .pptx out, with checks), the make-deck skill, the deck-designer agent and /presentations:deck",
+      "author": {
+        "name": "storage brain"
+      },
+      "source": "./presentations",
+      "category": "productivity"
+    },
+    {
       "name": "commit-commands",
       "description": "Commands for git commit workflows including commit, push, and PR creation",
       "author": {

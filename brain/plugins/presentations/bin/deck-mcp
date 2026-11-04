@@ -1,0 +1,8 @@
+#!/bin/sh
+# The presentations plugin's MCP server: the brain's deck tools (deck_mcp.py, deck.py, deck_icons.py) from ~/.claude/tools,
+# else the multi-user VM's shared /opt/paas/tools. They need python-pptx in the devtools venv (brain/devtools).
+for d in "${CLAUDE_HOME:-$HOME/.claude}/tools" /opt/paas/tools; do
+  [ -f "$d/deck_mcp.py" ] && exec python3 "$d/deck_mcp.py"
+done
+echo "presentations: deck_mcp.py not found in ~/.claude/tools or /opt/paas/tools (install the storage brain: brain/install.sh)" >&2
+exit 1

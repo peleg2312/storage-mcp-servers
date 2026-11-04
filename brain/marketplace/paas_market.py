@@ -1009,11 +1009,13 @@ def publish(brain, mcp_file=None):
     dfile = os.path.join(MARKET, "defaults.json")
     if not os.path.exists(dfile):
         json.dump(["skill/docs-lookup", "skill/explain-error", "skill/report-export", "skill/brain-health",
-                   "agent/docs-researcher", "agent/Explore", "mcp/docs-local"], open(dfile, "w"), indent=2)
+                   "agent/docs-researcher", "agent/Explore", "mcp/docs-local", "plugin/presentations"], open(dfile, "w"), indent=2)
     else:                                       # Explore on Haiku (replaces the built-in one) for every new account
         ids = json.load(open(dfile))
-        if "agent/Explore" not in ids:
-            json.dump(ids + ["agent/Explore"], open(dfile, "w"), indent=2)
+        for new in ("agent/Explore", "plugin/presentations"):   # Explore on Haiku; the PowerPoint plugin
+            if new not in ids:
+                ids.append(new)
+        json.dump(ids, open(dfile, "w"), indent=2)
     print(f"published {len(load_index())} items to {MARKET}")
 
 

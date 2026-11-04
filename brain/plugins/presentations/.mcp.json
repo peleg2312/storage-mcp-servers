@@ -1,0 +1,7 @@
+{
+  "mcpServers": {
+    "deck": {
+      "command": "${CLAUDE_PLUGIN_ROOT}/bin/deck-mcp"
+    }
+  }
+}

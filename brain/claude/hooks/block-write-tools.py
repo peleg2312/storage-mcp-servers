@@ -518,6 +518,8 @@ def decide(data):
         return 0
     if re.match(r"mcp__docs-(local|search|http-[a-z0-9_-]+)__", name):    # read-only documentation search: the query text may say "create view" / "grant"
         return 0
+    if re.match(r"mcp__(plugin_presentations_)?deck__deck_(guide|build|read|icons|deliver)$", name):   # decks under ~/storage-reports: no infrastructure
+        return 0
     tool_input = data.get("tool_input") or {}
     if re.fullmatch(r"mcp__databases__(pg_execute|mongo_write)", name):
         # the user's own application databases (writable connections only, the server checks): confirm each write

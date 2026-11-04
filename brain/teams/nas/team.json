@@ -24,8 +24,7 @@
     "nas-replication-check",
     "smartconnect-check",
     "vast-view-check",
-    "nas-morning-check",
-    "make-deck"
+    "nas-morning-check"
   ],
   "agents": [
     "Explore",

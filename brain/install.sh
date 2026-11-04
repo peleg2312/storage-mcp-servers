@@ -95,7 +95,7 @@ cp "$SRC/hooks/block-write-tools.py" "$SRC/hooks/session-start.py" "$SRC/hooks/d
   [ -f "$DST/brain/$f" ] || cp "$SRC/brain/$f" "$DST/brain/$f"
 done
 cp "$SRC/banner/paas-banner.py" "$SRC/banner/paas-statusline.py" "$DST/banner/"
-mkdir -p "$DST/tools/vendor" && cp "$SRC/tools/report.py" "$SRC/tools/deck.py" "$SRC/tools/deck_icons.py" "$SRC/tools/get-reports.ps1" "$SRC/tools/db_mcp.py" "$SRC/tools/add-docs" "$SRC/tools/paas-open" "$SRC/tools/paas-team" "$SRC/tools/paas-library" "$DST/tools/"
+mkdir -p "$DST/tools/vendor" && cp "$SRC/tools/report.py" "$SRC/tools/deck.py" "$SRC/tools/deck_icons.py" "$SRC/tools/deck_mcp.py" "$SRC/tools/get-reports.ps1" "$SRC/tools/db_mcp.py" "$SRC/tools/add-docs" "$SRC/tools/paas-open" "$SRC/tools/paas-team" "$SRC/tools/paas-library" "$DST/tools/"
 cp "$HERE/../docs-search-mcp/docs_index.py" "$DST/tools/"     # add-docs: your own documents into the library
 [ -f "$USER_DST/brain/databases.json" ] || cp "$SRC/tools/databases.example.json" "$USER_DST/brain/databases.example.json"
 cp "$SRC/tools/vendor/"*.whl "$DST/tools/vendor/"   # charts + Excel (report-export skill); pure-Python wheels, no pip
@@ -278,7 +278,7 @@ fi
 
 # Development: ruff + basedpyright (offline wheels) and Anthropic's official dev plugins (offline copy in
 # brain/plugins, copied to ~/.claude/brain/plugins: Claude Code reads plugins from the registered folder, so the repo can move).
-# Installed by default: pyright-lsp, security-guidance, dev-discipline, commit-commands (~300 tokens per session).
+# Installed by default: pyright-lsp, security-guidance, dev-discipline, commit-commands, presentations (PowerPoint decks).
 # The rest (pr-review-toolkit, feature-dev, mcp-server-dev) are opt-in: claude plugin install <name>@brain-dev
 # Dev tools and the banner wrapper are per user in both modes; plugins are user-scope only, so a project install skips them.
 PLUGDST=$USER_DST/brain/plugins
@@ -288,10 +288,10 @@ if [ -n "$PROJECT" ]; then
 elif command -v claude >/dev/null 2>&1; then
   claude plugin marketplace add "$PLUGDST" >/dev/null 2>&1 || claude plugin marketplace update brain-dev >/dev/null 2>&1 || true
   HAVE=$(claude plugin list 2>/dev/null || true)
-  for p in pyright-lsp security-guidance dev-discipline commit-commands; do
+  for p in pyright-lsp security-guidance dev-discipline commit-commands presentations; do
     case "$HAVE" in *"$p@brain-dev"*) ;; *) claude plugin install "$p@brain-dev" >/dev/null 2>&1 || echo "plugin $p: not installed (claude plugin install $p@brain-dev)" ;; esac
   done
-  echo "dev plugins: $(claude plugin list 2>/dev/null | grep -c '@brain-dev') from brain/plugins (4 by default; earlier installs keep any others until: claude plugin uninstall <name>@brain-dev)"
+  echo "dev plugins: $(claude plugin list 2>/dev/null | grep -c '@brain-dev') from brain/plugins (5 by default; earlier installs keep any others until: claude plugin uninstall <name>@brain-dev)"
 fi
 
 echo

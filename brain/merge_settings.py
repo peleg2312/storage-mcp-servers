@@ -100,8 +100,9 @@ for tool in ("WebFetch", "WebSearch", "NotebookEdit"):
     if tool not in deny:
         deny.append(tool)
 # Chrome DevTools plugin: drives the person's own Chrome (empty profile); its connector refuses infrastructure pages
-if "mcp__plugin_chrome-devtools_chrome-devtools" not in allow:
-    allow.append("mcp__plugin_chrome-devtools_chrome-devtools")
+for rule in ("mcp__plugin_chrome-devtools_chrome-devtools", "mcp__plugin_presentations_deck"):   # the deck tools write decks under ~/storage-reports only
+    if rule not in allow:
+        allow.append(rule)
 for srv in servers:
     rule = f"mcp__{srv}"
     if rule not in allow:

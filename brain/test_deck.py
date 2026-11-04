@@ -140,3 +140,45 @@ deck(f, "--out", os.path.join(tmp, "n.pptx"))
 assert Presentation(os.path.join(tmp, "n.pptx")).slides[0].notes_slide.notes_text_frame.text == "say this"
 print("notes ok")
 print("deck ok")
+
+# the deck MCP server (plugin presentations): tools listed, guide, build with warnings and without, read back, deliver only reports
+mcp = os.path.join(os.path.dirname(TOOL), "deck_mcp.py")
+
+
+def mcp_calls(*calls):
+    msgs = [{"jsonrpc": "2.0", "id": 0, "method": "initialize", "params": {"protocolVersion": "2025-06-18"}},
+            {"jsonrpc": "2.0", "method": "notifications/initialized"}, {"jsonrpc": "2.0", "id": 1, "method": "tools/list"}]
+    msgs += [{"jsonrpc": "2.0", "id": 10 + i, "method": "tools/call", "params": {"name": n, "arguments": a}} for i, (n, a) in enumerate(calls)]
+    r = subprocess.run([sys.executable, mcp], input="\n".join(json.dumps(m) for m in msgs) + "\n", capture_output=True, text=True,
+                       env=dict(os.environ, HOME=tmp), timeout=600)
+    out = [json.loads(line) for line in r.stdout.splitlines()]
+    assert [o["id"] for o in out] == [0, 1] + [10 + i for i in range(len(calls))], r.stdout[-500:] + r.stderr[-500:]
+    return out[1]["result"]["tools"], [json.loads(o["result"]["content"][0]["text"]) for o in out[2:]]
+
+
+short = {"title": "MCP test", "slides": [{"type": "title", "title": "MCP test"}, {"type": "bullets", "title": "x", "bullets": ["b%d" % i for i in range(8)]}]}
+fixed = {"title": "MCP test", "slides": [{"type": "title", "title": "MCP test"}, {"type": "bullets", "title": "x", "bullets": ["a", "b", "c"]}]}
+tools, (g, b1, b2, bad) = mcp_calls(("deck_guide", {}), ("deck_build", {"spec": short, "style": "bold"}),
+                                    ("deck_build", {"spec": json.dumps(fixed), "look": 5}), ("deck_build", {"spec": {"slides": []}}))
+assert {t["name"] for t in tools} == {"deck_guide", "deck_build", "deck_read", "deck_icons", "deck_deliver"}
+assert "TITLE SAYS THE CONCLUSION" in g["rules"] and g["example"]["slides"] and "database" in g["icons"]
+assert b1["warnings"] and "8 bullets" in b1["warnings"][0] and b1["style"] == "bold" and "fix each warning" in b1["next"]
+assert not b2["warnings"] and b2["look"] == 5 and b2["path"].startswith(os.path.join(tmp, "storage-reports")) and os.path.isfile(b2["path"])
+assert "error" in bad
+_, (rd, dl, nope) = mcp_calls(("deck_read", {"path": b2["path"]}), ("deck_deliver", {"path": b2["path"]}), ("deck_deliver", {"path": TOOL}))
+assert rd["slides"] == 2 and "MCP test" in rd["deck"][0]["texts"][0]
+assert "path" in dl and "error" in nope
+print("deck MCP server ok")
+
+# the plugin: manifest, MCP wiring, agent tools in the plugin's MCP names, the command, the skill moved here
+P = os.path.join(HERE, "plugins", "presentations")
+assert json.load(open(os.path.join(P, ".claude-plugin", "plugin.json")))["name"] == "presentations"
+assert json.load(open(os.path.join(P, ".mcp.json")))["mcpServers"]["deck"]["command"] == "${CLAUDE_PLUGIN_ROOT}/bin/deck-mcp"
+assert os.access(os.path.join(P, "bin", "deck-mcp"), os.X_OK)
+ag = open(os.path.join(P, "agents", "deck-designer.md")).read()
+assert all(f"mcp__plugin_presentations_deck__{t}" in ag for t in ("deck_guide", "deck_build", "deck_read", "deck_deliver"))
+assert os.path.isfile(os.path.join(P, "commands", "deck.md")) and os.path.isfile(os.path.join(P, "skills", "make-deck", "SKILL.md"))
+assert not os.path.exists(os.path.join(HERE, "claude", "skills", "make-deck")), "one make-deck skill: the plugin's"
+mk = json.load(open(os.path.join(HERE, "plugins", ".claude-plugin", "marketplace.json")))
+assert any(p["name"] == "presentations" and p["source"] == "./presentations" for p in mk["plugins"])
+print("presentations plugin ok")
