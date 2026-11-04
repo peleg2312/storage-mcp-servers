@@ -24,22 +24,33 @@ with their data, styled tables, text fitted to its box, page numbers. Never draw
 |---|---|---|
 | title | title, subtitle, meta | first slide |
 | agenda | items (≤ 7) | the parts |
-| section | title, subtitle | start of a part (its name becomes the small label above later titles) |
-| stats | stats [{value, label, delta, good}], note | 2-4 headline numbers |
-| chart | chart {kind, categories, series [{name, values}], unit, highlight, source, min, max}, takeaway | trends, comparisons; kind: column, bar, stacked, stacked_bar, line, area, pie, doughnut |
-| bullets | bullets [text or {text, sub: [..]}], takeaway | reasons, findings |
-| cards | cards [{title, text, icon}] (2-6) | options, checks, pillars (icon: a short value like "90 TB") |
+| section | title, subtitle, icon | start of a part (its name becomes the small label above later titles) |
+| hero | value, text, sub, icon | ONE big number or statement on a full-colour slide ("14 months" / "until full") |
+| stats | stats [{value, label, delta, good, progress, icon}], note | 2-4 headline numbers (progress "78%" draws a bar) |
+| chart | chart {kind, categories, series [{name, values}], unit, highlight, target, target_label, source, min, max}, takeaway, icon | trends, comparisons; kind: column, bar, stacked, stacked_bar, line, area, pie, doughnut |
+| bullets | bullets [text or {text, sub: [..]}], takeaway, icon | reasons, findings |
+| cards | cards [{title, text, icon, value}] (2-6) | options, checks, pillars (value: "90 TB" beside the icon) |
+| iconlist | items [{icon, title, text}] (2-6) | checks, principles, features |
 | compare | left / right {title, bullets}, verdict | A vs B, before / after |
-| table | columns, rows, highlight (row index), note | ≤ 12 rows, ≤ 7 columns (more: the Excel export) |
-| timeline | items [{date, title, text, done}] (3-6) | plan, history (done: false greys future items) |
+| table | columns, rows, highlight (row index), heat [column names], total, zebra, note | ≤ 12 rows, ≤ 7 columns (more: the Excel export) |
+| timeline | items [{date, title, text, done, icon}] (3-6) | plan, history (done: false greys future items) |
 | process | steps [{title, text}] (3-5) | procedures, flows |
 | quote | quote, by | one strong statement |
 | image | image (path), caption | a screenshot or diagram file |
 | closing | title, subtitle, bullets, contact | the ask, next steps |
 
 Every slide takes `notes` (speaker notes). Deck fields: `title`, `theme` (midnight, graphite, ocean, emerald,
-sunset, light), `footer`, `template` (company .pptx / .potx), `colors` / `fonts` overrides.
-Charts: one measure per chart; `highlight` a category to make it the only strong bar; ≤ 5 series, a pie ≤ 6 slices.
+sunset, light), `style` (**clean**: calm, light slides; **bold**: gradients, colour panels, split layouts - for
+management and kick-offs), `footer`, `template` (company .pptx / .potx), `colors` / `fonts` overrides.
+- **Icons** (`deck.py --icons`): database, server, disk, network, switch, cloud, shield, lock, check, alert, error,
+  clock, calendar, chart, trend-up, gauge, money, users, gear, search, archive, replication, rocket, idea... (aliases:
+  storage, backup, dr, risk, cost, team...). Give one icon per card / stat / list item, matching its meaning.
+- **Charts**: one measure per chart; `highlight` a category to make it the only strong bar; `target` draws a dashed
+  limit line (capacity 80%, an SLA); a line chart names each series at its end (no legend); a doughnut shows its total
+  in the middle; ≤ 5 series, a pie ≤ 6 slices; `unit` "%", "TB", "ms"...
+- **Tables**: status words (OK, Healthy, Warning, Degraded, Failed, Down, In sync, Lagging...) are coloured by
+  themselves; `heat` tints a numeric column by value (used %, latency); `total: true` styles the last row as a total.
+- Rhythm: vary the slide types (a hero after the stats, a chart, then cards); never three bullet slides in a row.
 
 ## 3. Build, then fix every WARN
 ```bash

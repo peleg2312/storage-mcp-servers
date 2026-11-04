@@ -5,6 +5,7 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 TOOL = os.path.join(HERE, "claude", "tools", "deck.py")
 try:
     from pptx import Presentation
+    from pptx.oxml.ns import qn
     from pptx.util import Inches
 except ImportError:
     for v in (os.path.expanduser("~/.claude/devtools-venv"), "/opt/paas/devtools-venv"):
@@ -29,26 +30,38 @@ spec = os.path.join(tmp, "ex.json")
 json.dump(ex, open(spec, "w"))
 
 # every theme: builds, every check passes on the example, 16:9, native charts and tables, nothing drawn as a picture
-for theme in ("midnight", "graphite", "ocean", "emerald", "sunset", "light"):
-    out = os.path.join(tmp, theme + ".pptx")
-    o = deck(spec, "--theme", theme, "--out", out)
+for theme, style in (("midnight", "clean"), ("graphite", "bold"), ("ocean", "clean"), ("emerald", "bold"), ("sunset", "clean"),
+                     ("light", "bold"), ("midnight", "bold"), ("light", "clean")):
+    out = os.path.join(tmp, f"{theme}-{style}.pptx")
+    o = deck(spec, "--theme", theme, "--style", style, "--out", out)
     assert "checks: ok" in o and "WARN" not in o, (theme, o)
     p = Presentation(out)
     assert len(p.slides) == len(ex["slides"]) and round(p.slide_width / 914400, 2) == 13.33
     shapes = [sh for s in p.slides for sh in s.shapes]
-    assert sum(sh.has_chart for sh in shapes) == 2 and sum(sh.has_table for sh in shapes) == 1
+    assert sum(sh.has_chart for sh in shapes) == 3 and sum(sh.has_table for sh in shapes) == 1
+    icons = [sh for sh in shapes if sh.name.startswith("icon ")]
+    assert len(icons) >= 15 and all(sh._element.spPr.find(qn("a:custGeom")) is not None for sh in icons), (theme, len(icons))
+    assert sum(sh.name == "target line" for sh in shapes) == 1
     assert not any(sh.shape_type == 13 for sh in shapes), "a picture where native shapes belong"
     for s in p.slides:                                   # every shape inside the slide
         for sh in s.shapes:
             if not sh.name.startswith("decor"):        # the decorative circles bleed off on purpose
                 assert sh.left >= 0 and sh.top >= 0 and sh.left + sh.width <= p.slide_width + 10 and sh.top + sh.height <= p.slide_height + 10, (theme, sh.name)
-print("themes ok:", len(types), "slide types")
+print("themes and styles ok:", len(types), "slide types")
 
 # the chart keeps its data (editable in PowerPoint) and the highlight
-p = Presentation(os.path.join(tmp, "midnight.pptx"))
+p = Presentation(os.path.join(tmp, "midnight-clean.pptx"))
 ch = next(sh.chart for s in p.slides for sh in s.shapes if sh.has_chart)
 assert list(ch.plots[0].categories) == ["PMAX-A", "PMAX-B", "ONTAP-1", "ONTAP-2"] and list(ch.plots[0].series[0].values) == [160, 70, 55, 30]
-print("chart data ok")
+# a line chart names its series at the last point (no legend); a table colours status words and keeps the total row plain
+line = [sh.chart for s in p.slides for sh in s.shapes if sh.has_chart][1]
+assert not line.has_legend and line.plots[0].series[0].points[5].data_label.text_frame.text.startswith("PMAX-A")
+tbl = next(sh.table for s in p.slides for sh in s.shapes if sh.has_table)
+assert tbl.cell(4, 4).text.endswith("Failed") and tbl.cell(4, 4).text_frame.paragraphs[0].runs[0].text == "\u25CF "
+print("chart data, direct labels, table status ok")
+o = deck("--icons")
+assert "database" in o and "storage=database" in o
+print("icons list ok")
 
 # the default output goes to ~/storage-reports/<date>-<slug>/<slug>.pptx
 o = deck(spec)
@@ -85,7 +98,7 @@ t = Presentation()
 t.slides.add_slide(t.slide_layouts[0]).shapes.title.text = "old slide"
 t.save(tpl)
 out = os.path.join(tmp, "corp-deck.pptx")
-o = deck(spec, "--template", tpl, "--out", out)
+o = deck(spec, "--template", tpl, "--style", "bold", "--out", out)
 assert "checks: ok" in o, o
 p = Presentation(out)
 assert p.slide_width == Inches(10) and len(p.slides) == len(ex["slides"])
