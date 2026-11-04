@@ -13,15 +13,17 @@ is moving the old team accounts' notes into the team repositories, and the thing
   team's MCP servers. Its memory (notes, environment, tool map, captures, incidents) is shared by the whole team through a
   git repository; every saved note is committed with the person's name and pushed, every session start pulls.
 - Idle web UI instances stop after 60 minutes and restart on the next request; each person has a CPU and memory budget.
-- The packed docs library in git is still version 2026.10.25b (indexed 24 October): Dell, NetApp, Cisco, Kubernetes, five
-  VMware KB pages, the PowerScale Info Hub papers, no VAST. The VAST documentation and the VMware KB pages and vSphere
-  guides were synced and tested on the PC on 31 October but not repacked, so a VM does not have them yet (see "Later").
-  The MCP server images are unchanged.
+- The packed docs library is version 2026.11.01 (indexed 1 November): 67,063 unique documents. New since 2026.10.25b: VAST
+  (documentation, KB, REST API 5.5), the VMware KB storage articles, the vSphere 7, 8 and 9 storage, monitoring and release-note
+  guides, the NetApp NAS and S3 KB, the PowerScale OneFS 9.10 manuals, and the PowerMax and other PDF guides indexed in full.
+  Not in it: the OneFS event reference, security guide and release notes, which need a Dell sign-in.
+- The MCP server images are rebuilt from the current servers: docs-search-mcp 1.2, mds-mcp 2.3, powermax-mcp 2.1,
+  powerflex-mcp 1.1, ucsc-mcp 2.3. They matter only for a cluster deployment: a VM runs the servers from the repository.
 
 ## What you do not need to do
 
-- No library work on the VM: `library/` and `images/` in git did not change since 30.10. When you copy the repository to
-  the VM instead of pulling, those two folders (1.3 GB) can be skipped, unless you repack the library first (below).
+- No library work on the VM: the upgrade command installs the new version into `/opt/paas/library` for everyone (a minute).
+  Copy `library/` this time (1.1 GB), since it changed; `images/` can be skipped unless you deploy on a cluster.
 - No account re-creation, no edits to hooks, managed settings or systemd units by hand: the installer regenerates them.
   Your own settings stay: the accounts and their ports, the API key, who may sign in, the marketplace servers you set up
   and the items people shared, the per-person budget, the docs port, the Chrome block list. A gate port or idle time you
@@ -45,11 +47,11 @@ is moving the old team accounts' notes into the team repositories, and the thing
 
 ## Getting the new version onto the VM (no git access there)
 
-Two ways. The **ZIP of the repository** from GitHub (Code, Download ZIP: 1.2 GB, mostly the unchanged library and image
+Two ways. The **ZIP of the repository** from GitHub (Code, Download ZIP: about 1.7 GB, mostly the library and image
 parts): unpack it into a new folder next to the old one and run the command from there. Or the **update pack**, built where
 git is (a PC with the repository): `sh scripts/update-pack.sh c014fbf` writes
-`storage-mcp-servers-update-c014fbf-<head>.tar.gz` with every file that changed since 30.10 (about 190 MB with the rebuilt
-web UI bundle, half a megabyte without it: `--no-ui-bundle`), the list of removed files and an apply script. On the VM:
+`storage-mcp-servers-update-c014fbf-<head>.tar.gz` with every file that changed since 30.10 (about 1.6 GB: the new library and
+image parts and the rebuilt web UI bundle), the list of removed files and an apply script. On the VM:
 
 ```sh
 tar -xzf storage-mcp-servers-update-c014fbf-<head>.tar.gz
@@ -104,11 +106,6 @@ upgrade command again. Installers from this version on relabel by themselves.
 - `sh scripts/run_tests.sh` passes on the VM (the retrieval evals run when the built index exists).
 
 ## Later, when you want
-
-- The VAST and VMware documents on the VM: on the PC, RUNBOOK section 1 (`sync_vast.py`, `sync_techdocs.py`, `sync_web.py`),
-  then `docs_index.py`, `scripts/run_tests.sh` (the VAST + VMware retrieval set must pass) and `bundle/pack-library.sh`; commit
-  the new `library/` parts. On the VM the same upgrade command installs the new version into `/opt/paas/library` for everyone
-  (a minute); the NAS team's VAST skills answer from the library only from then on.
 
 - AD accounts: join, then `sh brain/multiuser/install-multiuser.sh --groups "<AD groups>"` (the other flags are remembered).
 - Laptops: the three `claude plugin` lines in README.md with the team's url, with the person's own GitLab login.

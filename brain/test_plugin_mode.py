@@ -20,9 +20,15 @@ work = tempfile.mkdtemp()
 home = os.path.join(work, "home")
 os.makedirs(os.path.join(home, ".claude", "tools"))
 ext = os.path.expanduser("~/.vscode/extensions")         # this Mac's claude launcher finds its binary under $HOME; a normal install needs no link
-if os.path.isdir(ext):
-    os.makedirs(os.path.join(home, ".vscode"))
-    os.symlink(ext, os.path.join(home, ".vscode", "extensions"))
+
+
+def link_launcher(h):
+    if os.path.isdir(ext):
+        os.makedirs(os.path.join(h, ".vscode"))
+        os.symlink(ext, os.path.join(h, ".vscode", "extensions"))
+
+
+link_launcher(home)
 shutil.copy(TOOL, os.path.join(home, ".claude", "tools", "paas-team"))
 subprocess.run([sys.executable, os.path.join(R, "brain", "teams", "publish.py"), "--all", "--to", os.path.join(work, "sources")], check=True, capture_output=True)
 env = dict(os.environ, HOME=home, PAAS_TEAMS=os.path.join(work, "sources"))
@@ -75,6 +81,7 @@ print("switch ok")
 # 3. brain/install.sh --team in plugin mode: settings.json carries no brain hook entries, the plugin runs them
 home2 = os.path.join(work, "home2")
 os.makedirs(home2)
+link_launcher(home2)
 env2 = dict(env, HOME=home2)
 r = subprocess.run(["sh", os.path.join(R, "brain", "install.sh"), "--no-library", "--team", "nas"], capture_output=True, text=True, env=env2, timeout=900)
 assert r.returncode == 0, (r.stdout[-1500:], r.stderr[-800:])
