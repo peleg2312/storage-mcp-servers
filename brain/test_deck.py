@@ -83,14 +83,17 @@ for needle in ("9 bullets", "does not fit", "card 1 text is long", "8 slices"):
 print("warnings ok")
 
 # errors are clear, no traceback
-for s, needle in (({"slides": [{"type": "nope"}]}, "unknown type"),
-                  ({"slides": [{"type": "chart", "chart": {"categories": ["a"], "series": [{"name": "s", "values": [1, 2]}]}}]}, "2 values for 1 categories"),
+for s, needle in (({"slides": [{"type": "chart", "chart": {"categories": ["a"], "series": [{"name": "s", "values": [1, 2]}]}}]}, "2 values for 1 categories"),
                   ({"slides": []}, '"slides"'), ({"theme": "pink", "slides": [{"type": "title"}]}, "unknown theme")):
     f = os.path.join(tmp, "e.json")
     json.dump(s, open(f, "w"))
     o = deck(f, "--out", os.path.join(tmp, "e.pptx"), ok=False)
     assert needle in o and "Traceback" not in o, o
 print("errors ok")
+f = os.path.join(tmp, "e.json")
+json.dump({"slides": [{"type": "nope", "title": "x", "bullets": ["a", "b"]}]}, open(f, "w"))
+o = deck(f, "--out", os.path.join(tmp, "e.pptx"))
+assert "fixed slide 1: type 'nope' -> 'bullets'" in o, o
 
 # company template: its size, layouts and theme fonts are used, its old slides are gone
 tpl = os.path.join(tmp, "corp.pptx")
@@ -161,14 +164,81 @@ fixed = {"title": "MCP test", "slides": [{"type": "title", "title": "MCP test"},
 tools, (g, b1, b2, bad) = mcp_calls(("deck_guide", {}), ("deck_build", {"spec": short, "style": "bold"}),
                                     ("deck_build", {"spec": json.dumps(fixed), "look": 5}), ("deck_build", {"spec": {"slides": []}}))
 assert {t["name"] for t in tools} == {"deck_guide", "deck_build", "deck_read", "deck_icons", "deck_deliver"}
-assert "TITLE SAYS THE CONCLUSION" in g["rules"] and g["example"]["slides"] and "database" in g["icons"]
-assert b1["warnings"] and "8 bullets" in b1["warnings"][0] and b1["style"] == "bold" and "fix each warning" in b1["next"]
+assert "SLIDE TYPES AND THEIR FIELDS" in g["rules"] and g["example"]["slides"] and "database" in g["icons"] and "copy" in g["next"]
+assert not b1["warnings"] and any("8 bullets -> 2 slides" in x for x in b1["fixed"]) and b1["style"] == "bold" and "deck_deliver" in b1["next"]
 assert not b2["warnings"] and b2["look"] == 5 and b2["path"].startswith(os.path.join(tmp, "storage-reports")) and os.path.isfile(b2["path"])
 assert "error" in bad
 _, (rd, dl, nope) = mcp_calls(("deck_read", {"path": b2["path"]}), ("deck_deliver", {"path": b2["path"]}), ("deck_deliver", {"path": TOOL}))
 assert rd["slides"] == 2 and "MCP test" in rd["deck"][0]["texts"][0]
 assert "path" in dl and "error" in nope
+# a Hebrew guide, an outline sent in a ```json fence, the outline sent as the arguments, a title too long: a warning to act on
+long = {"title": "x", "slides": [{"type": "bullets", "title": "A very long title " * 8, "bullets": ["a", "b", "c"]}]}
+_, (gh, fence, flat, lw) = mcp_calls(("deck_guide", {"lang": "he"}),
+                                     ("deck_build", {"spec": "```json\n" + json.dumps(fixed) + "\n```"}),
+                                     ("deck_build", dict(fixed)), ("deck_build", {"spec": long}))
+assert "סקירת" in gh["example"]["title"] and gh["example"]["slides"][0]["type"] == "title"
+assert fence.get("path") and flat.get("path"), (fence, flat)
+assert lw["warnings"] and "title is long" in lw["warnings"][0] and "change the outline" in lw["next"]
 print("deck MCP server ok")
+
+# right to left: a Hebrew outline gives RTL paragraphs with he-IL runs and a Hebrew-capable complex-script font, a mirrored
+# layout (the title on the right half), a table whose first column is on the right, chevrons pointing left
+he = json.loads(subprocess.run([sys.executable, TOOL, "--example", "he"], capture_output=True, text=True).stdout)
+hf = os.path.join(tmp, "he.json")
+json.dump(he, open(hf, "w"), ensure_ascii=False)
+he["slides"].append({"type": "process", "title": "תהליך שחזור", "steps": [{"title": "בחירה", "text": "הגיבוי האחרון"}, {"title": "בדיקה", "text": "BSL זמין"}, {"title": "שחזור", "text": "oc create"}]})
+json.dump(he, open(hf, "w"), ensure_ascii=False)
+o = deck(hf, "--out", os.path.join(tmp, "he.pptx"))
+assert "direction: right to left (he)" in o, o
+hp = Presentation(os.path.join(tmp, "he.pptx"))
+from pptx.oxml.ns import qn as _qn
+W = hp.slide_width
+rtl_paras = langs = 0
+for sl in hp.slides:
+    for sh in sl.shapes:
+        if sh.has_text_frame:
+            for para in sh.text_frame.paragraphs:
+                txt = "".join(r.text for r in para.runs)
+                if any("\u0590" <= ch <= "\u05FF" for ch in txt):
+                    assert para._p.pPr is not None and para._p.pPr.get("rtl") == "1", txt
+                    rtl_paras += 1
+                for r in para.runs:
+                    if any("\u0590" <= ch <= "\u05FF" for ch in r.text):
+                        assert r.font._rPr.get("lang") == "he-IL", r.text
+                        cs = r.font._rPr.find(_qn("a:cs"))
+                        assert cs is not None and cs.get("typeface") in ("Segoe UI", "Segoe UI Semibold", "Arial", "Tahoma"), r.text
+                        langs += 1
+                if txt == "312 TB":
+                    assert para._p.pPr is None or para._p.pPr.get("rtl") != "1", "a value alone keeps its own order"
+assert rtl_paras > 20 and langs > 20, (rtl_paras, langs)
+title = next(sh for sh in hp.slides[3].shapes if sh.has_text_frame and "97.8%" in sh.text_frame.text and sh.top < 914400 * 1.5)
+assert title.left + title.width > W * 0.9, "the title of a right-to-left slide starts at the right edge"
+tbl = next(sh for sl in hp.slides for sh in sl.shapes if getattr(sh, "has_table", False) and sh.has_table).table
+assert tbl.cell(0, len(tbl.columns) - 1).text == "MediaAgent", "the first column is on the right"
+chev = [sh for sh in hp.slides[-1].shapes if sh._element.tag == _qn("p:sp") and sh._element.spPr.find(_qn("a:prstGeom")) is not None
+        and sh._element.spPr.find(_qn("a:prstGeom")).get("prst") in ("chevron", "homePlate")]
+assert chev and all(c._element.spPr.find(_qn("a:xfrm")).get("flipH") == "1" for c in chev)
+print("right to left ok")
+
+# a small model's outline: aliases, strings, empty items, unknown icons, emoji, too many items -> repaired, never a crash,
+# and no text box ever holds more than fits
+sloppy = {"slides": [{"type": "summary", "heading": "Why", "points": "One. Two. Three."},
+                     {"type": "cards", "title": "Options", "cards": ["Fix DNS", {"heading": "Move", "description": "To another bucket", "icon": "🪣"}, {"title": "", "text": ""}]},
+                     {"type": "stats", "title": "Numbers", "stats": [{"value": 12345678, "label": "files"}, {"value": "3", "label": "x", "icon": "incident"}]},
+                     {"type": "bullets", "title": "Many", "bullets": ["✅ item %d with some words" % k for k in range(9)]},
+                     {"type": "chart", "title": "Trend", "chart": {"type": "line", "labels": ["a", "b"], "data": ["3", "5"]}},
+                     {"type": "table", "title": "T", "columns": ["A", "B"], "rows": [{"A": 1, "B": 2}]},
+                     {"type": "compare", "title": "A vs B", "left": ["x", "y"], "right": "z. w."}]}
+sf = os.path.join(tmp, "sloppy.json")
+json.dump(sloppy, open(sf, "w"))
+o = deck(sf, "--out", os.path.join(tmp, "sloppy.pptx"))
+for needle in ("type 'summary' -> 'bullets'", "'points' -> 'bullets'", "an empty item dropped", "icon '🪣' -> arrow-right",
+               "9 bullets -> 2 slides", "chart data -> series", "table row was an object", "left was a list"):
+    assert needle in o, (needle, o)
+sp = Presentation(os.path.join(tmp, "sloppy.pptx"))
+alltext = " ".join(sh.text_frame.text for sl in sp.slides for sh in sl.shapes if sh.has_text_frame)
+assert "✅" not in alltext and "🪣" not in alltext and "12345678" in alltext
+print("sloppy outline ok")
 
 # the plugin: manifest, MCP wiring, agent tools in the plugin's MCP names, the command, the skill moved here
 P = os.path.join(HERE, "plugins", "presentations")

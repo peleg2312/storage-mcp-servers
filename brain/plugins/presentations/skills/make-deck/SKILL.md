@@ -1,77 +1,74 @@
 ---
 name: make-deck
-description: Designed PowerPoint decks (.pptx, editable, native charts and tables) from any topic, investigation, report, document or data - you write a short JSON outline, the deck MCP tools do the design (a look per deck, or the company template) and check it. Triggers - "presentation", "PowerPoint", "pptx", "slides", "deck", "make it a presentation for management / the team", "restyle this deck"
+description: Designed PowerPoint decks (.pptx, editable, native charts and tables, Hebrew right-to-left by itself) from any topic, investigation, report, document or data - you write a short JSON outline, the deck MCP tools do all the design and check it. Triggers - "presentation", "PowerPoint", "pptx", "slides", "deck", "מצגת", "make it a presentation for management / the team", "restyle this deck"
 ---
-# Designed decks (the `deck` MCP server of this plugin)
+# Make a deck (the `deck` MCP server of this plugin)
 
-You write the **content** as a JSON outline; the tools do the **design**: layout, fonts, colours, native charts
-with their data, styled tables, text fitted to its box, page numbers. Never draw slides with python-pptx yourself.
-Tools: `deck_guide` (rules, types, example), `deck_build`, `deck_read` (any .pptx back as text), `deck_icons`,
-`deck_deliver`. A long deck from many facts: hand the facts to the `deck-designer` agent (its own context).
-Without the MCP server (not loaded): the same with `python3 ~/.claude/tools/deck.py <outline.json> [--json]`.
+You write only the CONTENT, as a JSON outline. The tools do ALL the design: layout, colours, fonts, icons, charts,
+fitting the text, right-to-left for Hebrew. Never draw slides with python-pptx yourself, never set positions, sizes,
+colours or fonts. Follow the steps in order; do not skip one.
 
-## 1. Content first
-- Facts only from tool results, reports or documents in this session (golden rule 2); numbers you chart come from
-  saved data (python), never retyped. Missing data: say so on the slide, never invent it.
-- Story: what the audience must decide or know → 8-15 slides: title, agenda (optional), a section per part,
-  the evidence, the ask / next steps (closing).
-- **One message per slide.** The title says the conclusion ("Prod-A grew fastest: 40 TB a month"), not the topic
-  ("Growth"). `**bold**` the one number or phrase that matters.
-- Short: 3-6 bullets of one line each; card / step / milestone texts are one sentence.
+Tools: `deck_guide`, `deck_build`, `deck_read` (any .pptx back as text), `deck_icons`, `deck_deliver`.
+No MCP tools in this session: the same with `python3 ~/.claude/tools/deck.py --example he > outline.json` (or `en`),
+then `python3 ~/.claude/tools/deck.py outline.json --json`.
 
-## 2. Write the outline
-`deck_guide` returns the rules and an example with every slide type: start from it. `deck_build` saves the outline
-as `~/storage-reports/<date>-<title>/deck.json` and the deck beside it. To restyle the user's own deck: `deck_read`
-it, rewrite its content as an outline, build.
+## Step 1. Facts
+Collect the facts first, from tool results, reports or documents in this session (golden rule 2). Write them down as a
+short list: numbers with their source, names, dates. A fact you do not have: write "(to confirm)" on that slide and
+tell the user. Never invent a number.
 
-| type | fields | use for |
-|---|---|---|
-| title | title, subtitle, meta | first slide |
-| agenda | items (≤ 7) | the parts |
-| section | title, subtitle, icon | start of a part (its name becomes the small label above later titles) |
-| hero | value, text, sub, icon | ONE big number or statement on a full-colour slide ("14 months" / "until full") |
-| stats | stats [{value, label, delta, good, progress, icon}], note | 2-4 headline numbers (progress "78%" draws a bar) |
-| chart | chart {kind, categories, series [{name, values}], unit, highlight, target, target_label, source, min, max}, takeaway, icon | trends, comparisons; kind: column, bar, stacked, stacked_bar, line, area, pie, doughnut |
-| bullets | bullets [text or {text, sub: [..]}], takeaway, icon | reasons, findings |
-| cards | cards [{title, text, icon, value}] (2-6) | options, checks, pillars (value: "90 TB" beside the icon) |
-| iconlist | items [{icon, title, text}] (2-6) | checks, principles, features |
-| compare | left / right {title, bullets}, verdict | A vs B, before / after |
-| table | columns, rows, highlight (row index), heat [column names], total, zebra, note | ≤ 12 rows, ≤ 7 columns (more: the Excel export) |
-| timeline | items [{date, title, text, done, icon}] (3-6) | plan, history (done: false greys future items) |
-| process | steps [{title, text}] (3-5) | procedures, flows |
-| quote | quote, by | one strong statement |
-| image | image (path), caption | a screenshot or diagram file |
-| closing | title, subtitle, bullets, contact | the ask, next steps |
+## Step 2. Plan 8-12 slides
+Use this order and change it only when the content needs it:
+1. `title` - the subject, the team, the date
+2. `agenda` - 3-6 parts
+3. for each part: a `section` slide, then 1-3 evidence slides (see the table below)
+4. `closing` - the ask or the next steps (3-5 bullets)
 
-Every slide takes `notes` (speaker notes). Deck fields: `title`, `footer`, `style`, `theme` / `accent`, `look`,
-`template` (company .pptx / .potx), `colors` / `fonts` overrides.
-- **Every deck looks different by itself**: its `look` (layouts of the title, section, agenda, cards and numbers
-  slides, palette, fonts, bullets) comes from its title; the output's `look:` line gives the number. Do not copy a
-  theme from an earlier deck. The user liked one: `"look": <that number>`; wants another: `"look": "random"`.
-- **Choose the style for the audience** (always set it): management, kick-off, a proposal → `"bold"`; an ops review,
-  a technical walkthrough, a handover → `"clean"`; an incident review → `"clean"` with `"theme": "graphite"`.
-- Colours: leave them to the look, or `"accent": "#7A3EF0"` (the team's or the customer's colour: a whole palette is
-  built from it), or a fixed `theme` (midnight, graphite, ocean, emerald, sunset, light). A `template` overrides all
-  of this: company decks always look like the company.
-- **Icons** (`deck.py --icons`): database, server, disk, network, switch, cloud, shield, lock, check, alert, error,
-  clock, calendar, chart, trend-up, gauge, money, users, gear, search, archive, replication, rocket, idea... (aliases:
-  storage, backup, dr, risk, cost, team...). Give one icon per card / stat / list item, matching its meaning.
-- **Charts**: one measure per chart; `highlight` a category to make it the only strong bar; `target` draws a dashed
-  limit line (capacity 80%, an SLA); a line chart names each series at its end (no legend); a doughnut shows its total
-  in the middle; ≤ 5 series, a pie ≤ 6 slices; `unit` "%", "TB", "ms"...
-- **Tables**: status words (OK, Healthy, Warning, Degraded, Failed, Down, In sync, Lagging...) are coloured by
-  themselves; `heat` tints a numeric column by value (used %, latency); `total: true` styles the last row as a total.
-- Rhythm: vary the slide types (a hero after the stats, a chart, then cards); never three bullet slides in a row.
+Pick the slide type by what you show; never two `bullets` slides in a row:
+| You show | Type |
+|---|---|
+| 2-4 key numbers | `stats` |
+| ONE number that matters most | `hero` |
+| a comparison or a trend over time | `chart` |
+| reasons or findings (3-5) | `bullets` |
+| options or things that work (3-4) | `cards` |
+| checks, principles, features (3-5) | `iconlist` |
+| a list of systems with values | `table` |
+| a plan with dates | `timeline` |
+| a procedure in steps | `process` |
+| A against B | `compare` |
 
-## 3. Build, then fix every warning
-`deck_build {spec, style, template?, look?, preview?}` returns the path, the look number, the slide list and
-`warnings` (text that does not fit, too many bullets, long titles, crowded charts): shorten or split in the outline
-and build again until `warnings` is empty. Never deliver with warnings left.
-- **Company look**: `template` = the company deck or .potx (its master, logo, colours, fonts and layouts). Ask the
-  user for the path once and keep it in `notes/tools.md`.
-- `preview: true` (LibreOffice installed) renders `preview/contact-sheet.png`: if you can view images, look at it and
-  fix what looks wrong; else `deck_read` the result and check the text.
+## Step 3. Write the outline
+1. Call `deck_guide` once, with `lang: "he"` for a Hebrew deck. It returns the rules and an `example` outline.
+2. COPY the example. Keep its JSON shape and field names exactly; replace its content with your facts; delete the slides
+   you do not need, repeat the types you need.
+3. Each slide title says the conclusion in one line (max 60 characters): "env2 has most failures: 23 of 41", not
+   "Failures". Put the one key number in `**bold**`.
+4. Keep texts short: bullet max 90 characters, card or step text max 80, item title max 30, stat value max 12
+   ("97.8%", "312 TB"), stat label max 30.
+5. Counts: bullets 3-5, cards 3-4, stats 2-4, items 3-5, steps 3-5, table rows max 10 and columns max 6.
+6. Give every card, stat, iconlist item and timeline item an `icon` from the icon list (closest meaning).
+7. Chart values are plain numbers from your facts: `"values": [9, 23, 5]`.
+8. `"style"`: `"bold"` for managers and proposals, `"clean"` for technical reviews. No colours, no theme.
 
-## 4. Deliver
-`deck_deliver` the path (to the PC / Reports tab), then answer with the file as a Markdown link to its full path, the
-look number, the slide list (one line each) and what the user should check (numbers, names).
+**Hebrew deck**: write every text in Hebrew; keep product names, IDs and commands in English exactly as they are
+(Commvault, MA-SITEB-03, `oc get backups`). Do not set direction, alignment or fonts: the deck turns right-to-left by
+itself (`"direction": "rtl"` in the reply confirms it).
+
+**Never put in the outline**: emoji, bullet signs ("•", "-", "1.") at the start of a text, HTML, Markdown other than
+`**bold**`, empty items, positions, sizes, colours, font names.
+
+## Step 4. Build and fix
+Call `deck_build` with `{"spec": <the outline>, "style": "bold" or "clean"}`. Read the reply:
+- `fixed`: things the tool already repaired for you. Nothing to do.
+- `warnings`: each line names a slide and what is wrong (a text cut to fit, a title too long). Change exactly that in the
+  outline (shorten the text, or split the slide in two) and call `deck_build` again with the whole outline.
+- Stop after 3 rounds: deliver, and tell the user which warnings are left.
+- `look`: the design number. The user liked it: keep `"look": <number>` next time; wants another: `"look": "random"`.
+- To restyle a deck the user gave you: `deck_read` it, write its content as an outline, build.
+- Company look: `"template": "<path of the company .pptx or .potx>"` in the outline; ask the user for the path once and
+  keep it in `notes/tools.md`.
+
+## Step 5. Deliver
+Call `deck_deliver` with the path. Answer the user with: the file path as a Markdown link, the look number, one line per
+slide (number, type, title), and what to check (numbers, names, anything marked "(to confirm)").

@@ -92,10 +92,65 @@ ALIASES = {"storage": "database", "array": "database", "ok": "check", "done": "c
            "backup": "archive", "performance": "gauge", "capacity": "chart", "dr": "replication", "launch": "rocket"}
 
 
+ALIASES.update({"success": "check", "pass": "check", "passed": "check", "complete": "check", "completed": "check", "yes": "check",
+                "failed": "error", "failure": "error", "down": "error", "broken": "error", "incident": "alert", "issue": "alert",
+                "problem": "alert", "danger": "alert", "warn": "alert", "restore": "replication", "recovery": "replication",
+                "replicate": "replication", "sync": "replication", "copy": "replication", "snapshot": "layers", "snapshots": "layers",
+                "clone": "layers", "volume": "disk", "lun": "disk", "drive": "disk", "library": "archive", "tape": "archive",
+                "s3": "cloud", "bucket": "cloud", "object": "cloud", "files": "folder", "file-server": "folder", "share": "folder",
+                "nfs": "folder", "cifs": "folder", "db": "database", "sql": "database", "oracle": "database", "postgres": "database",
+                "postgresql": "database", "exchange": "mail", "email": "mail", "k8s": "layers", "kubernetes": "layers",
+                "openshift": "layers", "cluster": "server", "node": "server", "mediaagent": "server", "proxy": "server",
+                "commserve": "server", "vbr": "server", "network": "network", "dns": "network", "lan": "network", "move": "arrow-right",
+                "next": "arrow-right", "step": "arrow-right", "migrate": "arrow-right", "upgrade": "rocket", "new": "star",
+                "best": "star", "quality": "star", "speed": "lightning", "slow": "clock", "schedule": "calendar", "date": "calendar",
+                "deadline": "flag", "milestone": "flag", "report": "document", "docs": "document", "policy": "document",
+                "audit": "search", "scan": "search", "check-up": "search", "find": "search", "review": "search", "cpu": "cpu",
+                "compute": "cpu", "encryption": "lock", "password": "key", "access": "key", "permission": "key", "compliance": "shield",
+                "protect": "shield", "protection": "shield", "budget": "money", "price": "money", "money-bag": "money",
+                "trend": "trend-up", "up": "trend-up", "increase": "trend-up", "decrease": "trend-down", "drop": "trend-down",
+                "metric": "gauge", "kpi": "gauge", "sla": "gauge", "rpo": "clock", "rto": "clock", "people": "users", "owner": "user",
+                "contact": "mail", "global": "globe", "site": "globe", "region": "globe", "link": "link", "integration": "link",
+                "nothing": "info", "note": "info", "question": "info", "tip": "idea", "solution": "idea", "fix": "gear",
+                "configuration": "gear", "config": "gear", "tool": "gear", "automation": "gear", "monitoring": "monitor",
+                "dashboard": "monitor", "screen": "monitor"})
+# Hebrew words a model may give as an icon name or write in the item (matched on the word)
+HEBREW = {"גיבוי": "archive", "גיבויים": "archive", "שחזור": "replication", "שחזורים": "replication", "שכפול": "replication",
+          "בדיקה": "search", "בדיקות": "search", "סריקה": "search", "אבטחה": "shield", "הגנה": "shield", "תקלה": "alert",
+          "תקלות": "alert", "כשל": "error", "כשלים": "error", "שגיאה": "error", "הצלחה": "check", "תקין": "check", "בוצע": "check",
+          "זמן": "clock", "שעה": "clock", "לוח": "calendar", "תאריך": "calendar", "כסף": "money", "עלות": "money", "תקציב": "money",
+          "צוות": "users", "אנשים": "users", "משתמש": "user", "שרת": "server", "שרתים": "server", "רשת": "network",
+          "אחסון": "database", "מסד": "database", "נתונים": "database", "ענן": "cloud", "קיבולת": "chart", "נפח": "chart",
+          "ביצועים": "gauge", "מדד": "gauge", "יעד": "target", "מטרה": "target", "שדרוג": "rocket", "אוטומציה": "gear",
+          "הגדרות": "gear", "מסמך": "document", "דוח": "document", "מדיניות": "document", "מפתח": "key", "הצפנה": "lock",
+          "תיקיה": "folder", "קבצים": "folder", "רעיון": "idea", "פתרון": "idea", "צעד": "arrow-right", "שלב": "arrow-right"}
+
+
 def resolve(name):
     n = str(name or "").strip().lower()
-    n = ALIASES.get(n, n)
+    n = ALIASES.get(n, HEBREW.get(n, n))
     return n if n in ICONS else None
+
+
+def guess(name="", *context):
+    """the icon for a name a model made up ("restore-db", "warning_sign", "גיבוי") or, without one, for the item's own words:
+    the name itself, then each word of it, then the words of the context (title, text); None when nothing matches"""
+    hit = resolve(name)
+    if hit:
+        return hit
+    import re
+    for src in (str(name or ""),) + tuple(str(c or "") for c in context):
+        for w in re.split("[^a-z0-9\u0590-\u05FF]+", src.lower()):
+            if not w:
+                continue
+            hit = resolve(w) or (resolve(w[:-1]) if w.endswith("s") else None)
+            if hit:
+                return hit
+            if w.startswith(("ה", "ב", "ל", "מ", "ו", "ש")) and len(w) > 3:      # Hebrew prefixes: "הגיבוי", "בשרת"
+                hit = resolve(w[1:])
+                if hit:
+                    return hit
+    return None
 
 
 def _arc(cx, cy, rx, ry, a0, a1):
