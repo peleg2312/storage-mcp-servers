@@ -52,6 +52,9 @@ for root, _, files in os.walk(os.path.join(HERE, "overlay")):
 with open(os.path.join(SRC, "src/index.css"), "a", encoding="utf-8") as f:
     f.write("\n" + open(os.path.join(HERE, "paas.css"), encoding="utf-8").read())
 
+sys.path.insert(0, HERE)
+import compact_summary  # noqa: E402  (the compaction summary drawn as the summary, not as a user message)
+compact_summary.patch(os.path.join(SRC, "server/modules/providers/list/claude/claude-sessions.provider.ts"), ts=True)
 edit("index.html", ("<title>CloudCLI UI</title>", f"<title>{NAME}</title>"))
 m = json.load(open(os.path.join(SRC, "public/manifest.json")))
 m.update(name=NAME, short_name="Peleg", description=f"{NAME}: the storage & platform brain", theme_color="#0d0f1c",

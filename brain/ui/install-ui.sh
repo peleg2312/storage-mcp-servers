@@ -48,6 +48,9 @@ s = s.replace("TOOLS_REQUIRING_INTERACTION.has(toolName) || (guardAsk && !bypass
 if s != o:
     open(p, "w").write(s)
 EOP
+# a compaction summary is drawn as the compaction row's summary, not as a message the user sent (brand/compact_summary.py)
+CS="$DST/app/dist-server/server/modules/providers/list/claude/claude-sessions.provider.js"
+[ ! -f "$CS" ] || python3 "$HERE/brand/compact_summary.py" "$CS" >/dev/null || echo "ui: compaction summary fix not applied (see above)"
 SA="$DST/app/dist-server/server/modules/auth/system-auth.js"
 [ ! -f "$SA" ] || sed -i 's#/^\[a-z_\]\[a-z0-9_.-\]\*\$/#/^[a-z0-9_][a-z0-9_.-]*$/#' "$SA"
 [ "${UI_SHARED:-0}" = 1 ] && { chmod -R a+rX "$DST"; echo "ui: files in $DST (per-user services: brain/multiuser)"; exit 0; }

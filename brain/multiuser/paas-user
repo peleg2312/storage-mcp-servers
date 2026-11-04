@@ -15,6 +15,10 @@
 #                                 host (a group token) or for one repository (a project token); every account's git, the
 #                                 hooks and the docs service push and pull with it (https urls)
 #   paas-user list [--json]       everyone, with port, locked and running
+#   paas-user context [<tokens>|default] [--json]   the context window Claude Code gives the regular model (plain opus on
+#                                 the gateway's model name; auto-compaction runs at about 80-85% of it), for everyone, terminal
+#                                 and web UI: 100000-1000000 (300k works too), or default (200000 assumed); no value prints it.
+#                                 The 1M model (opus[1m]) keeps its 1M window. New sessions get it; a running chat at its next start
 set -eu
 export PATH="/usr/local/sbin:/usr/sbin:/sbin:$PATH"     # useradd / usermod / chpasswd live in sbin; the UI calls this with a short PATH
 [ "$(id -u)" = 0 ] || { echo "paas-user: run as root"; exit 1; }
@@ -289,5 +293,46 @@ case "$cmd" in
       fi
     done
     if [ $json = 1 ]; then printf ']\n'; fi ;;
+  context)
+    # CLAUDE_CODE_MAX_CONTEXT_TOKENS in the managed settings: it applies to a model name Claude Code does not recognise (the
+    # gateway's) without [1m], so opus[1m] stays at 1M; CLAUDE_CODE_AUTO_COMPACT_WINDOW is removed, since it shrinks every model
+    v=; json=0
+    for x in "$@"; do case "$x" in --json) json=1 ;; *) v=$x ;; esac; done
+    n=$(python3 - "$v" "$json" <<'EOP'
+import json, os, re, sys
+v, js = sys.argv[1], sys.argv[2] == "1"
+p = "/etc/claude-code/managed-settings.json"
+s = json.load(open(p)) if os.path.exists(p) else {}
+env = s.setdefault("env", {})
+cur = str(env.get("CLAUDE_CODE_MAX_CONTEXT_TOKENS", ""))
+if not v:
+    t = int(cur) if cur.isdigit() else None
+    print(json.dumps({"ok": True, "tokens": t, "default": 200000}) if js else f"regular model window: {t or '200000 (default)'} tokens")
+    sys.exit(0)
+if v == "default":
+    env.pop("CLAUDE_CODE_MAX_CONTEXT_TOKENS", None)
+    n = 0
+else:
+    m = re.fullmatch(r"(\d+)(k?)", v.replace("_", "").replace(",", ""))
+    n = int(m.group(1)) * (1000 if m.group(2) else 1) if m else -1
+    if not 100000 <= n <= 1000000:
+        sys.exit("paas-user: the window is 100000 to 1000000 tokens (or 300k), or default")
+    env["CLAUDE_CODE_MAX_CONTEXT_TOKENS"] = str(n)
+env.pop("CLAUDE_CODE_AUTO_COMPACT_WINDOW", None)
+tmp = p + ".new"
+os.makedirs(os.path.dirname(p), exist_ok=True)
+with open(tmp, "w") as f:
+    json.dump(s, f, indent=2)
+os.chmod(tmp, 0o644)
+os.replace(tmp, p)
+print(n)
+EOP
+) || exit 1
+    [ -n "$v" ] || { echo "$n"; exit 0; }
+    D=/etc/systemd/system/paas-ui@.service.d
+    if [ "$n" = 0 ]; then rm -f "$D/context.conf"; else mkdir -p "$D"; printf '[Service]\n# the web UI context counter: the same window as paas-user context\nEnvironment=CONTEXT_WINDOW=%s\n' "$n" > "$D/context.conf"; fi
+    systemctl daemon-reload 2>/dev/null || true
+    if [ $json = 1 ]; then printf '{"ok":true,"tokens":%s}\n' "$([ "$n" = 0 ] && echo null || echo "$n")"
+    else echo "regular model window: $([ "$n" = 0 ] && echo '200000 (default)' || echo "$n") tokens, for new sessions (terminal and web UI); opus[1m] keeps 1M"; fi ;;
   *) sed -n '2,/^set -eu/{/^set -eu/!p;}' "$0" | sed 's/^# \{0,1\}//'; exit 1 ;;
 esac

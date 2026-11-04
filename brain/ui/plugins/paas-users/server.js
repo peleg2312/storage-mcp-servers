@@ -36,6 +36,13 @@ const routes = {
   'POST /passwd': async (b) => (name(b) && pw(b).length >= 8 && !/[\r\n:]/.test(pw(b)) ? run(['passwd', b.name], pw(b)) : { ok: false, out: 'Password: at least 8 characters, no line breaks or colons' }),
   'POST /lock': async (b) => (name(b) ? run(['lock', b.name]) : { ok: false, out: 'Unknown user' }),
   'POST /unlock': async (b) => (name(b) ? run(['unlock', b.name]) : { ok: false, out: 'Unknown user' }),
+  'GET /context': async () => { const r = await run(['context', '--json']); try { return JSON.parse(r.stdout.trim()); } catch { return { ok: false, out: r.out } } },
+  'POST /context': async (b) => {
+    const v = b.tokens === null || b.tokens === 'default' ? 'default' : String(parseInt(b.tokens, 10));
+    if (v !== 'default' && !(Number(v) >= 100000 && Number(v) <= 1000000)) return { ok: false, out: 'Between 100000 and 1000000 tokens' };
+    const r = await run(['context', v, '--json']);
+    try { return JSON.parse(r.stdout.trim()); } catch { return { ok: false, out: r.out } }
+  },
   'POST /remove': async (b) => (name(b) ? run(['remove', b.name, ...(b.deleteHome ? ['--delete-home'] : [])]) : { ok: false, out: 'Unknown user' }),
 };
 

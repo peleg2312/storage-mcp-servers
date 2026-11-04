@@ -222,7 +222,11 @@ const STATE = { Locked: ['fail', 'Cannot sign in'], Active: ['ok', 'Their chat i
 
 export function mount(container, api) {
   container.innerHTML = `<style>${PAAS_CSS}${CSS}</style><div class="paas">${header('Users', 'Each person signs in with their own VM account and gets their own chats, files, notes and marketplace items. You (root) can see everything.', '<span class="slot"></span>')}
-    <div class="form-slot"></div><div class="card"><div class="list">${skeleton('table')}</div></div></div>`;
+    <div class="form-slot"></div><div class="card"><div class="list">${skeleton('table')}</div></div>
+    <form class="card ctx" novalidate><h3>Chat context window</h3>
+      <p class="sub" style="margin:4px 0 12px">How many tokens a chat on the regular model (Opus) holds before Claude summarises it (auto-compact runs at about 80-85% of this). For everyone, web UI and terminal, from their next session. Opus (1M context) in the model picker keeps its 1M window. Set it no higher than the model behind your gateway really accepts.</p>
+      <div class="row" style="align-items:flex-end"><div class="field" style="margin:0;max-width:220px"><label for="f-ctx">Window (tokens)</label><input id="f-ctx" class="f-ctx" inputmode="numeric" placeholder="200000"></div>
+      <button type="submit" class="btn f-cs">Save</button><button type="button" class="btn ghost f-cd">Use default (200000)</button><span class="sub f-cst" role="status"></span></div></form></div>`;
   const head = container.querySelector('.actions');
   const addBtn = el('<button class="btn add">' + icon('plus') + ' Add person</button>');
   head.appendChild(addBtn);
@@ -296,6 +300,27 @@ export function mount(container, api) {
     if (r.ok) say(`${n} ${{ lock: 'locked', unlock: 'unlocked', remove: 'removed' }[a]}`); else status.error(r.out);
     load();
   }
+
+  // the regular model's context window (paas-user context): one value for every account
+  const ctx = container.querySelector('.ctx');
+  const cin = ctx.querySelector('.f-ctx');
+  const cst = ctx.querySelector('.f-cst');
+  const showCtx = (r) => { cin.value = r.tokens || ''; cst.textContent = r.tokens ? `Now ${Number(r.tokens).toLocaleString()} tokens` : 'Now the default, 200,000 tokens'; cst.style.color = ''; };
+  const ctxErr = (t) => { cst.textContent = t; cst.style.color = 'hsl(var(--destructive))'; };
+  async function saveCtx(tokens, btn) {
+    const restore = busy(btn, 'Saving…');
+    const r = await api.rpc('POST', 'context', { tokens }).catch((x) => ({ out: String(x.message || x) }));
+    restore();
+    if (r.ok) { showCtx(r); say('Context window saved: new sessions use it'); } else ctxErr(r.out);
+  }
+  ctx.addEventListener('submit', (ev) => {
+    ev.preventDefault();
+    const n = parseInt(cin.value.replace(/[\s,_]/g, '').replace(/k$/i, '000'), 10);
+    if (!(n >= 100000 && n <= 1000000)) return ctxErr('Between 100,000 and 1,000,000 tokens');
+    saveCtx(n, ctx.querySelector('.f-cs'));
+  });
+  ctx.querySelector('.f-cd').addEventListener('click', (e) => saveCtx(null, e.currentTarget));
+  api.rpc('GET', 'context').then((r) => (r.ok ? showCtx(r) : ctxErr(r.out || 'Could not read the setting'))).catch(() => {});
 
   addBtn.addEventListener('click', () => passwordForm('Add a person', ''));
   load();

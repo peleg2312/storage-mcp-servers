@@ -29,6 +29,10 @@ subprocess.run([sys.executable, os.path.join(here, "..", "merge_settings.py"), t
                stdout=subprocess.DEVNULL)
 s = json.load(open(tmp))
 s["apiKeyHelper"] = f"{paas}/bin/paas-api-key"
+# the default model is plain opus; opus[1m] stays selectable (in /model and the web UI's picker), so the variable that
+# removes the [1m] variants is taken out. The regular model's window: paas-user context (CLAUDE_CODE_MAX_CONTEXT_TOKENS)
+s.setdefault("model", "opus")
+s.get("env", {}).pop("CLAUDE_CODE_DISABLE_1M_CONTEXT", None)
 deny = s.setdefault("permissions", {}).setdefault("deny", [])
 # "//" is an absolute path in permission rules ("/x" is relative to this settings file): the shared API key lives there
 deny[:] = [r for r in deny if r != "Read(/etc/paas/**)"]

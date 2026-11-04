@@ -240,6 +240,24 @@ rotated when someone leaves). **A new team**: a folder `brain/teams/<name>/` wit
 skills, agents), `python3 brain/test_budgets.py` and `python3 brain/test_teams.py` green, then publish. The team definition, the
 Brain tab's team editor, what the Market tab shows, the CI gate and the knowledge flow: `brain/teams/README.md`.
 
+## Models and the context window (multi-user VM)
+
+The default model is plain **Opus** (`"model": "opus"` in `/etc/claude-code/managed-settings.json`); **Opus (1M context)** stays
+in the web UI's model picker and in `/model opus[1m]` for a chat that needs it. The installer no longer sets
+`CLAUDE_CODE_DISABLE_1M_CONTEXT` (that variable hides the 1M variants) and removes it when an earlier update left it there.
+
+Behind the gateway Claude Code does not recognise the model name, assumes a 200,000-token window and summarises a chat
+(auto-compact) at about 160-170k. To give the regular model a larger window, as root: the **Users** tab, *Chat context
+window*, or
+
+```sh
+paas-user context 300000      # 100000-1000000 (300k works too); `paas-user context` prints it; `default` goes back to 200000
+```
+It sets `CLAUDE_CODE_MAX_CONTEXT_TOKENS` in the managed settings (it applies to the gateway's model name without `[1m]`, so
+Opus 1M keeps 1M), removes `CLAUDE_CODE_AUTO_COMPACT_WINDOW` (it would shrink every model, 1M included) and gives the web UI's
+context counter the same number. New sessions get it, terminal and web UI. Set it no higher than the model behind the gateway
+really accepts, or long chats fail with a "prompt too long" error instead of being summarised.
+
 ## Active Directory accounts on the multi-user VM
 
 Everyone signs in to the web UI with their own domain account; nothing is created by hand, and the audit log, the chats and

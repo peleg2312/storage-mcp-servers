@@ -390,7 +390,7 @@ t=setTimeout(function(){w.hidden=false},4000)});
 addEventListener('pageshow',function(v){if(v.persisted){clearTimeout(t);b.disabled=false;b.textContent='Sign In';b.removeAttribute('aria-busy');w.hidden=true}});
 e.onclick=function(){var s=p.type==='password';p.type=s?'text':'password';e.textContent=s?'Hide':'Show';e.setAttribute('aria-pressed',s);
 e.setAttribute('aria-label',(s?'Hide':'Show')+' password')};
-p.onkeyup=p.onkeydown=function(k){c.hidden=!(k.getModifierState&&k.getModifierState('CapsLock'))};p.onblur=function(){c.hidden=true};
+/* Caps Lock from the letters typed: getModifierState is wrong through RDP / VDI clients and for letters without case */var cl=null;p.onkeydown=function(k){var ch=k.key||'';if(ch.length===1&&ch.toLowerCase()!==ch.toUpperCase()){cl=(ch!==ch.toLowerCase())!==k.shiftKey;c.hidden=!cl}};p.onkeyup=function(k){if(k.key==='CapsLock'&&cl!==null){cl=!cl;c.hidden=!cl}};p.onblur=function(){c.hidden=true};
 </script></body></html>`;
 
 const signedInPage = (token) => '<!doctype html><meta charset="utf-8"><title>Signing in - Peleg As A Service</title><script>'
