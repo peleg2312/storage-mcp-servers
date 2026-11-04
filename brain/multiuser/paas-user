@@ -121,6 +121,9 @@ P=$1; C=$HOME/.claude
 mkdir -p "$C/brain/notes" "$HOME/storage-reports" "$HOME/chats" "$HOME/.claude-code-ui/plugins"
 for l in brain/library:library brain/libraries:libraries brain/storage.md:brain/storage.md brain/coding.md:brain/coding.md tools:tools banner:banner themes:themes; do
   dst=$C/${l%%:*}; src=$P/${l#*:}
+  # tools/ holds only the brain's own programs (no settings: databases.json is in brain/): a real folder left by an older
+  # single-user install would keep old tools forever (a missing deck.py), so it is set aside and linked to the shared one
+  if [ "${l%%:*}" = tools ] && [ -d "$dst" ] && [ ! -L "$dst" ]; then mv "$dst" "$dst.before-shared-$(date +%Y%m%d%H%M)"; fi
   [ -L "$dst" ] || [ ! -e "$dst" ] || continue      # never replace a real file the person made (storage.md too)
   ln -sfn "$src" "$dst"
 done
