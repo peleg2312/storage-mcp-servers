@@ -37,13 +37,20 @@ VENVS = [os.path.expanduser("~/.claude/devtools-venv"), "/opt/paas/devtools-venv
 
 
 def _reexec():
-    """python-pptx lives in the devtools venv: run there when this python does not have it"""
+    """python-pptx lives in a devtools venv: run in the first one that really has it (an old personal venv without it
+    must not hide the shared one)"""
+    tried = []
     for v in VENVS:
         py = os.path.join(v, "bin", "python")
-        if os.path.isfile(py) and os.path.realpath(py) != os.path.realpath(sys.executable) and not os.environ.get("DECK_REEXEC"):
-            os.environ["DECK_REEXEC"] = "1"
+        # the venv itself, not its python: that is a link to the system python this very process may be running
+        if not os.path.isfile(py) or os.path.realpath(v) == os.path.realpath(sys.prefix):
+            continue
+        tried.append(py)
+        if subprocess.run([py, "-c", "import pptx"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL).returncode == 0:
             os.execv(py, [py] + sys.argv)
-    sys.exit("deck: python-pptx is not installed (the devtools venv: sh brain/devtools/install-devtools.sh)")
+    sys.exit("deck: python-pptx is not installed in " + (", ".join(tried) or "any devtools venv (" + ", ".join(VENVS) + ")")
+             + ". As root: DEVTOOLS_VENV=/opt/paas/devtools-venv sh brain/devtools/install-devtools.sh (multi-user VM), or"
+             " <venv>/bin/python -m pip install --no-index --find-links brain/devtools/wheels python-pptx")
 
 
 try:

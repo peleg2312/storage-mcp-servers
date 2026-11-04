@@ -10,7 +10,7 @@ try:
 except ImportError:
     for v in (os.path.expanduser("~/.claude/devtools-venv"), "/opt/paas/devtools-venv"):
         py = os.path.join(v, "bin", "python")
-        if os.path.isfile(py) and os.path.realpath(py) != os.path.realpath(sys.executable):
+        if os.path.isfile(py) and os.path.realpath(v) != os.path.realpath(sys.prefix):
             os.execv(py, [py] + sys.argv)
     print("skipped: python-pptx is not installed (ImportError)")
     sys.exit(77)
