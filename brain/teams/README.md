@@ -90,7 +90,7 @@ and token in the team editor. Agents list each one in their `tools:` (`mcp__comm
 By default every team searches the one general library, plus its own knowledge. A team that needs other documents, and none
 of the general ones, names its own library in `team.json`: `"library": "ops"`. Then, for that team only:
 
-- the docs service answers `https://<vm>:8001/mcp?team=<team>` from `/opt/paas/libraries/ops/docs.db` (plus the team's
+- the docs service answers `https://<vm>:8443/mcp?team=<team>` from `/opt/paas/libraries/ops/docs.db` (plus the team's
   knowledge), never from the general library; a library that is named but not built yet gives a clear error, no fallback;
 - the team plugin's `docs-local` opens `~/.claude/brain/libraries/ops/docs.db` (on the multi-user VM a link to
   `/opt/paas/libraries`); where that is not installed it bridges to the docs service, and without that it searches the team's

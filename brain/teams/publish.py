@@ -17,6 +17,7 @@ Layout of a team repository:
              project; use read-only tokens and rotate them when someone leaves); HOST / TOKEN placeholders until filled
   team.json (name, title, remote)   README.md   .gitignore
   bin/paas-team                     the team tool, so a clone of this repository is a complete install source
+  join.sh, join.ps1                 a new machine (Linux / macOS, Windows) joins the team: certificate, docs check, plugin
   check.py + .gitlab-ci.yml         the repository's own gate (JSON, plugin shape, skills, no secrets in knowledge, caps)
 Standard library, Python 3.9."""
 import json
@@ -63,8 +64,13 @@ def readme(team, remote):
     url = remote or "<this repository's url>"
     n = t["name"]
     return (f"# Team brain: {t.get('title', n)}\n\n{t.get('description', '')}\n\n"
-            "## Install (any machine with Claude Code, git and python3)\n\n"
-            f"```sh\nclaude plugin marketplace add {url}\nclaude plugin install paas-brain-{n}@paas-brain-{n}\nclaude\n```\n"
+            "## Install (any machine with Claude Code and git)\n\n"
+            "From a clone of this repository, one command trusts the VM's certificate, checks the docs service, installs the "
+            "plugin and checks that Claude Code connects the docs:\n\n"
+            f"```sh\ngit clone {url} brain-{n}\nsh brain-{n}/join.sh                                   # Linux / macOS\n"
+            f"powershell -ExecutionPolicy Bypass -File .\\brain-{n}\\join.ps1   # Windows\n```\n"
+            f"Or by hand: `claude plugin marketplace add {url}`, `claude plugin install paas-brain-{n}@paas-brain-{n}`, and the VM's "
+            f"certificate (`paas-brain-{n}/lib/paas-ui.crt`) in this machine's trust store. Then `claude`.\n"
             "The first session sets the team up: it clones this repository into `~/.claude/brain/teams/" + n + "`, links the "
             "memory files into it, writes the rules (persona, storage and coding rules; one import line in your `~/.claude/CLAUDE.md`) "
             "and installs `paas-team`. From then on every saved note is committed and pushed here, every session start pulls, "
@@ -80,8 +86,9 @@ def readme(team, remote):
             "connects them; `team.json`: the team's lists\n"
             "- `check.py` runs in CI (`.gitlab-ci.yml`) and refuses a push that carries a credential or breaks the notes format\n\n"
             f"`paas-team` shows the state, `paas-team use <other>` switches team, `paas-team off` leaves the teams. "
-            "The docs library is not in this repository: where it is not installed (a laptop), the plugin's docs-local reaches the VM's "
-            "docs-search instead (address and token come with the plugin), so the docs search works the same everywhere.\n"
+            "The docs library is not in this repository: the plugin's `docs-http` is the VM's docs service for this team (address and "
+            "token come with the plugin; the VM's port open from this machine, its certificate trusted); on the VM the plugin's "
+            "`docs-local` serves the same library. The brain's session hooks and `docs-local` need python3; `docs-http` does not.\n"
             f"On the VM: `paas-team use {n}` (or the Brain tab). On a laptop add `\"env\": {{\"ENABLE_TOOL_SEARCH\": \"true\"}}` to `~/.claude/settings.json`: "
             "the team's MCP tool schemas then load when a task needs them instead of into every session.\n")
 
@@ -182,6 +189,9 @@ def publish(team, dest, remote=None, hooks=True, commit=True, force=False, docs_
     for stale in ("install-team.sh",):                                 # earlier publishes wrote it; the plugin install replaced it
         if os.path.exists(os.path.join(dest, stale)):
             os.remove(os.path.join(dest, stale))
+    for src, dst in (("team-join.sh", "join.sh"), ("team-join.ps1", "join.ps1")):   # a new machine joins with one command
+        shutil.copy(os.path.join(HERE, src), os.path.join(dest, dst))
+    os.chmod(os.path.join(dest, "join.sh"), 0o755)
     shutil.copy(os.path.join(HERE, "team-check.py"), os.path.join(dest, "check.py"))      # the repository's own CI gate
     os.chmod(os.path.join(dest, "check.py"), 0o755)
     if not os.path.exists(os.path.join(dest, ".gitlab-ci.yml")):

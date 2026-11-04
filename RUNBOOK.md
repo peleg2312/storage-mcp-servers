@@ -137,14 +137,14 @@ On the VM each Claude session searches it with `docs-local` (the team plugin's o
 notes pages and incidents, which the server rebuilds at start when they changed.
 
 **The VM serves the same search to other machines over HTTPS** (`install-shared.sh` sets it up): the service `paas-docs`
-runs the same dependency-free server in HTTP mode on port 8001 with the gate's certificate and a bearer token
-(`/etc/paas/docs-token`; port and refresh interval in `/etc/paas/docs.env`). `https://<vm>:8001/mcp` is the library;
-`https://<vm>:8001/mcp?team=nas` adds that team's knowledge: the service keeps its own clone of every team repository
+runs the same dependency-free server in HTTP mode on port 8443 with the gate's certificate and a bearer token
+(`/etc/paas/docs-token`; port and refresh interval in `/etc/paas/docs.env`). `https://<vm>:8443/mcp` is the library;
+`https://<vm>:8443/mcp?team=nas` adds that team's knowledge: the service keeps its own clone of every team repository
 under `/var/lib/paas-docs` (from the remote recorded in `/opt/paas/teams/<team>/team.json`), pulls it and rebuilds the
 team's index every 10 minutes and at once when a member's notes hook pushes (it posts to `/refresh?team=<team>` with the
 token from the team's `mcp.json`). `install-shared.sh` writes `docs-search` with its `?team=` url and the token into every team's `mcp.json`
 when it publishes the teams; the plugin's `docs-local` uses it as a bridge on every machine without the library (a laptop),
-and serves the library itself where it is installed (the VM), so there is one docs server name everywhere and one token. Health: `curl -k https://<vm>:8001/health`. The OpenShift
+and serves the library itself where it is installed (the VM), so there is one docs server name everywhere and one token. Health: `curl -k https://<vm>:8443/health`. The OpenShift
 deployment of `docs-search` (`docs-search-mcp/bundle/build-offline.sh --from-library`, `openshift-offline.yaml`) remains an
 option for a cluster-hosted copy; it serves the library only.
 
@@ -232,10 +232,18 @@ settings (`/etc/claude-code/managed-settings.json` on Linux, the equivalent path
 `{"extraKnownMarketplaces": {"paas-brain-nas": {"source": {"source": "git", "url": "<team url>"}, "autoUpdate": true}},
 "enabledPlugins": {"paas-brain-nas@paas-brain-nas": true}}`.
 
-**Docs on a laptop.** The team plugin carries `docs-http`: the VM's docs service for the team (`https://<vm>:8001/mcp?team=<team>`:
+**A new PC or laptop joins with one command** (Claude Code and git installed, the person's GitLab login): `git clone <team url>
+brain-<team>` then `sh brain-<team>/join.sh` (Linux / macOS; sudo puts the certificate in the system store, `--no-sudo` uses
+`NODE_EXTRA_CA_CERTS` in the shell profile) or `powershell -ExecutionPolicy Bypass -File .\brain-<team>\join.ps1` (Windows, no
+admin): it trusts the VM's certificate, checks the docs port, installs the plugin and checks that Claude Code connects `docs-http`,
+saying what to fix when a step fails. The docs port is 8443 (`/etc/paas/docs.env`); to change it: `sh brain/multiuser/install-multiuser.sh
+--docs-port <port>` (the firewall, every team plugin's `docs-http` and the Market's docs items follow; PCs get the new address with
+their next plugin update).
+
+**Docs on a laptop.** The team plugin carries `docs-http`: the VM's docs service for the team (`https://<vm>:8443/mcp?team=<team>`:
 its library and the team's knowledge), a native Claude Code connection, no Python needed, on Windows too. It is in the plugin when
 the team was published with the VM's docs address (the multi-user installer does that; by hand: `publish.py <team> --to <url>
---docs-search https://<vm>:8001/mcp --docs-token-file /etc/paas/docs-token`). Once per laptop: TCP 8001 open to the VM, and the VM's
+--docs-search https://<vm>:8443/mcp --docs-token-file /etc/paas/docs-token`). Once per laptop: TCP 8443 open to the VM, and the VM's
 certificate trusted (Claude Code trusts the operating system's store): Windows, PowerShell `Import-Certificate -FilePath
 paas-ui.crt -CertStoreLocation Cert:\CurrentUser\Root`; RHEL `cp paas-ui.crt /etc/pki/ca-trust/source/anchors/ && update-ca-trust`;
 Ubuntu `cp paas-ui.crt /usr/local/share/ca-certificates/ && update-ca-certificates`; or `NODE_EXTRA_CA_CERTS=<path>` set before
@@ -243,7 +251,7 @@ Ubuntu `cp paas-ui.crt /usr/local/share/ca-certificates/ && update-ca-certificat
 `lib/paas-ui.crt` in the plugin. Check: `claude mcp list` shows `plugin:paas-brain-<team>:docs-http ... Connected`. The plugin's
 `docs-local` serves the team knowledge from the person's clone (it needs Python 3; on the VM it has the library too, and the
 VM's managed settings switch `docs-http` off there so the docs are not listed twice). Another team's docs on a laptop (the VM
-Market's `docs-http-<other>`): `claude mcp add --transport http docs-http-<other> "https://<vm>:8001/mcp?team=<other>" --header
+Market's `docs-http-<other>`): `claude mcp add --transport http docs-http-<other> "https://<vm>:8443/mcp?team=<other>" --header
 "Authorization: Bearer <docs token>"`.
 
 **A team with its own documents** instead of the general library: `"library": "<name>"` in its `team.json`, then on the VM

@@ -107,7 +107,7 @@ ln -sfn "$P/bin/paas-user" /usr/local/sbin/paas-user
 getent passwd paas-market >/dev/null || useradd -r -M -d / -s /sbin/nologin paas-market   # before the first chown to it (a new VM)
 [ -s "$ETC/docs-token" ] || { umask 077; head -c 24 /dev/urandom | base64 | tr -d '/+=' > "$ETC/docs-token"; umask 022; }
 chown root:paas-market "$ETC/docs-token"; chmod 640 "$ETC/docs-token"
-[ -f "$ETC/docs.env" ] || printf 'PAAS_DOCS_PORT=8001\nPAAS_DOCS_REFRESH=10\n' > "$ETC/docs.env"
+[ -f "$ETC/docs.env" ] || printf 'PAAS_DOCS_PORT=8443\nPAAS_DOCS_REFRESH=10\n' > "$ETC/docs.env"   # a VM installed before keeps its port
 DOCS_URL="https://$(hostname -f 2>/dev/null || hostname):$(sed -n 's/^PAAS_DOCS_PORT=//p' "$ETC/docs.env")/mcp"
 DOCS_OPTS="--docs-search $DOCS_URL --docs-token-file $ETC/docs-token"
 # A team's GitLab remote (members clone and push there): python3 brain/teams/publish.py <team> --to /opt/paas/teams/<team> --remote <url>
@@ -187,7 +187,7 @@ else
   echo "marketplace for other VMs: starts after install-gate.sh made the certificate (re-run this script then)"
 fi
 
-# docs-search for other machines: the stdlib docs server in HTTP mode on 8001 (token, the gate's certificate), with every
+# docs-search for other machines: the stdlib docs server in HTTP mode on PAAS_DOCS_PORT (8443; token, the gate's certificate), with every
 # team's knowledge index refreshed from the team repositories (clones under /var/lib/paas-docs). Laptops put it into the team's
 # mcp.json (the editor); VM users keep docs-local.
 setfacl -R -m u:paas-market:rX "$P/teams" "$P/library" "$P/libraries" 2>/dev/null || chmod -R o+rX "$P/library"
@@ -198,8 +198,11 @@ cp "$BRAIN/../docs-search-mcp/docs_index.py" "$P/library/docs_index.py" 2>/dev/n
 install -m 644 "$HERE/paas-docs.service" /etc/systemd/system/paas-docs.service
 if [ -f "$ETC/market/paas-ui.crt" ]; then
   systemctl daemon-reload; systemctl enable -q paas-docs; systemctl restart paas-docs
+  DPORT=$(sed -n 's/^PAAS_DOCS_PORT=//p' "$ETC/docs.env")
   if command -v firewall-cmd >/dev/null 2>&1 && firewall-cmd --state >/dev/null 2>&1; then
-    firewall-cmd -q --permanent --add-port="$(sed -n 's/^PAAS_DOCS_PORT=//p' "$ETC/docs.env")/tcp" && firewall-cmd -q --reload
+    OLD=$(cat "$ETC/docs.port-open" 2>/dev/null || echo 8001)     # the port opened last time (installs before this note it: 8001), closed when it changed
+    [ -n "$OLD" ] && [ "$OLD" != "$DPORT" ] && firewall-cmd -q --permanent --remove-port="$OLD/tcp" 2>/dev/null || true
+    firewall-cmd -q --permanent --add-port="$DPORT/tcp" && firewall-cmd -q --reload && echo "$DPORT" > "$ETC/docs.port-open"
   fi
   PAAS_MARKET="$P/marketplace" PAAS_TEAMS="$P/teams" python3 "$P/bin/paas-market" setup-docs "$DOCS_URL" < "$ETC/docs-token" || true   # docs-http-<team> per team
   echo "docs-search for other machines: $DOCS_URL (one token for everyone, in every team's mcp.json; laptops reach it through the team plugin); health: $DOCS_URL/../health"

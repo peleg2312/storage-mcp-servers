@@ -22,7 +22,7 @@ root only:
   paas-market setup-mcp <name> <url> [shared|personal|none]  set where an MCP server is; the token: shared = one
                                                            for everyone (on stdin), personal = each person adds
                                                            their own when they add it, none = no token
-  paas-market setup-docs <https://vm:8001/mcp>              one docs item per team, docs-http-<team> (url ?team=<team>:
+  paas-market setup-docs <https://vm:8443/mcp>              one docs item per team, docs-http-<team> (url ?team=<team>:
                                                            the team's library, general or its own, plus its knowledge);
                                                            the docs token on stdin
   paas-market import-mcp [<item>=<your server>...]        set up the marketplace's MCP items from your own Claude's
@@ -752,7 +752,7 @@ def setup_docs(base, token):
     its own, plus its knowledge). Everyone sees and may add every team's; a team's plugin carries its own as docs-local.
     Items of teams that are gone, and the old single docs-search item, are removed."""
     if not re.match(r"^https://[\w.-]+(:\d+)?/mcp$", base):
-        sys.exit("paas-market: the address must look like https://vm:8001/mcp")
+        sys.exit("paas-market: the address must look like https://vm:8443/mcp")
     if len(token) < 16:
         sys.exit("paas-market: the docs token (stdin) is missing or shorter than 16 characters")
     d = os.path.join(MARKET, "items", "mcp")
@@ -1208,7 +1208,7 @@ def main(argv):
             setup_mcp(args[0], args[1], read_secret("shared token: ") if mode == "shared" else "", mode)
     elif cmd == "setup-docs":
         if len(args) != 1:
-            sys.exit("usage: paas-market setup-docs <https://vm:8001/mcp>   (root; the docs token on stdin)")
+            sys.exit("usage: paas-market setup-docs <https://vm:8443/mcp>   (root; the docs token on stdin)")
         setup_docs(args[0], read_secret("docs token: "))
     elif cmd == "import-mcp":
         if os.geteuid() != 0:

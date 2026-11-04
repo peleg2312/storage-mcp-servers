@@ -200,3 +200,24 @@ assert "mcp__plugin_paas-brain-flashback_docs-http__*" in open(os.path.join(P, "
 ms = open(os.path.join(B, "multiuser", "managed_settings.py")).read()
 assert '{"serverName": f"plugin:paas-brain-{t}:docs-http"}' in ms
 print("plugin docs servers ok")
+
+# 8. a new machine joins with one command: the team repository carries join.sh / join.ps1; the docs port is 8443 by default
+#    and --docs-port changes it (the real run of join.sh against an HTTPS docs service is in the session log, not repeated here)
+repo = os.path.join(tmp, "joinrepo")
+subprocess.run([sys.executable, os.path.join(B, "teams", "publish.py"), "flashback", "--to", repo], check=True,
+               stdout=subprocess.DEVNULL, env=genv)
+for f in ("join.sh", "join.ps1"):
+    assert os.path.isfile(os.path.join(repo, f)), f
+assert os.access(os.path.join(repo, "join.sh"), os.X_OK)
+assert subprocess.run(["sh", "-n", os.path.join(repo, "join.sh")]).returncode == 0
+ps = open(os.path.join(repo, "join.ps1")).read()
+for needle in ("Cert:\\CurrentUser\\Root", "Test-NetConnection", "claude plugin install", "docs-http"):
+    assert needle in ps, needle
+assert "join.sh" in open(os.path.join(repo, "README.md")).read()
+shared = open(os.path.join(B, "multiuser", "install-shared.sh")).read()
+assert "PAAS_DOCS_PORT=8443" in shared and "--remove-port" in shared
+r = subprocess.run(["sh", os.path.join(B, "multiuser", "install-multiuser.sh"), "--dry-run", "--docs-port", "8443"], capture_output=True, text=True)
+assert r.returncode == 0, r.stdout + r.stderr
+r = subprocess.run(["sh", os.path.join(B, "multiuser", "install-multiuser.sh"), "--dry-run", "--docs-port", "x"], capture_output=True, text=True)
+assert r.returncode != 0 and "port number" in r.stdout, r.stdout
+print("join scripts and docs port ok")
