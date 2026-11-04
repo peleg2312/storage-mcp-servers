@@ -232,6 +232,13 @@ settings (`/etc/claude-code/managed-settings.json` on Linux, the equivalent path
 `{"extraKnownMarketplaces": {"paas-brain-nas": {"source": {"source": "git", "url": "<team url>"}, "autoUpdate": true}},
 "enabledPlugins": {"paas-brain-nas@paas-brain-nas": true}}`.
 
+**Plain HTTP (no certificates on the PCs).** `sh brain/multiuser/install-multiuser.sh --plain-http` serves the docs MCP service
+(8443) and the marketplace for other VMs (3443) as `http://` (remembered; `--https` goes back). The token is still required, but
+nothing is encrypted: anyone who can capture traffic on that network can copy the docs token and read the docs and every team's
+knowledge (notes, environment, incidents). The sign-in page stays HTTPS. Then a PC needs only `claude plugin marketplace add
+<team url>` and `claude plugin install paas-brain-<team>@paas-brain-<team>` (and TCP 8443 open to the VM); other VMs connect
+with `paas-market connect http://<vm>:3443 <token>`. Team repositories may be on an `http://` GitLab too.
+
 **A new PC or laptop joins with one command** (Claude Code and git installed, the person's GitLab login): `git clone <team url>
 brain-<team>` then `sh brain-<team>/join.sh` (Linux / macOS; sudo puts the certificate in the system store, `--no-sudo` uses
 `NODE_EXTRA_CA_CERTS` in the shell profile) or `powershell -ExecutionPolicy Bypass -File .\brain-<team>\join.ps1` (Windows, no

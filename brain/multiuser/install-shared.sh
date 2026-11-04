@@ -108,7 +108,12 @@ getent passwd paas-market >/dev/null || useradd -r -M -d / -s /sbin/nologin paas
 [ -s "$ETC/docs-token" ] || { umask 077; head -c 24 /dev/urandom | base64 | tr -d '/+=' > "$ETC/docs-token"; umask 022; }
 chown root:paas-market "$ETC/docs-token"; chmod 640 "$ETC/docs-token"
 [ -f "$ETC/docs.env" ] || printf 'PAAS_DOCS_PORT=8443\nPAAS_DOCS_REFRESH=10\n' > "$ETC/docs.env"   # a VM installed before keeps its port
-DOCS_URL="https://$(hostname -f 2>/dev/null || hostname):$(sed -n 's/^PAAS_DOCS_PORT=//p' "$ETC/docs.env")/mcp"
+SCHEME=https; [ -f "$ETC/plain-http" ] && SCHEME=http      # install-multiuser.sh --plain-http: the docs MCP and the market without TLS
+grep -v '^PAAS_DOCS_TLS_ARGS=' "$ETC/docs.env" > "$ETC/docs.env.new" || true
+if [ "$SCHEME" = https ]; then echo 'PAAS_DOCS_TLS_ARGS=--tls-cert /etc/paas/market/paas-ui.crt --tls-key /etc/paas/market/paas-ui.key' >> "$ETC/docs.env.new"
+else echo 'PAAS_DOCS_TLS_ARGS=' >> "$ETC/docs.env.new"; fi
+mv "$ETC/docs.env.new" "$ETC/docs.env"; chmod 644 "$ETC/docs.env"
+DOCS_URL="$SCHEME://$(hostname -f 2>/dev/null || hostname):$(sed -n 's/^PAAS_DOCS_PORT=//p' "$ETC/docs.env")/mcp"
 DOCS_OPTS="--docs-search $DOCS_URL --docs-token-file $ETC/docs-token"
 # A team's GitLab remote (members clone and push there): python3 brain/teams/publish.py <team> --to /opt/paas/teams/<team> --remote <url>
 install -m 755 "$BRAIN/claude/tools/paas-team" "$P/bin/paas-team"
@@ -177,12 +182,14 @@ setfacl -m u:paas-market:rx "$P/marketplace" 2>/dev/null || echo "note: setfacl 
 chown root:paas-market "$ETC/market"/*; chmod 640 "$ETC/market"/*
 install -m 755 "$HERE/paas-market-serve.py" "$P/bin/paas-market-serve"
 install -m 644 "$HERE/paas-market-serve.service" /etc/systemd/system/paas-market-serve.service
+mkdir -p "$ETC/market"; if [ "$SCHEME" = http ]; then echo PAAS_MARKET_TLS=0 > "$ETC/market/market.env"; else echo PAAS_MARKET_TLS=1 > "$ETC/market/market.env"; fi
+chown root:paas-market "$ETC/market/market.env"; chmod 640 "$ETC/market/market.env"
 if [ -f "$ETC/tls/paas-ui.crt" ]; then
   systemctl daemon-reload; systemctl enable -q paas-market-serve; systemctl restart paas-market-serve
   if command -v firewall-cmd >/dev/null 2>&1 && firewall-cmd --state >/dev/null 2>&1; then
     firewall-cmd -q --permanent --add-port=3443/tcp && firewall-cmd -q --reload
   fi
-  echo "marketplace for other VMs: https://$(hostname -f 2>/dev/null || hostname):3443 (token: cat $ETC/market/token)"
+  echo "marketplace for other VMs: $SCHEME://$(hostname -f 2>/dev/null || hostname):3443 (token: cat $ETC/market/token)"
 else
   echo "marketplace for other VMs: starts after install-gate.sh made the certificate (re-run this script then)"
 fi

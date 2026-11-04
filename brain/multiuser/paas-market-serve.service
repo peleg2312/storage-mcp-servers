@@ -1,8 +1,10 @@
 [Unit]
-Description=Marketplace for other VMs (read-only HTTPS, token)
+Description=Marketplace for other VMs (read-only HTTPS or HTTP, token)
 After=network-online.target
 
 [Service]
+# PAAS_MARKET_TLS=0: plain HTTP (install-multiuser.sh --plain-http writes it)
+EnvironmentFile=-/etc/paas/market/market.env
 ExecStart=/usr/bin/python3 /opt/paas/bin/paas-market-serve
 User=paas-market
 Group=paas-market

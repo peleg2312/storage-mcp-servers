@@ -8,6 +8,9 @@
 #
 # --docs-port N: the docs service's port for laptops and other machines (default 8443; kept in /etc/paas/docs.env, so later
 #   runs need it only to change it: the firewall, the team plugins' docs-http and the Market's docs items follow).
+# --plain-http: the docs service (MCP, 8443) and the marketplace for other VMs (3443) answer plain http:// (the token still
+#   required, nothing encrypted on the wire; the sign-in page stays HTTPS): a PC then needs no certificate. --https goes back.
+#   Remembered (/etc/paas/plain-http).
 # What it does, in order: checks the packages; the brain for root (install-vm.sh); the shared base (install-shared.sh);
 # the sign-in gate with its certificate (install-gate.sh); the API key (/etc/paas/api-key); who may sign in
 # (/etc/paas/allowed-groups); the GitLab token for every account (paas-user git-token) and each team's repository url
@@ -22,7 +25,7 @@ HERE=$(cd "$(dirname "$0")" && pwd)
 ROOT=$(cd "$HERE/../.." && pwd)
 ETC=/etc/paas
 CONF=$ETC/multiuser.conf
-DRY=0; GITLAB_HOST=""; TEAM_URLS=""; GROUPS_CSV=""; PEOPLE=""; API_KEY_FILE=""; GIT_TOKEN_FILE=""; DOCS_PORT=""
+DRY=0; GITLAB_HOST=""; TEAM_URLS=""; GROUPS_CSV=""; PEOPLE=""; API_KEY_FILE=""; GIT_TOKEN_FILE=""; DOCS_PORT=""; SCHEME_SET=""
 [ -f "$CONF" ] && . "$CONF"
 while [ $# -gt 0 ]; do
   case "$1" in
@@ -35,6 +38,8 @@ while [ $# -gt 0 ]; do
     --people) case "$2" in ''|*[!0-9]*) echo "install-multiuser: --people wants a number"; exit 1 ;; esac; PEOPLE=$2; shift 2 ;;
     --api-key-file) API_KEY_FILE=$2; shift 2 ;;
     --git-token-file) GIT_TOKEN_FILE=$2; shift 2 ;;
+    --plain-http) SCHEME_SET=http; shift ;;
+    --https) SCHEME_SET=https; shift ;;
     --docs-port) case "$2" in ''|*[!0-9]*) echo "install-multiuser: --docs-port wants a port number"; exit 1 ;; esac
                  [ "$2" -ge 1 ] && [ "$2" -le 65535 ] || { echo "install-multiuser: --docs-port: 1-65535"; exit 1; }
                  DOCS_PORT=$2; shift 2 ;;
@@ -84,6 +89,11 @@ if [ -n "$DOCS_PORT" ] && [ "$DRY" = 0 ]; then               # docs.env is where
       || echo "PAAS_DOCS_PORT=$DOCS_PORT" >> "$ETC/docs.env"
   else printf 'PAAS_DOCS_PORT=%s\nPAAS_DOCS_REFRESH=10\n' "$DOCS_PORT" > "$ETC/docs.env"; fi
   note "docs service port: $DOCS_PORT (/etc/paas/docs.env)"
+fi
+if [ -n "$SCHEME_SET" ] && [ "$DRY" = 0 ]; then
+  mkdir -p "$ETC"
+  if [ "$SCHEME_SET" = http ]; then touch "$ETC/plain-http"; note "docs service and marketplace: plain http:// (/etc/paas/plain-http)"
+  else rm -f "$ETC/plain-http"; note "docs service and marketplace: https://"; fi
 fi
 say "[3/10] the shared base (install-shared.sh)"
 sh "$HERE/install-shared.sh"
@@ -165,7 +175,8 @@ EOF
 GP=$(sed -n 's/^GATE_PORT=//p' "$ETC/gate.env" 2>/dev/null | head -1); GP=${GP:-3001}
 g=$(http "https://127.0.0.1:$GP/"); [ "$g" = 200 ] && note "gate answers: https://$FQ:$GP" || { note "gate on $GP answered $g"; todo "check the gate: journalctl -u paas-gate -n 50"; }
 DP=$(sed -n 's/^PAAS_DOCS_PORT=//p' "$ETC/docs.env" 2>/dev/null); DP=${DP:-8443}
-d=$(http "https://127.0.0.1:$DP/health"); [ "$d" = 200 ] && note "docs service answers: https://$FQ:$DP/mcp (one token for everyone, in each team's mcp.json)" || { note "docs service answered $d"; todo "check the docs service: journalctl -u paas-docs -n 50"; }
+DS=https; [ -f "$ETC/plain-http" ] && DS=http
+d=$(http "$DS://127.0.0.1:$DP/health"); [ "$d" = 200 ] && note "docs service answers: $DS://$FQ:$DP/mcp (one token for everyone, in each team's mcp.json)" || { note "docs service answered $d"; todo "check the docs service: journalctl -u paas-docs -n 50"; }
 for tu in $TEAM_URLS; do
   n=${tu%%=*}; u=${tu#*=}
   if GIT_TERMINAL_PROMPT=0 git -c credential.helper=/opt/paas/bin/paas-git-credential -c credential.useHttpPath=true ls-remote --exit-code -q -- "$u" HEAD >/dev/null 2>&1; then note "team $n: $u reachable with the stored token"

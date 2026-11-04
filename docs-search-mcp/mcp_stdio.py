@@ -131,9 +131,16 @@ class Server:
             o = lib.search_docs(self.con, q, vendor, product, limit)
             if b is not None:                                 # the team knowledge joins the library's answer for this query
                 ob = lib.search_docs(b, q, vendor, product, limit)
+                # the two indexes' scores do not compare: a small knowledge index gives every word a low weight (BM25 idf),
+                # so a team note that holds every word of the question would sink under the library and be cut off by
+                # the limit. Such a note is the team's own answer: it goes first; a partial one keeps its own score
+                top = max((r["score"] for r in o["results"]), default=0.0)
                 for r in ob["results"]:
                     r["chunk_id"] += ID_BASE
                     r["library"] = "team knowledge"
+                    h, _, n = (r.get("matched") or "").partition("/")
+                    if h == n or h == "phrases":
+                        r["score"] = r["score"] + top + 1e-3
                 o["results"] = sorted(o["results"] + ob["results"], key=lambda r: -r["score"])
                 if ob.get("match_mode", "all words") == "all words":
                     o["match_mode"] = "all words"
@@ -391,7 +398,7 @@ class Teams:
                         subprocess.run(["git", "-C", clone, "pull", "-q", "--ff-only"], env=env, timeout=120, capture_output=True)
                     else:
                         os.makedirs(os.path.dirname(clone), exist_ok=True)
-                        r = subprocess.run(["git", "clone", "-q", "--", remote, clone], env=dict(env, GIT_ALLOW_PROTOCOL="https:ssh:file"), timeout=300, capture_output=True, text=True)
+                        r = subprocess.run(["git", "clone", "-q", "--", remote, clone], env=dict(env, GIT_ALLOW_PROTOCOL="https:http:ssh:file"), timeout=300, capture_output=True, text=True)
                         if r.returncode:
                             shown = re.sub(r"://[^/@]+@", "://", remote)          # never a credential in the journal
                             self.log(f"team {team}: clone of {shown} failed: {re.sub(r'://[^/@]+@', '://', r.stderr.strip()[-160:])}")

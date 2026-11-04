@@ -11,7 +11,7 @@ TEAM=$(sed -n 's/^ *"name": *"\([a-z0-9_-]*\)".*/\1/p' "$HERE/team.json" | head 
 [ -n "$TEAM" ] || { echo "join: no team.json here: run this from a clone of the team repository"; exit 1; }
 PLUG="paas-brain-$TEAM"
 CRT="$HERE/$PLUG/lib/paas-ui.crt"
-DOCS=$(grep -o 'https://[^"]*?team=[^"]*' "$HERE/$PLUG/.mcp.json" 2>/dev/null | head -1 || true)
+DOCS=$(grep -o 'https\{0,1\}://[^"]*?team=[^"]*' "$HERE/$PLUG/.mcp.json" 2>/dev/null | head -1 || true)
 ok() { printf '  ok    %s\n' "$*"; }
 bad() { printf '  FAIL  %s\n' "$*"; FAILED=1; }
 FAILED=0
@@ -23,6 +23,14 @@ command -v git >/dev/null 2>&1 || { echo "join: git is missing (Claude Code inst
 EXTRA=""
 if [ -z "$DOCS" ]; then
   bad "the plugin has no docs-http: the team was published without the VM's docs address (re-run the VM's installer)"
+elif [ "${DOCS#http://}" != "$DOCS" ]; then                  # the VM serves plain HTTP (--plain-http): no certificate
+  base=${DOCS%%/mcp*}
+  code=$(curl -s -o /dev/null -w '%{http_code}' --max-time 10 "$base/health" 2>/dev/null || true)
+  case "$code" in
+    200) ok "docs service answers: $base (plain HTTP, no certificate needed)" ;;
+    000) bad "docs service not reachable at $base: the port must be open (TCP) from this machine to the VM, and the VM name in the url must resolve" ;;
+    *) bad "docs service at $base answered $code" ;;
+  esac
 elif [ ! -f "$CRT" ]; then
   bad "no certificate in $PLUG/lib/paas-ui.crt (publish the team on the VM, where the certificate is)"
 else

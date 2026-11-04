@@ -751,8 +751,8 @@ def setup_docs(base, token):
     """root: one Market item per team, docs-http-<team>, the VM's docs service for that team (its library, the general one or
     its own, plus its knowledge). Everyone sees and may add every team's; a team's plugin carries its own as docs-local.
     Items of teams that are gone, and the old single docs-search item, are removed."""
-    if not re.match(r"^https://[\w.-]+(:\d+)?/mcp$", base):
-        sys.exit("paas-market: the address must look like https://vm:8443/mcp")
+    if not re.match(r"^https?://[\w.-]+(:\d+)?/mcp$", base):
+        sys.exit("paas-market: the address must look like https://vm:8443/mcp (or http:// with --plain-http)")
     if len(token) < 16:
         sys.exit("paas-market: the docs token (stdin) is missing or shorter than 16 characters")
     d = os.path.join(MARKET, "items", "mcp")
@@ -1040,12 +1040,31 @@ def reindex():
 
 
 def connect(url, token, want=""):
-    m = re.match(r"^https://([\w.-]+):(\d+)/?$", url)
+    global REMOTE
+    m = re.match(r"^(https?)://([\w.-]+):(\d+)/?$", url)
     if not m:
-        sys.exit("usage: paas-market connect https://<vm>:3443 [<token>] [--fingerprint SHA256:..]   (on that VM root reads the token: cat /etc/paas/market/token)")
+        sys.exit("usage: paas-market connect https://<vm>:3443 [<token>] [--fingerprint SHA256:..]   (http:// for a VM installed with "
+                 "--plain-http; on that VM root reads the token: cat /etc/paas/market/token)")
     token = token.strip() or read_secret("marketplace token: ")
     if not token:
         sys.exit("paas-market: a token is needed")
+    os.makedirs(os.path.dirname(REMOTE_CFG), exist_ok=True)
+    if m.group(1) == "http":                       # plain HTTP (the VM's choice, --plain-http): no certificate to pin
+        old = os.umask(0o077)
+        try:
+            json.dump({"url": url.rstrip("/"), "token": token}, open(REMOTE_CFG, "w"))
+            if os.path.exists(REMOTE_CRT):
+                os.remove(REMOTE_CRT)
+        finally:
+            os.umask(old)
+        REMOTE = {"url": url.rstrip("/"), "token": token}
+        try:
+            pull()
+        except BaseException:
+            os.remove(REMOTE_CFG)
+            raise
+        return
+    m = re.match(r"^https://([\w.-]+):(\d+)/?$", url)
     try:
         pem = ssl.get_server_certificate((m.group(1), int(m.group(2))))
     except OSError as e:
@@ -1065,7 +1084,6 @@ def connect(url, token, want=""):
         json.dump({"url": url.rstrip("/"), "token": token}, open(REMOTE_CFG, "w"))
     finally:
         os.umask(old)
-    global REMOTE
     REMOTE = {"url": url.rstrip("/"), "token": token}
     try:
         pull()
@@ -1077,8 +1095,10 @@ def connect(url, token, want=""):
 
 def pull():
     """download the other VM's marketplace into MIRROR (whole copy, swapped in at the end)"""
-    ctx = ssl.create_default_context(cafile=REMOTE_CRT)
-    ctx.check_hostname = False                     # the certificate itself is pinned (connect), whatever name it carries
+    ctx = None
+    if not REMOTE["url"].startswith("http://"):
+        ctx = ssl.create_default_context(cafile=REMOTE_CRT)
+        ctx.check_hostname = False                 # the certificate itself is pinned (connect), whatever name it carries
     stamp = os.path.join(MIRROR, ".pulled")
     try:
         url, etag = open(stamp).read().split("\n")[:2]            # the VM the copy is from, and its ETag

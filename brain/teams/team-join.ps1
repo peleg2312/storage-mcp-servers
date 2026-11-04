@@ -26,6 +26,18 @@ if (-not (Get-Command git -ErrorAction SilentlyContinue)) { throw 'join: git is 
 # 1. the VM's certificate, in the current user's trusted roots (Claude Code reads the Windows store)
 if (-not $docs) {
     Bad 'the plugin has no docs-http: the team was published without the VM''s docs address (re-run the VM''s installer)'
+} elseif (([Uri]$docs).Scheme -eq 'http') {
+    # the VM serves plain HTTP (--plain-http): no certificate, only the port
+    $u = [Uri]$docs
+    $tcp = Test-NetConnection -ComputerName $u.Host -Port $u.Port -WarningAction SilentlyContinue
+    if (-not $tcp.TcpTestSucceeded) {
+        Bad "TCP $($u.Port) to $($u.Host) is closed: open it from this PC to the VM (firewall), and check the name resolves"
+    } else {
+        try {
+            $r = Invoke-WebRequest -UseBasicParsing -TimeoutSec 10 -Uri "http://$($u.Host):$($u.Port)/health"
+            Ok "docs service answers: http://$($u.Host):$($u.Port) (plain HTTP, no certificate needed)"
+        } catch { Bad "docs service at http://$($u.Host):$($u.Port): $($_.Exception.Message)" }
+    }
 } elseif (-not (Test-Path $crt)) {
     Bad "no certificate in $plug\lib\paas-ui.crt (publish the team on the VM, where the certificate is)"
 } else {

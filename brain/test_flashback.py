@@ -221,3 +221,32 @@ assert r.returncode == 0, r.stdout + r.stderr
 r = subprocess.run(["sh", os.path.join(B, "multiuser", "install-multiuser.sh"), "--dry-run", "--docs-port", "x"], capture_output=True, text=True)
 assert r.returncode != 0 and "port number" in r.stdout, r.stdout
 print("join scripts and docs port ok")
+
+# 9. --plain-http: the docs service's TLS arguments come from docs.env (empty = http), the market server reads market.env,
+#    the clients take http:// addresses; a team note that holds every word of a question comes before the library
+svc = open(os.path.join(B, "multiuser", "paas-docs.service")).read()
+assert "$PAAS_DOCS_TLS_ARGS" in svc and "--tls-cert /etc/paas/market" not in svc
+assert "PAAS_DOCS_TLS_ARGS=" in shared and 'SCHEME=http' in shared and "PAAS_MARKET_TLS=0" in shared
+assert "EnvironmentFile=-/etc/paas/market/market.env" in open(os.path.join(B, "multiuser", "paas-market-serve.service")).read()
+mu = open(os.path.join(B, "multiuser", "install-multiuser.sh")).read()
+assert "--plain-http) SCHEME_SET=http" in mu and "--https) SCHEME_SET=https" in mu
+js = open(os.path.join(B, "teams", "team-join.sh")).read()
+assert "plain HTTP, no certificate needed" in js and "plain HTTP, no certificate needed" in ps
+assert 'GIT_ALLOW_PROTOCOL="https:http:ssh:file"' in open(os.path.join(R, "docs-search-mcp", "mcp_stdio.py")).read()
+kd = os.path.join(tmp, "rank")
+os.makedirs(os.path.join(kd, "lib", "commvault", "11.40"))
+for i in range(6):
+    open(os.path.join(kd, "lib", "commvault", "11.40", f"t{i}.md"), "w").write(
+        f"# Cloud library topic {i}\n\nA cloud storage library goes offline when the access node cannot resolve DNS {i}. " * 3)
+docs_index.build(os.path.join(kd, "lib"), os.path.join(kd, "lib.db"), full=True, log=lambda *a: None)
+os.makedirs(os.path.join(kd, "brain", "notes"))
+open(os.path.join(kd, "brain", "notes", "commvault.md"), "w").write(
+    "# commvault: known issues\n2026-11-04 · the S3 cloud library goes offline when the access node loses DNS; restore the DNS entry · verified · job 1\n")
+msgs = [{"jsonrpc": "2.0", "id": 1, "method": "initialize", "params": {"protocolVersion": "2025-06-18", "capabilities": {}, "clientInfo": {"name": "t", "version": "1"}}},
+        {"jsonrpc": "2.0", "id": 2, "method": "tools/call", "params": {"name": "search_docs", "arguments": {"query": "cloud library offline access node DNS", "limit": 3}}}]
+r = subprocess.run([sys.executable, os.path.join(R, "docs-search-mcp", "mcp_stdio.py"), "--db", os.path.join(kd, "lib.db"),
+                    "--knowledge", os.path.join(kd, "brain")], input="\n".join(json.dumps(m) for m in msgs) + "\n",
+                   capture_output=True, text=True, timeout=120, env=dict(os.environ, HOME=os.path.join(kd, "home")))
+res = json.loads(json.loads(r.stdout.strip().splitlines()[-1])["result"]["content"][0]["text"])["results"]
+assert res and res[0].get("library") == "team knowledge", [(x.get("library"), x.get("title")) for x in res]
+print("plain http and team knowledge first ok")
