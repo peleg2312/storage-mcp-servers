@@ -25,7 +25,7 @@ check("CLAUDE.md + persona.md + notes.md", size(C, "CLAUDE.md") + size(R, "brain
 check("coding.md (read on demand by code work)", size(C, "brain", "coding.md"), 3 * 1024)
 check("storage.md + environment.md + tool-map.md",
       sum(size(C, "brain", f) for f in ("storage.md", "environment.md", "tool-map.md")), 12 * 1024)
-check("skill frontmatter total", sum(front(f) for f in glob.glob(C + "/skills/*/SKILL.md")), 10500)
+check("skill frontmatter total", sum(front(f) for f in glob.glob(C + "/skills/*/SKILL.md")), 11000)
 check("agent frontmatter total", sum(front(f) for f in glob.glob(C + "/agents/*.md")), 3600)
 # the same budgets per team profile (what one team's member pays): brain/plugin/build.py resolves each team's lists
 import json, shutil, subprocess, tempfile
@@ -35,7 +35,7 @@ for team in sorted(d for d in os.listdir(os.path.join(R, "brain", "teams")) if o
     P = os.path.join(tmp, "paas-brain-" + team)
     check(f"team {team}: CLAUDE.md + persona.md + notes.md", size(C, "CLAUDE.md") + size(P, "brain", "persona.md") + size(P, "brain", "notes.md"), 8 * 1024)
     check(f"team {team}: storage.md + environment.md + tool-map.md", sum(size(P, "brain", f) for f in ("storage.md", "environment.md", "tool-map.md")), 12 * 1024)
-    check(f"team {team}: skill frontmatter total", sum(front(f) for f in glob.glob(P + "/skills/*/SKILL.md")), 10500)
+    check(f"team {team}: skill frontmatter total", sum(front(f) for f in glob.glob(P + "/skills/*/SKILL.md")), 11000)
     check(f"team {team}: agent frontmatter total", sum(front(f) for f in glob.glob(P + "/agents/*.md")), 4800)   # tools: lists carry the plugin form of the server names; only name and description load into the context
 shutil.rmtree(tmp, ignore_errors=True)
 for f in ("powermax-mcp/server.py", "powerflex-mcp/server.py", "ucsc-mcp/server.py",

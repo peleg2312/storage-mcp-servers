@@ -95,7 +95,7 @@ cp "$SRC/hooks/block-write-tools.py" "$SRC/hooks/session-start.py" "$SRC/hooks/d
   [ -f "$DST/brain/$f" ] || cp "$SRC/brain/$f" "$DST/brain/$f"
 done
 cp "$SRC/banner/paas-banner.py" "$SRC/banner/paas-statusline.py" "$DST/banner/"
-mkdir -p "$DST/tools/vendor" && cp "$SRC/tools/report.py" "$SRC/tools/get-reports.ps1" "$SRC/tools/db_mcp.py" "$SRC/tools/add-docs" "$SRC/tools/paas-open" "$SRC/tools/paas-team" "$SRC/tools/paas-library" "$DST/tools/"
+mkdir -p "$DST/tools/vendor" && cp "$SRC/tools/report.py" "$SRC/tools/deck.py" "$SRC/tools/get-reports.ps1" "$SRC/tools/db_mcp.py" "$SRC/tools/add-docs" "$SRC/tools/paas-open" "$SRC/tools/paas-team" "$SRC/tools/paas-library" "$DST/tools/"
 cp "$HERE/../docs-search-mcp/docs_index.py" "$DST/tools/"     # add-docs: your own documents into the library
 [ -f "$USER_DST/brain/databases.json" ] || cp "$SRC/tools/databases.example.json" "$USER_DST/brain/databases.example.json"
 cp "$SRC/tools/vendor/"*.whl "$DST/tools/vendor/"   # charts + Excel (report-export skill); pure-Python wheels, no pip
