@@ -70,12 +70,12 @@ def resolve(team, kind):
 
     def path_of(folder, name):
         p = os.path.join(folder, name if kind == "skills" else name + ".md")
-        return p if (os.path.isdir(p) if kind == "skills" else os.path.isfile(p)) else None
+        return p if (os.path.isfile(os.path.join(p, "SKILL.md")) if kind == "skills" else os.path.isfile(p)) else None   # an empty folder an update left: no skill
 
     if wanted == "all":
         names = sorted({n[:-3] if kind == "agents" and n.endswith(".md") else n
                         for folder in (shared, own) if os.path.isdir(folder) for n in os.listdir(folder)
-                        if not n.startswith(".") and (kind == "skills" or n.endswith(".md"))})
+                        if not n.startswith(".") and (path_of(folder, n) if kind == "skills" else n.endswith(".md"))})
     else:
         names = list(dict.fromkeys(wanted))
     out = []
