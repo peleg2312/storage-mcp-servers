@@ -108,6 +108,30 @@ fonts = {r.font.name for s in p.slides for sh in s.shapes if sh.has_text_frame f
 assert "Calibri" in fonts and "Segoe UI" not in fonts, fonts
 print("template ok")
 
+# looks: the same number gives the same deck design, other numbers other designs; a generated palette stays readable
+sys.path.insert(0, os.path.dirname(TOOL))
+import deck as D  # noqa: E402
+looks = {json.dumps({k: v for k, v in D.make_look(n).items() if k != "seed"}, sort_keys=True) for n in range(40)}
+assert D.make_look(7) == D.make_look(7) and len(looks) >= 35, len(looks)
+for h in D.HUES + ["#FFEE00", "#00FFAA", "#111111"]:
+    assert all(D.contrast(c, "#FFFFFF") >= 3.0 for c in D.palette(h)["accents"]), h
+plainspec = dict(ex)
+plainspec.pop("theme", None), plainspec.pop("style", None)
+f = os.path.join(tmp, "looks.json")
+json.dump(plainspec, open(f, "w"))
+seen = set()
+for n in (1, 2, 3, 4, 5, 6):
+    o = deck(f, "--look", str(n), "--out", os.path.join(tmp, f"look{n}.pptx"))
+    assert "checks: ok" in o and f"look: {n} (" in o, o
+    seen.add(o.split("look: ")[1].split(";")[0].split(" ", 1)[1])
+assert len(seen) >= 4, seen
+o1 = deck(f, "--out", os.path.join(tmp, "auto1.pptx"))
+o2 = deck(f, "--out", os.path.join(tmp, "auto2.pptx"))
+assert o1.split("look: ")[1].split(" ")[0] == o2.split("look: ")[1].split(" ")[0], "the same title keeps its look"
+json.dump(dict(plainspec, accent="#7A3EF0"), open(f, "w"))
+assert "accent #7A3EF0" in deck(f, "--out", os.path.join(tmp, "acc.pptx"))
+print("looks ok:", len(looks), "different looks of 40; designs seen:", len(seen))
+
 # speaker notes
 s = {"slides": [{"type": "bullets", "title": "n", "bullets": ["a"], "notes": "say this"}]}
 f = os.path.join(tmp, "n.json")

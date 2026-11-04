@@ -39,9 +39,16 @@ with their data, styled tables, text fitted to its box, page numbers. Never draw
 | image | image (path), caption | a screenshot or diagram file |
 | closing | title, subtitle, bullets, contact | the ask, next steps |
 
-Every slide takes `notes` (speaker notes). Deck fields: `title`, `theme` (midnight, graphite, ocean, emerald,
-sunset, light), `style` (**clean**: calm, light slides; **bold**: gradients, colour panels, split layouts - for
-management and kick-offs), `footer`, `template` (company .pptx / .potx), `colors` / `fonts` overrides.
+Every slide takes `notes` (speaker notes). Deck fields: `title`, `footer`, `style`, `theme` / `accent`, `look`,
+`template` (company .pptx / .potx), `colors` / `fonts` overrides.
+- **Every deck looks different by itself**: its `look` (layouts of the title, section, agenda, cards and numbers
+  slides, palette, fonts, bullets) comes from its title; the output's `look:` line gives the number. Do not copy a
+  theme from an earlier deck. The user liked one: `"look": <that number>`; wants another: `"look": "random"`.
+- **Choose the style for the audience** (always set it): management, kick-off, a proposal → `"bold"`; an ops review,
+  a technical walkthrough, a handover → `"clean"`; an incident review → `"clean"` with `"theme": "graphite"`.
+- Colours: leave them to the look, or `"accent": "#7A3EF0"` (the team's or the customer's colour: a whole palette is
+  built from it), or a fixed `theme` (midnight, graphite, ocean, emerald, sunset, light). A `template` overrides all
+  of this: company decks always look like the company.
 - **Icons** (`deck.py --icons`): database, server, disk, network, switch, cloud, shield, lock, check, alert, error,
   clock, calendar, chart, trend-up, gauge, money, users, gear, search, archive, replication, rocket, idea... (aliases:
   storage, backup, dr, risk, cost, team...). Give one icon per card / stat / list item, matching its meaning.

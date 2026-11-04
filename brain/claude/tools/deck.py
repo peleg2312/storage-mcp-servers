@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Designed PowerPoint decks from a short JSON outline: the model writes the content, this tool does the design.
 
-    deck.py spec.json [--out DIR|FILE.pptx] [--theme NAME] [--style clean|bold] [--template company.pptx] [--preview]
+    deck.py spec.json [--out DIR|FILE.pptx] [--theme NAME] [--style clean|bold] [--look N|random] [--template company.pptx] [--preview]
     deck.py --example            a spec with every slide type (start from it)
     deck.py --themes             the built-in themes
     deck.py --icons              the icon names (cards, stats, iconlist, timeline, hero, section, takeaway)
@@ -16,7 +16,10 @@ editable. Text is fitted to its box (the font shrinks within limits); what still
 Spec: {"title": "...", "theme": "midnight", "footer": "SAN team", "slides": [{"type": "title", ...}, ...]}
 Slide types: title, agenda, section, hero, bullets, cards, iconlist, stats, chart, table, compare, timeline, process,
 quote, image, closing (fields: deck.py --example). Styles: clean (calm, light slides) or bold (gradients, colour panels,
-split layouts, a dark numbers slide). Icons are drawn as editable shapes (deck_icons.py), no image files. Any slide takes "notes" (speaker notes). Text takes **bold** inline.
+split layouts, a dark numbers slide). Icons are drawn as editable shapes (deck_icons.py), no image files.
+Looks: every deck gets its own design from its title (layout variants of the title, section, agenda, cards and numbers
+slides, a palette from the themes or built from a brand colour, a font pair, bullets), printed as "look: N"; the same
+N gives the same design again, "random" a new one; "accent": "#RRGGBB" builds the palette from that colour. Any slide takes "notes" (speaker notes). Text takes **bold** inline.
 Needs python-pptx (the devtools venv: ~/.claude/devtools-venv or /opt/paas/devtools-venv). Python 3.9+."""
 import copy
 import datetime as dt
@@ -85,6 +88,11 @@ THEMES = {
                  "accents": ["#2A78D6", "#1BAF7A", "#EDA100", "#EB6834", "#6250D6", "#E87BA4"]},
 }
 FONTS = {"head": "Segoe UI Semibold", "body": "Segoe UI"}
+# head / body font pairs a look can use (Windows fonts; LibreOffice substitutes in previews), with the head font's glyph width
+FONT_PAIRS = [("Segoe UI Semibold", "Segoe UI", 0.56), ("Georgia", "Segoe UI", 0.6), ("Bahnschrift SemiBold", "Segoe UI", 0.54),
+              ("Trebuchet MS", "Segoe UI", 0.57)]
+# brand colours a look can build its palette from (beside the fixed themes)
+HUES = ["#2A78D6", "#7A3EF0", "#0F9AA8", "#E4572E", "#2E9E5B", "#C2185B", "#3D5AFE", "#C77D00", "#5C6BC0", "#00897B"]
 GOOD, BAD = "#1A9E62", "#D64545"
 CHAR = 0.52          # average glyph width / font size (Segoe UI, Calibri, Arial within a few percent)
 BOLD_CHAR = 0.56
@@ -105,6 +113,56 @@ def mix(a, b, t):
 def usep(unit):
     """a unit after a number: "%" sticks to it, others get a space"""
     return unit if unit in ("%", "x", "\u00b0") else " " + unit
+
+
+def _lum(h):
+    def f(c):
+        return c / 12.92 if c <= 0.03928 else ((c + 0.055) / 1.055) ** 2.4
+    r, g, b = (int(h.lstrip("#")[i:i + 2], 16) / 255 for i in (0, 2, 4))
+    return 0.2126 * f(r) + 0.7152 * f(g) + 0.0722 * f(b)
+
+
+def contrast(a, b):
+    la, lb = sorted((_lum(a), _lum(b)), reverse=True)
+    return (la + 0.05) / (lb + 0.05)
+
+
+def _hls(h, l, s):
+    import colorsys
+    r, g, b = colorsys.hls_to_rgb(h % 1.0, max(0.0, min(1.0, l)), max(0.0, min(1.0, s)))
+    return "#%02X%02X%02X" % (round(r * 255), round(g * 255), round(b * 255))
+
+
+def palette(accent):
+    """a full theme from one brand colour: dark, text and surface tones of its hue, five companion accents around the
+    colour wheel, every accent at least 3:1 against white (readable as a chart colour or on a white slide)"""
+    import colorsys
+    a = str(accent).lstrip("#")
+    if not re.fullmatch(r"[0-9A-Fa-f]{6}", a):
+        raise SystemExit(f"deck: accent {accent!r} is not a colour like #2A78D6")
+    h, l, s = colorsys.rgb_to_hls(*(int(a[i:i + 2], 16) / 255 for i in (0, 2, 4)))
+    s = max(s, 0.5)
+
+    def acc(hh, ll=0.5):
+        c = _hls(hh, ll, min(0.78, s))
+        while contrast(c, "#FFFFFF") < 3.0 and ll > 0.2:
+            ll -= 0.03
+            c = _hls(hh, ll, min(0.78, s))
+        return c
+    first = "#" + a.upper() if contrast("#" + a, "#FFFFFF") >= 3.0 else acc(h, l)
+    return {"dark": _hls(h, 0.13, min(0.6, s)), "dark2": _hls(h, 0.18, min(0.55, s)), "on_dark": "#FFFFFF",
+            "on_dark_muted": _hls(h, 0.8, 0.3), "bg": "#FFFFFF", "text": _hls(h, 0.15, 0.35), "muted": _hls(h, 0.4, 0.14),
+            "surface": _hls(h, 0.965, 0.45), "line": _hls(h, 0.89, 0.22),
+            "accents": [first] + [acc(h + d) for d in (0.45, 0.12, -0.09, 0.6, 0.3)]}
+
+
+def make_look(seed):
+    """the design choices of one deck, all from one number: the same number gives the same look again"""
+    import random
+    r = random.Random(seed)
+    return {"seed": seed, "title": r.randrange(4), "section": r.randrange(3), "cards": r.randrange(3), "stats": r.randrange(3),
+            "agenda": r.randrange(2), "chrome": r.randrange(3), "fonts": r.randrange(len(FONT_PAIRS)), "bullet": r.randrange(3),
+            "palette": r.randrange(len(THEMES) - 1 + len(HUES)), "style": r.choice(("clean", "bold"))}
 
 
 def plain(text):
@@ -134,23 +192,50 @@ def fit(paras, width_in, height_in, hi, lo, spacing=1.15, gap=0.55, char=CHAR):
 
 
 class Deck:
-    def __init__(self, spec, theme=None, template=None, style=None):
+    def __init__(self, spec, theme=None, template=None, style=None, look=None):
         self.spec, self.warn = spec, []
-        self.style = style or spec.get("style") or "clean"
+        lk = look if look is not None else spec.get("look")
+        if lk in (None, ""):                         # each deck its own look, the same one again for the same title
+            import hashlib
+            lk = int(hashlib.sha1(plain(spec.get("title", "")).encode()).hexdigest()[:8], 16) % 10000
+        elif str(lk).lower() == "random":
+            import random
+            lk = random.randrange(10000)
+        try:
+            lk = int(lk)
+        except (TypeError, ValueError):
+            raise SystemExit(f"deck: look {lk!r}: a number (0-9999) or random")
+        self.look = make_look(lk)
+        self.style = style or spec.get("style") or self.look["style"]
         if self.style not in ("clean", "bold"):
             raise SystemExit(f"deck: unknown style {self.style!r}; clean or bold")
         self.template = template or spec.get("template")
+        self.hc = BOLD_CHAR
         if self.template:
             self.prs = Presentation(os.path.expanduser(self.template))
             self._drop_slides()
             self.t = self._theme_from_template()
+            self.theme_name = "template"
         else:
             self.prs = Presentation()
             self.prs.slide_width, self.prs.slide_height = Inches(13.333), Inches(7.5)
-            name = theme or spec.get("theme") or "midnight"
-            if name not in THEMES:
-                raise SystemExit(f"deck: unknown theme {name!r}; one of {', '.join(THEMES)}")
-            self.t = dict(THEMES[name], **FONTS)
+            name = theme or spec.get("theme")
+            fp = FONT_PAIRS[self.look["fonts"]]
+            fonts = {"head": fp[0], "body": fp[1]}
+            if spec.get("accent") and not name:
+                self.t = dict(palette(spec["accent"]), **fonts)
+                self.theme_name = "accent " + str(spec["accent"])
+            elif name:
+                if name not in THEMES:
+                    raise SystemExit(f"deck: unknown theme {name!r}; one of {', '.join(THEMES)}")
+                self.t = dict(THEMES[name], **fonts)
+                self.theme_name = name
+            else:
+                names = [k for k in THEMES if k != "light"]
+                i = self.look["palette"]
+                self.t = dict(THEMES[names[i]] if i < len(names) else palette(HUES[i - len(names)]), **fonts)
+                self.theme_name = names[i] if i < len(names) else "accent " + HUES[i - len(names)]
+            self.hc = fp[2]
         for k, v in (spec.get("colors") or {}).items():   # "colors": {"accents": [...], "dark": "#..."} overrides
             self.t[k] = v
         for k in ("head", "body"):
@@ -348,7 +433,7 @@ class Deck:
                 etree.SubElement(bc, qn("a:srgbClr")).set("val", (bullet_color or self.t["accents"][0]).lstrip("#"))
                 etree.SubElement(pPr, qn("a:buSzPct")).set("val", "100000")
                 etree.SubElement(pPr, qn("a:buFont")).set("typeface", "Arial")
-                etree.SubElement(pPr, qn("a:buChar")).set("char", "•" if lvl == 0 else "–")
+                etree.SubElement(pPr, qn("a:buChar")).set("char", ("\u2022", "\u25AA", "\u203A")[self.look["bullet"]] if lvl == 0 else "\u2013")
         return tf
 
     def frame(self, s, sl, title=True, dark=False, left=None, width=None):
@@ -364,6 +449,11 @@ class Deck:
                 return top
         x = M if left is None else left
         w = (self.W - 2 * M) if width is None else width
+        ch = self.look["chrome"]
+        if ch == 1 and not dark:                     # a thin accent strip along the top
+            self.shape(s, MSO_SHAPE.RECTANGLE, 0, 0, self.W, 0.08, fill=t["accents"][0])
+        elif ch == 2 and not dark:                   # a rule over the footer
+            self.shape(s, MSO_SHAPE.RECTANGLE, M, self.H - 0.6, self.W - 2 * M, 0.012, fill=t["line"])
         fg, mu = (t["on_dark"], t["on_dark_muted"]) if dark else (t["text"], t["muted"])
         if self.kicker:
             k = self.kicker.upper()
@@ -377,7 +467,7 @@ class Deck:
             ttl = sl.get("title", "")
             hi, lo = (34, 24) if self.bold else (30, 22)
             th = 3.0 if dark and width is not None else 1.0
-            size, ok = fit([(ttl, 0)], w, th, hi, lo, spacing=1.05, char=BOLD_CHAR)
+            size, ok = fit([(ttl, 0)], w, th, hi, lo, spacing=1.05, char=self.hc)
             if not ok or len(plain(ttl)) > 90:
                 self.warn.append(f"slide {self.n}: title is long ({len(plain(ttl))} characters); say it in one line")
             self.text(s, x, 0.78 if self.bold else 0.72, w, th, [ttl], size, fg, font=t["head"], spacing=1.05)
@@ -400,35 +490,73 @@ class Deck:
                 elif ty == 4 or p.placeholder_format.idx == 1:
                     p.text = plain(" · ".join(x for x in (sl.get("subtitle"), sl.get("meta")) if x))
             return s
-        s = self.new(dark=True)
+        v = self.look["title"]
         W, H = self.W, self.H
         a = t["accents"]
-        if self.bold:
+        title = sl.get("title", "")
+        meta = sl.get("meta") or dt.date.today().strftime("%B %Y")
+        if v == 3:                                   # editorial: light page, an accent edge, very large type
+            s = self.new(fill=t["bg"])
+            self.shape(s, MSO_SHAPE.RECTANGLE, 0, 0, 0.32, H, fill=a[0])
+            self.shape(s, MSO_SHAPE.OVAL, W - 4.4, H - 4.6, 6.0, 6.0, fill=a[1 % len(a)], alpha=0.10)
+            self.shape(s, MSO_SHAPE.OVAL, W - 2.9, -1.4, 3.6, 3.6, fill=a[0], alpha=0.12)
+            if sl.get("icon"):
+                self.icon(s, sl["icon"], 1.1, 1.0, 0.7, a[0], weight=1.8)
+            size, ok = fit([(title, 0)], 9.2, 2.6, 62, 38, spacing=0.98, char=self.hc)
+            self.text(s, 1.1, 1.95, 9.2, 2.6, [title], size, t["text"], font=t["head"], spacing=0.98, anchor=MSO_ANCHOR.BOTTOM)
+            self.shape(s, MSO_SHAPE.RECTANGLE, 1.1, 4.75, 1.4, 0.08, fill=a[0])
+            if sl.get("subtitle"):
+                self.text(s, 1.1, 5.0, 8.5, 0.9, [sl["subtitle"]], 22, t["muted"])
+            self.text(s, 1.1, H - 0.9, 8, 0.4, [meta.upper()], 12, a[0], font=t["head"], spc=150)
+        elif v == 2:                                 # split: the title on the dark side, a colour block with a tile pattern
+            s = self.new(dark=True)
+            bx = W * 0.64
+            self.shape(s, MSO_SHAPE.RECTANGLE, bx, 0, W - bx, H, fill=a[0])
+            k = 0.78
+            for r in range(6):
+                for c in range(4):
+                    if (r + c) % 3 == 0:
+                        self.shape(s, MSO_SHAPE.RECTANGLE, bx + 0.45 + c * (k + 0.12), 0.35 + r * (k + 0.12), k, k, fill="#FFFFFF", alpha=0.14)
+            if sl.get("icon"):
+                self.icon(s, sl["icon"], bx + (W - bx) / 2 - 0.9, H / 2 - 0.9, 1.8, "#FFFFFF", weight=1.4)
+            size, ok = fit([(title, 0)], bx - 1.6, 2.6, 54, 34, spacing=0.98, char=self.hc)
+            self.shape(s, MSO_SHAPE.RECTANGLE, 0.9, 1.95, 0.9, 0.08, fill=a[1 % len(a)])
+            self.text(s, 0.9, 2.2, bx - 1.6, 2.6, [title], size, t["on_dark"], font=t["head"], spacing=0.98)
+            ys = 2.2 + min(2.6, (lines_for(title, size, bx - 1.6, self.hc) * size * 0.98 + 40) / 72)
+            if sl.get("subtitle"):
+                self.text(s, 0.9, ys, bx - 1.8, 1.0, [sl["subtitle"]], 20, t["on_dark_muted"])
+            self.text(s, 0.9, H - 1.0, bx - 1.5, 0.4, [meta], 13, t["on_dark_muted"], spc=60)
+        elif v == 1:                                 # bands: diagonal colour bands and a dot
+            s = self.new(dark=True)
             band = self.shape(s, MSO_SHAPE.RECTANGLE, W - 6.2, -2.0, 3.2, 11.5, fill=a[0], alpha=0.30)
             band.rotation = 24
             band2 = self.shape(s, MSO_SHAPE.RECTANGLE, W - 3.3, -2.0, 1.4, 11.5, fill=a[1 % len(a)], alpha=0.35)
             band2.rotation = 24
             self.shape(s, MSO_SHAPE.OVAL, W - 2.6, H - 2.4, 1.3, 1.3, fill=a[2 % len(a)], alpha=0.9)
             if sl.get("icon"):
-                self.icon(s, sl["icon"], 0.9, 1.05, 0.75, a[0] if t["dark"] != "#FFFFFF" else a[0], weight=1.8)
+                self.icon(s, sl["icon"], 0.9, 1.05, 0.75, a[0], weight=1.8)
             self.shape(s, MSO_SHAPE.RECTANGLE, 0.9, 2.25, 1.2, 0.1, fill=a[0])
-            size, ok = fit([(sl.get("title", ""), 0)], 7.9, 2.4, 58, 36, spacing=0.98, char=BOLD_CHAR)
-            self.text(s, 0.9, 2.55, 7.9, 2.4, [sl.get("title", "")], size, t["on_dark"], font=t["head"], spacing=0.98)
-            ys = 2.55 + min(2.4, (lines_for(sl.get("title", ""), size, 7.9, BOLD_CHAR) * size * 0.98 + 48) / 72)
-        else:
+            size, ok = fit([(title, 0)], 7.9, 2.4, 58, 36, spacing=0.98, char=self.hc)
+            self.text(s, 0.9, 2.55, 7.9, 2.4, [title], size, t["on_dark"], font=t["head"], spacing=0.98)
+            ys = 2.55 + min(2.4, (lines_for(title, size, 7.9, self.hc) * size * 0.98 + 48) / 72)
+            if sl.get("subtitle"):
+                self.text(s, 0.9, ys, 7.4, 1.0, [sl["subtitle"]], 22, t["on_dark_muted"])
+            self.text(s, 0.9, H - 1.0, 8, 0.4, [meta], 13, t["on_dark_muted"], spc=60)
+        else:                                        # circles: three translucent circles
+            s = self.new(dark=True)
             self.shape(s, MSO_SHAPE.OVAL, W - 5.2, -1.6, 7.0, 7.0, fill=a[0], alpha=0.22)
             self.shape(s, MSO_SHAPE.OVAL, W - 3.4, 2.9, 5.2, 5.2, fill=a[1 % len(a)], alpha=0.18)
             self.shape(s, MSO_SHAPE.OVAL, W - 6.3, 4.6, 1.5, 1.5, fill=a[2 % len(a)], alpha=0.35)
+            if sl.get("icon"):
+                self.icon(s, sl["icon"], 0.9, 1.2, 0.7, a[0], weight=1.8)
             self.shape(s, MSO_SHAPE.RECTANGLE, 0.9, 2.35, 0.9, 0.08, fill=a[0])
-            size, ok = fit([(sl.get("title", ""), 0)], 7.6, 2.2, 48, 32, spacing=1.0, char=BOLD_CHAR)
-            self.text(s, 0.9, 2.6, 7.6, 2.2, [sl.get("title", "")], size, t["on_dark"], font=t["head"], spacing=1.0)
-            ys = 4.85
+            size, ok = fit([(title, 0)], 7.6, 2.2, 48, 32, spacing=1.0, char=self.hc)
+            self.text(s, 0.9, 2.6, 7.6, 2.2, [title], size, t["on_dark"], font=t["head"], spacing=1.0)
+            if sl.get("subtitle"):
+                self.text(s, 0.9, 4.85, 7.4, 1.0, [sl["subtitle"]], 20, t["on_dark_muted"])
+            self.text(s, 0.9, H - 1.0, 8, 0.4, [meta], 13, t["on_dark_muted"], spc=60)
         if not ok:
             self.warn.append(f"slide {self.n}: the deck title is long; keep it under about 8 words")
-        if sl.get("subtitle"):
-            self.text(s, 0.9, ys, 7.4, 1.0, [sl["subtitle"]], 22 if self.bold else 20, t["on_dark_muted"])
-        meta = sl.get("meta") or dt.date.today().strftime("%B %Y")
-        self.text(s, 0.9, H - 1.0, 8, 0.4, [meta], 13, t["on_dark_muted"], spc=60)
         return s
 
     def s_section(self, sl):
@@ -446,9 +574,11 @@ class Deck:
                     p.text = plain(sl["subtitle"])
             return s
         a = t["accents"][0]
-        if self.bold:
+        v = self.look["section"]
+        num = "%02d" % self.sections
+        if v == 1:                                   # full colour, the number very large and faint
             s = self.new(fill=mix(a, "#000000", 0.18))
-            self.text(s, self.W - 7.2, self.H - 5.4, 6.9, 4.6, ["%02d" % self.sections], 260, "#FFFFFF", font=t["head"], align=PP_ALIGN.RIGHT,
+            self.text(s, self.W - 7.2, self.H - 5.4, 6.9, 4.6, [num], 260, "#FFFFFF", font=t["head"], align=PP_ALIGN.RIGHT,
                       spacing=0.8, alpha=0.16)
             self.shape(s, MSO_SHAPE.RECTANGLE, 0.95, 3.35, 1.2, 0.1, fill="#FFFFFF")
             if sl.get("icon"):
@@ -457,12 +587,227 @@ class Deck:
             if sl.get("subtitle"):
                 self.text(s, 0.95, 5.25, self.W - 2.5, 1.0, [sl["subtitle"]], 22, mix("#FFFFFF", a, 0.2))
             return s
-        s = self.new(dark=True)
+        if v == 2:                                   # light: a big accent number, a rule, the title beside it
+            s = self.new(fill=t["bg"])
+            self.shape(s, MSO_SHAPE.RECTANGLE, 0, self.H - 0.18, self.W, 0.18, fill=a)
+            self.text(s, 0.8, 1.6, 4.2, 3.6, [num], 200, a, font=t["head"], spacing=0.85, anchor=MSO_ANCHOR.MIDDLE)
+            self.shape(s, MSO_SHAPE.RECTANGLE, 5.1, 2.0, 0.04, 3.0, fill=t["line"])
+            if sl.get("icon"):
+                self.icon(s, sl["icon"], 5.6, 2.0, 0.65, a, weight=1.8)
+            self.text(s, 5.6, 2.85, self.W - 6.4, 1.5, [sl.get("title", "")], 44, t["text"], font=t["head"], spacing=1.0)
+            if sl.get("subtitle"):
+                self.text(s, 5.6, 4.35, self.W - 6.4, 0.9, [sl["subtitle"]], 20, t["muted"])
+            return s
+        s = self.new(dark=True)                      # classic: a side bar, the number in colour
         self.shape(s, MSO_SHAPE.RECTANGLE, 0, 0, 0.35, self.H, fill=a)
-        self.text(s, 0.95, 1.35, 6, 2.2, ["%02d" % self.sections], 120, a, font=t["head"], spacing=0.9)
+        self.text(s, 0.95, 1.35, 6, 2.2, [num], 120, a, font=t["head"], spacing=0.9)
+        if sl.get("icon"):
+            self.icon(s, sl["icon"], self.W - 2.2, 1.4, 1.1, a, weight=1.6)
         self.text(s, 0.95, 3.75, self.W - 2.5, 1.5, [sl.get("title", "")], 40, t["on_dark"], font=t["head"], spacing=1.0)
         if sl.get("subtitle"):
             self.text(s, 0.95, 5.15, self.W - 2.5, 1.0, [sl["subtitle"]], 20, t["on_dark_muted"])
+        return s
+
+    def s_agenda(self, sl):
+        t = self.t
+        s = self.new("titleonly")
+        sl = dict(sl, title=sl.get("title") or "Agenda")
+        top = self.frame(s, sl)
+        items = sl.get("items", [])
+        if len(items) > 7:
+            self.warn.append(f"slide {self.n}: {len(items)} agenda items; keep it to 7 or fewer")
+        if self.look["agenda"] == 1 and 3 <= len(items) <= 6:      # a grid of large numbers
+            cols = 2 if len(items) == 4 else 3
+            rows = math.ceil(len(items) / cols)
+            cw = (self.W - 2 * self.M - 0.4 * (cols - 1)) / cols
+            rh = min(2.2, (self.H - 1.0 - top) / rows)
+            for i, it in enumerate(items):
+                x = self.M + (i % cols) * (cw + 0.4)
+                y = top + 0.1 + (i // cols) * rh
+                c = t["accents"][i % len(t["accents"])]
+                self.shape(s, MSO_SHAPE.RECTANGLE, x, y, cw, 0.03, fill=c)
+                self.text(s, x, y + 0.15, cw, 0.9, ["%02d" % (i + 1)], 40, c, font=t["head"])
+                self.text(s, x, y + 1.05, cw, rh - 1.15, [it], 22, t["text"], font=t["head"], spacing=1.1)
+            return s
+        n = max(1, len(items))
+        rows = min(n, 7)
+        avail = self.H - 0.8 - top
+        row = min(0.82, avail / rows)
+        for i, it in enumerate(items[:7]):
+            y = top + i * row
+            c = t["accents"][i % len(t["accents"])]
+            self.shape(s, MSO_SHAPE.OVAL, self.M, y + (row - 0.52) / 2, 0.52, 0.52, fill=c)
+            self.text(s, self.M, y + (row - 0.52) / 2, 0.52, 0.52, [str(i + 1)], 16, "#FFFFFF", font=t["head"], align=PP_ALIGN.CENTER,
+                      anchor=MSO_ANCHOR.MIDDLE)
+            self.text(s, self.M + 0.85, y, self.W - 2 * self.M - 0.85, row, [it], 22, t["text"], anchor=MSO_ANCHOR.MIDDLE)
+            if i < rows - 1:
+                self.shape(s, MSO_SHAPE.RECTANGLE, self.M + 0.85, y + row - 0.01, self.W - 2 * self.M - 0.85, 0.012, fill=t["line"])
+        return s
+
+    def s_cards(self, sl):
+        t = self.t
+        s = self.new("titleonly")
+        top = self.frame(s, sl)
+        cards = sl.get("cards", [])
+        if not 2 <= len(cards) <= 6:
+            self.warn.append(f"slide {self.n}: {len(cards)} cards; 2-6 look right")
+        v = self.look["cards"]
+        cols = len(cards) if len(cards) <= 4 else 3
+        rows = math.ceil(max(1, len(cards)) / cols)
+        cw = (self.W - 2 * self.M - 0.3 * (cols - 1)) / cols
+        need = max([(2.85 if deck_icons.resolve(c.get("icon")) else 2.45) + 16 * 1.25 * lines_for(c.get("text", ""), 16, cw - 0.6) / 72 for c in cards] or [3])
+        avail = self.H - 0.85 - (top + 0.05)
+        ch_ = min(avail, max(3.0, need) * rows + 0.3 * (rows - 1))
+        y0 = top + 0.05 + (avail - ch_) / 2 * 0.6
+        cells = self.grid(max(1, len(cards)), y0, y0 + ch_, max_cols=4 if len(cards) == 4 else 3)
+        for i, (c, (x, y, w, h)) in enumerate(zip(cards, cells)):
+            col = t["accents"][i % len(t["accents"])]
+            icon = c.get("icon")
+            has_icon = bool(deck_icons.resolve(icon))
+            if v == 1:                               # outlined, a colour band on top
+                self.shape(s, MSO_SHAPE.RECTANGLE, x, y, w, h, fill=t["bg"], line=t["line"])
+                self.shape(s, MSO_SHAPE.RECTANGLE, x, y, w, 0.12, fill=col)
+                ic, bg = "#FFFFFF", col
+            elif v == 2:                             # tinted with the card's own colour
+                self.shape(s, MSO_SHAPE.ROUNDED_RECTANGLE, x, y, w, h, fill=mix(col, "#FFFFFF", 0.9), radius=0.08)
+                ic, bg = "#FFFFFF", col
+            else:                                    # quiet surface
+                self.shape(s, MSO_SHAPE.ROUNDED_RECTANGLE, x, y, w, h, fill=t["surface"], radius=0.06)
+                if not has_icon:
+                    self.shape(s, MSO_SHAPE.RECTANGLE, x + 0.3, y + 0.3, 0.5, 0.06, fill=col)
+                ic, bg = col, mix(col, "#FFFFFF", 0.84)
+            compact = h < 2.9
+            badge = icon or c.get("value") or str(i + 1)
+            d = 0.62 if compact else 0.82
+            iy = y + (0.42 if v == 1 else 0.32)
+            if has_icon:
+                self.badge(s, icon, x + 0.3, iy, d, ic, bg)
+            if compact:
+                bx = x + 0.3
+                if has_icon:
+                    bx += d + 0.2
+                else:
+                    self.text(s, bx, iy + 0.1, 0.9, 0.5, [badge], 20 if len(badge) <= 3 else 14, col, font=t["head"], anchor=MSO_ANCHOR.MIDDLE)
+                    bx += 0.55 if len(badge) <= 2 else 1.0
+                self.text(s, bx, iy, x + w - 0.3 - bx, d, [c.get("title", "")], 18, t["text"], font=t["head"], anchor=MSO_ANCHOR.MIDDLE)
+                ty = iy + d + 0.2
+            else:
+                if not has_icon:
+                    self.text(s, x + 0.3, y + 0.5, w - 0.6, 0.6, [badge], 26 if len(badge) <= 3 else 18, col, font=t["head"])
+                elif c.get("value"):
+                    self.text(s, x + 0.3 + d + 0.2, iy, w - d - 0.8, d, [c["value"]], 22, col, font=t["head"], anchor=MSO_ANCHOR.MIDDLE)
+                hy = iy + d + 0.3 if has_icon else y + 1.15
+                hs, _ = fit([(c.get("title", ""), 0)], w - 0.6, 0.8, 20, 15, char=self.hc)
+                self.text(s, x + 0.3, hy, w - 0.6, 0.8, [c.get("title", "")], hs, mix(col, "#000000", 0.25) if v == 2 else t["text"],
+                          font=t["head"], spacing=1.05)
+                ty = hy + 0.75
+            bh = y + h - 0.25 - ty
+            size, ok = fit([(c.get("text", ""), 0)], w - 0.6, bh, 16, 11, spacing=1.2)
+            if not ok:
+                self.warn.append(f"slide {self.n}: card {i + 1} text is long; one or two sentences")
+            self.text(s, x + 0.3, ty, w - 0.6, bh, [c.get("text", "")], size, t["muted"] if v != 2 else t["text"], spacing=1.2)
+        return s
+
+    def s_stats(self, sl):
+        t = self.t
+        v = self.look["stats"]
+        stats = sl.get("stats", [])
+        if v == 2 and len(stats) >= 2 and not self.template:
+            return self.stats_lead(sl, stats)
+        dark = self.bold and not self.template and v == 0
+        s = self.new("titleonly", dark=dark)
+        top = self.frame(s, sl, dark=dark)
+        if not 1 <= len(stats) <= 4:
+            self.warn.append(f"slide {self.n}: {len(stats)} numbers; 2-4 read best")
+        n = max(1, len(stats))
+        fg, mu, ln = (t["on_dark"], t["on_dark_muted"], mix(t["dark"], "#FFFFFF", 0.2)) if dark else (t["text"], t["muted"], t["line"])
+        bottom = self.H - (1.6 if sl.get("note") else 0.9)
+        gap = 0.3 if v == 1 else 0
+        w = (self.W - 2 * self.M - gap * (n - 1)) / n
+        icons = any(deck_icons.resolve(st.get("icon")) for st in stats)
+        y = top + (bottom - top) / 2 - (1.75 if icons else 1.3)
+        vs = min([fit([(str(st.get("value", "")), 0)], w - 0.7, 1.2, 72 if self.bold else 66, 34, char=0.6)[0] for st in stats] or [60])
+        for i, st in enumerate(stats):
+            x = self.M + i * (w + gap)
+            col = t["accents"][i % len(t["accents"])] if sl.get("colorful") or self.bold or v == 1 else t["accents"][0]
+            yy = y
+            if v == 1:                               # tiles
+                self.shape(s, MSO_SHAPE.ROUNDED_RECTANGLE, x, y - 0.3, w, (bottom - y) + 0.1, fill=t["surface"], radius=0.06)
+                self.shape(s, MSO_SHAPE.RECTANGLE, x, y - 0.3, 0.08, (bottom - y) + 0.1, fill=col)
+            elif i:
+                self.shape(s, MSO_SHAPE.RECTANGLE, x, y + 0.1, 0.015, 2.4 + (0.9 if icons else 0), fill=ln)
+            if icons:
+                if deck_icons.resolve(st.get("icon")):
+                    self.icon(s, st["icon"], x + 0.35, yy, 0.6, col)
+                yy += 0.9
+            val = str(st.get("value", ""))
+            self.text(s, x + 0.35, yy, w - 0.6, 1.3, [val], vs, "#FFFFFF" if dark and self.bold and i == 0 else col, font=t["head"],
+                      spacing=0.95, anchor=MSO_ANCHOR.BOTTOM)
+            self.text(s, x + 0.35, yy + 1.45, w - 0.6, 0.8, [st.get("label", "")], 16, fg, spacing=1.1)
+            self.stat_extras(s, st, x, yy + 2.15, w, col, ln)
+        if sl.get("note"):
+            self.shape(s, MSO_SHAPE.RECTANGLE, self.M, self.H - 1.45, self.W - 2 * self.M, 0.012, fill=ln)
+            self.text(s, self.M, self.H - 1.3, self.W - 2 * self.M, 0.5, [sl["note"]], 15, mu)
+        return s
+
+    def stat_extras(self, s, st, x, ny, w, col, ln):
+        """the progress bar and the delta under a number"""
+        if st.get("progress") is not None:
+            pv = st["progress"]
+            pv = float(str(pv).rstrip("%")) / (100 if str(pv).endswith("%") or float(str(pv).rstrip("%")) > 1 else 1)
+            pv = max(0.0, min(1.0, pv))
+            bw = min(w - 0.7, 2.6)
+            self.shape(s, MSO_SHAPE.ROUNDED_RECTANGLE, x + 0.35, ny + 0.05, bw, 0.1, fill=ln, radius=0.5)
+            bar = BAD if st.get("good") is False and pv >= 0.8 else col
+            if pv > 0:
+                self.shape(s, MSO_SHAPE.ROUNDED_RECTANGLE, x + 0.35, ny + 0.05, max(0.1, bw * pv), 0.1, fill=bar, radius=0.5)
+            ny += 0.35
+        if st.get("delta"):
+            d = str(st["delta"])
+            good = st.get("good", not d.strip().startswith("-"))
+            arrow = "▲ " if not d.strip().startswith("-") else "▼ "
+            self.text(s, x + 0.35, ny, w - 0.6, 0.4, [arrow + d.lstrip("+-")], 14, GOOD if good else BAD, font=self.t["head"])
+
+    def stats_lead(self, sl, stats):
+        """the first number very large on the left, the others as rows on the right"""
+        t = self.t
+        s = self.new("titleonly")
+        top = self.frame(s, sl)
+        if len(stats) > 5:
+            self.warn.append(f"slide {self.n}: {len(stats)} numbers; 2-5 read best")
+        bottom = self.H - (1.6 if sl.get("note") else 0.9)
+        a = t["accents"][0]
+        lw = (self.W - 2 * self.M) * 0.46
+        first, rest = stats[0], stats[1:]
+        self.shape(s, MSO_SHAPE.RECTANGLE, self.M, top, lw, bottom - top, fill=t["dark"] if t["dark"] != "#FFFFFF" else a)
+        y = top + 0.45
+        if deck_icons.resolve(first.get("icon")):
+            self.icon(s, first["icon"], self.M + 0.45, y, 0.7, a if t["dark"] != "#FFFFFF" else "#FFFFFF")
+            y += 0.95
+        vs, _ = fit([(str(first.get("value", "")), 0)], lw - 0.9, 1.8, 110, 48, char=0.6)
+        self.text(s, self.M + 0.45, y, lw - 0.9, 1.9, [str(first.get("value", ""))], vs, "#FFFFFF", font=t["head"], spacing=0.9,
+                  anchor=MSO_ANCHOR.BOTTOM)
+        self.text(s, self.M + 0.45, y + 2.0, lw - 0.9, 0.9, [first.get("label", "")], 20, mix("#FFFFFF", t["dark"], 0.2), spacing=1.1)
+        self.stat_extras(s, first, self.M + 0.1, y + 2.9, lw, a, mix(t["dark"], "#FFFFFF", 0.25))
+        rx = self.M + lw + 0.5
+        rw = self.W - self.M - rx
+        rh = (bottom - top) / max(1, len(rest))
+        for i, st in enumerate(rest):
+            yy = top + i * rh
+            col = t["accents"][(i + 1) % len(t["accents"])]
+            if i:
+                self.shape(s, MSO_SHAPE.RECTANGLE, rx, yy, rw, 0.012, fill=t["line"])
+            ix = rx
+            if deck_icons.resolve(st.get("icon")):
+                self.badge(s, st["icon"], rx, yy + (rh - 0.62) / 2, 0.62, col, mix(col, "#FFFFFF", 0.84))
+                ix += 0.85
+            vw = min(2.6, rw * 0.42)
+            vs2, _ = fit([(str(st.get("value", "")), 0)], vw, rh * 0.7, 40, 22, char=0.6)
+            self.text(s, ix, yy, vw, rh, [str(st.get("value", ""))], vs2, col, font=t["head"], anchor=MSO_ANCHOR.MIDDLE)
+            lab = st.get("label", "") + ("  ·  " + str(st["delta"]) if st.get("delta") else "")
+            self.text(s, ix + vw + 0.2, yy, rx + rw - ix - vw - 0.2, rh, [lab], 16, t["text"], anchor=MSO_ANCHOR.MIDDLE, spacing=1.1)
+        if sl.get("note"):
+            self.text(s, self.M, self.H - 1.3, self.W - 2 * self.M, 0.5, [sl["note"]], 15, t["muted"])
         return s
 
     def takeaway(self, s, x, y, w, h, text, label="Key point", filled=False, icon=None):
@@ -518,113 +863,6 @@ class Deck:
             self.takeaway(s, tx, top, self.W - self.M - tx, bottom - top, sl["takeaway"], icon=sl.get("icon"))
         else:
             self.body(s, self.M, top + 0.1, self.W - 2 * self.M - 1.5, bottom - top - 0.1, items, hi=24, what="the bullets")
-        return s
-
-    def s_cards(self, sl):
-        t = self.t
-        s = self.new("titleonly")
-        top = self.frame(s, sl)
-        cards = sl.get("cards", [])
-        if not 2 <= len(cards) <= 6:
-            self.warn.append(f"slide {self.n}: {len(cards)} cards; 2-6 look right")
-        cols = len(cards) if len(cards) <= 4 else 3
-        rows = math.ceil(max(1, len(cards)) / cols)
-        cw = (self.W - 2 * self.M - 0.3 * (cols - 1)) / cols
-        need = max([(2.85 if deck_icons.resolve(c.get("icon")) else 2.45) + 16 * 1.25 * lines_for(c.get("text", ""), 16, cw - 0.6) / 72 for c in cards] or [3])
-        avail = self.H - 0.85 - (top + 0.05)
-        ch_ = min(avail, max(3.0, need) * rows + 0.3 * (rows - 1))
-        y0 = top + 0.05 + (avail - ch_) / 2 * 0.6
-        cells = self.grid(max(1, len(cards)), y0, y0 + ch_, max_cols=4 if len(cards) == 4 else 3)
-        for i, (c, (x, y, w, h)) in enumerate(zip(cards, cells)):
-            col = t["accents"][i % len(t["accents"])]
-            icon = c.get("icon")
-            has_icon = bool(deck_icons.resolve(icon))
-            if self.bold:
-                self.shape(s, MSO_SHAPE.RECTANGLE, x, y, w, h, fill=t["bg"], line=t["line"])
-                self.shape(s, MSO_SHAPE.RECTANGLE, x, y, w, 0.12, fill=col)
-            else:
-                self.shape(s, MSO_SHAPE.ROUNDED_RECTANGLE, x, y, w, h, fill=t["surface"], radius=0.06)
-                if not has_icon:
-                    self.shape(s, MSO_SHAPE.RECTANGLE, x + 0.3, y + 0.3, 0.5, 0.06, fill=col)
-            compact = h < 2.9
-            badge = icon or c.get("value") or str(i + 1)
-            d = 0.62 if compact else 0.82
-            iy = y + (0.42 if self.bold else 0.32)
-            if has_icon:
-                self.badge(s, icon, x + 0.3, iy, d, "#FFFFFF" if self.bold else col, col if self.bold else mix(col, "#FFFFFF", 0.84))
-            if compact:
-                bx = x + 0.3
-                if has_icon:
-                    bx += d + 0.2
-                else:
-                    self.text(s, bx, iy + 0.1, 0.9, 0.5, [badge], 20 if len(badge) <= 3 else 14, col, font=t["head"], anchor=MSO_ANCHOR.MIDDLE)
-                    bx += 0.55 if len(badge) <= 2 else 1.0
-                self.text(s, bx, iy, x + w - 0.3 - bx, d, [c.get("title", "")], 18, t["text"], font=t["head"], anchor=MSO_ANCHOR.MIDDLE)
-                ty = iy + d + 0.2
-            else:
-                if not has_icon:
-                    self.text(s, x + 0.3, y + 0.5, w - 0.6, 0.6, [badge], 26 if len(badge) <= 3 else 18, col, font=t["head"])
-                elif c.get("value"):
-                    self.text(s, x + 0.3 + d + 0.2, iy, w - d - 0.8, d, [c["value"]], 22, col, font=t["head"], anchor=MSO_ANCHOR.MIDDLE)
-                hy = iy + d + 0.3 if has_icon else y + 1.15
-                hs, _ = fit([(c.get("title", ""), 0)], w - 0.6, 0.8, 20, 15, char=BOLD_CHAR)
-                self.text(s, x + 0.3, hy, w - 0.6, 0.8, [c.get("title", "")], hs, t["text"], font=t["head"], spacing=1.05)
-                ty = hy + 0.75
-            bh = y + h - 0.25 - ty
-            size, ok = fit([(c.get("text", ""), 0)], w - 0.6, bh, 16, 11, spacing=1.2)
-            if not ok:
-                self.warn.append(f"slide {self.n}: card {i + 1} text is long; one or two sentences")
-            self.text(s, x + 0.3, ty, w - 0.6, bh, [c.get("text", "")], size, t["muted"], spacing=1.2)
-        return s
-
-    def s_stats(self, sl):
-        t = self.t
-        dark = self.bold and not self.template
-        s = self.new("titleonly", dark=dark)
-        top = self.frame(s, sl, dark=dark)
-        stats = sl.get("stats", [])
-        if not 1 <= len(stats) <= 4:
-            self.warn.append(f"slide {self.n}: {len(stats)} numbers; 2-4 read best")
-        n = max(1, len(stats))
-        fg, mu, ln = (t["on_dark"], t["on_dark_muted"], mix(t["dark"], "#FFFFFF", 0.2)) if dark else (t["text"], t["muted"], t["line"])
-        bottom = self.H - (1.6 if sl.get("note") else 0.9)
-        w = (self.W - 2 * self.M) / n
-        icons = any(deck_icons.resolve(st.get("icon")) for st in stats)
-        y = top + (bottom - top) / 2 - (1.75 if icons else 1.3)
-        vs = min([fit([(str(st.get("value", "")), 0)], w - 0.6, 1.2, 72 if self.bold else 66, 34, char=0.6)[0] for st in stats] or [60])
-        for i, st in enumerate(stats):
-            x = self.M + i * w
-            col = t["accents"][i % len(t["accents"])] if sl.get("colorful") or self.bold else t["accents"][0]
-            yy = y
-            if i:
-                self.shape(s, MSO_SHAPE.RECTANGLE, x, y + 0.1, 0.015, 2.4 + (0.9 if icons else 0), fill=ln)
-            if icons:
-                if deck_icons.resolve(st.get("icon")):
-                    self.icon(s, st["icon"], x + 0.35, yy, 0.6, col)
-                yy += 0.9
-            val = str(st.get("value", ""))
-            self.text(s, x + 0.35, yy, w - 0.6, 1.3, [val], vs, col if not dark or not self.bold else (col if i else "#FFFFFF"), font=t["head"],
-                      spacing=0.95, anchor=MSO_ANCHOR.BOTTOM)
-            self.text(s, x + 0.35, yy + 1.45, w - 0.6, 0.8, [st.get("label", "")], 16, fg, spacing=1.1)
-            ny = yy + 2.15
-            if st.get("progress") is not None:
-                pv = st["progress"]
-                pv = float(str(pv).rstrip("%")) / (100 if str(pv).endswith("%") or float(str(pv).rstrip("%")) > 1 else 1)
-                pv = max(0.0, min(1.0, pv))
-                bw = min(w - 0.7, 2.6)
-                self.shape(s, MSO_SHAPE.ROUNDED_RECTANGLE, x + 0.35, ny + 0.05, bw, 0.1, fill=ln, radius=0.5)
-                bar = BAD if st.get("good") is False and pv >= 0.8 else col
-                if pv > 0:
-                    self.shape(s, MSO_SHAPE.ROUNDED_RECTANGLE, x + 0.35, ny + 0.05, max(0.1, bw * pv), 0.1, fill=bar, radius=0.5)
-                ny += 0.35
-            if st.get("delta"):
-                d = str(st["delta"])
-                good = st.get("good", not d.strip().startswith("-"))
-                arrow = "▲ " if not d.strip().startswith("-") else "▼ "
-                self.text(s, x + 0.35, ny, w - 0.6, 0.4, [arrow + d.lstrip("+-")], 14, GOOD if good else BAD, font=t["head"])
-        if sl.get("note"):
-            self.shape(s, MSO_SHAPE.RECTANGLE, self.M, self.H - 1.45, self.W - 2 * self.M, 0.012, fill=ln)
-            self.text(s, self.M, self.H - 1.3, self.W - 2 * self.M, 0.5, [sl["note"]], 15, mu)
         return s
 
     def s_hero(self, sl):
@@ -1150,29 +1388,6 @@ class Deck:
         if sl.get("notes"):
             s.notes_slide.notes_text_frame.text = sl["notes"]
 
-    def s_agenda(self, sl):
-        t = self.t
-        s = self.new("titleonly")
-        sl = dict(sl, title=sl.get("title") or "Agenda")
-        top = self.frame(s, sl)
-        items = sl.get("items", [])
-        if len(items) > 7:
-            self.warn.append(f"slide {self.n}: {len(items)} agenda items; keep it to 7 or fewer")
-        n = max(1, len(items))
-        rows = min(n, 7)
-        avail = self.H - 0.8 - top
-        row = min(0.82, avail / rows)
-        for i, it in enumerate(items[:7]):
-            y = top + i * row
-            c = t["accents"][i % len(t["accents"])]
-            self.shape(s, MSO_SHAPE.OVAL, self.M, y + (row - 0.52) / 2, 0.52, 0.52, fill=c)
-            self.text(s, self.M, y + (row - 0.52) / 2, 0.52, 0.52, [str(i + 1)], 16, "#FFFFFF", font=t["head"], align=PP_ALIGN.CENTER,
-                      anchor=MSO_ANCHOR.MIDDLE)
-            self.text(s, self.M + 0.85, y, self.W - 2 * self.M - 0.85, row, [it], 22, t["text"], anchor=MSO_ANCHOR.MIDDLE)
-            if i < rows - 1:
-                self.shape(s, MSO_SHAPE.RECTANGLE, self.M + 0.85, y + row - 0.01, self.W - 2 * self.M - 0.85, 0.012, fill=t["line"])
-        return s
-
     def grid(self, n, top, bottom, max_cols=3, gap=0.3):
         cols = n if n <= max_cols else math.ceil(n / 2)
         rows = math.ceil(n / cols)
@@ -1276,8 +1491,6 @@ TYPES = [n[2:] for n in dir(Deck) if n.startswith("s_")]
 
 EXAMPLE = {
     "title": "SAN capacity review Q4",
-    "theme": "midnight",
-    "style": "clean",
     "footer": "SAN team \u00b7 capacity review",
     "slides": [
         {"type": "title", "title": "SAN capacity review Q4", "subtitle": "Where the growth went and what we buy next", "meta": "SAN team \u00b7 November 2026"},
@@ -1385,6 +1598,7 @@ def main(argv):
     ap.add_argument("--out")
     ap.add_argument("--theme")
     ap.add_argument("--style", choices=["clean", "bold"])
+    ap.add_argument("--look")
     ap.add_argument("--icons", action="store_true")
     ap.add_argument("--template")
     ap.add_argument("--preview", action="store_true")
@@ -1409,7 +1623,7 @@ def main(argv):
         spec = json.load(open(os.path.expanduser(a.spec), encoding="utf-8"))
     except (OSError, ValueError) as e:
         raise SystemExit(f"deck: {a.spec}: {e}")
-    d = Deck(spec, theme=a.theme, template=a.template, style=a.style)
+    d = Deck(spec, theme=a.theme, template=a.template, style=a.style, look=a.look)
     prs = d.build()
     name = slug(spec.get("title") or spec["slides"][0].get("title", "deck"))
     out = os.path.expanduser(a.out) if a.out else os.path.expanduser(f"~/storage-reports/{dt.date.today()}-{name}")
@@ -1417,6 +1631,7 @@ def main(argv):
     os.makedirs(os.path.dirname(path) or ".", exist_ok=True)
     prs.save(path)
     print(f"deck: {path} ({d.n} slides)")
+    print(f"look: {d.look['seed']} ({d.style}, {d.theme_name}, {d.t['head']}); the same again: \"look\": {d.look['seed']}, another: \"look\": \"random\"")
     for w in d.warn:
         print("WARN " + w)
     if not d.warn:
