@@ -34,6 +34,7 @@ for s in ("restore-plan", "oadp-restore-hosted-cluster", "oadp-backup-check", "c
           "backup-morning-check", "snapshot-protection-check", "replication-check", "docs-lookup"):
     assert os.path.isfile(os.path.join(P, "skills", s, "SKILL.md")), s
 assert "Flashback library" in open(os.path.join(P, "skills", "docs-lookup", "SKILL.md")).read()     # the team's own, not the shared
+assert "Brain setup (Flashback)" in open(os.path.join(P, "skills", "brain-setup", "SKILL.md")).read()
 cv = open(os.path.join(P, "agents", "commvault-analyst.md")).read()
 for env in ("env1", "env2", "env3"):
     assert f"mcp__plugin_paas-brain-flashback_commvault-{env}__*" in cv, cv[:400]
