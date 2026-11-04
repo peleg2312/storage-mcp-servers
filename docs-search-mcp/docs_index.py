@@ -539,7 +539,7 @@ def build(docs_root, db_path, full=False, log=print, prefix=""):
         st = os.stat(path)
         seen.add(rel)
         old = known.get(rel)
-        if old and old[1] == st.st_mtime and old[2] == st.st_size:
+        if old and int(old[1] or 0) == int(st.st_mtime) and old[2] == st.st_size:   # whole seconds: a tarball keeps no more
             continue
         try:
             title, chunks = parse_file(path)

@@ -132,7 +132,8 @@ def import_tar(name, tar_path):
             shutil.rmtree(os.path.join(d, "docs", p), ignore_errors=True)
         tmp = os.path.join(d, ".import")
         shutil.rmtree(tmp, ignore_errors=True)
-        t.extractall(tmp, members=members)
+        safe = {"filter": "data"} if hasattr(tarfile, "data_filter") else {}     # Python 3.12+ and 3.9.17+: refuse unsafe members
+        t.extractall(tmp, members=members, **safe)
     for p in prods:
         os.makedirs(os.path.dirname(os.path.join(d, "docs", p)), exist_ok=True)
         os.replace(os.path.join(tmp, "docs", p), os.path.join(d, "docs", p))
