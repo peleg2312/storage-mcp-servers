@@ -602,16 +602,41 @@ def refresh():
     print(f"team {t}: re-applied")
 
 
-def relink():
+def relink(background=False):
     """the cheap re-apply after a sync pulled a new plugin (session start): files and links, then one `claude plugin
-    update` so a plugin installed from the team's GitLab marketplace (bootstrap) picks the new version up too; a plugin
-    read in place from the clone needs nothing"""
+    update` so a plugin installed from the team's GitLab marketplace (bootstrap, laptops) picks the new version up too; a
+    plugin read in place from the clone needs nothing. background: the update runs detached (it fetches the marketplace and
+    can take longer than a session-start hook may wait); a failed update is retried at the next session start"""
     t = active()
     if not t:
         return
     apply(t, say=False, plugin_cmds=False)
-    if shutil.which("claude"):
-        claude("update", f"paas-brain-{t}@paas-brain-{t}")
+    if not shutil.which("claude"):
+        return
+    if background:
+        subprocess.Popen([sys.executable, os.path.abspath(__file__), "plugin-update"], stdin=subprocess.DEVNULL,
+                         stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, start_new_session=True)
+    else:
+        plugin_update()
+
+
+def plugin_update():
+    """`claude plugin update` of the active team's plugin; when it fails (GitLab not reachable, timed out) the applied mark
+    is cleared, so needs-refresh says yes again at the next session start instead of never"""
+    t = active()
+    if not t:
+        return 1
+    # `claude plugin update` answers from the marketplace copy Claude Code already has: fetch the team's marketplace first,
+    # or a laptop stays on its first version (a local folder marketplace, the VM, needs no fetch: the update finds it current)
+    rc, out = claude("marketplace", "update", f"paas-brain-{t}")
+    if rc == 0:
+        rc, out = claude("update", f"paas-brain-{t}@paas-brain-{t}")
+    if rc != 0:
+        st = jload(os.path.join(TEAMS, ".applied"))
+        st["digest"] = ""
+        write(os.path.join(TEAMS, ".applied"), json.dumps(st) + "\n")
+        print(f"team {t}: plugin update failed, retried at the next session start: {out[-200:]}")
+    return rc
 
 
 def needs_refresh():
@@ -792,8 +817,10 @@ def edit(team, change):
             cur = {"type": c.get("type") or "http", "url": str(c["url"]).strip(), **({"headers": cur["headers"]} if cur.get("headers") else {})}
         if "token" in c:                                      # a string sets it, null / empty removes it, absent keeps it
             tok = str(c["token"] or "").strip()
+            was = str((servers.get(n) or {}).get("headers", {}).get("Authorization", ""))
+            bare = bool(was) and not was.startswith("Bearer ")   # the catalog shape (or the admin) chose a bare secret: keep it so
             if tok:
-                cur["headers"] = {"Authorization": "Bearer " + tok}
+                cur["headers"] = {"Authorization": tok if bare or tok.startswith("Bearer ") else "Bearer " + tok}
             else:
                 cur.pop("headers", None)
         servers[n] = cur
@@ -885,7 +912,9 @@ def main(a):
     elif cmd == "refresh":
         refresh()
     elif cmd == "relink":
-        relink()
+        relink(background="--background" in a)
+    elif cmd == "plugin-update":
+        sys.exit(plugin_update())
     elif cmd == "sync":
         sys.exit(sync())
     elif cmd == "remote" and len(a) >= 3:

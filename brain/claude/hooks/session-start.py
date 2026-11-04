@@ -129,8 +129,9 @@ def team_line():
         try:
             if subprocess.run([sys.executable, tool, "needs-refresh"], stdin=subprocess.DEVNULL, capture_output=True,
                               timeout=3).returncode == 0:
-                subprocess.run([sys.executable, tool, "relink"], stdin=subprocess.DEVNULL, capture_output=True, timeout=12)
-                line += " - updated from the team repository: new skills apply to the next session"
+                # files and links now; the plugin update (a marketplace fetch on a laptop) runs on in the background
+                subprocess.run([sys.executable, tool, "relink", "--background"], stdin=subprocess.DEVNULL, capture_output=True, timeout=12)
+                line += " - updated from the team repository: the new version applies to the next session"
         except subprocess.TimeoutExpired:
             pass
     return line + "."
@@ -306,12 +307,16 @@ def main():
         chats_rules()
     except Exception:
         pass
-    lines = []
-    for fn in (bare_plugin_rules, team_line, library_line, environment_line, memory_line, shared_line, hook_line):
+    # the shared brain is pulled first, so the team line sees a plugin that this very pull brought (printed in the usual order)
+    order = (bare_plugin_rules, shared_line, team_line, library_line, environment_line, memory_line, hook_line)
+    shown = (bare_plugin_rules, team_line, library_line, environment_line, memory_line, shared_line, hook_line)
+    got = {}
+    for fn in order:
         try:
-            lines.append(fn())
+            got[fn] = fn()
         except Exception:
-            pass
+            got[fn] = ""
+    lines = [got[fn] for fn in shown]
     print("Storage brain: " + "\n".join(l for l in lines if l))
     return 0
 

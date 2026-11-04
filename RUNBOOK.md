@@ -224,11 +224,21 @@ Only the way a machine gets the team differs:
 **Publishing and updates.** Once per team: an empty GitLab project (default branch `main`, every member Developer) and
 `python3 brain/teams/publish.py nas --to <url>`. After every `git pull` of this repository run it again (the multi-user installer
 does it for every team): members get the new plugin at their next session start, laptops when Claude Code checks the marketplace
-(`claude plugin update paas-brain-nas@paas-brain-nas`, `/reload-plugins`, or auto-update; the plugin's version carries a fingerprint
+(by themselves: every session start pulls the team repository, and when it brought a new plugin the brain runs
+`claude plugin marketplace update` + `claude plugin update` in the background, retried at the next start when GitLab did not
+answer; the new version is active from the session after; by hand: the same two commands; the plugin's version carries a fingerprint
 of its content, so every change is delivered). Many laptops without anyone typing: the team marketplace in the laptops' managed
 settings (`/etc/claude-code/managed-settings.json` on Linux, the equivalent path on macOS):
 `{"extraKnownMarketplaces": {"paas-brain-nas": {"source": {"source": "git", "url": "<team url>"}, "autoUpdate": true}},
 "enabledPlugins": {"paas-brain-nas@paas-brain-nas": true}}`.
+
+**Docs on a laptop.** The team plugin carries its own team's docs address: `docs-local` bridges to the VM's docs service
+(`https://<vm>:8001/mcp?team=<team>`, TCP 8001 open from the laptop, the VM's certificate inside the plugin) when the plugin was
+published with the VM's docs address (the multi-user installer does that; by hand: `publish.py <team> --to <url> --docs-search
+https://<vm>:8001/mcp --docs-token-file /etc/paas/docs-token`). Another team's docs (the Market's `docs-http-<team>` on the
+VM) on a laptop: `claude mcp add docs-<other> -s user -e PAAS_DOCS_TOKEN=<docs token> -- python3
+~/.claude/brain/teams/<team>/paas-brain-<team>/lib/mcp_stdio.py --proxy "https://<vm>:8001/mcp?team=<other>" --ca
+~/.claude/brain/teams/<team>/paas-brain-<team>/lib/paas-ui.crt`.
 
 **A team with its own documents** instead of the general library: `"library": "<name>"` in its `team.json`, then on the VM
 `paas-library add <name> <folder of their documents> --to <vendor>/<product>` and the installer command (publishes the team,

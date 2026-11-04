@@ -138,3 +138,45 @@ assert not os.path.exists(os.path.join(out, "netapp", "ontap", "smb-admin"))
 assert open(os.path.join(out, "netapp", "ontap", ".source_url")).read().startswith("https://github.com/NetAppDocs")
 assert json.load(open(os.path.join(out, "dell", "powermax", "manifest.json"))) == {"snapvx.pdf": {"url": "u1"}}
 print("copy subset ok")
+
+# 6. the team editor keeps each server's Authorization scheme (Commvault's MCP takes the bare secret); a laptop's plugin
+#    update fetches the team's marketplace first and is retried when it fails; the session start pulls before it checks
+work = os.path.join(tmp, "teamrepo")
+bare = os.path.join(work, "brain-flashback.git")
+os.makedirs(work)
+subprocess.run(["git", "init", "-q", "--bare", "-b", "main", bare], check=True)
+genv = dict(os.environ, GIT_AUTHOR_NAME="t", GIT_AUTHOR_EMAIL="t@t", GIT_COMMITTER_NAME="t", GIT_COMMITTER_EMAIL="t@t")
+subprocess.run([sys.executable, os.path.join(B, "teams", "publish.py"), "flashback", "--to", "file://" + bare],
+               check=True, stdout=subprocess.DEVNULL, env=genv)
+home = os.path.join(work, "home")
+fake = os.path.join(work, "fakebin")
+os.makedirs(fake)
+open(os.path.join(fake, "claude"), "w").write('#!/bin/sh\necho "$@" >> "$HOME/claude.log"\n[ -f "$HOME/claude.fail" ] && exit 1\nexit 0\n')
+os.chmod(os.path.join(fake, "claude"), 0o755)
+henv = dict(genv, HOME=home, PATH=fake + os.pathsep + os.environ["PATH"], PAAS_TEAMS=os.path.join(work, "none"))
+henv.pop("CLAUDE_HOME", None)
+tool = os.path.join(B, "claude", "tools", "paas-team")
+subprocess.run([sys.executable, tool, "add", "flashback", "file://" + bare], check=True, env=henv, stdout=subprocess.DEVNULL)
+change = {"mcp_servers": {"commvault-env1": {"url": "http://cv1:8000/mcp", "token": "cv-secret"},
+                          "ontap": {"url": "http://ontap:8000/mcp", "token": "on-tok"}}}
+r = subprocess.run([sys.executable, tool, "edit", "flashback"], input=json.dumps(change), capture_output=True, text=True, env=henv)
+assert r.returncode == 0, r.stdout + r.stderr
+clone = os.path.join(home, ".claude", "brain", "teams", "flashback")
+pm = json.load(open(os.path.join(clone, "paas-brain-flashback", ".mcp.json")))["mcpServers"]
+assert pm["commvault-env1"]["headers"]["Authorization"] == "cv-secret", pm       # bare, as the catalog's shape says
+assert pm["ontap"]["headers"]["Authorization"] == "Bearer on-tok", pm
+subprocess.run([sys.executable, tool, "use", "flashback"], check=True, env=henv, stdout=subprocess.DEVNULL)
+open(os.path.join(home, "claude.log"), "w").close()
+assert subprocess.run([sys.executable, tool, "plugin-update"], env=henv, capture_output=True).returncode == 0
+log = open(os.path.join(home, "claude.log")).read().splitlines()
+assert log == ["plugin marketplace update paas-brain-flashback", "plugin update paas-brain-flashback@paas-brain-flashback"], log
+open(os.path.join(home, "claude.fail"), "w").close()
+r = subprocess.run([sys.executable, tool, "plugin-update"], env=henv, capture_output=True, text=True)
+assert r.returncode != 0 and "retried at the next session start" in r.stdout, r.stdout
+r = subprocess.run([sys.executable, tool, "needs-refresh"], env=henv, capture_output=True)
+assert r.returncode == 0                                                           # the next session start tries again
+src = open(os.path.join(B, "claude", "hooks", "session-start.py")).read()
+order = src[src.index("order = ("):].split("\n", 1)[0]
+assert order.index("shared_line") < order.index("team_line"), order
+assert '"relink", "--background"' in src
+print("team edits and laptop updates ok")
