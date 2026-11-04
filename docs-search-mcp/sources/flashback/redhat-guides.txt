@@ -1,0 +1,9 @@
+# Red Hat OpenShift guides for the Flashback library: <ocp version> <guide> <library product>
+# OADP 1.4.x is documented in the OCP 4.18 guide, 1.5.x in 4.20, 1.6.x in 4.22 (the guide of each OCP release carries the
+# OADP versions supported there); the hosted control planes guide holds backup / restore / DR of hosted clusters.
+4.18 backup_and_restore     oadp-1.4
+4.20 backup_and_restore     oadp-1.5
+4.22 backup_and_restore     oadp-1.6
+4.18 hosted_control_planes  hosted-control-planes-4.18
+4.20 hosted_control_planes  hosted-control-planes-4.20
+4.22 hosted_control_planes  hosted-control-planes-4.22

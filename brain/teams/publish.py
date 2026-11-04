@@ -86,6 +86,15 @@ def readme(team, remote):
             "the team's MCP tool schemas then load when a task needs them instead of into every session.\n")
 
 
+
+def shape(cat, name):
+    """the catalog entry of a server: its own, or the one its name extends ("commvault-env2" is a "commvault": a team with
+    one server per CommCell, cluster or site names each instance)"""
+    if name in cat:
+        return cat[name]
+    base = max((k for k in cat if name.startswith(k + "-")), key=len, default="")
+    return cat.get(base)
+
 def publish(team, dest, remote=None, hooks=True, commit=True, force=False, docs_search=None, docs_token=None):
     """build the team into the repository at dest (a directory); returns the plugin's team.json data. docs_search: the VM's
     docs-search url (?team= is added), docs_token its token: written into the team's mcp.json, so laptops reach the library."""
@@ -108,7 +117,8 @@ def publish(team, dest, remote=None, hooks=True, commit=True, force=False, docs_
         cat = json.load(open(CATALOG)) if os.path.exists(CATALOG) else {}
         with open(os.path.join(plug, "team.json")) as f:
             want = json.load(f).get("mcp", [])
-        servers = {n: json.loads(json.dumps(cat[n]["server"]).replace("TEAM", team)) for n in want if n in cat and n != "docs-local"}
+        servers = {n: json.loads(json.dumps(shape(cat, n)["server"]).replace("TEAM", team)) for n in want
+                   if shape(cat, n) and n != "docs-local"}
     else:
         with open(mcp_path) as f:
             servers = json.load(f)

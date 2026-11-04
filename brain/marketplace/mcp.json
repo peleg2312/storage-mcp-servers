@@ -110,5 +110,15 @@
         "Authorization": "Bearer TOKEN"
       }
     }
+  },
+  "commvault": {
+    "description": "Commvault live state (Commvault's official MCP server, one per CommCell): jobs, clients, subclients, plans, storage policies and pools, libraries, MediaAgents, schedules, SLA; job control is blocked by the read-only guard",
+    "server": {
+      "type": "http",
+      "url": "http://HOST:8000/mcp",
+      "headers": {
+        "Authorization": "TOKEN"
+      }
+    }
   }
 }

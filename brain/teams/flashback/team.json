@@ -1,0 +1,50 @@
+{
+  "name": "flashback",
+  "title": "Flashback / backup and restore",
+  "description": "Backup and restore assistant: Commvault (three CommCells, MediaAgents, S3 and NetApp libraries, CommServe DR), Veeam B&R 13 and Veeam ONE, OADP with the HyperShift plugin and CSI data mover, NetApp / PowerMax / PowerFlex snapshots and replication, with the team's own backup docs library",
+  "persona": "persona.md",
+  "rules": "storage-flashback.md",
+  "environment": "environment.md",
+  "library": "flashback",
+  "skills": [
+    "brain-setup",
+    "brain-health",
+    "brain-learn",
+    "docs-lookup",
+    "explain-error",
+    "report-export",
+    "handover-note",
+    "change-review",
+    "code-version-check",
+    "replication-check",
+    "k8s-volume-troubleshoot",
+    "backup-morning-check",
+    "commvault-job-check",
+    "commvault-infra-check",
+    "backup-coverage",
+    "restore-plan",
+    "restore-drill",
+    "veeam-job-check",
+    "oadp-backup-check",
+    "oadp-restore-hosted-cluster",
+    "snapshot-protection-check"
+  ],
+  "agents": [
+    "Explore",
+    "docs-researcher",
+    "commvault-analyst",
+    "veeam-analyst",
+    "oadp-analyst",
+    "storage-protection-analyst"
+  ],
+  "mcp": [
+    "docs-local",
+    "docs-search",
+    "commvault-env1",
+    "commvault-env2",
+    "commvault-env3",
+    "ontap",
+    "powermax",
+    "powerflex"
+  ]
+}

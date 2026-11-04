@@ -33,12 +33,13 @@ WRITE = {"create", "delete", "destroy", "remove", "rm", "update", "modify", "set
          "unassign", "associate", "disassociate", "commit", "deploy", "install", "upgrade", "reset",
          "clear", "kill", "terminate", "start", "stop", "suspend", "resume", "failover", "failback",
          "establish", "split", "swap", "unlink", "offline", "online", "purge", "format", "wipe", "acknowledge",
-         "ack", "cancel", "sync", "flush"}
+         "ack", "cancel", "sync", "flush", "resubmit", "recover", "setup"}
 CLI_KEYS = {"command", "cmd", "cli", "cli_command", "commands", "cmd_line", "command_line", "operation"}
 # the in-house servers refuse writes in their own code (HTTP method checks); every other server is judged by its tool names
 IN_HOUSE = {"powermax", "powerflex", "ucs-central", "ucsc", "mds", "docs-local", "docs-search", "databases"}
 ACTION = {"break", "quiesce", "resync", "invoke", "execute", "exec", "run", "action", "trigger", "perform", "call", "send",
-          "post", "takeover", "giveback", "abort", "release", "script", "rest", "api", "raw", "passthrough"}
+          "post", "takeover", "giveback", "abort", "release", "script", "rest", "api", "raw", "passthrough", "schedule", "backup",
+          "rerun"}
 CLI_READ = {"show", "get", "list", "display", "dir", "ls", "cat", "describe", "terminal"}
 METHOD_KEYS = {"method", "http_method", "verb", "request_method", "http_verb", "action"}
 SQL_KEYS = {"sql", "query", "statement"}
@@ -223,6 +224,9 @@ def _remote_check(remote, depth):
     return None, ""
 
 
+VELERO_CHANGE = {"create", "delete", "patch", "edit", "set", "install", "uninstall", "add", "remove", "pause", "unpause", "apply"}
+
+
 def shell_check(cmd, depth=0):
     """("block" | "ask" | None, reason) for one shell command line."""
     worst = (None, "")
@@ -283,6 +287,9 @@ def shell_check(cmd, depth=0):
                 r = shell_check(" ".join(shlex.quote(a) for a in payload), depth + 1)
                 if not r[0] and _program(payload)[0] in ("rm", "mv", "truncate", "shred"):
                     r = ("ask", f"{prog} {sub} runs {_program(payload)[0]} in the pod")
+        elif os.path.basename(prog) == "velero" and set(low) & VELERO_CHANGE:
+            # the velero CLI (often through oc exec deployment/velero): backups, restores, schedules are the backup system
+            r = ("ask", f"velero {' '.join(a for a in low if a in VELERO_CHANGE)} changes backups / restores (OADP)")
         elif prog == "eval" and depth < 2:
             r = shell_check(" ".join(args), depth + 1)
         elif prog == "chroot" and depth < 2:

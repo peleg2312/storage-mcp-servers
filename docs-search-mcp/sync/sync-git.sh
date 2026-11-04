@@ -2,6 +2,7 @@
 # Pull text-only documentation (and, for lines marked "code", source code) from sources/git-repos.txt.
 #   sync-git.sh [DOCS_DIR]                 sources/git-repos.txt -> DOCS_DIR/<vendor>/<product>
 #   sync-git.sh --netapp-all [DOCS_DIR]    additionally every public NetAppDocs repo (~2000; GitHub API)
+#   SOURCES=<file> sync-git.sh DOCS_DIR    another list (sources/flashback/git-repos.txt); a url may end in #<branch>
 # Needs: sh, git (curl or wget only for --netapp-all). Re-running updates existing clones.
 set -euf          # -f: the sparse-checkout patterns below must reach git unexpanded
 HERE=$(cd "$(dirname "$0")/.." && pwd)
@@ -9,7 +10,7 @@ ALL=0
 [ "${1:-}" = "--netapp-all" ] && { ALL=1; shift; }
 DOCS=${1:-${DOCS_DIR:-/data/docs}}
 LIST=$(mktemp)
-sed 's/#.*//' "$HERE/sources/git-repos.txt" | awk 'NF>=3' > "$LIST"
+sed 's/^#.*//; s/[[:space:]]#[^/]*$//' "${SOURCES:-$HERE/sources/git-repos.txt}" | awk 'NF>=3' > "$LIST"
 if [ "$ALL" = 1 ]; then
   get() {
     if command -v curl >/dev/null 2>&1; then curl -fsSL ${GITHUB_TOKEN:+-H "Authorization: Bearer $GITHUB_TOKEN"} "$1"
@@ -32,7 +33,7 @@ patterns() {
   for s in "$@"; do
     case "$s" in
       code) code=1 ;;
-      *.md|*.mdx|*.adoc|*.rst|*.txt|*.proto) docs="$docs /$s" ;;     # a single file (e.g. CHANGELOG.md)
+      *.md|*.mdx|*.adoc|*.rst|*.txt|*.proto|*.yaml|*.yml) docs="$docs /$s" ;;   # a file or a glob (CHANGELOG.md, examples/**/*.yaml)
       *) docs="$docs /$s/**/*.adoc /$s/**/*.md /$s/**/*.mdx /$s/**/*.markdown /$s/**/*.rst /$s/*.md /$s/*.mdx /$s/*.markdown /$s/*.rst /$s/*.adoc" ;;
     esac
   done
@@ -46,23 +47,25 @@ patterns() {
 ok=0; fail=0
 while read -r vendor product url subdirs; do
   d="$DOCS/$vendor/$product"
+  branch=""
+  case "$url" in *"#"*) branch=${url##*#}; url=${url%#*} ;; esac
   # shellcheck disable=SC2086
   pats=$(patterns $subdirs)
   if [ -d "$d/.git" ]; then
     # shellcheck disable=SC2086
-    if git -C "$d" sparse-checkout set --no-cone $pats >/dev/null && git -C "$d" fetch -q --depth 1 origin && git -C "$d" reset -q --hard FETCH_HEAD; then
-      ok=$((ok+1)); echo "${url%.git}" > "$d/.source_url"; echo "updated $vendor/$product"
+    if git -C "$d" sparse-checkout set --no-cone $pats >/dev/null && git -C "$d" fetch -q --depth 1 origin $branch && git -C "$d" reset -q --hard FETCH_HEAD; then
+      ok=$((ok+1)); echo "${url%.git}${branch:+/tree/$branch}" > "$d/.source_url"; echo "updated $vendor/$product"
     else fail=$((fail+1)); echo "update failed: $url"; fi
     continue
   fi
   rm -rf "$d"; mkdir -p "$(dirname "$d")"
-  if ! git clone -q --depth 1 --filter=blob:none --no-checkout "$url" "$d"; then
+  if ! git clone -q --depth 1 --filter=blob:none --no-checkout ${branch:+--branch "$branch"} "$url" "$d"; then
     fail=$((fail+1)); echo "clone failed: $url"; continue
   fi
   # shellcheck disable=SC2086
   git -C "$d" sparse-checkout set --no-cone $pats >/dev/null
   git -C "$d" checkout -q
-  echo "${url%.git}" > "$d/.source_url"
+  echo "${url%.git}${branch:+/tree/$branch}" > "$d/.source_url"
   ok=$((ok+1)); echo "cloned $vendor/$product"
 done < "$LIST"
 rm -f "$LIST"

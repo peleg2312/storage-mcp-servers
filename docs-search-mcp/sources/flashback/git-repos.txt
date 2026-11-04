@@ -1,0 +1,17 @@
+# Flashback library: GitHub documentation (text only), same format as ../git-repos.txt; a url may end in #<branch>.
+# <vendor> <product> <git-url[#branch]> [subdir ...]
+# ---- OADP (OpenShift API for Data Protection): the operator's docs per release branch ----
+openshift  oadp-operator-1.4      https://github.com/openshift/oadp-operator#oadp-1.4   docs README.md
+openshift  oadp-operator-1.5      https://github.com/openshift/oadp-operator#oadp-1.5   docs README.md
+openshift  oadp-operator-1.6      https://github.com/openshift/oadp-operator#oadp-1.6   docs README.md
+# ---- HyperShift OADP plugin (hosted clusters on MCE): README, design docs and the example Backup / Restore / Schedule YAML ----
+openshift  hypershift-oadp-plugin      https://github.com/openshift/hypershift-oadp-plugin        README.md ARCHITECTURE.md docs examples examples/**/*.yaml
+openshift  hypershift-oadp-plugin-1.5  https://github.com/openshift/hypershift-oadp-plugin#oadp-1.5  README.md docs examples examples/**/*.yaml
+# ---- HyperShift: disaster recovery and backup / restore of hosted clusters ----
+openshift  hypershift-dr          https://github.com/openshift/hypershift    docs/content/how-to/disaster-recovery docs/content/how-to/kubevirt docs/content/how-to/agent
+# ---- Velero (OADP 1.4 = Velero 1.14, 1.5 = 1.16, 1.6 = 1.17) ----
+velero     velero-1.14            https://github.com/vmware-tanzu/velero     site/content/docs/v1.14
+velero     velero-1.16            https://github.com/vmware-tanzu/velero     site/content/docs/v1.16
+velero     velero-1.17            https://github.com/vmware-tanzu/velero     site/content/docs/v1.17
+# ---- the Commvault MCP server the team runs (its tools and setup) ----
+commvault  commvault-mcp-server   https://github.com/Commvault/commvault-mcp-server   README.md

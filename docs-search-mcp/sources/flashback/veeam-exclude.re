@@ -1,0 +1,1 @@
+> (Amazon Web Services|Microsoft Azure|Google Cloud|Microsoft Hyper-V|Proxmox Virtual Environment|Nutanix AHV|VMware Cloud Director|Scale Computing HyperCore|HPE Morpheus VM Essentials|oVirt KVM|Universal Hypervisors|XCP-ng and Citrix XenServer|Sangfor aSV|Microsoft Entra ID)( >|$)

@@ -1,0 +1,20 @@
+# Flashback library: documents copied from the general library (library/ in this repository), by product and path.
+# <vendor>/<product> <regular expression over the file's path inside the product>     (. = the whole product)
+# ---- NetApp ONTAP: snapshots, snapshot policies, SnapMirror, SVM DR, FlexClone, restore from snapshot ----
+netapp/ontap                (^|/)(data-protection|snapmirror-active-sync|peering|consistency-groups|s3-snapmirror|s3-snapshots|snaplock|anti-ransomware|volumes|svm-migrate|concepts|error-messages|_include)/
+netapp/kb-ontap             (?i)snapmirror|snapshot|snap_?restore|svm_?dr|svm-dr|vserver_dr|flexclone|clone|vault|restore|backup|ndmp|lag|transfer|peer|xdp|dp_volume|snaplock|ransomware
+netapp/ontap-ems            (?i)(^|/)(snapmirror|smc|sms|snapvault|wafl\.snap|vserver\.dr|svmdr|mgmt\.snapmgr|clone|vol\.clone|arw|callhome\.snapmirror|replication)
+netapp/ontap-restapi        (?i)snapmirror|snapshot|clone|svm.*(dr|peer)|cluster.peer
+netapp/ontap-technical-reports (?i)snapmirror|backup|disaster|dr|snap|clone|protect
+netapp/trident              .
+netapp/kb-trident           (?i)snapshot|clone|backup|restore|velero|oadp|kasten|import
+# ---- Dell PowerMax: SnapVX, SRDF, TimeFinder; PowerFlex: snapshots, snapshot policies, replication ----
+dell/powermax               (?i)snapvx|srdf|timefinder|snapshot|replicat|clone|protect|product_guide|product-guide
+dell/powerflex              (?i)administration-guide|replication|snapshot|protect|user-guide
+dell/kb                     (?i)snapvx|srdf|timefinder|snapshot|replicat|clone|backup|restore
+dell/csm                    (?i)replication|snapshot|backup|restore|powerflex
+dell/csi-powerflex          .
+dell/csm-replication        .
+# ---- Kubernetes CSI snapshots (OADP data mover uses them) ----
+kubernetes/external-snapshotter .
+openshift/storage           (?i)snapshot|csi|clone|restore

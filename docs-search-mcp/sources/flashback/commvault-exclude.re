@@ -1,0 +1,1 @@
+HyperScale|Remote Office Appliance|Tape Storage|Exchange Online|Microsoft 365|NetApp E-Series|NetApp SolidFire|Build Your Own Reports|End-of-Life, Deprecated, and Extended Support|Service Provider|MSP|Laptop

@@ -240,6 +240,33 @@ rotated when someone leaves). **A new team**: a folder `brain/teams/<name>/` wit
 skills, agents), `python3 brain/test_budgets.py` and `python3 brain/test_teams.py` green, then publish. The team definition, the
 Brain tab's team editor, what the Market tab shows, the CI gate and the knowledge flow: `brain/teams/README.md`.
 
+## The Flashback team (backup and restore)
+
+The team `flashback` (`brain/teams/flashback`): Commvault (three CommCells), Veeam 13 / Veeam ONE, OADP with the HyperShift
+plugin on the MCE clusters, NetApp / PowerMax / PowerFlex snapshots and replication. Its own docs library `flashback`, not the
+general one. Once, in this order:
+
+1. **The library** (a machine with internet, from this repository): `sh docs-search-mcp/sources/flashback/build-library.sh`
+   (Commvault 11.36 = `2024e`, 11.40, 11.42, 11.44; Veeam 13 guides; the OCP 4.18 / 4.20 / 4.22 backup and hosted control
+   plane guides for OADP 1.4 / 1.5 / 1.6; oadp-operator, hypershift-oadp-plugin, HyperShift DR, Velero; the NetApp / Dell
+   data-protection part of the general library; first run about two hours, then incremental) →
+   `work/flashback/flashback-library-<date>.tar.gz` + `.sha256`. Carry both in. 11.38 is not fetched: the Commvault site's
+   robots.txt disallows it.
+2. **On the VM as root**: `paas-library import flashback flashback-library-<date>.tar.gz`, then `paas-library list`.
+3. **The team**: an empty GitLab project, `python3 brain/teams/publish.py flashback --to <url>` (or the multi-user installer,
+   which publishes every team; add the team's AD group to its `--groups`), members switch in the Brain tab (Team: Flashback).
+4. **Commvault MCP** (Commvault's official server, one per CommCell, run where it reaches the CommServe; streamable-http):
+   Brain tab, Team, More, Edit a team: `commvault-env1`, `-env2`, `-env3`: url `http://<host>:<port>/mcp`, the header
+   `Authorization` = the secret the server's setup stored (no "Bearer"). Use a Commvault user with view-only rights: the guard
+   blocks the job-control tools anyway (kill, suspend, resume, resubmit, schedule changes) and asks before a manual backup.
+   Rename the three servers to your environments' names in team.json and the agents before the first publish, or keep env1-3
+   and write which is which in environment.md.
+5. **ontap / powermax / powerflex**: the same servers as the SAN team (addresses and read-only tokens in the editor).
+6. **OADP**: no MCP: members run `oc` against the MCE clusters (their own kubeconfig; reads pass, `oc create` of a Restore
+   asks). Veeam: no MCP: the skills give PowerShell to run on the VBR server and read the pasted output.
+7. In a member's first chat: `/paas-brain-flashback:brain-setup`, then fill `environment.md` (CommCells, versions, MediaAgents,
+   libraries, Veeam proxies / repositories, MCE clusters, RPO / RTO).
+
 ## Models and the context window (multi-user VM)
 
 The default model is plain **Opus** (`"model": "opus"` in `/etc/claude-code/managed-settings.json`); **Opus (1M context)** stays

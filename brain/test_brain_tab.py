@@ -63,7 +63,7 @@ def call(method, path, body=None):
 
 try:
     t = call("GET", "team")
-    assert t["installed"] and t["active"] is None and [x["name"] for x in t["teams"]] == ["nas", "san"], t
+    assert t["installed"] and t["active"] is None and [x["name"] for x in t["teams"]] == ["flashback", "nas", "san"], t
     r = call("POST", "team", {"name": "san"})
     assert r["ok"] and "team san" in r["out"], r
     assert call("GET", "team")["active"] == "san"

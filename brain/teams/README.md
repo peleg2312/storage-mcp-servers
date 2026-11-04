@@ -9,6 +9,7 @@ their own audit trail; the team is a profile on top of the person, not a shared 
 |---|---|---|---|---|
 | `san` (default) | `brain/claude/brain/storage.md` | all of `brain/claude/skills` (28) | all of `brain/claude/agents` (9) | docs-local, powermax, powerflex, ontap, harvest, mds, ucs-central |
 | `nas` | `brain/teams/nas/storage-nas.md` (installed as `storage.md`) | 12 shared + 7 NAS: nas-morning-check, share-access-check, export-policy-check, quota-report, nas-replication-check, smartconnect-check, vast-view-check | Explore, docs-researcher, ontap-analyst, nas-analyst | docs-local, ontap, harvest. **No PowerScale or VAST MCP exists yet**: those skills work from output the person pastes (isi, VAST CLI / VMS) and the docs library, and say so |
+| `flashback` | `brain/teams/flashback/storage-flashback.md` (backup and restore rules B1-B9) | 11 shared + 11 backup: backup-morning-check, commvault-job-check, commvault-infra-check, backup-coverage, restore-plan, restore-drill, veeam-job-check, oadp-backup-check, oadp-restore-hosted-cluster, snapshot-protection-check, and its own docs-lookup | Explore, docs-researcher, commvault-analyst, veeam-analyst, oadp-analyst, storage-protection-analyst | docs-local, commvault-env1/2/3 (Commvault's official MCP server, one per CommCell), ontap, powermax, powerflex; OADP through `oc` read commands; **no Veeam MCP** (pasted PowerShell). Its own library `flashback` (Commvault 11.36-11.44, Veeam 13, OADP 1.4-1.6, HyperShift, Velero, NetApp / Dell data protection): `docs-search-mcp/sources/flashback/build-library.sh` |
 
 ## Definition: `brain/teams/<team>/team.json`
 
@@ -80,6 +81,10 @@ that form into the agents' `tools:` lists for the team's servers, `paas-team use
 person's settings.json (the previous team's go), and the read-only guard reads the form as the bare name, so a server added
 to a team in the editor is usable by the agents and needs no permission prompt at the next session.
 
+**Several servers of one kind** (three CommCells, two ONTAP clusters): name them `<catalog name>-<suffix>` in team.json
+(`commvault-env1`, `commvault-env2`): the first publish gives each the catalog entry's shape, and each gets its own address
+and token in the team editor. Agents list each one in their `tools:` (`mcp__commvault-env1__*`).
+
 ## A team with its own library
 
 By default every team searches the one general library, plus its own knowledge. A team that needs other documents, and none
@@ -99,6 +104,9 @@ paas-library add ops /path/to/their/documents --to <vendor>/<product>     # copi
 paas-library build ops [--full]                                           # re-index after files changed in the folder
 paas-library list                                                         # every library: documents, size, when built
 ```
+A library built on a machine with internet (the Flashback one: `sh docs-search-mcp/sources/flashback/build-library.sh`)
+comes in as one tarball: `paas-library import <name> <name>-library-<date>.tar.gz` (checked against its `.sha256`; the
+products it carries are replaced, documents added on the VM stay, then the index is brought up to date).
 The documents live in `/opt/paas/libraries/<name>/docs/<vendor>/<product>/`, the index next to them; a rebuilt index is
 used at the next request, no restart. Single VM: `~/.claude/brain/libraries` instead.
 

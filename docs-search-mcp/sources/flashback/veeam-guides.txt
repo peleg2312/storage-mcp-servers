@@ -1,0 +1,10 @@
+# Veeam help center guides (v13, the version the site serves by default) for the Flashback library.
+# <guide> [filter]   filter = drop the topics veeam-exclude.re matches (other hypervisors and clouds)
+vbr/userguide filter
+vbr/powershell filter
+vbr/events
+vbr/wn
+vbr/permissions
+vbr/qsg
+one/userguide
+agentforlinux/userguide

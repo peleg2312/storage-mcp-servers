@@ -459,7 +459,8 @@ def url_for(vendor, product, rel_in_product, manifest_meta):
         page = page[:-len("_index")] if page.endswith("_index") else page + "/"
         return f"https://dell.github.io/csm-docs/{page}"
     if src.startswith("https://github.com/"):
-        return f"{src}/blob/HEAD/{rel_in_product}"
+        base, _, branch = src.partition("/tree/")          # sync-git.sh writes <repo>/tree/<branch> for a url with #<branch>
+        return f"{base}/blob/{branch or 'HEAD'}/{rel_in_product}"
     if vendor == "netapp" and rel_in_product.endswith(".adoc"):
         return f"https://docs.netapp.com/us-en/{product}/{rel_in_product[:-5]}.html"
     return None

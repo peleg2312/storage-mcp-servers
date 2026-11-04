@@ -13,11 +13,20 @@ for bad in ["DELETE FROM vms", "select 1; delete from vms", "WITH t AS (SELECT 1
 assert h.reason_for("mcp__ontap__lun_delete", {}) and h.reason_for("mcp__aria__get_alerts", {}) is None
 for t in "overview locate related luns query aggregate history diff trend compare fields relationships sql export rescan".split():
     assert h.reason_for("mcp__kuparashit__" + t, {"where": "naas != not found"}) is None, t
+# the official Commvault MCP server (one per CommCell, flashback team): reads pass, job control and setup are blocked
+for t in ("kill_job", "suspend_job", "resume_job", "resubmit_job", "enable_schedule", "disable_schedule", "set_user_enabled",
+          "create_send_logs_job_for_a_job", "recover_docusign_envelope", "setup_docusign_backup_vault"):
+    assert h.reason_for("mcp__commvault-env1__" + t, {}), t
+for t in ("get_jobs_list", "get_failed_jobs", "get_job_detail", "get_job_task_details", "get_retention_info_of_a_job",
+          "get_schedules_list", "get_schedule_properties", "get_storage_policy_copy_details", "get_library_list",
+          "get_mediaagent_list", "get_sla_status", "list_backedup_docusign_envelopes", "view_entity_permissions"):
+    assert h.reason_for("mcp__commvault-env1__" + t, {}) is None, t
 print("hook ok")
 
 # shell guard: development and reading pass, infrastructure changes are blocked, general changes ask first
 sh = h.shell_check
-for ok in ["oc get pvc -A", "kubectl describe pod csi-node-x -n vxflexos", "oc logs -f deploy/csi-controller",
+for ok in ["oc -n openshift-adp exec deployment/velero -c velero -- ./velero backup describe b1 --details",
+           "velero backup get", "oc get backups.velero.io -n openshift-adp", "oc get pvc -A", "kubectl describe pod csi-node-x -n vxflexos", "oc logs -f deploy/csi-controller",
            "oc exec pod-1 -- multipath -ll", "curl -sk -u mon:x https://u4p:8443/univmax/restapi/version",
            "curl -X POST http://localhost:8000/api/items -d '{}'", "curl -X DELETE http://127.0.0.1:8080/items/1",
            "ssh admin@mds01 'show zoneset active vsan 10'", "ssh admin@cl1 'volume show -fields size'",
@@ -29,7 +38,9 @@ for ok in ["oc get pvc -A", "kubectl describe pod csi-node-x -n vxflexos", "oc l
            "python3 -m pytest -q", "uvicorn app:app --reload", "git commit -m x && git push", "mkfs.ext4 /tmp/disk.img",
            "terraform plan", "ansible-playbook site.yml --check", "pip install -r requirements.txt"]:
     assert sh(ok)[0] is None, (ok, sh(ok))
-for ask in ["oc apply -f deploy.yaml", "kubectl delete pod x", "oc rollout restart deploy/api", "helm upgrade app ./chart",
+for ask in ["oc -n openshift-adp exec deployment/velero -c velero -- ./velero backup delete b1",
+            "oc -n openshift-adp exec deployment/velero -c velero -- ./velero restore create --from-backup b1",
+            "velero schedule pause s1", "oc create -f restore.yaml", "oc apply -f deploy.yaml", "kubectl delete pod x", "oc rollout restart deploy/api", "helm upgrade app ./chart",
             "oc adm drain node1", "curl -X POST https://api.example.com/v1/x", "curl --data x https://u4p:8443/univmax/x",
             "systemctl restart myapp", "terraform apply", "ansible-playbook site.yml", "sudo oc delete pod x",
             "timeout 30 kubectl scale deploy/x --replicas=0", "FOO=1 oc delete x", "true && oc create ns x"]:
