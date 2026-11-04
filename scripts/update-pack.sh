@@ -22,7 +22,11 @@ NAME=update-$B-$H
 W=$(mktemp -d); mkdir -p "$W/$NAME"
 # changed and added files (renames as their new name); the library and image parts are left out unless they changed
 EXCL=':!docs-search-mcp/work'
-git diff --name-only --diff-filter=AMRC "$BASE" HEAD -- . $EXCL > "$W/changed"
+# also every file a commit since <base> touched that exists now, when it ends up as it was at <base>: a VM that applied an
+# earlier pack from the same base carries the in-between version, which this pack must put back
+{ git diff --name-only --diff-filter=AMRC "$BASE" HEAD -- . $EXCL
+  git log --no-renames --format= --name-only "$BASE..HEAD" -- . $EXCL | while IFS= read -r f; do
+    [ -n "$f" ] && git cat-file -e "HEAD:$f" 2>/dev/null && echo "$f"; done; } | sort -u > "$W/changed"
 if [ "$UI" = 0 ] && grep -q '^brain/ui/bundle/' "$W/changed"; then
   rm -rf "$W"; echo "update-pack: the web UI bundle changed since $B: leaving it out would keep the old UI on the VM; build without --no-ui-bundle"; exit 1
 fi
