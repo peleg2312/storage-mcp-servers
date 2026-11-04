@@ -996,6 +996,9 @@ def publish(brain, mcp_file=None):
         for n in sorted(os.listdir(os.path.join(teams, t, "agents"))) if os.path.isdir(os.path.join(teams, t, "agents")) else []:
             if n.endswith(".md"):
                 shutil.copy(os.path.join(teams, t, "agents", n), item_path("agent", n[:-3]))
+    for gone in ("make-deck",):                            # moved into a plugin (presentations): no second copy as an item
+        if not os.path.isdir(os.path.join(brain, "skills", gone)):
+            shutil.rmtree(item_path("skill", gone), ignore_errors=True)
     for old, new in (("ucsc", "ucs-central"),):            # renamed in the brain: root's address and token move with it
         if os.path.exists(item_path("mcp", old)) and not os.path.exists(item_path("mcp", new)):
             os.replace(item_path("mcp", old), item_path("mcp", new))

@@ -26,7 +26,11 @@ git diff --name-only --diff-filter=AMRC "$BASE" HEAD -- . $EXCL > "$W/changed"
 if [ "$UI" = 0 ] && grep -q '^brain/ui/bundle/' "$W/changed"; then
   rm -rf "$W"; echo "update-pack: the web UI bundle changed since $B: leaving it out would keep the old UI on the VM; build without --no-ui-bundle"; exit 1
 fi
-git diff --name-only --diff-filter=D "$BASE" HEAD -- . $EXCL > "$W/$NAME/REMOVED.txt"
+# removed: gone since <base>, and also files added after <base> and removed again (a VM may carry them from an earlier
+# pack made from the same base); rm -f of a file that is not there is harmless
+{ git diff --name-only --diff-filter=D "$BASE" HEAD -- . $EXCL
+  git log --format= --name-only --diff-filter=D "$BASE..HEAD" -- . $EXCL | while IFS= read -r f; do
+    [ -n "$f" ] && ! git cat-file -e "HEAD:$f" 2>/dev/null && echo "$f"; done; } | sort -u > "$W/$NAME/REMOVED.txt"
 while IFS= read -r f; do
   [ -e "$f" ] || continue
   mkdir -p "$W/$NAME/files/$(dirname "$f")"; cp -p "$f" "$W/$NAME/files/$f"
