@@ -232,13 +232,19 @@ settings (`/etc/claude-code/managed-settings.json` on Linux, the equivalent path
 `{"extraKnownMarketplaces": {"paas-brain-nas": {"source": {"source": "git", "url": "<team url>"}, "autoUpdate": true}},
 "enabledPlugins": {"paas-brain-nas@paas-brain-nas": true}}`.
 
-**Docs on a laptop.** The team plugin carries its own team's docs address: `docs-local` bridges to the VM's docs service
-(`https://<vm>:8001/mcp?team=<team>`, TCP 8001 open from the laptop, the VM's certificate inside the plugin) when the plugin was
-published with the VM's docs address (the multi-user installer does that; by hand: `publish.py <team> --to <url> --docs-search
-https://<vm>:8001/mcp --docs-token-file /etc/paas/docs-token`). Another team's docs (the Market's `docs-http-<team>` on the
-VM) on a laptop: `claude mcp add docs-<other> -s user -e PAAS_DOCS_TOKEN=<docs token> -- python3
-~/.claude/brain/teams/<team>/paas-brain-<team>/lib/mcp_stdio.py --proxy "https://<vm>:8001/mcp?team=<other>" --ca
-~/.claude/brain/teams/<team>/paas-brain-<team>/lib/paas-ui.crt`.
+**Docs on a laptop.** The team plugin carries `docs-http`: the VM's docs service for the team (`https://<vm>:8001/mcp?team=<team>`:
+its library and the team's knowledge), a native Claude Code connection, no Python needed, on Windows too. It is in the plugin when
+the team was published with the VM's docs address (the multi-user installer does that; by hand: `publish.py <team> --to <url>
+--docs-search https://<vm>:8001/mcp --docs-token-file /etc/paas/docs-token`). Once per laptop: TCP 8001 open to the VM, and the VM's
+certificate trusted (Claude Code trusts the operating system's store): Windows, PowerShell `Import-Certificate -FilePath
+paas-ui.crt -CertStoreLocation Cert:\CurrentUser\Root`; RHEL `cp paas-ui.crt /etc/pki/ca-trust/source/anchors/ && update-ca-trust`;
+Ubuntu `cp paas-ui.crt /usr/local/share/ca-certificates/ && update-ca-certificates`; or `NODE_EXTRA_CA_CERTS=<path>` set before
+`claude` starts (a settings.json `env` entry comes too late). The certificate: `/etc/paas/tls/paas-ui.crt` on the VM, also
+`lib/paas-ui.crt` in the plugin. Check: `claude mcp list` shows `plugin:paas-brain-<team>:docs-http ... Connected`. The plugin's
+`docs-local` serves the team knowledge from the person's clone (it needs Python 3; on the VM it has the library too, and the
+VM's managed settings switch `docs-http` off there so the docs are not listed twice). Another team's docs on a laptop (the VM
+Market's `docs-http-<other>`): `claude mcp add --transport http docs-http-<other> "https://<vm>:8001/mcp?team=<other>" --header
+"Authorization: Bearer <docs token>"`.
 
 **A team with its own documents** instead of the general library: `"library": "<name>"` in its `team.json`, then on the VM
 `paas-library add <name> <folder of their documents> --to <vendor>/<product>` and the installer command (publishes the team,

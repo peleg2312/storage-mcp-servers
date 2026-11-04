@@ -70,8 +70,9 @@ only the library stays in `~/.claude/brain/library`.
 M behind`, or a push failure with its reason from `.git/paas-push-failed`); `paas-team needs-refresh` says whether the clone
 holds a newer plugin than the one applied. `claude plugin list`: `paas-brain-<team>` enabled, the other teams' plugins
 disabled. `paas-team show <team> --json`: every MCP server with `configured: false` is still on its HOST / TOKEN placeholders
-and is not connected; name them. Where `docs-local` bridges to the VM's `docs-search` (its env in the plugin's `.mcp.json`
-has `PAAS_DOCS_URL`), `curl -sk <that url without /mcp>/health` must answer. Rows: WARN for a push failure, a pending
+and is not connected; name them. Where the plugin's `.mcp.json` has `docs-http` (the VM's docs service, used off the VM),
+`curl -sk <that url without /mcp>/health` must answer, and `claude mcp list` must show it Connected (a certificate error:
+the VM's `lib/paas-ui.crt` is not in this machine's trust store). Rows: WARN for a push failure, a pending
 refresh or a placeholder server; FAIL for a disabled plugin or a team folder that is not a git clone.
 
 ## Output

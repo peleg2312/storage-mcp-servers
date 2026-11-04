@@ -78,12 +78,15 @@ for plug in plugs:
         if isinstance(mcp, dict) and isinstance(mcp.get("mcpServers"), dict) and isinstance(team_mcp, dict):
             def ready(c):
                 return isinstance(c, dict) and c.get("url") and not c.get("command") and "HOST" not in c["url"] and "TOKEN" not in json.dumps(c.get("headers", {}))
-            want = {"docs-local"} | {n for n, c in team_mcp.items() if n not in ("docs-local", "docs-search") and ready(c)}
+            want = {"docs-local"} | {n for n, c in team_mcp.items() if n not in ("docs-local", "docs-search", "docs-http") and ready(c)}
+            if ready(team_mcp.get("docs-search")):
+                want.add("docs-http")                               # the VM's docs service rides in the plugin as docs-http
             have = set(mcp["mcpServers"])
             ok("plugin .mcp.json matches mcp.json", want == have,
                f"plugin has {sorted(have - want) or 'nothing extra'}, lacks {sorted(want - have) or 'nothing'}: run publish.py or the team editor, do not edit .mcp.json by hand")
             for n in want & have - {"docs-local"}:
-                ok(f"plugin .mcp.json {n} address", mcp["mcpServers"][n].get("url") == team_mcp[n].get("url"), "the two files disagree: republish")
+                src = team_mcp["docs-search" if n == "docs-http" else n]
+                ok(f"plugin .mcp.json {n} address", mcp["mcpServers"][n].get("url") == src.get("url"), "the two files disagree: republish")
     for sk in files("SKILL.md", os.path.join(plug, "skills")):
         fm = front(sk)
         ok("skill " + os.path.basename(os.path.dirname(sk)), "name:" in fm and "description:" in fm, "frontmatter needs name and description")

@@ -36,7 +36,7 @@ WRITE = {"create", "delete", "destroy", "remove", "rm", "update", "modify", "set
          "ack", "cancel", "sync", "flush", "resubmit", "recover", "setup"}
 CLI_KEYS = {"command", "cmd", "cli", "cli_command", "commands", "cmd_line", "command_line", "operation"}
 # the in-house servers refuse writes in their own code (HTTP method checks); every other server is judged by its tool names
-IN_HOUSE = {"powermax", "powerflex", "ucs-central", "ucsc", "mds", "docs-local", "docs-search", "databases"}
+IN_HOUSE = {"powermax", "powerflex", "ucs-central", "ucsc", "mds", "docs-local", "docs-search", "docs-http", "databases"}
 ACTION = {"break", "quiesce", "resync", "invoke", "execute", "exec", "run", "action", "trigger", "perform", "call", "send",
           "post", "takeover", "giveback", "abort", "release", "script", "rest", "api", "raw", "passthrough", "schedule", "backup",
           "rerun"}

@@ -118,7 +118,8 @@ def build(out, team_name="san", hooks=True):
     plugin_servers = {m for m in team.get("mcp", []) if m != "docs-search"} | {"docs-local"}
     for n, p in agents:
         text = open(p, encoding="utf-8").read()
-        text = re.sub(r"\bmcp__([A-Za-z0-9_.-]+)__\*", lambda m: (f"mcp__plugin_{name}_{m.group(1)}__*" if m.group(1) in plugin_servers else m.group(0)), text, count=0)
+        text = re.sub(r"\bmcp__([A-Za-z0-9_.-]+)__\*", lambda m: (f"mcp__plugin_{name}_{m.group(1)}__*" if m.group(1) in plugin_servers
+                      else f"mcp__plugin_{name}_docs-http__*" if m.group(1) == "docs-search" else m.group(0)), text, count=0)
         write(os.path.join(plug, "agents", n + ".md"), text)
     # the coding rules as a skill too (one source: brain/claude/brain/coding.md), so a plugin-only install has them and
     # Claude loads them by itself before code work; the file copy under brain/ stays for the installed brains

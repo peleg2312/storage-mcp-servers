@@ -4,7 +4,8 @@ description: How to answer from the offline documentation library - vendor / pro
 ---
 # Library lookup (how every docs answer is built)
 
-Tools: docs MCP (`docs-search` on the cluster or `docs-local` on this VM; same five tools) or, without
+Tools: docs MCP (`docs-local` on the VM, `docs-http` from a team plugin elsewhere, `docs-search` on the cluster; the same
+tools: use one of them, not two for one question) or, without
 MCP, `python3 ~/.claude/brain/library/search.py search "..." [--vendor v] [--product p] [--limit n]`,
 `read-chunk <id> --context 1`, `read-doc --path <p>` / `--url <u>`, `sources`, `explain-code <code>`. Exact names of every
 vendor / product: `~/.claude/brain/library/MANIFEST.md`. There is no internet; never cite anything else.

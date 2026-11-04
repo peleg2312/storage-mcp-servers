@@ -390,22 +390,18 @@ def claude_mcp(*args):
 
 
 def plugin_mcp(plug, servers):
-    """The plugin's .mcp.json, built from the team repository's mcp.json: docs-local plus every http server whose address
-    and token are filled in (a placeholder would fail at every session start). Claude Code connects them wherever the
-    plugin is enabled, on the VM and on laptops alike: no per-person `claude mcp` command. docs-search is not listed
-    twice: its address and token ride in docs-local's environment, and docs-local bridges to it where the library is
-    missing (a laptop). Returns the server names."""
-    local = {"command": "${CLAUDE_PLUGIN_ROOT}/bin/docs-local"}
+    """The plugin's .mcp.json, built from the team repository's mcp.json: docs-local (the team knowledge, and the library
+    where it is installed: the VM), docs-http (the VM's docs service for the team over HTTPS: its library and the team's
+    knowledge, a native Claude Code connection that needs no Python, for laptops and other machines; the VM's managed
+    settings switch it off there, docs-local has the same), plus every http server whose address and token are filled in
+    (a placeholder would fail at every session start). Claude Code connects them wherever the plugin is enabled: no
+    per-person `claude mcp` command. Returns the server names."""
+    out = {"docs-local": {"command": "${CLAUDE_PLUGIN_ROOT}/bin/docs-local"}}
     ds = servers.get("docs-search") or {}
     if isinstance(ds, dict) and ds.get("url") and mcp_ready(ds):
-        env = {"PAAS_DOCS_URL": ds["url"]}
-        auth = (ds.get("headers") or {}).get("Authorization", "")
-        if auth.startswith("Bearer "):
-            env["PAAS_DOCS_TOKEN"] = auth[7:].strip()
-        local["env"] = env
-    out = {"docs-local": local}
+        out["docs-http"] = {"type": "http", "url": ds["url"], **({"headers": ds["headers"]} if ds.get("headers") else {})}
     for n, c in sorted(servers.items()):
-        if n in ("docs-local", "docs-search") or not isinstance(c, dict) or c.get("command") or not c.get("url") or not mcp_ready(c):
+        if n in ("docs-local", "docs-search", "docs-http") or not isinstance(c, dict) or c.get("command") or not c.get("url") or not mcp_ready(c):
             continue
         out[n] = {"type": c.get("type") or "http", "url": c["url"], **({"headers": c["headers"]} if c.get("headers") else {})}
     write(os.path.join(plug, ".mcp.json"), json.dumps({"mcpServers": out}, indent=2, sort_keys=True) + "\n")
@@ -445,7 +441,7 @@ def allow_plugin_tools(team, mcp):
     allow = s.setdefault("permissions", {}).setdefault("allow", [])
     allow[:] = [r for r in allow if not str(r).startswith("mcp__plugin_paas-brain-")]
     if team:
-        allow += [f"mcp__plugin_paas-brain-{team}_{m}" for m in mcp if m != "docs-search"]
+        allow += [f"mcp__plugin_paas-brain-{team}_{'docs-http' if m == 'docs-search' else m}" for m in mcp]
     write(p, json.dumps(s, indent=2) + "\n")
 
 

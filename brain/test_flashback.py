@@ -180,3 +180,23 @@ order = src[src.index("order = ("):].split("\n", 1)[0]
 assert order.index("shared_line") < order.index("team_line"), order
 assert '"relink", "--background"' in src
 print("team edits and laptop updates ok")
+
+# 7. the plugin's docs: docs-local (knowledge; the library on the VM) and docs-http (the VM's docs service, native HTTPS: laptops,
+#    Windows too); the VM's managed settings switch the plugins' docs-http off by its plugin-scoped name
+import importlib.machinery
+pt = importlib.machinery.SourceFileLoader("paas_team_mod", tool).load_module()
+pdir = os.path.join(tmp, "plugmcp")
+os.makedirs(pdir)
+got = pt.plugin_mcp(pdir, {"docs-search": {"type": "http", "url": "https://vm:8001/mcp?team=flashback",
+                                           "headers": {"Authorization": "Bearer docs-token-0123456789"}},
+                           "commvault-env1": {"type": "http", "url": "http://cv1:8000/mcp", "headers": {"Authorization": "cv"}},
+                           "ontap": {"type": "http", "url": "http://HOST:8000/mcp", "headers": {"Authorization": "Bearer TOKEN"}}})
+pm = json.load(open(os.path.join(pdir, ".mcp.json")))["mcpServers"]
+assert got == ["commvault-env1", "docs-http", "docs-local"], got
+assert pm["docs-http"] == {"type": "http", "url": "https://vm:8001/mcp?team=flashback",
+                           "headers": {"Authorization": "Bearer docs-token-0123456789"}}, pm
+assert pm["docs-local"] == {"command": "${CLAUDE_PLUGIN_ROOT}/bin/docs-local"}, pm      # no bridge: docs-http is the way off the VM
+assert "mcp__plugin_paas-brain-flashback_docs-http__*" in open(os.path.join(P, "agents", "commvault-analyst.md")).read()
+ms = open(os.path.join(B, "multiuser", "managed_settings.py")).read()
+assert '{"serverName": f"plugin:paas-brain-{t}:docs-http"}' in ms
+print("plugin docs servers ok")

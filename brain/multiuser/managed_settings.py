@@ -39,6 +39,18 @@ deny[:] = [r for r in deny if r != "Read(/etc/paas/**)"]
 for rule in ("Read(//etc/paas/**)", "Edit(~/.claude/hooks/**)"):   # Edit also covers Write: no editing the guard's allow-list
     if rule not in deny:
         deny.append(rule)
+# a team plugin's docs-http is the VM's own docs service reached over HTTPS: on the VM the plugin's docs-local already has the
+# same library (plus the person's own pages), so docs-http is switched off here, for every team (laptops keep it)
+teams = set()
+for base in (os.path.join(here, "..", "teams"), os.path.join(paas, "teams")):
+    for t in (os.listdir(base) if os.path.isdir(base) else []):
+        if os.path.isfile(os.path.join(base, t, "team.json")):
+            teams.add(t)
+denied = [d for d in s.get("deniedMcpServers", []) if not str(d.get("serverName", "")).endswith(":docs-http")]
+for t in sorted(teams):
+    denied.append({"serverName": f"plugin:paas-brain-{t}:docs-http"})
+if denied:
+    s["deniedMcpServers"] = denied
 with open(tmp, "w") as f:
     json.dump(s, f, indent=2)
     f.flush()

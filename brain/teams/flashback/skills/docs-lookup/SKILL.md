@@ -4,7 +4,7 @@ description: How to answer from the Flashback backup library - Commvault, Veeam,
 ---
 # Library lookup (the Flashback library)
 
-Tools: docs MCP (`docs-local` on this VM, `docs-search` from a laptop; same tools) or, without MCP,
+Tools: docs MCP (`docs-local` on the VM, `docs-http` on a laptop or another machine; the same tools, use one) or, without MCP,
 `python3 ~/.claude/brain/library/search.py --db ~/.claude/brain/libraries/flashback/docs.db search "..." [--vendor v]
 [--product p] [--limit n]` (also `read-chunk <id>`, `read-doc --path <p>`, `sources`). What is inside: `~/.claude/brain/libraries/flashback/MANIFEST.md`.
 This team's library is its own: the general SAN / NAS library is not searched. No internet; never cite anything else.
