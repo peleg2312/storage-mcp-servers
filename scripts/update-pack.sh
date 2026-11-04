@@ -5,6 +5,8 @@
 #
 #   sh scripts/update-pack.sh <base> [<out dir>]          e.g. sh scripts/update-pack.sh c014fbf ~/Downloads
 #   sh scripts/update-pack.sh <base> --no-ui-bundle       leave the web UI bundle out (180 MB; take it only when it changed)
+#   sh scripts/update-pack.sh <base> --no-library         leave library/ and images/ out (1.6 GB when they changed): the VM
+#                                                          keeps the docs library it has; bring a new one with a later full pack
 #
 # On the VM:   tar -xzf storage-mcp-servers-update-<base>-<head>.tar.gz && sh update-<base>-<head>/apply-update.sh /path/to/storage-mcp-servers
 # then the usual command: sh brain/multiuser/install-multiuser.sh  (multi-user VM) or sh install-vm.sh (single VM)
@@ -12,8 +14,8 @@ set -eu
 ROOT=$(cd "$(dirname "$0")/.." && pwd)
 BASE=${1:-}; [ -n "$BASE" ] || { sed -n '2,/^set -eu/{/^set -eu/!p;}' "$0" | sed 's/^# \{0,1\}//'; exit 1; }
 shift
-OUT=$PWD; UI=1
-for a in "$@"; do case "$a" in --no-ui-bundle) UI=0 ;; *) OUT=$a ;; esac; done
+OUT=$PWD; UI=1; LIB=1
+for a in "$@"; do case "$a" in --no-ui-bundle) UI=0 ;; --no-library) LIB=0 ;; *) OUT=$a ;; esac; done
 cd "$ROOT"
 git rev-parse -q --verify "$BASE^{commit}" >/dev/null || { echo "update-pack: no such commit $BASE"; exit 1; }
 B=$(git rev-parse --short "$BASE"); H=$(git rev-parse --short HEAD)
@@ -22,6 +24,7 @@ NAME=update-$B-$H
 W=$(mktemp -d); mkdir -p "$W/$NAME"
 # changed and added files (renames as their new name); the library and image parts are left out unless they changed
 EXCL=':!docs-search-mcp/work'
+[ "$LIB" = 1 ] || EXCL="$EXCL :!library :!images"
 # also every file a commit since <base> touched that exists now, when it ends up as it was at <base>: a VM that applied an
 # earlier pack from the same base carries the in-between version, which this pack must put back
 { git diff --name-only --diff-filter=AMRC "$BASE" HEAD -- . $EXCL
@@ -40,7 +43,7 @@ while IFS= read -r f; do
   mkdir -p "$W/$NAME/files/$(dirname "$f")"; cp -p "$f" "$W/$NAME/files/$f"
 done < "$W/changed"
 (cd "$W/$NAME/files" && find . -type f | sed 's#^\./##' | sort | xargs sha256sum > "../SHA256SUMS")
-{ echo "storage-mcp-servers update pack: $B -> $H ($(date -u +%Y-%m-%d))"; echo "files: $(wc -l < "$W/$NAME/SHA256SUMS") changed or added, $(wc -l < "$W/$NAME/REMOVED.txt") removed";
+{ echo "storage-mcp-servers update pack: $B -> $H ($(date -u +%Y-%m-%d))$([ "$LIB" = 1 ] || echo ', without library/ and images/')"; echo "files: $(wc -l < "$W/$NAME/SHA256SUMS") changed or added, $(wc -l < "$W/$NAME/REMOVED.txt") removed";
   echo; git log --format='%h %ad %s' --date=short "$BASE..HEAD" | cut -c1-140; } > "$W/$NAME/CHANGES.txt"
 cat > "$W/$NAME/apply-update.sh" <<'EOF'
 #!/bin/sh
