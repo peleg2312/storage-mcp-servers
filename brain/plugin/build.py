@@ -94,7 +94,16 @@ def hooks_json():
         subprocess.run([sys.executable, os.path.join(BRAIN, "merge_settings.py"), settings,
                         "--hooks-dir", '"${CLAUDE_PLUGIN_ROOT}"/hooks'], check=True, stdout=subprocess.DEVNULL)   # quoted: a path with spaces stays one word
         with open(settings) as f:
-            return {"hooks": json.load(f)["hooks"]}
+            h = {"hooks": json.load(f)["hooks"]}
+    # in the plugin every hook starts through hooks/pyrun: python3, python or py -3, whichever this machine has (Windows has
+    # no python3), and without any Python the read-only guard blocks instead of letting calls through unchecked
+    for groups in h["hooks"].values():
+        for g in groups:
+            for x in g.get("hooks", []):
+                c = x.get("command", "")
+                if c.startswith('python3 "${CLAUDE_PLUGIN_ROOT}"/hooks/'):
+                    x["command"] = 'sh "${CLAUDE_PLUGIN_ROOT}"/hooks/pyrun ' + c[len("python3 "):]
+    return h
 
 
 def version():

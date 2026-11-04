@@ -53,11 +53,12 @@ CODES = list(lib.CODE_RX.values()) if lib else []
 def tmpdir():
     """Private per-user dir for the session and cache files (a shared /tmp name can be a planted symlink); an
     unusable dir comes back as a path that does not exist, so every open() below just fails with OSError."""
-    d = os.path.join(tempfile.gettempdir(), f"claude-brain-{os.getuid()}")
+    uid = os.getuid() if hasattr(os, "getuid") else None      # Windows: no uid; %TEMP% is the user's own there
+    d = os.path.join(tempfile.gettempdir(), f"claude-brain-{uid if uid is not None else 'w'}")
     try:
         os.makedirs(d, mode=0o700, exist_ok=True)
         st = os.lstat(d)
-        if st.st_uid == os.getuid() and stat.S_ISDIR(st.st_mode):
+        if (uid is None or st.st_uid == uid) and stat.S_ISDIR(st.st_mode):
             return d
     except OSError:
         pass

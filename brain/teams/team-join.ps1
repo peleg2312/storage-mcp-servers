@@ -88,8 +88,16 @@ if ($docs) {
     elseif ($line -match 'SELF_SIGNED|CERT|certificate') { Bad "docs-http: certificate not trusted: $line" }
     else { Bad "docs-http: $(if ($line) { $line } else { 'not listed' })" }
 }
-if (-not (Get-Command python3 -ErrorAction SilentlyContinue) -and -not (Get-Command python -ErrorAction SilentlyContinue)) {
-    Write-Host '  note  Python 3 is missing: the brain''s session hooks and docs-local need it (docs-http does not)'
+$py = $false
+foreach ($c in @(@('python3'), @('python'), @('py', '-3'))) {
+    if (Get-Command $c[0] -ErrorAction SilentlyContinue) {
+        $args2 = @($c | Select-Object -Skip 1) + @('-c', 'import sys; sys.exit(0 if sys.version_info[0] == 3 else 1)')
+        & $c[0] @args2 *> $null
+        if ($LASTEXITCODE -eq 0) { $py = $true; Ok "Python 3 found ($($c -join ' ')): the brain's hooks run"; break }
+    }
+}
+if (-not $py) {
+    Bad 'Python 3 is missing: install it (python.org, tick "Add python.exe to PATH"). Without it the read-only guard blocks MCP and shell calls (only docs-http works) and the team setup and notes sync do not run'
 }
 if ($failed) { Write-Host 'some checks failed (above)' -ForegroundColor Red; exit 1 }
 Write-Host 'done: start claude; the first session sets the team up'

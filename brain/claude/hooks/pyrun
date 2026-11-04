@@ -1,0 +1,39 @@
+#!/bin/sh
+# Start a brain hook with this machine's Python 3, whatever it is called:  sh pyrun <script.py> [args]
+#   python3 (Linux, macOS); python (python.org on Windows; a Python 2 is skipped); py -3 (the Windows launcher).
+#   The Windows Store stubs (python.exe / python3.exe under WindowsApps that only open the Store) are skipped too.
+# No Python 3 at all: the read-only guard fails closed (exit 2 blocks the call), except the docs servers (read-only search);
+# the session start says what is missing; every other hook steps aside. Standard POSIX sh (Git Bash on Windows).
+S=$1
+shift
+real3() {   # the command answers as a Python 3 (not a stub, not Python 2)
+  "$@" -c 'import sys; sys.exit(0 if sys.version_info[0] == 3 else 1)' >/dev/null 2>&1
+}
+p=$(command -v python3 2>/dev/null || true)
+if [ -n "$p" ]; then
+  case "$p" in
+    *WindowsApps*) real3 python3 && exec python3 "$S" "$@" ;;
+    *) exec python3 "$S" "$@" ;;
+  esac
+fi
+command -v python >/dev/null 2>&1 && real3 python && exec python "$S" "$@"
+command -v py >/dev/null 2>&1 && real3 py -3 && exec py -3 "$S" "$@"
+
+MSG="Python 3 is not installed on this machine (python3, python or py), so the brain's hooks cannot run: install it (python.org; tick 'Add python.exe to PATH'), then start a new Claude session"
+case "$(basename "$S")" in
+  block-write-tools.py)
+    IN=$(cat)
+    # the docs servers only search and read: they stay usable; anything else waits for the guard
+    if printf '%s' "$IN" | grep -Eq '"tool_name"[[:space:]]*:[[:space:]]*"mcp__(plugin_[^"]*_)?docs-(http|local|search)__'; then
+      exit 0
+    fi
+    echo "BLOCKED by the read-only guard: $MSG. Until then only the docs servers (docs-http) work." >&2
+    exit 2 ;;
+  session-start.py)
+    cat >/dev/null
+    echo "Storage brain: $MSG. Until then: no team setup, no notes sync, and MCP / shell calls are blocked by the read-only guard; the team's docs and notes are searchable through docs-http."
+    exit 0 ;;
+  *)
+    cat >/dev/null
+    exit 0 ;;
+esac

@@ -8,10 +8,12 @@ import importlib.util
 import io
 import json
 import os
+import shutil
 import subprocess
 import sys
 import tarfile
 import tempfile
+import time
 
 R = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..")
 B = os.path.join(R, "brain")
@@ -250,3 +252,54 @@ r = subprocess.run([sys.executable, os.path.join(R, "docs-search-mcp", "mcp_stdi
 res = json.loads(json.loads(r.stdout.strip().splitlines()[-1])["result"]["content"][0]["text"])["results"]
 assert res and res[0].get("library") == "team knowledge", [(x.get("library"), x.get("title")) for x in res]
 print("plain http and team knowledge first ok")
+
+# 10. any Python, Windows links, simultaneous notes: hooks start through hooks/pyrun (python3, python, py -3; without any the
+#     guard fails closed except the docs servers); knowledge files can be hard links (Windows without the symlink right)
+#     that are re-made after a pull; the team repository merges knowledge files with git's union driver
+plug = os.path.join(tmp, "paas-brain-flashback")
+hj = json.load(open(os.path.join(plug, "hooks", "hooks.json")))["hooks"]
+cmds = {x["command"] for gs in hj.values() for g in gs for x in g["hooks"]}
+assert cmds and all(c.startswith('sh "${CLAUDE_PLUGIN_ROOT}"/hooks/pyrun "${CLAUDE_PLUGIN_ROOT}"/hooks/') for c in cmds), cmds
+pr = os.path.join(plug, "hooks", "pyrun")
+nopy = os.path.join(tmp, "nopy")
+os.makedirs(nopy)
+for c in ("sh", "grep", "basename", "cat"):
+    os.symlink(shutil.which(c), os.path.join(nopy, c))
+def guard(tool, path):
+    return subprocess.run([os.path.join(path, "sh"), pr, os.path.join(plug, "hooks", "block-write-tools.py")],
+                          input=json.dumps({"tool_name": tool, "tool_input": {}}), capture_output=True, text=True, env={"PATH": path})
+assert guard("mcp__plugin_paas-brain-flashback_commvault-env1__get_jobs_list", nopy).returncode == 2
+assert guard("Bash", nopy).returncode == 2
+assert guard("mcp__plugin_paas-brain-flashback_docs-http__search_docs", nopy).returncode == 0
+r = subprocess.run([os.path.join(nopy, "sh"), pr, os.path.join(plug, "hooks", "session-start.py")], input="{}", capture_output=True, text=True, env={"PATH": nopy})
+assert r.returncode == 0 and "Python 3 is not installed" in r.stdout, r.stdout
+onlypy = os.path.join(tmp, "onlypy")
+os.makedirs(onlypy)
+for c in ("sh", "grep", "basename", "cat"):
+    os.symlink(shutil.which(c), os.path.join(onlypy, c))
+os.symlink(sys.executable, os.path.join(onlypy, "python"))
+assert guard("mcp__plugin_paas-brain-flashback_commvault-env1__kill_job", onlypy).returncode == 2       # the real guard
+assert guard("mcp__plugin_paas-brain-flashback_commvault-env1__get_jobs_list", onlypy).returncode == 0
+attrs = open(os.path.join(repo, ".gitattributes")).read()
+assert "knowledge/**/*.md merge=union" in attrs and "knowledge/INDEX.md -merge" in attrs
+# hard links: paas-team with PAAS_NO_SYMLINKS=1 links the files by hard link, re-links after the clone's file was replaced
+hl = os.path.join(tmp, "hlhome")
+henv2 = dict(henv, HOME=hl, PAAS_NO_SYMLINKS="1")
+subprocess.run([sys.executable, tool, "add", "flashback", "file://" + bare], check=True, env=henv2, stdout=subprocess.DEVNULL)
+subprocess.run([sys.executable, tool, "use", "flashback"], check=True, env=henv2, stdout=subprocess.DEVNULL)
+b = os.path.join(hl, ".claude", "brain")
+k = os.path.join(b, "teams", "flashback", "knowledge")
+for n in ("notes.md", "environment.md", "tool-map.md"):
+    assert not os.path.islink(os.path.join(b, n)) and os.path.samefile(os.path.join(b, n), os.path.join(k, n)), n
+t = open(os.path.join(k, "notes.md")).read()
+os.remove(os.path.join(k, "notes.md"))                                  # what a git pull does: a new file, the link broken
+open(os.path.join(k, "notes.md"), "w").write(t + "- teammate line\n")
+time.sleep(1.1)
+with open(os.path.join(b, "notes.md"), "a") as f:
+    f.write("- my line written after the pull\n")
+r = subprocess.run([sys.executable, tool, "link-files"], env=henv2, capture_output=True, text=True)
+assert "re-linked notes.md" in r.stdout, r.stdout + r.stderr
+merged = open(os.path.join(b, "notes.md")).read()
+assert "- teammate line" in merged and "- my line written after the pull" in merged, merged
+assert os.path.samefile(os.path.join(b, "notes.md"), os.path.join(k, "notes.md"))
+print("pyrun, windows links and union merge ok")

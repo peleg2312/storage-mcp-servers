@@ -80,5 +80,6 @@ if [ -n "$DOCS" ]; then
     *) bad "docs-http: ${line:-not listed}" ;;
   esac
 fi
-command -v python3 >/dev/null 2>&1 || echo "  note  python3 is missing: the brain's session hooks and docs-local need it (docs-http does not)"
+if command -v python3 >/dev/null 2>&1 || command -v python >/dev/null 2>&1; then ok "Python 3 found: the brain's hooks run"
+else bad "Python 3 is missing: without it the read-only guard blocks MCP and shell calls (only docs-http works) and the team setup and notes sync do not run"; fi
 [ "$FAILED" = 0 ] && echo "done: start claude; the first session sets the team up" || { echo "some checks failed (above)"; exit 1; }

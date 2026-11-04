@@ -41,6 +41,10 @@ _spec.loader.exec_module(paas_team)
 CERTS = ("/opt/paas/paas-ui.crt", "/etc/paas/market/paas-ui.crt")   # the VM's certificate, for laptops' docs-local bridge
 
 IGNORE = "*.bak\n.DS_Store\n._*\n__pycache__/\n"
+# two members who add notes at the same moment both append at the end of the same file: a plain merge calls that a
+# conflict and the second push stops. git's built-in union merge keeps both sides' lines; the generated INDEX.md keeps
+# the old rule (the notes hook rebuilds it when it conflicts)
+ATTRIBUTES = ("knowledge/*.md merge=union\nknowledge/**/*.md merge=union\nknowledge/INDEX.md -merge\n")
 CATALOG = os.path.join(BRAIN, "marketplace", "mcp.json")        # the servers' shapes (HOST / TOKEN placeholders)
 
 
@@ -184,6 +188,8 @@ def publish(team, dest, remote=None, hooks=True, commit=True, force=False, docs_
         f.write("\n")
     with open(os.path.join(dest, ".gitignore"), "w") as f:
         f.write(IGNORE)
+    with open(os.path.join(dest, ".gitattributes"), "w") as f:
+        f.write(ATTRIBUTES)
     with open(os.path.join(dest, "README.md"), "w") as f:
         f.write(readme(t, meta.get("remote")))
     for stale in ("install-team.sh",):                                 # earlier publishes wrote it; the plugin install replaced it

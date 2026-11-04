@@ -147,12 +147,12 @@ def identity():
             have = {l.split()[0] for l in r.stdout.splitlines() if l.strip()}
         except Exception:
             have = set()
-        import pwd
+        import getpass                              # pwd / getuid do not exist on Windows
         import socket
         try:
-            name = pwd.getpwuid(os.getuid()).pw_name
-        except KeyError:
-            name = os.environ.get("USER") or "brain"
+            name = getpass.getuser()
+        except Exception:
+            name = os.environ.get("USER") or os.environ.get("USERNAME") or "brain"
         env = {}
         if "user.name" not in have:
             env.update(GIT_AUTHOR_NAME=name, GIT_COMMITTER_NAME=name)
@@ -204,6 +204,7 @@ def commit(message, rel=None):
     if not os.path.isdir(os.path.join(REPO, ".git")):
         return
     try:
+        relink_files()                              # Windows hard links: lines written after the last pull join first
         idx = index()
         extra = ["--", rel, idx] if rel and idx else (["--", rel] if rel else [])
         held = [] if rel else unclean()               # a whole-tree commit never carries a file that still holds a secret
@@ -219,6 +220,7 @@ def commit(message, rel=None):
                     git(["rebase", "--abort"], 10)   # a real clash: the next --sync reports it
                 else:
                     rc = push(4)
+                relink_files()
             if rc == 0:
                 notify_docs()
     except Exception:
@@ -342,6 +344,7 @@ def sync():
     unstick()
     commit("brain: update")                          # whatever is uncommitted goes in first
     rc, out = git(["pull", "--rebase", "--autostash", "-q"], 15)
+    relink_files()                                   # the pull replaced the files a Windows hard link pointed to
     if rc == 124:                                    # killed mid-rebase: leave a usable tree, try again next time
         git(["rebase", "--abort"], 10)
         print("brain: sync timed out (remote slow or unreachable); nothing changed, the next sync retries")
@@ -359,12 +362,40 @@ def sync():
     return 0
 
 
+FILE_LINKS = ("notes.md", "environment.md", "tool-map.md")   # paas-team's LINKS that are files
+
+
+def relink_files():
+    """Windows keeps the team's knowledge files as hard links (no symlink right): a pull replaced the clone's file, so the
+    brain's copy is old; its extra lines join the clone's file and the link is made again (paas-team link_files)"""
+    if REPO == BRAIN:
+        return
+    for name in FILE_LINKS:
+        p, t = os.path.join(BRAIN, name), os.path.join(REPO, "knowledge", name)
+        try:
+            if os.path.islink(p) or not os.path.isfile(p) or not os.path.isfile(t) or os.path.samefile(p, t):
+                continue
+            mine, theirs = open(p, encoding="utf-8").read(), open(t, encoding="utf-8").read()
+            extra = [l for l in mine.splitlines() if l.strip() and l not in theirs.splitlines()]
+            if extra and os.path.getmtime(p) > os.path.getmtime(t) - 1:
+                with open(t, "w", encoding="utf-8") as f:
+                    f.write(theirs.rstrip("\n") + "\n" + "\n".join(extra) + "\n")
+            os.remove(p)
+            os.link(t, p)
+        except OSError:
+            pass
+
+
 def hook():
     try:
         path = (json.load(sys.stdin).get("tool_input") or {}).get("file_path", "")
     except Exception:
         return 0
     path = os.path.realpath(os.path.expanduser(path)) if path else ""
+    for name in FILE_LINKS:                        # a hard-linked knowledge file (Windows): its real place is the clone
+        if REPO != BRAIN and path == os.path.realpath(os.path.join(BRAIN, name)):
+            relink_files()
+            path = os.path.realpath(os.path.join(REPO, "knowledge", name))
     roots = [os.path.realpath(p) + os.sep for p in (BRAIN, os.path.expanduser("~/storage-reports"))]
     if not path.startswith(tuple(roots)) or not os.path.isfile(path) or os.path.basename(path) == "mcp.json":
         return 0                                   # a team's mcp.json carries its servers' tokens by the owner's decision

@@ -287,7 +287,7 @@ def chats_rules():
 
 def prune_tmp():
     """Delete files older than 7 days in the private dir docs-leads / docs-hints use for seen files and caches."""
-    d = os.path.join(tempfile.gettempdir(), f"claude-brain-{os.getuid()}")
+    d = os.path.join(tempfile.gettempdir(), f"claude-brain-{os.getuid() if hasattr(os, 'getuid') else 'w'}")
     for name in os.listdir(d):
         p = os.path.join(d, name)
         if os.path.isfile(p) and time.time() - os.lstat(p).st_mtime > 7 * 86400:

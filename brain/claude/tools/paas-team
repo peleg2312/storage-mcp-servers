@@ -57,12 +57,12 @@ def identity(repo):
             have = {l.split()[0] for l in r.stdout.splitlines() if l.strip()}
         except Exception:
             have = set()
-        import pwd
+        import getpass                              # pwd / getuid do not exist on Windows
         import socket
         try:
-            name = pwd.getpwuid(os.getuid()).pw_name
-        except KeyError:
-            name = os.environ.get("USER") or "brain"
+            name = getpass.getuser()
+        except Exception:
+            name = os.environ.get("USER") or os.environ.get("USERNAME") or "brain"
         env = {}
         if "user.name" not in have:
             env.update(GIT_AUTHOR_NAME=name, GIT_COMMITTER_NAME=name)
@@ -321,10 +321,14 @@ def link(brain_name, target, template=None):
     recursively), a file replaces a team file that is still the untouched template, else its '- ' lines the team file
     lacks are appended. Whatever differs from the team's copy is kept as <name>.pre-team; nothing is deleted."""
     p = os.path.join(BRAIN, brain_name)
+    if os.path.exists(p) and os.path.exists(target) and not os.path.islink(p) and same(p, target):
+        return                                               # already a junction / hard link to it (Windows)
     if os.path.islink(p):
         if os.readlink(p) == target:
             return
         os.remove(p)                                         # another team's link: its knowledge stays in its own clone
+    elif is_junction(p):
+        os.rmdir(p)                                          # another team's junction (Windows): removes the link only
     elif os.path.exists(p):
         if not os.path.exists(target):
             shutil.move(p, target)
@@ -346,7 +350,69 @@ def link(brain_name, target, template=None):
         else:
             park(p)
     os.makedirs(os.path.dirname(target), exist_ok=True)
-    os.symlink(target, p)
+    make_link(target, p)
+
+
+def no_symlinks():
+    """Windows without the symlink right (no admin, no Developer Mode); PAAS_NO_SYMLINKS=1 makes Linux behave so (tests)"""
+    return os.name == "nt" or os.environ.get("PAAS_NO_SYMLINKS") == "1"
+
+
+def is_junction(p):
+    try:
+        return bool(getattr(os.path, "isjunction", lambda x: False)(p))
+    except OSError:
+        return False
+
+
+def same(a, b):
+    try:
+        return os.path.samefile(a, b) or os.path.realpath(a) == os.path.realpath(b)
+    except OSError:
+        return False
+
+
+def make_link(target, p):
+    """a symlink; where Windows refuses one: a directory junction (no admin needed) or, for a file, a hard link (re-made
+    by link_files after every git pull, which replaces the file and so breaks the hard link)"""
+    if not (os.environ.get("PAAS_NO_SYMLINKS") == "1"):
+        try:
+            os.symlink(target, p, target_is_directory=os.path.isdir(target))
+            return
+        except (OSError, NotImplementedError):
+            if os.name != "nt":
+                raise
+    if os.path.isdir(target):
+        if os.name == "nt":
+            import _winapi
+            _winapi.CreateJunction(target, p)
+        else:
+            os.symlink(target, p)                            # the test stand-in for a junction
+    else:
+        os.link(target, p)
+
+
+def link_files(team=None):
+    """The knowledge files that are hard links (Windows): a git pull wrote a new file in the clone, so ~/.claude/brain/<file>
+    still holds the old one. Lines written there since are added to the clone's file, then the link is made again.
+    Symlinks and junctions need nothing. Returns the names re-linked."""
+    team = team or active()
+    if not team:
+        return []
+    k = os.path.join(team_dir(team), "knowledge")
+    out = []
+    for name in LINKS:
+        p, t = os.path.join(BRAIN, name), os.path.join(k, name)
+        if not os.path.isfile(t) or os.path.islink(p) or not os.path.isfile(p) or same(p, t):
+            continue
+        mine, theirs = read(p), read(t)
+        extra = [l for l in mine.splitlines() if l.strip() and l not in theirs.splitlines()]
+        if extra and os.path.getmtime(p) > os.path.getmtime(t) - 1:
+            write(t, theirs.rstrip("\n") + "\n" + "\n".join(extra) + "\n")
+        os.remove(p)
+        os.link(t, p)
+        out.append(name)
+    return out
 
 
 def copy_rule(src, dst):
@@ -686,8 +752,13 @@ def off():
     plug = plugin_dir(team_dir(t))
     for name in LINKS:                 # the team's memory stays in its repository (a copy would travel into the next team's)
         p = os.path.join(BRAIN, name)
+        k = os.path.join(team_dir(t), "knowledge", name)
         if os.path.islink(p):
             os.remove(p)
+        elif is_junction(p):
+            os.rmdir(p)                                      # Windows: the junction only, the team's folder stays
+        elif os.path.isfile(p) and os.path.isfile(k) and same(p, k):
+            os.remove(p)                                     # Windows: the hard link only, the team's file stays
         if os.path.lexists(p):
             continue
         if os.path.lexists(p + ".pre-team"):                   # the person's own, from before the first team
@@ -911,6 +982,9 @@ def main(a):
         relink(background="--background" in a)
     elif cmd == "plugin-update":
         sys.exit(plugin_update())
+    elif cmd == "link-files":
+        for n in link_files():
+            print(f"re-linked {n}")
     elif cmd == "sync":
         sys.exit(sync())
     elif cmd == "remote" and len(a) >= 3:
