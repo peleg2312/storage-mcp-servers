@@ -28,8 +28,8 @@ if [ "$UI" = 0 ] && grep -q '^brain/ui/bundle/' "$W/changed"; then
 fi
 # removed: gone since <base>, and also files added after <base> and removed again (a VM may carry them from an earlier
 # pack made from the same base); rm -f of a file that is not there is harmless
-{ git diff --name-only --diff-filter=D "$BASE" HEAD -- . $EXCL
-  git log --format= --name-only --diff-filter=D "$BASE..HEAD" -- . $EXCL | while IFS= read -r f; do
+{ git diff --no-renames --name-only --diff-filter=D "$BASE" HEAD -- . $EXCL
+  git log --no-renames --format= --name-only --diff-filter=D "$BASE..HEAD" -- . $EXCL | while IFS= read -r f; do
     [ -n "$f" ] && ! git cat-file -e "HEAD:$f" 2>/dev/null && echo "$f"; done; } | sort -u > "$W/$NAME/REMOVED.txt"
 while IFS= read -r f; do
   [ -e "$f" ] || continue
