@@ -224,7 +224,7 @@ def lines_for(text, size, width_in, char=CHAR):
     for para in plain(text).split("\n"):
         if cur:
             n, cur = n + 1, 0
-        for w in para.split():
+        for w in [x for x in re.split(r"[ \t]+", para) if x]:   # a no-break space joins its words into one
             if len(w) > per_line:                    # a long word starts on its own line and wraps by characters
                 n += (1 if cur else 0) + (len(w) - 1) // per_line
                 cur = len(w) % per_line or per_line
@@ -248,6 +248,28 @@ def fit(paras, width_in, height_in, hi, lo, spacing=1.15, gap=0.55, char=CHAR):
 
 
 EMOJI_RX = re.compile("[\U0001F000-\U0001FAFF\U00002600-\U000027BF\U0001F900-\U0001F9FF\uFE0F\u200D]")
+
+
+LRM = "\u200E"
+# where the Unicode bidi algorithm breaks a mixed Hebrew / English line: a number that follows Hebrew counts as right to left,
+# so "2 TB" shows as "TB 2" and "-12" as "12-". An invisible left-to-right mark just before such a number or sign keeps it
+# in its own order (PowerPoint and LibreOffice both honour it). Only these two cases get one: everything else (env2: 23,
+# ה-proxy, failover., (56%), dates, versions) already reads right, and a mark around brackets would break them.
+NUM_UNIT_RX = re.compile(r"(?<![\w.,:/+\u2212\u200E])(?<![\dA-Za-z.]-)(?<!\u200E[-+\u2212])(\d[\d.,:/]*%?)(?=\s?[A-Za-z])")  # 2 TB, ו-312 TB, 15min
+SIGNED_RX = re.compile(r"(?<![\w.,:/\u200E])([+\-\u2212])(?=\d)")                           # -12, +6%, ב-+6% (not ב-12)
+
+
+# a short English phrase inside a Hebrew line wraps as one piece ("Always On", "2 TB", "SQL Server 2019"): its spaces become
+# no-break spaces, so a line never ends with "Always" and starts with "On."; a long one (a command) may still wrap
+LATIN_PHRASE_RX = re.compile(r"[A-Za-z0-9\u200E][A-Za-z0-9\u200E+\-.%:/_#]*(?: [A-Za-z0-9\u200E][A-Za-z0-9\u200E+\-.%:/_#]*)+")
+
+
+def bidi_marks(text):
+    """a line of a right-to-left paragraph with the left-to-right marks it needs (see LRM above), and its short English
+    phrases held together"""
+    text = SIGNED_RX.sub(LRM + r"\1", str(text))
+    text = NUM_UNIT_RX.sub(LRM + r"\1", text)
+    return LATIN_PHRASE_RX.sub(lambda m: m.group(0).replace(" ", "\u00A0") if len(m.group(0)) <= 22 else m.group(0), text)
 
 
 def clean_text(t):
@@ -904,8 +926,10 @@ class Deck:
             txt = clean_text(txt)
             para = tf.paragraphs[0] if i == 0 else tf.add_paragraph()
             para.alignment = align
-            if self.rtl and RTL_RX.search(plain(txt)):  # a line with Hebrew / Arabic letters reads right to left; a value,
+            rtl_para = self.rtl and RTL_RX.search(plain(txt))
+            if rtl_para:                                # a line with Hebrew / Arabic letters reads right to left; a value,
                 para._p.get_or_add_pPr().set("rtl", "1")  # a name or a number alone ("312 TB", "MA-01") keeps its own order
+                txt = bidi_marks(txt)                   # and its numbers stay beside their units and signs
             para.line_spacing = spacing
             if i:
                 para.space_before = Pt(size * gap * (0.6 if lvl else 1))
@@ -1970,9 +1994,10 @@ class Deck:
                 p.alignment = PP_ALIGN.RIGHT if numeric[j] or (self.rtl and not numeric[j]) else PP_ALIGN.LEFT
                 if self.rtl and numeric[j]:
                     p.alignment = PP_ALIGN.LEFT                  # numbers line up on their left edge in a right-to-left table
+                status = self.STATUS.get(text.strip().lower()) if i else None
                 if self.rtl and RTL_RX.search(text):
                     p._p.get_or_add_pPr().set("rtl", "1")
-                status = self.STATUS.get(text.strip().lower()) if i else None
+                    text = bidi_marks(text)
                 if status:
                     r = p.add_run()
                     r.text = "● "

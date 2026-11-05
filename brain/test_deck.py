@@ -332,3 +332,19 @@ if _sh.which("soffice") and _sh.which("pdftotext"):
     print("fit check ok:", len(repaired), "repairs")
 else:
     print("fit check skipped: LibreOffice / pdftotext not installed")
+
+# mixed Hebrew / English lines: a number keeps its unit and its sign ("2 TB" not "TB 2", "-12" not "12-"), a short English
+# phrase wraps as one piece; what already reads right gets no mark (brackets, dates, versions, Hebrew prefixes)
+L, NB = "‎", " "
+cases = {"שחזור DB של 2 TB לפני": f"שחזור DB של {L}2{NB}TB לפני", "עבודות שנכשלו: -12 לעומת": f"עבודות שנכשלו: {L}-12 לעומת",
+         "גדל ב-+6% תוך": f"גדל ב-{L}+6% תוך", "ירד ב-12% החודש": "ירד ב-12% החודש", "מספרים: 2 TB ו-312 TB": f"מספרים: {L}2{NB}TB ו-{L}312{NB}TB",
+         "דוח 2026-11-01 עד 2026-11-30": "דוח 2026-11-01 עד 2026-11-30", "מתוך 41 (56%)": "מתוך 41 (56%)",
+         "נכשל אחרי failover של Always On.": f"נכשל אחרי failover של Always{NB}On.", "MA-SITEB-03 מאבד DNS": "MA-SITEB-03 מאבד DNS"}
+for k, v in cases.items():
+    assert D.bidi_marks(k) == v, (k, D.bidi_marks(k).encode("unicode_escape"))
+o = deck(hf, "--out", os.path.join(tmp, "he2.pptx"))
+txt = [r.text for s_ in Presentation(os.path.join(tmp, "he2.pptx")).slides for sh in s_.shapes if sh.has_text_frame
+       for para in sh.text_frame.paragraphs for r in para.runs]
+assert any(f"{L}2{NB}TB" in t for t in txt) and any(f"{L}-12" in t for t in txt), "the Hebrew example keeps 2 TB and -12 in order"
+assert not any(L in t or NB in t for t in txt if not D.RTL_RX.search(t)), "marks only in right-to-left lines"
+print("mixed Hebrew / English lines ok")
