@@ -601,5 +601,47 @@ edit("server/modules/providers/list/claude/claude-session-synchronizer.provider.
       "        } else if (eventType === 'last-prompt') {"),
      ("      return foundCustomTitle || foundAiTitle || foundLastPrompt;",
       "      return foundCustomTitle || foundAiTitle || foundLastPrompt || foundFirstMessage;"))
+# the composer's context counter ("0 tokens" until a page refresh, and a number nobody could read):
+# 1. the server never sends an all-zero reading: a model behind a proxy (GLM) streams its usage only at the end of a
+#    request, so the first assistant message carried zeros, counted as "sent", and the real reading never followed
+edit("server/modules/providers/list/claude/claude-runtime.provider.js",
+     ("      if (tokenBudgetData) {\n        if (message.type === 'assistant') {\n          assistantBudgetSent = true;\n        }",
+      "      if (tokenBudgetData && tokenBudgetData.used > 0) {\n        if (message.type === 'assistant') {\n          assistantBudgetSent = true;\n        }"))
+# 2. the page ignores a zero reading too, and at the end of every turn reads the real one from the saved transcript (what
+#    a page refresh did), again 1.5 s later when the transcript was still being written
+edit("src/modules/chat/hooks/useChatRealtimeHandlers.ts",
+     ("import { collectRunningBackgroundTasks } from '@/modules/chat/utils/backgroundTasks';\n",
+      "import { collectRunningBackgroundTasks } from '@/modules/chat/utils/backgroundTasks';\nimport { api } from '@/shared/api';\n"),
+     ("            if (sid === activeViewSessionId) {\n              setTokenBudget(msg.tokenBudget as Record<string, unknown>);",
+      "            if (sid === activeViewSessionId && Number((msg.tokenBudget as Record<string, unknown>).used) > 0) {\n"
+      "              setTokenBudget(msg.tokenBudget as Record<string, unknown>);"),
+     ("          if (sid && sid === activeViewSessionId) {\n            void requestLatestMessages(sid, isActiveRef.current);\n          }\n",
+      "          if (sid && sid === activeViewSessionId) {\n            void requestLatestMessages(sid, isActiveRef.current);\n"
+      "            const readUsage = (triesLeft: number) => {\n"
+      "              api.providers.sessionTokenUsage(sid)\n"
+      "                .then((r) => (r.ok ? r.json() : null))\n"
+      "                .then((payload) => {\n"
+      "                  const data = payload?.data as Record<string, unknown> | undefined;\n"
+      "                  if (data && Number(data.used) > 0 && sid === activeViewSessionIdRef.current) {\n"
+      "                    setTokenBudget(data);\n"
+      "                  }\n"
+      "                  if (triesLeft > 0) window.setTimeout(() => readUsage(triesLeft - 1), 1500);\n"
+      "                })\n"
+      "                .catch(() => undefined);\n"
+      "            };\n"
+      "            readUsage(1);\n"
+      "          }\n"))
+# 3. the counter is "Memory 34%" with a ring that turns amber / red (overlay TokenUsageSummary.tsx, paasContextMeter.ts),
+#    and its details say what fills the memory and what to do (overlay PaasContextCard.tsx) instead of a token table
+edit("src/modules/chat/modals/CommandResultModal.tsx",
+     ("import ModelLibraryPanel from '@/modules/chat/modals/ModelLibraryPanel';\n",
+      "import ModelLibraryPanel from '@/modules/chat/modals/ModelLibraryPanel';\nimport PaasContextCard from '@/modules/chat/modals/PaasContextCard';\n"),
+     ("{payload?.kind === 'cost' && <CostContent data={payload.data as CostCommandData} />}",
+      "{payload?.kind === 'cost' && <PaasContextCard data={payload.data as CostCommandData} "
+      "providerLabel={getProviderLabel((payload.data as CostCommandData).provider, (payload.data as CostCommandData).provider || '')} />}"),
+     ("function CostContent({ data }: { data: CostCommandData }) {", "// eslint-disable-next-line @typescript-eslint/no-unused-vars\nfunction CostContent({ data }: { data: CostCommandData }) {"))
+strings("chat.json", misc__modalMeta__costEyebrow="Chat memory", misc__modalMeta__costTitle="How full is this chat?",
+        misc__modalMeta__costSubtitle="What Claude keeps in mind for this conversation, and what to do when it fills up.",
+        misc__showTokenUsage="Show chat memory")
 exec(open(os.path.join(HERE, "chat.py"), encoding="utf-8").read())    # chat fixes, same edit()
 print(f"branded {SRC} as {NAME}")
