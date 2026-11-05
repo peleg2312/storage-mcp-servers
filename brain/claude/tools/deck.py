@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
 """Designed PowerPoint decks from a short JSON outline: the model writes the content, this tool does the design.
 
-    deck.py spec.json [--out DIR|FILE.pptx] [--theme NAME] [--style clean|bold] [--look N|random] [--template company.pptx] [--preview]
-    deck.py --example            a spec with every slide type (start from it)
-    deck.py --themes             the built-in themes
+    deck.py spec.json [--out DIR|FILE.pptx] [--theme NAME] [--style clean|bold] [--look N|random] [--template company.pptx] [--check] [--preview]
+    deck.py --example [he]       a spec with every slide type (start from it)
+    deck.py --stories            story plans of recurring decks; --story NAME: one plan (slides in order, what each says)
+    deck.py --themes             the built-in themes (+ premium: executive, ivory, noir)
     deck.py --icons              the icon names (cards, stats, iconlist, timeline, hero, section, takeaway)
 
 Every slide is native PowerPoint (text boxes, shapes, real charts with their data, real tables), so the deck stays
@@ -14,8 +15,13 @@ editable. Text is fitted to its box (the font shrinks within limits); what still
 (LibreOffice + pdftoppm, when installed) next to the deck. Default output: ~/storage-reports/<date>-<title>/<title>.pptx.
 
 Spec: {"title": "...", "theme": "midnight", "footer": "SAN team", "slides": [{"type": "title", ...}, ...]}
-Slide types: title, agenda, section, hero, bullets, cards, iconlist, stats, chart, table, compare, timeline, process,
-quote, image, closing (fields: deck.py --example). Styles: clean (calm, light slides) or bold (gradients, colour panels,
+Slide types: title, agenda, section, summary, hero, bullets, cards, iconlist, stats, status, chart, table, compare,
+beforeafter, matrix, diagram, timeline, process, quote, image, closing (fields: deck.py --example). A stat takes "trend"
+(a sparkline), a chart "callouts" (a note on a point). Slides fade in ("transition": "none" turns it off); slides without
+"notes" get speaker notes made of their own words ("auto_notes": false turns it off). The story is checked too: a content
+slide whose title only names a topic, two bullets slides in a row, no closing, a placeholder left in -> WARN.
+--check renders the deck with LibreOffice, finds every text drawn outside its box (pdftotext), makes it smaller and renders
+again (at most 3 times), and keeps the PDF next to the deck. Styles: clean (calm, light slides) or bold (gradients, colour panels,
 split layouts, a dark numbers slide). Icons are drawn as editable shapes (deck_icons.py), no image files.
 Looks: every deck gets its own design from its title (layout variants of the title, section, agenda, cards and numbers
 slides, a palette from the themes or built from a brand colour, a font pair, bullets), printed as "look: N"; the same
@@ -31,6 +37,7 @@ Needs python-pptx (the devtools venv: ~/.claude/devtools-venv or /opt/paas/devto
 import copy
 import datetime as dt
 import glob
+import html
 import json
 import math
 import os
@@ -101,6 +108,18 @@ THEMES = {
                  "bg": "#FFFFFF", "text": "#14213D", "muted": "#5B6B82", "surface": "#F2F5F9", "line": "#DDE3EA",
                  "accents": ["#2A78D6", "#1BAF7A", "#EDA100", "#EB6834", "#6250D6", "#E87BA4"]},
 }
+# premium themes, chosen by name ("theme": "executive"); not in the random looks, so a look number keeps its design
+PREMIUM = {
+    "executive": {"dark": "#0B1F3A", "dark2": "#12294A", "on_dark": "#FFFFFF", "on_dark_muted": "#AFC0D6",
+                  "bg": "#FFFFFF", "text": "#0B1F3A", "muted": "#5A6A80", "surface": "#F4F6F9", "line": "#DCE2EA",
+                  "accents": ["#B8862B", "#2F6FB3", "#2E9E83", "#C2553D", "#6A5ACD", "#7A8899"]},
+    "ivory":     {"dark": "#2B2522", "dark2": "#3A322D", "on_dark": "#FFFFFF", "on_dark_muted": "#CFC3B5",
+                  "bg": "#FBF8F2", "text": "#2B2522", "muted": "#6F655C", "surface": "#F2ECE2", "line": "#E2D9CB",
+                  "accents": ["#B4532A", "#2F6E73", "#C99A2E", "#5E6FA8", "#8C5A7A", "#5D8A4E"]},
+    "noir":      {"dark": "#07090C", "dark2": "#11151B", "on_dark": "#FFFFFF", "on_dark_muted": "#9AA4B2",
+                  "bg": "#0F1318", "text": "#EEF1F5", "muted": "#9AA4B2", "surface": "#1A2029", "line": "#2A323D",
+                  "accents": ["#4C9AFF", "#2BC4A0", "#F5B83D", "#FF7A59", "#A78BFA", "#F472B6"]},
+}
 FONTS = {"head": "Segoe UI Semibold", "body": "Segoe UI"}
 # head / body font pairs a look can use (Windows fonts; LibreOffice substitutes in previews), with the head font's glyph width
 FONT_PAIRS = [("Segoe UI Semibold", "Segoe UI", 0.56), ("Georgia", "Segoe UI", 0.6), ("Bahnschrift SemiBold", "Segoe UI", 0.54),
@@ -113,11 +132,11 @@ LATIN_RX = re.compile("[A-Za-z]")
 # the words the design adds by itself, per language (a spec can override any of them with "labels": {...})
 LABELS = {
     "en": {"agenda": "Agenda", "key": "Key point", "shows": "What it shows", "look": "What to look at", "source": "Source: ",
-           "target": "Target "},
+           "target": "Target ", "summary": "Executive summary", "before": "Before", "after": "After", "ask": "The ask"},
     "he": {"agenda": "סדר היום", "key": "נקודה מרכזית", "shows": "מה רואים כאן", "look": "על מה להסתכל", "source": "מקור: ",
-           "target": "יעד "},
+           "target": "יעד ", "summary": "תקציר מנהלים", "before": "לפני", "after": "אחרי", "ask": "הבקשה"},
     "ar": {"agenda": "جدول الأعمال", "key": "النقطة الرئيسية", "shows": "ما يظهره", "look": "ما يجب النظر إليه", "source": "المصدر: ",
-           "target": "الهدف "},
+           "target": "الهدف ", "summary": "الملخص التنفيذي", "before": "قبل", "after": "بعد", "ask": "الطلب"},
 }
 # brand colours a look can build its palette from (beside the fixed themes)
 HUES = ["#2A78D6", "#7A3EF0", "#0F9AA8", "#E4572E", "#2E9E5B", "#C2185B", "#3D5AFE", "#C77D00", "#5C6BC0", "#00897B"]
@@ -261,7 +280,11 @@ def script(rPr, font, text, lang):
 # ------------------------------------------------------------------------------------------- outline normalization
 # A small model writes the outline: the usual slips are repaired here, before any layout, and listed as "fixed" (nothing to
 # do). Too many items for one slide are split over continuation slides, so no slide is ever crowded.
-TYPE_ALIASES = {"summary": "bullets", "list": "bullets", "text": "bullets", "points": "bullets", "content": "bullets",
+TYPE_ALIASES = {"exec-summary": "summary", "executive-summary": "summary", "tldr": "summary", "bottom-line": "summary",
+                "architecture": "diagram", "topology": "diagram", "flowchart": "diagram", "flow-diagram": "diagram",
+                "boxes": "diagram", "2x2": "matrix", "quadrant": "matrix", "quadrants": "matrix", "before-after": "beforeafter",
+                "before-and-after": "beforeafter", "dashboard": "status", "health": "status", "rag": "status",
+                "status-board": "status", "list": "bullets", "text": "bullets", "points": "bullets", "content": "bullets",
                 "findings": "bullets", "kpi": "stats", "kpis": "stats", "metrics": "stats", "numbers": "stats", "graph": "chart",
                 "bar": "chart", "line": "chart", "pie": "chart", "steps": "process", "flow": "process", "plan": "timeline",
                 "roadmap": "timeline", "milestones": "timeline", "comparison": "compare", "vs": "compare", "versus": "compare",
@@ -281,8 +304,10 @@ LIST_FIELDS = {"bullets": ("bullets", ("points", "items", "list", "lines", "cont
                "stats": ("stats", ("items", "metrics", "kpis", "numbers", "values")),
                "timeline": ("items", ("milestones", "events", "steps", "phases", "dates")),
                "process": ("steps", ("items", "stages", "phases", "list")),
-               "agenda": ("items", ("points", "list", "sections", "topics", "bullets"))}
-MAX_ITEMS = {"bullets": 6, "cards": 6, "iconlist": 6, "stats": 4, "timeline": 6, "process": 5, "agenda": 7, "closing": 5}
+               "agenda": ("items", ("points", "list", "sections", "topics", "bullets")),
+               "summary": ("points", ("items", "bullets", "key_points", "findings", "list")),
+               "status": ("items", ("systems", "tiles", "services", "list", "rows"))}
+MAX_ITEMS = {"summary": 4, "status": 9, "bullets": 6, "cards": 6, "iconlist": 6, "stats": 4, "timeline": 6, "process": 5, "agenda": 7, "closing": 5}
 
 
 def _fields(d):
@@ -404,12 +429,104 @@ def normalize(spec):
                 cats = [str(k + 1) for k in range(n)]
                 fixes.append(f"slide {i}: chart without categories, numbered 1-{n}")
             c["categories"] = cats                   # a count that differs is the outline's mistake: chart() says so
+            co = c.pop("callouts", None) or c.pop("callout", None) or c.pop("annotations", None) or sl.get("callouts") or sl.get("callout")
+            if co:
+                co = co if isinstance(co, list) else [co]
+                outc = []
+                for x in co:
+                    if isinstance(x, str) and ":" in x:
+                        a_, b_ = x.split(":", 1)
+                        x = {"at": a_.strip(), "text": b_.strip()}
+                    if isinstance(x, dict):
+                        x = {str(k).lower(): v for k, v in x.items()}
+                        at = x.get("at", x.get("category", x.get("x", x.get("point"))))
+                        txt = x.get("text") or x.get("label") or x.get("note") or ""
+                        if at is not None and txt:
+                            outc.append({"at": str(at), "text": str(txt), "series": x.get("series")})
+                if outc:
+                    c["callouts"] = outc
             if not series or not cats:
                 fixes.append(f"slide {i}: a chart without data became a bullets slide")
                 sl = {"type": "bullets", "title": sl.get("title", ""), "bullets": [sl.get("takeaway") or ""], "notes": sl.get("notes")}
                 kind = "bullets"
             else:
                 sl["chart"] = c
+        if kind == "diagram":
+            nodes, seen = [], set()
+            for k, nd in enumerate(sl.get("nodes") or sl.get("boxes") or sl.get("items") or []):
+                nd = {"label": nd} if isinstance(nd, str) else _fields(nd) if isinstance(nd, dict) else None
+                if not nd:
+                    continue
+                if not nd.get("label"):
+                    nd["label"] = nd.get("title") or nd.get("id") or f"{k + 1}"
+                nd["id"] = str(nd.get("id") or nd["label"])
+                if nd["id"] in seen:
+                    continue
+                seen.add(nd["id"])
+                if nd.get("icon") and not deck_icons.resolve(nd["icon"]):
+                    g = deck_icons.guess(nd["icon"], nd["label"], nd.get("sub"))
+                    fixes.append(f"slide {i}: icon {nd['icon']!r} -> {g or 'none'}")
+                    nd["icon"] = g
+                nodes.append(nd)
+            links = []
+            for l in sl.get("links") or sl.get("edges") or sl.get("arrows") or sl.get("connections") or []:
+                if isinstance(l, (list, tuple)) and len(l) >= 2:
+                    l = {"from": l[0], "to": l[1], "label": l[2] if len(l) > 2 else ""}
+                elif isinstance(l, str) and re.search(r"\s*(->|→|=>)\s*", l):
+                    a_, b_ = re.split(r"\s*(?:->|→|=>)\s*", l, maxsplit=1)
+                    l = {"from": a_, "to": b_}
+                if not isinstance(l, dict):
+                    continue
+                l = {str(k).lower(): v for k, v in l.items()}
+                f_ = l.get("from") or l.get("source") or l.get("src")
+                t_ = l.get("to") or l.get("target") or l.get("dst")
+                if f_ and t_:
+                    links.append({"from": str(f_), "to": str(t_), "label": l.get("label") or l.get("text") or ""})
+            if nodes and not links and len(nodes) > 1:
+                links = [{"from": nodes[k]["id"], "to": nodes[k + 1]["id"]} for k in range(len(nodes) - 1)]
+                fixes.append(f"slide {i}: a diagram without links, its boxes chained in order")
+            if not nodes:
+                fixes.append(f"slide {i}: a diagram without nodes became a bullets slide")
+                sl = {"type": "bullets", "title": sl.get("title", ""), "bullets": [sl.get("takeaway") or sl.get("note") or ""],
+                      "notes": sl.get("notes")}
+                kind = "bullets"
+            else:
+                sl["nodes"], sl["links"] = nodes, links
+        if kind == "matrix":
+            q = sl.get("quadrants") or sl.get("cells") or []
+            if isinstance(q, dict):
+                order = ("top_left", "top_right", "bottom_left", "bottom_right")
+                q = [q.get(k) or q.get(k.replace("_", "-")) or {} for k in order]
+            q = [({"title": x} if isinstance(x, str) else _fields(x) if isinstance(x, dict) else {}) for x in q][:4]
+            for x in q:
+                if x.get("icon") and not deck_icons.resolve(x["icon"]):
+                    x["icon"] = deck_icons.guess(x["icon"], x.get("title"), x.get("text"))
+            if len(q) < 4:
+                fixes.append(f"slide {i}: a 2x2 needs 4 quadrants, {len(q)} given (the rest left empty)")
+            sl["quadrants"] = q
+            items = []
+            for it in sl.get("items") or sl.get("points") or []:
+                if isinstance(it, dict):
+                    it = _fields(it)
+                    it.setdefault("label", it.get("title", ""))
+                    items.append(it)
+            sl["items"] = items
+        if kind == "beforeafter":
+            for side in ("before", "after"):
+                v = sl.get(side)
+                if isinstance(v, (str, int, float)):
+                    sl[side] = {"value": str(v)}
+                elif isinstance(v, dict):
+                    v = _fields(v)
+                    if v.get("value") in (None, "") and v.get("title"):
+                        v["value"] = v.pop("title")
+                    v["value"] = str(v.get("value", ""))
+                    sl[side] = v
+                else:
+                    sl[side] = {"value": "(to confirm)"}
+                    fixes.append(f"slide {i}: no {side!r} given, marked (to confirm)")
+        if kind == "summary" and not (sl.get("summary") or sl.get("text")) and sl.get("subtitle"):
+            sl["summary"] = sl.pop("subtitle")
         if kind == "table":
             cols = [str(x) for x in sl.get("columns") or sl.get("headers") or []]
             rows = []
@@ -595,9 +712,10 @@ class Deck:
                 self.t = dict(palette(spec["accent"]), **fonts)
                 self.theme_name = "accent " + str(spec["accent"])
             elif name:
-                if name not in THEMES:
-                    raise SystemExit(f"deck: unknown theme {name!r}; one of {', '.join(THEMES)}")
-                self.t = dict(THEMES[name], **fonts)
+                allt = dict(THEMES, **PREMIUM)
+                if name not in allt:
+                    raise SystemExit(f"deck: unknown theme {name!r}; one of {', '.join(allt)}")
+                self.t = dict(allt[name], **fonts)
                 self.theme_name = name
             else:
                 names = [k for k in THEMES if k != "light"]
@@ -679,6 +797,8 @@ class Deck:
         self.n += 1
         if self.template and kind != "blank":
             return s
+        if not fill and not dark and self.t["bg"] != "#FFFFFF":
+            fill = self.t["bg"]                       # an ivory or dark theme: every content slide on its own background
         if fill:
             s.background.fill.solid()
             s.background.fill.fore_color.rgb = rgb(fill)
@@ -822,8 +942,9 @@ class Deck:
         at most max_lines lines, and the height those lines need, so what comes under it starts below it"""
         char = self.hc * 1.07
         size = hi
-        while size > lo and lines_for(text, size, w, char) > max_lines:
-            size -= 1
+        longest = max([len(x) for x in plain(text).split()] or [0])
+        while size > lo and (lines_for(text, size, w, char) > max_lines or longest > int(w * 72 / (size * char))):
+            size -= 1                                  # also: no word broken in the middle ("CommSer / ve") while it can be helped
         n = min(max_lines, lines_for(text, size, w, char)) if str(text).strip() else 0
         return size, n * size * spacing / 72
 
@@ -893,10 +1014,21 @@ class Deck:
             ttl = sl.get("title", "")
             hi, lo = (34, 24) if self.bold else (30, 22)
             th = 3.0 if dark and width is not None else 1.0
-            size, ok = fit([(ttl, 0)], w, th, hi, lo, spacing=1.05, char=self.hc)
-            if not ok or len(plain(ttl)) > 90:
+            char = self.hc * 1.07                    # PowerPoint and LibreOffice measure wider than the estimate
+            size = hi
+            while size > lo and lines_for(ttl, size, w, char) > 1:      # one line if it can be done at a readable size
+                size -= 1
+            n = lines_for(ttl, size, w, char)
+            ok = True
+            if n > 1:
+                size, ok = fit([(ttl, 0)], w, th, hi, lo, spacing=1.05, char=char)
+                n = lines_for(ttl, size, w, char)
+            if not ok or (n > 2 and width is None) or len(plain(ttl)) > 90:
                 self.warn.append(f"slide {self.n}: title is long ({len(plain(ttl))} characters); say it in one line")
-            self.text(s, x, 0.78 if self.bold else 0.72, w, th, [ttl], size, fg, font=t["head"], spacing=1.05)
+            ty = 0.78 if self.bold else 0.72
+            self.text(s, x, ty, w, th, [ttl], size, fg, font=t["head"], spacing=1.05)
+            if width is None and not dark:           # a title on two lines: the content starts under it, never over it
+                top = max(top, ty + min(n, 2) * size * 1.12 / 72 + 0.3)
         foot = self.spec.get("footer") or plain(self.spec.get("title", ""))
         self.text(s, M, self.H - 0.45, self.W * 0.5 - M, 0.25, [foot], 10, mu, floor=10, quiet=True)   # one line, cut
         self.text(s, self.W - M - 1, self.H - 0.45, 1, 0.25, [str(self.n)], 10, mu if dark and width is None else t["muted"], align=PP_ALIGN.RIGHT)
@@ -1095,13 +1227,13 @@ class Deck:
                 self.shape(s, MSO_SHAPE.RECTANGLE, x, y, w, 0.12, fill=col)
                 ic, bg = "#FFFFFF", col
             elif v == 2:                             # tinted with the card's own colour
-                self.shape(s, MSO_SHAPE.ROUNDED_RECTANGLE, x, y, w, h, fill=mix(col, "#FFFFFF", 0.9), radius=0.08)
+                self.shape(s, MSO_SHAPE.ROUNDED_RECTANGLE, x, y, w, h, fill=mix(col, t["bg"], 0.9), radius=0.08)
                 ic, bg = "#FFFFFF", col
             else:                                    # quiet surface
                 self.shape(s, MSO_SHAPE.ROUNDED_RECTANGLE, x, y, w, h, fill=t["surface"], radius=0.06)
                 if not has_icon:
                     self.shape(s, MSO_SHAPE.RECTANGLE, x + 0.3, y + 0.3, 0.5, 0.06, fill=col)
-                ic, bg = col, mix(col, "#FFFFFF", 0.84)
+                ic, bg = col, mix(col, t["bg"], 0.84)
             compact = h < 2.9
             badge = icon or c.get("value") or str(i + 1)
             d = 0.62 if compact else 0.82
@@ -1151,8 +1283,16 @@ class Deck:
         gap = 0.3 if v == 1 else 0
         w = (self.W - 2 * self.M - gap * (n - 1)) / n
         icons = any(deck_icons.resolve(st.get("icon")) for st in stats)
-        y = top + (bottom - top) / 2 - (1.75 if icons else 1.3)
+        content = (0.9 if icons else 0) + 2.15 + (0.35 if any(st.get("progress") is not None for st in stats) else 0) \
+            + (0.4 if any(st.get("delta") for st in stats) else 0)
+        y = top + max(0.3, (bottom - top - content) / 2)   # the numbers centred in the space, never over the title
         vs = min([one_line(st.get("value", ""), w - 0.7, 72 if self.bold else 66, 26) for st in stats] or [60])
+        # a trend line goes beside its number when there is room, else under it (and the block is laid out taller)
+        beside = {i for i, st in enumerate(stats) if st.get("trend") and
+                  (w - 0.7) - len(str(st.get("value", ""))) * vs * self.hc * 1.07 / 72 >= 1.0}
+        if any(st.get("trend") for i, st in enumerate(stats) if i not in beside):
+            content += 0.42
+        y = top + max(0.3, (bottom - top - content) / 2)
         for i, st in enumerate(stats):
             x = self.M + i * (w + gap)
             col = t["accents"][i % len(t["accents"])] if sl.get("colorful") or self.bold or v == 1 else t["accents"][0]
@@ -1170,6 +1310,11 @@ class Deck:
             self.text(s, x + 0.35, yy, w - 0.6, 1.3, [val], vs, "#FFFFFF" if dark and self.bold and i == 0 else col, font=t["head"],
                       spacing=0.95, anchor=MSO_ANCHOR.BOTTOM)
             self.text(s, x + 0.35, yy + 1.45, w - 0.6, 0.8, [st.get("label", "")], 16, fg, spacing=1.1)
+            if i in beside:
+                vw = len(val) * vs * self.hc * 1.07 / 72
+                sw_ = min(1.6, w - 0.7 - vw - 0.25)
+                self.sparkline(s, st["trend"], x + 0.35 + vw + 0.25, yy + 1.3 - 0.62, sw_, 0.45, col)
+                st = dict(st, trend=None)
             self.stat_extras(s, st, x, yy + 2.15, w, col, ln)
         if sl.get("note"):
             self.shape(s, MSO_SHAPE.RECTANGLE, self.M, self.H - 1.45, self.W - 2 * self.M, 0.012, fill=ln)
@@ -1193,6 +1338,35 @@ class Deck:
             good = st.get("good", not d.strip().startswith("-"))
             arrow = "▲ " if not d.strip().startswith("-") else "▼ "
             self.text(s, x + 0.35, ny, w - 0.6, 0.4, [arrow + d.lstrip("+-")], 14, GOOD if good else BAD, font=self.t["head"])
+            ny += 0.4
+        if st.get("trend"):
+            self.sparkline(s, st["trend"], x + 0.35, ny + 0.02, min(w - 0.7, 2.4), 0.36, col)
+
+    def sparkline(self, s, values, x, y, w, h, col):
+        """a small line of the recent values under a number, its last point marked: the trend at a glance"""
+        vals = []
+        for v in values or []:
+            try:
+                vals.append(float(str(v).replace(",", "").rstrip("%")))
+            except ValueError:
+                pass
+        if len(vals) < 2:
+            return
+        lo, hi = min(vals), max(vals)
+        span = (hi - lo) or 1.0
+        pts = [(x + w * k / (len(vals) - 1), y + h * (1 - (v - lo) / span)) for k, v in enumerate(vals)]
+        fb = s.shapes.build_freeform(Inches(pts[0][0]), Inches(pts[0][1]), scale=1.0)
+        fb.add_line_segments([(Inches(a), Inches(b)) for a, b in pts[1:]], close=False)
+        sh = fb.convert_to_shape()
+        st = sh._element.find(qn("p:style"))
+        if st is not None:
+            sh._element.remove(st)                   # no theme shadow
+        sh.fill.background()
+        sh.line.color.rgb = rgb(col)
+        sh.line.width = Pt(2)
+        sh.name = "decor sparkline"
+        lx, ly = pts[-1]
+        self.shape(s, MSO_SHAPE.OVAL, lx - 0.06, ly - 0.06, 0.12, 0.12, fill=col)
 
     def stats_lead(self, sl, stats):
         """the first number very large on the left, the others as rows on the right"""
@@ -1207,14 +1381,20 @@ class Deck:
         first, rest = stats[0], stats[1:]
         self.shape(s, MSO_SHAPE.RECTANGLE, self.M, top, lw, bottom - top, fill=t["dark"] if t["dark"] != "#FFFFFF" else a)
         y = top + 0.45
+        # laid out from the panel's bottom: the extras (bar, delta, trend), the label above them, the number above the label
+        ext = (0.35 if first.get("progress") is not None else 0) + (0.4 if first.get("delta") else 0) + (0.45 if first.get("trend") else 0)
         if deck_icons.resolve(first.get("icon")):
-            self.icon(s, first["icon"], self.M + 0.45, y, 0.7, a if t["dark"] != "#FFFFFF" else "#FFFFFF")
-            y += 0.95
-        vs = one_line(first.get("value", ""), lw - 0.9, 110, 34)
-        self.text(s, self.M + 0.45, y, lw - 0.9, 1.9, [str(first.get("value", ""))], vs, "#FFFFFF", font=t["head"], spacing=0.9,
+            d = 0.7 if ext <= 0.4 else 0.5                  # a smaller icon when the extras need the room
+            self.icon(s, first["icon"], self.M + 0.45, y, d, a if t["dark"] != "#FFFFFF" else "#FFFFFF")
+            y += d + 0.25
+        ey = bottom - 0.3 - ext
+        ly = ey - 0.8
+        vh = max(0.6, ly - 0.05 - y)
+        vs = min(one_line(first.get("value", ""), lw - 0.9, 110, 34), max(34, int(vh * 72 / 1.05)))
+        self.text(s, self.M + 0.45, y, lw - 0.9, vh, [str(first.get("value", ""))], vs, "#FFFFFF", font=t["head"], spacing=0.9,
                   anchor=MSO_ANCHOR.BOTTOM)
-        self.text(s, self.M + 0.45, y + 2.0, lw - 0.9, 0.9, [first.get("label", "")], 20, mix("#FFFFFF", t["dark"], 0.2), spacing=1.1)
-        self.stat_extras(s, first, self.M + 0.1, y + 2.9, lw, a, mix(t["dark"], "#FFFFFF", 0.25))
+        self.text(s, self.M + 0.45, ly, lw - 0.9, 0.75, [first.get("label", "")], 20, mix("#FFFFFF", t["dark"], 0.2), spacing=1.1)
+        self.stat_extras(s, first, self.M + 0.1, ey, lw, a, mix(t["dark"], "#FFFFFF", 0.25))
         rx = self.M + lw + 0.5
         rw = self.W - self.M - rx
         rh = (bottom - top) / max(1, len(rest))
@@ -1225,7 +1405,7 @@ class Deck:
                 self.shape(s, MSO_SHAPE.RECTANGLE, rx, yy, rw, 0.012, fill=t["line"])
             ix = rx
             if deck_icons.resolve(st.get("icon")):
-                self.badge(s, st["icon"], rx, yy + (rh - 0.62) / 2, 0.62, col, mix(col, "#FFFFFF", 0.84))
+                self.badge(s, st["icon"], rx, yy + (rh - 0.62) / 2, 0.62, col, mix(col, t["bg"], 0.84))
                 ix += 0.85
             # the value and, right under it, its label: one block beside the badge (a label far from its number reads as a
             # different item)
@@ -1343,7 +1523,7 @@ class Deck:
             x = self.M + (i % cols) * (cw + gap)
             y = top + (i // cols) * rh
             d = 0.72
-            if not self.badge(s, it.get("icon"), x, y + 0.05, d, "#FFFFFF" if self.bold else col, col if self.bold else mix(col, "#FFFFFF", 0.84)):
+            if not self.badge(s, it.get("icon"), x, y + 0.05, d, "#FFFFFF" if self.bold else col, col if self.bold else mix(col, t["bg"], 0.84)):
                 self.shape(s, MSO_SHAPE.OVAL, x, y + 0.05, d, d, fill=col)
                 self.text(s, x, y + 0.05, d, d, [str(i + 1)], 18, "#FFFFFF", font=t["head"], align=PP_ALIGN.CENTER, anchor=MSO_ANCHOR.MIDDLE)
             tx, tw = x + d + 0.3, cw - d - 0.3
@@ -1459,7 +1639,7 @@ class Deck:
                 if total is None:
                     tv = sum(allv[:len(cats)])
                     total = (f"{tv:,.1f}" if tv % 1 else f"{tv:,.0f}") + (usep(unit) if unit else "")
-                cx, cy = x + w * 0.03 + side / 2, y + h / 2
+                cx, cy = self.unmirror(x + w * 0.03 + side / 2, x, w), y + h / 2
                 self.text(s, cx - side * 0.3, cy - 0.5, side * 0.6, 0.6, [str(total)], 26, t["text"], font=t["head"], align=PP_ALIGN.CENTER,
                           anchor=MSO_ANCHOR.BOTTOM)
                 self.text(s, cx - side * 0.3, cy + 0.12, side * 0.6, 0.4, [c.get("center_label", "total")], 12, t["muted"], align=PP_ALIGN.CENTER)
@@ -1495,7 +1675,7 @@ class Deck:
                     dl.font.color.rgb = rgb(col)
             elif kind == "area":
                 se.format.fill.solid()
-                se.format.fill.fore_color.rgb = rgb(mix(col, "#FFFFFF", 0.35 if len(series) > 1 else 0.15))
+                se.format.fill.fore_color.rgb = rgb(mix(col, t["bg"], 0.35 if len(series) > 1 else 0.15))
             else:
                 se.format.fill.solid()
                 se.format.fill.fore_color.rgb = rgb(col)
@@ -1503,7 +1683,7 @@ class Deck:
                     idx = cats.index(str(hl)) if str(hl) in cats else int(hl) if str(hl).isdigit() else -1
                     for j, pt in enumerate(se.points):
                         pt.format.fill.solid()
-                        pt.format.fill.fore_color.rgb = rgb(col if j == idx else mix(col, "#FFFFFF", 0.62))
+                        pt.format.fill.fore_color.rgb = rgb(col if j == idx else mix(col, t["bg"], 0.62))
         if kind not in ("line", "area"):
             plot.gap_width = 50 if len(series) == 1 else 80
             if stacked:
@@ -1583,7 +1763,68 @@ class Deck:
             ln.line.width = Pt(1.75)
             ln.line.dash_style = MSO_LINE_DASH_STYLE.DASH
             ln.name = "target line"
+        if c.get("callouts"):
+            self.callouts(s, c, cats, series, kind, vmin, vmax, x + left * w, y + topm * h, pw * w, ph * h, (x, y, w, h))
         return gf
+
+    def unmirror(self, xc, fx, fw):
+        """the centre x for a shape laid over a chart: a chart's inside is not mirrored in a right-to-left deck, only its
+        frame moves, so a shape on a point of it is placed where mirror() will bring it onto that point"""
+        return 2 * fx + fw - xc if self.rtl else xc
+
+    def callouts(self, s, c, cats, series, kind, vmin, vmax, px, py, pww, phh, frame):
+        """a note on one point of a chart ("callouts": [{"at": "Sep", "text": "policy changed"}]): a ring on the point and a
+        label with a leader line, placed from the chart's own scale, so it lands on the value (mirrored with the deck)"""
+        t = self.t
+        fx, fy, fw, fh = frame
+        if kind in ("pie", "doughnut"):
+            self.warn.append(f"slide {self.n}: callouts are drawn on column, bar, line and area charts only")
+            return
+        horizontal = kind in ("bar", "stacked_bar")
+        stacked = kind.startswith("stacked")
+        n = len(cats)
+        for co in c["callouts"][:3]:
+            at, txt = co.get("at"), plain(co.get("text", ""))
+            j = cats.index(str(at)) if str(at) in cats else (int(at) if str(at).isdigit() and int(at) < n else None)
+            if j is None or not txt:
+                self.warn.append(f"slide {self.n}: callout at {at!r}: no such category (one of {', '.join(cats[:8])})")
+                continue
+            si = 0
+            if co.get("series") is not None:
+                names = [str(se.get("name", "")) for se in series]
+                si = names.index(str(co["series"])) if str(co["series"]) in names else 0
+            v = float(series[si]["values"][j] or 0)
+            if stacked:
+                v = sum(float(se["values"][j] or 0) for se in series[:si + 1])
+            frac = (v - vmin) / ((vmax - vmin) or 1)
+            if horizontal:
+                ptx, pty = px + pww * frac, py + phh * (j + 0.5) / n
+            else:
+                ptx, pty = px + pww * (j + 0.5) / n, py + phh * (1 - frac)
+            ptx = self.unmirror(ptx, fx, fw)
+            lw = min(3.2, max(1.2, len(txt) * 0.095 + 0.45))
+            lh = 0.38 if len(txt) * 0.095 + 0.45 <= 3.2 else 0.62
+            if horizontal:
+                lx, ly = min(fx + fw - lw, ptx + 0.75), pty - lh / 2
+            else:
+                lx = max(fx, min(fx + fw - lw, ptx - lw / 2))
+                ly = pty - 0.55 - lh - (0.3 if kind in ("column", "stacked") else 0)
+                if ly < fy:                                     # no room above: beside the point
+                    ly = max(fy, pty - lh / 2)
+                    lx = ptx + 0.3 if ptx + 0.3 + lw <= fx + fw else ptx - 0.3 - lw
+            bars = kind in ("column", "bar", "stacked", "stacked_bar")
+            if not bars:                                        # a ring on a line point; a bar is its own mark (and has its label)
+                ring = self.shape(s, MSO_SHAPE.OVAL, ptx - 0.13, pty - 0.13, 0.26, 0.26, line=t["text"], width=2)
+                ring.fill.background()
+            # the leader from the label to the point (vertical pieces only: they mirror cleanly)
+            end = pty - (0.34 if bars else 0.13)
+            if not horizontal and ly + lh < end - 0.05 and lx <= ptx <= lx + lw:
+                cn = s.shapes.add_connector(MSO_CONNECTOR.STRAIGHT, Inches(ptx), Inches(ly + lh), Inches(ptx), Inches(end))
+                cn.line.color.rgb = rgb(t["text"])
+                cn.line.width = Pt(1.25)
+            pill = self.shape(s, MSO_SHAPE.ROUNDED_RECTANGLE, lx, ly, lw, lh, fill=t["dark"] if t["dark"] != "#FFFFFF" else t["text"],
+                              radius=0.3)
+            self.text(s, 0, 0, 0, 0, [txt], 12, "#FFFFFF", font=t["head"], align=PP_ALIGN.CENTER, anchor=MSO_ANCHOR.MIDDLE, shape=pill)
 
     def s_chart(self, sl):
         t = self.t
@@ -1614,7 +1855,10 @@ class Deck:
               "warning": "#C98500", "warn": "#C98500", "degraded": "#C98500", "amber": "#C98500", "at risk": "#C98500",
               "pending": "#C98500", "lagging": "#C98500", "minor": "#C98500", "major": "#E5604D",
               "critical": BAD, "failed": BAD, "fail": BAD, "down": BAD, "error": BAD, "offline": BAD, "red": BAD,
-              "blocked": BAD, "broken": BAD, "out of sync": BAD, "non-compliant": BAD}
+              "blocked": BAD, "broken": BAD, "out of sync": BAD, "non-compliant": BAD,
+              "תקין": GOOD, "ירוק": GOOD, "פעיל": GOOD, "הושלם": GOOD, "מסונכרן": GOOD, "אזהרה": "#C98500", "צהוב": "#C98500",
+              "כתום": "#C98500", "בסיכון": "#C98500", "ממתין": "#C98500", "מושהה": "#C98500", "חלקי": "#C98500",
+              "נכשל": BAD, "תקלה": BAD, "אדום": BAD, "למטה": BAD, "קריטי": BAD, "לא זמין": BAD}
 
     @staticmethod
     def cell_lines(cell, bottom=None, top=None):
@@ -1712,7 +1956,7 @@ class Deck:
                 if i == 0:
                     fill = head_fill
                 elif hl is not None and i - 1 == hl:
-                    fill = mix(t["accents"][0], "#FFFFFF", 0.84)
+                    fill = mix(t["accents"][0], t["bg"], 0.84)
                 elif j in heat and not (total and last) and value(val) is not None and ranges[j][1] > ranges[j][0]:
                     k = (value(val) - ranges[j][0]) / (ranges[j][1] - ranges[j][0])
                     fill = mix(t["bg"], heat_to, 0.06 + 0.5 * k)
@@ -1764,7 +2008,7 @@ class Deck:
             self.shape(s, MSO_SHAPE.RECTANGLE, self.M, ly - 0.025, k * w + 0.2, 0.05, fill=t["accents"][0])
         for i, it in enumerate(items):
             x = self.M + i * w
-            col = t["accents"][i % len(t["accents"])] if sl.get("colorful") else (t["accents"][0] if it.get("done", True) else mix(t["muted"], "#FFFFFF", 0.4))
+            col = t["accents"][i % len(t["accents"])] if sl.get("colorful") else (t["accents"][0] if it.get("done", True) else mix(t["muted"], t["bg"], 0.4))
             self.text(s, x, ly - 0.95 - (0.15 if deck_icons.resolve(it.get("icon")) else 0), w - 0.25, 0.6, [it.get("date", "")], 18, col,
                       font=t["head"], anchor=MSO_ANCHOR.BOTTOM)
             if deck_icons.resolve(it.get("icon")):
@@ -1836,8 +2080,26 @@ class Deck:
         return size
 
     def notes(self, s, sl):
-        if sl.get("notes"):
-            s.notes_slide.notes_text_frame.text = sl["notes"]
+        txt = sl.get("notes")
+        if not txt and self.spec.get("auto_notes", True) is not False:
+            txt = auto_notes(sl)
+        if txt:
+            s.notes_slide.notes_text_frame.text = txt if isinstance(txt, str) else "\n".join(map(str, txt))
+
+    def transition(self, s):
+        """a short fade between slides (the spec's "transition": "fade" (default), "push" or "none")"""
+        kind = str(self.spec.get("transition", "fade")).lower()
+        if kind in ("none", "off", "false", ""):
+            return
+        el = s._element
+        tr = etree.Element(qn("p:transition"))
+        tr.set("spd", "med")
+        if kind == "push":
+            etree.SubElement(tr, qn("p:push")).set("dir", "l" if self.rtl else "r")
+        else:
+            etree.SubElement(tr, qn("p:fade"))
+        after = el.find(qn("p:clrMapOvr"))
+        (after if after is not None else el.find(qn("p:cSld"))).addnext(tr)
 
     def grid(self, n, top, bottom, max_cols=3, gap=0.3):
         cols = n if n <= max_cols else math.ceil(n / 2)
@@ -1897,6 +2159,350 @@ class Deck:
             self.text(s, x + 0.1, top + 1.75, w - 0.5, bh, [st.get("text", "")], size, t["text"], spacing=1.2)
         return s
 
+    # ------------------------------------------------------------------------------------------- v4 slide types
+    def s_summary(self, sl):
+        """executive summary: the answer in one panel, 2-4 numbered key points beside it, an optional ask bar"""
+        t = self.t
+        s = self.new("titleonly")
+        top = self.frame(s, sl)
+        a = t["accents"][0]
+        pts = sl.get("points", [])
+        ask = sl.get("ask")
+        bottom = self.H - (1.55 if ask else 0.95)
+        pw = (self.W - 2 * self.M) * 0.4
+        self.shape(s, MSO_SHAPE.RECTANGLE, self.M, top, pw, bottom - top, fill=t["dark"] if t["dark"] != "#FFFFFF" else a)
+        self.shape(s, MSO_SHAPE.RECTANGLE, self.M, top, 0.09, bottom - top, fill=a)
+        lab = sl.get("label") or self.L["summary"]
+        self.text(s, self.M + 0.45, top + 0.4, pw - 0.8, 0.35, [lab if self.rtl else lab.upper()], 12, mix("#FFFFFF", a, 0.3),
+                  font=t["head"], spc=140)
+        ans = sl.get("summary") or sl.get("text") or ""
+        # a line of a large heading font is about 1.2 x its size high: measured as such, so the answer never leaves the panel
+        size, ok = fit([(ans, 0)], pw - 0.9, bottom - top - 1.4, 28, 14, spacing=1.32, char=self.hc * 1.1)
+        self.text(s, self.M + 0.45, top + 0.95, pw - 0.9, bottom - top - 1.3, [ans], size, "#FFFFFF", font=t["head"], spacing=1.1)
+        rx = self.M + pw + 0.55
+        rw = self.W - self.M - rx
+        n = max(1, len(pts))
+        rh = min(1.55, (bottom - top) / n)
+        py0 = top + max(0, (bottom - top - rh * n) / 2) if n < 3 else top
+        for i, p in enumerate(pts):
+            y = py0 + i * rh
+            col = t["accents"][i % len(t["accents"])] if self.bold else a
+            self.shape(s, MSO_SHAPE.OVAL, rx, y + 0.08, 0.56, 0.56, fill=col)
+            self.text(s, rx, y + 0.08, 0.56, 0.56, [str(i + 1)], 18, "#FFFFFF", font=t["head"], align=PP_ALIGN.CENTER,
+                      anchor=MSO_ANCHOR.MIDDLE, fitbox=False)
+            tx, tw = rx + 0.85, rw - 0.85
+            ts, th = self.head_block(p.get("title", ""), tw, 20, 15, 2)
+            self.text(s, tx, y + 0.06, tw, th + 0.05, [p.get("title", "")], ts, t["text"], font=t["head"], spacing=1.08)
+            if p.get("text"):
+                by = y + 0.06 + th + 0.08
+                self.text(s, tx, by, tw, y + rh - 0.12 - by, [p["text"]], 15, t["muted"], spacing=1.2)
+            if i:
+                self.shape(s, MSO_SHAPE.RECTANGLE, rx, y - 0.06, rw, 0.012, fill=t["line"])
+        if ask:
+            self.shape(s, MSO_SHAPE.RECTANGLE, self.M, self.H - 1.4, self.W - 2 * self.M, 0.55, fill=mix(a, t["bg"], 0.86))
+            lab2 = self.L["ask"]
+            self.text(s, self.M + 0.3, self.H - 1.4, self.W - 2 * self.M - 0.6, 0.55, [f"**{lab2}:** {plain(ask)}"], 16, t["text"],
+                      anchor=MSO_ANCHOR.MIDDLE, floor=12)
+        return s
+
+    def s_status(self, sl):
+        """a status board: one tile per system / service, its colour from the status word (OK / Warning / Failed, תקין / אזהרה /
+        נכשל, green / amber / red), the value large, one line of text"""
+        t = self.t
+        s = self.new("titleonly")
+        top = self.frame(s, sl)
+        items = sl.get("items", [])
+        n = max(1, len(items))
+        cols = n if n <= 4 else 3 if n in (5, 6, 9) else 4
+        rows = math.ceil(n / cols)
+        bottom = self.H - (1.45 if sl.get("note") else 0.95)
+        gap = 0.25
+        cw = (self.W - 2 * self.M - gap * (cols - 1)) / cols
+        chh = min(2.6, (bottom - top - gap * (rows - 1)) / rows)
+        y0 = top + max(0, (bottom - top - (chh * rows + gap * (rows - 1))) / 2)
+        for i, it in enumerate(items):
+            x = self.M + (i % cols) * (cw + gap)
+            y = y0 + (i // cols) * (chh + gap)
+            st = str(it.get("status", "")).strip()
+            col = self.STATUS.get(st.lower(), t["muted"]) if st else t["muted"]
+            self.shape(s, MSO_SHAPE.ROUNDED_RECTANGLE, x, y, cw, chh, fill=t["surface"], radius=0.05)
+            self.shape(s, MSO_SHAPE.RECTANGLE, x, y, cw, 0.09, fill=col)
+            ts, th = self.head_block(it.get("title", ""), cw - 0.5, 18, 13, 2)
+            self.text(s, x + 0.25, y + 0.3, cw - 0.5, th + 0.05, [it.get("title", "")], ts, t["text"], font=t["head"], spacing=1.08)
+            yy = y + 0.3 + th + 0.12
+            if st:
+                pw = min(cw - 0.5, 0.35 + len(st) * 0.105)
+                pill = self.shape(s, MSO_SHAPE.ROUNDED_RECTANGLE, x + 0.25, yy, pw, 0.32, fill=mix(col, t["bg"], 0.82), radius=0.5)
+                self.text(s, 0, 0, 0, 0, ["● " + st], 11, col, font=t["head"], align=PP_ALIGN.CENTER, anchor=MSO_ANCHOR.MIDDLE, shape=pill)
+                yy += 0.45
+            if it.get("value") not in (None, ""):
+                vs = one_line(it["value"], cw - 0.5, 30, 16)
+                self.text(s, x + 0.25, yy, cw - 0.5, vs * 1.2 / 72, [str(it["value"])], vs, col if st else t["text"], font=t["head"], spacing=1.0)
+                yy += vs * 1.2 / 72 + 0.05
+            if it.get("text") and y + chh - 0.15 - yy > 0.25:
+                self.text(s, x + 0.25, yy, cw - 0.5, y + chh - 0.15 - yy, [it["text"]], 13, t["muted"], spacing=1.15)
+        if sl.get("note"):
+            self.text(s, self.M, self.H - 1.3, self.W - 2 * self.M, 0.45, [sl["note"]], 14, t["muted"])
+        return s
+
+    def s_beforeafter(self, sl):
+        """two numbers with the change between them: before (quiet) -> after (accent), the change in a circle"""
+        t = self.t
+        s = self.new("titleonly")
+        top = self.frame(s, sl)
+        a = t["accents"][0]
+        bottom = self.H - (1.6 if sl.get("takeaway") else 0.95)
+        gap = 1.5
+        pw = (self.W - 2 * self.M - gap) / 2
+        need = 0
+        for key in ("before", "after"):                      # the panels as tall as their content, centred in the space
+            side = sl.get(key) or {}
+            vs = one_line(side.get("value", ""), pw - 0.9, 80, 30)
+            tl = lines_for(plain(side.get("text", "")), 18, pw - 0.9) if side.get("text") else 0
+            need = max(need, 0.95 + vs * 1.15 / 72 + tl * 18 * 1.2 / 72 + 0.6)
+        ph = max(min(bottom - top, need), min(bottom - top, 2.8))
+        top = top + (bottom - top - ph) / 2
+        bottom = top + ph
+        for k, (key, fill, fg) in enumerate((("before", t["surface"], t["text"]), ("after", a, "#FFFFFF"))):
+            side = sl.get(key) or {}
+            x = self.M + k * (pw + gap)
+            self.shape(s, MSO_SHAPE.ROUNDED_RECTANGLE, x, top, pw, bottom - top, fill=fill, radius=0.04)
+            lab = side.get("label") or self.L[key]
+            self.text(s, x + 0.45, top + 0.35, pw - 0.9, 0.4, [lab if self.rtl else lab.upper()], 13,
+                      t["muted"] if k == 0 else mix("#FFFFFF", a, 0.3), font=t["head"], spc=140)
+            vs = one_line(side.get("value", ""), pw - 0.9, 80, 30)
+            self.text(s, x + 0.45, top + 0.85, pw - 0.9, vs * 1.15 / 72, [str(side.get("value", ""))], vs, fg if k else t["text"],
+                      font=t["head"], spacing=1.0)
+            ty = top + 0.95 + vs * 1.15 / 72
+            if side.get("text"):
+                self.text(s, x + 0.45, ty, pw - 0.9, bottom - 0.3 - ty, [side["text"]], 18, fg if k else t["muted"], spacing=1.2)
+        cx = self.M + pw + gap / 2
+        cy = top + (bottom - top) / 2
+        self.shape(s, MSO_SHAPE.RIGHT_ARROW, cx - 0.55, cy - 0.3, 1.1, 0.6, fill=t["line"])
+        if sl.get("change"):
+            ch = str(sl["change"])
+            d = 1.25
+            self.shape(s, MSO_SHAPE.OVAL, cx - d / 2, cy - d / 2 - 1.15, d, d, fill=t["dark"] if t["dark"] != "#FFFFFF" else a)
+            self.text(s, cx - d / 2, cy - d / 2 - 1.15, d, d, [ch], one_line(ch, d - 0.2, 22, 11), "#FFFFFF", font=t["head"],
+                      align=PP_ALIGN.CENTER, anchor=MSO_ANCHOR.MIDDLE, fitbox=False)
+        if sl.get("takeaway"):
+            self.text(s, self.M, self.H - 1.4, self.W - 2 * self.M, 0.5, [sl["takeaway"]], 18, t["text"], font=t["head"])
+        return s
+
+    def s_matrix(self, sl):
+        """a 2x2: four quadrants (top-left, top-right, bottom-left, bottom-right) with a title and a line each, the axes
+        named, optional items placed by x / y (0-1); the top-right quadrant is the strong one"""
+        t = self.t
+        s = self.new("titleonly")
+        top = self.frame(s, sl)
+        a = t["accents"][0]
+        q = (sl.get("quadrants") or [])[:4]
+        q += [{}] * (4 - len(q))
+        bottom = self.H - 0.95
+        ax = self.M + 0.55                                   # room for the y label
+        size = min(bottom - top - 0.45, (self.W - 2 * self.M) * 0.62)
+        gw = (self.W - 2 * self.M - 0.55) if not sl.get("items") else size * 1.45
+        gh = bottom - top - 0.45
+        cw, ch = gw / 2, gh / 2
+        for k, quad in enumerate(q):
+            x = ax + (k % 2) * cw
+            y = top + (k // 2) * ch
+            strong = k == 1
+            self.shape(s, MSO_SHAPE.RECTANGLE, x + 0.04, y + 0.04, cw - 0.08, ch - 0.08,
+                       fill=a if strong else mix(t["accents"][k % len(t["accents"])], t["bg"], 0.9))
+            fg = "#FFFFFF" if strong else t["text"]
+            if quad.get("icon") and deck_icons.resolve(quad["icon"]):
+                self.icon(s, quad["icon"], x + 0.3, y + 0.28, 0.42, fg if strong else a)
+            ts, th = self.head_block(quad.get("title", ""), cw - 1.1, 20, 14, 2)
+            self.text(s, x + (0.85 if quad.get("icon") else 0.3), y + 0.25, cw - 1.15, th + 0.05, [quad.get("title", "")], ts, fg,
+                      font=t["head"], spacing=1.08)
+            if quad.get("text"):
+                by = y + 0.3 + th + 0.12
+                self.text(s, x + 0.3, by, cw - 0.6, y + ch - 0.2 - by, [quad["text"]], 15, "#FFFFFF" if strong else t["muted"], spacing=1.2)
+        xl, yl = sl.get("x_label", ""), sl.get("y_label", "")
+        if xl:
+            self.text(s, ax, top + gh + 0.08, gw, 0.35, [xl + "  →" if not self.rtl else "←  " + xl], 13, t["muted"], font=t["head"],
+                      align=PP_ALIGN.CENTER)
+        if yl:
+            tb = self.text(s, self.M - 0.25 - gh / 2 + 0.3, top + gh / 2 - 0.18, gh, 0.36, [yl + "  →"], 13, t["muted"], font=t["head"],
+                           align=PP_ALIGN.CENTER, fitbox=False)
+            s.shapes[-1].rotation = 270
+        for it in sl.get("items") or []:
+            try:
+                fx, fy = float(it.get("x", 0.5)), float(it.get("y", 0.5))
+            except (TypeError, ValueError):
+                continue
+            px = ax + max(0.03, min(0.97, fx)) * gw
+            py = top + (1 - max(0.03, min(0.97, fy))) * gh
+            self.shape(s, MSO_SHAPE.OVAL, px - 0.11, py - 0.11, 0.22, 0.22, fill=t["dark"] if t["dark"] != "#FFFFFF" else t["text"])
+            self.text(s, px + 0.16, py - 0.2, 2.2, 0.4, [it.get("label", it.get("title", ""))], 13, t["text"], font=t["head"],
+                      anchor=MSO_ANCHOR.MIDDLE, floor=10)
+        if sl.get("items") and sl.get("takeaway"):
+            tx = ax + gw + 0.5
+            self.takeaway(s, tx, top, self.W - self.M - tx, gh, sl["takeaway"])
+        return s
+
+    def s_diagram(self, sl):
+        """boxes and arrows: nodes [{id, label, sub, icon, group}] and links [{from, to, label}] laid out in columns from the
+        links (a source on the left, what it feeds to its right; right to left in a Hebrew deck), groups as frames behind"""
+        t = self.t
+        s = self.new("titleonly")
+        top = self.frame(s, sl)
+        a = t["accents"][0]
+        nodes = sl.get("nodes", [])
+        links = sl.get("links", [])
+        ids = [str(nd.get("id") or nd.get("label")) for nd in nodes]
+        by_label = {str(nd.get("label", "")).lower(): ids[i] for i, nd in enumerate(nodes)}
+
+        def ref(x):
+            x = str(x)
+            return x if x in ids else by_label.get(x.lower())
+        edges = [(ref(l.get("from")), ref(l.get("to")), l.get("label", "")) for l in links]
+        bad = [l for l, e in zip(links, edges) if not (e[0] and e[1])]
+        if bad:
+            self.warn.append(f"slide {self.n}: {len(bad)} link(s) name a node that does not exist: use the node ids")
+        edges = [e for e in edges if e[0] and e[1] and e[0] != e[1]]
+        # columns: the longest path from a source (a node nothing points to); a link that closes a loop is drawn but does
+        # not move nodes
+        order = {i: k for k, i in enumerate(ids)}
+        succ = {i: [] for i in ids}
+        for f, to, _l in edges:
+            succ[f].append(to)
+        state, back = {}, set()
+
+        def dfs(u):
+            state[u] = 1
+            for v in succ[u]:
+                if state.get(v) == 1:
+                    back.add((u, v))
+                elif not state.get(v):
+                    dfs(v)
+            state[u] = 2
+        indeg = {i: 0 for i in ids}
+        for f, to, _l in edges:
+            indeg[to] += 1
+        for i in sorted(ids, key=lambda i: (indeg[i] > 0, order[i])):
+            if not state.get(i):
+                dfs(i)
+        dag = [(f, to) for f, to, _l in edges if (f, to) not in back]
+        layer = {i: 0 for i in ids}
+        for _ in range(len(ids)):
+            changed = False
+            for f, to in dag:
+                if layer[to] < layer[f] + 1:
+                    layer[to] = layer[f] + 1
+                    changed = True
+            if not changed:
+                break
+        nl = max(layer.values() or [0]) + 1
+        if nl > 6:
+            self.warn.append(f"slide {self.n}: the diagram is {nl} boxes wide; 6 or fewer read well (split it, or group nodes)")
+        cols = {}
+        for i in ids:
+            cols.setdefault(layer[i], []).append(i)
+        for c in sorted(cols)[1:]:                         # each column in the order of what feeds it: fewer crossings
+            prev = {i: r for c2 in cols if c2 < c for r, i in enumerate(cols[c2])}
+            def bary(i):
+                ps = [prev[f] for f, to in dag if to == i and f in prev]
+                return (sum(ps) / len(ps)) if ps else 99
+            cols[c].sort(key=lambda i: (bary(i), order[i]))
+        maxrows = max(len(v) for v in cols.values()) if cols else 1
+        if maxrows > 5:
+            self.warn.append(f"slide {self.n}: {maxrows} boxes in one column; 5 or fewer")
+        bottom = self.H - (1.5 if sl.get("note") or sl.get("takeaway") else 0.95)
+        aw = self.W - 2 * self.M
+        gapx = max(0.55, min(1.1, aw * 0.4 / max(1, nl - 1))) if nl > 1 else 0
+        bw = min(3.0, (aw - gapx * (nl - 1)) / nl)
+        gapx = (aw - bw * nl) / max(1, nl - 1) if nl > 1 else 0
+        tall = bw < 2.45                                  # narrow boxes: the icon above the label, the boxes taller
+        bh = min(1.85 if tall else 1.15, (bottom - top - 0.3 * (maxrows - 1)) / maxrows)
+        pos = {}
+        for c, members in cols.items():
+            tot = bh * len(members) + 0.35 * (len(members) - 1)
+            y0 = top + (bottom - top - tot) / 2
+            for r, i in enumerate(members):
+                pos[i] = (self.M + c * (bw + gapx) if nl > 1 else self.M + (aw - bw) / 2, y0 + r * (bh + 0.35))
+        node = {ids[k]: nd for k, nd in enumerate(nodes)}
+        # groups: a tinted frame around their members, behind everything
+        groups = []
+        for i in ids:
+            g = node[i].get("group")
+            if g and g not in groups:
+                groups.append(g)
+        for gi, g in enumerate(groups):
+            mem = [i for i in ids if node[i].get("group") == g]
+            x0 = min(pos[i][0] for i in mem) - 0.2
+            y0 = min(pos[i][1] for i in mem) - 0.45
+            x1 = max(pos[i][0] for i in mem) + bw + 0.2
+            y1 = max(pos[i][1] for i in mem) + bh + 0.18
+            gc = t["accents"][(gi + 1) % len(t["accents"])]
+            self.shape(s, MSO_SHAPE.ROUNDED_RECTANGLE, x0, y0, x1 - x0, y1 - y0, fill=mix(gc, t["bg"], 0.93), line=mix(gc, t["bg"], 0.6),
+                       radius=0.04, width=1)
+            self.text(s, x0 + 0.15, y0 + 0.06, x1 - x0 - 0.3, 0.3, [str(g)], 11, mix(gc, "#000000", 0.2), font=t["head"], spc=80, floor=9)
+        # links under the boxes: from the right side of the source to the left side of the target (an elbow when the rows differ)
+        lc = mix(t["muted"], t["bg"], 0.25)
+        for f, to, lab in edges:
+            (fx, fy), (tx, ty) = pos[f], pos[to]
+            if tx > fx:
+                x1_, y1_, x2_, y2_ = fx + bw, fy + bh / 2, tx, ty + bh / 2
+            elif tx < fx:
+                x1_, y1_, x2_, y2_ = fx, fy + bh / 2, tx + bw, ty + bh / 2
+            elif ty > fy:                                   # the same column: from the bottom of one to the top of the other
+                x1_, y1_, x2_, y2_ = fx + bw / 2, fy + bh, tx + bw / 2, ty
+            else:
+                x1_, y1_, x2_, y2_ = fx + bw / 2, fy, tx + bw / 2, ty + bh
+            kind = MSO_CONNECTOR.STRAIGHT if abs(y1_ - y2_) < 0.05 or abs(x1_ - x2_) < 0.05 else MSO_CONNECTOR.ELBOW
+            cn = s.shapes.add_connector(kind, Inches(x1_), Inches(y1_), Inches(x2_), Inches(y2_))
+            cn.line.color.rgb = rgb(lc)
+            cn.line.width = Pt(1.75)
+            ln = cn.line._get_or_add_ln()
+            etree.SubElement(ln, qn("a:tailEnd")).set("type", "triangle")
+            if lab:
+                mx, my = (x1_ + x2_) / 2, (y1_ + y2_) / 2
+                lw = min(max(0.9, len(plain(lab)) * 0.085 + 0.3), max(1.0, gapx + bw * 0.6))
+                pill = self.shape(s, MSO_SHAPE.ROUNDED_RECTANGLE, mx - lw / 2, my - 0.17, lw, 0.34, fill=t["bg"], line=t["line"], radius=0.5)
+                self.text(s, 0, 0, 0, 0, [lab], 10, t["muted"], align=PP_ALIGN.CENTER, anchor=MSO_ANCHOR.MIDDLE, shape=pill)
+        # the boxes
+        for k, i in enumerate(ids):
+            nd, (x, y) = node[i], pos[i]
+            col = t["accents"][layer[i] % len(t["accents"])] if self.bold else a
+            self.shape(s, MSO_SHAPE.ROUNDED_RECTANGLE, x, y, bw, bh, fill=t["bg"], line=mix(col, t["bg"], 0.35), radius=0.1, width=1.25)
+            self.shape(s, MSO_SHAPE.RECTANGLE, x + 0.02, y + 0.12, 0.07, bh - 0.24, fill=col)
+            lab = nd.get("label", i)
+            sub = nd.get("sub") or nd.get("text") or ""
+            if tall:
+                has = deck_icons.resolve(nd.get("icon"))
+                d = min(0.55, bh * 0.3) if has else 0
+                tw = bw - 0.4
+                ls, lh = self.head_block(lab, tw, 15, 10, 2)
+                sh_ = (lines_for(plain(sub), 10, tw) * 10 * 1.15 / 72 if sub else 0)
+                sh_ = min(sh_, 0.36)
+                tot = d + (0.1 if d else 0) + lh + (0.04 + sh_ if sub else 0)
+                yy = y + (bh - tot) / 2
+                if has:
+                    self.badge(s, nd["icon"], x + (bw - d) / 2, yy, d, "#FFFFFF", col)
+                    yy += d + 0.1
+                self.text(s, x + 0.2, yy, tw, lh + 0.04, [lab], ls, t["text"], font=t["head"], spacing=1.05, align=PP_ALIGN.CENTER)
+                if sub:
+                    self.text(s, x + 0.2, yy + lh + 0.04, tw, sh_ + 0.02, [sub], 10, t["muted"], floor=8, align=PP_ALIGN.CENTER)
+                continue
+            tx_ = x + 0.25
+            if deck_icons.resolve(nd.get("icon")):
+                d = min(0.6, bh - 0.4)
+                self.badge(s, nd["icon"], x + 0.22, y + (bh - d) / 2, d, "#FFFFFF", col)
+                tx_ = x + 0.22 + d + 0.18
+            tw = x + bw - 0.15 - tx_
+            ls, lh = self.head_block(lab, tw, 16, 11, 2)
+            sh_ = 0.26 if sub else 0
+            yy = y + (bh - lh - sh_) / 2
+            self.text(s, tx_, yy, tw, lh + 0.04, [lab], ls, t["text"], font=t["head"], spacing=1.05)
+            if sub:
+                self.text(s, tx_, yy + lh + 0.02, tw, 0.26, [sub], 11, t["muted"], floor=9)
+        if sl.get("note") or sl.get("takeaway"):
+            self.text(s, self.M, self.H - 1.35, self.W - 2 * self.M, 0.45, [sl.get("takeaway") or sl.get("note")], 16,
+                      t["text"] if sl.get("takeaway") else t["muted"], font=t["head"] if sl.get("takeaway") else None)
+        return s
+
     def s_image(self, sl):
         t = self.t
         s = self.new("titleonly")
@@ -1938,6 +2544,10 @@ class Deck:
                     xfrm = el.spPr.find(qn("a:xfrm"))
                     if xfrm is not None:
                         xfrm.set("flipH", "0" if xfrm.get("flipH") == "1" else "1")
+            if sh.name.startswith("decor sparkline"):        # a trend reads right to left too: its newest point on the left
+                xfrm = el.spPr.find(qn("a:xfrm"))
+                if xfrm is not None:
+                    xfrm.set("flipH", "0" if xfrm.get("flipH") == "1" else "1")
             if el.tag == qn("p:cxnSp"):
                 xfrm = el.spPr.find(qn("a:xfrm"))
                 if xfrm is not None:
@@ -1956,12 +2566,126 @@ class Deck:
             if self.rtl:
                 self.mirror(s)
             self.notes(s, sl)
+            self.transition(s)
         if len(slides) > 25:
             self.warn.append(f"{len(slides)} slides; a deck people read is 8-20")
+        if self.spec.get("check_story", True) is not False:
+            self.warn += storyline(slides, self.rtl)
         return self.prs
 
 
 TYPES = [n[2:] for n in dir(Deck) if n.startswith("s_")]
+
+
+# the story of a recurring deck: the slides in order and what each must say. deck_guide gives the plan, the model fills it with
+# its facts (the example shows the JSON of each type). Names: deck.py --stories
+STORIES = {
+    "monthly-review": {"about": "a monthly / quarterly review of a service (backup, capacity, operations)", "style": "bold", "plan": [
+        ("title", "the review, the team, the month"),
+        ("summary", "the answer first: the headline number, the one problem, the ask"),
+        ("status", "each system / environment with its status (OK / Warning / Failed) and its key value"),
+        ("stats", "2-4 key numbers of the period with the change against last period (delta, trend)"),
+        ("chart", "where the problems are: a column chart by system, the worst one highlighted"),
+        ("bullets", "the 3 causes behind most of the problems, a takeaway with what fixing them saves"),
+        ("cards", "what works well (3 cards)"),
+        ("timeline", "the plan for the next period, with dates"),
+        ("closing", "the decisions or help you need (3-5 bullets)")]},
+    "incident-review": {"about": "a post-incident review (what happened, why, what changes)", "style": "clean", "plan": [
+        ("title", "the incident, its date, the team"),
+        ("summary", "what happened in one sentence, the impact, the root cause, what we change"),
+        ("stats", "the impact: duration, systems or users hit, data at risk (only measured numbers)"),
+        ("timeline", "the timeline: detection, escalation, mitigation, recovery (with times)"),
+        ("diagram", "where it broke: the components and links, the failed link named in the takeaway"),
+        ("bullets", "the root cause and the contributing factors"),
+        ("iconlist", "what we change: each action with an owner"),
+        ("closing", "the follow-ups and their dates")]},
+    "dr-drill": {"about": "the result of a DR / restore drill", "style": "clean", "plan": [
+        ("title", "the drill, the scope, the date"),
+        ("summary", "passed or not, the measured RTO / RPO against the target, the gap to close"),
+        ("diagram", "what was restored and from where: source, copy, target"),
+        ("process", "the restore steps as they were run"),
+        ("beforeafter", "RTO (or RPO): the target against the measured value, or last drill against this one"),
+        ("table", "each system restored: time, result, data checked"),
+        ("bullets", "what slowed us down or failed"),
+        ("closing", "the fixes and the date of the next drill")]},
+    "proposal": {"about": "a proposal that needs a decision (a purchase, a project, a change)", "style": "bold", "plan": [
+        ("title", "the proposal in one line"),
+        ("summary", "the ask, what it costs, what it gives, why now"),
+        ("hero", "the one number that makes the case"),
+        ("chart", "the evidence: the trend or comparison behind the problem"),
+        ("matrix", "the options on two axes (effort / effect, cost / risk), the recommended one top right"),
+        ("compare", "the recommended option against the next best, with a verdict"),
+        ("timeline", "the plan with dates"),
+        ("closing", "the decision you ask for, by when")]},
+    "status-update": {"about": "a short status update of a project or migration", "style": "clean", "plan": [
+        ("title", "the project, the date"),
+        ("summary", "on track or not, the one risk, the ask"),
+        ("status", "each workstream with its status"),
+        ("stats", "progress numbers: done, left, dates"),
+        ("timeline", "the next milestones"),
+        ("closing", "help needed, next update")]},
+}
+
+
+TOPIC_EXEMPT = ("title", "section", "agenda", "closing", "quote", "hero", "image")
+
+
+def storyline(slides, rtl=False):
+    """warnings about the story (not the layout): a content slide whose title only names a topic, two bullet slides in a row,
+    no closing, a placeholder left in"""
+    out = []
+    for i, sl in enumerate(slides, 1):
+        kind = sl.get("type")
+        ttl = plain(sl.get("title", ""))
+        base = re.sub(r"\s*\(\d+/\d+\)$", "", ttl)
+        if kind not in TOPIC_EXEMPT and base and len(base.split()) < 4 and not re.search(r"\d", base):
+            out.append(f"slide {i}: the title {base!r} names a topic; say the conclusion in it "
+                       f"(like \"env2 has most failures: 23 of 41\")")
+        if i > 1 and kind == "bullets" and slides[i - 2].get("type") == "bullets" and not re.search(r"\(\d+/\d+\)$", ttl):
+            out.append(f"slide {i}: two bullets slides in a row; make one of them stats, cards, iconlist or a chart")
+        if re.search(r"<[^<>]{2,60}>|\bTODO\b|\bTBD\b|lorem ipsum", json.dumps(sl, ensure_ascii=False), re.I):
+            out.append(f"slide {i}: a placeholder is left in (<...>, TODO, TBD); put the fact in, or write (to confirm)")
+    if len(slides) >= 6 and slides[-1].get("type") != "closing":
+        out.append(f"the deck has no closing slide: end with the ask or the next steps (type closing)")
+    return out
+
+
+def auto_notes(sl):
+    """speaker notes made of the slide's own words (nothing added): the conclusion, then each point, then the takeaway"""
+    kind = sl.get("type")
+    lines = []
+    head = plain(sl.get("title") or sl.get("value") or "")
+    if head:
+        lines.append(head + ("" if head.endswith((".", "!", "?", ":")) else "."))
+    if kind in ("title", "section", "quote"):
+        return "\n".join(lines + [plain(x) for x in (sl.get("subtitle"), sl.get("quote"), sl.get("by")) if x])
+    if sl.get("summary") or (kind == "hero" and sl.get("text")):
+        lines.append(plain(sl.get("summary") or sl.get("text")))
+    for key in ("points", "stats", "cards", "items", "steps", "bullets", "quadrants"):
+        for it in sl.get(key) or []:
+            if isinstance(it, dict):
+                if key == "stats":
+                    parts = [str(it.get("value", "")), it.get("label", ""), f"({it['delta']})" if it.get("delta") else ""]
+                else:
+                    parts = [it.get("date", ""), it.get("title", ""), (": " if it.get("title") and (it.get("text") or it.get("status")) else ""),
+                             " ".join(str(x) for x in (it.get("status"), it.get("value"), it.get("text")) if x)]
+                line = " ".join(plain(str(p)) for p in parts if p).replace(" : ", ": ").strip()
+            else:
+                line = plain(str(it))
+            if line:
+                lines.append("- " + line)
+    c = sl.get("chart") or {}
+    if c.get("series") and len(c["series"]) == 1 and len(c.get("categories") or []) <= 8:
+        vals = c["series"][0].get("values") or []
+        lines.append(", ".join(f"{k} {v:g}" for k, v in zip(c["categories"], vals)) + (f" {c['unit']}" if c.get("unit") else ""))
+    for side in ("before", "after", "left", "right"):
+        v = sl.get(side)
+        if isinstance(v, dict):
+            lines.append("- " + " ".join(plain(str(v.get(k))) for k in ("label", "title", "value", "text") if v.get(k)))
+    for k in ("change", "verdict", "takeaway", "ask", "note"):
+        if sl.get(k):
+            lines.append(plain(str(sl[k])))
+    return "\n".join(lines[:12])
 
 EXAMPLE = {
     "title": "SAN capacity review Q4",
@@ -1969,10 +2693,31 @@ EXAMPLE = {
     "slides": [
         {"type": "title", "title": "SAN capacity review Q4", "subtitle": "Where the growth went and what we buy next", "meta": "SAN team \u00b7 November 2026"},
         {"type": "agenda", "items": ["Where we are", "What grew", "Risks", "The ask"]},
+        {"type": "summary", "title": "We have 14 months of space: reclaim now, expand in Q1",
+         "summary": "Capacity is **78% used**. Reclaiming old copies buys 5 months; the Q1 expansion buys 2 years.",
+         "points": [{"title": "PMAX-A drives the growth", "text": "40 TB a month since July, half of all new capacity."},
+                    {"title": "90 TB can be reclaimed", "text": "Unmapped LUNs and old database refresh copies."},
+                    {"title": "Order by January", "text": "10 weeks lead time; online before the 80% line in March."}],
+         "ask": "Approve the reclaim plan and the Q1 expansion budget."},
         {"type": "section", "title": "Where we are", "subtitle": "Four arrays, two sites", "icon": "database"},
+        {"type": "status", "title": "Three arrays healthy, **ONTAP-2 replication failed**", "items": [
+            {"title": "PMAX-A", "status": "Warning", "value": "78%", "text": "Used; 80% line in March"},
+            {"title": "PMAX-B", "status": "OK", "value": "55%", "text": "Used; SRDF in sync"},
+            {"title": "ONTAP-1", "status": "OK", "value": "64%", "text": "SnapMirror lag 12 min"},
+            {"title": "ONTAP-2", "status": "Failed", "value": "41%", "text": "SnapMirror broken since 2026-10-30"}],
+         "note": "Source: Unisphere and ONTAP System Manager, 2026-11-01"},
+        {"type": "diagram", "title": "Prod replicates to DR; DR copies go to the vault",
+         "nodes": [{"id": "pa", "label": "PMAX-A", "sub": "Prod, block", "icon": "database", "group": "Prod site"},
+                   {"id": "o1", "label": "ONTAP-1", "sub": "Prod, file", "icon": "server", "group": "Prod site"},
+                   {"id": "pb", "label": "PMAX-B", "sub": "DR, block", "icon": "database", "group": "DR site"},
+                   {"id": "o2", "label": "ONTAP-2", "sub": "DR, file", "icon": "server", "group": "DR site"},
+                   {"id": "v", "label": "Cyber vault", "sub": "Immutable copies", "icon": "shield"}],
+         "links": [{"from": "pa", "to": "pb", "label": "SRDF/A"}, {"from": "o1", "to": "o2", "label": "SnapMirror"},
+                   {"from": "pb", "to": "v", "label": "daily"}, {"from": "o2", "to": "v", "label": "daily"}],
+         "takeaway": "One broken link (ONTAP-1 to ONTAP-2) leaves file data without a DR copy."},
         {"type": "stats", "title": "Usable capacity is **78% used** across the four arrays",
          "stats": [{"value": "1.9 PB", "label": "usable capacity", "icon": "database"},
-                   {"value": "78%", "label": "used", "delta": "+6 pts in 90 days", "good": False, "progress": "78%", "icon": "gauge"},
+                   {"value": "78%", "label": "used", "delta": "+6 pts in 90 days", "good": False, "trend": [62, 66, 69, 72, 75, 78], "icon": "gauge"},
                    {"value": "4.1:1", "label": "data reduction", "icon": "layers"},
                    {"value": "14", "label": "months to full at this rate", "icon": "calendar"}],
          "note": "Source: Unisphere, 2026-11-01"},
@@ -1984,7 +2729,8 @@ EXAMPLE = {
         {"type": "chart", "title": "PMAX-A reaches the 80% line in March",
          "chart": {"kind": "line", "categories": ["Jun", "Jul", "Aug", "Sep", "Oct", "Nov"],
                    "series": [{"name": "PMAX-A", "values": [62, 66, 69, 72, 75, 78]}, {"name": "PMAX-B", "values": [48, 49, 51, 52, 54, 55]}],
-                   "unit": "%", "target": 80, "target_label": "80% limit", "max": 100}},
+                   "unit": "%", "target": 80, "target_label": "80% limit", "max": 100,
+                   "callouts": [{"at": "Aug", "text": "Snapshot retention 7 -> 30 days"}]}},
         {"type": "chart", "title": "Half of the space is databases",
          "chart": {"kind": "doughnut", "categories": ["Databases", "VMware", "File", "Other"], "series": [{"name": "TB", "values": [620, 410, 180, 90]}],
                    "unit": "TB"}, "takeaway": "Databases grow 3% a month; everything else is flat."},
@@ -1992,7 +2738,7 @@ EXAMPLE = {
          "bullets": ["**Database refresh** copies on Prod-A: 12 new 4 TB LUNs", {"text": "Snapshot retention moved from 7 to 30 days", "sub": ["policy change in August"]},
                      "Two new VMware clusters on ONTAP-1"],
          "takeaway": "Reclaiming old refresh copies frees about **90 TB** without buying anything.", "icon": "idea"},
-        {"type": "cards", "title": "Our options", "cards": [
+        {"type": "cards", "title": "Three ways to win back capacity", "cards": [
             {"title": "Reclaim", "text": "Remove unmapped LUNs and old refresh copies.", "icon": "archive", "value": "90 TB"},
             {"title": "Rebalance", "text": "Move test workloads from PMAX-A to PMAX-B.", "icon": "replication", "value": "60 TB"},
             {"title": "Expand", "text": "Add one engine of capacity to PMAX-A in Q1.", "icon": "server", "value": "300 TB"}]},
@@ -2001,6 +2747,15 @@ EXAMPLE = {
             {"icon": "users", "title": "The owner agrees", "text": "In the change ticket, in writing."},
             {"icon": "shield", "title": "A snapshot is kept", "text": "14 days, so an unmap can be undone."},
             {"icon": "check", "title": "The space is recorded", "text": "Freed TB per array in the capacity sheet."}]},
+        {"type": "matrix", "title": "Reclaim is quick and cheap; expansion lasts longest",
+         "x_label": "Effect", "y_label": "Speed",
+         "quadrants": [{"title": "Quick, small", "text": "Rebalance test workloads: 60 TB in December.", "icon": "replication"},
+                       {"title": "Quick, large", "text": "Reclaim old copies: 90 TB in 3 weeks.", "icon": "archive"},
+                       {"title": "Slow, small", "text": "Tune data reduction: a few TB.", "icon": "settings"},
+                       {"title": "Slow, large", "text": "Expand PMAX-A: 300 TB by March.", "icon": "server"}]},
+        {"type": "beforeafter", "title": "Reclaim + rebalance cut PMAX-A to **63%**",
+         "before": {"value": "78%", "text": "PMAX-A used today"}, "after": {"value": "63%", "text": "after reclaim and rebalance"},
+         "change": "-15 pts", "takeaway": "That buys about 5 months before the expansion is needed."},
         {"type": "compare", "title": "Reclaim first, then expand",
          "left": {"title": "Reclaim + rebalance", "bullets": ["No purchase", "Done in 3 weeks", "Buys about 5 months"]},
          "right": {"title": "Expand now", "bullets": ["Purchase order and lead time", "Done in 10 weeks", "Buys 2+ years"]},
@@ -2009,7 +2764,7 @@ EXAMPLE = {
          "rows": [["PMAX-A", "Prod", "78%", "118", "In sync"], ["PMAX-B", "Prod", "55%", "290", "In sync"],
                   ["ONTAP-1", "DR", "64%", "150", "Lagging"], ["ONTAP-2", "DR", "41%", "260", "Failed"], ["Total", "", "62%", "818", ""]],
          "heat": ["Used %"], "total": True, "note": "Replication: SRDF and SnapMirror state on 2026-11-01"},
-        {"type": "timeline", "title": "Plan", "items": [
+        {"type": "timeline", "title": "Reclaim by December, new capacity by March", "items": [
             {"date": "Nov", "title": "Reclaim", "text": "Unmap and remove, with owners' approval.", "icon": "archive"},
             {"date": "Dec", "title": "Rebalance", "text": "Move test SGs to PMAX-B.", "icon": "replication"},
             {"date": "Jan", "title": "Order", "text": "Expansion PO.", "done": False, "icon": "money"},
@@ -2032,27 +2787,51 @@ EXAMPLE_HE = {
     "slides": [
         {"type": "title", "title": "סקירת גיבויים חודשית", "subtitle": "Commvault, Veeam ו-OADP בשלוש הסביבות", "meta": "צוות Flashback · נובמבר 2026"},
         {"type": "agenda", "items": ["מצב הגיבויים", "כשלים עיקריים", "שחזורים", "צעדים הבאים"]},
+        {"type": "summary", "title": "הגיבויים יציבים: תיקון DNS אחד יחסוך 60% מהכשלים",
+         "summary": "**97.8%** מהעבודות הצליחו החודש. רוב הכשלים מגיעים מ-MediaAgent אחד ב-env2.",
+         "points": [{"title": "env2 מוביל בכשלים", "text": "23 מתוך 41 הכשלים, רובם ב-MA-SITEB-03"},
+                    {"title": "שחזורים עברו בהצלחה", "text": "כל תרגילי השחזור של החודש הושלמו"},
+                    {"title": "תרגיל DR בדצמבר", "text": "שחזור hosted cluster מלא עם OADP"}],
+         "ask": "לאשר חלון תחזוקה לתיקון ה-DNS ביום חמישי"},
         {"type": "section", "title": "מצב הגיבויים", "subtitle": "שלושת ה-CommCells, Veeam ו-OADP", "icon": "database"},
+        {"type": "status", "title": "ארבע מערכות תקינות, **env2 באזהרה**", "items": [
+            {"title": "Commvault env1", "status": "תקין", "value": "99.1%", "text": "הצלחת עבודות"},
+            {"title": "Commvault env2", "status": "אזהרה", "value": "94.0%", "text": "MA-SITEB-03 מאבד DNS"},
+            {"title": "Commvault env3", "status": "תקין", "value": "99.4%", "text": "הצלחת עבודות"},
+            {"title": "Veeam", "status": "תקין", "value": "98.7%", "text": "proxy עובר ל-NBD"},
+            {"title": "OADP", "status": "תקין", "value": "100%", "text": "כל ה-backups הושלמו"},
+            {"title": "SnapMirror", "status": "תקין", "value": "12 דק'", "text": "lag ממוצע"}]},
+        {"type": "diagram", "title": "הנתונים זורמים מה-clients דרך ה-MediaAgents ל-S3",
+         "nodes": [{"id": "c", "label": "Clients", "sub": "VM, SQL, Exchange", "icon": "server"},
+                   {"id": "cs", "label": "CommServe", "sub": "תזמון וקטלוג", "icon": "settings"},
+                   {"id": "ma", "label": "MediaAgents", "sub": "MA-SITEB-01..04", "icon": "database"},
+                   {"id": "s3", "label": "S3-PROD-02", "sub": "ספריית דיסק", "icon": "cloud"}],
+         "links": [{"from": "cs", "to": "c", "label": "תזמון"}, {"from": "c", "to": "ma", "label": "נתונים"},
+                   {"from": "ma", "to": "s3", "label": "dedup"}],
+         "takeaway": "כש-MA-SITEB-03 מאבד DNS, הקישור ל-S3-PROD-02 נשבר"},
         {"type": "stats", "title": "**97.8%** מהעבודות הצליחו החודש", "stats": [
-            {"value": "97.8%", "label": "הצלחת גיבויים", "delta": "+1.2%", "good": True, "icon": "check"},
+            {"value": "97.8%", "label": "הצלחת גיבויים", "delta": "+1.2%", "good": True, "trend": [95.1, 96.0, 96.6, 97.8], "icon": "check"},
             {"value": "41", "label": "עבודות שנכשלו", "delta": "-12", "good": True, "icon": "alert"},
             {"value": "312 TB", "label": "נפח בספריות S3", "progress": "78%", "icon": "cloud"}],
          "note": "מקור: Commvault Command Center, 30 הימים האחרונים"},
         {"type": "chart", "title": "env2 מוביל בכשלים: 23 מתוך 41",
          "chart": {"kind": "column", "categories": ["env1", "env2", "env3", "Veeam", "OADP"], "series": [{"name": "כשלים", "values": [9, 23, 5, 3, 1]}],
-                   "highlight": "env2", "source": "Commvault MCP"},
+                   "highlight": "env2", "source": "Commvault MCP", "callouts": [{"at": "env2", "text": "MA-SITEB-03 מאבד DNS"}]},
          "takeaway": "רוב הכשלים ב-env2 נובעים מ-MediaAgent אחד", "icon": "chart"},
         {"type": "bullets", "title": "שלושה גורמים לרוב הכשלים", "bullets": [
             "ספריית S3-PROD-02 מתנתקת כש-MA-SITEB-03 מאבד DNS",
             "גיבויי SQL Always On נכשלים אחרי failover",
             "ה-proxy של Veeam עובר ל-NBD במקום hot-add"], "takeaway": "תיקון ה-DNS לבדו יחסוך כ-60% מהכשלים", "icon": "alert"},
-        {"type": "cards", "title": "מה עובד טוב", "cards": [
+        {"type": "cards", "title": "שלושה תחומים עובדים ללא תקלות", "cards": [
             {"title": "IntelliSnap ל-Exchange", "text": "כל הגיבויים הושלמו בזמן", "icon": "check"},
             {"title": "PostgreSQL", "text": "גיבוי WAL רציף, RPO של 15 דקות", "icon": "database"},
             {"title": "SnapMirror", "text": "lag ממוצע של 12 דקות", "icon": "replication"}]},
         {"type": "table", "title": "MA-SITEB-03 עמוס ו-MA-SITEB-04 למטה", "columns": ["MediaAgent", "סטטוס", "ניצול %", "עבודות"],
          "rows": [["MA-SITEB-01", "OK", 62, 14], ["MA-SITEB-03", "Warning", 88, 3], ["MA-SITEB-04", "Down", 0, 0]], "heat": ["ניצול %"]},
-        {"type": "timeline", "title": "התוכנית לרבעון הבא", "items": [
+        {"type": "beforeafter", "title": "זמן השחזור ירד ל-**42 דקות**",
+         "before": {"value": "3.5 שעות", "text": "שחזור DB של 2 TB לפני השינוי"},
+         "after": {"value": "42 דק'", "text": "עם IntelliSnap ו-MediaAgent ייעודי"}, "change": "-80%"},
+        {"type": "timeline", "title": "שלושה צעדים עד ינואר", "items": [
             {"date": "נובמבר", "title": "תיקון DNS", "text": "רשומות קבועות לכל ה-MediaAgents", "done": True},
             {"date": "דצמבר", "title": "תרגיל DR", "text": "שחזור hosted cluster מלא", "done": False},
             {"date": "ינואר", "title": "שדרוג", "text": "Commvault 11.40 בכל הסביבות", "done": False}]},
@@ -2064,28 +2843,162 @@ def slug(s):
     return re.sub(r"[^\w-]+", "-", plain(s).lower()).strip("-")[:60] or "deck"
 
 
-def preview(path):
-    """PNG per slide + a contact sheet next to the deck (LibreOffice + pdftoppm); the paths, or a reason"""
+def to_pdf(path, outdir=None):
+    """(pdf path, None) or (None, reason): the deck as LibreOffice renders it, next to the deck unless outdir is given"""
     soffice = shutil.which("soffice") or shutil.which("libreoffice")
-    if not soffice or not shutil.which("pdftoppm"):
-        return None, "preview skipped: LibreOffice (soffice) and pdftoppm are needed"
-    out = os.path.join(os.path.dirname(path), "preview")
+    if not soffice:
+        return None, "LibreOffice (soffice) is not installed"
+    out = outdir or os.path.dirname(os.path.abspath(path))
     os.makedirs(out, exist_ok=True)
     prof = tempfile.mkdtemp(prefix="deck-lo-")                 # own profile: two people converting at once do not clash
     try:
         r = subprocess.run([soffice, f"-env:UserInstallation=file://{prof}", "--headless", "--convert-to", "pdf", "--outdir", out, path],
-                           capture_output=True, text=True, timeout=180)
+                           capture_output=True, text=True, timeout=240)
         pdf = os.path.join(out, os.path.splitext(os.path.basename(path))[0] + ".pdf")
         if not os.path.isfile(pdf):
-            return None, "preview failed: " + (r.stderr or r.stdout).strip()[-200:]
+            return None, "PDF failed: " + (r.stderr or r.stdout).strip()[-200:]
+        return pdf, None
+    except (subprocess.SubprocessError, OSError) as e:
+        return None, f"PDF failed: {e}"
+    finally:
+        shutil.rmtree(prof, ignore_errors=True)
+
+
+# ------------------------------------------------------------------------------------------- real fit check
+# The size estimates in fit() are averages; the real test is the deck as it renders. LibreOffice draws the deck to PDF,
+# pdftotext gives every word's box, and each text shape's words must lie inside that shape: a word drawn outside its box is
+# text that spills (over a card's edge, onto other text). Those shapes get their text 12-35% smaller and the deck is drawn
+# again, at most 3 times; what still spills is a warning naming the slide and the text.
+WORD_RX = re.compile(r"\w{2,}", re.UNICODE)
+
+
+def _pdf_words(pdf):
+    """{page: [(chunk, cx, cy)]} and {page: (width, height)} from pdftotext -bbox (points, origin top left)"""
+    r = subprocess.run(["pdftotext", "-bbox", pdf, "-"], capture_output=True, text=True, timeout=120)
+    pages, sizes, n = {}, {}, 0
+    for line in r.stdout.splitlines():
+        m = re.search(r'<page width="([\d.]+)" height="([\d.]+)"', line)
+        if m:
+            n += 1
+            sizes[n] = (float(m.group(1)), float(m.group(2)))
+            pages[n] = []
+            continue
+        m = re.search(r'<word xMin="([\d.]+)" yMin="([\d.]+)" xMax="([\d.]+)" yMax="([\d.]+)">(.*)</word>', line)
+        if m and n:
+            x0, y0, x1, y1 = (float(m.group(k)) for k in range(1, 5))
+            word = html.unescape(m.group(5))
+            for ch in WORD_RX.findall(word):
+                pages[n].append((ch.lower(), (x0 + x1) / 2, (y0 + y1) / 2))
+    return pages, sizes
+
+
+def spills(pptx, pdf):
+    """[(slide, shape id, text, how far out in points)] for every text shape with words drawn outside it"""
+    prs = Presentation(pptx)
+    pages, sizes = _pdf_words(pdf)
+    sw = prs.slide_width / 12700
+    out = []
+    for i, s in enumerate(prs.slides, 1):
+        if i not in pages:
+            continue
+        k = sizes[i][0] / sw
+        words = {}
+        for ch, cx, cy in pages[i]:
+            words.setdefault(ch, []).append((cx, cy))
+        for sh in s.shapes:
+            if not getattr(sh, "has_text_frame", False) or not sh.has_text_frame or sh.rotation:
+                continue
+            if sh.name.startswith(("icon ", "decor")) or sh.width is None:
+                continue
+            if any(r._r.find(qn("a:rPr")) is not None and r._r.find(qn("a:rPr")).get("spc") for p in sh.text_frame.paragraphs
+                   for r in p.runs):
+                continue                                         # letter-spaced labels come out of pdftotext as single letters
+            txt = sh.text_frame.text
+            toks = [w.lower() for w in WORD_RX.findall(txt)]
+            if not toks:
+                continue
+            x0, y0 = sh.left / 12700 * k, sh.top / 12700 * k
+            x1, y1 = x0 + sh.width / 12700 * k, y0 + sh.height / 12700 * k
+            tol = 2.5
+            worst = 0.0
+            for tok in toks:
+                cands = words.get(tok, []) + (words.get(tok[::-1], []) if RTL_RX.search(tok) else [])
+                if not cands:
+                    continue
+                d = min(max(x0 - tol - cx, cx - x1 - tol, y0 - tol - cy, cy - y1 - tol, 0) for cx, cy in cands)
+                if d <= max(45.0, (y1 - y0) * 0.8):           # farther away it is the same word in another text, not a spill
+                    worst = max(worst, d)
+            if worst > 0:
+                out.append((i, sh.shape_id, plain(txt)[:60], round(worst, 1)))
+    return out
+
+
+def shrink(pptx, found, floor=8):
+    """the text of the shapes named in found [(slide, shape id, text, points out)] made smaller, the more the farther it
+    spills (12-35%); the number of shapes changed"""
+    prs = Presentation(pptx)
+    want = {(f[0], f[1]): f[3] for f in found}
+    done = 0
+    for i, s in enumerate(prs.slides, 1):
+        for sh in s.shapes:
+            if (i, sh.shape_id) not in want:
+                continue
+            box = max(10.0, min(sh.width, sh.height) / 12700)
+            factor = max(0.65, min(0.88, (box / (box + 2.5 * want[(i, sh.shape_id)])) ** 0.5))
+            changed = False
+            for p in sh.text_frame.paragraphs:
+                for r in p.runs:
+                    if r.font.size is not None and r.font.size.pt > floor:
+                        r.font.size = Pt(max(floor, round(r.font.size.pt * factor, 1)))
+                        changed = True
+            done += changed
+    prs.save(pptx)
+    return done
+
+
+def fit_check(path, rounds=3):
+    """(pdf, warnings, repairs, note): render, find spilled text, shrink it, render again; the final PDF is kept next to the deck"""
+    if not shutil.which("pdftotext"):
+        pdf, why = to_pdf(path)
+        return pdf, [], [], "fit check skipped: " + ("pdftotext (poppler-utils) is not installed" if pdf else why)
+    pdf, why = to_pdf(path)
+    if not pdf:
+        return None, [], [], "fit check skipped: " + why
+    repairs = []
+    for _ in range(rounds):
+        found = spills(path, pdf)
+        if not found:
+            return pdf, [], repairs, None
+        n = shrink(path, found)
+        repairs += [f"slide {f[0]}: text made smaller to fit its box: \"{f[2]}\"" for f in found]
+        if not n:
+            break
+        pdf, why = to_pdf(path)
+        if not pdf:
+            return None, [], repairs, "fit check stopped: " + why
+    found = spills(path, pdf)
+    warns = [f"slide {f[0]}: text spills {f[3]:.0f} pt out of its box as rendered: \"{f[2]}\"; shorten it" for f in found]
+    return pdf, warns, repairs, None
+
+
+def preview(path, pdf=None):
+    """PNG per slide + a contact sheet next to the deck (LibreOffice + pdftoppm); the paths, or a reason"""
+    if not shutil.which("pdftoppm"):
+        return None, "preview skipped: pdftoppm (poppler-utils) is needed"
+    out = os.path.join(os.path.dirname(path), "preview")
+    os.makedirs(out, exist_ok=True)
+    prof = None
+    try:
+        if not pdf:
+            pdf, why = to_pdf(path, out)
+            if not pdf:
+                return None, "preview skipped: " + why
         for f in glob.glob(os.path.join(out, "slide-*.png")):
             os.remove(f)
         subprocess.run(["pdftoppm", "-png", "-r", "60", pdf, os.path.join(out, "slide")], check=True, timeout=180)
         pngs = sorted(glob.glob(os.path.join(out, "slide-*.png")))
     except (subprocess.SubprocessError, OSError) as e:
         return None, f"preview failed: {e}"
-    finally:
-        shutil.rmtree(prof, ignore_errors=True)
     try:
         from PIL import Image
         ims = [Image.open(p) for p in pngs]
@@ -2137,8 +3050,11 @@ def main(argv):
     ap.add_argument("--icons", action="store_true")
     ap.add_argument("--template")
     ap.add_argument("--preview", action="store_true")
+    ap.add_argument("--check", action="store_true", help="render with LibreOffice, repair text that spills out of its box, keep a PDF copy")
     ap.add_argument("--example", nargs="?", const="en", metavar="LANG", help="an outline with every slide type (he: in Hebrew)")
     ap.add_argument("--themes", action="store_true")
+    ap.add_argument("--stories", action="store_true", help="the story plans of recurring decks")
+    ap.add_argument("--story", metavar="NAME", help="one story plan as JSON (the slides in order and what each says)")
     ap.add_argument("--json", action="store_true", help="the result as one JSON object (the deck MCP server reads it)")
     ap.add_argument("--outline", metavar="PPTX", help="the text of every slide of any .pptx, as JSON")
     a = ap.parse_args(argv)
@@ -2152,8 +3068,19 @@ def main(argv):
         print("icons: " + ", ".join(sorted(deck_icons.ICONS)))
         print("aliases: " + ", ".join(f"{k}={v}" for k, v in sorted(deck_icons.ALIASES.items())))
         return 0
+    if a.stories:
+        for k, v in STORIES.items():
+            print(f"{k:16} {v['about']} ({len(v['plan'])} slides)")
+        return 0
+    if a.story:
+        st = STORIES.get(a.story)
+        if not st:
+            raise SystemExit(f"deck: no story {a.story!r}; one of {', '.join(STORIES)}")
+        print(json.dumps({"story": a.story, "about": st["about"], "style": st["style"],
+                          "plan": [{"n": i + 1, "type": k, "say": v} for i, (k, v) in enumerate(st["plan"])]}, indent=1))
+        return 0
     if a.themes:
-        for k, v in THEMES.items():
+        for k, v in dict(THEMES, **PREMIUM).items():
             print(f"{k:10} dark {v['dark']}  accents {' '.join(v['accents'][:4])}")
         print("or --template company.pptx: its master, colours and fonts")
         return 0
@@ -2170,13 +3097,23 @@ def main(argv):
     path = out if out.endswith(".pptx") else os.path.join(out, name + ".pptx")
     os.makedirs(os.path.dirname(path) or ".", exist_ok=True)
     prs.save(path)
+    pdf, repaired, note = None, [], None
+    if a.check:
+        pdf, warns, repaired, note = fit_check(path)
+        d.warn += warns
     if a.json:
         res = {"path": path, "slides": d.n, "look": d.look["seed"], "style": d.style, "palette": d.theme_name, "fonts": d.t["head"],
                "warnings": d.warn, "fixed": d.fixed, "direction": "rtl" if d.rtl else "ltr",
+               "to_confirm": [i + 1 for i, sl in enumerate(d.spec["slides"]) if "to confirm" in json.dumps(sl, ensure_ascii=False).lower()
+                              or "לאישור" in json.dumps(sl, ensure_ascii=False) or "לוודא" in json.dumps(sl, ensure_ascii=False)],
                "outline": [{"n": i + 1, "type": sl.get("type", "bullets"), "title": plain(sl.get("title", sl.get("value", "")))}
                            for i, sl in enumerate(d.spec["slides"])]}
+        if a.check:
+            res.update(pdf=pdf, repaired=repaired)
+            if note:
+                res["check"] = note
         if a.preview:
-            files, why = preview(path)
+            files, why = preview(path, pdf)
             res["preview"] = files[0] if files else why
         print(json.dumps(res, ensure_ascii=False))
         return 0
@@ -2188,10 +3125,16 @@ def main(argv):
         print("fixed " + f)
     for w in d.warn:
         print("WARN " + w)
+    for r in repaired:
+        print("repaired " + r)
+    if note:
+        print(note)
+    if pdf:
+        print(f"pdf: {pdf}")
     if not d.warn:
-        print("checks: ok (every text fits its box, no design rule broken)")
+        print("checks: ok (every text fits its box" + (" as rendered" if pdf else "") + ", no design rule broken)")
     if a.preview:
-        files, why = preview(path)
+        files, why = preview(path, pdf)
         print(why or "preview: " + files[0] + (f" (+ {len(files) - 1} slide images)" if len(files) > 1 else ""))
     return 0
 

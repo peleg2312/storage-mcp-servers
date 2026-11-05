@@ -46,7 +46,10 @@ for theme, style in (("midnight", "clean"), ("graphite", "bold"), ("ocean", "cle
     for s in p.slides:                                   # every shape inside the slide
         for sh in s.shapes:
             if not sh.name.startswith("decor"):        # the decorative circles bleed off on purpose
-                assert sh.left >= 0 and sh.top >= 0 and sh.left + sh.width <= p.slide_width + 10 and sh.top + sh.height <= p.slide_height + 10, (theme, sh.name)
+                l, t_, w, h = sh.left, sh.top, sh.width, sh.height
+                if getattr(sh, "rotation", 0) in (90.0, 270.0):  # a rotated label: its box turned about its centre
+                    l, t_, w, h = l + (w - h) // 2, t_ + (h - w) // 2, h, w
+                assert l >= 0 and t_ >= 0 and l + w <= p.slide_width + 10 and t_ + h <= p.slide_height + 10, (theme, sh.name)
 print("themes and styles ok:", len(types), "slide types")
 
 # the chart keeps its data (editable in PowerPoint) and the highlight
@@ -159,8 +162,8 @@ def mcp_calls(*calls):
     return out[1]["result"]["tools"], [json.loads(o["result"]["content"][0]["text"]) for o in out[2:]]
 
 
-short = {"title": "MCP test", "slides": [{"type": "title", "title": "MCP test"}, {"type": "bullets", "title": "x", "bullets": ["b%d" % i for i in range(8)]}]}
-fixed = {"title": "MCP test", "slides": [{"type": "title", "title": "MCP test"}, {"type": "bullets", "title": "x", "bullets": ["a", "b", "c"]}]}
+short = {"title": "MCP test", "slides": [{"type": "title", "title": "MCP test"}, {"type": "bullets", "title": "Eight jobs failed on 2 nights", "bullets": ["b%d" % i for i in range(8)]}]}
+fixed = {"title": "MCP test", "slides": [{"type": "title", "title": "MCP test"}, {"type": "bullets", "title": "Three jobs failed on 2 nights", "bullets": ["a", "b", "c"]}]}
 tools, (g, b1, b2, bad) = mcp_calls(("deck_guide", {}), ("deck_build", {"spec": short, "style": "bold"}),
                                     ("deck_build", {"spec": json.dumps(fixed), "look": 5}), ("deck_build", {"spec": {"slides": []}}))
 assert {t["name"] for t in tools} == {"deck_guide", "deck_build", "deck_read", "deck_icons", "deck_deliver"}
@@ -211,7 +214,8 @@ for sl in hp.slides:
                 if txt == "312 TB":
                     assert para._p.pPr is None or para._p.pPr.get("rtl") != "1", "a value alone keeps its own order"
 assert rtl_paras > 20 and langs > 20, (rtl_paras, langs)
-title = next(sh for sh in hp.slides[3].shapes if sh.has_text_frame and "97.8%" in sh.text_frame.text and sh.top < 914400 * 1.5)
+si = next(i for i, x in enumerate(he["slides"]) if x["type"] == "stats")
+title = next(sh for sh in hp.slides[si].shapes if sh.has_text_frame and "97.8%" in sh.text_frame.text and sh.top < 914400 * 1.5)
 assert title.left + title.width > W * 0.9, "the title of a right-to-left slide starts at the right edge"
 tbl = next(sh for sl in hp.slides for sh in sl.shapes if getattr(sh, "has_table", False) and sh.has_table).table
 assert tbl.cell(0, len(tbl.columns) - 1).text == "MediaAgent", "the first column is on the right"
@@ -232,7 +236,7 @@ sloppy = {"slides": [{"type": "summary", "heading": "Why", "points": "One. Two. 
 sf = os.path.join(tmp, "sloppy.json")
 json.dump(sloppy, open(sf, "w"))
 o = deck(sf, "--out", os.path.join(tmp, "sloppy.pptx"))
-for needle in ("type 'summary' -> 'bullets'", "'points' -> 'bullets'", "an empty item dropped", "icon '🪣' -> arrow-right",
+for needle in ("points was one string, split into 3 items", "an empty item dropped", "icon '🪣' -> arrow-right",
                "9 bullets -> 2 slides", "chart data -> series", "table row was an object", "left was a list"):
     assert needle in o, (needle, o)
 sp = Presentation(os.path.join(tmp, "sloppy.pptx"))
@@ -252,3 +256,79 @@ assert not os.path.exists(os.path.join(HERE, "claude", "skills", "make-deck")), 
 mk = json.load(open(os.path.join(HERE, "plugins", ".claude-plugin", "marketplace.json")))
 assert any(p["name"] == "presentations" and p["source"] == "./presentations" for p in mk["plugins"])
 print("presentations plugin ok")
+
+# v4: the new slide types, sparklines, callouts, transitions, notes made from the slide, premium themes, story plans, the
+# storyline check, the real fit check (LibreOffice) with its repair and the PDF copy
+for t_ in ("summary", "status", "diagram", "matrix", "beforeafter"):
+    assert t_ in types, t_
+p = Presentation(os.path.join(tmp, "midnight-clean.pptx"))
+names = [sh.name for s_ in p.slides for sh in s_.shapes]
+assert sum(n.startswith("decor sparkline") for n in names) == 1
+conn = [sh for s_ in p.slides for sh in s_.shapes if sh._element.tag == qn("p:cxnSp") and sh._element.spPr.find(qn("a:ln")).find(qn("a:tailEnd")) is not None]
+assert len(conn) == 4, "the diagram's four links are arrows"
+assert all(s_._element.find(qn("p:transition")) is not None for s_ in p.slides), "a fade on every slide"
+notes = [s_.notes_slide.notes_text_frame.text for s_ in p.slides if s_.has_notes_slide]
+assert len(notes) == len(p.slides) and any("PMAX-A 160" in n for n in notes), "notes made from the slide's own words"
+for th in ("executive", "ivory", "noir"):
+    o = deck(spec, "--theme", th, "--out", os.path.join(tmp, f"{th}.pptx"))
+    assert "checks: ok" in o and "WARN" not in o, (th, o)
+iv = Presentation(os.path.join(tmp, "ivory.pptx"))
+assert iv.slides[2].background.fill.fore_color.rgb == D.rgb("#FBF8F2"), "a content slide on the theme's paper colour"
+json.dump(dict(ex, transition="none"), open(f, "w"))
+deck(f, "--out", os.path.join(tmp, "nt.pptx"))
+assert all(s_._element.find(qn("p:transition")) is None for s_ in Presentation(os.path.join(tmp, "nt.pptx")).slides)
+# aliases of the new types and their fields
+v4 = {"slides": [{"type": "title", "title": "v4"},
+                 {"type": "exec-summary", "title": "Backups are 97.8% good this month", "text": "Most is fine.", "items": ["env2 fails", "DNS"]},
+                 {"type": "topology", "title": "Data flows from clients to S3", "nodes": ["Clients", "MediaAgents", "S3"]},
+                 {"type": "2x2", "title": "Reclaim wins on speed and on effect", "quadrants": {"top_left": "a", "top_right": "b", "bottom_left": "c", "bottom_right": "d"}},
+                 {"type": "before-after", "title": "RTO dropped to 42 minutes", "before": "3.5 h", "after": {"value": "42 min"}},
+                 {"type": "dashboard", "title": "Two systems up, one down today", "systems": [{"name": "a", "status": "OK"}, {"name": "b", "status": "נכשל"}]},
+                 {"type": "chart", "title": "env2 fails most: 23 of 41", "chart": {"kind": "column", "categories": ["env1", "env2"],
+                  "series": [{"name": "f", "values": [9, 23]}], "callout": {"at": "env2", "text": "DNS loss"}}},
+                 {"type": "closing", "title": "Next steps", "bullets": ["Fix DNS"]}]}
+f = os.path.join(tmp, "v4.json")
+json.dump(v4, open(f, "w"))
+o = deck(f, "--out", os.path.join(tmp, "v4.pptx"))
+for needle in ("'exec-summary' -> 'summary'", "'items' -> 'points'", "'topology' -> 'diagram'", "boxes chained in order",
+               "'2x2' -> 'matrix'", "'before-after' -> 'beforeafter'", "'dashboard' -> 'status'", "'systems' -> 'items'"):
+    assert needle in o, (needle, o)
+assert "WARN" not in o, o
+v4p = Presentation(os.path.join(tmp, "v4.pptx"))
+assert any(sh.has_text_frame and sh.text_frame.text == "DNS loss" for sh in v4p.slides[6].shapes), "the callout is drawn"
+# the storyline check: a topic title, two bullets slides in a row, a placeholder, no closing
+story = {"slides": [{"type": "title", "title": "x"}, {"type": "bullets", "title": "Failures", "bullets": ["a <number>"]},
+                    {"type": "bullets", "title": "More failures here today", "bullets": ["b"]}, {"type": "hero", "value": "1"},
+                    {"type": "hero", "value": "2"}, {"type": "hero", "value": "3"}]}
+json.dump(story, open(f, "w"))
+o = deck(f, "--out", os.path.join(tmp, "st.pptx"))
+for needle in ("names a topic", "two bullets slides in a row", "a placeholder is left in", "no closing slide"):
+    assert needle in o, (needle, o)
+assert "monthly-review" in deck("--stories")
+plan = json.loads(deck("--story", "dr-drill"))
+assert plan["plan"][1]["type"] == "summary" and all(x["type"] in types for x in plan["plan"])
+deck("--story", "nope", ok=False)
+_, (gs,) = mcp_calls(("deck_guide", {"story": "incident-review"}))
+assert gs["story"]["plan"][0]["type"] == "title" and "story.plan" in gs["next"]
+print("v4 types, sparklines, callouts, transitions, notes, themes, stories ok")
+
+# the real fit check: LibreOffice draws the deck, a text drawn outside its box is made smaller until it fits; a PDF copy
+import shutil as _sh  # noqa: E402
+if _sh.which("soffice") and _sh.which("pdftotext"):
+    from pptx.util import Pt  # noqa: E402
+    out = os.path.join(tmp, "fit.pptx")
+    o = deck(spec, "--out", out, "--check")
+    assert "pdf: " in o and os.path.isfile(out[:-5] + ".pdf") and "WARN" not in o, o
+    fp = Presentation(out)
+    big = next(sh for sh in fp.slides[12].shapes if sh.has_text_frame and "Remove unmapped" in sh.text_frame.text)
+    for para in big.text_frame.paragraphs:
+        for r in para.runs:
+            r.font.size = Pt(26)
+    fp.save(out)
+    assert D.spills(out, D.to_pdf(out)[0]), "a spill is found"
+    pdf, warns, repaired, note = D.fit_check(out)
+    assert pdf and repaired and not warns and note is None, (warns, repaired, note)
+    assert not D.spills(out, pdf)
+    print("fit check ok:", len(repaired), "repairs")
+else:
+    print("fit check skipped: LibreOffice / pdftotext not installed")

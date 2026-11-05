@@ -34,14 +34,19 @@ RULES = """HOW TO WRITE THE OUTLINE (follow every line)
 5. Counts per slide: bullets 3-5, cards 3-4 (max 6), stats 2-4, iconlist items 3-5, timeline items 3-5, process steps 3-5,
    agenda items 3-6, table rows max 10 and columns max 6. More items: make two slides.
 6. Never two bullets slides in a row: use stats for numbers, chart for comparisons or trends, cards for options, iconlist
-   for checks, timeline for plans, process for procedures, table for lists of systems, compare for A vs B.
+   for checks, timeline for plans, process for procedures, table for lists of systems, compare for A vs B, status for the
+   health of several systems, diagram for how systems connect, matrix for options on two axes, beforeafter for one
+   number that changed. A deck for managers starts with a summary slide right after the title (the answer first).
 7. Every card, stat, iconlist item and timeline item gets an "icon" from the icon list (pick the closest meaning).
 8. Numbers come from tool results only. Chart "values" are plain numbers: [9, 23, 5], never "23 jobs".
 9. Hebrew deck: write all text in Hebrew; keep product names, IDs and commands in English exactly as they are (Commvault,
    MA-SITEB-03, oc get backups). Do NOT set direction, fonts or alignment: the deck turns right-to-left by itself.
 10. Do NOT add: emoji, bullet signs ("•", "-") or numbers at the start of a line, HTML, Markdown other than **bold**,
     colours, font names, positions or sizes.
-11. "style": "bold" for managers and proposals, "clean" for technical reviews. Leave colours out (each deck gets its own look).
+11. "style": "bold" for managers and proposals, "clean" for technical reviews. Leave colours out (each deck gets its own look);
+    a premium look on request: "theme": "executive" (navy and gold), "ivory" (warm paper) or "noir" (dark).
+12. A recurring deck (monthly review, incident review, DR drill, proposal, status update): call deck_guide with "story" and
+    follow its plan slide by slide.
 SLIDE TYPES AND THEIR FIELDS
 title {title, subtitle, meta} | agenda {items: [text]} | section {title, subtitle, icon} | hero {value, text, sub, icon}
 stats {title, stats: [{value, label, delta, good, progress, icon}], note}
@@ -51,12 +56,20 @@ bullets {title, bullets: [text | {text, sub: [text]}], takeaway, icon} | cards {
 iconlist {title, items: [{icon, title, text}]} | compare {title, left: {title, bullets}, right: {title, bullets}, verdict}
 table {title, columns: [..], rows: [[..], ..], heat: [column names], total, note} | timeline {title, items: [{date, title, text, done, icon}]}
 process {title, steps: [{title, text}]} | quote {quote, by} | image {title, image, caption} | closing {title, bullets, contact}
-Any slide may have "notes" (speaker notes)."""
+summary {title, summary, points: [{title, text}], ask}  (the answer, 2-4 key points, the decision asked)
+status {title, items: [{title, status: OK|Warning|Failed (or תקין|אזהרה|נכשל), value, text}], note}
+diagram {title, nodes: [{id, label, sub, icon, group}], links: [{from, to, label}], takeaway}  (from/to are node ids)
+matrix {title, x_label, y_label, quadrants: [top-left, top-right, bottom-left, bottom-right as {title, text, icon}]}
+beforeafter {title, before: {value, text}, after: {value, text}, change, takeaway}
+A stat may have "trend": [numbers] (a small line of the recent values). A chart may have "callouts": [{"at": category, "text": ...}]
+(a note on one point, max 3). Any slide may have "notes" (speaker notes; made from the slide's own text when left out)."""
 
 TOOLS = [
     {"name": "deck_guide", "description": "The rules, every slide type with its fields, the icon names and a complete example outline "
      "to copy. Call once before the first deck_build; lang 'he' gives the example in Hebrew.",
-     "inputSchema": {"type": "object", "properties": {"lang": {"type": "string", "description": "en (default) or he"}}}},
+     "inputSchema": {"type": "object", "properties": {"lang": {"type": "string", "description": "en (default) or he"},
+                     "story": {"type": "string", "description": "a recurring deck's plan: monthly-review, incident-review, dr-drill, "
+                               "proposal or status-update (the slides in order and what each must say)"}}}},
     {"name": "deck_build", "description": "Build a designed, editable .pptx from an outline (deck_guide shows the format). Returns the "
      "file path, the look number (to repeat a design), the slide list and warnings: text that does not fit, too many bullets, long "
      "titles, crowded charts. Fix every warning in the outline and build again until warnings is empty.",
@@ -66,6 +79,7 @@ TOOLS = [
          "template": {"type": "string", "description": "path of the company .pptx / .potx (its master, colours, fonts, layouts)"},
          "style": {"type": "string", "enum": ["clean", "bold"]},
          "look": {"type": ["integer", "string"], "description": "a look number to repeat a design, or 'random'"},
+         "theme": {"type": "string", "description": "only when the user asks for one: executive, ivory, noir"},
          "preview": {"type": "boolean", "description": "also render PNGs and a contact sheet (needs LibreOffice)"}}}},
     {"name": "deck_read", "description": "The text, tables, chart data and notes of every slide of a .pptx: a deck the user gave you "
      "(to restyle or summarise) or the one just built (a check that reads it back).",
@@ -100,15 +114,23 @@ def call(name, a):
         if rc:
             return {"error": err or "deck.py --example failed"}
         icons = ic.strip().splitlines()[0] if ic.strip() else ""
-        return {"rules": RULES, "icons": icons, "example": json.loads(ex),
-                "next": "copy 'example', replace its content with your facts (same JSON shape), then call deck_build"}
+        out = {"rules": RULES, "icons": icons, "example": json.loads(ex),
+               "next": "copy 'example', replace its content with your facts (same JSON shape), then call deck_build"}
+        if a.get("story"):
+            rc3, st, err3 = run(["--story", str(a["story"])])
+            if rc3:
+                return {"error": err3 or "no such story", "stories": "monthly-review, incident-review, dr-drill, proposal, status-update"}
+            out["story"] = json.loads(st)
+            out["next"] = ("write one slide per line of 'story.plan', in that order, each of that type and saying what 'say' asks "
+                           "(the example shows the JSON of every type); then call deck_build with the story's style")
+        return out
     if name == "deck_icons":
         rc, ic, err = run(["--icons"])
         return {"icons": ic.strip()} if rc == 0 else {"error": err}
     if name == "deck_build":
         spec = a.get("spec")
         if spec is None and isinstance(a.get("slides"), list):      # the outline sent as the arguments themselves
-            spec = {k: v for k, v in a.items() if k not in ("folder", "template", "style", "look", "preview")}
+            spec = {k: v for k, v in a.items() if k not in ("folder", "template", "style", "look", "preview", "theme")}
         if isinstance(spec, str):                      # a model that sends the outline as text, maybe in a ```json fence
             txt = re.sub(r"^\s*```(?:json)?\s*|\s*```\s*$", "", spec.strip())
             try:
@@ -124,8 +146,8 @@ def call(name, a):
         sp = os.path.join(out, "deck.json")
         with open(sp, "w", encoding="utf-8") as f:
             json.dump(spec, f, indent=1, ensure_ascii=False)
-        args = [sp, "--out", out, "--json"]
-        for k in ("template", "style"):
+        args = [sp, "--out", out, "--json", "--check"]         # rendered and checked; a PDF copy beside the deck
+        for k in ("template", "style", "theme"):
             if a.get(k):
                 args += ["--" + k, str(a[k])]
         if a.get("look") not in (None, ""):
@@ -138,11 +160,15 @@ def call(name, a):
                     "next": "fix the outline as the error says and call deck_build again"}
         res = json.loads(so.strip().splitlines()[-1])
         res["outline_file"] = sp
-        res["fixed_note"] = "'fixed' lists what the tool already repaired in your outline: nothing to do about it"
+        res["fixed_note"] = ("'fixed' and 'repaired' list what the tool already repaired (in your outline / in the rendered deck): "
+                             "nothing to do about them")
+        if res.get("to_confirm"):
+            res["to_confirm_note"] = "these slides hold '(to confirm)': tell the user to check them"
         res["next"] = ("change the outline for each line in 'warnings' (shorten the text, or split the slide), then call deck_build "
                        "again with the whole outline; after 3 rounds deliver anyway and tell the user which warnings are left"
                        if res["warnings"] else
-                       "done: call deck_deliver with this path, then answer with the path, the slide list and what the user should check")
+                       "done: call deck_deliver with this path (and with the 'pdf' path when there is one), then answer with the paths, the "
+                       "slide list and what the user should check")
         return res
     if name == "deck_read":
         p = os.path.expanduser(str(a.get("path", "")))
@@ -168,7 +194,7 @@ def main():
         mid, method = msg.get("id"), msg.get("method")
         if method == "initialize":
             res = {"protocolVersion": msg.get("params", {}).get("protocolVersion", "2024-11-05"),
-                   "capabilities": {"tools": {}}, "serverInfo": {"name": "deck", "version": "1.0"}, "instructions": INSTRUCTIONS}
+                   "capabilities": {"tools": {}}, "serverInfo": {"name": "deck", "version": "1.2"}, "instructions": INSTRUCTIONS}
         elif method == "tools/list":
             res = {"tools": TOOLS}
         elif method == "tools/call":
