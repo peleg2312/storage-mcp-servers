@@ -192,6 +192,27 @@ after each save or restore; every session start and every opening of the Brain t
 (`paas-team sync`), and a plugin the team republished is re-applied at that moment. Offline is never an error: the next
 sync retries. A conflict on the same line is aborted and named; `RUNBOOK.md` has the three git lines that resolve it.
 
+## External brains: any other Claude Code brain, kept as it is
+
+`paas-team add <name> <git url>` (or the Brain tab: Team, More, Add) also takes a brain that is not a team built here:
+a repository with a plugin marketplace (`.claude-plugin/marketplace.json`), a plugin folder (`*/.claude-plugin/plugin.json`,
+up to two levels down) or plain `skills/` / `agents/` / `commands/`. It is cloned to `~/.claude/brain/teams/<name>` and
+marked in its own `.git/paas-external.json`; a marketplace.json or plugin.json it lacks is written there as an untracked
+file listed in `.git/info/exclude`, so the clone stays clean and its own hooks keep pulling it. Nothing else changes in it.
+
+`paas-team use <name>` (one click in the Brain tab) installs and enables its plugin from the clone (read in place),
+disables every other team's plugin, removes the previous team's knowledge links (your own notes come back), writes a short
+persona that names the brain, and puts its settings into `~/.claude/settings.json` `env`, which Claude Code hands to every
+session, hook and MCP server in the web UI as in a terminal (`~/.bashrc` is never read by the UI's service):
+`paas-team env <name> GRAFANA_URL=... TOKEN=...` (the Brain tab has a box for it; `KEY=` removes one; values are kept in
+the clone's `.git`, mode 600, and never shown again). A variable its scripts read for its own folder under the home
+directory (`${TEAM_BRAIN_DIR:-$HOME/team-brain}`) is pointed at the clone when it is added.
+
+It keeps its own workflow: the brain's notes hook never commits or pushes into it, `paas-team sync` only fast-forwards it
+(and leaves it alone with local changes), the team editor refuses it, and a skill of it is changed in its own repository.
+The VM's read-only guard and managed hooks still apply to its tools. Switching back to a team or to "No team" disables its
+plugin and removes its settings. Root can offer one to everyone by cloning it into `/opt/paas/teams/<name>`.
+
 ## Switching: `paas-team`
 
 `~/.claude/tools/paas-team` (laptop, single VM) or `/opt/paas/bin/paas-team` (multi-user VM; `paas-team` in PATH):

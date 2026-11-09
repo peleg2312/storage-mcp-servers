@@ -33,6 +33,8 @@ def team_repo():
     except OSError:
         return BRAIN
     d = os.path.join(BRAIN, "teams", t)
+    if os.path.isfile(os.path.join(d, ".git", "paas-external.json")):
+        return BRAIN                              # an external brain (paas-team): its own workflow, never committed from here
     return d if t and os.path.isdir(os.path.join(d, ".git")) else BRAIN
 
 

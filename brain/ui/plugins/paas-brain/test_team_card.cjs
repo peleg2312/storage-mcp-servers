@@ -17,6 +17,8 @@ const HTML = `<!doctype html><meta charset="utf-8"><title>smoke</title><style>:r
   const teams = [
     { name: 'san', title: 'SAN', description: 'SAN team', local: true, skills: 20, agents: 8, mcp: ['docs-local', 'powermax'], mcp_added: ['docs-local'] },
     { name: 'nas', title: 'NAS', description: 'NAS team', local: true, skills: 18, agents: 4, mcp: ['docs-local', 'ontap'], mcp_added: ['docs-local', 'ontap'] },
+    { name: 'redbull', title: 'team-brain', description: 'Platform team brain', local: true, skills: 5, agents: 1, mcp: ['team-knowledge'], mcp_added: ['team-knowledge'],
+      external: true, plugin: 'team-brain', env: ['TEAM_BRAIN_DIR'], remote: 'https://gitlab.example.com/platform/team-brain.git' },
   ];
   const api = {
     rpc: async (method, route, body) => {
@@ -53,12 +55,14 @@ const HTML = `<!doctype html><meta charset="utf-8"><title>smoke</title><style>:r
   const seg = page.locator('.tseg button');
   await seg.first().waitFor({ timeout: 10000 });
   const labels = await seg.allTextContents();
-  if (labels.join('|') !== 'No team|SAN|NAS') throw new Error('segments: ' + labels.join('|'));
+  if (labels.join('|') !== 'No team|SAN|NAS|team-brain') throw new Error('segments: ' + labels.join('|'));
   if (await seg.nth(0).getAttribute('aria-pressed') !== 'true') throw new Error('No team should be pressed at start');
   const sub0 = await page.locator('.tline').textContent();
   if (!/Your own rules and skills/.test(sub0)) throw new Error('intro text: ' + sub0);
   if (!/What a team is/.test(await page.locator('.pane').textContent())) throw new Error('explainer missing');
-  if (await page.locator('.trow').count() !== 2) throw new Error('two team rows expected');
+  if (await page.locator('.trow').count() !== 3) throw new Error('three rows expected');
+  const extRow = await page.locator('.trow', { hasText: 'team-brain' }).innerHTML();
+  if (!/external brain/.test(extRow) || !/its own repository/.test(extRow)) throw new Error('external row: ' + extRow);
   // one click switches to NAS, no dialog
   await seg.nth(2).click();
   await page.locator('.tseg button[aria-pressed="true"]', { hasText: 'NAS' }).waitFor({ timeout: 10000 });
@@ -81,6 +85,19 @@ const HTML = `<!doctype html><meta charset="utf-8"><title>smoke</title><style>:r
   const opts = await page.locator('.tsel option').allTextContents();
   const selected = await page.locator('.tsel').inputValue();
   if (opts.length !== 2 || selected !== 'san') throw new Error('editor dropdown: ' + JSON.stringify([opts, selected]));
+  // an external brain: one click too, its settings box under More, and it is not in the editor's dropdown
+  await page.locator('.tseg button', { hasText: 'team-brain' }).click();
+  await page.locator('.tseg button[aria-pressed="true"]', { hasText: 'team-brain' }).waitFor({ timeout: 10000 });
+  const lineExt = await page.locator('.tline').innerHTML();
+  if (!/external brain \(its skills: \/team-brain:/.test(lineExt)) throw new Error('external line: ' + lineExt);
+  await page.locator('.tmore > summary').click();
+  if (await page.locator('.tsel option', { hasText: 'team-brain' }).count() !== 0) throw new Error('external brain in the editor dropdown');
+  await page.locator('.tenv > summary').click();
+  await page.locator('.te-pairs').fill('GRAFANA_URL=https://grafana.internal\n\nGRAFANA_SERVICE_ACCOUNT_TOKEN=x');
+  await page.locator('.te-go').click();
+  await page.waitForFunction(() => window.__calls.some((c) => c[1] === 'team-env'));
+  const envCall = (await page.evaluate(() => window.__calls)).find((c) => c[1] === 'team-env');
+  if (envCall[2].name !== 'redbull' || envCall[2].pairs.length !== 2) throw new Error('team-env call: ' + JSON.stringify(envCall));
   // back to no team with one click
   await page.locator('.tseg button', { hasText: 'No team' }).click();
   await page.locator('.tseg button[aria-pressed="true"]', { hasText: 'No team' }).waitFor({ timeout: 10000 });

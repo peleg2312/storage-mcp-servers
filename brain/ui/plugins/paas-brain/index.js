@@ -365,6 +365,7 @@ export function mount(container, api) {
           <li><b>Skills and agents</b>: the team's playbooks and helpers, listed in the Skills and Agents tabs with a <span class="tag">team</span> label.</li>
           <li><b>MCP servers</b>: the team's live tool servers, connected for you automatically.</li>
           <li><b>Shared memory</b>: notes, environment and tool map that every member writes and reads, kept in the team's git repository and synced at every save and every session start.</li>
+          <li><b>Other brains</b>: any other Claude Code brain in git (More, Add) works too, kept exactly as its owners publish it: its skills, agents, hooks and servers, and its own way of saving knowledge (for example merge requests).</li>
         </ul>
         <div class="sub">One team at a time; <b>No team</b> means your own rules, skills and notes. After a switch, start a new chat.</div></details></div>`;
 
@@ -387,15 +388,15 @@ export function mount(container, api) {
     const teamSkills = (data.skills || []).filter((x) => x.source === 'team');
     const teamAgents = (data.agents || []).filter((x) => x.source === 'team');
     const row = (x) => `<div class="trow${x.name === t.active ? ' on' : ''}">
-        <div class="t row spread"><span><b>${esc(x.title || x.name)}</b> <span class="sub" title="${esc(x.version || '')}">(${esc(x.name)}${x.version ? `, ${esc(String(x.version).split('-')[0])}` : ''})</span>${x.name === t.active ? ' <span class="tag">your team now</span>' : x.local ? '' : ' <span class="tag" title="Cloned from the team repository at the first click">not added yet</span>'}</span>${x.name === t.active ? '' : `<button type="button" class="btn ghost sm tuse" data-team="${esc(x.name)}">Switch to ${esc(x.title || x.name)}</button>`}</div>
+        <div class="t row spread"><span><b>${esc(x.title || x.name)}</b> <span class="sub" title="${esc(x.version || '')}">(${esc(x.name)}${x.version ? `, ${esc(String(x.version).split('-')[0])}` : ''})</span>${x.external ? ` <span class="tag" title="Another Claude Code brain, kept exactly as its owners publish it: plugin ${esc(x.plugin || '')}, its skills are /${esc(x.plugin || '')}:&lt;skill&gt;; it keeps its own way of saving knowledge">external brain</span>` : ''}${x.name === t.active ? ' <span class="tag">your team now</span>' : x.local ? '' : ' <span class="tag" title="Cloned from the team repository at the first click">not added yet</span>'}</span>${x.name === t.active ? '' : `<button type="button" class="btn ghost sm tuse" data-team="${esc(x.name)}">Switch to ${esc(x.title || x.name)}</button>`}</div>
         <div class="sub">${esc(x.description || '')}</div>
-        <div class="sub">${esc(x.skills ?? 0)} skills, ${esc(x.agents ?? 0)} agents · MCP: ${mcpTags(x) || 'none'}${x.remote ? ` · shared memory in <code>${esc(x.remote)}</code>` : ' · shared memory on this VM'}</div>
+        <div class="sub">${esc(x.skills ?? 0)} skills, ${esc(x.agents ?? 0)} agents · MCP: ${mcpTags(x) || 'none'}${x.external ? (x.remote ? ` · its own repository <code>${esc(x.remote)}</code>` : '') : x.remote ? ` · shared memory in <code>${esc(x.remote)}</code>` : ' · shared memory on this VM'}</div>
         ${x.name === t.active && (teamSkills.length || teamAgents.length) ? `<div class="sub tchips"><b>Skills</b> ${teamSkills.map((k) => `<span class="tag" title="${esc(k.description)}">/${esc(k.name)}</span>`).join(' ')}</div>
         <div class="sub tchips"><b>Agents</b> ${teamAgents.map((k) => `<span class="tag" title="${esc(k.description)}">${esc(k.name)}</span>`).join(' ') || 'none'}</div>` : ''}</div>`;
     box.innerHTML = `<div class="card"><h3>Your brain now</h3>${t.error ? `<div class="sub bad" role="alert">${esc(t.error)}</div></div>` : `
       <div class="seg tseg" role="group" aria-label="Team"><button type="button" data-team="none" aria-pressed="${!t.active}">No team</button>${teams.map((x) => `<button type="button" data-team="${esc(x.name)}" aria-pressed="${x.name === t.active}" title="${esc(x.description || x.name)}">${esc(x.title || x.name)}</button>`).join('')}</div>
       <div class="sub tline" style="margin:10px 0">${cur
-        ? `<b>${esc(cur.title || cur.name)}</b>: ${cur.description ? `${esc(cur.description)} · ` : ''}${esc(cur.skills ?? 0)} skills, ${esc(cur.agents ?? 0)} agents, shared memory.`
+        ? `<b>${esc(cur.title || cur.name)}</b>: ${cur.description ? `${esc(cur.description)} · ` : ''}${esc(cur.skills ?? 0)} skills, ${esc(cur.agents ?? 0)} agents, ${cur.external ? `external brain (its skills: /${esc(cur.plugin || '')}:&lt;skill&gt;; it saves knowledge its own way).` : 'shared memory.'}`
         : 'Your own rules and skills, no shared team memory. Click a team to use its brain; the next chat uses it, and one click brings you back.'}</div>
       <div class="row"><span class="tanchor"></span><span class="stbox"></span></div></div>
       ${box.dataset.explain ? EXPLAIN : ''}
@@ -404,12 +405,17 @@ export function mount(container, api) {
       <details class="tmore"><summary>More: sync, git, edit a team</summary>
         <div class="row" style="margin:10px 0"><span class="sub grow">${cur ? (cur.remote ? `Git remote: <code>${esc(cur.remote)}</code>` : 'No git remote: the knowledge stays on this VM') : 'No team active.'}</span>${cur?.remote ? '<button type="button" class="btn ghost sm tcp">Copy</button>' : ''}</div>
         ${cur ? '<div class="row" style="margin-bottom:10px"><button type="button" class="btn ghost sm tsy">Sync knowledge</button></div>' : ''}
-        <details class="tadd" style="margin-top:8px"><summary>Add a team from a git url</summary>
+        <details class="tadd" style="margin-top:8px"><summary>Add a team, or any other Claude Code brain, from a git url</summary>
+          <div class="sub" style="margin:6px 0">A team repository, or another brain (a plugin marketplace, a plugin folder, or skills/ and agents/): it is cloned as it is and switched like a team.</div>
           ${field('Name', '<input class="ta-name" aria-label="Team name" placeholder="san" autocomplete="off" spellcheck="false">', 'lower-case letters, digits, dashes')}
           ${field('Git url', '<input class="ta-url" aria-label="Git url" placeholder="https://gitlab.example.com/team/brain.git" autocomplete="off" spellcheck="false">')}
           <div class="row"><button type="button" class="btn ta-go">Add</button></div></details>
+        ${cur?.external ? `<details class="tenv" style="margin-top:8px"><summary>Settings of ${esc(cur.title || cur.name)} (server addresses, tokens)</summary>
+          <div class="sub" style="margin:6px 0">What its plugin reads from the environment (its README names them). Set now: ${(cur.env || []).map((k) => `<code>${esc(k)}</code>`).join(' ') || 'none'}. Values are kept for you only and never shown again.</div>
+          ${field('KEY=VALUE, one per line (KEY= removes it)', '<textarea class="te-pairs" rows="4" aria-label="Settings" placeholder="GRAFANA_URL=https://grafana.internal" spellcheck="false"></textarea>')}
+          <div class="row"><button type="button" class="btn te-go">Save settings</button></div></details>` : ''}
         <details class="ted" style="margin-top:8px"><summary>Edit a team (for the whole team)</summary>
-          ${field('Team to edit', `<select class="tsel" aria-label="Team to edit">${teams.map((x) => `<option value="${esc(x.name)}" ${x.name === (t.active || teams[0]?.name) ? 'selected' : ''}>${esc(x.title || x.name)} (${esc(x.name)})</option>`).join('') || '<option value="none">No team available</option>'}</select>`)}
+          ${field('Team to edit', `<select class="tsel" aria-label="Team to edit">${teams.filter((x) => !x.external).map((x) => `<option value="${esc(x.name)}" ${x.name === (cur && !cur.external ? t.active : teams.find((y) => !y.external)?.name) ? 'selected' : ''}>${esc(x.title || x.name)} (${esc(x.name)})</option>`).join('') || '<option value="none">No team available</option>'}</select>`)}
           <div class="ted-body"></div></details>
       </details></div>`}`;
     if (t.error) return;
@@ -452,6 +458,16 @@ export function mount(container, api) {
       done();
       if (!r.ok) { st.error(`Not added: ${r.out || 'unknown error'}`); return; }
       teamMsg = `Added ${name}: click it above to switch.`;
+      renderTeam(box);
+    });
+    box.querySelector('.te-go')?.addEventListener('click', async (e) => {
+      const pairs = box.querySelector('.te-pairs').value.split('\n').map((l) => l.trim()).filter(Boolean);
+      if (!pairs.length) { st.error('One KEY=VALUE per line.'); return; }
+      const done = busy(e.currentTarget, 'Saving…'); st.say('');
+      const r = await api.rpc('POST', 'team-env', { name: cur.name, pairs }).catch((x) => ({ out: String(x) }));
+      done();
+      if (!r.ok) { st.error(`Not saved: ${r.out || 'unknown error'}`); return; }
+      teamMsg = `${String(r.out || 'Saved').split('\n').filter(Boolean).pop()}. Start a new chat to use them.`;
       renderTeam(box);
     });
     teamEditor(box, t.active, st);
@@ -684,7 +700,7 @@ export function mount(container, api) {
       <div class="d" title="${esc(x.description)}">${esc(x.description)}</div><div class="row">${actions('skill', x.dir, x)}</div></div>`;
     pane.innerHTML = `<div class="row spread"><span class="sub">${data.skills.length} skills · ${mine.length} of them yours</span>
       ${editing ? '' : '<button class="btn new">New skill</button>'}</div>
-      <div class="sub" style="margin-top:6px">Team skills come and go with the team; your own and marketplace skills stay. Add more in the Market tab.${data.pluginTeam ? ` In Claude they are called /paas-brain-${esc(data.pluginTeam)}:&lt;skill&gt;.` : ''}</div>${form}
+      <div class="sub" style="margin-top:6px">Team skills come and go with the team; your own and marketplace skills stay. Add more in the Market tab.${data.pluginName ? ` In Claude they are called /${esc(data.pluginName)}:&lt;skill&gt;.` : ''}</div>${form}
       ${mine.length ? `<div class="sec-label">Your skills</div><div class="grid">${mine.map(card).join('')}</div><div class="sec-label">${data.pluginTeam ? `From your team (${esc(data.pluginTeam.toUpperCase())})` : 'Built in'}</div>` : '<div style="height:12px"></div>'}
       <div class="grid">${data.skills.filter((x) => !x.mine).map(card).join('')}</div>`;
     pane.querySelector('.new')?.addEventListener('click', () => renderSkills({}));

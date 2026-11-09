@@ -41,6 +41,8 @@ def team_repo():
     brain = os.path.join(USER_HOME, "brain")
     team = read(os.path.join(brain, "team")).strip()
     if team and re.match(r"^[a-z][a-z0-9_-]{0,31}$", team) and os.path.isdir(os.path.join(brain, "teams", team, ".git")):
+        if os.path.isfile(os.path.join(brain, "teams", team, ".git", "paas-external.json")):
+            return brain                              # an external brain: its own hooks pull it, nothing is pushed from here
         return os.path.join(brain, "teams", team)
     return brain
 
@@ -114,6 +116,13 @@ def team_line():
         offered = sorted(d for d in (os.listdir(shared) if os.path.isdir(shared) else []) if re.match(r"^[a-z][a-z0-9_-]{0,31}$", d))
         return f"Team: none (your own rules; {', '.join(offered)} available: Brain tab, Team, one click)." if offered else ""
     tdir = os.path.join(USER_HOME, "brain", "teams", name)
+    try:
+        ext = json.loads(read(os.path.join(tdir, ".git", "paas-external.json")) or "{}")
+    except ValueError:
+        ext = {}
+    if ext.get("plugin"):                                    # an external brain: kept as it is, its own hooks brief Claude
+        return (f"Brain: {name} (external, plugin {ext['plugin']}: its skills are /{ext['plugin']}:<skill>; follow its own "
+                f"instructions for its knowledge).")
     try:
         meta = json.loads(read(os.path.join(tdir, "team.json")) or "{}")
     except ValueError:

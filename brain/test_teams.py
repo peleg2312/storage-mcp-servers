@@ -374,4 +374,69 @@ run([sys.executable, mk, "disable", "plugin/paas-brain-san"], e=menv)
 assert not os.path.exists(os.path.join(brain, "team"))
 team("use", "san")
 print("marketplace teams ok")
+
+# 10. an external brain: another Claude Code brain kept as it is. Its plugin folder without a marketplace.json (one is
+#     written, untracked and git-excluded), a "where is my repository" variable found in its hook script, switching
+#     disables the paas team's plugin and back, its settings go into settings.json env and leave with it, the notes hook
+#     never commits into it, sync only fast-forwards, the editor refuses it
+ext = os.path.join(work, "other-brain")
+plug = os.path.join(ext, "plugins", "ob")
+os.makedirs(os.path.join(plug, ".claude-plugin")); os.makedirs(os.path.join(plug, "skills", "lookup")); os.makedirs(os.path.join(plug, "scripts"))
+open(os.path.join(plug, ".claude-plugin", "plugin.json"), "w").write('{"name": "ob", "version": "2.0.0", "description": "Other brain"}')
+open(os.path.join(plug, "skills", "lookup", "SKILL.md"), "w").write("---\nname: lookup\ndescription: look things up\n---\nLook.\n")
+open(os.path.join(plug, "scripts", "start.sh"), "w").write('BRAIN="${OB_DIR:-$HOME/other-brain}"\n')
+open(os.path.join(ext, "README.md"), "w").write("# Other brain\n")
+os.makedirs(os.path.join(ext, "knowledge"))
+open(os.path.join(ext, "knowledge", "page.md"), "w").write("a page\n")
+for c in (["init", "-q", "-b", "main"], ["add", "-A"], ["-c", "user.name=t", "-c", "user.email=t@t", "commit", "-qm", "init"]):
+    run(["git", "-C", ext, *c])
+team("add", "ob", ext)
+clone = os.path.join(brain, "teams", "ob")
+rec = json.load(open(os.path.join(clone, ".git", "paas-external.json")))
+assert rec["plugin"] == "ob" and rec["marketplace"] == "ob" and rec["dir"] == os.path.join("plugins", "ob"), rec
+assert rec["env"] == {"OB_DIR": "{dir}"} and rec["generated"] == [".claude-plugin/marketplace.json"], rec
+assert run(["git", "-C", clone, "status", "--porcelain"])[1] == "", "the clone stays clean for its own pulls"
+open(os.path.join(home, "claude.log"), "w").close()
+o = team("use", "ob")
+assert "external brain" in o and "/ob:<skill>" in o, o
+log = claude_log()
+assert f"plugin marketplace add {clone}" in log and "plugin install ob@ob --scope user" in log and "plugin disable paas-brain-san@paas-brain-san" in log, log
+st = json.load(open(os.path.join(home, ".claude", "settings.json")))
+assert st["env"]["OB_DIR"] == clone, st.get("env")
+assert not any(str(r).startswith("mcp__plugin_paas-brain-") for r in st.get("permissions", {}).get("allow", []))
+assert not os.path.islink(os.path.join(brain, "notes.md")) and not os.path.islink(os.path.join(brain, "notes"))
+assert "Other brain" in open(os.path.join(brain, "persona.md")).read()
+rows = {t["name"]: t for t in json.loads(team("list", "--json"))["teams"]}
+assert rows["ob"]["external"] and rows["ob"]["active"] and rows["ob"]["plugin"] == "ob" and rows["ob"]["skills"] == 1, rows["ob"]
+team("env", "ob", "OB_URL=https://ob.internal", "OB_TOKEN=s3cret")
+st = json.load(open(os.path.join(home, ".claude", "settings.json")))
+assert st["env"]["OB_URL"] == "https://ob.internal" and oct(os.stat(os.path.join(home, ".claude", "settings.json")).st_mode)[-3:] == "600"
+assert "s3cret" not in team("list", "--json")                       # names only, never values
+# the notes hook: a file saved inside the external clone is not committed there; sync is a fast-forward only
+open(os.path.join(clone, "knowledge", "page.md"), "a").write("more\n")
+run([sys.executable, os.path.join(HOOKS, "notes-check.py")], inp=json.dumps({"tool_input": {"file_path": os.path.join(clone, "knowledge", "page.md")}}))
+assert len(run(["git", "-C", clone, "log", "--oneline"])[1].split()) == 2, "no commit in the external clone (only its own init)"
+assert "local changes" in team("sync")
+run(["git", "-C", clone, "checkout", "--", "knowledge/page.md"])
+open(os.path.join(ext, "knowledge", "new.md"), "w").write("new\n")
+run(["git", "-C", ext, "add", "-A"]); run(["git", "-C", ext, "-c", "user.name=t", "-c", "user.email=t@t", "commit", "-qm", "new"])
+assert "up to date" in team("sync") and os.path.isfile(os.path.join(clone, "knowledge", "new.md"))
+assert run([sys.executable, TOOL, "edit", "ob"], ok=False, inp="{}")[0] == 1
+# back to a paas team: the external plugin is disabled, its settings leave, the team's links come back
+team("use", "san")
+assert "plugin disable ob@ob" in claude_log()
+st = json.load(open(os.path.join(home, ".claude", "settings.json")))
+assert not any(k.startswith("OB_") for k in st.get("env", {})), st.get("env")
+assert os.path.islink(os.path.join(brain, "notes.md"))
+# and no team from the external brain: plugin off, settings gone
+team("use", "ob"); team("use", "none")
+assert not os.path.exists(os.path.join(brain, "team")) and "OB_DIR" not in json.load(open(os.path.join(home, ".claude", "settings.json"))).get("env", {})
+# a repository that is no brain at all is refused, nothing left behind
+nob = os.path.join(work, "no-brain"); os.makedirs(nob); open(os.path.join(nob, "x.txt"), "w").write("x")
+for c in (["init", "-q", "-b", "main"], ["add", "-A"], ["-c", "user.name=t", "-c", "user.email=t@t", "commit", "-qm", "init"]):
+    run(["git", "-C", nob, *c])
+rc, o = run([sys.executable, TOOL, "add", "nob", nob], ok=False)
+assert rc == 1 and "holds no" in o and not os.path.exists(os.path.join(brain, "teams", "nob")), o
+team("use", "san")
+print("external brain ok")
 shutil.rmtree(work, ignore_errors=True)

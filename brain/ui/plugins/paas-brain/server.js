@@ -41,9 +41,15 @@ const run = (cmd, args, timeout = 120000, extraEnv = {}) => new Promise((resolve
 // never blocks a save. The repository is looked up per call: the team can change while the UI runs.
 const TEAM_NAME = /^[a-z][a-z0-9_-]{0,31}$/;
 const TEAM_BIN = [path.join(HOME, '.claude', 'tools', 'paas-team'), '/opt/paas/bin/paas-team', path.join(HOME, '.local', 'bin', 'paas-team')].find((p) => fs.existsSync(p));
+// an external brain (paas-team add of another Claude Code brain): its record in the clone's .git, or null
+function extRecord(team) {
+  if (!TEAM_NAME.test(String(team || ''))) return null;
+  const r = json(path.join(BRAIN, 'teams', team, '.git', 'paas-external.json'));
+  return r && r.plugin && r.marketplace ? r : null;
+}
 function repoDir() {
   const team = (read(path.join(BRAIN, 'team'), 200) || '').trim();
-  if (TEAM_NAME.test(team)) {
+  if (TEAM_NAME.test(team) && !extRecord(team)) {          // an external brain's clone is never written from here
     const d = path.join(BRAIN, 'teams', team);
     if (fs.existsSync(path.join(d, '.git'))) return d;
   }
@@ -124,6 +130,12 @@ async function teamCommit(repo, team, kind, name) {
 function pluginTeam() {
   const team = (read(path.join(BRAIN, 'team'), 200) || '').trim();
   if (!TEAM_NAME.test(team)) return null;
+  const ext = extRecord(team);
+  if (ext) {                                                 // an external brain: its own plugin folder, read-only here
+    const dir = path.resolve(BRAIN, 'teams', team, String(ext.dir || '.'));
+    return dir.startsWith(path.join(BRAIN, 'teams', team)) && fs.existsSync(dir)
+      ? { team, dir, external: true, plugin: ext.plugin, id: `${ext.plugin}@${ext.marketplace}` } : null;
+  }
   const dir = path.join(BRAIN, 'teams', team, `paas-brain-${team}`);
   return fs.existsSync(dir) ? { team, dir } : null;
 }
@@ -171,10 +183,11 @@ function otherPlugins() {
   const rec = json(path.join(C, 'plugins', 'installed_plugins.json')) || {};
   const on = { ...((json(path.join(C, 'settings.json')) || {}).enabledPlugins || {}), ...((json(MANAGED) || {}).enabledPlugins || {}) };
   const out = [];
+  const team = pluginTeam();                                 // an external brain is listed as the team, not twice
   for (const [id, v] of Object.entries(rec.plugins || {})) {
     const e = Array.isArray(v) ? (v.find((x) => x && x.scope === 'user') || v[0]) : v;
     const name = id.split('@')[0];
-    if (!e || !e.installPath || on[id] === false || name.startsWith('paas-brain-') || !fs.existsSync(e.installPath)) continue;
+    if (!e || !e.installPath || on[id] === false || name.startsWith('paas-brain-') || id === team?.id || !fs.existsSync(e.installPath)) continue;
     out.push({ id, name, dir: e.installPath });
   }
   return out;
@@ -369,6 +382,8 @@ async function overview() {
     library: tl ? { team: tl.name, built: tl.built, version: null, sources: src.ok ? src.out : null }
       : { version: read(path.join(LIB, 'VERSION'))?.trim() || null, sources: src.ok ? src.out : null },
     pluginTeam: pluginTeam()?.team || null,
+    pluginName: pluginTeam() ? (pluginTeam().external ? pluginTeam().plugin : `paas-brain-${pluginTeam().team}`) : null,
+    pluginExternal: !!pluginTeam()?.external,
     skills: skills(), agents: agents(), hooks: hooks(), mcp: mcpServers(), inbox: inbox(), captures: captures(),
     // multi-user VM: environment.md / tool-map.md are shared and only root writes them; the library too
     // CLAUDE.md is this account's own copy of the brain's rules, yours to change (a brain update replaces it)
@@ -505,6 +520,7 @@ const routes = {
     const tf = fs.existsSync(p) ? null : teamFile(b.kind, b.name);
     if (tf) {                                                          // plugin mode: write into the clone, push for the team
       if (b.create) return { ok: false, out: `"${b.name}" already exists` };
+      if (tf.external) return { ok: false, out: `"${b.name}" belongs to the external brain ${tf.team}: change it in its own repository` };
       const repo = repoDir();
       if (!repo || repo === BRAIN) return { ok: false, out: 'The team repository is not available' };
       if (!inside(tf.file, [repo])) return OUTSIDE;
@@ -576,6 +592,16 @@ const routes = {
       child.stdin.on('error', () => { /* the child exited before reading: its exit code reports it */ });
       child.stdin.end(payload);
     });
+  },
+  // an external brain's settings (its server addresses, tokens): paas-team env <team> KEY=VALUE (KEY= removes one);
+  // the values go on the command line of a local child process only and are never echoed back (names only)
+  'POST /team-env': async (_q, b) => {
+    if (!TEAM_BIN) return { ok: false, out: 'Teams are not installed on this VM' };
+    const name = String(b.name || '');
+    if (!TEAM_NAME.test(name) || !extRecord(name)) return { ok: false, out: 'Not an external brain' };
+    const pairs = (Array.isArray(b.pairs) ? b.pairs : []).map(String).filter((x) => /^[A-Za-z_][A-Za-z0-9_]{0,63}=[^\n]{0,2000}$/.test(x)).slice(0, 40);
+    if (!pairs.length) return { ok: false, out: 'Nothing to set: KEY=VALUE, one per line (KEY= removes it)' };
+    return run('python3', [TEAM_BIN, 'env', name, ...pairs]);
   },
   'POST /team-sync': async () => (TEAM_BIN ? run('python3', [TEAM_BIN, 'sync']) : { ok: false, out: 'Teams are not installed on this VM' }),
   'GET /mcp-status': () => run('claude', ['mcp', 'list'], 90000),
