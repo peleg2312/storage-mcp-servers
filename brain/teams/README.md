@@ -145,6 +145,16 @@ multi-user VM shares one knowledge index per team (`/var/lib/paas-docs/<team>.db
 `docs-local` uses when it matches their clone, and one resource budget per person (`/etc/paas/limits.env`); `RUNBOOK.md`,
 "Sizing the VM".
 
+## A team's hooks and guard are its own
+
+On the multi-user VM the brain's hooks (the read-only guard, notes sync, docs hints, session start) also run from the
+VM's managed settings (`/opt/paas/hooks`), but only for a session with **no team**: as soon as a person's active team
+plugin is enabled (a paas team or an external brain), those VM copies step aside and the hooks in the team's plugin run,
+the ones its git repository holds. What the team keeps in git is what runs: a hook or the guard removed from the
+repository is not run for that team, and nothing on the VM puts it back. The VM keeps only its own protections in the
+managed settings (no reading `/etc/paas`, where the API key is; no editing `~/.claude/hooks`). On a laptop it has always
+been this way: the team plugin is the only source of its hooks.
+
 ## Updates and the CI gate
 
 The plugin's `version` is the library version plus a fingerprint of the plugin's content (`2026.10.25b-7cbc8a20`): Claude
@@ -256,7 +266,11 @@ schema when a task needs it. On the VM `python3 ~/.claude/tools/token-report.py`
   `--team-source <git-url>` takes the team repository from GitLab instead. Without `--team` the install is the SAN brain
   alone: plain files, no team repository, no plugin.
 - `sh install-laptop.sh [--team nas] [--team-source <url>]`: the pre-team `paas-brain` plugin is removed.
-- Multi-user VM: `install-shared.sh` publishes every team into `/opt/paas/teams/<team>` (plugins without hooks, the
-  hooks are managed settings) and installs `paas-team`. Everyone starts without a team; the Team tab of the Brain tab
+- Multi-user VM: `install-shared.sh` builds a team into `/opt/paas/teams/<team>` only when it is not there yet, and
+  never changes a team repository that exists (here or in GitLab): a GitLab project recorded for a team gets the team's
+  first content only while it is still empty. `install-multiuser.sh --team <name>=<git url>` records the url of a team
+  that is here, builds a team of `brain/teams` that is not, or clones any other team or brain from its url as it is.
+  Updating a team from this repository is a deliberate step: `python3 brain/teams/publish.py <team> --to <its GitLab
+  url>` (refuses to drop the team's own edits without `--force`). Everyone starts without a team; the Team tab of the Brain tab
   switches with one click (No team / SAN / NAS), root can also set it with `paas-user team dana nas` or `paas-user add
   dana --team nas`.

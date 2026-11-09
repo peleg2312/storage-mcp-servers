@@ -7,16 +7,18 @@
 #      --groups "storage-san-team,storage-nas-team" [--people 8] [--api-key-file F] [--git-token-file F] [--docs-port 8443]
 #
 # --docs-port N: the docs service's port for laptops and other machines (default 8443; kept in /etc/paas/docs.env, so later
-#   runs need it only to change it: the firewall, the team plugins' docs-http and the Market's docs items follow).
+#   runs need it only to change it: the firewall and the Market's docs items follow; a team repository keeps its own
+#   docs address: change it in the Brain tab's team editor, which writes it into the team's git).
 # --plain-http: the docs service (MCP, 8443) and the marketplace for other VMs (3443) answer plain http:// (the token still
 #   required, nothing encrypted on the wire; the sign-in page stays HTTPS): a PC then needs no certificate. --https goes back.
 #   Remembered (/etc/paas/plain-http).
 # What it does, in order: checks the packages; the brain for root (install-vm.sh); the shared base (install-shared.sh);
 # the sign-in gate with its certificate (install-gate.sh); the API key (/etc/paas/api-key); who may sign in
 # (/etc/paas/allowed-groups); the GitLab token for every account (paas-user git-token) and each team's repository url
-# (recorded, then published there with the docs token); the shared base again, now with the certificate (marketplace,
-# docs service, team repositories pushed); every account re-provisioned; then it checks the services, the gate, the docs
-# service and each team repository and prints what is left for you.
+# (recorded; a team not on this VM yet is built from brain/teams, or cloned from its url when it is any other brain); the
+# shared base again (marketplace, docs service; an EMPTY GitLab project gets its team's first content, a repository with
+# content is never changed: a team's skills, rules, hooks and guard are what it keeps in git); every account re-provisioned;
+# then it checks the services, the gate, the docs service and each team repository and prints what is left for you.
 # Flags are remembered in /etc/paas/multiuser.conf, so later runs need none. Secrets (API key, GitLab token) are asked
 # once when missing and a terminal is present, or read from the --*-file flags; they are never printed.
 #   --dry-run   print the plan and the remembered settings, change nothing (works as any user)
@@ -60,7 +62,7 @@ todo() { TODO="$TODO
 
 say "plan for $FQ"
 note "1 packages  2 install-vm.sh (root's brain)  3 install-shared.sh  4 install-gate.sh  5 API key  6 who may sign in"
-note "7 GitLab token + team repositories  8 install-shared.sh again (certificate, docs service, push to GitLab)  9 accounts  10 checks"
+note "7 GitLab token + team repositories  8 install-shared.sh again (certificate, docs service, empty GitLab projects filled)  9 accounts  10 checks"
 note "settings: gitlab host '${GITLAB_HOST:-none}', teams '${TEAM_URLS:-none}', groups '${GROUPS_CSV:-paas-users only}', people '${PEOPLE:-auto}'"
 if [ "$DRY" = 1 ]; then echo; echo "dry run: nothing changed (settings file: $CONF)"; exit 0; fi
 [ "$(id -u)" = 0 ] || { echo "install-multiuser: run as root"; exit 1; }
@@ -147,11 +149,26 @@ if [ -n "$GITLAB_HOST" ]; then
 else note "no --gitlab-host: the team repositories stay on this VM only (members' notes sync to /opt/paas/teams clones, not to GitLab)"; fi
 for tu in $TEAM_URLS; do
   n=${tu%%=*}; u=${tu#*=}
-  [ -d "$ROOT/brain/teams/$n" ] || { note "team $n: no such team in brain/teams"; todo "fix --team $n=... (teams: $(ls "$ROOT/brain/teams" | grep -v '\.' | tr '\n' ' '))"; continue; }
-  python3 "$ROOT/brain/teams/publish.py" "$n" --to "/opt/paas/teams/$n" --remote "$u" >/dev/null && note "team $n: remote $u recorded"
+  if [ -d "/opt/paas/teams/$n/.git" ]; then               # already here: only the remote is recorded, nothing rebuilt
+    python3 - "/opt/paas/teams/$n" "$u" <<'PY' && note "team $n: remote $u recorded (the team itself left as it is)"
+import json, os, subprocess, sys
+d, u = sys.argv[1], sys.argv[2]
+p = os.path.join(d, "team.json")
+if os.path.isfile(p):
+    t = json.load(open(p)); t["remote"] = u; json.dump(t, open(p, "w"), indent=2, sort_keys=True); open(p, "a").write("\n")
+subprocess.run(["git", "-C", d, "remote", "remove", "origin"], capture_output=True)
+subprocess.run(["git", "-C", d, "remote", "add", "origin", u], capture_output=True)
+PY
+  elif [ -d "$ROOT/brain/teams/$n" ]; then                # a team defined in this repository, new here: built once
+    python3 "$ROOT/brain/teams/publish.py" "$n" --to "/opt/paas/teams/$n" --remote "$u" >/dev/null && note "team $n: built, remote $u recorded"
+  else                                                    # any other team or brain in git: cloned as it is
+    if GIT_TERMINAL_PROMPT=0 git -c credential.helper=/opt/paas/bin/paas-git-credential -c credential.useHttpPath=true clone -q -- "$u" "/opt/paas/teams/$n" 2>/dev/null; then
+      note "team $n: cloned from $u as it is"
+    else note "team $n: cannot clone $u"; todo "team $n: check the url and the GitLab token (paas-user git-token ...)"; fi
+  fi
 done
 
-say "[8/10] the shared base again (certificate, marketplace and docs service, team repositories pushed to GitLab)"
+say "[8/10] the shared base again (certificate, marketplace and docs service; empty GitLab projects get their team, others are left alone)"
 sh "$HERE/install-shared.sh"
 
 say "[9/10] accounts"

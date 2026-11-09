@@ -445,20 +445,35 @@ def audit(data, decision, why=""):
         print(f"read-only guard: audit log not written ({e.__class__.__name__})", file=sys.stderr)
 
 
-def managed_twin():
-    """Run from a team plugin on a VM whose managed settings (/etc/claude-code/managed-settings.json) run this very hook
-    for every account: that copy is the enforced one, this run would only repeat its answer. One small file read."""
-    if not os.environ.get("CLAUDE_PLUGIN_ROOT") or os.path.realpath(__file__).startswith("/opt/paas/hooks/"):
-        return False                                   # the enforced copy never steps aside, whatever the environment says
+def team_hooks_active():
+    """VM: the active team's own hooks, those of its plugin from its git repository, run instead of the VM's copies under
+    /opt/paas/hooks, so whatever the team keeps in git is what runs, guard included (removed there: not run). True when
+    this is the VM's copy and the active team's plugin (a paas team or an external brain) is enabled for this person."""
+    if not os.path.realpath(__file__).startswith("/opt/paas/hooks/"):
+        return False                                   # the plugin's own copy (or a single-user install) always runs
     try:
-        with open(os.environ.get("PAAS_MANAGED_SETTINGS") or "/etc/claude-code/managed-settings.json", encoding="utf-8") as f:
-            return "block-write-tools.py" in f.read()
-    except OSError:
+        import json as _j
+        import pwd as _pwd                             # the account's own home, not an environment variable a setting could change
+        c = os.path.join(_pwd.getpwuid(os.getuid()).pw_dir, ".claude")
+        t = open(os.path.join(c, "brain", "team"), encoding="utf-8").read().strip()
+        d = os.path.join(c, "brain", "teams", t)
+        if not t or not os.path.isdir(d):
+            return False
+        ext = os.path.join(d, ".git", "paas-external.json")
+        if os.path.isfile(ext):
+            r = _j.load(open(ext, encoding="utf-8"))
+            pid = f"{r['plugin']}@{r['marketplace']}"
+        elif os.path.isdir(os.path.join(d, "paas-brain-" + t)):
+            pid = f"paas-brain-{t}@paas-brain-{t}"
+        else:
+            return False
+        return _j.load(open(os.path.join(c, "settings.json"), encoding="utf-8")).get("enabledPlugins", {}).get(pid) is True
+    except Exception:
         return False
 
 
 def main():
-    if managed_twin():
+    if team_hooks_active():                            # VM: the active team's guard from git answers instead
         return 0
     try:
         data = json.load(sys.stdin)

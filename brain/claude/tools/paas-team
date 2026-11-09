@@ -523,7 +523,7 @@ def add(team, source=None, quiet=False):
     src_dir = os.path.join(SOURCES, team)
     if not source:
         if plugin_dir(src_dir):
-            source = info(src_dir).get("remote") or src_dir
+            source = info(src_dir).get("remote") or remote_of(src_dir) or src_dir     # GitLab first: members push there
         elif os.path.isdir(os.path.join(src_dir, ".git")) and find_plugin(src_dir, team):   # an external brain root put here
             source = remote_of(src_dir) or src_dir
         else:

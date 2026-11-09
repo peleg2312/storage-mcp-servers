@@ -22,8 +22,8 @@ for f in (tmp, tmp + ".bak"):
         os.remove(f)
 if os.path.exists(path):
     shutil.copy(path, tmp)
-# every brain hook for every account (enforced, cannot be switched off); a team plugin's own copies step aside when they
-# see these (CLAUDE_PLUGIN_ROOT set and this file naming the script), so nothing runs twice
+# every brain hook for a session with no team; while a person's team plugin is enabled these copies step aside and the
+# hooks in the team's plugin run, those its git repository holds (team_hooks_active in each hook), so nothing runs twice
 subprocess.run([sys.executable, os.path.join(here, "..", "merge_settings.py"), tmp,
                 "--hooks-dir", f"{paas}/hooks", "--banner-dir", f"{paas}/banner", *catalog], check=True,
                stdout=subprocess.DEVNULL)

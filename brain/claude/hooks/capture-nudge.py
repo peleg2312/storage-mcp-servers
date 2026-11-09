@@ -52,13 +52,35 @@ def main():
     return 0
 
 
+
+def team_hooks_active():
+    """VM: the active team's own hooks, those of its plugin from its git repository, run instead of the VM's copies under
+    /opt/paas/hooks, so whatever the team keeps in git is what runs, guard included (removed there: not run). True when
+    this is the VM's copy and the active team's plugin (a paas team or an external brain) is enabled for this person."""
+    if not os.path.realpath(__file__).startswith("/opt/paas/hooks/"):
+        return False                                   # the plugin's own copy (or a single-user install) always runs
+    try:
+        import json as _j
+        import pwd as _pwd                             # the account's own home, not an environment variable a setting could change
+        c = os.path.join(_pwd.getpwuid(os.getuid()).pw_dir, ".claude")
+        t = open(os.path.join(c, "brain", "team"), encoding="utf-8").read().strip()
+        d = os.path.join(c, "brain", "teams", t)
+        if not t or not os.path.isdir(d):
+            return False
+        ext = os.path.join(d, ".git", "paas-external.json")
+        if os.path.isfile(ext):
+            r = _j.load(open(ext, encoding="utf-8"))
+            pid = f"{r['plugin']}@{r['marketplace']}"
+        elif os.path.isdir(os.path.join(d, "paas-brain-" + t)):
+            pid = f"paas-brain-{t}@paas-brain-{t}"
+        else:
+            return False
+        return _j.load(open(os.path.join(c, "settings.json"), encoding="utf-8")).get("enabledPlugins", {}).get(pid) is True
+    except Exception:
+        return False
+
 if __name__ == "__main__":
-    # a team plugin's copy on a VM whose managed settings run this hook for every account steps aside: the enforced copy
-    # under /opt/paas/hooks answers. The enforced copy itself never steps aside, whatever the environment says.
-    if len(sys.argv) == 1 and os.environ.get("CLAUDE_PLUGIN_ROOT") and not os.path.realpath(__file__).startswith("/opt/paas/hooks/"):
-        try:
-            if os.path.basename(__file__) in open(os.environ.get("PAAS_MANAGED_SETTINGS") or "/etc/claude-code/managed-settings.json").read():
-                sys.exit(0)
-        except OSError:
-            pass
+    # VM: the VM's copy steps aside while the active team's plugin brings its own hooks from git (team_hooks_active)
+    if len(sys.argv) == 1 and team_hooks_active():
+        sys.exit(0)
     sys.exit(main())

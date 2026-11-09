@@ -5,7 +5,9 @@ knowledge folder, in one git repository people clone (paas-team add) and Claude 
   publish.py <team> --to <dir>        build into <dir> (git init on first use), commit the new plugin
   publish.py <team> --to <git-url>    clone the team repository (an empty GitLab project is fine), rebuild the
                                       plugin, commit, push; the url is recorded as the team's knowledge remote
-  publish.py --all --to <parent-dir>  every team of brain/teams into <parent>/<team> (install-shared.sh)
+  publish.py --all --to <parent-dir>  every team of brain/teams into <parent>/<team>
+           --only-missing  (with --all) only the teams not there yet: an existing team repository is never changed
+                           (install-shared.sh: a team's repository is its own; update one on purpose with publish.py <team>)
   options: --remote <url>  record another url as the remote members clone and push to
            --no-hooks      the plugin without hooks (a VM whose hooks are managed settings)
            --no-commit     leave the files uncommitted
@@ -236,7 +238,7 @@ def main():
     args = sys.argv[1:]
     team = dest = remote = None
     hooks = commit = True
-    everything = force = False
+    everything = force = only_missing = False
     docs_search = docs_token = None
     while args:
         a = args.pop(0)
@@ -251,6 +253,8 @@ def main():
             remote = args.pop(0)
         elif a == "--all":
             everything = True
+        elif a == "--only-missing":
+            only_missing = True
         elif a == "--no-hooks":
             hooks = False
         elif a == "--no-commit":
@@ -265,6 +269,10 @@ def main():
         sys.exit(__doc__)
     if everything:
         for name in build.team_names():
+            there = os.path.join(os.path.abspath(dest), name)
+            if only_missing and os.path.isdir(os.path.join(there, ".git")):
+                print(f"team {name}: already in {there}, left as it is")
+                continue
             t = publish(name, os.path.join(os.path.abspath(dest), name), remote=remote, hooks=hooks, commit=commit, force=force,
                         docs_search=docs_search, docs_token=docs_token)
             print(f"team {name}: plugin {t['version']} ({len(t['skills'])} skills, {len(t['agents'])} agents) in {os.path.join(dest, name)}")

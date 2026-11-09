@@ -90,28 +90,23 @@ assert not settings.get("hooks"), settings.get("hooks")
 assert "paas-brain-nas@paas-brain-nas" in run(["claude", "plugin", "list"], e=env2)
 print("install.sh plugin mode ok")
 
-# 4. the guard from a plugin on a VM whose managed settings run it: steps aside; without that twin it judges as always
+# 4. a team's hooks come from its plugin (its git repository): the plugin's copy always runs and judges, even on a VM whose
+#    managed settings name the same hook (there the VM's copy under /opt/paas/hooks is the one that steps aside while the
+#    team's plugin is on: brain/claude/hooks team_hooks_active, path-bound, not testable outside /opt/paas)
 hook = os.path.join(R, "brain", "claude", "hooks", "block-write-tools.py")
 managed = os.path.join(work, "managed.json")
 open(managed, "w").write(json.dumps({"hooks": {"PreToolUse": [{"matcher": "mcp__.*|Bash", "hooks": [{"type": "command", "command": "python3 /opt/paas/hooks/block-write-tools.py"}]}]}}))
 call = json.dumps({"tool_name": "mcp__powermax__delete_volume", "tool_input": {"id": "x"}, "session_id": "t"})
 twin = dict(env, CLAUDE_PLUGIN_ROOT="/x", PAAS_MANAGED_SETTINGS=managed)
 r = subprocess.run([sys.executable, hook], input=call, capture_output=True, text=True, env=twin, timeout=30)
-assert r.returncode == 0 and not r.stdout.strip(), (r.returncode, r.stdout, r.stderr)
-alone = dict(env, CLAUDE_PLUGIN_ROOT="/x", PAAS_MANAGED_SETTINGS=os.path.join(work, "none.json"))
-r = subprocess.run([sys.executable, hook], input=call, capture_output=True, text=True, env=alone, timeout=30)
 assert r.returncode == 2, (r.returncode, r.stdout, r.stderr)
-# every hook steps aside the same way (hook mode only; the CLI uses of notes-check keep working)
 ss = os.path.join(R, "brain", "claude", "hooks", "session-start.py")
 open(managed, "w").write(json.dumps({"hooks": {"SessionStart": [{"hooks": [{"type": "command", "command": "python3 /opt/paas/hooks/session-start.py"}]}]}}))
 r = subprocess.run([sys.executable, ss], input="{}", capture_output=True, text=True, env=twin, timeout=30)
-assert r.returncode == 0 and not r.stdout.strip(), (r.stdout[:200], r.stderr[:200])
-r = subprocess.run([sys.executable, ss], input="{}", capture_output=True, text=True, env=alone, timeout=30)
 assert r.stdout.startswith("Storage brain:"), r.stdout[:200]
 nc = os.path.join(R, "brain", "claude", "hooks", "notes-check.py")
-open(managed, "w").write(json.dumps({"hooks": {"PostToolUse": [{"hooks": [{"type": "command", "command": "python3 /opt/paas/hooks/notes-check.py"}]}]}}))
 r = subprocess.run([sys.executable, nc, "--sync"], capture_output=True, text=True, env=dict(twin, HOME=home), timeout=30)
-assert "brain:" in r.stdout, r.stdout                     # a CLI use is never a twin
+assert "brain:" in r.stdout, r.stdout
 # an install made without --team carries the hooks in settings.json: the switch to a team plugin strips them
 home3 = os.path.join(work, "home3"); os.makedirs(os.path.join(home3, ".claude", "tools"))
 shutil.copy(TOOL, os.path.join(home3, ".claude", "tools", "paas-team"))
@@ -119,5 +114,5 @@ subprocess.run([sys.executable, os.path.join(R, "brain", "merge_settings.py"), o
 assert json.load(open(os.path.join(home3, ".claude", "settings.json")))["hooks"]
 run([sys.executable, TOOL, "use", "san"], e=dict(env, HOME=home3))
 assert not json.load(open(os.path.join(home3, ".claude", "settings.json"))).get("hooks"), "settings hooks stripped: the plugin runs them"
-print("guard twin ok")
+print("team hooks from the plugin ok")
 shutil.rmtree(work, ignore_errors=True)

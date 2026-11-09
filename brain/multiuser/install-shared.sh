@@ -122,14 +122,22 @@ install -m 755 "$BRAIN/claude/tools/paas-team" "$P/bin/paas-team"
 install -m 755 "$BRAIN/claude/tools/paas-library" "$P/bin/paas-library"
 mkdir -p "$P/libraries" && chmod 755 "$P/libraries"
 ln -sfn "$P/bin/paas-team" /usr/local/bin/paas-team
-python3 "$BRAIN/teams/publish.py" --all --to "$P/teams" $DOCS_OPTS > "$P/teams.log" 2>&1 || { cat "$P/teams.log"; echo "install-shared: publishing the teams failed (see above)"; exit 1; }
+# A team's repository is its own: once it exists (here, or in GitLab) the installer never changes it again - skills,
+# rules, hooks and guard are whatever the team keeps in git. Only a team not here yet is built, and a GitLab project
+# recorded for it is filled once while it is still empty. Updating a team from this repository is a deliberate step:
+#   python3 brain/teams/publish.py <team> --to <its GitLab url>      (then members get it at their next session start)
+python3 "$BRAIN/teams/publish.py" --all --only-missing --to "$P/teams" $DOCS_OPTS > "$P/teams.log" 2>&1 || { cat "$P/teams.log"; echo "install-shared: publishing the teams failed (see above)"; exit 1; }
 sed 's/^/teams: /' "$P/teams.log"; rm -f "$P/teams.log"
-# a team with a GitLab project recorded: the new plugin goes there too, so every member (VM or laptop) gets it at the next sync
 for tj in "$P"/teams/*/team.json; do
   [ -f "$tj" ] || continue
   t=$(basename "$(dirname "$tj")"); remote=$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1])).get("remote") or "")' "$tj")
-  [ -n "$remote" ] || continue
-  python3 "$BRAIN/teams/publish.py" "$t" --to "$remote" $DOCS_OPTS 2>&1 | sed "s/^/teams: $t -> GitLab: /" || true
+  [ -n "$remote" ] && [ -d "$BRAIN/teams/$t" ] || continue
+  refs=$(GIT_TERMINAL_PROMPT=0 git -c credential.helper="$P/bin/paas-git-credential" -c credential.useHttpPath=true ls-remote -q -- "$remote" 2>/dev/null) || { echo "teams: $t: $remote not reachable now; left alone"; continue; }
+  if [ -z "$refs" ]; then                                   # a new, empty GitLab project: the team's first content
+    python3 "$BRAIN/teams/publish.py" "$t" --to "$remote" $DOCS_OPTS 2>&1 | sed "s/^/teams: $t -> GitLab (first content): /" || true
+  else
+    echo "teams: $t: $remote has content: left as it is (the team's own)"
+  fi
 done
 # API key for everyone's Claude: root writes it once into /etc/paas/api-key; the helper below hands it to each person's
 # Claude Code (managed settings). Readable by group paas-users and, through the ACLs below, by the directory groups that may
