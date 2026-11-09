@@ -333,10 +333,10 @@ export function mount(container, api) {
       : emptyBlock('Ask your admin to connect a tool server, or add one from the Marketplace.', '', null, { icon: 'box', title: 'No MCP servers configured' }).outerHTML}
       <div class="row" style="margin-top:10px"><button class="btn ghost sm chk">${icon('play')} Check connections</button><span class="sub">runs <code>claude mcp list</code></span></div><pre class="st" role="status" style="display:none"></pre></div>
       <div class="card"><h3>Hooks</h3><div class="sub" style="margin-bottom:10px">Small helpers that run around Claude's steps. Switching one off applies to your chats only.</div>${data.hooks.length ? data.hooks.map((h) => `<div class="hk">
-        <div class="hk-t"><b>${esc(h.title)}</b> <span class="badge">${h.source === 'shared' ? 'shared' : String(h.source || '').startsWith('plugin ') ? esc(h.source) : 'yours'}</span>
+        <div class="hk-t"><b>${esc(h.title)}</b> <span class="badge">${h.source === 'shared' ? 'shared' : /^(plugin|team) /.test(String(h.source || '')) ? esc(h.source) : 'yours'}</span>${h.source === 'shared' && !h.on && !h.canToggle ? ' <span class="badge">standing aside</span>' : ''}
         <div class="sub">${esc(h.about || h.command)}</div><div class="sub">${esc(h.when)}${h.matcher !== '*' ? ` · <code>${esc(h.matcher)}</code>` : ''}</div></div>
         ${h.canToggle ? `<label class="sw"><input type="checkbox" role="switch" aria-label="${esc(h.title)}" data-hk="${esc(h.id)}" ${h.on ? 'checked' : ''}><span></span></label>`
-          : `<span class="sub">${h.id === 'block-write-tools' ? 'Always on: keeps your storage read-only' : String(h.source || '').startsWith('plugin ') ? 'Comes with the plugin' : 'Set by root'}</span>`}</div>`).join('')
+          : `<span class="sub">${h.source === 'shared' && !h.on ? 'Your team\'s own copy runs instead' : String(h.source || '').startsWith('team ') ? 'From your team\'s git repository' : h.id === 'block-write-tools' ? 'On for chats without a team: keeps your storage read-only' : String(h.source || '').startsWith('plugin ') ? 'Comes with the plugin' : 'Set by root'}</span>`}</div>`).join('')
         : emptyBlock('Hooks are small helpers that run around Claude\'s steps.', '', null, { icon: 'play', title: 'No hooks set up' }).outerHTML}</div>`;
     wireShare(renderMcp);
     pane.querySelectorAll('[data-hk]').forEach((cb) => cb.addEventListener('change', async () => {

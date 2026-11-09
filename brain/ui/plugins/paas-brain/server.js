@@ -297,24 +297,35 @@ const WHEN = { PreToolUse: 'Before a tool runs', PostToolUse: 'After a tool runs
 function hooks() {
   const off = hooksOff();
   const out = [];
+  // the active team's plugin brings its own hooks (from its git repository); while it is enabled the VM's shared copies
+  // stand aside (brain/claude/hooks team_hooks_active), so the list says which ones really run
+  const t = pluginTeam();
+  const tid = t ? (t.id || `paas-brain-${t.team}@paas-brain-${t.team}`) : null;
+  const teamOn = !!tid && ((json(path.join(C, 'settings.json')) || {}).enabledPlugins || {})[tid] === true;
   const files = [['shared', MANAGED], ['yours', path.join(C, 'settings.json')],
+    ...(t ? [[`team ${t.external ? t.plugin : t.team.toUpperCase()}`, path.join(t.dir, 'hooks', 'hooks.json')]] : []),
     ...otherPlugins().map((pl) => [`plugin ${pl.name}`, path.join(pl.dir, 'hooks', 'hooks.json')])];   // other plugins' hooks too
   for (const [source, file] of files) {
     const s = json(file) || {};
-    const fromPlugin = source.startsWith('plugin ');
+    const fromPlugin = source.startsWith('plugin ') || source.startsWith('team ');
+    const asides = source === 'shared' && teamOn && MANAGED_HOOKS_STEP_ASIDE;
     for (const [event, groups] of Object.entries(s.hooks || {})) {
       for (const g of groups || []) {
         for (const h of g.hooks || []) {
-          const command = String(h.command || '').replace(HOME, '~');
-          const id = (/([\w-]+)\.py\b/.exec(command) || [])[1] || '';
-          const [title, about, canToggle] = HOOK_INFO[id] || [command.length > 70 ? `${command.slice(0, 69)}…` : command, '', false];
-          out.push({ id, title, about, canToggle: canToggle && !fromPlugin, on: fromPlugin || !off.has(id), source, when: WHEN[event] || event, matcher: g.matcher || '*', command });
+          const command = [h.command, ...(Array.isArray(h.args) ? h.args : [])].filter(Boolean).map(String).join(' ').replace(new RegExp(HOME, 'g'), '~');
+          const id = (/([\w-]+)\.(?:py|sh|js)\b/.exec(command) || [])[1] || '';
+          const [title, about0, canToggle] = HOOK_INFO[id] || [command.length > 70 ? `${command.slice(0, 69)}…` : command, '', false];
+          const about = asides ? `Stands aside while your team (${t.external ? t.plugin : t.team.toUpperCase()}) runs its own hooks from its git repository.${about0 ? ` ${about0}` : ''}` : about0;
+          out.push({ id, title, about, canToggle: canToggle && !fromPlugin && !asides, on: asides ? false : (fromPlugin || !off.has(id)), source, when: WHEN[event] || event, matcher: g.matcher || '*', command });
         }
       }
     }
   }
   return out;
 }
+// the VM's shared hooks step aside for an active team plugin (brain/claude/hooks, team_hooks_active); a VM whose hooks
+// predate that rule does not, so the list only says so when the installed copy carries it
+const MANAGED_HOOKS_STEP_ASIDE = (() => { try { return fs.readFileSync('/opt/paas/hooks/block-write-tools.py', 'utf8').includes('team_hooks_active'); } catch { return false; } })();
 
 // the servers this person's Claude connects: the active team plugin's (its .mcp.json, built from the team repository's
 // mcp.json; Claude Code starts them while the plugin is enabled) and their own user-scope ones in ~/.claude.json
