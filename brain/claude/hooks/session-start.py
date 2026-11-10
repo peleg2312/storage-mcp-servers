@@ -205,6 +205,10 @@ def memory_line():
     notes = read(os.path.join(mem, "brain", "notes.md"))
     n = len(notes.splitlines())
     line = f"notes.md: {sum(1 for l in notes.splitlines() if l.startswith('- '))} core facts, {n} lines"
+    link = os.path.join(mem, "brain", "notes.md")
+    if os.path.islink(link):              # team mode: Claude Code does not Write / Edit through a file link, so name the real place
+        line += (f" (notes.md, environment.md and tool-map.md are links: edit them at "
+                 f"{os.path.dirname(os.path.realpath(link)).replace(os.path.expanduser('~'), '~', 1)}/<file>)")
     if n > NOTES_CAP:
         line += (f" - OVER the {NOTES_CAP}-line cap: move facts most sessions do not need into notes/<topic>.md "
                  "(it is loaded every session)")

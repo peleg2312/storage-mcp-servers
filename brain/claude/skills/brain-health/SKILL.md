@@ -44,7 +44,10 @@ Note which docs server answered (docs-search or docs-local); if neither, test th
 - Never test the guard by calling a write tool.
 
 ## 4. Brain files (`~/.claude/`)
-`CLAUDE.md` present and identical to the repo copy (if the repo is here: `cmp`); `brain/environment.md`
+`CLAUDE.md` present and identical to the repo copy (if the repo is here: `cmp`). Team mode (`brain/team` exists): instead,
+`CLAUDE.md` holds the line `@~/.claude/brain/main.md`, and `brain/main.md`, `persona.md`, `storage.md`, `coding.md` are links
+into `brain/teams/<team>/rules/` (`ls -l`): the team's own rules, so a difference from the repo is not a finding, a broken
+link or a missing import line is; `notes.md`, `environment.md`, `tool-map.md` link into the team's `knowledge/`. `brain/environment.md`
 filled (arrays, versions, fabrics, thresholds - count empty table rows and `__` placeholders);
 `brain/tool-map.md` generated (not the "Not generated yet" stub); `brain/notes.md` present;
 `skills/*/SKILL.md` and `agents/*.md` counts equal the repo's; the banner / status line files exist.
@@ -54,10 +57,11 @@ Run `/doctor prompt-audit` if this Claude Code has it (audits CLAUDE.md, the imp
 and agents under `~/.claude/`). Report its findings - contradictions between files, references to tools,
 files or commands that do not exist, instructions written for older models - as WARN rows with the
 proposed edit; apply nothing (the user decides). If the command is unavailable, say so and compare by hand the
-rules in CLAUDE.md and brain/storage.md with the skills that cite them (read-only rule, answer format, notes.md as memory).
+rules in CLAUDE.md (or main.md) and brain/storage.md with the skills that cite them (read-only rule, answer format, notes.md as memory).
 
 ## 6. Context size
-Two budgets: `wc -l ~/.claude/CLAUDE.md ~/.claude/brain/notes.md` (every session) <= 120 lines; plus
+Two budgets: `wc -l ~/.claude/CLAUDE.md ~/.claude/brain/notes.md` plus `~/.claude/brain/main.md` when CLAUDE.md imports it
+(every session) <= 120 lines; plus
 `storage.md environment.md tool-map.md` (plain chats, generated ~/chats/CLAUDE.md) <= 250 lines in total; notes.md <= 60.
 Over that: WARN with the
 file to trim (move notes.md facts most sessions do not need into `notes/<topic>.md`, which is read on demand;

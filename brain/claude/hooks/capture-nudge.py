@@ -33,7 +33,8 @@ def main():
     if not sid or text.count('"type":"tool_use"') + text.count('"type": "tool_use"') < need:
         return 0
     # a capture or note was written this session (a mention of the paths in prose does not count)
-    if re.search(r'"file_path"\s*:\s*"[^"]*brain/(?:captures/|notes/|notes\.md)', text):
+    # (a team member's notes.md is written at its real place, ~/.claude/brain/teams/<team>/knowledge/notes.md)
+    if re.search(r'"file_path"\s*:\s*"[^"]*(?:brain|knowledge)/(?:captures/|notes/|notes\.md|runbooks/)', text):
         return 0
     d = os.path.expanduser("~/.claude/brain/.nudged")
     try:

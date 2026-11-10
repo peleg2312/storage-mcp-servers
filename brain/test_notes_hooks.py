@@ -53,6 +53,9 @@ assert run("capture-nudge.py", sess("a")) == (0, ""), "second time must be silen
 assert run("capture-nudge.py", sess("b", stop_hook_active=True)) == (0, "")
 open(tr, "w").write('{"type":"tool_use"}\n' * 25 + '{"type":"tool_use","name":"Write","input":{"file_path":"/home/u/.claude/brain/captures/x.md"}}\n')
 assert run("capture-nudge.py", sess("c")) == (0, "")
+for i, target in enumerate(("/home/u/.claude/brain/teams/san/knowledge/notes.md", "/home/u/.claude/brain/runbooks/pmax-add-host.md")):
+    open(tr, "w").write('{"type":"tool_use"}\n' * 25 + '{"type":"tool_use","name":"Edit","input":{"file_path":"%s"}}\n' % target)
+    assert run("capture-nudge.py", sess(f"d{i}")) == (0, ""), target   # a team member's notes.md at its real place, a runbook
 print("capture-nudge ok")
 
 # brain as a git repository: the hook commits what it scans, --commit works, incidents are scanned

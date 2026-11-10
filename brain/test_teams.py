@@ -257,6 +257,7 @@ r = subprocess.run([sys.executable, os.path.join(clone, "paas-brain-san", "hooks
                    capture_output=True, text=True, timeout=60)
 assert "notes/powermax.md" in r.stdout and "notes/fabric.md" in r.stdout and "runbooks: 1" in r.stdout, r.stdout
 assert "notes.md: 1 core facts" in r.stdout, r.stdout
+assert "are links: edit them at ~/.claude/brain/teams/san/knowledge/<file>" in r.stdout, r.stdout   # Claude Code will not write through a file link
 print("runbooks ok")
 
 # 4. the notes hook commits into the active team's repository; sync against a bare remote; refresh after a plugin change

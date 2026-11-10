@@ -600,7 +600,7 @@ export function mount(container, api) {
     dirty = false;
     pane.innerHTML = `${cap ? '' : `<div class="sub" style="margin-bottom:10px">${data.pluginTeam ? `Team <b>${esc(data.pluginTeam.toUpperCase())}</b>: notes, environment and tool map are the team's shared memory, synced through the team repository at every save. Switch in the Team tab.` : 'Your own memory files. Pick a team in the Team tab to share notes, environment and tool map with that team.'}</div>`}<div class="seg" role="group" aria-label="Memory file">${data.memory.map((x, k) => `<button data-i="${k}" aria-pressed="${k === i}">${esc(x.name)}</button>`).join('')}</div>
       <div class="sub" style="margin:12px 0 8px">${m.editable
-        ? `What Claude reads at the start of every session. Edit and save; the previous version is kept as a .bak file.${m.name === 'CLAUDE.md' ? ' A brain update replaces this file: keep lasting facts in notes.md.' : ''}`
+        ? `What Claude reads at the start of every session. Edit and save; the previous version is kept as a .bak file.${m.name === 'CLAUDE.md' ? (data.pluginTeam ? ' Your own lines only: the brain\'s rules come from your team\'s rules/ folder through the @~/.claude/brain/main.md line (keep that line).' : ' A brain update replaces this file: keep lasting facts in notes.md.') : ''}`
         : 'Shared file: only root changes it.'}</div>
       ${m.editable ? `${field(`${esc(m.name)}`, `<textarea class="mt" spellcheck="false">${esc(m.text)}</textarea>`)}
         <div class="row sticky"><button class="btn save">Save</button><button class="btn ghost hist">History</button><span class="stbox"></span></div><div class="histbox"></div>` : `<pre>${esc(m.text)}</pre>`}
