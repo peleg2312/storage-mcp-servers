@@ -443,4 +443,44 @@ rc, o = run([sys.executable, TOOL, "add", "nob", nob], ok=False)
 assert rc == 1 and "holds no" in o and not os.path.exists(os.path.join(brain, "teams", "nob")), o
 team("use", "san")
 print("external brain ok")
+
+# 11. an external brain on a multi-user VM, like a paas team there: root's copy in the teams folder is pulled and its docs
+#     folder becomes its library (mirrored, rebuilt only when the docs changed); a member who switches to it gets a
+#     docs-local over that library and the knowledge index the docs service keeps for it, and loses it when leaving
+vmlib, vmidx, libs = os.path.join(work, "vmlib"), os.path.join(work, "vmidx"), os.path.join(work, "libs")
+os.makedirs(vmlib); os.makedirs(vmidx); os.makedirs(libs)
+open(os.path.join(vmlib, "mcp_stdio.py"), "w").write("# stand-in\n")
+vm = dict(env, PAAS_DOCS_LIB=vmlib, PAAS_DOCS_INDEX=vmidx, PAAS_LIBRARIES=libs)
+vteam = lambda *a, ok=True: run([sys.executable, TOOL, *a], e=vm, ok=ok)[1]
+src_ob = os.path.join(work, "sources", "ob")
+run(["git", "clone", "-q", ext, src_ob])                       # root's copy (install-multiuser.sh --team ob=<url>)
+os.makedirs(os.path.join(ext, "docs", "upstream", "proda")); os.makedirs(os.path.join(ext, "docs", "upstream", "prodb"))
+open(os.path.join(ext, "docs", "upstream", "proda", "a.md"), "w").write("# Product A\n\nThe quorum witness of product A lives on site C.\n")
+open(os.path.join(ext, "docs", "upstream", "prodb", "b.md"), "w").write("# Product B\n\nB replicates every five minutes.\n")
+run(["git", "-C", ext, "add", "-A"]); run(["git", "-C", ext, "-c", "user.name=t", "-c", "user.email=t@t", "commit", "-qm", "docs"])
+o = vteam("docs", "--all")
+assert "ob: up to date with its remote" in o and "2 documents" in o, o
+assert os.path.isfile(os.path.join(libs, "ob", "docs.db")) and os.path.isfile(os.path.join(libs, "ob", "docs", "ob", "proda", "a.md")), o
+assert "unchanged" in vteam("docs", "--all"), "the same docs tree: no rebuild"
+run(["git", "-C", ext, "rm", "-q", "docs/upstream/proda/a.md"]); run(["git", "-C", ext, "-c", "user.name=t", "-c", "user.email=t@t", "commit", "-qm", "rm"])
+o = vteam("docs", "--all")
+assert "1 documents" in o and not os.path.exists(os.path.join(libs, "ob", "docs", "ob", "proda")), o
+open(os.path.join(home, "claude.log"), "w").close()
+o = vteam("use", "ob")
+log = claude_log()
+assert "mcp add-json -s user docs-local" in log and os.path.join(vmidx, "ob.db") in log and os.path.join(libs, "ob", "docs.db") in log, log
+assert "docs-local: its knowledge + ob" in o, o
+ext_env = os.path.join(brain, "teams", ".external-env.json")
+assert json.load(open(ext_env)).get("docs_mcp"), open(ext_env).read()
+vteam("env", "ob", "OB_URL=https://ob2.internal")
+assert json.load(open(ext_env)).get("docs_mcp"), "a settings change keeps its docs-local"
+open(os.path.join(home, "claude.log"), "w").close()
+vteam("use", "san")
+assert "mcp remove -s user docs-local" in claude_log() and not os.path.exists(ext_env)
+# not on a VM (no docs service here): nothing registered
+open(os.path.join(home, "claude.log"), "w").close()
+team("use", "ob")
+assert "add-json" not in claude_log(), claude_log()
+team("use", "san")
+print("external brain on a VM ok")
 shutil.rmtree(work, ignore_errors=True)

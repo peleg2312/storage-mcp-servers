@@ -1,0 +1,10 @@
+[Unit]
+Description=Daily refresh of the external brains' docs libraries (paas-team docs --all)
+
+[Timer]
+OnCalendar=*-*-* 03:17
+RandomizedDelaySec=20m
+Persistent=true
+
+[Install]
+WantedBy=timers.target

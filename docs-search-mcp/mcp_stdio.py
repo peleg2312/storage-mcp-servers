@@ -14,6 +14,8 @@ for a VM that runs Claude Code but has no pip, no containers and no internet.
                       index at start when they changed since the last run (one or two seconds for a team's pages, nothing
                       otherwise), so the team knowledge is searched with the library without any other step. Without a
                       library (--db missing: a laptop) the knowledge index is the only index (knowledge-only mode).
+    --team-index PATH  an external brain on a multi-user VM: the knowledge index the docs service keeps for it
+                      (/var/lib/paas-docs/index/<team>.db), searched with the library as it is (nothing is rebuilt)
     --shared-knowledge DIR   a multi-user VM: the docs service keeps one index per team under DIR (/var/lib/paas-docs,
                       <team>.db + .stamp); when it is as fresh as this person's clone it is used as is, so twenty people
                       do not each rebuild the same index; otherwise the person's own index is built as usual.
@@ -306,6 +308,46 @@ def knowledge_files(root):
     return out
 
 
+EXT_KNOWLEDGE = ("knowledge", "runbooks", "incidents", "notes", "postmortems", "playbooks", "decisions")
+
+
+def glob_plugin_json(d):
+    import glob
+    return glob.glob(os.path.join(d, ".claude-plugin", "plugin.json")) + glob.glob(os.path.join(d, "*", ".claude-plugin", "plugin.json")) \
+        + glob.glob(os.path.join(d, "*", "*", ".claude-plugin", "plugin.json"))
+
+
+def origin_url(repo):
+    """the origin url of a repository, read from its .git/config (the service's account does not own root's copy, and git
+    refuses to work in a repository of another owner)"""
+    try:
+        text = open(os.path.join(repo, ".git", "config"), encoding="utf-8", errors="replace").read()
+    except OSError:
+        return ""
+    m = re.search(r'^\s*\[remote\s+"origin"\]\s*$(.*?)(?=^\s*\[|\Z)', text, re.M | re.S)
+    u = re.search(r"^\s*url\s*=\s*(\S.*?)\s*$", m.group(1), re.M) if m else None
+    return u.group(1) if u else ""
+
+
+def external_files(root, folders):
+    """the knowledge pages of an external brain: *.md under its knowledge folders (and inbox), regular files inside the
+    repository only (a symlink is never followed), README / templates left out"""
+    real = os.path.realpath(root)
+    out = []
+    for fo in folders:
+        base = os.path.join(root, fo)
+        if os.path.islink(base) or not os.path.isdir(base):
+            continue
+        for dp, dirs, fs in os.walk(base):
+            dirs[:] = sorted(x for x in dirs if not x.startswith(".") and not os.path.islink(os.path.join(dp, x)))
+            for f in sorted(fs):
+                p = os.path.join(dp, f)
+                if f.endswith(".md") and not f.lower().startswith(("readme", "_template")) and not os.path.islink(p) \
+                        and os.path.isfile(p) and os.path.realpath(p).startswith(real + os.sep):
+                    out.append(p)
+    return out
+
+
 def knowledge_state(brain_dir, files):
     """a fingerprint of the knowledge pages that is the same in every clone of the same commit (names and contents, not
     mtimes), so the service's index and a member's clone can be compared; cheap: a team's pages are small"""
@@ -367,9 +409,31 @@ class Teams:
 
     def names(self):
         try:
-            return sorted(d for d in os.listdir(self.dir) if os.path.isfile(os.path.join(self.dir, d, "team.json")))
+            return sorted(d for d in os.listdir(self.dir) if re.match(r"^[a-z][a-z0-9_-]{0,31}$", d)
+                          and (os.path.isfile(os.path.join(self.dir, d, "team.json")) or self.external(d)))
         except OSError:
             return []
+
+    def external(self, team):
+        """an external brain root put here (another Claude Code brain kept as it is: no team.json): its knowledge layout
+        from its brain.json, else the usual folders; None for a team built by the brain (team.json)"""
+        d = os.path.join(self.dir, team)
+        if os.path.isfile(os.path.join(d, "team.json")) or not os.path.isdir(os.path.join(d, ".git")):
+            return None
+        try:
+            bj = json.load(open(os.path.join(d, "brain.json")))
+            bj = bj if isinstance(bj, dict) else {}
+        except (OSError, ValueError):
+            bj = {}
+        has_plugin = bj.get("plugin") or os.path.isfile(os.path.join(d, ".claude-plugin", "marketplace.json")) or any(
+            os.path.isfile(p) for p in glob_plugin_json(d)) or os.path.isdir(os.path.join(d, "skills"))
+        if not has_plugin:
+            return None
+        kn = bj.get("knowledge") if isinstance(bj.get("knowledge"), dict) else {}
+        ok = lambda f: isinstance(f, str) and f and not f.startswith((".", "/")) and ".." not in f.split("/")
+        folders = [f for f in (kn.get("folders") or EXT_KNOWLEDGE) if ok(f)] + [f for f in [kn.get("inbox") or "inbox"] if ok(f)]
+        lib_name = str(bj.get("library") or team)
+        return {"folders": folders, "library": lib_name if re.match(r"^[a-z0-9][a-z0-9_-]{0,31}$", lib_name) else ""}
 
     def db(self, team):
         return os.path.join(self.state, "index", team + ".db")      # index/: readable by members' docs-local; the clones are not
@@ -389,7 +453,11 @@ class Teams:
             if team not in self.names():
                 continue
             try:
-                meta = json.load(open(os.path.join(self.dir, team, "team.json")))
+                ext = self.external(team)
+                if ext:
+                    meta = {"remote": origin_url(os.path.join(self.dir, team))}
+                else:
+                    meta = json.load(open(os.path.join(self.dir, team, "team.json")))
                 remote = meta.get("remote")
                 clone = os.path.join(self.state, "teams", team)
                 env = dict(os.environ, GIT_TERMINAL_PROMPT="0")
@@ -405,8 +473,8 @@ class Teams:
                             clone = os.path.join(self.dir, team)
                 else:
                     clone = os.path.join(self.dir, team)       # no remote: the VM's copy is all there is
-                k = os.path.join(clone, "knowledge")
-                files = knowledge_files(k)
+                k = clone if ext else os.path.join(clone, "knowledge")
+                files = external_files(clone, ext["folders"]) if ext else knowledge_files(k)
                 state = knowledge_state(k, files)
                 stamp = self.db(team) + ".stamp"
                 try:
@@ -425,7 +493,9 @@ class Teams:
                 try:
                     os.makedirs(os.path.join(staging, "local", "brain-notes"))
                     os.makedirs(os.path.join(staging, "local", "brain-incidents"))
-                    for f in files:
+                    for f in files if ext else []:            # an external brain: every page, named by its path in the repository
+                        shutil.copy2(f, os.path.join(staging, "local", "brain-notes", os.path.relpath(f, clone).replace(os.sep, "__")), follow_symlinks=False)
+                    for f in [] if ext else files:
                         if os.sep + "notes" + os.sep in f:
                             shutil.copy2(f, os.path.join(staging, "local", "brain-notes", os.path.basename(f)), follow_symlinks=False)
                         else:
@@ -443,6 +513,10 @@ class Teams:
 
     def library(self, team):
         """the team's own library name from its team.json ("library"), or "" for the general one"""
+        ext = self.external(team)
+        if ext:                                              # its docs as a team library once root built it (paas-team docs)
+            name = ext["library"]
+            return name if name and self.libraries and os.path.isfile(os.path.join(self.libraries, name, "docs.db")) else ""
         try:
             name = str(json.load(open(os.path.join(self.dir, team, "team.json"))).get("library") or "")
         except (OSError, ValueError):
@@ -635,6 +709,8 @@ def main():
     ap.add_argument("--no-library", action="store_true",
                     help="never look for the general library (a team with its own library that is not installed here)")
     ap.add_argument("--shared-knowledge", metavar="DIR")
+    ap.add_argument("--team-index", metavar="PATH", help="a team knowledge index built by the docs service (an external brain "
+                    "on a multi-user VM: /var/lib/paas-docs/index/<team>.db), used as it is: nothing is rebuilt")
     ap.add_argument("--proxy", metavar="URL", help="stdio bridge to a docs-search server (token: PAAS_DOCS_TOKEN or --token-file)")
     ap.add_argument("--ca", metavar="FILE", help="certificate the --proxy server is verified against (the VM's)")
     a = ap.parse_args()
@@ -644,6 +720,14 @@ def main():
             with open(a.token_file) as f:
                 token = f.read().strip()
         return serve_proxy(a.proxy, token, a.ca)
+    if not a.http and a.team_index:                           # an external brain: the service's index of its knowledge, as is
+        a.brain_db = a.team_index if os.path.exists(a.team_index) else "/nonexistent-brain-db"
+        lib_db = None if a.no_library else lib.locate_db(a.db)
+        if lib_db:
+            return serve_stdio(Server(lib.find_db(lib_db), a.brain_db))
+        if os.path.exists(a.brain_db):                       # no library here: the team index is the whole index
+            return serve_stdio(Server(a.brain_db, "/nonexistent-brain-db"))
+        sys.exit("docs-local: no library and no team index yet (" + a.team_index + ")")
     if not a.http:                                            # every docs-local indexes the person's team knowledge at start
         knowledge = a.knowledge or os.path.dirname(a.brain_db or default_brain_db())
         shared = shared_knowledge(knowledge, a.shared_knowledge) if a.shared_knowledge else None

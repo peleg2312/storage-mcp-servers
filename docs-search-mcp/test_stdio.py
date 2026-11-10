@@ -292,3 +292,52 @@ open(os.path.join(member, "notes", "mine.md"), "w").write("# Mine\n- 2026-10-31 
 o = ask_stdio(["--db", db, "--knowledge", member, "--brain-db", own, "--shared-knowledge", os.path.join(state, "index")])
 assert os.path.exists(own) and o[2]["libraries"][1]["documents"] == 3, "pages differ from the service's: own index"
 print("shared knowledge ok")
+
+# an external brain on a multi-user VM (another Claude Code brain kept as it is: a plugin, no team.json): the docs service
+# indexes its knowledge folders (brain.json, else the usual ones), leaves README / templates / symlinks out, serves its
+# library once built, and a member's docs-local reads the service's index as it is (--team-index)
+import importlib
+ms = importlib.import_module("mcp_stdio")
+xdir, xstate, xlibs = os.path.join(root, "xteams"), os.path.join(root, "xstate"), os.path.join(root, "xlibs")
+rb = os.path.join(xdir, "redbull")
+for d in ("skills/triage", "runbooks/fc", "knowledge", "templates", ".claude-plugin", "src"):
+    os.makedirs(os.path.join(rb, d))
+open(os.path.join(rb, ".claude-plugin", "plugin.json"), "w").write(json.dumps({"name": "redbull-brain"}))
+open(os.path.join(rb, "skills", "triage", "SKILL.md"), "w").write("---\nname: triage\n---\nnot knowledge\n")
+open(os.path.join(rb, "runbooks", "fc", "slowdrain.md"), "w").write("# Slow drain\n- the brocade porterrshow credit zero counter climbs on isl 3\n")
+open(os.path.join(rb, "knowledge", "README.md"), "w").write("# readme credit zero isl\n")
+open(os.path.join(rb, "templates", "x.md"), "w").write("# template credit zero\n")
+open(os.path.join(rb, "src", "code.md"), "w").write("# code credit zero isl\n")
+os.symlink("/etc", os.path.join(rb, "knowledge", "etc"))
+subprocess.run(["git", "init", "-q", rb], check=True)
+os.makedirs(os.path.join(xdir, "plain", ".git"))              # neither team.json nor a plugin: not a team
+os.makedirs(os.path.join(xdir, "t1")); shutil.copy(os.path.join(tdir, "t1", "team.json"), os.path.join(xdir, "t1", "team.json"))
+T = ms.Teams(xdir, xstate, print, xlibs)
+assert T.names() == ["redbull", "t1"], T.names()
+assert T.external("t1") is None and T.external("plain") is None
+assert T.external("redbull")["library"] == "redbull" and "runbooks" in T.external("redbull")["folders"]
+assert T.library("redbull") == "", "no library until root built it"
+os.makedirs(os.path.join(xlibs, "redbull")); shutil.copy(db, os.path.join(xlibs, "redbull", "docs.db"))
+assert T.library("redbull") == "redbull"
+T.refresh("redbull")
+xdb = T.db("redbull")
+assert os.path.exists(xdb) and os.path.exists(xdb + ".stamp"), os.listdir(os.path.join(xstate, "index"))
+ask = [{"jsonrpc": "2.0", "id": 1, "method": "tools/call", "params": {"name": "search_docs", "arguments": {"query": "porterrshow credit zero isl"}}},
+       {"jsonrpc": "2.0", "id": 2, "method": "tools/call", "params": {"name": "list_sources", "arguments": {}}}]
+o = ask_stdio(["--db", db, "--team-index", xdb])
+paths = [r.get("path", "") for r in o[1]["results"]]
+assert any("runbooks__fc__slowdrain.md" in p for p in paths), paths
+assert not any(w in p for p in paths for w in ("README", "template", "code.md", "SKILL")), paths
+assert [l["library"] for l in o[2]["libraries"]] == ["main", "team knowledge"] and o[2]["libraries"][1]["documents"] == 1, o[2]
+m0 = os.path.getmtime(xdb); time.sleep(1.1); T.refresh("redbull")
+assert os.path.getmtime(xdb) == m0, "unchanged pages: no rebuild"
+# brain.json names other folders and a library of another name
+open(os.path.join(rb, "brain.json"), "w").write(json.dumps({"knowledge": {"folders": ["src", "../etc", "/etc"]}, "library": "rb-docs"}))
+assert T.external("redbull")["folders"] == ["src", "inbox"] and T.library("redbull") == ""
+p = subprocess.run([sys.executable, os.path.join(here, "mcp_stdio.py"), "--no-library", "--team-index", os.path.join(root, "missing.db")],
+                   input="", capture_output=True, text=True, timeout=60)
+assert p.returncode != 0 and "no team index yet" in p.stderr, p.stderr
+print("external brain index ok")
+subprocess.run(["git", "-C", rb, "remote", "add", "origin", "https://gitlab.example.com/team-redbull/redbull-brain.git"], check=True)
+assert ms.origin_url(rb) == "https://gitlab.example.com/team-redbull/redbull-brain.git" and ms.origin_url(os.path.join(xdir, "plain")) == ""
+print("origin url ok")

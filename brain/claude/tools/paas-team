@@ -22,8 +22,11 @@ knowledge are still switched and the plugin is registered at the next `paas-team
   paas-team env <team> [KEY=VALUE ...] [KEY=]   settings an external brain's plugin reads (its server addresses,
                                    tokens): kept in its clone's .git, put into ~/.claude/settings.json "env" while it is
                                    active ({dir} = the clone); without pairs: the names set
-  paas-team docs <team>            root: an external brain's docs folder (brain.json "docs", or docs/upstream) into a team
-                                   library of the same name (paas-library), used by the Docs tab while that brain is active
+  paas-team docs <team> [--force]  root: an external brain's docs folder (brain.json "docs", or docs/upstream) into a team
+                                   library of the same name (paas-library, mirrored; skipped when unchanged), used by the
+                                   Docs tab and docs-local while that brain is active
+  paas-team docs --all [--no-pull] root, multi-user VM: every external brain in /opt/paas/teams pulled (fast-forward) and its
+                                   library built when its docs changed (install-shared.sh and the daily timer run it)
   paas-team edit <team>            change it from JSON on stdin (title, description, persona, rules, environment, skills,
                                    agents, mcp_servers {name: {url, type, token}}, remove_mcp): written into the team's
                                    repository (filled-in servers also into the plugin's .mcp.json), committed, pushed,
@@ -403,20 +406,93 @@ def settings_env(add=None, drop=()):
 
 
 def clear_ext_env():
+    """an external brain leaves: the settings it put into settings.json, and the docs-local registered for it"""
     st = jload(EXT_ENV)
     if st.get("keys"):
         settings_env(drop=st["keys"])
+    if st.get("docs_mcp"):
+        claude_mcp("remove", "-s", "user", "docs-local")
     if os.path.exists(EXT_ENV):
         os.remove(EXT_ENV)
 
 
 def apply_ext_env(team):
-    clear_ext_env()
+    st = jload(EXT_ENV)                                         # its settings again (paas-team env); its docs-local stays
+    if st.get("keys"):
+        settings_env(drop=st["keys"])
     env = {k: str(v).replace("{dir}", team_dir(team)) for k, v in ((external(team_dir(team)) or {}).get("env") or {}).items() if v != ""}
     if env:
         settings_env(add=env)
-    write(EXT_ENV, json.dumps({"team": team, "keys": sorted(env)}) + "\n")
+    keep = {"docs_mcp": st["docs_mcp"]} if st.get("team") == team and st.get("docs_mcp") else {}
+    write(EXT_ENV, json.dumps({"team": team, "keys": sorted(env), **keep}) + "\n")
     return sorted(env)
+
+
+# the VM's docs service and libraries (a multi-user VM): an external brain root put into /opt/paas/teams gets what a paas
+# team has there - its knowledge indexed by the docs service, its docs folder as a team library, a docs-local for each member
+DOCS_LIB = os.environ.get("PAAS_DOCS_LIB") or "/opt/paas/library"                 # mcp_stdio.py and the general docs.db
+DOCS_INDEX = os.environ.get("PAAS_DOCS_INDEX") or "/var/lib/paas-docs/index"       # <team>.db, kept by the docs service
+LIBRARIES = os.environ.get("PAAS_LIBRARIES") or "/opt/paas/libraries"
+
+
+def same_remote(a, b):
+    norm = lambda u: re.sub(r"(\.git)?/*$", "", re.sub(r"://[^/@]+@", "://", (u or "").strip())).lower()
+    return bool(a and b) and norm(a) == norm(b)
+
+
+def config_origin(repo):
+    """origin url from .git/config itself: root's copies in the VM's teams folder are another owner's, where git refuses"""
+    m = re.search(r'^\s*\[remote\s+"origin"\]\s*$(.*?)(?=^\s*\[|\Z)', read(os.path.join(repo, ".git", "config")), re.M | re.S)
+    u = re.search(r"^\s*url\s*=\s*(\S.*?)\s*$", m.group(1), re.M) if m else None
+    return u.group(1) if u else ""
+
+
+def vm_brain(team, tdir=None):
+    """the name of this external brain in the VM's teams folder: the same name with the same remote, else the copy whose
+    remote is this clone's; "" when root has not put it there"""
+    tdir = tdir or team_dir(team)
+    mine = config_origin(tdir)
+    if not os.path.isdir(SOURCES):
+        return ""
+    names = [team] + sorted(d for d in os.listdir(SOURCES) if d != team)
+    for n in names:
+        d = os.path.join(SOURCES, n)
+        if not NAME.match(n) or os.path.isfile(os.path.join(d, "team.json")) or not os.path.isdir(os.path.join(d, ".git")):
+            continue
+        if (n == team and os.path.realpath(d) == os.path.realpath(tdir)) or same_remote(config_origin(d), mine):
+            return n
+    return ""
+
+
+def vm_library(vm_name):
+    """the external brain's team library on the VM (brain.json "library", else its name), once root built it"""
+    lib = str(brain_json(os.path.join(SOURCES, vm_name)).get("library") or vm_name)
+    db = os.path.join(LIBRARIES, lib, "docs.db")
+    return (lib, db) if NAME.match(lib) and os.path.isfile(db) else ("", "")
+
+
+def ext_docs_mcp(team):
+    """on a multi-user VM: a docs-local for this person (user scope) that searches the brain's own library (or the general
+    one) with the knowledge index the docs service keeps for it, as a paas team's plugin has. Registered only where the
+    service and the brain's VM copy exist; removed again when the brain is left (clear_ext_env)."""
+    server = os.path.join(DOCS_LIB, "mcp_stdio.py")
+    if not os.path.isfile(server) or not shutil.which("claude"):
+        return ""
+    vm = vm_brain(team)
+    if not vm:
+        print(f"note: {team} is not in {SOURCES} on this VM: no docs index for it (root: install-multiuser.sh --team {team}=<git url>)")
+        return ""
+    lib, db = vm_library(vm)
+    args = [server, "--db", db or os.path.join(DOCS_LIB, "docs.db"), "--team-index", os.path.join(DOCS_INDEX, vm + ".db")]
+    claude_mcp("remove", "-s", "user", "docs-local")           # one docs-local only: this brain's
+    rc, out = claude_mcp("add-json", "-s", "user", "docs-local", json.dumps({"type": "stdio", "command": "python3", "args": args}))
+    if rc:
+        print(f"note: docs-local not registered: {out[-200:]}")
+        return ""
+    st = jload(EXT_ENV)
+    st.update({"team": team, "docs_mcp": True})
+    write(EXT_ENV, json.dumps(st) + "\n")
+    return lib or "general library"
 
 
 def unlink_team(t):
@@ -472,7 +548,9 @@ def apply_external(team, say=True):
     else:
         print("note: claude is not in PATH; the plugin is registered next time (paas-team use " + team + ")")
     apply_mcp({"mcp": []}, installed(), tdir)                 # the previous team's servers and permission rules go
+    clear_ext_env()                                           # the previous brain's settings and docs-local
     env = apply_ext_env(team)
+    docs = ext_docs_mcp(team)
     pp = os.path.join(BRAIN, "persona.md")
     if os.path.islink(pp):                                    # multi-user VM: a link to root's shared default, never written through
         os.remove(pp)
@@ -486,37 +564,97 @@ def apply_external(team, say=True):
     if say:
         print(f"brain {team} ({t['title']}) active: plugin {t['plugin']}, {len(t['skills'])} skills, {len(t['agents'])} agents"
               + (f", MCP {', '.join(t['mcp'])}" if t["mcp"] else "") + (f", version {t['version']}" if t["version"] else "")
-              + f"; external brain, kept as it is in {tdir}" + (f"; settings: {', '.join(env)}" if env else ""))
+              + f"; external brain, kept as it is in {tdir}" + (f"; settings: {', '.join(env)}" if env else "")
+              + (f"; docs-local: its knowledge + {docs}" if docs else ""))
         print(f"Its skills are /{t['plugin']}:<skill>. Start a new Claude session (or a new chat in the web UI) to work with it.")
     return t
 
 
-def load_docs(team):
-    """root: an external brain's docs folder (brain.json "docs", or docs/upstream) into the team library of the same name
-    (paas-library add, one product per sub-folder, then build): the Brain tab's Docs tab and the docs search use it while
-    that brain is active. Looked up in the person's clone, then in the VM's teams folder."""
-    tdir = next((d for d in (team_dir(team), os.path.join(SOURCES, team)) if external(d) or (os.path.isdir(d) and find_plugin(d, team))), "")
+def load_docs(team, force=False):
+    """root: an external brain's docs folder (brain.json "docs", or docs/upstream) as the team library of the same name:
+    one product per sub-folder (<library>/docs/<team>/<product>, mirrored: a document deleted in git leaves the library
+    too), then one incremental build. Skipped when the docs folder is the same commit tree as last time (--force builds
+    anyway). The VM's teams folder copy is used first (what the docs service serves), else the person's clone."""
+    tdir = next((d for d in (os.path.join(SOURCES, team), team_dir(team))
+                 if os.path.isdir(d) and not os.path.isfile(os.path.join(d, "team.json")) and (external(d) or find_plugin(d, team))), "")
     if not tdir:
         die(f"no external brain {team!r} here")
     rec = external(tdir) or {"dir": find_plugin(tdir, team)[2], "env": {}}      # a VM copy root cloned: detected the same way
     lay = ext_layout(tdir, rec, team)
-    if not lay["docs"] or not lay["library"]:
-        die(f"{team}: no docs folder (brain.json \"docs\", or docs/upstream)")
-    lib = next((p for p in ("/opt/paas/bin/paas-library", os.path.join(HOME, "tools", "paas-library")) if os.path.isfile(p)), "")
+    if not lay["docs"] or not lay["library"] or not NAME.match(lay["library"]):
+        print(f"{team}: no docs folder (brain.json \"docs\", or docs/upstream): no library to build")
+        return 0
+    lib = next((p for p in ("/opt/paas/bin/paas-library", os.path.join(HOME, "tools", "paas-library"),
+                            os.path.join(os.path.dirname(os.path.realpath(__file__)), "paas-library")) if os.path.isfile(p)), "")
     if not lib:
         die("paas-library is not installed here")
-    root = os.path.join(tdir, lay["docs"])
-    subs = sorted(d for d in os.listdir(root) if os.path.isdir(os.path.join(root, d)) and not d.startswith("."))
+    r = subprocess.run([sys.executable, lib, "path", lay["library"]], capture_output=True, text=True, timeout=60)
+    ldir = r.stdout.strip()
+    if r.returncode or not ldir:
+        die(f"paas-library path {lay['library']}: {(r.stdout + r.stderr).strip()[-200:]}")
+    rc, tree = git(tdir, "rev-parse", "HEAD:" + lay["docs"], timeout=10)
+    mark = os.path.join(ldir, ".source-" + team)
+    if not force and rc == 0 and tree and os.path.isfile(os.path.join(ldir, "docs.db")) and read(mark).strip() == tree:
+        print(f"library {lay['library']}: {team}'s docs unchanged ({tree[:10]}), nothing to build")
+        return 0
+    src = os.path.join(tdir, lay["docs"])
+    subs = sorted(d for d in os.listdir(src) if os.path.isdir(os.path.join(src, d)) and not d.startswith(".") and not os.path.islink(os.path.join(src, d)))
+    dst = os.path.join(ldir, "docs", re.sub(r"[^a-z0-9_.-]+", "-", team.lower()))
+    shutil.rmtree(dst, ignore_errors=True)                    # mirrored: the docs in git are the library's
+    n = 0
     for d in subs or ["."]:
-        prod = re.sub(r"[^a-z0-9_.-]+", "-", (d if d != "." else team).lower())
-        r = subprocess.run([sys.executable, lib, "add", lay["library"], os.path.join(root, d), "--to", f"{team}/{prod}"],
-                           capture_output=True, text=True, timeout=3600)
-        print(f"{prod}: " + ((r.stdout + r.stderr).strip().splitlines() or ["?"])[-1])
-        if r.returncode:
-            return r.returncode
+        prod = re.sub(r"[^a-z0-9_.-]+", "-", (d if d != "." else team).lower()).strip("-.") or "docs"
+        base = os.path.join(src, d)
+        for dp, dirs, fs in os.walk(base):
+            dirs[:] = [x for x in dirs if not x.startswith(".") and not os.path.islink(os.path.join(dp, x))]
+            for f in fs:
+                fp = os.path.join(dp, f)
+                if f.startswith(".") or os.path.islink(fp) or not os.path.isfile(fp):
+                    continue
+                to = os.path.join(dst, prod, os.path.relpath(fp, base))
+                os.makedirs(os.path.dirname(to), exist_ok=True)
+                shutil.copy2(fp, to)                           # mtimes kept: the build reads only what changed
+                n += 1
+    print(f"library {lay['library']}: {n} documents from {team}'s {lay['docs']} ({len(subs) or 1} products)")
+    if not n:
+        return 0
     r = subprocess.run([sys.executable, lib, "build", lay["library"]], capture_output=True, text=True, timeout=7200)
     print((r.stdout + r.stderr).strip()[-400:])
+    if r.returncode == 0 and rc == 0 and tree:
+        write(mark, tree + "\n")
+        os.chmod(mark, 0o644)
     return r.returncode
+
+
+def vm_externals():
+    """the external brains in the VM's teams folder (root cloned them: install-multiuser.sh --team <name>=<url>)"""
+    if not os.path.isdir(SOURCES):
+        return []
+    return [n for n in sorted(os.listdir(SOURCES)) if NAME.match(n) and os.path.isdir(os.path.join(SOURCES, n, ".git"))
+            and not os.path.isfile(os.path.join(SOURCES, n, "team.json")) and find_plugin(os.path.join(SOURCES, n), n)]
+
+
+def docs_all(pull=True):
+    """root, on the VM (install-shared.sh, and the daily paas-brain-docs timer): every external brain in the teams folder
+    brought up to its remote (fast-forward only: the VM copy is never changed by hand), then its docs library built when
+    the docs changed. The docs service indexes their knowledge itself (every 10 minutes)."""
+    bad = 0
+    for n in vm_externals():
+        d = os.path.join(SOURCES, n)
+        if pull and remote_of(d):
+            helper = "/opt/paas/bin/paas-git-credential"
+            cfg = ["-c", "credential.helper=" + helper, "-c", "credential.useHttpPath=true"] if os.path.isfile(helper) else []
+            r = subprocess.run(["git", *cfg, "-C", d, "pull", "-q", "--ff-only"], capture_output=True, text=True, timeout=600,
+                               env=dict(os.environ, GIT_TERMINAL_PROMPT="0"))
+            msg = re.sub(r"://[^/@]+@", "://", (r.stdout + r.stderr).strip())[-200:]
+            print(f"{n}: " + ("up to date with its remote" if r.returncode == 0 else f"pull failed, left as it is: {msg}"))
+        try:
+            rc = load_docs(n)
+        except SystemExit as e:
+            print(f"{n}: {e}")
+            rc = 1
+        bad += 1 if rc else 0
+    return 1 if bad else 0
 
 
 def set_env(team, pairs):
@@ -1432,8 +1570,10 @@ def main(a):
             print(f"{d['name']}: {d['title']} ({d['version']}); skills {len(d['skills'])}, agents {len(d['agents'])}, MCP {', '.join(d['mcp'])}")
             for n, c in d["mcp_servers"].items():
                 print(f"  {n}: {c['url'] or c['command']} {'ready' if c['configured'] else 'HOST / TOKEN not filled in'}")
+    elif cmd == "docs" and len(a) >= 2 and a[1] == "--all":
+        sys.exit(docs_all(pull="--no-pull" not in a))
     elif cmd == "docs" and len(a) >= 2:
-        sys.exit(load_docs(a[1]))
+        sys.exit(load_docs(a[1], force="--force" in a))
     elif cmd == "env" and len(a) >= 2:
         names = set_env(a[1], a[2:])
         print(f"brain {a[1]}: settings {', '.join(names) or 'none'}" + (" (applied: start a new chat)" if active() == a[1] and a[2:] else ""))

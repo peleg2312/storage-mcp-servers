@@ -159,9 +159,9 @@ Every Brain tab feature works with an external brain, from what its repository h
   `"save": "push"` saves straight to its main branch instead. The person's own notes are one click away.
 - **Skills, Agents, MCP & hooks**: its plugin's, labelled as the team's, read-only (changed in its repository); the hooks
   list shows its hooks and the VM's standing aside.
-- **Docs**: its docs folder (brain.json `docs`, else `docs/upstream`) becomes a team library when root runs
-  `paas-team docs <name>` (one product per sub-folder, `paas-library`); the Docs tab and its search then use it while
-  that brain is active.
+- **Docs**: its docs folder (brain.json `docs`, else `docs/upstream`) becomes a team library (one product per
+  sub-folder, `paas-library`): on a multi-user VM automatically (below), elsewhere when root runs `paas-team docs <name>`;
+  the Docs tab, its search and docs-local then use it while that brain is active.
 - **Market**: listed as `plugin/brain-<name>`; turning it on switches to it, off goes back to no team.
 
 An optional `brain.json` at the repository's top makes it exact (every key optional):
@@ -258,6 +258,27 @@ It keeps its own workflow: the brain's notes hook never commits or pushes into i
 (and leaves it alone with local changes), the team editor refuses it, and a skill of it is changed in its own repository.
 The VM's read-only guard and managed hooks still apply to its tools. Switching back to a team or to "No team" disables its
 plugin and removes its settings. Root can offer one to everyone by cloning it into `/opt/paas/teams/<name>`.
+
+### On a multi-user VM: the same as a team built here (library, docs service, docs-local, index)
+
+Root adds it once, from its git url (any name; the docs then follow the repository by themselves):
+```
+sudo sh brain/multiuser/install-multiuser.sh --team redbull=https://gitlab.example.com/team-redbull/redbull-brain.git
+```
+(or `git clone <url> /opt/paas/teams/redbull` and then `sudo sh brain/multiuser/install-shared.sh`). From then on:
+
+| What | How, automatically | When |
+|---|---|---|
+| The VM copy `/opt/paas/teams/redbull` | pulled, fast-forward only (never changed by hand) | every install / update, and daily (`paas-brain-docs.timer`, 03:17) |
+| Its **library** `/opt/paas/libraries/<brain.json "library", else redbull>` | its docs folder (brain.json `docs`, else `docs/upstream`), one product per sub-folder, mirrored (a document deleted in git leaves the library), incremental build; nothing is done when the docs folder's git tree is the same | same |
+| Its **knowledge index** `/var/lib/paas-docs/index/redbull.db` | the docs service clones it from its remote and indexes the pages under its knowledge folders (brain.json `knowledge.folders` + inbox, else knowledge, runbooks, incidents, notes, postmortems, playbooks, decisions; README / templates / symlinks left out) | every 10 minutes, and on `POST /refresh?team=redbull` |
+| **docs-search** over HTTP(S) | `https://<vm>:8443/mcp?team=redbull`: its library (once built, else the general one) plus its knowledge index | always |
+| **docs-local** for each member | `paas-team use redbull` (one click in the Brain tab) registers a user-scope `docs-local`: its library (else the general one) with the knowledge index above, as is (`mcp_stdio.py --team-index`, nothing rebuilt per person); leaving the brain removes it | on switching |
+
+Root can run it by hand at any time: `sudo PAAS_TEAMS=/opt/paas/teams paas-team docs --all` (all external brains),
+`sudo paas-team docs redbull --force` (rebuild one). The member's clone is matched to the VM copy by name and git
+remote, so a member may call it something else. Laptops: the brain's own repository carries no docs-search token, so a
+laptop gets the library and index only by adding the VM's `docs-http` server by hand (address and token from root).
 
 ## Switching: `paas-team`
 

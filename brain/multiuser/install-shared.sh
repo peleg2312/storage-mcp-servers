@@ -209,7 +209,17 @@ setfacl -R -m u:paas-market:rX "$P/teams" "$P/library" "$P/libraries" 2>/dev/nul
 # default ACLs too: files the publish, paas-library or a member's clone make later stay readable by the docs service
 find "$P/teams" "$P/library" "$P/libraries" -type d -exec setfacl -m d:u:paas-market:rX {} + 2>/dev/null || true
 for tf in "$ETC"/git/*.token; do [ -f "$tf" ] && { chown root:paas-users "$tf"; chmod 640 "$tf"; setfacl -m u:paas-market:r "$tf" 2>/dev/null || true; }; done   # the docs service pulls the team repositories with it
-cp "$BRAIN/../docs-search-mcp/docs_index.py" "$P/library/docs_index.py" 2>/dev/null || true   # the HTTP server indexes team knowledge with it
+for f in docs_index.py mcp_stdio.py search_cli.py docs_text.py; do   # the docs server (HTTP for others, docs-local here) and its indexer, current
+  cp "$BRAIN/../docs-search-mcp/$f" "$P/library/$f" 2>/dev/null && chmod 644 "$P/library/$f" || true
+done
+# external brains root cloned into /opt/paas/teams (install-multiuser.sh --team <name>=<url>): each is brought up to its
+# remote and its docs folder (brain.json "docs", or docs/upstream) becomes its team library, as a paas team's; the docs
+# service indexes their knowledge folders itself, and every member who switches to one gets a docs-local for it.
+# Daily after this: the paas-brain-docs timer (a pull and a build only when their docs changed).
+PAAS_TEAMS="$P/teams" PAAS_LIBRARIES="$P/libraries" python3 "$P/bin/paas-team" docs --all 2>&1 | sed 's/^/external brains: /' || true
+install -m 644 "$HERE/paas-brain-docs.service" /etc/systemd/system/paas-brain-docs.service
+install -m 644 "$HERE/paas-brain-docs.timer" /etc/systemd/system/paas-brain-docs.timer
+systemctl daemon-reload 2>/dev/null && systemctl enable -q --now paas-brain-docs.timer 2>/dev/null || true
 install -m 644 "$HERE/paas-docs.service" /etc/systemd/system/paas-docs.service
 if [ -f "$ETC/market/paas-ui.crt" ]; then
   systemctl daemon-reload; systemctl enable -q paas-docs; systemctl restart paas-docs

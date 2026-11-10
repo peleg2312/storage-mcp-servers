@@ -1,0 +1,12 @@
+[Unit]
+Description=External brains: pull their VM copies (fast-forward) and rebuild their docs libraries when their docs changed
+After=network-online.target
+
+[Service]
+Type=oneshot
+# root: the VM copies in /opt/paas/teams and the libraries in /opt/paas/libraries are root's; members and the docs service
+# only read them. A team's GitLab token comes from the shared credential helper (paas-user git-token).
+Environment=PAAS_TEAMS=/opt/paas/teams PAAS_LIBRARIES=/opt/paas/libraries
+ExecStart=/usr/bin/python3 /opt/paas/bin/paas-team docs --all
+Nice=10
+IOSchedulingClass=idle
