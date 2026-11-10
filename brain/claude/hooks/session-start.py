@@ -312,10 +312,6 @@ def main():
         prune_tmp()
     except Exception:
         pass
-    try:
-        chats_rules()
-    except Exception:
-        pass
     # the shared brain is pulled first, so the team line sees a plugin that this very pull brought (printed in the usual order)
     order = (bare_plugin_rules, shared_line, team_line, library_line, environment_line, memory_line, hook_line)
     shown = (bare_plugin_rules, team_line, library_line, environment_line, memory_line, shared_line, hook_line)
@@ -325,6 +321,10 @@ def main():
             got[fn] = fn()
         except Exception:
             got[fn] = ""
+    try:
+        chats_rules()                      # after the pull: a rule the team just changed reaches the web UI's plain chats now
+    except Exception:
+        pass
     lines = [got[fn] for fn in shown]
     print("Storage brain: " + "\n".join(l for l in lines if l))
     return 0

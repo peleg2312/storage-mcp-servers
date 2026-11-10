@@ -125,6 +125,7 @@ for l in brain/library:library brain/libraries:libraries brain/storage.md:brain/
   # single-user install would keep old tools forever (a missing deck.py), so it is set aside and linked to the shared one
   if [ "${l%%:*}" = tools ] && [ -d "$dst" ] && [ ! -L "$dst" ]; then mv "$dst" "$dst.before-shared-$(date +%Y%m%d%H%M)"; fi
   [ -L "$dst" ] || [ ! -e "$dst" ] || continue      # never replace a real file the person made (storage.md too)
+  case "$(readlink "$dst" 2>/dev/null)" in */brain/teams/*/rules/*) continue ;; esac   # their team's rules (paas-team): kept
   ln -sfn "$src" "$dst"
 done
 # root's default persona, once; after that it is theirs (or the team's)

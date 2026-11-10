@@ -197,6 +197,9 @@ assert git(san_src, "rev-list", "--count", "HEAD").strip() == n, "the team's rul
 r = subprocess.run(["git", "-C", os.path.join(brain, "teams", "san"), "pull", "--ff-only", "-q", san_src, "main"], capture_output=True, text=True)
 assert r.returncode == 0, r.stderr                           # (origin is the unreachable stand-in GitLab: pull the source directly)
 assert "Team rule: SG names" in open(os.path.join(brain, "storage.md")).read()
+os.makedirs(os.path.join(home, "chats"), exist_ok=True)       # the web UI's plain chats get the team's rules at session start
+subprocess.run([sys.executable, os.path.join(HOOKS, "session-start.py")], input="{}", env=env, capture_output=True, text=True, timeout=60)
+assert "Team rule: SG names" in open(os.path.join(home, "chats", "CLAUDE.md")).read()
 # the guard: Claude's edits and shell writes to a team rule are blocked, reads and notes pass
 guard = lambda payload: subprocess.run([sys.executable, os.path.join(HOOKS, "block-write-tools.py")], input=json.dumps(payload),
                                        capture_output=True, text=True, env=env, timeout=30)
