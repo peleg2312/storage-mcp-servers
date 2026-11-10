@@ -3,7 +3,7 @@
 every JSON file parses (dot-folders included: .claude-plugin, .mcp.json), the plugin has its manifest, hooks.json and
 .mcp.json in their wrapped shapes, every skill and agent carries a name and a description, team.json's lists resolve to
 files, the knowledge files carry no secret (the same patterns as the brain's notes-check hook, the same 'notes-check: allow'
-marker; mcp.json holds the servers' tokens by the team's decision and is not scanned; rules/ is scanned too), every runbook has its Pre-checks / Procedure / Verification / Rollback sections, and notes.md /
+marker; the plugin's .mcp.json holds the servers' tokens by the team's decision and is not scanned; rules/ is scanned too), every runbook has its Pre-checks / Procedure / Verification / Rollback sections, and notes.md /
 tool-map.md and the rules/ files stay under their line caps. Published into every team repository by brain/teams/publish.py as check.py. Standard library, Python 3.9.
 Exit 1 on a finding; a broken file is a finding, never a traceback."""
 import json
@@ -76,21 +76,15 @@ for plug in plugs:
     mcp = parsed.get(os.path.join(plug, ".mcp.json"))
     if os.path.isfile(os.path.join(plug, ".mcp.json")):
         ok(".mcp.json wrapped in mcpServers", isinstance(mcp, dict) and "mcpServers" in mcp)
-        # the plugin's servers are built from the repository's mcp.json (publish.py and the team editor): docs-local plus every
-        # http server whose address and token are filled in. A hand edit of either file shows up here as a mismatch.
-        team_mcp = parsed.get(os.path.join(ROOT, "mcp.json"))
-        if isinstance(mcp, dict) and isinstance(mcp.get("mcpServers"), dict) and isinstance(team_mcp, dict):
-            def ready(c):
-                return isinstance(c, dict) and c.get("url") and not c.get("command") and "HOST" not in c["url"] and "TOKEN" not in json.dumps(c.get("headers", {}))
-            want = {"docs-local"} | {n for n, c in team_mcp.items() if n not in ("docs-local", "docs-search", "docs-http") and ready(c)}
-            if ready(team_mcp.get("docs-search")):
-                want.add("docs-http")                               # the VM's docs service rides in the plugin as docs-http
-            have = set(mcp["mcpServers"])
-            ok("plugin .mcp.json matches mcp.json", want == have,
-               f"plugin has {sorted(have - want) or 'nothing extra'}, lacks {sorted(want - have) or 'nothing'}: run publish.py or the team editor, do not edit .mcp.json by hand")
-            for n in want & have - {"docs-local"}:
-                src = team_mcp["docs-search" if n == "docs-http" else n]
-                ok(f"plugin .mcp.json {n} address", mcp["mcpServers"][n].get("url") == src.get("url"), "the two files disagree: republish")
+        # the only copy of the team's connected servers (publish.py and the team editor write it): each one complete. A server
+        # still without an address or token waits in team.json's mcp_pending, never here (it would fail at every session start)
+        for n, c in ((mcp.get("mcpServers") or {}).items() if isinstance(mcp, dict) else []):
+            text = json.dumps(c)
+            ok(f"plugin .mcp.json {n} complete", isinstance(c, dict) and (c.get("url") or c.get("command")) and "HOST" not in text
+               and "Bearer TOKEN" not in text, "a placeholder or no address: fill it in with the team editor, do not edit .mcp.json by hand")
+    for old in ("mcp.json", "team.json"):
+        if os.path.isfile(os.path.join(ROOT, old)):
+            print(f"note: {old} at the root is from an older layout: the next publish.py (or a team editor save) moves it into the plugin")
     for sk in files("SKILL.md", os.path.join(plug, "skills")):
         fm = front(sk)
         ok("skill " + os.path.basename(os.path.dirname(sk)), "name:" in fm and "description:" in fm, "frontmatter needs name and description")

@@ -17,10 +17,11 @@ try:
     team = os.path.join(work, "san")
     publish = [sys.executable, os.path.join(R, "brain", "teams", "publish.py"), "san", "--to", team]
     subprocess.run(publish, check=True, capture_output=True)
-    m = json.load(open(os.path.join(team, "mcp.json")))
-    m.pop("ucs-central", None)                         # as published before the rename, with the address filled in
-    m["ucsc"] = {"type": "http", "url": "http://ucs.example:8000/mcp", "headers": {"Authorization": "Bearer ucs-token-123456"}}
-    json.dump(m, open(os.path.join(team, "mcp.json"), "w"), indent=2)
+    pj, mj = os.path.join(team, "paas-brain-san", "team.json"), os.path.join(team, "paas-brain-san", ".mcp.json")
+    t = json.load(open(pj)); t["mcp_pending"].pop("ucs-central", None); json.dump(t, open(pj, "w"), indent=2)
+    m = json.load(open(mj))                            # as published before the rename, with the address filled in
+    m["mcpServers"]["ucsc"] = {"type": "http", "url": "http://ucs.example:8000/mcp", "headers": {"Authorization": "Bearer ucs-token-123456"}}
+    json.dump(m, open(mj, "w"), indent=2)
     k = os.path.join(team, "knowledge")
     open(os.path.join(k, "notes.md"), "a").write("- 2026-11-03 · UCS domain dc1 has 2 FIs · verified · ucs\n")
     open(os.path.join(k, "tool-map.md"), "a").write("\n<!-- a line the team wrote -->\n")
@@ -28,11 +29,11 @@ try:
     subprocess.run(["git", "-C", team, "-c", "user.name=t", "-c", "user.email=t@t", "commit", "-qm", "filled"], check=True)
     before = digest(os.path.join(k, "notes.md"), os.path.join(k, "tool-map.md"))
     subprocess.run(publish, check=True, capture_output=True)
-    m = json.load(open(os.path.join(team, "mcp.json")))
+    m = json.load(open(mj))["mcpServers"]
     assert "ucsc" not in m and m["ucs-central"]["url"] == "http://ucs.example:8000/mcp", m
     assert m["ucs-central"]["headers"]["Authorization"] == "Bearer ucs-token-123456"
-    plug = json.load(open(os.path.join(team, "paas-brain-san", ".mcp.json")))["mcpServers"]
-    assert "ucs-central" in plug and "ucsc" not in plug, plug
+    pending = json.load(open(pj)).get("mcp_pending", {})
+    assert "ucs-central" not in pending and "ucsc" not in pending, pending      # one copy: connected, so not pending
     assert digest(os.path.join(k, "notes.md"), os.path.join(k, "tool-map.md")) == before, "team knowledge must not change"
     agent = open(os.path.join(team, "paas-brain-san", "agents", "fabric-investigator.md")).read()
     assert "mcp__plugin_paas-brain-san_ucs-central__*" in agent and "mcp__ucsc__*" in agent, agent[:300]

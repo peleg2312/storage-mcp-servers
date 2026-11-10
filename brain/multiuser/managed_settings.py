@@ -7,6 +7,7 @@ The same hooks, permissions, auto-mode description and look as the single-user b
 scripts in <paas dir>/hooks and <paas dir>/banner, plus the API key helper. Root's own ~/.claude/settings.json loses
 the brain's hook entries, so they do not run twice for root (everything else in it is kept).
 """
+import glob
 import json
 import os
 import shutil
@@ -44,8 +45,8 @@ for rule in ("Read(//etc/paas/**)", "Edit(~/.claude/hooks/**)"):   # Edit also c
 teams = set()
 for base in (os.path.join(here, "..", "teams"), os.path.join(paas, "teams")):
     for t in (os.listdir(base) if os.path.isdir(base) else []):
-        if os.path.isfile(os.path.join(base, t, "team.json")):
-            teams.add(t)
+        if os.path.isfile(os.path.join(base, t, "team.json")) or glob.glob(os.path.join(base, t, "paas-brain-*", "team.json")):
+            teams.add(t)                                     # a team definition (brain/teams) or a team repository (its plugin)
 denied = [d for d in s.get("deniedMcpServers", []) if not str(d.get("serverName", "")).endswith(":docs-http")]
 for t in sorted(teams):
     denied.append({"serverName": f"plugin:paas-brain-{t}:docs-http"})

@@ -120,7 +120,8 @@ def team_line():
         return f"Team: none (your own rules; {', '.join(offered)} available: Brain tab, Team, one click)." if offered else ""
     tdir = os.path.join(USER_HOME, "brain", "teams", name)
     try:
-        meta = json.loads(read(os.path.join(tdir, "team.json")) or "{}")
+        meta = json.loads(next((read(f) for f in sorted(glob.glob(os.path.join(tdir, "paas-brain-*", "team.json")))
+                                + [os.path.join(tdir, "team.json")] if read(f)), "") or "{}")   # the plugin's (an older repository: its root copy)
     except ValueError:
         meta = {}
     line = f"Team: {name} ({meta.get('title', name)}, {meta.get('version', '?')})"

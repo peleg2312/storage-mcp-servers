@@ -81,8 +81,8 @@ try:
         o = subprocess.run([sys.executable, os.path.join(R, "brain", "teams", "publish.py"), t, "--to", os.path.join(teams, t),
                             "--docs-search", "https://vm.example:8001/mcp"], env=env, capture_output=True, text=True, timeout=300)
         assert o.returncode == 0, (o.stdout[-600:], o.stderr[-600:])
-    assert json.load(open(os.path.join(teams, "lab", "team.json")))["library"] == "labdocs"
-    assert "library" not in json.load(open(os.path.join(teams, "san", "team.json")))
+    assert not os.path.exists(os.path.join(teams, "lab", "team.json")), "one copy: the plugin's team.json"
+    assert "library" not in json.load(open(os.path.join(teams, "san", "paas-brain-san", "team.json")))
     lab_plug = os.path.join(teams, "lab", "paas-brain-lab")
     assert json.load(open(os.path.join(lab_plug, "team.json")))["library"] == "labdocs"
     assert "libraries/labdocs/docs.db" in open(os.path.join(lab_plug, "bin", "docs-local")).read()
@@ -124,13 +124,14 @@ try:
         src = rpc(port, "lab", "tools/call", {"name": "list_sources", "arguments": {}})["content"][0]["text"]
         assert '"library":"labdocs"' in src, src
         # a team library that is named but not built: a clear error, never the general library
-        meta = json.load(open(os.path.join(teams, "lab", "team.json")))
+        lab_tj = os.path.join(teams, "lab", "paas-brain-lab", "team.json")
+        meta = json.load(open(lab_tj))
         meta["library"] = "notbuilt"
-        write(os.path.join(teams, "lab", "team.json"), json.dumps(meta))
+        write(lab_tj, json.dumps(meta))
         r, _ = search(port, "lab", GENERAL_WORD)
         assert r["isError"] and "not built yet" in r["content"][0]["text"] and "paas-library build notbuilt" in r["content"][0]["text"], r
         meta["library"] = "labdocs"
-        write(os.path.join(teams, "lab", "team.json"), json.dumps(meta))
+        write(lab_tj, json.dumps(meta))
         assert "vault.md" in search(port, "lab", LAB_WORD)[1]
     finally:
         srv.kill()

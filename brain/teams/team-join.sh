@@ -7,7 +7,7 @@
 set -eu
 HERE=$(cd "$(dirname "$0")" && pwd)
 NOSUDO=0; [ "${1:-}" = "--no-sudo" ] && NOSUDO=1
-TEAM=$(sed -n 's/^ *"name": *"\([a-z0-9_-]*\)".*/\1/p' "$HERE/team.json" | head -1)
+TEAM=$(sed -n 's/^ *"name": *"\([a-z0-9_-]*\)".*/\1/p' "$HERE"/paas-brain-*/team.json "$HERE/team.json" 2>/dev/null | head -1)
 [ -n "$TEAM" ] || { echo "join: no team.json here: run this from a clone of the team repository"; exit 1; }
 PLUG="paas-brain-$TEAM"
 CRT="$HERE/$PLUG/lib/paas-ui.crt"

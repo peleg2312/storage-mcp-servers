@@ -378,9 +378,20 @@ class Teams:
         self.lock = __import__("threading").Lock()
         self.refresh_lock = __import__("threading").Lock()
 
+    def meta(self, team):
+        """a team repository's team.json: the plugin's (paas-brain-<team>/team.json, the only copy), else the root one an
+        older repository still has"""
+        import glob
+        for f in sorted(glob.glob(os.path.join(self.dir, team, "paas-brain-*", "team.json"))) + [os.path.join(self.dir, team, "team.json")]:
+            try:
+                return json.load(open(f))
+            except (OSError, ValueError):
+                continue
+        return None
+
     def names(self):
         try:
-            return sorted(d for d in os.listdir(self.dir) if os.path.isfile(os.path.join(self.dir, d, "team.json")))
+            return sorted(d for d in os.listdir(self.dir) if self.meta(d) is not None)
         except OSError:
             return []
 
@@ -402,7 +413,7 @@ class Teams:
             if team not in self.names():
                 continue
             try:
-                meta = json.load(open(os.path.join(self.dir, team, "team.json")))
+                meta = self.meta(team) or {}
                 remote = meta.get("remote")
                 clone = os.path.join(self.state, "teams", team)
                 env = dict(os.environ, GIT_TERMINAL_PROMPT="0")
@@ -450,10 +461,7 @@ class Teams:
 
     def library(self, team):
         """the team's own library name from its team.json ("library"), or "" for the general one"""
-        try:
-            name = str(json.load(open(os.path.join(self.dir, team, "team.json"))).get("library") or "")
-        except (OSError, ValueError):
-            return ""
+        name = str((self.meta(team) or {}).get("library") or "")
         return name if re.match(r"^[a-z0-9][a-z0-9_-]{0,31}$", name) else ""
 
     def _libcon(self, name):

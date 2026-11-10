@@ -125,9 +125,9 @@ ln -sfn "$P/bin/paas-team" /usr/local/bin/paas-team
 python3 "$BRAIN/teams/publish.py" --all --to "$P/teams" $DOCS_OPTS > "$P/teams.log" 2>&1 || { cat "$P/teams.log"; echo "install-shared: publishing the teams failed (see above)"; exit 1; }
 sed 's/^/teams: /' "$P/teams.log"; rm -f "$P/teams.log"
 # a team with a GitLab project recorded: the new plugin goes there too, so every member (VM or laptop) gets it at the next sync
-for tj in "$P"/teams/*/team.json; do
+for tj in "$P"/teams/*/paas-brain-*/team.json; do          # the plugin's team.json: the team's only copy (with its remote)
   [ -f "$tj" ] || continue
-  t=$(basename "$(dirname "$tj")"); remote=$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1])).get("remote") or "")' "$tj")
+  t=$(basename "$(dirname "$(dirname "$tj")")"); remote=$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1])).get("remote") or "")' "$tj")
   [ -n "$remote" ] || continue
   python3 "$BRAIN/teams/publish.py" "$t" --to "$remote" $DOCS_OPTS 2>&1 | sed "s/^/teams: $t -> GitLab: /" || true
 done

@@ -234,13 +234,16 @@ def commit(message, rel=None):
 
 
 def notify_docs():
-    """The team's docs-search service (mcp.json of the team repository: url with ?team=<team>, bearer token) re-indexes
+    """The team's docs-search service (docs-http in the team plugin's .mcp.json: url with ?team=<team>, bearer token) re-indexes
     the team's knowledge at once, so teammates search the new page seconds after the push. Best effort, 3 s, silent."""
     try:
         import ssl
         import urllib.request
-        servers = json.load(open(os.path.join(REPO, "mcp.json"), encoding="utf-8"))
-        cfg = servers.get("docs-search") or {}
+        cfg = {}
+        for f in glob.glob(os.path.join(REPO, "paas-brain-*", ".mcp.json")):
+            cfg = (json.load(open(f, encoding="utf-8")).get("mcpServers") or {}).get("docs-http") or cfg
+        if not cfg and os.path.isfile(os.path.join(REPO, "mcp.json")):     # an older team repository
+            cfg = json.load(open(os.path.join(REPO, "mcp.json"), encoding="utf-8")).get("docs-search") or {}
         url = cfg.get("url", "")
         if "HOST" in url or "?team=" not in url:
             return
@@ -403,7 +406,7 @@ def hook():
             relink_files()
             path = os.path.realpath(os.path.join(REPO, "knowledge", name))
     roots = [os.path.realpath(p) + os.sep for p in (BRAIN, os.path.expanduser("~/storage-reports"))]
-    if not path.startswith(tuple(roots)) or not os.path.isfile(path) or os.path.basename(path) == "mcp.json":
+    if not path.startswith(tuple(roots)) or not os.path.isfile(path) or os.path.basename(path) in ("mcp.json", ".mcp.json"):
         return 0                                   # a team's mcp.json carries its servers' tokens by the owner's decision
     f = findings(path)
     repo = os.path.realpath(REPO) + os.sep         # team mode: the real file lives in the team clone

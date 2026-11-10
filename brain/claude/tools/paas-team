@@ -22,12 +22,12 @@ knowledge are still switched and the plugin is registered at the next `paas-team
   paas-team show <team> [--json]   the team's definition: persona, rules, skills, agents, MCP servers, what could be added
   paas-team edit <team>            change it from JSON on stdin (title, description, persona, rules, environment, skills,
                                    agents, mcp_servers {name: {url, type, token}}, remove_mcp): written into the team's
-                                   repository (filled-in servers also into the plugin's .mcp.json), committed, pushed,
+                                   plugin (filled-in servers into its .mcp.json, the others into team.json), committed, pushed,
                                    re-applied; the Brain tab's team editor uses it
 Environment: PAAS_TEAMS (source directory: /opt/paas/teams on a multi-user VM, else ~/.claude/brain/team-sources,
 written by the installer), CLAUDE_HOME (default ~/.claude).
 Standard library, Python 3.9. The only credentials it handles are the team's MCP tokens, which `edit` writes into the
-team repository's mcp.json by the team's decision (see brain/teams/README.md); nothing else is ever written."""
+team plugin's .mcp.json by the team's decision (see brain/teams/README.md); nothing else is ever written."""
 import glob
 import hashlib
 import json
@@ -545,9 +545,44 @@ def plugin_mcp(plug, servers):
     return sorted(out)
 
 
+def load_servers(plug, tdir=None):
+    """The team's MCP servers from the one place they live, the plugin: the connected ones from its .mcp.json (docs-http
+    there is the team's docs-search), the ones still waiting for an address or a token from team.json's mcp_pending.
+    {name: entry} in the shape the team editor works on. A team repository published before this layout keeps them in
+    its own mcp.json (tdir): that one is read until publish.py or the team editor moves it into the plugin."""
+    if tdir and os.path.isfile(os.path.join(tdir, "mcp.json")):
+        return jload(os.path.join(tdir, "mcp.json"))
+    out = {}
+    for n, c in (jload(os.path.join(plug, ".mcp.json")).get("mcpServers") or {}).items():
+        if n != "docs-local" and isinstance(c, dict):
+            out["docs-search" if n == "docs-http" else n] = c
+    for n, c in (jload(os.path.join(plug, "team.json")).get("mcp_pending") or {}).items():
+        if isinstance(c, dict):
+            out.setdefault(n, c)
+    return out
+
+
+def save_servers(plug, servers, t=None):
+    """The servers back into the plugin, each in one place: the filled-in ones into .mcp.json (Claude Code connects them),
+    the rest (an address or token still missing, a command) into team.json's mcp_pending: in t when the caller writes
+    team.json itself, else into the file. Returns the names the plugin connects."""
+    names = plugin_mcp(plug, servers)
+    connected = {"docs-search" if n == "docs-http" else n for n in names}
+    pending = {n: c for n, c in sorted(servers.items())
+               if n not in connected and n not in ("docs-local", "docs-http") and isinstance(c, dict)}
+    meta = t if t is not None else jload(os.path.join(plug, "team.json"))
+    if pending:
+        meta["mcp_pending"] = pending
+    else:
+        meta.pop("mcp_pending", None)
+    if t is None:
+        write(os.path.join(plug, "team.json"), json.dumps(meta, indent=2, sort_keys=True) + "\n")
+    return names
+
+
 def apply_mcp(t, old, tdir):
-    """The team's MCP servers come with the plugin (its .mcp.json, built by publish.py and the team editor from the team
-    repository's mcp.json): nothing is registered per person. Servers an earlier version of this tool registered with
+    """The team's MCP servers come with the plugin (its .mcp.json, written by publish.py and the team editor): nothing is
+    registered per person. Servers an earlier version of this tool registered with
     `claude mcp add-json` or the marketplace are removed; a server still without an address gets a note. Returns {}."""
     prev = old.get("mcp", {})
     prev = {m: "market" for m in prev} if isinstance(prev, list) else prev
@@ -558,10 +593,10 @@ def apply_mcp(t, old, tdir):
         elif via == "market" and market_bin() and f"mcp/{m}" in mine:
             market("remove", f"mcp/{m}")
     allow_plugin_tools(t.get("name"), t.get("mcp", []))
-    servers = jload(os.path.join(tdir, "mcp.json"))
+    servers = load_servers(plugin_dir(tdir), tdir)
     for m in t.get("mcp", []):
         if m != "docs-local" and not mcp_ready(servers.get(m) or {}):
-            print(f"note: MCP {m}: no address or token in the team's mcp.json yet (Brain tab, Team, Edit)")
+            print(f"note: MCP {m}: no address or token for the team yet (Brain tab, Team, Edit)")
     return {}
 
 
@@ -883,7 +918,7 @@ def show(team):
     if not plug:
         die(f"no team {team}")
     t = info(tdir)
-    servers = jload(os.path.join(tdir, "mcp.json"))
+    servers = load_servers(plug, tdir)
     b = os.path.join(plug, "brain")
     return {"name": team, "title": t.get("title", team), "description": t.get("description", ""), "version": t.get("version", ""),
             "local": tdir == team_dir(team), "remote": remote_of(tdir) or t.get("remote") or None, "active": active() == team,
@@ -915,11 +950,12 @@ def edit(team, change):
     b = os.path.join(plug, "brain")
     pj = os.path.join(plug, "team.json")
     t = jload(pj)
-    rj = os.path.join(tdir, "team.json")
-    r = jload(rj)
+    old_root = jload(os.path.join(tdir, "team.json"))          # an older repository's copy: its remote moves into the plugin's
+    if old_root.get("remote") and not t.get("remote"):
+        t["remote"] = old_root["remote"]
     for k in ("title", "description"):
         if isinstance(change.get(k), str):
-            t[k] = r[k] = change[k].strip()
+            t[k] = change[k].strip()
     for k, f in (("persona", "persona.md"), ("rules", "storage.md"), ("environment", "environment.md")):
         if isinstance(change.get(k), str) and change[k].strip():
             own = os.path.join(tdir, "rules", f)           # the team's rules/ when the repository has it, else the plugin's copy
@@ -944,7 +980,7 @@ def edit(team, change):
             os.makedirs(os.path.dirname(dst), exist_ok=True)
             shutil.copytree(src, dst, ignore=shutil.ignore_patterns(".user-skill", "__pycache__")) if kind == "skills" else shutil.copy(src, dst)
         t[kind] = want
-    servers = jload(os.path.join(tdir, "mcp.json"))
+    servers = load_servers(plug, tdir)
     for n in change.get("remove_mcp") or []:
         servers.pop(str(n), None)
     for n, c in (change.get("mcp_servers") or {}).items():
@@ -966,12 +1002,12 @@ def edit(team, change):
         servers[n] = cur
     removed = {str(n) for n in change.get("remove_mcp") or []}
     t["mcp"] = ["docs-local"] + [n for n in dict.fromkeys(list(t.get("mcp", [])) + list(servers)) if n != "docs-local" and n not in removed]
-    r["mcp"] = t["mcp"]
-    write(os.path.join(tdir, "mcp.json"), json.dumps(servers, indent=2, sort_keys=True) + "\n")
-    plugin_mcp(plug, servers)                                # the plugin connects the filled-in servers for every member
+    save_servers(plug, servers, t)                           # the plugin connects the filled-in servers for every member
     write(pj, json.dumps(t, indent=2, sort_keys=True) + "\n")
-    r["version"] = bump_version(plug)                        # a new version string: plugin-mode members get the new copy
-    write(rj, json.dumps(r, indent=2, sort_keys=True) + "\n")
+    bump_version(plug)                                       # a new version string: plugin-mode members get the new copy
+    for old in ("mcp.json", "team.json"):                    # one copy: an older repository's root files are now in the plugin
+        if os.path.isfile(os.path.join(tdir, old)):
+            os.remove(os.path.join(tdir, old))
     git(tdir, "add", "-A", timeout=30)
     git(tdir, "commit", "-q", "-m", f"brain tab: team {team} edited", timeout=30)
     pushed = ""

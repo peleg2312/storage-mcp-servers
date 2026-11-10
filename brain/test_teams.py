@@ -92,23 +92,49 @@ run([sys.executable, PUBLISH, "--all", "--to", os.path.join(work, "sources")])
 for t in TEAMS:
     d = os.path.join(work, "sources", t)
     for p in (".git", ".claude-plugin/marketplace.json", "paas-brain-" + t, "knowledge/notes", "knowledge/runbooks", "knowledge/captures",
-              "knowledge/incidents", "knowledge/tool-map.md", "team.json", "README.md", ".gitignore"):
+              "knowledge/incidents", "knowledge/tool-map.md", f"paas-brain-{t}/team.json", f"paas-brain-{t}/.mcp.json", "README.md", ".gitignore"):
         assert os.path.exists(os.path.join(d, p)), (t, p)
+    for p in ("team.json", "mcp.json"):                      # one copy: the plugin's (the only part Claude Code installs)
+        assert not os.path.exists(os.path.join(d, p)), (t, p)
     assert "knowledge/notes.md" not in open(os.path.join(d, ".gitignore")).read(), "notes.md and environment.md are team memory"
-    for f in ("knowledge/notes.md", "knowledge/environment.md", "mcp.json"):
+    for f in ("knowledge/notes.md", "knowledge/environment.md"):
         assert os.path.exists(os.path.join(d, f)), (t, f)
-    servers = json.load(open(os.path.join(d, "mcp.json")))
-    assert "docs-local" not in servers and all("HOST" in c.get("url", "") for c in servers.values()), servers
-    assert servers["docs-search"]["url"].endswith(f"/mcp?team={t}"), servers["docs-search"]      # the team's own knowledge over HTTP
+    # servers still on their catalog placeholders wait in team.json; .mcp.json connects only complete ones (docs-local here)
+    pending = json.load(open(os.path.join(d, f"paas-brain-{t}", "team.json")))["mcp_pending"]
+    assert "docs-local" not in pending and all("HOST" in c.get("url", "") for c in pending.values()), pending
+    assert pending["docs-search"]["url"].endswith(f"/mcp?team={t}"), pending["docs-search"]      # the team's own knowledge over HTTP
+    assert list(json.load(open(os.path.join(d, f"paas-brain-{t}", ".mcp.json")))["mcpServers"]) == ["docs-local"]
 git = lambda d, *a: subprocess.run(["git", "-C", d, *a], capture_output=True, text=True).stdout
 n = git(os.path.join(work, "sources", "san"), "rev-list", "--count", "HEAD").strip()
 run([sys.executable, PUBLISH, "san", "--to", os.path.join(work, "sources", "san"), "--remote", "git@gitlab.example:san/brain.git"])
 assert git(os.path.join(work, "sources", "san"), "rev-list", "--count", "HEAD").strip() == str(int(n) + 1), "team.json remote recorded = one commit"
-assert json.load(open(os.path.join(work, "sources", "san", "team.json")))["remote"] == "git@gitlab.example:san/brain.git"
+assert json.load(open(os.path.join(work, "sources", "san", "paas-brain-san", "team.json")))["remote"] == "git@gitlab.example:san/brain.git"
 run([sys.executable, PUBLISH, "san", "--to", os.path.join(work, "sources", "san")])
 assert git(os.path.join(work, "sources", "san"), "rev-list", "--count", "HEAD").strip() == str(int(n) + 1), "nothing changed: no commit"
 # the recorded remote is unreachable here: paas-team must fall back to the VM's copy (test 3) and keep the remote for later
 print("publish ok")
+
+# 2b. a team repository from the earlier layout (mcp.json and team.json at its root): the next publish moves both into the
+#     plugin (filled-in servers into .mcp.json, the rest into team.json's mcp_pending, the remote into team.json), removes
+#     the root copies, and a team editor commit that only touched those files does not count as a plugin edit
+old = os.path.join(work, "oldlayout")
+subprocess.run(["git", "clone", "-q", os.path.join(work, "sources", "nas"), old], check=True)
+json.dump({"ontap": {"type": "http", "url": "http://ontap.example:8000/mcp", "headers": {"Authorization": "Bearer abcdef0123456789"}},
+           "harvest": {"type": "http", "url": "http://HOST:8000/mcp", "headers": {"Authorization": "Bearer TOKEN"}}},
+          open(os.path.join(old, "mcp.json"), "w"))
+json.dump({"name": "nas", "remote": "git@gitlab.example:nas/brain.git"}, open(os.path.join(old, "team.json"), "w"))
+pt = json.load(open(os.path.join(old, "paas-brain-nas", "team.json"))); pt.pop("remote", None); pt.pop("mcp_pending", None)
+json.dump(pt, open(os.path.join(old, "paas-brain-nas", "team.json"), "w"))
+gitc = ["git", "-C", old, "-c", "user.name=t", "-c", "user.email=t@x"]
+subprocess.run(gitc + ["add", "-A"], check=True); subprocess.run(gitc + ["commit", "-qm", "brain tab: team nas edited"], check=True)
+rc, o = run([sys.executable, PUBLISH, "nas", "--to", old])
+assert not os.path.exists(os.path.join(old, "mcp.json")) and not os.path.exists(os.path.join(old, "team.json")), os.listdir(old)
+pm = json.load(open(os.path.join(old, "paas-brain-nas", ".mcp.json")))["mcpServers"]
+pt = json.load(open(os.path.join(old, "paas-brain-nas", "team.json")))
+assert pm["ontap"]["headers"]["Authorization"] == "Bearer abcdef0123456789" and "harvest" not in pm, pm
+assert "harvest" in pt["mcp_pending"] and "ontap" not in pt["mcp_pending"] and pt["remote"] == "git@gitlab.example:nas/brain.git", pt
+assert subprocess.run([sys.executable, os.path.join(old, "check.py")], capture_output=True, text=True).returncode == 0
+print("one-copy migration ok")
 
 # 3. paas-team: a person with notes of their own joins san (notes move in), switches to nas and back; own skill kept
 brain = os.path.join(home, ".claude", "brain")
@@ -394,9 +420,12 @@ nasdir = os.path.join(brain, "teams", "nas")
 assert "zoning-audit" in json.load(open(os.path.join(nasdir, "paas-brain-nas", "team.json")))["skills"]
 assert os.path.isfile(os.path.join(nasdir, "paas-brain-nas", "skills", "zoning-audit", "SKILL.md"))
 assert not os.path.exists(os.path.join(nasdir, "paas-brain-nas", "agents", "ontap-analyst.md"))
-servers = json.load(open(os.path.join(nasdir, "mcp.json")))
+servers = json.load(open(os.path.join(nasdir, "paas-brain-nas", ".mcp.json")))["mcpServers"]
 assert servers["ontap"]["headers"]["Authorization"] == "Bearer s3cr3t-token-value", servers
-assert servers["harvest"]["url"].startswith("http://h.example") and servers["harvest"]["headers"]["Authorization"] == "Bearer TOKEN", servers   # no token given: the placeholder stays
+pending = json.load(open(os.path.join(nasdir, "paas-brain-nas", "team.json")))["mcp_pending"]
+assert "ontap" not in pending and "harvest" not in servers, (pending, servers)      # each server in one place only
+assert pending["harvest"]["url"].startswith("http://h.example") and pending["harvest"]["headers"]["Authorization"] == "Bearer TOKEN", pending   # no token given: the placeholder stays
+assert not os.path.exists(os.path.join(nasdir, "mcp.json")) and not os.path.exists(os.path.join(nasdir, "team.json"))
 assert "NAS person" in open(os.path.join(brain, "persona.md")).read(), "active team re-applied"
 assert "NAS person" in open(os.path.join(nasdir, "rules", "persona.md")).read(), "the editor writes the team's rules/"
 assert "brain tab: team nas edited" in git(os.path.join(work, "sources", "nas"), "log", "--format=%s")   # pushed to the remote

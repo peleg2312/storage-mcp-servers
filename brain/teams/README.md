@@ -35,9 +35,14 @@ storage.md, coding.md and environment / tool-map / notes, and `team.json` with t
 
 ```
 .claude-plugin/marketplace.json      paas-brain-nas/        knowledge/{notes,captures,incidents}/  knowledge/tool-map.md
-knowledge/notes.md, environment.md   rules/{main,persona,storage,coding}.md   mcp.json (the team's live MCP servers with
-address and token)   team.json   README.md
+knowledge/notes.md, environment.md   rules/{main,persona,storage,coding}.md   README.md
 ```
+**One copy of everything, inside the plugin.** Claude Code installs only the plugin folder (`paas-brain-nas/`), so the team's
+definition and servers live there and nowhere else: `paas-brain-nas/team.json` (lists, version, the `remote` a first session
+clones from, `library`, and `mcp_pending`: servers still without an address or token) and `paas-brain-nas/.mcp.json` (the
+connected servers, the only place their address and token are). The knowledge does not travel in the plugin: the plugin's
+session-start hook clones the whole repository (knowledge, rules) from that `remote`. A repository from before this layout
+(`mcp.json` and `team.json` at its root) is moved into the plugin by the next `publish.py` or team editor save.
 **The team's rules live in its repository, next to its knowledge.** `rules/` is created from the brain's templates by the first
 publish and is the team's own from then on: `main.md` (the golden rules, imported by every member's `~/.claude/CLAUDE.md`),
 `persona.md`, `storage.md`, `coding.md`. Nothing writes into an existing file there: a later publish keeps the team's text and
@@ -76,22 +81,23 @@ Laptops use the person's own GitLab login.
 
 ## MCP servers per team
 
-The team repository's `mcp.json` holds the team's live MCP servers with address and token (`{"powermax": {"type": "http",
-"url": "http://...:8000/mcp", "headers": {"Authorization": "Bearer ..."}}}`), created from the catalog with HOST / TOKEN
-placeholders at the first publish and filled in the Brain tab's team editor (or by hand). Every filled-in http server is
-written into the plugin's `.mcp.json` (publish.py and the editor both do it, through `paas-team`'s `plugin_mcp`), so Claude
-Code connects it wherever the plugin is enabled, VM or laptop, and nothing is registered per person; a server still on its
-placeholders is left out and named in a note at a switch; a server the person added themselves is theirs. The Team tab
+Each of the team's servers is in exactly one place in the plugin. At the first publish every server the team starts with
+gets its catalog shape with HOST / TOKEN placeholders in `team.json`'s `mcp_pending`; the Brain tab's team editor fills in
+the address and token, and a complete server moves into the plugin's `.mcp.json` (`{"mcpServers": {"powermax": {"type":
+"http", "url": "http://...:8000/mcp", "headers": {"Authorization": "Bearer ..."}}}}`; `paas-team`'s `save_servers`, used by
+publish.py and the editor), so Claude Code connects it wherever the plugin is enabled, VM or laptop, and nothing is
+registered per person; a server still pending is named in a note at a switch; a server the person added themselves is
+theirs. `check.py` fails a `.mcp.json` entry that still holds a placeholder. The Team tab
 shows which servers the plugin connects. `docs-search` is not listed twice: its address and token ride in `docs-local`'s
 environment, and `docs-local` bridges to it (stdio to HTTPS, the VM's certificate from `lib/paas-ui.crt`) on a machine without
-the library. The owner's decision: the tokens in `mcp.json` and `.mcp.json` are readable by everyone with access to the team's
+the library. The owner's decision: the tokens in the plugin's `.mcp.json` are readable by everyone with access to the team's
 GitLab project, so use read-only tokens for the read-only servers and rotate them when someone leaves; the notes hook never
 asks to redact those files. Claude Code names a plugin's tools `mcp__plugin_paas-brain-<team>_<server>__<tool>`: `build.py` writes
 that form into the agents' `tools:` lists for the team's servers, `paas-team use` puts the matching `permissions.allow` rules into the
 person's settings.json (the previous team's go), and the read-only guard reads the form as the bare name, so a server added
 to a team in the editor is usable by the agents and needs no permission prompt at the next session.
 
-**Several servers of one kind** (three CommCells, two ONTAP clusters): name them `<catalog name>-<suffix>` in team.json
+**Several servers of one kind** (three CommCells, two ONTAP clusters): name them `<catalog name>-<suffix>` in the team definition's team.json
 (`commvault-env1`, `commvault-env2`): the first publish gives each the catalog entry's shape, and each gets its own address
 and token in the team editor. Agents list each one in their `tools:` (`mcp__commvault-env1__*`).
 

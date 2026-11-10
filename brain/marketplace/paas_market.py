@@ -593,7 +593,10 @@ def team_meta(folder):
         mk = json.load(open(os.path.join(folder, ".claude-plugin", "marketplace.json")))
         plug = os.path.join(folder, mk["plugins"][0]["source"].lstrip("./"))
         t = json.load(open(os.path.join(plug, "team.json")))
-        t.update({k: v for k, v in json.load(open(os.path.join(folder, "team.json"))).items() if k in ("title", "description", "remote")})
+        try:                                                 # an older repository's root copy (the plugin's is the only one now)
+            t.update({k: v for k, v in json.load(open(os.path.join(folder, "team.json"))).items() if k in ("title", "description", "remote")})
+        except (OSError, ValueError):
+            pass
         return t
     except (OSError, ValueError, KeyError, IndexError):
         return None
@@ -759,10 +762,9 @@ def setup_docs(base, token):
     os.makedirs(d, exist_ok=True)
     teams = {}
     for t in sorted(os.listdir(TEAMS_SHARED)) if os.path.isdir(TEAMS_SHARED) else []:
-        try:
-            teams[t] = json.load(open(os.path.join(TEAMS_SHARED, t, "team.json")))
-        except (OSError, ValueError):
-            continue
+        meta = team_meta(os.path.join(TEAMS_SHARED, t))
+        if meta is not None:
+            teams[t] = meta
     for t, meta in teams.items():
         title = meta.get("title") or t
         own = meta.get("library")

@@ -9,7 +9,8 @@ $failed = $false
 function Ok($m) { Write-Host "  ok    $m" }
 function Bad($m) { Write-Host "  FAIL  $m" -ForegroundColor Red; $script:failed = $true }
 
-$team = (Get-Content (Join-Path $here 'team.json') -Raw | ConvertFrom-Json).name
+$tj = @(Get-ChildItem -Path (Join-Path $here 'paas-brain-*\team.json') -ErrorAction SilentlyContinue) + @(Get-Item (Join-Path $here 'team.json') -ErrorAction SilentlyContinue) | Select-Object -First 1
+$team = if ($tj) { (Get-Content $tj.FullName -Raw | ConvertFrom-Json).name } else { $null }
 if (-not $team) { throw 'join: no team.json here: run this from a clone of the team repository' }
 $plug = "paas-brain-$team"
 $crt = Join-Path $here "$plug\lib\paas-ui.crt"

@@ -11,13 +11,14 @@ knowledge folder, in one git repository people clone (paas-team add) and Claude 
            --no-commit     leave the files uncommitted
            --force         replace a plugin that members changed from the Brain tab (their edits are dropped)
 Layout of a team repository:
-  .claude-plugin/marketplace.json   paas-brain-<team>/ (the plugin, replaced on every publish)
+  .claude-plugin/marketplace.json   paas-brain-<team>/ (the plugin, rebuilt on every publish; its servers and remote carried over)
   knowledge/{notes,runbooks,captures,incidents}/ + notes.md, environment.md, tool-map.md   (the team's memory, shared by every member)
   rules/main.md, persona.md, storage.md, coding.md   the team's rules (created once from the brain's, then the team's own:
                                     linked into every member's ~/.claude/brain; a publish never changes them)
-  mcp.json   the team's live MCP servers with address and token (the owner's decision: readable by everyone in the
-             project; use read-only tokens and rotate them when someone leaves); HOST / TOKEN placeholders until filled
-  team.json (name, title, remote)   README.md   .gitignore
+  paas-brain-<team>/.mcp.json and team.json   the only copy of the team's MCP servers (connected ones with address and
+             token: the owner's decision, readable by everyone in the project; use read-only tokens and rotate them when
+             someone leaves) and of its definition (lists, remote, servers still waiting for an address or token)
+  README.md   .gitignore
   bin/paas-team                     the team tool, so a clone of this repository is a complete install source
   join.sh, join.ps1                 a new machine (Linux / macOS, Windows) joins the team: certificate, docs check, plugin
   check.py + .gitlab-ci.yml         the repository's own gate (JSON, plugin shape, skills, no secrets in knowledge, caps)
@@ -92,8 +93,9 @@ def readme(team, remote):
             "- `rules/`: the team's rules (`main.md` = the golden rules, `persona.md`, `storage.md`, `coding.md`), linked into every "
             "member's `~/.claude/brain`. Edit them here (commit and push by hand, or the Brain tab's team editor); Claude cannot "
             "change them, the notes hook never commits them and a new publish never overwrites them\n"
-            "- `mcp.json`: the team's MCP servers (address and token), built into the plugin's `.mcp.json` so every member's Claude "
-            "connects them; `team.json`: the team's lists\n"
+            f"- `paas-brain-{n}/.mcp.json` and `team.json`: the only copy of the team's MCP servers (address and token: every "
+            "member's Claude connects them) and of the team's definition (lists, remote, servers still waiting for an address "
+            "or a token); change them with the Brain tab's team editor\n"
             "- `check.py` runs in CI (`.gitlab-ci.yml`) and refuses a push that carries a credential or breaks the notes format\n\n"
             f"`paas-team` shows the state, `paas-team use <other>` switches team, `paas-team off` leaves the teams. "
             "The docs library is not in this repository: the plugin's `docs-http` is the VM's docs service for this team (address and "
@@ -114,7 +116,7 @@ def shape(cat, name):
 
 def publish(team, dest, remote=None, hooks=True, commit=True, force=False, docs_search=None, docs_token=None):
     """build the team into the repository at dest (a directory); returns the plugin's team.json data. docs_search: the VM's
-    docs-search url (?team= is added), docs_token its token: written into the team's mcp.json, so laptops reach the library."""
+    docs-search url (?team= is added), docs_token its token: written into the plugin's .mcp.json, so laptops reach the library."""
     os.makedirs(dest, exist_ok=True)
     if not os.path.isdir(os.path.join(dest, ".git")):
         git(dest, "init", "-q", "-b", "main", check=True)
@@ -122,33 +124,47 @@ def publish(team, dest, remote=None, hooks=True, commit=True, force=False, docs_
     if os.path.isdir(os.path.join(dest, ".git")) and os.path.isdir(plugdir) and not force:
         # commits touching the plugin that publish.py did not make: someone changed a team skill from the Brain tab (the
         # change is live for the whole team). Port it into brain/teams/<team> or brain/claude first, or pass --force.
-        r = git(dest, "log", "--format=%h %s", "--", "paas-brain-" + team)
-        edits = [l for l in r.stdout.splitlines() if not l.split(" ", 1)[1].startswith(f"team {team}: plugin")] if r.returncode == 0 else []
+        # A commit that only changed the team's servers or title (.mcp.json, team.json, the version) is not one: publish
+        # carries those over.
+        kept = {f"paas-brain-{team}/{x}" for x in (".mcp.json", "team.json", ".claude-plugin/plugin.json")}
+        r = git(dest, "log", "--format=%x00%h %s", "--name-only", "--", "paas-brain-" + team)
+        edits = []
+        for block in (r.stdout.split("\0")[1:] if r.returncode == 0 else []):
+            lines = [l for l in block.splitlines() if l.strip()]
+            head, files = lines[0], lines[1:]
+            if (head.split(" ", 1) + [""])[1].startswith(f"team {team}: plugin") or (files and set(files) <= kept):
+                continue
+            edits.append(head)
         if edits:
             sys.exit(f"publish.py: the team repository holds {len(edits)} change(s) to the plugin made outside publish.py "
                      f"(Brain tab edits):\n  " + "\n  ".join(edits[:10]) + "\nPort them into brain/teams/" + team
                      + " (git -C <repo> show <sha>) or re-run with --force to drop them.")
+    # one copy of everything, inside the plugin (the only part Claude Code installs): the team's servers live in its .mcp.json
+    # (connected) and team.json (mcp_pending: still without an address or token), the remote in team.json. Rebuilding the
+    # plugin replaces it, so they are read first; a repository from before this layout has them in mcp.json / team.json at
+    # its root: read from there once and the root files removed.
+    first = not os.path.exists(os.path.join(plugdir, ".mcp.json")) and not os.path.exists(os.path.join(dest, "mcp.json"))
+    servers = {} if first else paas_team.load_servers(plugdir, dest)
+    old_remote = paas_team.jload(os.path.join(plugdir, "team.json")).get("remote") or paas_team.jload(os.path.join(dest, "team.json")).get("remote")
     plug = build.build(dest, team, hooks)
-    mcp_path = os.path.join(dest, "mcp.json")                          # made once from the catalog; the team editor fills it
-    if not os.path.exists(mcp_path):
+    pj = os.path.join(plug, "team.json")
+    t = paas_team.jload(pj)
+    if first:                                                          # made once from the catalog; the team editor fills it
         cat = json.load(open(CATALOG)) if os.path.exists(CATALOG) else {}
-        with open(os.path.join(plug, "team.json")) as f:
-            want = json.load(f).get("mcp", [])
-        servers = {n: json.loads(json.dumps(shape(cat, n)["server"]).replace("TEAM", team)) for n in want
+        servers = {n: json.loads(json.dumps(shape(cat, n)["server"]).replace("TEAM", team)) for n in t.get("mcp", [])
                    if shape(cat, n) and n != "docs-local"}
-    else:
-        with open(mcp_path) as f:
-            servers = json.load(f)
-        for old, new in RENAMED.items():                          # a server renamed in the brain keeps its address and token
-            if old in servers and new not in servers:
-                servers[new] = servers.pop(old)
+    for old, new in RENAMED.items():                                  # a server renamed in the brain keeps its address and token
+        if old in servers and new not in servers:
+            servers[new] = servers.pop(old)
     if docs_search:                                                    # the VM's docs service: every member's docs-local reaches the library
         url = docs_search if "?team=" in docs_search else docs_search + "?team=" + team
         servers["docs-search"] = {"type": "http", "url": url, **({"headers": {"Authorization": "Bearer " + docs_token}} if docs_token else {})}
-    with open(mcp_path, "w") as f:
-        json.dump(servers, f, indent=2, sort_keys=True)
+    if remote or old_remote:                                           # the plugin's session-start hook clones the team from it
+        t["remote"] = remote or old_remote
+    paas_team.save_servers(plug, servers, t)                           # the filled-in servers into .mcp.json, the rest into team.json
+    with open(pj, "w") as f:
+        json.dump(t, f, indent=2, sort_keys=True)
         f.write("\n")
-    paas_team.plugin_mcp(plug, servers)                                # the filled-in servers ride in the plugin's .mcp.json
     for cert in CERTS:
         if os.path.isfile(cert):
             shutil.copy(cert, os.path.join(plug, "lib", "paas-ui.crt"))
@@ -157,8 +173,10 @@ def publish(team, dest, remote=None, hooks=True, commit=True, force=False, docs_
     # the version is the library version plus a fingerprint of the plugin's content (paas-team's rule), so every publish
     # with a change is one
     paas_team.bump_version(plug)
-    with open(os.path.join(plug, "team.json")) as f:
-        t = json.load(f)
+    t = paas_team.jload(pj)
+    for old in ("mcp.json", "team.json"):                              # one copy: the root files of an older layout go
+        if os.path.isfile(os.path.join(dest, old)):
+            os.remove(os.path.join(dest, old))
     k = os.path.join(dest, "knowledge")
     for d in ("notes", "runbooks", "captures", "incidents"):
         os.makedirs(os.path.join(k, d), exist_ok=True)
@@ -181,36 +199,12 @@ def publish(team, dest, remote=None, hooks=True, commit=True, force=False, docs_
             newer.append(f"rules/{name} (brain: {os.path.relpath(src, dest)})")
     if newer:
         print(f"team {team}: kept the team's own " + ", ".join(newer) + "; compare with git diff --no-index if you want the brain's changes")
-    meta_path = os.path.join(dest, "team.json")
-    meta = {}
-    if os.path.exists(meta_path):
-        with open(meta_path) as f:
-            meta = json.load(f)
-    meta.update({"name": team, "title": t["title"], "description": t["description"], "version": t["version"],
-                 "plugin": "paas-brain-" + team})
-    if t.get("library"):                                     # the docs service serves this team its own library (mcp_stdio.py)
-        meta["library"] = t["library"]
-    else:
-        meta.pop("library", None)
-    if remote:
-        meta["remote"] = remote
-    if meta.get("remote"):                                   # into the plugin too: its session-start hook clones from it
-        pj = os.path.join(plug, "team.json")
-        with open(pj) as f:
-            pt = json.load(f)
-        pt["remote"] = meta["remote"]
-        with open(pj, "w") as f:
-            json.dump(pt, f, indent=2, sort_keys=True)
-            f.write("\n")
-    with open(meta_path, "w") as f:
-        json.dump(meta, f, indent=2, sort_keys=True)
-        f.write("\n")
     with open(os.path.join(dest, ".gitignore"), "w") as f:
         f.write(IGNORE)
     with open(os.path.join(dest, ".gitattributes"), "w") as f:
         f.write(ATTRIBUTES)
     with open(os.path.join(dest, "README.md"), "w") as f:
-        f.write(readme(t, meta.get("remote")))
+        f.write(readme(t, t.get("remote")))
     for stale in ("install-team.sh",):                                 # earlier publishes wrote it; the plugin install replaced it
         if os.path.exists(os.path.join(dest, stale)):
             os.remove(os.path.join(dest, stale))

@@ -140,9 +140,9 @@ notes pages and incidents, which the server rebuilds at start when they changed.
 runs the same dependency-free server in HTTP mode on port 8443 with the gate's certificate and a bearer token
 (`/etc/paas/docs-token`; port and refresh interval in `/etc/paas/docs.env`). `https://<vm>:8443/mcp` is the library;
 `https://<vm>:8443/mcp?team=nas` adds that team's knowledge: the service keeps its own clone of every team repository
-under `/var/lib/paas-docs` (from the remote recorded in `/opt/paas/teams/<team>/team.json`), pulls it and rebuilds the
+under `/var/lib/paas-docs` (from the remote recorded in `/opt/paas/teams/<team>/paas-brain-<team>/team.json`), pulls it and rebuilds the
 team's index every 10 minutes and at once when a member's notes hook pushes (it posts to `/refresh?team=<team>` with the
-token from the team's `mcp.json`). `install-shared.sh` writes `docs-search` with its `?team=` url and the token into every team's `mcp.json`
+token from the team plugin's `.mcp.json`). `install-shared.sh` writes `docs-search` with its `?team=` url and the token into every team plugin's `.mcp.json` (as `docs-http`)
 when it publishes the teams; the plugin's `docs-local` uses it as a bridge on every machine without the library (a laptop),
 and serves the library itself where it is installed (the VM), so there is one docs server name everywhere and one token. Health: `curl -k https://<vm>:8443/health`. The OpenShift
 deployment of `docs-search` (`docs-search-mcp/bundle/build-offline.sh --from-library`, `openshift-offline.yaml`) remains an
@@ -190,7 +190,7 @@ It runs, in order: `install-vm.sh` (root's brain, the library, the web UI), `ins
 gate on 3001 with its certificate, one UI per signed-in person), the API key into `/etc/paas/api-key`, the groups into
 `/etc/paas/allowed-groups`, the GitLab token (`paas-user git-token`) and each team's url (recorded in `/opt/paas/teams/<team>`),
 `install-shared.sh` again (now with the certificate: the marketplace and the docs service start, each team repository is pushed
-to GitLab with `docs-search` and the docs token in its `mcp.json`), `paas-user provision --all`, then checks: the three services,
+to GitLab with `docs-search` and the docs token in its plugin's `.mcp.json`), `paas-user provision --all`, then checks: the three services,
 the gate, the docs service and each team repository reachable with the token. It ends with "left for you" when something is
 missing (the AD join, a GitLab project, the key). Flags are remembered in `/etc/paas/multiuser.conf`; `--people 8` sizes the
 per-person budget; `--dry-run` prints the plan. Nothing in it needs the internet.
