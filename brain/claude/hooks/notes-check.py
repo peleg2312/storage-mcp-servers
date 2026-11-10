@@ -397,9 +397,9 @@ def relink_files():
             pass
 
 
-def hook():
+def hook(data=None):
     try:
-        path = (json.load(sys.stdin).get("tool_input") or {}).get("file_path", "")
+        path = ((data if data is not None else json.load(sys.stdin)).get("tool_input") or {}).get("file_path", "")
     except Exception:
         return 0
     path = os.path.realpath(os.path.expanduser(path)) if path else ""
@@ -475,7 +475,32 @@ def team_hooks_active():
     except Exception:
         return False
 
+
+
+def ext_learn():
+    """the active external brain's learning (ext_learn.py beside this hook; "learn" in the brain's brain.json): (module,
+    config), or (None, None) when it is not switched on or the module is missing"""
+    try:
+        sys.path.insert(0, os.path.dirname(os.path.realpath(__file__)))
+        import ext_learn as mod
+        return mod, mod.config(refresh=False)
+    except Exception:
+        return None, None
+
 if __name__ == "__main__":
+    if len(sys.argv) == 1:
+        mod, learn = ext_learn()
+        if learn:                                    # an external brain that learns into its own git: its pages are committed there
+            try:
+                data = json.load(sys.stdin)
+                path = os.path.realpath(os.path.expanduser((data.get("tool_input") or {}).get("file_path", "") or ""))
+                if mod.handles(learn, path):
+                    sys.exit(mod.saved(learn, path, findings))
+                sys.exit(0 if team_hooks_active() else hook(data))
+            except SystemExit:
+                raise
+            except Exception:
+                sys.exit(0)
     # VM: the VM's copy steps aside while the active team's plugin brings its own hooks from git (team_hooks_active)
     if len(sys.argv) == 1 and team_hooks_active():
         sys.exit(0)

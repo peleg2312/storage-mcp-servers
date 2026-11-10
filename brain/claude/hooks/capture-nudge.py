@@ -18,7 +18,7 @@ REASON = (
     "Do not repeat your previous answer.")
 
 
-def main():
+def main(mod=None, learn=None):
     if os.environ.get("BRAIN_NUDGE_DISABLE") == "1":
         return 0
     try:
@@ -36,6 +36,8 @@ def main():
     # (a team member's notes.md is written at its real place, ~/.claude/brain/teams/<team>/knowledge/notes.md)
     if re.search(r'"file_path"\s*:\s*"[^"]*(?:brain|knowledge)/(?:captures/|notes/|notes\.md|runbooks/)', text):
         return 0
+    if learn and mod.saved_this_session(learn, text):  # an external brain that learns into its own git: saved in its folders
+        return 0
     d = os.path.expanduser("~/.claude/brain/.nudged")
     try:
         os.makedirs(d, mode=0o700, exist_ok=True)
@@ -49,7 +51,7 @@ def main():
         open(marker, "w").close()
     except OSError:
         return 0
-    print(json.dumps({"decision": "block", "reason": REASON}))
+    print(json.dumps({"decision": "block", "reason": mod.nudge_reason(learn) if learn else REASON}))
     return 0
 
 
@@ -80,7 +82,23 @@ def team_hooks_active():
     except Exception:
         return False
 
+
+
+def ext_learn():
+    """the active external brain's learning (ext_learn.py beside this hook; "learn" in the brain's brain.json): (module,
+    config), or (None, None) when it is not switched on or the module is missing"""
+    try:
+        sys.path.insert(0, os.path.dirname(os.path.realpath(__file__)))
+        import ext_learn as mod
+        return mod, mod.config(refresh=False)
+    except Exception:
+        return None, None
+
 if __name__ == "__main__":
+    if len(sys.argv) == 1:
+        mod, learn = ext_learn()
+        if learn:                                    # an external brain that learns into its own git: asks for a save there
+            sys.exit(main(mod, learn))
     # VM: the VM's copy steps aside while the active team's plugin brings its own hooks from git (team_hooks_active)
     if len(sys.argv) == 1 and team_hooks_active():
         sys.exit(0)

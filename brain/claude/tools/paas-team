@@ -26,6 +26,9 @@ knowledge are still switched and the plugin is registered at the next `paas-team
   paas-team docs <team> [--force]  root: an external brain's docs folder (brain.json "docs", or docs/upstream) into a team
                                    library of the same name (paas-library, mirrored; skipped when unchanged), used by the
                                    Docs tab and docs-local while that brain is active
+  paas-team learn <brain> [merge-request|push|off]   an external brain keeps what Claude learns in its own git:
+                                   merge requests for its team to review, or pushed at once (root on the VM: for every
+                                   member, beside its VM copy; anyone else: their own clone); without a mode: the state
   paas-team docs --all [--no-pull] root, multi-user VM: every external brain in /opt/paas/teams pulled (fast-forward) and its
                                    library built when its docs changed (install-shared.sh and the daily timer run it)
   paas-team edit <team>            change it from JSON on stdin (title, description, persona, rules, environment, skills,
@@ -377,6 +380,11 @@ def ext_layout(tdir, rec, name=None):
     templates = inside(tdir, kn.get("templates") or "templates")
     index = str(kn.get("index") or ("INDEX.md" if os.path.isfile(os.path.join(tdir, "INDEX.md")) else ""))
     save = str(kn.get("save") or "merge-request")
+    learn = learn_layout(tdir, bj, save if save in ("merge-request", "push") else "merge-request", str(kn.get("branch", "")), inbox)
+    for k in LEARN_KINDS if learn else ():                       # its learning folders are searched with its knowledge
+        top = learn[k].split("/")[0]
+        if os.path.isdir(os.path.join(tdir, top)) and top not in folders and not any(learn[k].startswith(f + "/") for f in folders):
+            folders.append(top)
     docs = inside(tdir, bj.get("docs") or "docs/upstream")
     name = name or os.path.basename(tdir)
     return {"title": str(bj.get("title", "")), "description": str(bj.get("description", "")), "settings_schema": schema,
@@ -384,7 +392,79 @@ def ext_layout(tdir, rec, name=None):
                           "save": save if save in ("merge-request", "push") else "merge-request",
                           "branch": str(kn.get("branch", ""))},
             "docs": docs, "library": str(bj.get("library") or (name if docs else "")),
-            "rules": rules_file(tdir, rec, bj), "plugins": brain_plugins(tdir, rec, bj)}
+            "rules": rules_file(tdir, rec, bj), "plugins": brain_plugins(tdir, rec, bj), "learn": learn}
+
+
+LEARN_KINDS = ("notes", "runbooks", "incidents", "captures")
+
+
+def rel_path(tdir, rel):
+    """rel as a path inside the repository that may not exist yet (no .., not absolute, not .git), or "" """
+    rel = str(rel or "").strip().strip("/")
+    if not rel or os.path.isabs(rel) or ".." in rel.split("/") or rel.split("/")[0] == ".git":
+        return ""
+    p = os.path.normpath(os.path.join(os.path.realpath(tdir), rel))
+    return rel if p.startswith(os.path.realpath(tdir) + os.sep) else ""
+
+
+def learn_layout(tdir, bj, save, branch, inbox):
+    """an external brain that keeps what Claude learns in its own git ("learn" in a brain.json: true, "push",
+    "merge-request" or {"save", "branch", "notes", "runbooks", "incidents", "captures", "guide"}): its folders (the ones it
+    names, else the ones it has: knowledge/<kind> or <kind>, postmortems for incidents, its inbox for captures, else new
+    ones under knowledge/), how a saved page reaches its git, and its own guide for learning (LEARNING.md). None when off."""
+    raw = bj.get("learn")
+    if raw in (None, False, "", "off", "no"):
+        return None
+    d = raw if isinstance(raw, dict) else {}
+    want = d.get("save") if d else (raw if isinstance(raw, str) else None)
+    out = {"raw": raw, "save": want if want in ("push", "merge-request") else save,
+           "branch": str(d.get("branch") or branch or default_branch(tdir))}
+    base = "knowledge/" if os.path.isdir(os.path.join(tdir, "knowledge")) else ""
+    extra = {"incidents": ["postmortems"], "captures": [inbox] if inbox else []}
+    for k in LEARN_KINDS:
+        named = rel_path(tdir, d.get(k))
+        out[k] = named or next((c for c in [f"knowledge/{k}", k] + extra.get(k, []) if c and os.path.isdir(os.path.join(tdir, c))), base + k)
+    g = rel_path(tdir, d.get("guide")) if d.get("guide") else next(
+        (c for c in ("LEARNING.md", "docs/LEARNING.md", ".claude/LEARNING.md") if os.path.isfile(os.path.join(tdir, c))), "")
+    out["guide"] = g if g and os.path.isfile(os.path.join(tdir, g)) else ""
+    return out
+
+
+def default_branch(tdir):
+    rc, out = git(tdir, "symbolic-ref", "-q", "--short", "refs/remotes/origin/HEAD", timeout=5)
+    if rc == 0 and out.startswith("origin/"):
+        return out[len("origin/"):]
+    rc, out = git(tdir, "rev-parse", "--abbrev-ref", "HEAD", timeout=5)
+    return out if rc == 0 and out and out != "HEAD" else "main"
+
+
+def set_learn(team, mode):
+    """paas-team learn <brain> [merge-request|push|off]: root on the VM writes it beside the VM copy (every member, nothing
+    in the brain's repository changes), anyone else into their own clone's .git/paas-brain.json (this machine only)"""
+    tdir = team_dir(team)
+    if not external(tdir):
+        die(f"{team} is not an external brain here (a team built here already shares its notes)")
+    if mode:
+        if mode not in ("merge-request", "push", "off"):
+            die("learn: merge-request, push or off")
+        vm = vm_brain(team, tdir) if os.path.isdir(SOURCES) else ""
+        target = os.path.join(SOURCES, vm + ".brain.json") if vm and os.geteuid() == 0 else os.path.join(tdir, ".git", "paas-brain.json")
+        d = jload(target)
+        if mode == "off":
+            d["learn"] = False
+        else:
+            d["learn"] = dict(d["learn"], save=mode) if isinstance(d.get("learn"), dict) else mode
+        write(target, json.dumps(d, indent=2) + "\n")
+        os.chmod(target, 0o644 if target.startswith(SOURCES) else 0o600)
+        print(f"learn {mode}: written to {target}")
+    rec = refresh_layout(tdir)
+    lay = rec.get("learn")
+    if not lay:
+        print(f"{team}: learning OFF: what Claude learns stays in your own notes")
+        return
+    how = "pushed at once" if lay["save"] == "push" else f"merge requests to {lay['branch']} (from your branch learn/<you>)"
+    print(f"{team}: learning ON, {how}; notes {lay['notes']}, runbooks {lay['runbooks']}, incidents {lay['incidents']}, "
+          f"captures {lay['captures']}" + (f", its guide {lay['guide']}" if lay["guide"] else "") + "; starts with the next chat")
 
 
 def rules_file(tdir, rec, bj):
@@ -512,7 +592,7 @@ def ext_info(tdir):
             "agents": agents, "mcp": mcp, "plugin_dir": plug, "external": True, "plugin": e["plugin"],
             "marketplace": e["marketplace"], "env": sorted(env), "settings": settings,
             "knowledge": e.get("knowledge") or {}, "library": e.get("library", ""), "docs": e.get("docs", ""),
-            "rules": e.get("rules", ""), "plugins": e.get("plugins") or [e["plugin"]]}
+            "rules": e.get("rules", ""), "plugins": e.get("plugins") or [e["plugin"]], "learn": e.get("learn")}
 
 
 def plugin_id(team):
@@ -720,7 +800,9 @@ def apply_external(team, say=True):
           f"{EXT_PERSONA}**{t['title']}** brain (Claude Code plugin `{t['plugin']}`, repository "
           f"{tdir}): its skills, agents, hooks and MCP servers come from that plugin; follow its own instructions and keep "
           f"its knowledge where it says (it has its own workflow, for example merge requests). The golden rules still apply.\n"
-          + (f"\n## {t['title']}: its own rules\n@{os.path.join(tdir, t['rules'])}\n" if t.get("rules") else ""))
+          + (f"\n## {t['title']}: its own rules\n@{os.path.join(tdir, t['rules'])}\n" if t.get("rules") else "")
+          + ("\nWhat you learn is kept in this brain's own git (learning is on): the session start says in which folders and "
+             "how; those replace ~/.claude/brain for notes, captures, runbooks and incidents.\n" if t.get("learn") else ""))
     write(STATE, json.dumps({"skills": [], "agents": [], "mcp": {}}) + "\n")
     write(os.path.join(BRAIN, "team"), team + "\n")
     write(os.path.join(TEAMS, ".applied"), json.dumps({"team": team, "external": True}) + "\n")
@@ -1869,6 +1951,11 @@ def main(a):
             print(f"{d['name']}: {d['title']} ({d['version']}); skills {len(d['skills'])}, agents {len(d['agents'])}, MCP {', '.join(d['mcp'])}")
             for n, c in d["mcp_servers"].items():
                 print(f"  {n}: {c['url'] or c['command']} {'ready' if c['configured'] else 'HOST / TOKEN not filled in'}")
+    elif cmd == "learn" and len(a) >= 2:
+        set_learn(a[1], a[2] if len(a) > 2 else "")
+    elif cmd == "relayout" and len(a) >= 2:                     # the learning hook: root or the brain changed brain.json
+        if external(team_dir(a[1])):
+            refresh_layout(team_dir(a[1]))
     elif cmd == "layout" and len(a) >= 3:                       # the docs service: an external brain's folders, as detected here
         print(json.dumps(brain_layout(a[1], a[2])))
     elif cmd == "docs" and len(a) >= 2 and a[1] == "--all":

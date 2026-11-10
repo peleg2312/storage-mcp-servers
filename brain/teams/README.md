@@ -297,6 +297,39 @@ Anything else is said in a brain.json, from any of three places, each later one 
    member's switch, the docs service and the library build read it;
 3. `.git/paas-brain.json` in one clone: that machine only.
 
+### Learning into the brain's own git (opt-in)
+
+By default what Claude learns while an external brain is active stays in the person's own notes. A brain can opt in to
+keep it in its own git instead, as a team built here shares its notes, but its way:
+```
+paas-team learn redbull merge-request     # every saved page becomes a merge request for its team (the default way)
+paas-team learn redbull push              # pushed to its branch at once (a branch that is not protected)
+paas-team learn redbull off               # back to private notes;   paas-team learn redbull   shows the state
+```
+Root on the VM writes it beside the VM copy (`/opt/paas/teams/redbull.brain.json`: every member, nothing in its
+repository changes); anyone else writes it into their own clone (`.git/paas-brain.json`); the brain may also say it in
+its own `brain.json`:
+```json
+"learn": {"save": "merge-request", "branch": "main", "notes": "kb/facts", "runbooks": "procedures",
+          "incidents": "postmortems", "captures": "inbox", "guide": "LEARNING.md"}
+```
+Every key is optional. Without folders, its own are used (`knowledge/<kind>` or `<kind>`, `postmortems/` for incidents,
+its inbox for captures; else new ones under `knowledge/`), and its guide is `LEARNING.md` when it has one: the brain's
+git says what to learn and how, and Claude follows its guide over the brain's formats.
+
+While it is on, three of the brain's hooks keep running for it (on the VM its other hooks step aside for the brain's own,
+which still run too):
+- **session start**: brings the copy Claude writes in up to the brain's branch, tells Claude the folders, the formats and
+  the guide, and lists its runbooks and note topics;
+- **saving a page** in those folders: scanned for secrets (a page holding one is not committed), committed as the person,
+  then pushed, or sent to the person's branch `learn/<user>` with a GitLab merge request to its branch. The person keeps
+  seeing their pages until the team merges them; a merged request (squash or not) starts the next session from the branch
+  again. Its server is not GitLab: the branch is pushed and the person opens the merge request;
+- **end of a long session** that saved nothing there: asks once for a capture in its captures folder.
+
+Merge-request mode writes in a worktree beside the clone (`~/.claude/brain/teams/.learn-<brain>`), so the clone's own
+branch stays exactly the brain's. The learning folders are searched with its knowledge (docs service, docs-local).
+
 ### What adding or switching never changes
 
 - The brain's repository: files it lacks (a marketplace.json, a plugin.json, the hooks / MCP of a project-style brain)

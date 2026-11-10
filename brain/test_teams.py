@@ -2,6 +2,7 @@
 """Team profiles: build.py / publish.py build every team, paas-team switches a person between teams in a temporary HOME,
 the notes hook commits into the team's repository and syncs it. Standard library; exits 1 on failure."""
 import json
+import re
 import os
 import shutil
 import subprocess
@@ -691,4 +692,67 @@ team("use", "ob"); team("use", "none")
 assert open(os.path.join(brain, "persona.md")).read() == "# Persona\nMy own words.\n"
 team("use", "san")
 print("brains of other shapes ok")
+
+# 13. an external brain that learns into its own git ("learn"): its folders and guide, the brain's learning hooks keep
+#     running for it; a saved page goes to its GitLab as a merge request from learn/<user> (or is pushed at once), a page
+#     with a secret is not committed, a merged request starts the next session from its branch, off goes back to private
+lr_bare = os.path.join(work, "lr.git"); lr_src = os.path.join(work, "lr-src")
+mkrepo(lr_src, {"skills/triage/SKILL.md": "---\nname: triage\ndescription: t\n---\nx\n", "knowledge/notes/fabric.md": "# Fabric\n- a fact\n",
+                "knowledge/runbooks/fc-zone-add.md": "# Zone add\n## Pre-checks\n## Procedure\n## Verification\n## Rollback\n",
+                "LEARNING.md": "# How we learn\nOne fact per line, owner first.\n"})
+run(["git", "clone", "-q", "--bare", lr_src, lr_bare]); run(["git", "-C", lr_bare, "config", "receive.advertisePushOptions", "true"])
+team("add", "lr", lr_bare)
+lc = os.path.join(brain, "teams", "lr")
+hook_env = dict(env, PAAS_TEAM_TOOL=TOOL)
+def hk(name, data, e=hook_env):
+    return run([sys.executable, os.path.join(HOOKS, name)], e=e, inp=json.dumps(data))[1]
+o = team("learn", "lr", "merge-request")
+assert "learning ON, merge requests to main" in o and "notes knowledge/notes" in o and "its guide LEARNING.md" in o, o
+team("use", "lr")
+assert "learning is on" in open(os.path.join(brain, "persona.md")).read()
+o = hk("session-start.py", {})
+wt = os.path.join(brain, "teams", ".learn-lr")
+assert "Learning for the lr brain is ON" in o and os.path.join(wt, "knowledge", "notes") in o and "LEARNING.md" in o, o
+assert "fc-zone-add" in o and "note topics" in o and "fabric" in o, o
+user = re.sub(r"[^a-z0-9._-]+", "-", __import__("getpass").getuser().lower())
+assert run(["git", "-C", wt, "rev-parse", "--abbrev-ref", "HEAD"])[1].strip() == "learn/" + user
+note = os.path.join(wt, "knowledge", "notes", "fabric.md")
+open(note, "a").write("- 2026-11-10 - fabric B owner is the network team - observed - user\n")
+o = hk("notes-check.py", {"tool_input": {"file_path": note}})
+assert "merge request from learn/" in o, o
+assert "fabric B owner" in run(["git", "-C", lr_bare, "show", f"learn/{user}:knowledge/notes/fabric.md"])[1]
+assert "fabric B owner" not in run(["git", "-C", lr_bare, "show", "main:knowledge/notes/fabric.md"])[1], "main untouched until merged"
+assert run(["git", "-C", lc, "status", "--porcelain"])[1] == "", "the clone itself stays the brain's"
+cap = os.path.join(wt, "knowledge", "captures", "2026-11-10-x.md"); os.makedirs(os.path.dirname(cap))
+open(cap, "w").write("password = hunter2x9\n")
+o = hk("notes-check.py", {"tool_input": {"file_path": cap}})
+assert "secret" in o and "2026-11-10-x.md" not in run(["git", "-C", lr_bare, "ls-tree", "-r", "--name-only", f"learn/{user}"])[1], o
+os.remove(cap)
+# the team merges it (squash): the next session starts the learning copy from main again
+mg = os.path.join(work, "lr-merge"); run(["git", "clone", "-q", lr_bare, mg])
+run(["git", "-C", mg, "merge", "-q", "--squash", f"origin/learn/{user}"]); run(["git", "-C", mg, "-c", "user.name=t", "-c", "user.email=t@t", "commit", "-qm", "merge"])
+run(["git", "-C", mg, "push", "-q", "origin", "main"])
+hk("session-start.py", {})
+assert run(["git", "-C", wt, "rev-list", "--count", "origin/main..HEAD"])[1].strip() == "0"
+assert run(["git", "-C", wt, "rev-parse", "HEAD"])[1] == run(["git", "-C", lr_bare, "rev-parse", "main"])[1]
+# capture reminder: a long session that saved nothing there is asked once, about its captures folder
+tr = os.path.join(work, "tr.jsonl"); open(tr, "w").write('{"type":"tool_use"}\n' * 25)
+o = hk("capture-nudge.py", {"session_id": "s1", "transcript_path": tr})
+assert '"block"' in o and os.path.join(wt, "knowledge", "captures") in o, o
+open(tr, "a").write(json.dumps({"file_path": note}) + "\n")
+assert '"block"' not in hk("capture-nudge.py", {"session_id": "s2", "transcript_path": tr})
+# pushed at once: a saved page lands on its main
+team("learn", "lr", "push")
+o = hk("session-start.py", {})
+assert "pushed to its git at once" in o and os.path.join(lc, "knowledge", "notes") in o, o
+run(["git", "-C", lc, "pull", "-q", "--ff-only"])
+n2 = os.path.join(lc, "knowledge", "notes", "storage.md"); open(n2, "w").write("# Storage\n- 2026-11-10 - array A is in room 2 - verified - me\n")
+o = hk("notes-check.py", {"tool_input": {"file_path": n2}})
+assert "saved in lr's git" in o and "array A" in run(["git", "-C", lr_bare, "show", "main:knowledge/notes/storage.md"])[1], o
+# off: back to the person's own notes
+team("learn", "lr", "off")
+assert "Learning for" not in hk("session-start.py", {})
+assert team("learn", "lr").count("learning OFF") == 1
+team("use", "san")
+print("external brain learning ok")
 shutil.rmtree(work, ignore_errors=True)

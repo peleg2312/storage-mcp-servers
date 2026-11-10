@@ -370,13 +370,34 @@ def team_hooks_active():
     except Exception:
         return False
 
+
+
+def ext_learn():
+    """the active external brain's learning (ext_learn.py beside this hook; "learn" in the brain's brain.json): (module,
+    config), or (None, None) when it is not switched on or the module is missing"""
+    try:
+        sys.path.insert(0, os.path.dirname(os.path.realpath(__file__)))
+        import ext_learn as mod
+        return mod, mod.config(refresh=True)
+    except Exception:
+        return None, None
+
 if __name__ == "__main__":
-    # VM: the VM's copy steps aside while the active team's plugin brings its own hooks from git (team_hooks_active)
-    if len(sys.argv) == 1 and team_hooks_active():
-        sys.exit(0)
     try:   # switched off by this person in the web UI (Brain tab, MCP & hooks)
         if "session-start" in open(os.path.expanduser("~/.claude/brain/hooks-off")).read().split():
             sys.exit(0)
     except OSError:
         pass
+    if len(sys.argv) == 1:
+        mod, learn = ext_learn()
+        if learn:                                    # an external brain that learns into its own git: where and how to save
+            try:
+                sys.exit(mod.session_start(learn))
+            except SystemExit:
+                raise
+            except Exception:
+                sys.exit(0)
+    # VM: the VM's copy steps aside while the active team's plugin brings its own hooks from git (team_hooks_active)
+    if len(sys.argv) == 1 and team_hooks_active():
+        sys.exit(0)
     sys.exit(main())
