@@ -3,8 +3,8 @@
 every JSON file parses (dot-folders included: .claude-plugin, .mcp.json), the plugin has its manifest, hooks.json and
 .mcp.json in their wrapped shapes, every skill and agent carries a name and a description, team.json's lists resolve to
 files, the knowledge files carry no secret (the same patterns as the brain's notes-check hook, the same 'notes-check: allow'
-marker; mcp.json holds the servers' tokens by the team's decision and is not scanned), and notes.md / tool-map.md stay under
-their line caps. Published into every team repository by brain/teams/publish.py as check.py. Standard library, Python 3.9.
+marker; mcp.json holds the servers' tokens by the team's decision and is not scanned; rules/ is scanned too), and notes.md /
+tool-map.md and the rules/ files stay under their line caps. Published into every team repository by brain/teams/publish.py as check.py. Standard library, Python 3.9.
 Exit 1 on a finding; a broken file is a finding, never a traceback."""
 import json
 import os
@@ -24,6 +24,8 @@ SECRET = [
     (re.compile(r"""(?i)\b(?:password|passwd|secret|token)\b["']?\s*[=:]\s*["']?(?!<[^>]*>|REDACTED)(?=[^\s"',;]*[\d_@#$%^&*+/=!?-])[^\s"',;]{6,}"""), "credential value"),
 ]
 CAPS = {"notes.md": 60, "tool-map.md": 80}
+# rules/ is loaded into every session (main.md, persona.md) or every storage chat (storage.md): kept short
+RULE_CAPS = {"main.md": 120, "persona.md": 30, "storage.md": 150, "coding.md": 60}
 
 
 def ok(label, cond, detail=""):
@@ -100,7 +102,12 @@ for plug in plugs:
             ok("team.json agent present: " + str(n), os.path.isfile(os.path.join(plug, "agents", str(n) + ".md")))
     else:
         ok("plugin team.json", False, "missing or not an object")
-for f in files(".md", os.path.join(ROOT, "knowledge")):
+for name, cap in RULE_CAPS.items():
+    f = os.path.join(ROOT, "rules", name)
+    if os.path.isfile(f):
+        n = len(open(f, encoding="utf-8", errors="replace").read().splitlines())
+        ok(f"rules/{name} under {cap} lines", n <= cap, f"{n} lines: every session pays for it, keep it short")
+for f in files(".md", os.path.join(ROOT, "knowledge")) + files(".md", os.path.join(ROOT, "rules")):
     try:
         lines = open(f, encoding="utf-8", errors="replace").read().splitlines()
     except OSError:

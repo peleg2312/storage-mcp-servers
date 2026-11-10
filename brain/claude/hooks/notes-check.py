@@ -208,8 +208,8 @@ def commit(message, rel=None):
         idx = index()
         extra = ["--", rel, idx] if rel and idx else (["--", rel] if rel else [])
         held = [] if rel else unclean()               # a whole-tree commit never carries a file that still holds a secret
-        if held:
-            extra = ["--", "."] + [":!" + h for h in held]
+        if not rel:                                   # nor the team's rules/: people commit those themselves (team editor, git)
+            extra = ["--", "."] + [":!" + h for h in held] + ([":!rules"] if REPO != BRAIN else [])
         git(["add", "-A"] + extra, 4)
         git(["commit", "-q", "-m", message], 4)
         if upstream():       # a failed push is retried by the next --sync or session start; never a credential prompt
@@ -401,6 +401,8 @@ def hook():
         return 0                                   # a team's mcp.json carries its servers' tokens by the owner's decision
     f = findings(path)
     repo = os.path.realpath(REPO) + os.sep         # team mode: the real file lives in the team clone
+    if path.startswith(repo + "rules" + os.sep):  # the team's rules: never committed by this hook (the guard blocks Claude there)
+        return 0
     if path.startswith(repo) and not f:            # a file holding a secret is not committed: the redacted save is
         commit("brain: " + path[len(repo):], path[len(repo):])
     if f:

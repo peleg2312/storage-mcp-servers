@@ -113,8 +113,9 @@ Code; few high-signal tools) and measured with `docs-search-mcp/eval_search.py`:
   VAST / ONTAP NAS): persona, rules file, skill and agent lists, starting MCP servers. `brain/plugin/build.py --team` resolves a
   team into the plugin `paas-brain-<team>` (skills, agents, hooks, docs-local, plus the persona / rules / templates a plugin
   cannot activate); `brain/teams/publish.py` wraps it into a team repository with `knowledge/` (notes/, captures/, incidents/,
-  tool-map.md), one git repository per team in GitLab. `paas-team use <team>` switches a person in a few seconds: persona.md and
-  storage.md rewritten, the memory paths (`notes.md`, `environment.md`, `tool-map.md`, `notes/`, `captures/`, `incidents/`) linked
+  tool-map.md) and `rules/` (main.md, persona.md, storage.md, coding.md: created once from the brain's, then the team's own; never
+  rewritten by a publish, never committed by the notes hook, blocked for Claude by the guard), one git repository per team in
+  GitLab. `paas-team use <team>` switches a person in a few seconds: the rules linked into the team's `rules/`, the memory paths (`notes.md`, `environment.md`, `tool-map.md`, `notes/`, `captures/`, `incidents/`) linked
   into `~/.claude/brain/teams/<team>/knowledge/`, the team's plugin enabled and the others disabled (the same Claude Code
   plugin on the VM and on laptops). Every hook, skill and the web UI keep reading the old paths; the notes hook commits and pushes into the team
   clone; session start pulls and re-applies a plugin the team updated. Each team is a separate context budget (`test_budgets.py`

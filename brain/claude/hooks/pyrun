@@ -23,8 +23,9 @@ MSG="Python 3 is not installed on this machine (python3, python or py), so the b
 case "$(basename "$S")" in
   block-write-tools.py)
     IN=$(cat)
-    # the docs servers only search and read: they stay usable; anything else waits for the guard
-    if printf '%s' "$IN" | grep -Eq '"tool_name"[[:space:]]*:[[:space:]]*"mcp__(plugin_[^"]*_)?docs-(http|local|search)__'; then
+    # the docs servers only search and read, and file edits are the person's own work (the guard checks them only for
+    # the team's rules): they stay usable; anything else waits for the guard
+    if printf '%s' "$IN" | grep -Eq '"tool_name"[[:space:]]*:[[:space:]]*"(mcp__(plugin_[^"]*_)?docs-(http|local|search)__|(Edit|Write|MultiEdit|NotebookEdit)")'; then
       exit 0
     fi
     echo "BLOCKED by the read-only guard: $MSG. Until then only the docs servers (docs-http) work." >&2

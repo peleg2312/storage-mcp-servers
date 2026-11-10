@@ -151,6 +151,64 @@ st = team()
 assert st.startswith("team: san (") and "other teams: nas" in st, st
 print("switch ok")
 
+# 3b. the team's rules live in its repository (rules/) next to knowledge/: linked into ~/.claude/brain, never written by
+#     publish.py, paas-team or the notes hook, and Claude cannot change them (the guard)
+san_src = os.path.join(work, "sources", "san")
+for name in ("main.md", "persona.md", "storage.md", "coding.md"):
+    assert os.path.isfile(os.path.join(san_src, "rules", name)), name
+    assert os.readlink(os.path.join(brain, name)) == os.path.join(brain, "teams", "san", "rules", name), name
+assert open(os.path.join(san_src, "rules", "main.md")).read() == open(os.path.join(san_src, "paas-brain-san", "brain", "CLAUDE.md")).read()
+assert "@~/.claude/brain/main.md" in open(os.path.join(home, ".claude", "CLAUDE.md")).read().split()
+# the team edits its storage rules; a new publish keeps them (and says so), adds no commit for them
+open(os.path.join(san_src, "rules", "storage.md"), "a").write("\nTeam rule: SG names start with SG_.\n")
+subprocess.run(["git", "-C", san_src, "-c", "user.name=t", "-c", "user.email=t@x", "commit", "-qam", "team rule"], check=True)
+n = git(san_src, "rev-list", "--count", "HEAD").strip()
+rc, o = run([sys.executable, PUBLISH, "san", "--to", san_src])
+assert "kept the team's own rules/storage.md" in o, o
+assert "Team rule: SG names" in open(os.path.join(san_src, "rules", "storage.md")).read()
+assert git(san_src, "rev-list", "--count", "HEAD").strip() == n, "the team's rules are not a publish change"
+# a member pulls it: their storage.md is the team's file itself
+r = subprocess.run(["git", "-C", os.path.join(brain, "teams", "san"), "pull", "--ff-only", "-q", san_src, "main"], capture_output=True, text=True)
+assert r.returncode == 0, r.stderr                           # (origin is the unreachable stand-in GitLab: pull the source directly)
+assert "Team rule: SG names" in open(os.path.join(brain, "storage.md")).read()
+# the guard: Claude's edits and shell writes to a team rule are blocked, reads and notes pass
+guard = lambda payload: subprocess.run([sys.executable, os.path.join(HOOKS, "block-write-tools.py")], input=json.dumps(payload),
+                                       capture_output=True, text=True, env=env, timeout=30)
+rules_dir = os.path.join(brain, "teams", "san", "rules")
+for tool, inp in (("Edit", {"file_path": os.path.join(brain, "storage.md"), "old_string": "a", "new_string": "b"}),
+                  ("Write", {"file_path": os.path.join(rules_dir, "new.md"), "content": "x"}),
+                  ("MultiEdit", {"file_path": os.path.join(rules_dir, "main.md"), "edits": []}),
+                  ("Bash", {"command": "sed -i 's/a/b/' ~/.claude/brain/storage.md"}),
+                  ("Bash", {"command": "echo x >> ~/.claude/brain/persona.md"}),
+                  ("Bash", {"command": "cp /tmp/x $HOME/.claude/brain/main.md"}),
+                  ("Bash", {"command": f"rm {os.path.join(rules_dir, 'coding.md')}"})):
+    r = guard({"tool_name": tool, "tool_input": inp})
+    assert r.returncode == 2 and "team's rules" in r.stderr, (tool, inp, r.returncode, r.stderr)
+for tool, inp in (("Edit", {"file_path": os.path.join(brain, "notes", "powermax.md"), "old_string": "a", "new_string": "b"}),
+                  ("Write", {"file_path": os.path.join(home, "project", "storage.md"), "content": "x"}),
+                  ("Bash", {"command": "cat ~/.claude/brain/storage.md > /tmp/rules-copy"}),
+                  ("Bash", {"command": "cp ~/.claude/brain/storage.md /tmp/rules-copy && grep -i sg ~/.claude/brain/storage.md"})):
+    r = guard({"tool_name": tool, "tool_input": inp})
+    assert r.returncode == 0, (tool, inp, r.stderr)
+# the notes hook never commits rules/: a whole-tree commit leaves a local rules edit alone, a save of a rule file commits nothing
+clone = os.path.join(brain, "teams", "san")
+open(os.path.join(clone, "rules", "coding.md"), "a").write("\nlocal draft\n")
+open(os.path.join(clone, "knowledge", "notes", "fabric.md"), "w").write("# Fabric\n- 2026-11-10 · fact · observed · test\n")
+subprocess.run([sys.executable, os.path.join(HOOKS, "notes-check.py"), "--commit", "brain: test"], env=env, check=True, capture_output=True)
+assert "knowledge/notes/fabric.md" in git(clone, "show", "--name-only", "--format=", "HEAD")
+assert git(clone, "status", "--porcelain").strip() == "M rules/coding.md", git(clone, "status", "--porcelain")
+subprocess.run(["git", "-C", clone, "checkout", "-q", "--", "rules/coding.md"], check=True)
+# an installed VM whose CLAUDE.md is the brain's full text: kept as a backup, replaced by the import (rules loaded once)
+vm = os.path.join(work, "vm")
+os.makedirs(os.path.join(vm, ".claude", "brain"))
+open(os.path.join(vm, ".claude", "CLAUDE.md"), "w").write(open(os.path.join(R, "brain", "claude", "CLAUDE.md")).read())
+run([sys.executable, TOOL, "use", "san"], e=dict(env, HOME=vm))
+md = open(os.path.join(vm, ".claude", "CLAUDE.md")).read()
+assert "@~/.claude/brain/main.md" in md.split() and "Golden rules" not in md, md
+assert any(f.startswith("CLAUDE.md.bak.") for f in os.listdir(os.path.join(vm, ".claude")))
+assert os.readlink(os.path.join(vm, ".claude", "brain", "main.md")).endswith(os.path.join("teams", "san", "rules", "main.md"))
+print("team rules ok")
+
 # 4. the notes hook commits into the active team's repository; sync against a bare remote; refresh after a plugin change
 hooks = os.path.join(home, ".claude", "hooks")
 os.makedirs(hooks)
@@ -222,8 +280,10 @@ assert subprocess.run([sys.executable, os.path.join(src, "check.py")], capture_o
 broken = tempfile.mkdtemp(); shutil.copytree(src, os.path.join(broken, "r"), ignore=shutil.ignore_patterns(".git"))
 open(os.path.join(broken, "r", "paas-brain-nas", ".mcp.json"), "w").write("{")
 open(os.path.join(broken, "r", "knowledge", "notes", "leak.md"), "w").write("- login password=hunter2\n- ok password=abc notes-check: allow\n")
+open(os.path.join(broken, "r", "rules", "main.md"), "a").write("x\n" * 200)
 r = subprocess.run([sys.executable, os.path.join(broken, "r", "check.py")], capture_output=True, text=True)
 assert "note knowledge/notes/leak.md:1: fact line without a date" in r.stdout, r.stdout
+assert "FAIL rules/main.md under 120 lines" in r.stdout, r.stdout
 assert r.returncode == 1 and "FAIL json paas-brain-nas/.mcp.json" in r.stdout and "FAIL no secret in knowledge/notes/leak.md: line 1" in r.stdout and "all checks passed" not in r.stdout, r.stdout
 # the plugin version is a fingerprint of its content, identical from publish.py and from paas-team bump
 v0 = json.load(open(os.path.join(src, "paas-brain-nas", ".claude-plugin", "plugin.json")))["version"]
@@ -314,6 +374,7 @@ servers = json.load(open(os.path.join(nasdir, "mcp.json")))
 assert servers["ontap"]["headers"]["Authorization"] == "Bearer s3cr3t-token-value", servers
 assert servers["harvest"]["url"].startswith("http://h.example") and servers["harvest"]["headers"]["Authorization"] == "Bearer TOKEN", servers   # no token given: the placeholder stays
 assert "NAS person" in open(os.path.join(brain, "persona.md")).read(), "active team re-applied"
+assert "NAS person" in open(os.path.join(nasdir, "rules", "persona.md")).read(), "the editor writes the team's rules/"
 assert "brain tab: team nas edited" in git(os.path.join(work, "sources", "nas"), "log", "--format=%s")   # pushed to the remote
 assert "mcp add-json" not in claude_log(), claude_log()   # the re-apply enables the plugin; no server is registered per person
 pm = plug_mcp("nas")
@@ -345,6 +406,10 @@ assert not os.path.islink(os.path.join(brain, "notes")) and os.path.isdir(os.pat
 assert not os.path.exists(os.path.join(brain, "notes", "powermax.md"))
 assert os.path.isfile(os.path.join(brain, "teams", "san", "knowledge", "notes", "powermax.md"))
 assert os.path.isfile(os.path.join(brain, "notes.md")) and not os.path.islink(os.path.join(brain, "notes.md"))
+for name in ("main.md", "persona.md", "storage.md", "coding.md"):    # the rules stay usable as plain copies of the team's
+    p = os.path.join(brain, name)
+    assert os.path.isfile(p) and not os.path.islink(p), name
+    assert open(p).read() == open(os.path.join(brain, "teams", "san", "rules", name)).read(), name
 assert not os.path.exists(os.path.join(brain, "team")) and os.path.isdir(os.path.join(brain, "teams", "san", ".git"))
 assert skills() == ["docs-lookup", "mine"], skills()
 assert not os.path.exists(os.path.join(home, ".claude", "agents", "nas-analyst.md"))

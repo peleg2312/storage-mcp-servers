@@ -32,10 +32,14 @@ command -v claude >/dev/null 2>&1 || { echo "claude (Claude Code) is required: i
 mkdir -p "$DST/hooks" "$DST/tools/vendor" "$B/inbox" "$HOME/storage-reports"
 
 echo "== rules (the team's persona, storage rules, skills and agents come with the team below)"
-cp "$SRC/brain/coding.md" "$B/"
+# a rule file linked into the team repository's rules/ (paas-team) is the team's own: never written from here
+team_rule() {   # $1 is the active team's rules/<name> itself (a symlink, or a Windows hard link: same file)
+  _t=$(cat "$(dirname "$1")/team" 2>/dev/null) && [ -n "$_t" ] && [ "$1" -ef "$(dirname "$1")/teams/$_t/rules/$(basename "$1")" ]
+}
+team_rule "$B/coding.md" || cp "$SRC/brain/coding.md" "$B/coding.md"
 # main.md = CLAUDE.md; brain/install.sh rewrites @~/.claude/brain/ imports only for a project install, so here it is a copy.
 # Your own ~/.claude/CLAUDE.md is never replaced: it only gets one import line.
-cp "$SRC/CLAUDE.md" "$B/main.md"
+team_rule "$B/main.md" || cp "$SRC/CLAUDE.md" "$B/main.md"
 touch "$DST/CLAUDE.md"
 grep -qxF '@~/.claude/brain/main.md' "$DST/CLAUDE.md" || printf '\n@~/.claude/brain/main.md\n' >> "$DST/CLAUDE.md"
 # the read-only guard reads ~/.claude/hooks/allowed-tools.txt too, so your list survives plugin updates

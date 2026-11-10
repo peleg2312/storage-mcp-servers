@@ -13,6 +13,8 @@ knowledge folder, in one git repository people clone (paas-team add) and Claude 
 Layout of a team repository:
   .claude-plugin/marketplace.json   paas-brain-<team>/ (the plugin, replaced on every publish)
   knowledge/{notes,captures,incidents}/ + notes.md, environment.md, tool-map.md   (the team's memory, shared by every member)
+  rules/main.md, persona.md, storage.md, coding.md   the team's rules (created once from the brain's, then the team's own:
+                                    linked into every member's ~/.claude/brain; a publish never changes them)
   mcp.json   the team's live MCP servers with address and token (the owner's decision: readable by everyone in the
              project; use read-only tokens and rotate them when someone leaves); HOST / TOKEN placeholders until filled
   team.json (name, title, remote)   README.md   .gitignore
@@ -76,7 +78,7 @@ def readme(team, remote):
             f"Or by hand: `claude plugin marketplace add {url}`, `claude plugin install paas-brain-{n}@paas-brain-{n}`, and the VM's "
             f"certificate (`paas-brain-{n}/lib/paas-ui.crt`) in this machine's trust store. Then `claude`.\n"
             "The first session sets the team up: it clones this repository into `~/.claude/brain/teams/" + n + "`, links the "
-            "memory files into it, writes the rules (persona, storage and coding rules; one import line in your `~/.claude/CLAUDE.md`) "
+            "memory files and the team's `rules/` into it (one import line in your `~/.claude/CLAUDE.md`) "
             "and installs `paas-team`. From then on every saved note is committed and pushed here, every session start pulls, "
             "and a new plugin version published here is applied at the next session start.\n"
             f"No GitLab from that machine? Copy a clone of this repository over and give its folder to the first command "
@@ -86,6 +88,9 @@ def readme(team, remote):
             f"version {t['version']}); rebuilt only by `brain/teams/publish.py` from the storage-mcp-servers repository, never edited here\n"
             "- `knowledge/`: the team's shared memory, written by every member's brain and synced through this repository: "
             "notes.md (the catalog loaded every session), environment.md, tool-map.md, notes/<topic>.md, captures/, incidents/\n"
+            "- `rules/`: the team's rules (`main.md` = the golden rules, `persona.md`, `storage.md`, `coding.md`), linked into every "
+            "member's `~/.claude/brain`. Edit them here (commit and push by hand, or the Brain tab's team editor); Claude cannot "
+            "change them, the notes hook never commits them and a new publish never overwrites them\n"
             "- `mcp.json`: the team's MCP servers (address and token), built into the plugin's `.mcp.json` so every member's Claude "
             "connects them; `team.json`: the team's lists\n"
             "- `check.py` runs in CI (`.gitlab-ci.yml`) and refuses a push that carries a credential or breaks the notes format\n\n"
@@ -162,6 +167,19 @@ def publish(team, dest, remote=None, hooks=True, commit=True, force=False, docs_
     for f in ("tool-map.md", "notes.md", "environment.md"):           # the team's memory starts from the templates, once
         if not os.path.exists(os.path.join(k, f)):
             shutil.copy(os.path.join(plug, "brain", f), os.path.join(k, f))
+    # the team's rules start from the brain's, once; from then on they are the team's: an existing file is never changed,
+    # a newer brain version is only reported (the team merges what it wants by hand)
+    rdir = os.path.join(dest, "rules")
+    os.makedirs(rdir, exist_ok=True)
+    newer = []
+    for name, tpl in paas_team.RULES:
+        own, src = os.path.join(rdir, name), os.path.join(plug, "brain", tpl)
+        if not os.path.exists(own):
+            shutil.copy(src, own)
+        elif open(own, encoding="utf-8").read() != open(src, encoding="utf-8").read():
+            newer.append(f"rules/{name} (brain: {os.path.relpath(src, dest)})")
+    if newer:
+        print(f"team {team}: kept the team's own " + ", ".join(newer) + "; compare with git diff --no-index if you want the brain's changes")
     meta_path = os.path.join(dest, "team.json")
     meta = {}
     if os.path.exists(meta_path):

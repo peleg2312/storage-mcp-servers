@@ -93,10 +93,12 @@ def bare_plugin_rules():
                 BOOTSTRAPPED = True
     except Exception:
         pass
-    text = read(os.path.join(b, "CLAUDE.md"))
-    text = re.sub(r"^@~/\.claude/brain/persona\.md\s*$", read(os.path.join(b, "persona.md")).strip(), text, flags=re.M)
+    mine = os.path.join(USER_HOME, "brain")                   # set up: the team's own rules (links into its rules/)
+    src = lambda f, tpl: (read(os.path.join(mine, f)) if done else "") or read(os.path.join(b, tpl))
+    text = src("main.md", "CLAUDE.md")
+    text = re.sub(r"^@~/\.claude/brain/persona\.md\s*$", src("persona.md", "persona.md").strip(), text, flags=re.M)
     text = re.sub(r"^@\S+\s*$\n?", "", text, flags=re.M)      # notes.md and the like do not exist yet
-    rules = re.sub(r"^@\S+\s*$\n?", "", read(os.path.join(b, "storage.md")), flags=re.M)
+    rules = re.sub(r"^@\S+\s*$\n?", "", src("storage.md", "storage.md"), flags=re.M)
     if done:
         return (done + "First session: these are the brain's rules (from the next session they come from ~/.claude/CLAUDE.md).\n"
                 + text.strip() + "\n\n" + rules.strip() + "\n(No docs library yet: install-laptop.sh of storage-mcp-servers adds it.)")
