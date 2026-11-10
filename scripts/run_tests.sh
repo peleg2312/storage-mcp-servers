@@ -22,6 +22,7 @@ if command -v node >/dev/null; then
   run brain/ui/plugins/paas-schedule "server.js --self-test" node
   run brain/multiuser "gate.js --self-test" node          # idle stop and allowed-groups logic
   run brain/ui/plugins/paas-brain "test_team_card.cjs" node   # the Team card in headless Chromium (SKIP without playwright)
+  run brain/ui/plugins/paas-brain "test_external_brain.cjs" node   # an external brain in the Brain tab: Memory, settings (SKIP without playwright)
 else echo "SKIP  node self-tests (no node)"; S=$((S+1)); fi
 run brain/ui/plugins "sync-shared.py --check" "$PY"   # every tab carries the current shared block
 run brain/multiuser "install-multiuser.sh --dry-run --team san=https://gl.example/storage/brain-san.git --groups A,b" sh   # the one-command install plans without root

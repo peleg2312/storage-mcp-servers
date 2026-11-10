@@ -395,6 +395,8 @@ clone = os.path.join(brain, "teams", "ob")
 rec = json.load(open(os.path.join(clone, ".git", "paas-external.json")))
 assert rec["plugin"] == "ob" and rec["marketplace"] == "ob" and rec["dir"] == os.path.join("plugins", "ob"), rec
 assert rec["env"] == {"OB_DIR": "{dir}"} and rec["generated"] == [".claude-plugin/marketplace.json"], rec
+assert rec["knowledge"]["folders"] == ["knowledge"] and rec["knowledge"]["save"] == "merge-request", rec["knowledge"]
+assert [x["name"] for x in rec["settings_schema"]] == ["OB_DIR"] and rec["library"] == "", rec
 assert run(["git", "-C", clone, "status", "--porcelain"])[1] == "", "the clone stays clean for its own pulls"
 open(os.path.join(home, "claude.log"), "w").close()
 o = team("use", "ob")
@@ -409,6 +411,8 @@ assert "Other brain" in open(os.path.join(brain, "persona.md")).read()
 rows = {t["name"]: t for t in json.loads(team("list", "--json"))["teams"]}
 assert rows["ob"]["external"] and rows["ob"]["active"] and rows["ob"]["plugin"] == "ob" and rows["ob"]["skills"] == 1, rows["ob"]
 team("env", "ob", "OB_URL=https://ob.internal", "OB_TOKEN=s3cret")
+st_rows = {x["name"]: x for x in {t["name"]: t for t in json.loads(team("list", "--json"))["teams"]}["ob"]["settings"]}
+assert st_rows["OB_TOKEN"]["secret"] and st_rows["OB_TOKEN"]["set"] and not st_rows["OB_URL"]["secret"], st_rows
 st = json.load(open(os.path.join(home, ".claude", "settings.json")))
 assert st["env"]["OB_URL"] == "https://ob.internal" and oct(os.stat(os.path.join(home, ".claude", "settings.json")).st_mode)[-3:] == "600"
 assert "s3cret" not in team("list", "--json")                       # names only, never values

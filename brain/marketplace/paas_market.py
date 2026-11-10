@@ -633,6 +633,42 @@ def team_plugin_items():
     return out
 
 
+_EXT = None
+
+
+def external_brains():
+    """{team: row} of the external brains (other Claude Code brains kept as they are) paas-team knows: the person's own
+    clones and those root put in the teams folder for everyone; their Market item is plugin/brain-<team>"""
+    global _EXT
+    if _EXT is None:
+        _EXT = {}
+        tool = team_tool()
+        if tool:
+            try:
+                r = subprocess.run([sys.executable, tool, "list", "--json"], text=True, capture_output=True, timeout=60)
+                _EXT = {t["name"]: t for t in json.loads(r.stdout).get("teams", []) if t.get("external")}
+            except (OSError, ValueError, subprocess.SubprocessError):
+                _EXT = {}
+    return _EXT
+
+
+def external_items():
+    act = active_team()
+    return [{"kind": "plugin", "name": f"brain-{n}", "team": n, "external": True, "title": t.get("title") or n, "source": "",
+             "author": None, "description": (t.get("description") or "") + f" (another brain, kept as it is: plugin {t.get('plugin') or '?'})",
+             "skills": [], "agents": [], "mcp": t.get("mcp") or [], "version": t.get("version") or "", "id": f"plugin/brain-{n}",
+             "added": bool(t.get("local")), "enabled": n == act, "update": False, "ready": True} for n, t in external_brains().items()]
+
+
+def team_plugin_name(name):
+    """the team a plugin item switches to: plugin/paas-brain-<team>, or an external brain's plugin/brain-<team>; else None"""
+    if name.startswith("paas-brain-"):
+        return name[len("paas-brain-"):]
+    if name.startswith("brain-") and name[len("brain-"):] in external_brains():
+        return name[len("brain-"):]
+    return None
+
+
 def team_membership():
     """{"skill/<n>" | "agent/<n>" | "mcp/<n>": [team names]}: which team plugins carry an item, active or not"""
     out = {}
@@ -666,7 +702,7 @@ def listing(words=None):
     provided, team = team_provides()
     in_teams = team_membership()
     out = []
-    for it in team_plugin_items() + load_index() + source_items():
+    for it in team_plugin_items() + external_items() + load_index() + source_items():
         it.setdefault("source", "")
         if it["kind"] == "plugin":
             if words and not all(w.lower() in f"{it['name']} {it['description']} plugin".lower() for w in words):
@@ -847,8 +883,8 @@ def team_guard(ids, action):
     rest = []
     provided, team = team_provides()
     for kind, name in ids:
-        if kind == "plugin" and name.startswith("paas-brain-"):
-            team_switch(name[len("paas-brain-"):] if action != "disable" else "none")
+        if kind == "plugin" and team_plugin_name(name):
+            team_switch(team_plugin_name(name) if action != "disable" else "none")
         elif f"{kind}/{name}" in provided and action in ("add", "remove"):
             print(f"{kind}/{name} comes with your team plugin ({team}); the team editor in the Brain tab changes the team's set")
         else:
@@ -1183,8 +1219,8 @@ def main(argv):
         for kind, name in parse_ids(args):
             if kind != "plugin":
                 sys.exit("paas-market: only plugins are switched on / off")
-            if name.startswith("paas-brain-"):
-                team_switch(name[len("paas-brain-"):] if cmd == "enable" else "none")
+            if team_plugin_name(name):
+                team_switch(team_plugin_name(name) if cmd == "enable" else "none")
                 continue
             plugin_cmd(cmd, name)
     elif cmd == "new":

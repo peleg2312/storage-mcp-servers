@@ -139,6 +139,94 @@ function pluginTeam() {
   const dir = path.join(BRAIN, 'teams', team, `paas-brain-${team}`);
   return fs.existsSync(dir) ? { team, dir } : null;
 }
+// ---- an external brain's own knowledge (its folders as its repository keeps them; never written on its main branch)
+function extBrain() {
+  const t = pluginTeam();
+  if (!t || !t.external) return null;
+  const rec = extRecord(t.team) || {};
+  const repo = path.join(BRAIN, 'teams', t.team);
+  const k = rec.knowledge || {};
+  const rel = (x) => (typeof x === 'string' && x && !x.startsWith('.git') && !path.isAbsolute(x) && !x.split('/').includes('..') ? x : '');
+  return { team: t.team, plugin: t.plugin, repo, title: rec.title || '', save: k.save === 'push' ? 'push' : 'merge-request', branch: rel(k.branch),
+    folders: (k.folders || []).map(rel).filter(Boolean), inbox: rel(k.inbox), templates: rel(k.templates), index: rel(k.index) };
+}
+// a page path inside one of the brain's knowledge folders (or its inbox / templates / index): the real file, else null
+function extFile(eb, rel, mustExist = true) {
+  rel = String(rel || '');
+  if (!/^[\w./ -]{1,300}\.md$/.test(rel) || rel.split('/').includes('..') || rel.startsWith('/')) return null;
+  const roots = [...eb.folders, eb.inbox, eb.templates].filter(Boolean);
+  if (!(roots.some((r) => rel === r || rel.startsWith(`${r}/`)) || (eb.index && rel === eb.index))) return null;
+  const p = path.join(eb.repo, rel);
+  if (mustExist && !fs.existsSync(p)) return null;
+  return inside(p, [eb.repo]) ? p : null;
+}
+function pageMeta(p, rel) {
+  const text = read(p, 4000) || '';
+  const f = frontmatter(text);
+  const head = /^#\s+(.+)$/m.exec(text.replace(/^---\n[\s\S]*?\n---\n?/, ''));
+  return { path: rel, title: String(f.title || (head ? head[1] : path.basename(rel, '.md'))).slice(0, 160),
+    area: rel.split('/').length > 2 ? rel.split('/')[1] : '', mtime: fs.statSync(p).mtimeMs };
+}
+function extPages(eb, root, limit = 3000) {
+  const out = [];
+  (function walk(d) {
+    if (out.length >= limit) return;
+    let entries = [];
+    try { entries = fs.readdirSync(path.join(eb.repo, d), { withFileTypes: true }); } catch { return; }
+    for (const e of entries) {
+      if (e.name.startsWith('.')) continue;
+      const rel = `${d}/${e.name}`;
+      if (e.isDirectory()) walk(rel);
+      else if (e.name.endsWith('.md') && !/^(README|_template)/i.test(e.name) && out.length < limit) out.push(pageMeta(path.join(eb.repo, rel), rel));
+    }
+  })(root);
+  return out;
+}
+function extOverview() {
+  const eb = extBrain();
+  if (!eb) return null;
+  return { team: eb.team, plugin: eb.plugin, title: eb.title, save: eb.save, folders: eb.folders, inbox: eb.inbox, templates: eb.templates,
+    index: eb.index && fs.existsSync(path.join(eb.repo, eb.index)) ? eb.index : '',
+    pages: eb.folders.flatMap((f) => extPages(eb, f)), inboxPages: eb.inbox ? extPages(eb, eb.inbox, 500) : [],
+    templatePages: eb.templates ? extPages(eb, eb.templates, 50) : [] };
+}
+// a change to the brain's knowledge, its way: a branch from its main line and a GitLab merge request (GitLab's own push
+// options open it, no glab needed), or a push to its main line only when its brain.json says "save": "push". Done in a
+// separate worktree, so the clone the person works with is never touched.
+async function extPropose(eb, rel, text, title) {
+  const env = await identity();
+  const g = (args, ms = 60000) => run('git', ['-C', eb.repo, ...args], ms, env);
+  await g(['fetch', '-q', 'origin'], 60000);
+  const head = (await g(['symbolic-ref', '--short', 'refs/remotes/origin/HEAD'], 5000)).out.trim();
+  const main = eb.branch || (/^origin\/[\w./-]+$/.test(head) ? head.slice(7) : 'main');
+  const slug = String(title).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 40) || 'change';
+  const d = new Date();
+  const branch = `brain-tab/${d.toISOString().slice(0, 10)}-${slug}-${Math.random().toString(36).slice(2, 6)}`;
+  const wt = path.join(eb.repo, '.git', 'paas-worktrees', branch.replace(/\//g, '_'));
+  const add = await g(eb.save === 'push' ? ['worktree', 'add', '-q', '--detach', wt, `origin/${main}`] : ['worktree', 'add', '-q', '-b', branch, wt, `origin/${main}`]);
+  if (!add.ok) return { ok: false, out: `Could not start the change: ${add.out.slice(-300)}` };
+  try {
+    const p = path.join(wt, rel);
+    fs.mkdirSync(path.dirname(p), { recursive: true });
+    fs.writeFileSync(p, text.endsWith('\n') ? text : `${text}\n`);
+    const w = (args, ms = 60000) => run('git', ['-C', wt, ...args], ms, env);
+    await w(['add', '--', rel]);
+    const c = await w(['commit', '-q', '-m', String(title).slice(0, 200)]);
+    if (!c.ok) return { ok: false, out: /nothing to commit/.test(c.out) ? 'Nothing changed' : c.out.slice(-300) };
+    const push = eb.save === 'push'
+      ? await w(['push', '-q', 'origin', `HEAD:${main}`], 120000)
+      : await w(['push', '-u', 'origin', branch, '-o', 'merge_request.create', '-o', `merge_request.target=${main}`,
+        '-o', `merge_request.title=${String(title).slice(0, 200)}`, '-o', 'merge_request.remove_source_branch'], 120000);
+    if (!push.ok) return { ok: false, out: `Not pushed: ${push.out.slice(-400)}` };
+    const url = (/https?:\/\/\S+\/merge_requests\/\d+/.exec(push.out) || /https?:\/\/\S+merge_requests\/new\S*/.exec(push.out) || [])[0] || '';
+    return { ok: true, url, branch: eb.save === 'push' ? main : branch,
+      out: eb.save === 'push' ? `Saved to ${main} of ${eb.team}` : url ? `Merge request: ${url}` : `Branch ${branch} pushed: open its merge request in GitLab` };
+  } finally {
+    await g(['worktree', 'remove', '--force', wt], 30000);
+    if (eb.save !== 'push') await g(['branch', '-D', branch], 10000);
+  }
+}
+
 // the clone's file for a team skill or agent (null: no plugin mode, bad name, or not in the team)
 function teamFile(kind, name) {
   const t = pluginTeam();
@@ -380,9 +468,10 @@ function captures() {
 // the general one: the Docs section shows and searches the library this person's Claude searches
 function teamLibrary() {
   const t = pluginTeam();
-  const name = t && String((json(path.join(t.dir, 'team.json')) || {}).library || '');
+  const name = t && String((t.external ? (extRecord(t.team) || {}).library : (json(path.join(t.dir, 'team.json')) || {}).library) || '');
   if (!name || !/^[a-z0-9][a-z0-9_-]{0,31}$/.test(name)) return null;
   const db = path.join(BRAIN, 'libraries', name, 'docs.db');
+  if (t.external && !fs.existsSync(db)) return null;          // its docs not loaded by root yet: the general library stays
   return { name, db, built: fs.existsSync(db) ? fs.statSync(db).mtimeMs : null };
 }
 
@@ -395,6 +484,7 @@ async function overview() {
     pluginTeam: pluginTeam()?.team || null,
     pluginName: pluginTeam() ? (pluginTeam().external ? pluginTeam().plugin : `paas-brain-${pluginTeam().team}`) : null,
     pluginExternal: !!pluginTeam()?.external,
+    external: extOverview(),
     skills: skills(), agents: agents(), hooks: hooks(), mcp: mcpServers(), inbox: inbox(), captures: captures(),
     // multi-user VM: environment.md / tool-map.md are shared and only root writes them; the library too
     // CLAUDE.md is this account's own copy of the brain's rules, yours to change (a brain update replaces it)
@@ -575,10 +665,13 @@ const routes = {
   },
   'POST /team-add': async (_q, b) => {
     if (!TEAM_BIN) return { ok: false, out: 'Teams are not installed on this VM' };
-    const name = String(b.name || ''); const url = String(b.url || '');
+    const url = String(b.url || '');
+    // no name given: the repository's own (".../redbull-brain.git" -> "redbull-brain")
+    const name = String(b.name || '') || (url.replace(/\.git\/?$/, '').split(/[/:]/).pop() || '').toLowerCase().replace(/[^a-z0-9_-]+/g, '-').replace(/^[^a-z]+/, '').slice(0, 32).replace(/-+$/, '');
     if (!TEAM_NAME.test(name)) return { ok: false, out: 'Name: lower-case letters, digits, dashes, starting with a letter' };
     if (url.length > 300 || /\s/.test(url) || !/^(https:\/\/|http:\/\/|ssh:\/\/|git@|\/)/.test(url)) return { ok: false, out: 'Give a git url (https://, ssh://, git@ or a folder path)' };
-    return run('python3', [TEAM_BIN, 'add', name, url], 180000);
+    const r = await run('python3', [TEAM_BIN, 'add', name, url], 180000);
+    return { ...r, name };
   },
   // one team in full, for the editor
   'GET /team-show': async (q) => {
@@ -613,6 +706,24 @@ const routes = {
     const pairs = (Array.isArray(b.pairs) ? b.pairs : []).map(String).filter((x) => /^[A-Za-z_][A-Za-z0-9_]{0,63}=[^\n]{0,2000}$/.test(x)).slice(0, 40);
     if (!pairs.length) return { ok: false, out: 'Nothing to set: KEY=VALUE, one per line (KEY= removes it)' };
     return run('python3', [TEAM_BIN, 'env', name, ...pairs]);
+  },
+  // an external brain's knowledge: one page, read-only here (GET), and a proposed change (POST: branch + merge request)
+  'GET /ext-page': async (q) => {
+    const eb = extBrain();
+    if (!eb) return { ok: false, out: 'No external brain active' };
+    const p = extFile(eb, q.get('path'));
+    return p ? { ok: true, path: q.get('path'), text: read(p) ?? '' } : { ok: false, out: 'Not one of its knowledge pages' };
+  },
+  'POST /ext-propose': async (_q, b) => {
+    const eb = extBrain();
+    if (!eb) return { ok: false, out: 'No external brain active' };
+    const rel = String(b.path || '');
+    if (!extFile(eb, rel, !b.create)) return { ok: false, out: 'Give a page inside its knowledge folders or inbox, ending in .md' };
+    if (b.create && fs.existsSync(path.join(eb.repo, rel))) return { ok: false, out: 'That page already exists: open it and propose a change' };
+    const text = String(b.text || '');
+    if (!text.trim() || Buffer.byteLength(text) > 2 * 1024 * 1024) return { ok: false, out: 'The page is empty or too large' };
+    const title = oneLine(b.title, 200) || `brain(${eb.team}): ${path.basename(rel, '.md')}`;
+    return extPropose(eb, rel, text, title);
   },
   'POST /team-sync': async () => (TEAM_BIN ? run('python3', [TEAM_BIN, 'sync']) : { ok: false, out: 'Teams are not installed on this VM' }),
   'GET /mcp-status': () => run('claude', ['mcp', 'list'], 90000),

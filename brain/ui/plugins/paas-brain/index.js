@@ -407,12 +407,16 @@ export function mount(container, api) {
         ${cur ? '<div class="row" style="margin-bottom:10px"><button type="button" class="btn ghost sm tsy">Sync knowledge</button></div>' : ''}
         <details class="tadd" style="margin-top:8px"><summary>Add a team, or any other Claude Code brain, from a git url</summary>
           <div class="sub" style="margin:6px 0">A team repository, or another brain (a plugin marketplace, a plugin folder, or skills/ and agents/): it is cloned as it is and switched like a team.</div>
-          ${field('Name', '<input class="ta-name" aria-label="Team name" placeholder="san" autocomplete="off" spellcheck="false">', 'lower-case letters, digits, dashes')}
+          ${field('Name (optional)', '<input class="ta-name" aria-label="Team name" placeholder="from the url" autocomplete="off" spellcheck="false">', 'lower-case letters, digits, dashes; empty: the repository\'s name')}
           ${field('Git url', '<input class="ta-url" aria-label="Git url" placeholder="https://gitlab.example.com/team/brain.git" autocomplete="off" spellcheck="false">')}
           <div class="row"><button type="button" class="btn ta-go">Add</button></div></details>
-        ${cur?.external ? `<details class="tenv" style="margin-top:8px"><summary>Settings of ${esc(cur.title || cur.name)} (server addresses, tokens)</summary>
-          <div class="sub" style="margin:6px 0">What its plugin reads from the environment (its README names them). Set now: ${(cur.env || []).map((k) => `<code>${esc(k)}</code>`).join(' ') || 'none'}. Values are kept for you only and never shown again.</div>
-          ${field('KEY=VALUE, one per line (KEY= removes it)', '<textarea class="te-pairs" rows="4" aria-label="Settings" placeholder="GRAFANA_URL=https://grafana.internal" spellcheck="false"></textarea>')}
+        ${cur?.external ? `<details class="tenv" style="margin-top:8px" ${(cur.settings || []).some((x) => !x.set && !x.optional) ? 'open' : ''}><summary>Settings of ${esc(cur.title || cur.name)} (server addresses, tokens)${(cur.settings || []).filter((x) => !x.set && !x.optional).length ? ` <span class="tag">${(cur.settings || []).filter((x) => !x.set && !x.optional).length} needed</span>` : ''}</summary>
+          <div class="sub" style="margin:6px 0">What its servers and hooks read (found in its files, or named in its brain.json). Filled values are kept for you only and never shown again; leave a field empty to keep it.</div>
+          ${(cur.settings || []).map((x) => field(`${esc(x.name)}${x.optional ? ' <span class="sub">(optional)</span>' : ''}${x.set ? ' <span class="tag">set</span>' : ''}`,
+            `<input class="te-f" data-k="${esc(x.name)}" type="${x.secret ? 'password' : 'text'}" aria-label="${esc(x.name)}" placeholder="${esc(x.set ? (x.secret ? '•••••• (set: type to replace)' : 'set: type to replace') : (x.about || ''))}" autocomplete="off" spellcheck="false">`,
+            x.about ? esc(x.about) : '')).join('')}
+          <details style="margin-top:6px" ${(cur.settings || []).length ? '' : 'open'}><summary class="sub">Something else, or remove one</summary>
+          ${field('KEY=VALUE, one per line (KEY= removes it)', '<textarea class="te-pairs" rows="3" aria-label="More settings" placeholder="SOME_URL=https://..." spellcheck="false"></textarea>')}</details>
           <div class="row"><button type="button" class="btn te-go">Save settings</button></div></details>` : ''}
         <details class="ted" style="margin-top:8px"><summary>Edit a team (for the whole team)</summary>
           ${field('Team to edit', `<select class="tsel" aria-label="Team to edit">${teams.filter((x) => !x.external).map((x) => `<option value="${esc(x.name)}" ${x.name === (cur && !cur.external ? t.active : teams.find((y) => !y.external)?.name) ? 'selected' : ''}>${esc(x.title || x.name)} (${esc(x.name)})</option>`).join('') || '<option value="none">No team available</option>'}</select>`)}
@@ -452,17 +456,18 @@ export function mount(container, api) {
     });
     box.querySelector('.ta-go')?.addEventListener('click', async (e) => {
       const name = box.querySelector('.ta-name').value.trim(); const url = box.querySelector('.ta-url').value.trim();
-      if (!name || !url) { st.error('Give a name and a git url.'); return; }
+      if (!url) { st.error('Give the git url.'); return; }
       const done = busy(e.currentTarget, 'Cloning…'); st.say('');
       const r = await api.rpc('POST', 'team-add', { name, url }).catch((x) => ({ out: String(x) }));
       done();
       if (!r.ok) { st.error(`Not added: ${r.out || 'unknown error'}`); return; }
-      teamMsg = `Added ${name}: click it above to switch.`;
+      teamMsg = `Added ${r.name || name}: click it above to switch.`;
       renderTeam(box);
     });
     box.querySelector('.te-go')?.addEventListener('click', async (e) => {
-      const pairs = box.querySelector('.te-pairs').value.split('\n').map((l) => l.trim()).filter(Boolean);
-      if (!pairs.length) { st.error('One KEY=VALUE per line.'); return; }
+      const pairs = [...box.querySelectorAll('.te-f')].filter((i) => i.value.trim()).map((i) => `${i.dataset.k}=${i.value.trim()}`)
+        .concat(box.querySelector('.te-pairs').value.split('\n').map((l) => l.trim()).filter(Boolean));
+      if (!pairs.length) { st.error('Fill in a field, or one KEY=VALUE per line.'); return; }
       const done = busy(e.currentTarget, 'Saving…'); st.say('');
       const r = await api.rpc('POST', 'team-env', { name: cur.name, pairs }).catch((x) => ({ out: String(x) }));
       done();
@@ -610,7 +615,79 @@ export function mount(container, api) {
   }
 
   // Memory: notes.md / environment.md / tool-map.md are yours (kept by every install); CLAUDE.md is your own copy too
+  // an external brain's knowledge (its own folders in its git repository): browse, read, propose a change (a branch and a
+  // merge request in its GitLab, reviewed by its team) or a new page; the person's own notes stay one click away
+  let memOwn = false;
+  function renderExtMemory(view = { kind: 'list' }) {
+    const x = data.external;
+    const saveWord = x.save === 'push' ? 'Save to its main branch' : 'Send for review (merge request)';
+    const how = x.save === 'push' ? 'Changes are saved straight to its main branch (its brain.json says so).'
+      : 'Changes go to it as merge requests: its team reviews them before they reach everyone.';
+    const top = `<div class="sub" style="margin-bottom:10px"><b>${esc(x.title || x.team)}</b> keeps its knowledge in its own git repository (${x.folders.map((f) => `<code>${esc(f)}</code>`).join(', ') || 'no knowledge folder found'}${x.inbox ? `, inbox <code>${esc(x.inbox)}</code>` : ''}). ${how}</div>
+      <div class="row" style="margin-bottom:10px"><button class="btn ghost sm em-own">Your own notes</button><button class="btn ghost sm em-new">New page</button><span class="stbox"></span></div>`;
+    if (view.kind === 'list') {
+      const groups = new Map();
+      for (const pg of x.pages) { const g = pg.path.split('/')[0] + (pg.area ? ` / ${pg.area}` : ''); if (!groups.has(g)) groups.set(g, []); groups.get(g).push(pg); }
+      const row = (pg) => `<div class="row em-row" data-path="${esc(pg.path)}" data-s="${esc(`${pg.title} ${pg.path}`.toLowerCase())}"><span class="grow"><b>${esc(pg.title)}</b> <span class="sub">${esc(pg.path)} · ${esc(new Date(pg.mtime).toLocaleDateString())}</span></span><button class="btn ghost sm em-open" data-path="${esc(pg.path)}">Open</button></div>`;
+      pane.innerHTML = `${top}${field('Find a page', '<input class="em-q" aria-label="Find a page" placeholder="title or path" autocomplete="off" spellcheck="false">')}
+        ${x.pages.length ? [...groups.entries()].map(([g, list]) => `<div class="sec-label">${esc(g)} (${list.length})</div>${list.map(row).join('')}`).join('') : '<div class="sub">No pages yet.</div>'}
+        ${x.inbox ? `<div class="sec-label">Inbox: waiting to be curated (${x.inboxPages.length})</div>${x.inboxPages.map(row).join('') || '<div class="sub">Empty.</div>'}` : ''}
+        ${x.index ? `<div class="sub" style="margin-top:12px"><button class="btn ghost sm em-open" data-path="${esc(x.index)}">Open ${esc(x.index)}</button></div>` : ''}`;
+      pane.querySelector('.em-q').addEventListener('input', (e) => {
+        const q = e.target.value.trim().toLowerCase();
+        pane.querySelectorAll('.em-row').forEach((r) => { r.style.display = !q || r.dataset.s.includes(q) ? '' : 'none'; });
+      });
+    } else if (view.kind === 'page') {
+      pane.innerHTML = `${top}<div class="sub" style="margin-bottom:8px"><code>${esc(view.path)}</code></div>
+        ${field('Page', `<textarea class="mt em-text" spellcheck="false" ${view.edit ? '' : 'readonly'}>${esc(view.text)}</textarea>`)}
+        ${view.edit ? field('What you changed (the merge request title)', `<input class="em-title" aria-label="Change title" placeholder="brain(${esc(view.path.split('/')[1] || 'knowledge')}): what was learned" autocomplete="off">`) : ''}
+        <div class="row sticky">${view.edit ? `<button class="btn em-send">${esc(saveWord)}</button>` : view.path === x.index ? '' : '<button class="btn em-edit">Propose a change</button>'}<button class="btn ghost em-back">Back to the list</button><span class="stbox"></span></div><div class="em-result"></div>`;
+    } else {
+      const dirs = [...x.folders, ...(x.inbox ? [x.inbox] : [])];
+      pane.innerHTML = `${top}${field('Folder', `<select class="em-dir" aria-label="Folder">${dirs.map((d) => `<option>${esc(d)}</option>`).join('')}</select>`, 'a sub-folder can be added in the file name: networking/my-page.md')}
+        ${field('File name', '<input class="em-file" aria-label="File name" placeholder="area/short-name.md" autocomplete="off" spellcheck="false">')}
+        ${x.templatePages.length ? field('Start from a template', `<select class="em-tpl" aria-label="Template"><option value="">(empty page)</option>${x.templatePages.map((t) => `<option value="${esc(t.path)}">${esc(t.title)} (${esc(t.path)})</option>`).join('')}</select>`) : ''}
+        ${field('Page', '<textarea class="mt em-text" spellcheck="false"></textarea>')}
+        ${field('What it is about (the merge request title)', '<input class="em-title" aria-label="Change title" autocomplete="off">')}
+        <div class="row sticky"><button class="btn em-send">${esc(saveWord)}</button><button class="btn ghost em-back">Back to the list</button><span class="stbox"></span></div><div class="em-result"></div>`;
+      pane.querySelector('.em-tpl')?.addEventListener('change', async (e) => {
+        if (!e.target.value) return;
+        const r = await api.rpc('GET', `ext-page?path=${encodeURIComponent(e.target.value)}`).catch(() => ({}));
+        if (r.ok) pane.querySelector('.em-text').value = r.text;
+      });
+    }
+    const st = statusLine(pane.querySelector('.stbox'));
+    pane.querySelector('.em-own').addEventListener('click', () => { memOwn = true; renderMemory(); });
+    pane.querySelector('.em-new').addEventListener('click', () => renderExtMemory({ kind: 'new' }));
+    pane.querySelector('.em-back')?.addEventListener('click', () => { dirty = false; renderExtMemory(); });
+    pane.querySelectorAll('.em-open').forEach((b) => b.addEventListener('click', async () => {
+      const r = await api.rpc('GET', `ext-page?path=${encodeURIComponent(b.dataset.path)}`).catch((e) => ({ out: String(e) }));
+      if (!r.ok) { st.error(r.out || 'Could not open it'); return; }
+      renderExtMemory({ kind: 'page', path: r.path, text: r.text });
+    }));
+    pane.querySelector('.em-edit')?.addEventListener('click', () => renderExtMemory({ ...view, edit: true }));
+    pane.querySelector('.em-text')?.addEventListener('input', () => { dirty = true; });
+    pane.querySelector('.em-send')?.addEventListener('click', async (e) => {
+      const text = pane.querySelector('.em-text').value;
+      const title = pane.querySelector('.em-title')?.value.trim() || '';
+      let rel = view.path;
+      if (view.kind === 'new') {
+        const f = pane.querySelector('.em-file').value.trim().replace(/^\/+/, '');
+        if (!f) { st.error('Give the file name.'); return; }
+        rel = `${pane.querySelector('.em-dir').value}/${f.endsWith('.md') ? f : `${f}.md`}`;
+      }
+      if (!text.trim()) { st.error('The page is empty.'); return; }
+      const done = busy(e.currentTarget, x.save === 'push' ? 'Saving…' : 'Opening the merge request…'); st.say('');
+      const r = await api.rpc('POST', 'ext-propose', { path: rel, text, title, create: view.kind === 'new' }).catch((er) => ({ out: String(er) }));
+      done();
+      if (!r.ok) { st.error(r.out || 'Not sent'); return; }
+      dirty = false;
+      pane.querySelector('.em-result').innerHTML = `<div class="card" style="margin-top:10px"><b>${esc(r.out)}</b>${r.url ? ` <a href="${esc(r.url)}" target="_blank" rel="noopener">Open it</a>` : ''}<div class="sub">${x.save === 'push' ? 'Everyone gets it at their next sync.' : 'Its team reviews it; once merged, everyone gets it at their next sync.'}</div></div>`;
+    });
+  }
+
   function renderMemory(i = 0, cap = null) {
+    if (data.external && !memOwn && !cap) return renderExtMemory();
     const m = cap || data.memory[i];
     if (!m) { pane.replaceChildren(emptyBlock('Claude creates them the first time it saves a note.', '', null, { icon: 'file', title: 'No memory files found' })); return; }
     dirty = false;
@@ -624,6 +701,12 @@ export function mount(container, api) {
       ${(data.captures || []).length ? data.captures.map((c, k) => `<div class="row"><span class="grow">${esc(c.name)} <span class="sub">${esc(new Date(c.mtime).toLocaleDateString())} ${esc(c.text.split('\n')[0].replace(/^#+\s*/, '').slice(0, 80))}</span></span>
         <button class="btn ghost sm" data-open="${k}">Open</button><button class="btn danger sm" data-drop="${k}">Discard</button></div>`).join('')
         : '<div class="sub">Nothing captured yet. Claude writes a capture when it solves something worth keeping.</div>'}`}`;
+    if (data.external && !cap) {
+      const back = document.createElement('div'); back.className = 'row'; back.style.marginBottom = '10px';
+      back.innerHTML = `<button class="btn ghost sm em-kb">${esc(data.external.title || data.external.team)}: its knowledge</button><span class="sub">You are looking at your own notes (they are not part of ${esc(data.external.title || data.external.team)}).</span>`;
+      pane.prepend(back);
+      back.querySelector('.em-kb').addEventListener('click', () => { memOwn = false; renderMemory(); });
+    }
     pane.querySelectorAll('.seg:not(.tseg) button').forEach((b) => b.addEventListener('click', () => renderMemory(Number(b.dataset.i))));
     pane.querySelectorAll('[data-open]').forEach((b) => b.addEventListener('click', () => {
       const c = data.captures[Number(b.dataset.open)]; renderMemory(0, { name: `captures/${c.name}`, editable: true, text: c.text });

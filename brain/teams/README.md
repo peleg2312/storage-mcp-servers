@@ -145,6 +145,42 @@ multi-user VM shares one knowledge index per team (`/var/lib/paas-docs/<team>.db
 `docs-local` uses when it matches their clone, and one resource budget per person (`/etc/paas/limits.env`); `RUNBOOK.md`,
 "Sizing the VM".
 
+### External brains in the Brain tab, and `brain.json`
+
+Every Brain tab feature works with an external brain, from what its repository holds:
+- **Team**: listed with an "external brain" tag, one click switches; **Settings** are fields for every variable it reads
+  (brain.json `settings`, every `${VAR}` in its `.mcp.json`, every `${VAR:-default}` in its JSON / TOML / YAML configuration
+  outside its docs and knowledge), secrets (`*TOKEN*`, `*SECRET*`, `*PASSWORD*`, `*API_KEY*`) masked, the needed ones counted;
+  the add form needs only the url (the name defaults to the repository's).
+- **Memory**: its knowledge folders (brain.json `knowledge.folders`, else `knowledge/ runbooks/ incidents/ notes/
+  postmortems/ playbooks/ decisions/`), grouped by area, its inbox and index, a filter; a page opens read-only and
+  **Propose a change** / **New page** (from one of its `templates/`) go to its GitLab as a branch and a **merge request**
+  (GitLab push options, no glab), made in a separate worktree, so the clone's main branch is never touched; brain.json
+  `"save": "push"` saves straight to its main branch instead. The person's own notes are one click away.
+- **Skills, Agents, MCP & hooks**: its plugin's, labelled as the team's, read-only (changed in its repository); the hooks
+  list shows its hooks and the VM's standing aside.
+- **Docs**: its docs folder (brain.json `docs`, else `docs/upstream`) becomes a team library when root runs
+  `paas-team docs <name>` (one product per sub-folder, `paas-library`); the Docs tab and its search then use it while
+  that brain is active.
+- **Market**: listed as `plugin/brain-<name>`; turning it on switches to it, off goes back to no team.
+
+An optional `brain.json` at the repository's top makes it exact (every key optional):
+```json
+{
+  "title": "Platform team brain", "description": "OpenShift fleet: HyperShift, Metal3, GPU, AKO",
+  "plugin": "plugins/team-brain",
+  "knowledge": { "folders": ["knowledge", "runbooks", "incidents"], "inbox": "inbox", "templates": "templates",
+                 "index": "INDEX.md", "save": "merge-request", "branch": "main" },
+  "settings": {
+    "TEAM_BRAIN_DIR":                { "about": "where this repository is", "default": "{dir}" },
+    "GRAFANA_URL":                   { "about": "Grafana address" },
+    "GRAFANA_SERVICE_ACCOUNT_TOKEN": { "about": "read-only Grafana token", "secret": true },
+    "RHOKP_URL":                     { "about": "Red Hat offline knowledge portal", "optional": true }
+  },
+  "docs": "docs/upstream", "library": "redbull"
+}
+```
+
 ## A team's hooks and guard are its own
 
 On the multi-user VM the brain's hooks (the read-only guard, notes sync, docs hints, session start) also run from the

@@ -22,6 +22,8 @@ knowledge are still switched and the plugin is registered at the next `paas-team
   paas-team env <team> [KEY=VALUE ...] [KEY=]   settings an external brain's plugin reads (its server addresses,
                                    tokens): kept in its clone's .git, put into ~/.claude/settings.json "env" while it is
                                    active ({dir} = the clone); without pairs: the names set
+  paas-team docs <team>            root: an external brain's docs folder (brain.json "docs", or docs/upstream) into a team
+                                   library of the same name (paas-library), used by the Docs tab while that brain is active
   paas-team edit <team>            change it from JSON on stdin (title, description, persona, rules, environment, skills,
                                    agents, mcp_servers {name: {url, type, token}}, remove_mcp): written into the team's
                                    repository (filled-in servers also into the plugin's .mcp.json), committed, pushed,
@@ -162,6 +164,18 @@ def find_plugin(tdir, name):
     if not os.path.isdir(tdir):
         return None
     root = os.path.realpath(tdir)
+    bp = str(brain_json(tdir).get("plugin") or "")              # brain.json names its plugin folder: taken as it says
+    if bp:
+        d = os.path.realpath(os.path.join(tdir, bp))
+        n = str(jload(os.path.join(d, ".claude-plugin", "plugin.json")).get("name", ""))
+        if (d == root or d.startswith(root + os.sep)) and PLUGIN_NAME.match(n):
+            mk = jload(os.path.join(tdir, ".claude-plugin", "marketplace.json"))
+            if any(isinstance(p, dict) and p.get("name") == n for p in mk.get("plugins", []) if isinstance(mk.get("plugins"), list)):
+                return str(mk.get("name") or n), n, d, {}
+            rel = os.path.relpath(d, tdir)
+            return n, n, d, {".claude-plugin/marketplace.json": {
+                "name": n, "owner": {"name": "external brain"},
+                "plugins": [{"name": n, "source": "./" if rel == "." else "./" + rel.replace(os.sep, "/")}]}}
     mk = jload(os.path.join(tdir, ".claude-plugin", "marketplace.json"))
     for p in mk.get("plugins", []) if isinstance(mk.get("plugins"), list) else []:
         src = p.get("source") if isinstance(p, dict) else None
@@ -210,6 +224,101 @@ def home_vars(plug):
     return sorted(out)
 
 
+def brain_json(tdir):
+    """an optional brain.json at the repository's top: how the brain describes itself (title, plugin folder, settings,
+    knowledge folders, how knowledge is saved, docs). Everything in it is optional; without it the layout is detected."""
+    d = jload(os.path.join(tdir, "brain.json"))
+    return d if isinstance(d, dict) else {}
+
+
+VAR_REF = re.compile(r"\$\{([A-Z][A-Z0-9_]*)(?::?-[^}]*)?\}")
+SECRETISH = re.compile(r"TOKEN|SECRET|PASSWORD|PASSWD|API_KEY|APIKEY|CREDENTIAL")
+KNOWLEDGE_DIRS = ("knowledge", "runbooks", "incidents", "notes", "postmortems", "playbooks", "decisions")
+
+
+def inside(tdir, rel):
+    """rel as a folder inside the clone (no .., no absolute, no .git), or "" """
+    rel = str(rel or "").strip().strip("/")
+    if not rel or rel.startswith(".git") or os.path.isabs(rel) or ".." in rel.split("/"):
+        return ""
+    d = os.path.realpath(os.path.join(tdir, rel))
+    return rel if d.startswith(os.path.realpath(tdir) + os.sep) and os.path.isdir(d) else ""
+
+
+CONFIG_SKIP = {".git", "docs", "node_modules", "vendor", "third_party", "__pycache__", "inbox", "templates", "tests"} | set(KNOWLEDGE_DIRS)
+
+
+def config_vars(tdir):
+    """{name: default} of every ${NAME} / ${NAME:-default} in the brain's configuration files (JSON, TOML, YAML outside its
+    docs and knowledge): the addresses and tokens its servers read from the environment"""
+    out = {}
+    for root, dirs, files in os.walk(tdir):
+        dirs[:] = [d for d in dirs if d not in CONFIG_SKIP and not d.startswith(".") or d == ".claude-plugin"]
+        for f in files:
+            if not f.endswith((".json", ".toml", ".yaml", ".yml")):
+                continue
+            pth = os.path.join(root, f)
+            try:
+                if os.path.getsize(pth) > 400000:
+                    continue
+                text = open(pth, encoding="utf-8", errors="replace").read()
+            except OSError:
+                continue
+            for m in re.finditer(r"\$\{([A-Z][A-Z0-9_]*)(?::?-([^}]*))?\}", text):
+                n = m.group(1)
+                if not n.startswith(("CLAUDE", "HOME", "PATH", "USER", "PWD")):
+                    out.setdefault(n, m.group(2) or "")
+    return out
+
+
+def ext_layout(tdir, rec, name=None):
+    """what the record keeps about an external brain besides its plugin: the settings it reads (brain.json, then every
+    ${VAR} its .mcp.json uses, then what was set), its knowledge folders, inbox, templates, how knowledge is saved, its docs"""
+    bj = brain_json(tdir)
+    plug = os.path.join(tdir, rec["dir"])
+    want = {}
+    for n, v in (bj.get("settings") or {}).items() if isinstance(bj.get("settings"), dict) else []:
+        if re.match(r"^[A-Za-z_][A-Za-z0-9_]{0,63}$", str(n)):
+            want[n] = v if isinstance(v, dict) else {"about": str(v)}
+    for n in VAR_REF.findall(read(os.path.join(plug, ".mcp.json"))):
+        if not n.startswith(("CLAUDE", "HOME", "PATH", "USER")):
+            want.setdefault(n, {})
+    for n, dflt in config_vars(tdir).items():                     # its configuration files: optional, their default as a hint
+        want.setdefault(n, {"optional": True, "about": f"default: {dflt}" if dflt else ""})
+    for n in rec.get("env") or {}:
+        want.setdefault(n, {})
+    schema = [{"name": n, "about": "where this brain's repository is (set for you)" if (rec.get("env") or {}).get(n) == "{dir}" else str(v.get("about", "")),
+               "secret": bool(v.get("secret", bool(SECRETISH.search(n)))), "optional": bool(v.get("optional", False)),
+               "default": str(v.get("default", "")) if v.get("default") is not None else ""} for n, v in want.items()]
+    kn = bj.get("knowledge") if isinstance(bj.get("knowledge"), dict) else {}
+    folders = [r for r in (inside(tdir, f) for f in (kn.get("folders") or KNOWLEDGE_DIRS)) if r]
+    inbox = inside(tdir, kn.get("inbox") or "inbox")
+    templates = inside(tdir, kn.get("templates") or "templates")
+    index = str(kn.get("index") or ("INDEX.md" if os.path.isfile(os.path.join(tdir, "INDEX.md")) else ""))
+    save = str(kn.get("save") or "merge-request")
+    docs = inside(tdir, bj.get("docs") or "docs/upstream")
+    name = name or os.path.basename(tdir)
+    return {"title": str(bj.get("title", "")), "description": str(bj.get("description", "")), "settings_schema": schema,
+            "knowledge": {"folders": folders, "inbox": inbox, "templates": templates, "index": index,
+                          "save": save if save in ("merge-request", "push") else "merge-request",
+                          "branch": str(kn.get("branch", ""))},
+            "docs": docs, "library": str(bj.get("library") or (name if docs else ""))}
+
+
+def save_rec(tdir, rec):
+    p = os.path.join(tdir, ".git", EXT_FILE)
+    write(p, json.dumps(rec, indent=2) + "\n")
+    os.chmod(p, 0o600)
+
+
+def refresh_layout(tdir):
+    rec = external(tdir)
+    if rec:
+        rec.update(ext_layout(tdir, rec))
+        save_rec(tdir, rec)
+    return rec
+
+
 def mark_external(tdir, name):
     """make a fresh clone of another brain usable as a team: write what its marketplace lacks (untracked, excluded from
     git, so the clone stays clean for its own pulls) and the record in .git. False when it holds no plugin, skills or agents."""
@@ -232,9 +341,13 @@ def mark_external(tdir, name):
     env = dict(old.get("env") or {})
     for v in home_vars(plug):
         env.setdefault(v, "{dir}")
+    bs = brain_json(tdir).get("settings")
+    for n, v in (bs.items() if isinstance(bs, dict) else []):    # brain.json defaults ("{dir}": the clone)
+        if isinstance(v, dict) and v.get("default") not in (None, "") and re.match(r"^[A-Za-z_][A-Za-z0-9_]{0,63}$", str(n)):
+            env.setdefault(n, str(v["default"]))
     rec = {"plugin": plugin, "marketplace": mk, "dir": os.path.relpath(plug, tdir), "env": env, "generated": sorted(files)}
-    write(os.path.join(tdir, ".git", EXT_FILE), json.dumps(rec, indent=2) + "\n")
-    os.chmod(os.path.join(tdir, ".git", EXT_FILE), 0o600)          # it may hold tokens (paas-team env)
+    rec.update(ext_layout(tdir, rec, name))
+    save_rec(tdir, rec)                                         # it may hold tokens (paas-team env): mode 600
     return True
 
 
@@ -253,10 +366,13 @@ def ext_info(tdir):
     agents = sorted(f[:-3] for f in (os.listdir(os.path.join(plug, "agents")) if os.path.isdir(os.path.join(plug, "agents")) else [])
                     if f.endswith(".md"))
     mcp = sorted((jload(os.path.join(plug, ".mcp.json")).get("mcpServers") or {}))
-    return {"name": os.path.basename(tdir), "title": title or pj.get("name") or os.path.basename(tdir),
-            "description": str(pj.get("description", "")), "version": str(pj.get("version", "")), "skills": skills,
+    env = e.get("env") or {}
+    settings = [dict(x, set=bool(env.get(x["name"]))) for x in (e.get("settings_schema") or [])]
+    return {"name": os.path.basename(tdir), "title": e.get("title") or title or pj.get("name") or os.path.basename(tdir),
+            "description": e.get("description") or str(pj.get("description", "")), "version": str(pj.get("version", "")), "skills": skills,
             "agents": agents, "mcp": mcp, "plugin_dir": plug, "external": True, "plugin": e["plugin"],
-            "marketplace": e["marketplace"], "env": sorted(e.get("env") or {})}
+            "marketplace": e["marketplace"], "env": sorted(env), "settings": settings,
+            "knowledge": e.get("knowledge") or {}, "library": e.get("library", ""), "docs": e.get("docs", "")}
 
 
 def plugin_id(team):
@@ -331,6 +447,7 @@ def apply_external(team, say=True):
     from the clone (a local marketplace, read in place), its environment goes into settings.json, a short persona says
     which brain this is; the clone itself is not touched"""
     tdir = team_dir(team)
+    refresh_layout(tdir)                                        # the repository may have changed since it was added
     t = ext_info(tdir)
     prev = active()
     if prev and prev != team and not external(team_dir(prev)):
@@ -374,6 +491,34 @@ def apply_external(team, say=True):
     return t
 
 
+def load_docs(team):
+    """root: an external brain's docs folder (brain.json "docs", or docs/upstream) into the team library of the same name
+    (paas-library add, one product per sub-folder, then build): the Brain tab's Docs tab and the docs search use it while
+    that brain is active. Looked up in the person's clone, then in the VM's teams folder."""
+    tdir = next((d for d in (team_dir(team), os.path.join(SOURCES, team)) if external(d) or (os.path.isdir(d) and find_plugin(d, team))), "")
+    if not tdir:
+        die(f"no external brain {team!r} here")
+    rec = external(tdir) or {"dir": find_plugin(tdir, team)[2], "env": {}}      # a VM copy root cloned: detected the same way
+    lay = ext_layout(tdir, rec, team)
+    if not lay["docs"] or not lay["library"]:
+        die(f"{team}: no docs folder (brain.json \"docs\", or docs/upstream)")
+    lib = next((p for p in ("/opt/paas/bin/paas-library", os.path.join(HOME, "tools", "paas-library")) if os.path.isfile(p)), "")
+    if not lib:
+        die("paas-library is not installed here")
+    root = os.path.join(tdir, lay["docs"])
+    subs = sorted(d for d in os.listdir(root) if os.path.isdir(os.path.join(root, d)) and not d.startswith("."))
+    for d in subs or ["."]:
+        prod = re.sub(r"[^a-z0-9_.-]+", "-", (d if d != "." else team).lower())
+        r = subprocess.run([sys.executable, lib, "add", lay["library"], os.path.join(root, d), "--to", f"{team}/{prod}"],
+                           capture_output=True, text=True, timeout=3600)
+        print(f"{prod}: " + ((r.stdout + r.stderr).strip().splitlines() or ["?"])[-1])
+        if r.returncode:
+            return r.returncode
+    r = subprocess.run([sys.executable, lib, "build", lay["library"]], capture_output=True, text=True, timeout=7200)
+    print((r.stdout + r.stderr).strip()[-400:])
+    return r.returncode
+
+
 def set_env(team, pairs):
     tdir = team_dir(team)
     e = external(tdir)
@@ -389,8 +534,8 @@ def set_env(team, pairs):
         else:
             env[k] = v
     e["env"] = env
-    write(os.path.join(tdir, ".git", EXT_FILE), json.dumps(e, indent=2) + "\n")
-    os.chmod(os.path.join(tdir, ".git", EXT_FILE), 0o600)
+    e.update(ext_layout(tdir, e, team))                     # a setting added by hand is listed too
+    save_rec(tdir, e)
     if active() == team:
         apply_ext_env(team)
     return sorted(env)
@@ -479,7 +624,8 @@ def listing():
                       "source": None, "remote": remote_of(tdir) or t.get("remote") or None,
                       "skills": len(t.get("skills", [])), "agents": len(t.get("agents", [])),
                       "mcp": t.get("mcp", []), "external": bool(t.get("external")), "plugin": t.get("plugin"),
-                      "env": t.get("env", []),
+                      "env": t.get("env", []), "settings": t.get("settings", []), "knowledge": t.get("knowledge"),
+                      "library": t.get("library") or None, "docs": t.get("docs") or None,
                       "mcp_added": sorted(jload(os.path.join(t.get("plugin_dir") or plugin_dir(tdir), ".mcp.json")).get("mcpServers", {}))})
         seen.add(name)
     for name, sdir in source_teams().items():
@@ -528,7 +674,8 @@ def add(team, source=None, quiet=False):
             source = remote_of(src_dir) or src_dir
         else:
             die(f"no team {team!r}: give its git url or directory (paas-team add {team} <source>)")
-    url = source if "://" in source or (":" in source and not os.path.exists(source)) else ""
+    bare = os.path.isdir(source) and os.path.isfile(os.path.join(source, "HEAD")) and os.path.isdir(os.path.join(source, "objects"))
+    url = source if "://" in source or (":" in source and not os.path.exists(source)) or bare else ""   # a bare repository: cloned like a url
     if url:
         if not quiet:
             print(f"cloning team {team} from {url} ...")
@@ -1016,6 +1163,7 @@ def sync():
             print(f"brain {t}: local changes in {tdir}, not pulled (it is an external brain: its own tools commit)")
             return 0
         rc, out = git(tdir, "pull", "--ff-only", "-q", timeout=60)
+        refresh_layout(tdir)
         print(f"brain {t}: up to date with its repository" if rc == 0 else f"brain {t}: pull failed: {out[-200:]}")
         return 1 if rc else 0
     nc = next((p for p in (os.path.join(HOME, "hooks", "notes-check.py"), "/opt/paas/hooks/notes-check.py",
@@ -1284,6 +1432,8 @@ def main(a):
             print(f"{d['name']}: {d['title']} ({d['version']}); skills {len(d['skills'])}, agents {len(d['agents'])}, MCP {', '.join(d['mcp'])}")
             for n, c in d["mcp_servers"].items():
                 print(f"  {n}: {c['url'] or c['command']} {'ready' if c['configured'] else 'HOST / TOKEN not filled in'}")
+    elif cmd == "docs" and len(a) >= 2:
+        sys.exit(load_docs(a[1]))
     elif cmd == "env" and len(a) >= 2:
         names = set_env(a[1], a[2:])
         print(f"brain {a[1]}: settings {', '.join(names) or 'none'}" + (" (applied: start a new chat)" if active() == a[1] and a[2:] else ""))
