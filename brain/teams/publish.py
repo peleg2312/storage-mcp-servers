@@ -235,14 +235,16 @@ def publish_url(team, url, hooks, commit, force=False, docs_search=None, docs_to
             sys.exit(f"publish.py: cannot clone {url}: {r.stderr.strip()[-300:]}")
         if git(tmp, "rev-parse", "--verify", "-q", "HEAD").returncode:      # an empty project
             git(tmp, "checkout", "-q", "-b", "main")
+        r = git(tmp, "rev-parse", "--abbrev-ref", "HEAD")
+        branch = r.stdout.strip() if r.returncode == 0 and r.stdout.strip() not in ("", "HEAD") else "main"   # its default (main, master...)
         t = publish(team, tmp, remote=url, hooks=hooks, commit=commit, force=force, docs_search=docs_search, docs_token=docs_token)
         if commit:
-            r = git(tmp, "push", "-u", "origin", "HEAD:main", timeout=300)
+            r = git(tmp, "push", "-u", "origin", "HEAD:" + branch, timeout=300)
             if r.returncode:
                 out = (r.stderr or r.stdout).strip()
                 reason = "\n  ".join(l.strip() for l in out.splitlines() if l.startswith("remote:") or l.startswith("!") or l.startswith("error:"))
                 sys.exit("publish.py: push failed:\n  " + (reason or out[-300:]))      # GitLab's own sentence, not only git's summary
-        print(f"team {team}: plugin {t['version']} ({len(t['skills'])} skills, {len(t['agents'])} agents) pushed to {url}")
+        print(f"team {team}: plugin {t['version']} ({len(t['skills'])} skills, {len(t['agents'])} agents) pushed to {url} (branch {branch})")
     finally:
         shutil.rmtree(tmp, ignore_errors=True)
 
