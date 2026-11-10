@@ -333,6 +333,7 @@ m0 = os.path.getmtime(xdb); time.sleep(1.1); T.refresh("redbull")
 assert os.path.getmtime(xdb) == m0, "unchanged pages: no rebuild"
 # brain.json names other folders and a library of another name
 open(os.path.join(rb, "brain.json"), "w").write(json.dumps({"knowledge": {"folders": ["src", "../etc", "/etc"]}, "library": "rb-docs"}))
+T._ext.clear()                                                 # kept 5 minutes; a refresh starts afresh
 assert T.external("redbull")["folders"] == ["src", "inbox"] and T.library("redbull") == ""
 p = subprocess.run([sys.executable, os.path.join(here, "mcp_stdio.py"), "--no-library", "--team-index", os.path.join(root, "missing.db")],
                    input="", capture_output=True, text=True, timeout=60)
@@ -341,3 +342,22 @@ print("external brain index ok")
 subprocess.run(["git", "-C", rb, "remote", "add", "origin", "https://gitlab.example.com/team-redbull/redbull-brain.git"], check=True)
 assert ms.origin_url(rb) == "https://gitlab.example.com/team-redbull/redbull-brain.git" and ms.origin_url(os.path.join(xdir, "plain")) == ""
 print("origin url ok")
+
+# with paas-team beside the teams folder (/opt/paas/bin/paas-team), the docs service asks it for an external brain's layout:
+# the same detection as a member's switch (knowledge kept under another name, root's <name>.brain.json beside the copy)
+os.makedirs(os.path.join(root, "bin"))
+os.symlink(os.path.join(here, "..", "brain", "claude", "tools", "paas-team"), os.path.join(root, "bin", "paas-team"))
+kbb = os.path.join(xdir, "kbbrain")
+for rel, text in {"CLAUDE.md": "# rules\n", "kb/a.md": "# A\n- the fabric zoning freeze window is friday\n", "kb/b.md": "# B\n", "kb/c.md": "# C\n"}.items():
+    os.makedirs(os.path.dirname(os.path.join(kbb, rel)), exist_ok=True); open(os.path.join(kbb, rel), "w").write(text)
+subprocess.run(["git", "init", "-q", kbb], check=True)
+T2 = ms.Teams(xdir, xstate, print, xlibs)
+assert T2.external("kbbrain") == {"folders": ["kb"], "library": ""}, T2.external("kbbrain")
+assert T2.external("plain") is None and T2.external("t1") is None
+open(os.path.join(xdir, "kbbrain.brain.json"), "w").write(json.dumps({"knowledge": {"folders": ["kb"], "inbox": "kb"}, "docs": "kb", "library": "kbdocs"}))
+T2._ext.clear()
+assert T2.external("kbbrain") == {"folders": ["kb"], "library": "kbdocs"}, T2.external("kbbrain")
+T2.refresh("kbbrain")
+o = ask_stdio(["--db", db, "--team-index", T2.db("kbbrain")])
+assert any("kb__a.md" in r.get("path", "") for r in o[1]["results"]) or o[2]["libraries"][1]["documents"] >= 3, o
+print("external brain layout from paas-team ok")

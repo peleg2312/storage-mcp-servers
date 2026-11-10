@@ -259,6 +259,37 @@ It keeps its own workflow: the brain's notes hook never commits or pushes into i
 The VM's read-only guard and managed hooks still apply to its tools. Switching back to a team or to "No team" disables its
 plugin and removes its settings. Root can offer one to everyone by cloning it into `/opt/paas/teams/<name>`.
 
+### Brains of any shape
+
+| The brain's repository | What it becomes (nothing in it is changed) |
+|---|---|
+| a marketplace (`.claude-plugin/marketplace.json`) | every plugin in it that lives in the repository, switched on and off together (brain.json `"plugins"` picks some) |
+| a plugin folder (`.claude-plugin/plugin.json`, up to two levels down), like redbull-brain | that plugin |
+| a project-style brain: `CLAUDE.md` + `.claude/skills`, `.claude/agents`, `.claude/commands` | its `.claude` folder as the plugin; its project hooks (`.claude/settings.json`) and MCP servers (`.mcp.json`) as the plugin's, `$CLAUDE_PROJECT_DIR` pointed at the clone; its `CLAUDE.md` as rules every session reads |
+| plain `skills/`, `agents/`, `commands/` at the top, or only a `CLAUDE.md` | the repository as the plugin; its `CLAUDE.md` as rules |
+
+Knowledge pages: the usual folders (knowledge, runbooks, incidents, notes, postmortems, playbooks, decisions), else any
+top-level folder that is mostly Markdown (at least 3 pages: `wiki/`, `kb/` ...). Docs for a library: `docs/upstream`.
+Anything else is said in a brain.json, from any of three places, each later one winning key by key:
+1. `brain.json` at the repository's top (the brain's own, if its team wants to add it);
+2. **`/opt/paas/teams/<name>.brain.json`** on the VM: root describes a brain **without touching its repository**
+   (e.g. `{"docs": "manuals", "knowledge": {"folders": ["wiki"]}, "rules": "GUIDE.md", "plugins": ["core"]}`); every
+   member's switch, the docs service and the library build read it;
+3. `.git/paas-brain.json` in one clone: that machine only.
+
+### What adding or switching never changes
+
+- The brain's repository: files it lacks (a marketplace.json, a plugin.json, the hooks / MCP of a project-style brain)
+  are written into the clone as untracked files listed in `.git/info/exclude`; the VM copy is only fast-forwarded to
+  its remote, and left alone when root changed something in it by hand.
+- A person's own settings: a `settings.json` env name the brain also uses gets its old value back when the brain is left;
+  a user-scope `docs-local` they had comes back; their persona from before comes back at "No team" (outside the VM); other
+  plugins of theirs are not touched (only other teams' plugins are switched off: one brain at a time).
+- Libraries: a brain's docs go only into a library that is its own (`.brain` in the library says whose); a brain.json
+  naming an existing library (a team's) is refused, nothing is mixed in.
+- The VM: the update adds the `paas-brain-docs` service and timer and the current docs server files in
+  `/opt/paas/library`; the docs port, TLS / plain HTTP, the token, firewall and the teams' repositories stay as they are.
+
 ### On a multi-user VM: the same as a team built here (library, docs service, docs-local, index)
 
 Root adds it once, from its git url (any name; the docs then follow the repository by themselves):

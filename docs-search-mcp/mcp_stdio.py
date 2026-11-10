@@ -415,18 +415,45 @@ class Teams:
             return []
 
     def external(self, team):
-        """an external brain root put here (another Claude Code brain kept as it is: no team.json): its knowledge layout
-        from its brain.json, else the usual folders; None for a team built by the brain (team.json)"""
+        """an external brain root put here (another Claude Code brain kept as it is: no team.json): its knowledge folders
+        and library as paas-team detects them (brain.json, root's <team>.brain.json, or by its shape), asked from
+        /opt/paas/bin/paas-team beside the teams folder and kept 5 minutes; without that tool, the usual folders. None for
+        a team built by the brain (team.json) or a folder that holds no brain."""
         d = os.path.join(self.dir, team)
         if os.path.isfile(os.path.join(d, "team.json")) or not os.path.isdir(os.path.join(d, ".git")):
             return None
+        cache = self.__dict__.setdefault("_ext", {})
+        hit = cache.get(team)
+        if hit and time.time() - hit[0] < 300:
+            return hit[1]
+        lay = None
+        tool = os.path.join(os.path.dirname(os.path.abspath(self.dir)), "bin", "paas-team")
+        if os.path.isfile(tool):
+            import subprocess
+            home = os.path.join(self.state, "paas-team-home")
+            try:
+                r = subprocess.run([sys.executable, tool, "layout", d, team], capture_output=True, text=True, timeout=60,
+                                   env=dict(os.environ, CLAUDE_HOME=home, PAAS_TEAMS=self.dir, HOME=home))
+                got = json.loads(r.stdout) if r.returncode == 0 else None
+                lay = ({"folders": [f for f in got.get("folders", []) if isinstance(f, str)], "library": str(got.get("library") or "")}
+                       if isinstance(got, dict) and got else None) if got is not None else self._own_layout(d, team)
+            except (OSError, ValueError, subprocess.SubprocessError):
+                lay = self._own_layout(d, team)
+        else:
+            lay = self._own_layout(d, team)
+        cache[team] = (time.time(), lay)
+        return lay
+
+    def _own_layout(self, d, team):
         try:
             bj = json.load(open(os.path.join(d, "brain.json")))
             bj = bj if isinstance(bj, dict) else {}
         except (OSError, ValueError):
             bj = {}
         has_plugin = bj.get("plugin") or os.path.isfile(os.path.join(d, ".claude-plugin", "marketplace.json")) or any(
-            os.path.isfile(p) for p in glob_plugin_json(d)) or os.path.isdir(os.path.join(d, "skills"))
+            os.path.isfile(p) for p in glob_plugin_json(d)) or any(
+            os.path.isdir(os.path.join(d, x)) or os.path.isdir(os.path.join(d, ".claude", x)) for x in ("skills", "agents", "commands")) \
+            or os.path.isfile(os.path.join(d, "CLAUDE.md"))
         if not has_plugin:
             return None
         kn = bj.get("knowledge") if isinstance(bj.get("knowledge"), dict) else {}
@@ -449,6 +476,7 @@ class Teams:
             self._refresh(only, glob, shutil, subprocess, di)
 
     def _refresh(self, only, glob, shutil, subprocess, di):
+        self.__dict__.get("_ext", {}).clear()                 # a pull may have changed a brain's layout
         for team in ([only] if only else self.names()):
             if team not in self.names():
                 continue

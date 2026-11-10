@@ -458,6 +458,9 @@ os.makedirs(os.path.join(ext, "docs", "upstream", "proda")); os.makedirs(os.path
 open(os.path.join(ext, "docs", "upstream", "proda", "a.md"), "w").write("# Product A\n\nThe quorum witness of product A lives on site C.\n")
 open(os.path.join(ext, "docs", "upstream", "prodb", "b.md"), "w").write("# Product B\n\nB replicates every five minutes.\n")
 run(["git", "-C", ext, "add", "-A"]); run(["git", "-C", ext, "-c", "user.name=t", "-c", "user.email=t@t", "commit", "-qm", "docs"])
+open(os.path.join(src_ob, "README.md"), "a").write("root's own line\n")
+assert "changed by hand on this VM: not pulled" in vteam("docs", "--all")
+run(["git", "-C", src_ob, "checkout", "--", "README.md"])
 o = vteam("docs", "--all")
 assert "ob: up to date with its remote" in o and "2 documents" in o, o
 assert os.path.isfile(os.path.join(libs, "ob", "docs.db")) and os.path.isfile(os.path.join(libs, "ob", "docs", "ob", "proda", "a.md")), o
@@ -483,4 +486,87 @@ team("use", "ob")
 assert "add-json" not in claude_log(), claude_log()
 team("use", "san")
 print("external brain on a VM ok")
+
+# 12. brains of other shapes, none changed: a project-style brain (CLAUDE.md + .claude/skills, agents, commands, its
+#     project hooks and .mcp.json) becomes a plugin from its .claude folder with its CLAUDE.md as rules; a marketplace of
+#     three plugins switches all three on and off; knowledge kept under another name (kb/, wiki/) is found by content;
+#     root describes a brain without touching it (<teams>/<name>.brain.json); a docs-local the person had comes back
+def mkrepo(path, files):
+    for rel, text in files.items():
+        os.makedirs(os.path.dirname(os.path.join(path, rel)), exist_ok=True)
+        open(os.path.join(path, rel), "w").write(text)
+    for c in (["init", "-q", "-b", "main"], ["add", "-A"], ["-c", "user.name=t", "-c", "user.email=t@t", "commit", "-qm", "init"]):
+        run(["git", "-C", path, *c])
+proj = os.path.join(work, "proj-brain")
+mkrepo(proj, {"CLAUDE.md": "# Rules\nAlways cite the runbook.\n", ".claude/skills/triage/SKILL.md": "---\nname: triage\ndescription: t\n---\nx\n",
+              ".claude/agents/helper.md": "---\nname: helper\ndescription: h\n---\nx\n", ".claude/commands/check.md": "check\n",
+              ".claude/settings.json": json.dumps({"hooks": {"SessionStart": [{"hooks": [{"type": "command", "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/start.sh"}]}]}}),
+              ".claude/hooks/start.sh": "echo hi\n", ".mcp.json": json.dumps({"mcpServers": {"grafana": {"type": "http", "url": "${GRAFANA_URL}/mcp"}}}),
+              **{f"wiki/fc/p{i}.md": f"# page {i}\n" for i in range(4)}, "src/app.py": "print(1)\n"})
+team("add", "proj", proj)
+pc = os.path.join(brain, "teams", "proj")
+rec = json.load(open(os.path.join(pc, ".git", "paas-external.json")))
+assert rec["dir"] == ".claude" and rec["rules"] == "CLAUDE.md" and rec["knowledge"]["folders"] == ["wiki"], rec
+hooks = json.load(open(os.path.join(pc, ".claude", "hooks", "hooks.json")))
+assert hooks["hooks"]["SessionStart"][0]["hooks"][0]["command"] == '"${CLAUDE_PLUGIN_ROOT}/.."/.claude/hooks/start.sh', hooks
+assert "grafana" in json.load(open(os.path.join(pc, ".claude", ".mcp.json")))["mcpServers"]
+assert "GRAFANA_URL" in [x["name"] for x in rec["settings_schema"]], rec["settings_schema"]
+assert run(["git", "-C", pc, "status", "--porcelain"])[1] == "", "its clone stays clean"
+o = team("use", "proj")
+assert "1 skills, 1 agents, MCP grafana" in o, o
+assert "@" + os.path.join(pc, "CLAUDE.md") in open(os.path.join(brain, "persona.md")).read()
+multi = os.path.join(work, "multi-brain")
+mkrepo(multi, {".claude-plugin/marketplace.json": json.dumps({"name": "mm", "owner": {"name": "x"}, "plugins": [
+                   {"name": n, "source": f"./plugins/{n}"} for n in ("core", "net", "stor")]}),
+               **{f"plugins/{n}/.claude-plugin/plugin.json": json.dumps({"name": n}) for n in ("core", "net", "stor")},
+               "plugins/core/skills/a/SKILL.md": "---\nname: a\ndescription: a\n---\nx\n", "plugins/net/skills/b/SKILL.md": "---\nname: b\ndescription: b\n---\nx\n",
+               "plugins/stor/agents/s.md": "x\n", "CLAUDE.md": "# how to develop this repository\n", **{f"kb/k{i}.md": "# k\n" for i in range(3)}})
+team("add", "multi", multi)
+open(os.path.join(home, "claude.log"), "w").close()
+o = team("use", "multi")
+log = claude_log()
+assert all(f"plugin install {n}@mm --scope user" in log for n in ("core", "net", "stor")), log
+assert "2 skills, 1 agents" in o and "plugin disable a@a" not in log and "plugin disable proj@proj" in log, (o, log)
+mrec = json.load(open(os.path.join(brain, "teams", "multi", ".git", "paas-external.json")))
+assert mrec["plugins"] == ["core", "net", "stor"] and mrec["rules"] == "" and mrec["knowledge"]["folders"] == ["kb"], mrec
+open(os.path.join(home, "claude.log"), "w").close()
+team("use", "none")
+assert all(f"plugin disable {n}@mm" in claude_log() for n in ("core", "net", "stor")), claude_log()
+# root's description beside its VM copy (the member's clone has the same remote): wins over what the repository says
+src_m = os.path.join(work, "sources", "multi"); run(["git", "clone", "-q", multi, src_m])
+open(os.path.join(work, "sources", "multi.brain.json"), "w").write(json.dumps({"plugins": ["core"], "knowledge": {"folders": ["plugins"]}, "title": "Multi"}))
+team("use", "multi")
+mrec = json.load(open(os.path.join(brain, "teams", "multi", ".git", "paas-external.json")))
+assert mrec["plugins"] == ["core"] and mrec["knowledge"]["folders"] == ["plugins"] and mrec["title"] == "Multi", mrec
+assert json.loads(team("layout", src_m, "multi"))["folders"] == ["plugins"]
+assert json.loads(team("layout", os.path.join(work, "no-brain"), "nob")) == {}
+team("use", "none")
+# the docs-local a person had before an external brain on the VM comes back when they leave it
+open(os.path.join(home, ".claude.json"), "w").write(json.dumps({"mcpServers": {"docs-local": {"type": "stdio", "command": "python3", "args": ["/opt/paas/library/mcp_stdio.py", "--db", "/opt/paas/library/docs.db"]}}}))
+vteam("use", "ob")
+assert json.load(open(ext_env))["docs_prev"]["args"][-1] == "/opt/paas/library/docs.db"
+open(os.path.join(home, "claude.log"), "w").close()
+vteam("use", "none")
+log = claude_log()
+assert "mcp remove -s user docs-local" in log and log.count("mcp add-json -s user docs-local") == 1 and "--team-index" not in log, log
+os.remove(os.path.join(home, ".claude.json"))
+team("use", "san")
+# never into another library: a brain whose brain.json names an existing library (a team's own) is refused
+os.makedirs(os.path.join(libs, "flashback", "docs", "commvault", "11.40")); open(os.path.join(libs, "flashback", "docs", "commvault", "11.40", "x.html"), "w").write("x")
+open(os.path.join(work, "sources", "ob.brain.json"), "w").write(json.dumps({"library": "flashback"}))
+rc, o = run([sys.executable, TOOL, "docs", "ob", "--force"], e=vm, ok=False)
+assert rc == 1 and "not mixed in" in o and os.listdir(os.path.join(libs, "flashback", "docs")) == ["commvault"], o
+os.remove(os.path.join(work, "sources", "ob.brain.json"))
+# a settings name the person already had comes back with its value when the brain leaves; their persona too
+sp = os.path.join(home, ".claude", "settings.json")
+st = json.load(open(sp)); st.setdefault("env", {})["OB_DIR"] = "/my/own"; json.dump(st, open(sp, "w"))
+team("use", "ob")
+assert json.load(open(sp))["env"]["OB_DIR"] == clone
+team("use", "none")
+assert json.load(open(sp))["env"]["OB_DIR"] == "/my/own", json.load(open(sp))["env"]
+open(os.path.join(brain, "persona.md"), "w").write("# Persona\nMy own words.\n")
+team("use", "ob"); team("use", "none")
+assert open(os.path.join(brain, "persona.md")).read() == "# Persona\nMy own words.\n"
+team("use", "san")
+print("brains of other shapes ok")
 shutil.rmtree(work, ignore_errors=True)
