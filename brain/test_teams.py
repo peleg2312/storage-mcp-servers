@@ -258,6 +258,9 @@ r = subprocess.run([sys.executable, os.path.join(clone, "paas-brain-san", "hooks
 assert "notes/powermax.md" in r.stdout and "notes/fabric.md" in r.stdout and "runbooks: 1" in r.stdout, r.stdout
 assert "notes.md: 1 core facts" in r.stdout, r.stdout
 assert "are links: edit them at ~/.claude/brain/teams/san/knowledge/<file>" in r.stdout, r.stdout   # Claude Code will not write through a file link
+# a teammate's commits show up (the rule change "t" committed in 3b), the member's own and publish.py's do not
+assert "Team changes in the last 14 days (by teammates): rules/storage.md (t)" in r.stdout, r.stdout
+assert "powermax-add-host" not in r.stdout.split("Team changes")[1].split("\n")[0], r.stdout
 print("runbooks ok")
 
 # 4. the notes hook commits into the active team's repository; sync against a bare remote; refresh after a plugin change
@@ -432,6 +435,13 @@ assert pending["harvest"]["url"].startswith("http://h.example") and pending["har
 assert not os.path.exists(os.path.join(nasdir, "mcp.json")) and not os.path.exists(os.path.join(nasdir, "team.json"))
 assert "NAS person" in open(os.path.join(brain, "persona.md")).read(), "active team re-applied"
 assert "NAS person" in open(os.path.join(nasdir, "rules", "persona.md")).read(), "the editor writes the team's rules/"
+assert d["main"].startswith("# Brain:") and "Golden rules" in d["main"] and d["coding"], "show returns the team's main.md and coding.md"
+r = subprocess.run([sys.executable, TOOL, "edit", "nas"], input=json.dumps({"main": d["main"] + "\n9. Team golden rule.\n",
+                   "coding": "# Coding\nTeam coding rule.\n"}), capture_output=True, text=True, env=env_c, timeout=120)
+assert r.returncode == 0, r.stderr
+assert "9. Team golden rule." in open(os.path.join(nasdir, "rules", "main.md")).read() and "9. Team golden rule." in open(os.path.join(brain, "main.md")).read()
+assert open(os.path.join(nasdir, "rules", "coding.md")).read() == "# Coding\nTeam coding rule.\n"
+assert "brain tab: team nas edited" in git(nasdir, "log", "-1", "--format=%s")
 assert "brain tab: team nas edited" in git(os.path.join(work, "sources", "nas"), "log", "--format=%s")   # pushed to the remote
 assert "mcp add-json" not in claude_log(), claude_log()   # the re-apply enables the plugin; no server is registered per person
 pm = plug_mcp("nas")

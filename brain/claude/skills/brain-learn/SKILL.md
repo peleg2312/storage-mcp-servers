@@ -72,6 +72,7 @@ is the answer: follow it, say which one, and add a History line when the user re
 
 ## e) After writing
 After a promote, a new page, a runbook or an incident, run `add-docs --brain`: the docs search then finds them next to the
-vendor documents (notes.md, captures and environment.md are never indexed). Nothing to commit by hand: the
+vendor documents (each dated fact line is its own hit; captures are found too, titled "Unverified capture";
+notes.md and environment.md are never indexed: they are in every session anyway). Nothing to commit by hand: the
 notes-check hook commits each saved file to the brain's git history (Brain tab shows it).
 On a team, every saved note, capture, runbook and incident is committed and pushed to the team repository at once and pulled by every member at their next session start; the whole memory is the team's.

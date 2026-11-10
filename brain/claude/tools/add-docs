@@ -21,15 +21,22 @@ PY=$HOME/.claude/devtools-venv/bin/python
 mkdir -p "$INBOX"
 if [ "${1:-}" = "--brain" ]; then
   # copies (mtime kept, so unchanged pages are not re-read) in a staging tree shaped local/<product>/<file>; rebuilt
-  # each run, so a page removed from notes/ leaves the index. captures, notes.md and environment.md stay out.
+  # each run, so a page removed from notes/ leaves the index. notes.md and environment.md stay out. (This copy-only path is
+  # for an older library; the docs server's --reindex-knowledge above is the full one: one hit per fact, captures marked.)
   B=${BRAIN:-$HOME/.claude/brain}; S=$B/.brain-index
+  BDB=${BRAIN_DB:-${CLAUDE_HOME:-$HOME/.claude}/brain/brain.db}
+  # the docs server's own indexing (the same files, rules and stamp as at its start, so the next session does not redo it)
+  LIBPY=$B/library/mcp_stdio.py
+  if [ -f "$LIBPY" ] && grep -q -- '--reindex-knowledge' "$LIBPY"; then
+    exec python3 "$LIBPY" --knowledge "$B" --brain-db "$BDB" --reindex-knowledge
+  fi
   rm -rf "$S"; mkdir -p "$S/local/brain-notes" "$S/local/brain-runbooks" "$S/local/brain-incidents"
   for f in "$B"/notes/*.md; do [ -f "$f" ] && cp -p "$f" "$S/local/brain-notes/"; done
   for f in "$B"/runbooks/*.md; do [ -f "$f" ] && cp -p "$f" "$S/local/brain-runbooks/"; done
+  mkdir -p "$S/local/brain-captures"; for f in "$B"/captures/*.md; do [ -f "$f" ] && cp -p "$f" "$S/local/brain-captures/"; done
   find "$B/incidents" -name '*.md' -type f 2>/dev/null | while read -r f; do
     cp -p "$f" "$S/local/brain-incidents/$(basename "$(dirname "$f")")-$(basename "$f")"
   done
-  BDB=${BRAIN_DB:-${CLAUDE_HOME:-$HOME/.claude}/brain/brain.db}
   exec "$PY" "$TOOLS/docs_index.py" --docs "$S" --db "$BDB" --add brain/
 fi
 if [ $# -gt 0 ]; then

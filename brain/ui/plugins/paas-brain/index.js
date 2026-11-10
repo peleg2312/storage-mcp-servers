@@ -515,7 +515,7 @@ export function mount(container, api) {
       };
       body.innerHTML = `<div class="t-form">${field('Title', `<input type="text" data-k="title" value="${esc(d.title || '')}" aria-label="Title" autocomplete="off">`)}
         ${field('Description', `<input type="text" data-k="description" value="${esc(d.description || '')}" aria-label="Description" autocomplete="off">`)}
-        ${text('persona', 'Persona', 'Who you work for', 6)}${text('rules', 'Rules', 'the storage rules file', 8)}${text('environment', 'Environment template', 'the template a new member starts from', 10)}
+        ${text('persona', 'Persona', 'Who you work for', 6)}${text('main', 'Golden rules (main.md)', 'loaded in every session of every member: keep it short', 12)}${text('rules', 'Storage rules (storage.md)', 'the storage rules file', 8)}${text('coding', 'Coding rules (coding.md)', 'read before code work', 6)}${text('environment', 'Environment template', 'the template a new member starts from', 10)}
         ${pick('skills', d.skills || [], d.available_skills)}${pick('agents', d.agents || [], d.available_agents)}
         <div class="field"><label>MCP servers</label><div class="table-wrap"><table><tr><th>Name</th><th>Type</th><th>URL</th><th>Token</th><th>Configured</th><th><span class="sr">Actions</span></th></tr>
           ${servers.map(mrow).join('')}
@@ -549,7 +549,7 @@ export function mount(container, api) {
       const save = body.querySelector('.t-save');
       save.addEventListener('click', async () => {
         const change = {};
-        for (const k of ['title', 'description', 'persona', 'rules', 'environment']) {
+        for (const k of ['title', 'description', 'persona', 'main', 'rules', 'coding', 'environment']) {
           const v = body.querySelector(`[data-k="${k}"]`).value;
           if (v !== (d[k] || '')) change[k] = v;
         }

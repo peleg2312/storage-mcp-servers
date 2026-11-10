@@ -6,11 +6,12 @@ for a VM that runs Claude Code but has no pip, no containers and no internet.
 
     claude mcp add docs-local -s user -- python3 ~/.claude/brain/library/mcp_stdio.py
     python3 mcp_stdio.py --db /path/to/docs.db          (index: --db, else $INDEX_DB, else next to the script)
-    --brain-db PATH   a second, small index of the person's team knowledge (notes pages, incidents; built by
+    --brain-db PATH   a second, small index of the person's team knowledge (notes, runbooks, captures, incidents; built by
                       `add-docs --brain`), searched together with the library: --brain-db, else $BRAIN_DB, else
                       ~/.claude/brain/brain.db; opened when the file exists, so it may appear later. Its chunk ids are
                       offset by ID_BASE as server.py does for several indexes.
-    --knowledge DIR   the brain folder (~/.claude/brain): its notes/*.md and incidents are indexed into the --brain-db
+    --reindex-knowledge   only that indexing (when the files changed), then exit: add-docs --brain runs it
+    --knowledge DIR   the brain folder (~/.claude/brain): its notes/*.md, runbooks, captures and incidents are indexed into the --brain-db
                       index at start when they changed since the last run (one or two seconds for a team's pages, nothing
                       otherwise), so the team knowledge is searched with the library without any other step. Without a
                       library (--db missing: a laptop) the knowledge index is the only index (knowledge-only mode).
@@ -270,22 +271,69 @@ def refresh_knowledge(brain_dir, db_path):
         lock.close()
 
 
-KNOWLEDGE_DIRS = ("notes", "runbooks", "incidents")      # the indexed knowledge folders (captures are drafts: not indexed)
+KNOWLEDGE_DIRS = ("notes", "runbooks", "captures", "incidents")   # the indexed knowledge folders
+FACT = re.compile(r"^- .*?\b(\d{4}-\d{2}-\d{2})\b")
+
+
+def index_text(kind, name, text):
+    """What the index reads for a knowledge file (the file itself is never changed). notes/: every dated fact line ('- date
+    · fact · confidence · source', with its indented continuation lines) becomes a section of its own, headed by the file's
+    current heading and the date, so a search returns that one fact instead of a block of thirty; everything else stays as
+    it is. captures/: titled 'Unverified capture: ...', so a result says it is a draft nobody has curated yet."""
+    lines = text.splitlines()
+    if kind == "captures":
+        if lines and lines[0].startswith("# "):
+            lines[0] = "# Unverified capture: " + lines[0][2:].strip()
+        else:
+            lines.insert(0, "# Unverified capture: " + name[:-3])
+        return "\n".join(lines) + "\n"
+    if kind != "notes":
+        return text
+    out, head, in_fact = [], "", False
+    for i, line in enumerate(lines):
+        m = re.match(r"^(#+)\s+(.+?)\s*$", line)
+        if m:
+            if len(m.group(1)) > 1 or i:            # line 1 '# Topic: ...' is the document's title
+                head = m.group(2)
+            elif not head:
+                head = m.group(2).split(":", 1)[0]
+            out.append(line)
+            in_fact = False
+            continue
+        f = FACT.match(line)
+        if f:
+            out += ["", f"## {head or name[:-3]} · {f.group(1)}", line]
+            in_fact = True
+            continue
+        if in_fact and line[:1] in (" ", "\t") and line.strip():
+            out.append(line)                        # the fact's own continuation line
+            continue
+        if in_fact and line.strip():                # back to the text under the heading
+            out += ["", f"## {head or name[:-3]}"]
+        in_fact = False if line.strip() else in_fact
+        out.append(line)
+    return "\n".join(out) + "\n"
 
 
 def stage_knowledge(files, staging):
-    """the knowledge files as the library's local/<product>/ tree: brain-notes, brain-runbooks, brain-incidents (an incident
-    keeps its year in the name); symlinks are never followed"""
-    import shutil
+    """the knowledge files as the library's local/<product>/ tree: brain-notes, brain-runbooks, brain-captures,
+    brain-incidents (an incident keeps its year in the name), in the form index_text gives them; symlinks never followed"""
     for d in KNOWLEDGE_DIRS:
         os.makedirs(os.path.join(staging, "local", "brain-" + d), exist_ok=True)
     for f in files:
         kind = os.path.basename(os.path.dirname(f))
-        if kind in ("notes", "runbooks"):
+        if kind in ("notes", "runbooks", "captures"):
             dst = os.path.join(staging, "local", "brain-" + kind, os.path.basename(f))
         else:
-            dst = os.path.join(staging, "local", "brain-incidents", kind + "-" + os.path.basename(f))
-        shutil.copy2(f, dst, follow_symlinks=False)
+            kind, dst = "incidents", os.path.join(staging, "local", "brain-incidents", kind + "-" + os.path.basename(f))
+        if os.path.islink(f):
+            continue
+        with open(f, encoding="utf-8", errors="replace") as fh:
+            text = index_text(kind, os.path.basename(f), fh.read())
+        with open(dst, "w", encoding="utf-8") as fh:
+            fh.write(text)
+        st = os.stat(f)
+        os.utime(dst, (st.st_atime, st.st_mtime))       # the indexer re-reads only what changed
 
 
 def _rebuild(files, db_path, stamp, state, di, shutil):
@@ -304,12 +352,13 @@ def _rebuild(files, db_path, stamp, state, di, shutil):
 
 
 def knowledge_files(root):
-    """notes/*.md, runbooks/*.md and incidents/**/*.md under a brain or knowledge folder: regular files inside it only (a
+    """notes/*.md, runbooks/*.md, captures/*.md and incidents/**/*.md under a brain or knowledge folder: regular files inside it only (a
     symlink pushed into a team repository could point at anything the indexing process can read: never followed)"""
     import glob
     real_root = os.path.realpath(root)
     out = []
     for f in sorted(glob.glob(os.path.join(root, "notes", "*.md"))) + sorted(glob.glob(os.path.join(root, "runbooks", "*.md"))) \
+            + sorted(glob.glob(os.path.join(root, "captures", "*.md"))) \
             + sorted(glob.glob(os.path.join(root, "incidents", "**", "*.md"), recursive=True)):
         if os.path.islink(f) or not os.path.isfile(f):
             continue
@@ -647,12 +696,19 @@ def main():
     ap.add_argument("--state-dir")
     ap.add_argument("--refresh-minutes", type=int, default=10)
     ap.add_argument("--knowledge", metavar="DIR")
+    ap.add_argument("--reindex-knowledge", action="store_true",
+                    help="index the --knowledge folder into --brain-db when it changed, write the stamp, exit (add-docs --brain)")
     ap.add_argument("--no-library", action="store_true",
                     help="never look for the general library (a team with its own library that is not installed here)")
     ap.add_argument("--shared-knowledge", metavar="DIR")
     ap.add_argument("--proxy", metavar="URL", help="stdio bridge to a docs-search server (token: PAAS_DOCS_TOKEN or --token-file)")
     ap.add_argument("--ca", metavar="FILE", help="certificate the --proxy server is verified against (the VM's)")
     a = ap.parse_args()
+    if a.reindex_knowledge:                                   # the same rule and stamp as at a server start: no second rebuild later
+        knowledge = a.knowledge or os.path.dirname(a.brain_db or default_brain_db())
+        db = refresh_knowledge(knowledge, a.brain_db or default_brain_db())
+        print(f"knowledge index: {db or 'nothing to index'} ({len(knowledge_files(knowledge))} files)")
+        return 0
     if a.proxy:
         token = os.environ.get("PAAS_DOCS_TOKEN", "")
         if a.token_file:

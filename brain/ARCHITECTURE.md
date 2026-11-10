@@ -123,7 +123,7 @@ Code; few high-signal tools) and measured with `docs-search-mcp/eval_search.py`:
   individual accounts (Active Directory on the multi-user VM, the team picked by AD group at first sign-in); the team is a profile,
   not a shared login, so the audit log, chats and personal notes stay per person.
 - **Team knowledge in the docs search.** `docs-local` opens a second, per-person index (`~/.claude/brain/brain.db`, built by
-  `add-docs --brain` from the active team's notes pages and incidents, rebuilt in the background by session start when they
+  `add-docs --brain` from the active team's notes (each dated fact line its own search hit), runbooks, captures (titled "Unverified capture") and incidents, rebuilt in the background by session start when they
   changed) and searches it with the library: chunk ids offset by 10^10 as server.py does for several indexes, results marked
   `library: team knowledge`, read_chunk / read_document / related_docs routed by id or `brain/` path, `list_sources` names
   both. The shared library stays read-only; nothing a person writes touches it.
