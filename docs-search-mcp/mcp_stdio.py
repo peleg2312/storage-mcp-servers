@@ -234,8 +234,8 @@ def _docs_index():
 
 
 def refresh_knowledge(brain_dir, db_path):
-    """notes/*.md and incidents/**/*.md of the brain folder into db_path (prefix brain/, products brain-notes and
-    brain-incidents), rebuilt only when the set of files or their newest mtime changed (stamp beside the db). Returns the
+    """notes/*.md, runbooks/*.md and incidents/**/*.md of the brain folder into db_path (prefix brain/, products brain-notes,
+    brain-runbooks and brain-incidents), rebuilt only when the set of files or their newest mtime changed (stamp beside the db). Returns the
     db path, or None when there is nothing to index and no index exists."""
     import glob
     import shutil
@@ -270,16 +270,28 @@ def refresh_knowledge(brain_dir, db_path):
         lock.close()
 
 
+KNOWLEDGE_DIRS = ("notes", "runbooks", "incidents")      # the indexed knowledge folders (captures are drafts: not indexed)
+
+
+def stage_knowledge(files, staging):
+    """the knowledge files as the library's local/<product>/ tree: brain-notes, brain-runbooks, brain-incidents (an incident
+    keeps its year in the name); symlinks are never followed"""
+    import shutil
+    for d in KNOWLEDGE_DIRS:
+        os.makedirs(os.path.join(staging, "local", "brain-" + d), exist_ok=True)
+    for f in files:
+        kind = os.path.basename(os.path.dirname(f))
+        if kind in ("notes", "runbooks"):
+            dst = os.path.join(staging, "local", "brain-" + kind, os.path.basename(f))
+        else:
+            dst = os.path.join(staging, "local", "brain-incidents", kind + "-" + os.path.basename(f))
+        shutil.copy2(f, dst, follow_symlinks=False)
+
+
 def _rebuild(files, db_path, stamp, state, di, shutil):
     staging = db_path + ".staging"
     shutil.rmtree(staging, ignore_errors=True)
-    os.makedirs(os.path.join(staging, "local", "brain-notes"))
-    os.makedirs(os.path.join(staging, "local", "brain-incidents"))
-    for f in files:
-        if os.sep + "notes" + os.sep in f:
-            shutil.copy2(f, os.path.join(staging, "local", "brain-notes", os.path.basename(f)))
-        else:
-            shutil.copy2(f, os.path.join(staging, "local", "brain-incidents", os.path.basename(os.path.dirname(f)) + "-" + os.path.basename(f)))
+    stage_knowledge(files, staging)
     try:
         di.build(staging, db_path, log=lambda *_: None, prefix="brain/")
         with open(stamp, "w") as f:
@@ -292,15 +304,16 @@ def _rebuild(files, db_path, stamp, state, di, shutil):
 
 
 def knowledge_files(root):
-    """notes/*.md and incidents/**/*.md under a brain or knowledge folder: regular files inside it only (a symlink pushed
-    into a team repository could point at anything the indexing process can read: never followed)"""
+    """notes/*.md, runbooks/*.md and incidents/**/*.md under a brain or knowledge folder: regular files inside it only (a
+    symlink pushed into a team repository could point at anything the indexing process can read: never followed)"""
     import glob
     real_root = os.path.realpath(root)
     out = []
-    for f in sorted(glob.glob(os.path.join(root, "notes", "*.md"))) + sorted(glob.glob(os.path.join(root, "incidents", "**", "*.md"), recursive=True)):
+    for f in sorted(glob.glob(os.path.join(root, "notes", "*.md"))) + sorted(glob.glob(os.path.join(root, "runbooks", "*.md"))) \
+            + sorted(glob.glob(os.path.join(root, "incidents", "**", "*.md"), recursive=True)):
         if os.path.islink(f) or not os.path.isfile(f):
             continue
-        if any(os.path.islink(os.path.join(root, part)) for part in ("notes", "incidents")) and not os.path.realpath(f).startswith(real_root + os.sep):
+        if any(os.path.islink(os.path.join(root, part)) for part in KNOWLEDGE_DIRS) and not os.path.realpath(f).startswith(real_root + os.sep):
             continue                                   # a symlinked folder is fine (the brain's own links) as long as the file sits inside the real root
         out.append(f)
     return out
@@ -423,13 +436,7 @@ class Teams:
                 staging = os.path.join(self.state, "staging-" + team)
                 shutil.rmtree(staging, ignore_errors=True)
                 try:
-                    os.makedirs(os.path.join(staging, "local", "brain-notes"))
-                    os.makedirs(os.path.join(staging, "local", "brain-incidents"))
-                    for f in files:
-                        if os.sep + "notes" + os.sep in f:
-                            shutil.copy2(f, os.path.join(staging, "local", "brain-notes", os.path.basename(f)), follow_symlinks=False)
-                        else:
-                            shutil.copy2(f, os.path.join(staging, "local", "brain-incidents", os.path.basename(os.path.dirname(f)) + "-" + os.path.basename(f)), follow_symlinks=False)
+                    stage_knowledge(files, staging)
                     di.build(staging, self.db(team), log=lambda *_: None, prefix="brain/")
                 finally:
                     shutil.rmtree(staging, ignore_errors=True)

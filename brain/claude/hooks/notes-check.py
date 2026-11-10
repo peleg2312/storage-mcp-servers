@@ -72,6 +72,7 @@ def findings(path):
 
 def note_files():
     return [os.path.join(BRAIN, "notes.md")] + sorted(glob.glob(os.path.join(BRAIN, "notes", "*.md"))) + \
+        sorted(glob.glob(os.path.join(BRAIN, "runbooks", "*.md"))) + \
         sorted(glob.glob(os.path.join(BRAIN, "captures", "*.md"))) + \
         sorted(glob.glob(os.path.join(BRAIN, "incidents", "**", "*.md"), recursive=True))
 
@@ -80,8 +81,8 @@ def stale(days):
     cut = datetime.date.today() - datetime.timedelta(days=days)
     n = 0
     for f in note_files():
-        if os.sep + "incidents" + os.sep in f:
-            continue                       # --stale: notes and captures only
+        if os.sep + "incidents" + os.sep in f or os.sep + "runbooks" + os.sep in f:
+            continue                       # --stale: notes and captures only (a runbook's dates are its history)
         try:
             lines = open(f, encoding="utf-8", errors="replace").read().splitlines()
         except OSError:
@@ -115,6 +116,11 @@ def index():
     lines += [f"## Core facts: {core} in [notes.md](notes.md) (loaded every session)", ""]
     lines += ["## Topics (read when a question touches them)", ""] + (topics or ["- none yet"]) + [""]
     lines += ["## Knowledge pages", ""] + (pages or ["- none yet"]) + [""]
+    books = []
+    for f in sorted(glob.glob(os.path.join(k, "runbooks", "*.md"))):
+        title = open(f, encoding="utf-8", errors="replace").read().split("\n", 1)[0].lstrip("# ").strip()[:90]
+        books.append(f"- [{os.path.basename(f)}](runbooks/{os.path.basename(f)}): {title}")
+    lines += ["## Runbooks (tested procedures, run by a person)", ""] + (books or ["- none yet"]) + [""]
     caps = sorted(glob.glob(os.path.join(k, "captures", "*.md")))
     lines += [f"## Captures waiting for curation: {len(caps)}", ""] + [f"- [{os.path.basename(c)}](captures/{os.path.basename(c)})" for c in caps[:40]] + [""]
     inc = sorted(glob.glob(os.path.join(k, "incidents", "*", "*.md")))

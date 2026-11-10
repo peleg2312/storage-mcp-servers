@@ -177,7 +177,11 @@ the same file when they are committed, so a broken edit is caught at the push, n
    knowledge is the whole `docs-local` index and the VM's `docs-search` supplies the library. It follows the active team.
 3. **Learn.** A solved problem, a quirk, a corrected assumption is written down (golden rule 6): a dated line with a
    confidence word (verified / observed / hypothesis) and its source into notes/<topic>.md, a capture under captures/ when
-   the topic is unclear, a page notes/<topic>-<slug>.md when it needs sections, an incident postmortem under incidents/.
+   the topic is unclear, a page notes/<topic>-<slug>.md when it needs sections, an incident postmortem under incidents/,
+   and a **runbook** under runbooks/<topic>-<task>.md when a change procedure the person ran worked: Pre-checks, Procedure,
+   Verification, Rollback (check.py requires these four), Scope, History; every command is for the person to run. Session
+   start lists the runbooks and Claude follows a matching one before writing change steps of its own; they are searched
+   with the notes (docs index, product `brain-runbooks`) and listed in INDEX.md.
    The stop hook asks once after a long session without a capture. Agents end with a Learned line the parent files.
 4. **Guard.** The notes hook scans every save for secrets and private addresses and sends them back for redaction before
    anything is committed; the team repository's check.py runs the same patterns at every push, and notes fact lines

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Team profiles of the brain: which brain (rules, skills, agents, knowledge) this account works with, switched in
 seconds. A team is a git repository published by brain/teams/publish.py: the plugin paas-brain-<team>/ plus
-knowledge/ (notes/, captures/, incidents/, tool-map.md) and rules/ (main.md, persona.md, storage.md, coding.md: the team's own
+knowledge/ (notes/, runbooks/, captures/, incidents/, tool-map.md) and rules/ (main.md, persona.md, storage.md, coding.md: the team's own
 rules, edited there and linked into ~/.claude/brain, never written by this tool). Each team the person added is a clone under
 ~/.claude/brain/teams/<team>; the active one is the Claude Code plugin paas-brain-<team> (enabled from that clone, the
 same plugin everyone installs) and its knowledge is linked into the brain's usual paths, so every skill, hook and the
@@ -44,7 +44,7 @@ SOURCES = os.environ.get("PAAS_TEAMS") or ("/opt/paas/teams" if os.path.isdir("/
                                             else os.path.join(BRAIN, "team-sources"))   # multi-user VM, else the installer's copies
 STATE = os.path.join(TEAMS, ".installed.json")             # skills / agents the active team put into ~/.claude
 NAME = re.compile(r"^[a-z][a-z0-9_-]{0,31}$")
-LINKS = ("notes.md", "environment.md", "tool-map.md", "notes", "captures", "incidents")   # brain paths -> knowledge/
+LINKS = ("notes.md", "environment.md", "tool-map.md", "notes", "runbooks", "captures", "incidents")   # brain paths -> knowledge/
 # brain paths -> the team repository's rules/ (owned and edited by the team, never written by this tool); the plugin's brain/
 # file each one started from (publish.py creates rules/ from these once). A team repository published before rules/ existed
 # gets the plugin's copies as before.
@@ -658,7 +658,7 @@ def apply(team, say=True, skills=True, plugin_cmds=True, persona=True):
         die(f"team {team} is not added (paas-team add {team} [<source>])")
     t = info(tdir)
     k = os.path.join(tdir, "knowledge")
-    for d in ("notes", "captures", "incidents"):
+    for d in ("notes", "runbooks", "captures", "incidents"):
         os.makedirs(os.path.join(k, d), exist_ok=True)
     first = not read(os.path.join(BRAIN, "team")).strip()     # first team ever: the person's files move in
     os.makedirs(BRAIN, exist_ok=True)

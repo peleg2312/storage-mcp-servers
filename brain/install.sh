@@ -47,7 +47,7 @@ LIBDST=$USER_DST/brain/library         # shared by every install on this VM
 [ ! -L "$LIBDST" ] || LIBDST=$(readlink -f "$LIBDST")   # multi-user VM: root's library is a link to /opt/paas/library
 esc() { printf '%s' "$1" | sed 's/[&#\\]/\\&/g'; }   # a path as a sed replacement ('#' is our delimiter)
 TS=$(date +%Y%m%d%H%M%S)
-mkdir -p "$DST/skills" "$DST/agents" "$DST/hooks" "$DST/brain" "$DST/brain/notes" "$DST/banner" "$USER_DST/brain" "$HOME/storage-reports"
+mkdir -p "$DST/skills" "$DST/agents" "$DST/hooks" "$DST/brain" "$DST/brain/notes" "$DST/brain/runbooks" "$DST/banner" "$USER_DST/brain" "$HOME/storage-reports"
 
 # CLAUDE.md (imports rewritten for the project layout), skills, agents, hooks, brain files
 # Project mode never replaces a CLAUDE.md that is not ours (no first-line marker): the brain text goes to

@@ -1,7 +1,7 @@
 ---
 name: brain-learn
-description: Capture durable knowledge into the brain's notes or captures, curate captures into notes, write a storage incident postmortem. Use for "remember this", "write it down", "curate the captures", "postmortem", "incident report", "what did we learn".
-when_to_use: A problem was solved, the user asks to keep something, to curate captures, or to write up an incident.
+description: Capture durable knowledge into the brain's notes or captures, curate captures into notes, save a tested procedure as a runbook, write a storage incident postmortem. Use for "remember this", "write it down", "curate the captures", "save this as a runbook", "postmortem", "incident report", "what did we learn".
+when_to_use: A problem was solved, a change procedure the user ran worked, the user asks to keep something, to curate captures, or to write up an incident.
 ---
 # Brain learn
 
@@ -28,7 +28,8 @@ Management IPs only in `environment.md`.
 
 ## b) Curate ("curate the captures")
 List `~/.claude/brain/captures/*.md`. For each choose: **promote** (into `notes/<topic>.md` as dated lines, or as a page
-`notes/<topic>-<slug>.md` when it fits no line), **merge** (fold into an existing note, bump its date), **keep**, **discard**. Show the table
+`notes/<topic>-<slug>.md` when it fits no line, or as a runbook (d) when it is a procedure the user has since run and
+confirmed), **merge** (fold into an existing note, bump its date), **keep**, **discard**. Show the table
 (file | decision | reason) and wait for the user's go-ahead before writing anything. Never raise confidence while
 curating. Stale facts: `python3 ~/.claude/hooks/notes-check.py --stale 180`; ask the user to re-verify, never delete them.
 
@@ -49,8 +50,28 @@ First search the library and `notes/` for related history. Sections, in order:
 Then add one dated line in `notes/<topic>.md` pointing to the report. Only when the user wants it delivered: copy it
 to `~/storage-reports/<date>-incident-<slug>/incident.md` and run `python3 ~/.claude/tools/report.py --send <file>`.
 
-## d) After writing
-After a promote, a new page or an incident, run `add-docs --brain`: the docs search then finds them next to the
+## d) Runbook
+A procedure the **user ran and that worked** (a change: add a host to a masking view, expand a LUN, replace an SFP)
+becomes `~/.claude/brain/runbooks/<topic>-<task>.md` (topic as in notes: powermax, ontap, fabric, ...). Not yet run, or
+it needed fixes on the way that nobody re-checked: a capture instead. Search first (`ls ~/.claude/brain/runbooks/`,
+grep): a runbook that exists is updated (steps fixed, Scope widened, a History line), never duplicated. Every command
+is for the user to run; placeholders (`<sid>`, `<sg-name>`, `<wwpn>`) instead of real names, plus the read-only command
+that shows each value; never passwords or tokens. Sections, in order (`check.py` requires the four marked *):
+```
+# <Verb phrase: Add an ESXi host to a PowerMax masking view>
+When to use: <situation / request>   Impact while running: <what users see, how long>   Prerequisites: <access, window>
+## Pre-checks *      read-only commands and what each must show before going on
+## Procedure *       numbered steps, one command block each, with why
+## Verification *    commands that prove it worked
+## Rollback *        how to undo each step, or "not reversible after step N"
+## Scope             arrays / models / versions it was run on; where it is known not to apply
+## History           <date>: created, run on <array model / version> by <who> · verified
+```
+Show it to the user and wait for the go-ahead before saving. When asked for change steps later, a matching runbook
+is the answer: follow it, say which one, and add a History line when the user reports it worked again (or fix it).
+
+## e) After writing
+After a promote, a new page, a runbook or an incident, run `add-docs --brain`: the docs search then finds them next to the
 vendor documents (notes.md, captures and environment.md are never indexed). Nothing to commit by hand: the
 notes-check hook commits each saved file to the brain's git history (Brain tab shows it).
-On a team, every saved note, capture and incident is committed and pushed to the team repository at once and pulled by every member at their next session start; the whole memory is the team's.
+On a team, every saved note, capture, runbook and incident is committed and pushed to the team repository at once and pulled by every member at their next session start; the whole memory is the team's.

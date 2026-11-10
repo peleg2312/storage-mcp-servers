@@ -12,7 +12,7 @@ knowledge folder, in one git repository people clone (paas-team add) and Claude 
            --force         replace a plugin that members changed from the Brain tab (their edits are dropped)
 Layout of a team repository:
   .claude-plugin/marketplace.json   paas-brain-<team>/ (the plugin, replaced on every publish)
-  knowledge/{notes,captures,incidents}/ + notes.md, environment.md, tool-map.md   (the team's memory, shared by every member)
+  knowledge/{notes,runbooks,captures,incidents}/ + notes.md, environment.md, tool-map.md   (the team's memory, shared by every member)
   rules/main.md, persona.md, storage.md, coding.md   the team's rules (created once from the brain's, then the team's own:
                                     linked into every member's ~/.claude/brain; a publish never changes them)
   mcp.json   the team's live MCP servers with address and token (the owner's decision: readable by everyone in the
@@ -87,7 +87,8 @@ def readme(team, remote):
             f"- `paas-brain-{n}/`: the brain as a Claude Code plugin ({len(t['skills'])} skills, {len(t['agents'])} agents, "
             f"version {t['version']}); rebuilt only by `brain/teams/publish.py` from the storage-mcp-servers repository, never edited here\n"
             "- `knowledge/`: the team's shared memory, written by every member's brain and synced through this repository: "
-            "notes.md (the catalog loaded every session), environment.md, tool-map.md, notes/<topic>.md, captures/, incidents/\n"
+            "notes.md (the catalog loaded every session), environment.md, tool-map.md, notes/<topic>.md, runbooks/ (tested "
+            "procedures: pre-checks, steps, verification, rollback), captures/, incidents/\n"
             "- `rules/`: the team's rules (`main.md` = the golden rules, `persona.md`, `storage.md`, `coding.md`), linked into every "
             "member's `~/.claude/brain`. Edit them here (commit and push by hand, or the Brain tab's team editor); Claude cannot "
             "change them, the notes hook never commits them and a new publish never overwrites them\n"
@@ -159,7 +160,7 @@ def publish(team, dest, remote=None, hooks=True, commit=True, force=False, docs_
     with open(os.path.join(plug, "team.json")) as f:
         t = json.load(f)
     k = os.path.join(dest, "knowledge")
-    for d in ("notes", "captures", "incidents"):
+    for d in ("notes", "runbooks", "captures", "incidents"):
         os.makedirs(os.path.join(k, d), exist_ok=True)
         keep = os.path.join(k, d, ".keep")
         if not os.listdir(os.path.join(k, d)):

@@ -3,7 +3,7 @@
 every JSON file parses (dot-folders included: .claude-plugin, .mcp.json), the plugin has its manifest, hooks.json and
 .mcp.json in their wrapped shapes, every skill and agent carries a name and a description, team.json's lists resolve to
 files, the knowledge files carry no secret (the same patterns as the brain's notes-check hook, the same 'notes-check: allow'
-marker; mcp.json holds the servers' tokens by the team's decision and is not scanned; rules/ is scanned too), and notes.md /
+marker; mcp.json holds the servers' tokens by the team's decision and is not scanned; rules/ is scanned too), every runbook has its Pre-checks / Procedure / Verification / Rollback sections, and notes.md /
 tool-map.md and the rules/ files stay under their line caps. Published into every team repository by brain/teams/publish.py as check.py. Standard library, Python 3.9.
 Exit 1 on a finding; a broken file is a finding, never a traceback."""
 import json
@@ -26,6 +26,8 @@ SECRET = [
 CAPS = {"notes.md": 60, "tool-map.md": 80}
 # rules/ is loaded into every session (main.md, persona.md) or every storage chat (storage.md): kept short
 RULE_CAPS = {"main.md": 120, "persona.md": 30, "storage.md": 150, "coding.md": 60}
+# a runbook is run by a person on live systems: it must say how to check first, how to prove it worked and how to undo it
+RUNBOOK_SECTIONS = ("Pre-checks", "Procedure", "Verification", "Rollback")
 
 
 def ok(label, cond, detail=""):
@@ -102,6 +104,10 @@ for plug in plugs:
             ok("team.json agent present: " + str(n), os.path.isfile(os.path.join(plug, "agents", str(n) + ".md")))
     else:
         ok("plugin team.json", False, "missing or not an object")
+for f in files(".md", os.path.join(ROOT, "knowledge", "runbooks")):
+    heads = {m.group(1).strip().lower() for m in re.finditer(r"^##\s+(.+?)\s*$", open(f, encoding="utf-8", errors="replace").read(), re.M)}
+    missing = [h for h in RUNBOOK_SECTIONS if not any(x.startswith(h.lower()) for x in heads)]   # "## Rollback (step 3 on)" counts
+    ok("runbook " + os.path.relpath(f, ROOT), not missing, "missing section(s): " + ", ".join("## " + h for h in missing))
 for name, cap in RULE_CAPS.items():
     f = os.path.join(ROOT, "rules", name)
     if os.path.isfile(f):

@@ -91,7 +91,7 @@ print("build ok")
 run([sys.executable, PUBLISH, "--all", "--to", os.path.join(work, "sources")])
 for t in TEAMS:
     d = os.path.join(work, "sources", t)
-    for p in (".git", ".claude-plugin/marketplace.json", "paas-brain-" + t, "knowledge/notes", "knowledge/captures",
+    for p in (".git", ".claude-plugin/marketplace.json", "paas-brain-" + t, "knowledge/notes", "knowledge/runbooks", "knowledge/captures",
               "knowledge/incidents", "knowledge/tool-map.md", "team.json", "README.md", ".gitignore"):
         assert os.path.exists(os.path.join(d, p)), (t, p)
     assert "knowledge/notes.md" not in open(os.path.join(d, ".gitignore")).read(), "notes.md and environment.md are team memory"
@@ -209,6 +209,27 @@ assert any(f.startswith("CLAUDE.md.bak.") for f in os.listdir(os.path.join(vm, "
 assert os.readlink(os.path.join(vm, ".claude", "brain", "main.md")).endswith(os.path.join("teams", "san", "rules", "main.md"))
 print("team rules ok")
 
+# 3c. runbooks: tested change procedures in the team's knowledge/runbooks, linked like notes/, committed by the notes hook,
+#     listed in INDEX.md and at session start
+assert os.readlink(os.path.join(brain, "runbooks")) == os.path.join(clone, "knowledge", "runbooks")
+book = os.path.join(brain, "runbooks", "powermax-add-host.md")
+open(book, "w").write("# Add an ESXi host to a PowerMax masking view\n## Pre-checks\n## Procedure\n## Verification\n## Rollback\n"
+                      "## History\n- 2025-01-02: created, run on a PowerMax 8000 by dana · verified\n")
+subprocess.run([sys.executable, os.path.join(HOOKS, "notes-check.py")], input=json.dumps({"tool_input": {"file_path": book}}),
+               env=env, check=True, capture_output=True, text=True)
+assert "knowledge/runbooks/powermax-add-host.md" in git(clone, "show", "--name-only", "--format=", "HEAD")
+assert "[powermax-add-host.md](runbooks/powermax-add-host.md): Add an ESXi host" in open(os.path.join(clone, "knowledge", "INDEX.md")).read()
+r = subprocess.run([sys.executable, os.path.join(HOOKS, "notes-check.py"), "--stale", "180"], env=env, capture_output=True, text=True)
+assert "powermax-add-host" not in r.stdout, "a runbook's history dates are not stale facts"
+r = subprocess.run([sys.executable, os.path.join(HOOKS, "session-start.py")], input="{}", env=env, capture_output=True, text=True, timeout=60)
+assert "runbooks: 1 tested procedures" in r.stdout and "powermax-add-host" in r.stdout, r.stdout
+# the same from the team plugin's own hook (laptops, a VM on a team): the person's memory, not the plugin's templates
+r = subprocess.run([sys.executable, os.path.join(clone, "paas-brain-san", "hooks", "session-start.py")], input="{}", env=env,
+                   capture_output=True, text=True, timeout=60)
+assert "notes/powermax.md" in r.stdout and "notes/fabric.md" in r.stdout and "runbooks: 1" in r.stdout, r.stdout
+assert "notes.md: 1 core facts" in r.stdout, r.stdout
+print("runbooks ok")
+
 # 4. the notes hook commits into the active team's repository; sync against a bare remote; refresh after a plugin change
 hooks = os.path.join(home, ".claude", "hooks")
 os.makedirs(hooks)
@@ -281,9 +302,12 @@ broken = tempfile.mkdtemp(); shutil.copytree(src, os.path.join(broken, "r"), ign
 open(os.path.join(broken, "r", "paas-brain-nas", ".mcp.json"), "w").write("{")
 open(os.path.join(broken, "r", "knowledge", "notes", "leak.md"), "w").write("- login password=hunter2\n- ok password=abc notes-check: allow\n")
 open(os.path.join(broken, "r", "rules", "main.md"), "a").write("x\n" * 200)
+open(os.path.join(broken, "r", "knowledge", "runbooks", "good.md"), "w").write("# A\n## Pre-checks\n## Procedure\n## Verification\n## Rollback (from step 2)\n")
+open(os.path.join(broken, "r", "knowledge", "runbooks", "bad.md"), "w").write("# B\n## Procedure\n## Verification\n")
 r = subprocess.run([sys.executable, os.path.join(broken, "r", "check.py")], capture_output=True, text=True)
 assert "note knowledge/notes/leak.md:1: fact line without a date" in r.stdout, r.stdout
 assert "FAIL rules/main.md under 120 lines" in r.stdout, r.stdout
+assert "ok   runbook knowledge/runbooks/good.md" in r.stdout and "FAIL runbook knowledge/runbooks/bad.md: missing section(s): ## Pre-checks, ## Rollback" in r.stdout, r.stdout
 assert r.returncode == 1 and "FAIL json paas-brain-nas/.mcp.json" in r.stdout and "FAIL no secret in knowledge/notes/leak.md: line 1" in r.stdout and "all checks passed" not in r.stdout, r.stdout
 # the plugin version is a fingerprint of its content, identical from publish.py and from paas-team bump
 v0 = json.load(open(os.path.join(src, "paas-brain-nas", ".claude-plugin", "plugin.json")))["version"]
