@@ -31,7 +31,8 @@ knowledge are still switched and the plugin is registered at the next `paas-team
                                    member, beside its VM copy; anyone else: their own clone); without a mode: the state
   paas-team docs --all [--no-pull] root, multi-user VM: every external brain in /opt/paas/teams pulled (fast-forward) and its
                                    library built when its docs changed (install-shared.sh and the daily timer run it)
-  paas-team edit <team>            change it from JSON on stdin (title, description, persona, rules, environment, skills,
+  paas-team edit <team>            change it from JSON on stdin (title, description, persona, rules (storage.md), main
+                                   (the golden rules, main.md), coding, environment, skills,
                                    agents, mcp_servers {name: {url, type, token}}, remove_mcp): written into the team's
                                    plugin (filled-in servers into its .mcp.json, the others into team.json), committed, pushed,
                                    re-applied; the Brain tab's team editor uses it
@@ -1798,6 +1799,7 @@ def show(team):
     return {"name": team, "title": t.get("title", team), "description": t.get("description", ""), "version": t.get("version", ""),
             "local": tdir == team_dir(team), "remote": remote_of(tdir) or t.get("remote") or None, "active": active() == team,
             "persona": read(rule_file(tdir, plug, "persona.md")), "rules": read(rule_file(tdir, plug, "storage.md")),
+            "main": read(rule_file(tdir, plug, "main.md")), "coding": read(rule_file(tdir, plug, "coding.md")),
             "environment": read(os.path.join(b, "environment.md")),
             "skills": t.get("skills", []), "agents": t.get("agents", []), "mcp": t.get("mcp", []),
             "mcp_servers": {n: {"type": c.get("type", "http" if c.get("url") else "stdio"), "url": c.get("url", ""),
@@ -1833,10 +1835,12 @@ def edit(team, change):
     for k in ("title", "description"):
         if isinstance(change.get(k), str):
             t[k] = change[k].strip()
-    for k, f in (("persona", "persona.md"), ("rules", "storage.md"), ("environment", "environment.md")):
+    for k, f in (("persona", "persona.md"), ("rules", "storage.md"), ("main", "main.md"), ("coding", "coding.md"),
+                 ("environment", "environment.md")):
         if isinstance(change.get(k), str) and change[k].strip():
             own = os.path.join(tdir, "rules", f)           # the team's rules/ when the repository has it, else the plugin's copy
-            write(own if f != "environment.md" and os.path.isfile(own) else os.path.join(b, f), change[k].rstrip() + "\n")
+            tpl = os.path.join(b, dict(RULES).get(f, f))   # (main.md started from the plugin's CLAUDE.md)
+            write(own if f != "environment.md" and os.path.isfile(own) else tpl, change[k].rstrip() + "\n")
     for kind in ("skills", "agents"):
         if not isinstance(change.get(kind), list):
             continue

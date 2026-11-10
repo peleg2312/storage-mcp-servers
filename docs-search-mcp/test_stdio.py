@@ -250,6 +250,11 @@ finally:
 kb = os.path.join(root, "kbrain"); os.makedirs(os.path.join(kb, "notes")); os.makedirs(os.path.join(kb, "incidents", "2026"))
 open(os.path.join(kb, "notes", "fabric.md"), "w").write("# Fabric\n- 2026-10-31 slowdrain on mds9 port fc1/7 verified mds\n")
 open(os.path.join(kb, "incidents", "2026", "x.md"), "w").write("# Incident\n- zoning outage on fabric A\n")
+open(os.path.join(kb, "notes", "powermax.md"), "w").write(
+    "# PowerMax: arrays and quirks\n- 2026-10-01 · PMAX01 SRDF group 12 lags every night at 02:00 because of the backup job · observed · alert\n"
+    "- 2026-10-05 · storage group names start with SG_ and end with the cluster name · verified · user\n")
+os.makedirs(os.path.join(kb, "captures"))
+open(os.path.join(kb, "captures", "2026-11-10-slow-ds.md"), "w").write("# Datastore latency spikes on DS_PROD_07\n## Symptom\nlatency 40 ms every hour on the hour\n")
 os.makedirs(os.path.join(kb, "runbooks"))
 open(os.path.join(kb, "runbooks", "powermax-add-host.md"), "w").write(
     "# Add an ESXi host to a PowerMax masking view\n## Pre-checks\nsymaccess list view\n## Procedure\n1. symaccess add initiator group\n"
@@ -258,7 +263,9 @@ kdb = os.path.join(root, "kbrain.db")
 ask = [{"jsonrpc": "2.0", "id": 1, "method": "tools/call", "params": {"name": "search_docs", "arguments": {"query": "slowdrain mds9 fc1/7"}}},
        {"jsonrpc": "2.0", "id": 2, "method": "tools/call", "params": {"name": "list_sources", "arguments": {}}},
        {"jsonrpc": "2.0", "id": 3, "method": "tools/call", "params": {"name": "search_docs", "arguments": {"query": "zoning outage fabric"}}},
-       {"jsonrpc": "2.0", "id": 4, "method": "tools/call", "params": {"name": "search_docs", "arguments": {"query": "add host masking view"}}}]
+       {"jsonrpc": "2.0", "id": 4, "method": "tools/call", "params": {"name": "search_docs", "arguments": {"query": "add host masking view"}}},
+       {"jsonrpc": "2.0", "id": 5, "method": "tools/call", "params": {"name": "search_docs", "arguments": {"query": "storage group names SG_ prefix"}}},
+       {"jsonrpc": "2.0", "id": 6, "method": "tools/call", "params": {"name": "search_docs", "arguments": {"query": "latency spikes DS_PROD_07"}}}]
 def ask_stdio(args):
     p = subprocess.run([sys.executable, os.path.join(here, "mcp_stdio.py"), *args], input="".join(json.dumps(m) + "\n" for m in ask),
                        capture_output=True, text=True, timeout=60)
@@ -266,9 +273,13 @@ def ask_stdio(args):
     return {m["id"]: json.loads(m["result"]["content"][0]["text"]) for m in (json.loads(l) for l in p.stdout.splitlines() if l.strip())}
 o = ask_stdio(["--db", db, "--knowledge", kb, "--brain-db", kdb])
 assert any(r.get("library") == "team knowledge" and "fabric.md" in r.get("path", "") for r in o[1]["results"]), o[1]
-assert [l["library"] for l in o[2]["libraries"]] == ["main", "team knowledge"] and o[2]["libraries"][1]["documents"] == 3, o[2]
+assert [l["library"] for l in o[2]["libraries"]] == ["main", "team knowledge"] and o[2]["libraries"][1]["documents"] == 5, o[2]
 assert any("incidents" in r.get("path", "") for r in o[3]["results"]), o[3]
 assert o[4]["results"][0].get("library") == "team knowledge" and "brain-runbooks/powermax-add-host.md" in o[4]["results"][0].get("path", ""), o[4]
+top = o[5]["results"][0]                                       # one fact per chunk: that line, not the whole topic file
+assert "brain-notes/powermax.md" in top.get("path", "") and top.get("section") == "PowerMax · 2026-10-05" and "SRDF" not in json.dumps(top), top
+cap = o[6]["results"][0]                                       # a capture is searchable and says it is unverified
+assert "brain-captures/" in cap.get("path", "") and "Unverified capture" in json.dumps(cap), cap
 m0 = os.path.getmtime(kdb)
 time.sleep(1.1)
 ask_stdio(["--db", db, "--knowledge", kb, "--brain-db", kdb])
@@ -279,7 +290,7 @@ assert os.path.getmtime(kdb) > m0, "changed pages: rebuilt"
 # knowledge-only (no --db, no library anywhere near): the knowledge is the whole index
 o = ask_stdio(["--knowledge", kb, "--brain-db", kdb])
 assert o[1]["results"] and all(r.get("library", "main") == "main" for r in o[1]["results"]), o[1]
-assert [l["library"] for l in o[2]["libraries"]] == ["main"] and o[2]["libraries"][0]["documents"] == 3, o[2]
+assert [l["library"] for l in o[2]["libraries"]] == ["main"] and o[2]["libraries"][0]["documents"] == 5, o[2]
 print("knowledge at start ok")
 
 # a shared team index on a multi-user VM: a member's docs-local uses the service's index when its stamp matches the member's

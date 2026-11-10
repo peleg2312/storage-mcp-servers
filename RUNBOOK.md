@@ -134,7 +134,7 @@ fresh as their clone, so twenty people on one team share one index instead of bu
 There is one documentation library for everyone; a team changes which rules and skills point into it, not the library.
 On the VM each Claude session searches it with `docs-local` (the team plugin's own stdlib server over the shared read-only
 `docs.db`; the OS page cache is shared, so ten people cost one copy), plus the person's own `brain.db` with the active team's
-notes pages and incidents, which the server rebuilds at start when they changed.
+notes (each dated fact line its own search hit), runbooks, captures (titled "Unverified capture") and incidents, which the server rebuilds at start when they changed.
 
 **The VM serves the same search to other machines over HTTPS** (`install-shared.sh` sets it up): the service `paas-docs`
 runs the same dependency-free server in HTTP mode on port 8443 with the gate's certificate and a bearer token

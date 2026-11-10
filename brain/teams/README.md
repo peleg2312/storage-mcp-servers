@@ -220,7 +220,10 @@ the same file when they are committed, so a broken edit is caught at the push, n
 
 1. **Load.** Every session starts with notes.md (core facts, under 60 lines) and a catalog of the topic files, pages,
    captures waiting and incidents; a topic file is read only when a question touches it. The session-start line also says
-   when curation is due (5 captures or more, or one older than 14 days) and how many facts are older than 180 days.
+   when curation is due (5 captures or more, or one older than 14 days) and how many facts are older than 180 days, and
+   lists what teammates changed in the last 14 days (notes, runbooks, rules; not your own commits nor publish.py's), so a
+   fact someone learned yesterday is read when a question touches it. In the docs search every dated fact line is a hit of
+   its own (not the whole topic file), and captures are found too, titled "Unverified capture" until curated.
 2. **Look up.** Before answering, Claude searches the offline library (docs-lookup, docs-leads) and the team's own
    knowledge. The plugin's `docs-local` carries the docs server itself: at every start it indexes the brain folder's notes
    pages and incidents into a small per-person index, `~/.claude/brain/brain.db` (a second or two when pages changed,

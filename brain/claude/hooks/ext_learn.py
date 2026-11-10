@@ -254,8 +254,8 @@ def saved(c, path, findings):
     p = os.path.realpath(path)
     f = findings(p)
     if f:
-        print(f"{os.path.basename(p)} holds {len(f)} secret(s) or real location(s); replace each value with <REDACTED> or a "
-              "placeholder now:\n" + "\n".join(f[:15]))
+        say(f"{os.path.basename(p)} holds {len(f)} secret(s) or real location(s), so it was not committed; replace each value "
+            "with <REDACTED> or a placeholder now:\n" + "\n".join(f[:15]))
         return 0
     root = os.path.realpath(c["root"])
     rel = os.path.relpath(p, root)

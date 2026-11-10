@@ -29,6 +29,7 @@ def run(script, payload=None, args=(), e=env):
 
 
 rc, out = run("notes-check.py", {"tool_input": {"file_path": notes}})
+out = json.loads(out)["hookSpecificOutput"]["additionalContext"]          # the form Claude Code hands to Claude
 assert rc == 0 and "notes.md:1: credential value" in out and "notes.md:2: private IP" in out, out
 assert "hunter2" not in out and ":3:" not in out and ":4:" not in out, out
 assert run("notes-check.py", {"tool_input": {"file_path": outside}}) == (0, "")
@@ -188,8 +189,8 @@ open(os.path.join(brain, "captures", "c.md"), "w").write("# Capture\n")
 e2 = dict(env, BRAIN_DB=db)
 paths = lambda: sorted(r[0] for r in sqlite3.connect(db).execute("SELECT path FROM docs"))
 r = subprocess.run(["sh", os.path.join(tools, "add-docs"), "--brain"], capture_output=True, text=True, env=e2)
-assert r.returncode == 0 and paths() == ["brain/local/brain-incidents/2026-x.md", "brain/local/brain-notes/x.md"], (r.stderr, paths())
+assert r.returncode == 0 and paths() == ["brain/local/brain-captures/c.md", "brain/local/brain-incidents/2026-x.md", "brain/local/brain-notes/x.md"], (r.stderr, paths())   # captures too (searched as unverified)
 os.remove(nx)
 subprocess.run(["sh", os.path.join(tools, "add-docs"), "--brain"], capture_output=True, env=e2)
-assert paths() == ["brain/local/brain-incidents/2026-x.md"], paths()
+assert paths() == ["brain/local/brain-captures/c.md", "brain/local/brain-incidents/2026-x.md"], paths()
 print("add-docs --brain ok")

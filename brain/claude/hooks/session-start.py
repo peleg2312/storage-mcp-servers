@@ -69,6 +69,41 @@ def shared_line():
     return "shared brain: " + out.replace("brain: ", "", 1) if out else ""
 
 
+def team_changes_line(days=14, most=6):
+    """What teammates changed in the team repository lately (after this session's pull): the knowledge and rules files
+    others committed in the last `days` days, newest first, with who, so a fact a teammate learned yesterday is read when a
+    question touches it. Own commits are left out (the notes hook's identity: git user.email, else <login>@<host>).
+    Silent outside team mode, with nothing new, or when git is slow (3 s)."""
+    repo = team_repo()
+    if repo == os.path.join(USER_HOME, "brain") or not os.path.isdir(os.path.join(repo, ".git")):
+        return ""
+    try:
+        me = subprocess.run(["git", "-C", repo, "config", "user.email"], stdin=subprocess.DEVNULL, capture_output=True,
+                            text=True, timeout=3).stdout.strip()
+        if not me:
+            import getpass
+            import socket
+            me = f"{getpass.getuser()}@{socket.gethostname()}"
+        out = subprocess.run(["git", "-C", repo, "log", f"--since={days}.days", "--format=%x00%ae%x09%an%x09%s", "--name-only", "--",
+                              "knowledge", "rules"], stdin=subprocess.DEVNULL, capture_output=True, text=True, timeout=3).stdout
+    except Exception:
+        return ""
+    seen = {}
+    for block in out.split("\0")[1:]:
+        lines = [l for l in block.splitlines() if l.strip()]
+        email, who, subject = (lines[0].split("\t", 2) + ["", ""])[:3] if lines else ("", "", "")
+        if not lines or email == me or re.match(r"team [a-z0-9_-]+: plugin", subject):
+            continue                                # own commits, and publish.py's (templates, the first rules/)
+        for f in lines[1:]:
+            if f.endswith(".md") and not f.endswith("INDEX.md") and f not in seen and os.path.exists(os.path.join(repo, f)):
+                seen[f] = who or email.split("@")[0]
+    if not seen:
+        return ""
+    items = [f"{f.replace('knowledge/', '', 1)} ({who})" for f, who in list(seen.items())[:most]]
+    more = f", {len(seen) - most} more" if len(seen) > most else ""
+    return f"Team changes in the last {days} days (by teammates): " + ", ".join(items) + more + "; read the ones this question touches"
+
+
 def bare_plugin_rules():
     """The hooks run from a team plugin (hooks.json beside this file) and nothing put the rules in place (no
     ~/.claude/brain/persona.md: a plain `claude plugin install`). First the plugin sets the team up itself (bin/paas-team
@@ -326,8 +361,8 @@ def main():
     except Exception:
         pass
     # the shared brain is pulled first, so the team line sees a plugin that this very pull brought (printed in the usual order)
-    order = (bare_plugin_rules, shared_line, team_line, library_line, environment_line, memory_line, hook_line)
-    shown = (bare_plugin_rules, team_line, library_line, environment_line, memory_line, shared_line, hook_line)
+    order = (bare_plugin_rules, shared_line, team_line, team_changes_line, library_line, environment_line, memory_line, hook_line)
+    shown = (bare_plugin_rules, team_line, library_line, environment_line, memory_line, team_changes_line, shared_line, hook_line)
     got = {}
     for fn in order:
         try:

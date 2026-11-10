@@ -418,8 +418,10 @@ def hook(data=None):
         commit("brain: " + path[len(repo):], path[len(repo):])
     if f:
         more = f"\n... and {len(f) - MAX_LINES} more" if len(f) > MAX_LINES else ""
-        print(f"{os.path.basename(path)} holds {len(f)} secret(s) or real location(s); replace each value with "
-              "<REDACTED> or a placeholder now:\n" + "\n".join(f[:MAX_LINES]) + more)
+        msg = (f"{os.path.basename(path)} holds {len(f)} secret(s) or real location(s); it was not committed. Replace each "
+               "value with <REDACTED> or a placeholder now:\n" + "\n".join(f[:MAX_LINES]) + more)
+        # PostToolUse: plain output reaches only the transcript view; additionalContext is what Claude reads
+        print(json.dumps({"hookSpecificOutput": {"hookEventName": "PostToolUse", "additionalContext": msg}}))
     return 0
 
 
