@@ -250,10 +250,15 @@ finally:
 kb = os.path.join(root, "kbrain"); os.makedirs(os.path.join(kb, "notes")); os.makedirs(os.path.join(kb, "incidents", "2026"))
 open(os.path.join(kb, "notes", "fabric.md"), "w").write("# Fabric\n- 2026-10-31 slowdrain on mds9 port fc1/7 verified mds\n")
 open(os.path.join(kb, "incidents", "2026", "x.md"), "w").write("# Incident\n- zoning outage on fabric A\n")
+os.makedirs(os.path.join(kb, "runbooks"))
+open(os.path.join(kb, "runbooks", "powermax-add-host.md"), "w").write(
+    "# Add an ESXi host to a PowerMax masking view\n## Pre-checks\nsymaccess list view\n## Procedure\n1. symaccess add initiator group\n"
+    "## Verification\nsymaccess show view\n## Rollback\nsymaccess remove initiator\n")
 kdb = os.path.join(root, "kbrain.db")
 ask = [{"jsonrpc": "2.0", "id": 1, "method": "tools/call", "params": {"name": "search_docs", "arguments": {"query": "slowdrain mds9 fc1/7"}}},
        {"jsonrpc": "2.0", "id": 2, "method": "tools/call", "params": {"name": "list_sources", "arguments": {}}},
-       {"jsonrpc": "2.0", "id": 3, "method": "tools/call", "params": {"name": "search_docs", "arguments": {"query": "zoning outage fabric"}}}]
+       {"jsonrpc": "2.0", "id": 3, "method": "tools/call", "params": {"name": "search_docs", "arguments": {"query": "zoning outage fabric"}}},
+       {"jsonrpc": "2.0", "id": 4, "method": "tools/call", "params": {"name": "search_docs", "arguments": {"query": "add host masking view"}}}]
 def ask_stdio(args):
     p = subprocess.run([sys.executable, os.path.join(here, "mcp_stdio.py"), *args], input="".join(json.dumps(m) + "\n" for m in ask),
                        capture_output=True, text=True, timeout=60)
@@ -261,8 +266,9 @@ def ask_stdio(args):
     return {m["id"]: json.loads(m["result"]["content"][0]["text"]) for m in (json.loads(l) for l in p.stdout.splitlines() if l.strip())}
 o = ask_stdio(["--db", db, "--knowledge", kb, "--brain-db", kdb])
 assert any(r.get("library") == "team knowledge" and "fabric.md" in r.get("path", "") for r in o[1]["results"]), o[1]
-assert [l["library"] for l in o[2]["libraries"]] == ["main", "team knowledge"] and o[2]["libraries"][1]["documents"] == 2, o[2]
+assert [l["library"] for l in o[2]["libraries"]] == ["main", "team knowledge"] and o[2]["libraries"][1]["documents"] == 3, o[2]
 assert any("incidents" in r.get("path", "") for r in o[3]["results"]), o[3]
+assert o[4]["results"][0].get("library") == "team knowledge" and "brain-runbooks/powermax-add-host.md" in o[4]["results"][0].get("path", ""), o[4]
 m0 = os.path.getmtime(kdb)
 time.sleep(1.1)
 ask_stdio(["--db", db, "--knowledge", kb, "--brain-db", kdb])
@@ -273,7 +279,7 @@ assert os.path.getmtime(kdb) > m0, "changed pages: rebuilt"
 # knowledge-only (no --db, no library anywhere near): the knowledge is the whole index
 o = ask_stdio(["--knowledge", kb, "--brain-db", kdb])
 assert o[1]["results"] and all(r.get("library", "main") == "main" for r in o[1]["results"]), o[1]
-assert [l["library"] for l in o[2]["libraries"]] == ["main"] and o[2]["libraries"][0]["documents"] == 2, o[2]
+assert [l["library"] for l in o[2]["libraries"]] == ["main"] and o[2]["libraries"][0]["documents"] == 3, o[2]
 print("knowledge at start ok")
 
 # a shared team index on a multi-user VM: a member's docs-local uses the service's index when its stamp matches the member's
@@ -361,3 +367,19 @@ T2.refresh("kbbrain")
 o = ask_stdio(["--db", db, "--team-index", T2.db("kbbrain")])
 assert any("kb__a.md" in r.get("path", "") for r in o[1]["results"]) or o[2]["libraries"][1]["documents"] >= 3, o
 print("external brain layout from paas-team ok")
+
+# a team built here in the new layout (team.json only inside its plugin, rules/ beside knowledge/) is a team, never an
+# external brain, for the docs service and for paas-team (vm_externals, layout)
+nt = os.path.join(xdir, "newteam")
+for rel, text in {"paas-brain-newteam/team.json": json.dumps({"name": "newteam", "library": ""}), "paas-brain-newteam/.claude-plugin/plugin.json": "{}",
+                  "rules/main.md": "# rules\n", "knowledge/notes/a.md": "# A\n- x\n", "knowledge/runbooks/fc-zone.md": "# R\n"}.items():
+    os.makedirs(os.path.dirname(os.path.join(nt, rel)), exist_ok=True); open(os.path.join(nt, rel), "w").write(text)
+subprocess.run(["git", "init", "-q", nt], check=True)
+T3 = ms.Teams(xdir, xstate, print, xlibs)
+assert "newteam" in T3.names() and T3.external("newteam") is None and T3.meta("newteam")["name"] == "newteam"
+p = subprocess.run([sys.executable, os.path.join(root, "bin", "paas-team"), "layout", nt, "newteam"], capture_output=True, text=True)
+assert p.returncode == 0 and json.loads(p.stdout) == {}, p.stdout + p.stderr
+p = subprocess.run([sys.executable, os.path.join(root, "bin", "paas-team"), "docs", "--all", "--no-pull"], capture_output=True, text=True,
+                   env=dict(os.environ, PAAS_TEAMS=xdir, PAAS_LIBRARIES=xlibs, CLAUDE_HOME=os.path.join(root, "ch")))
+assert "newteam" not in p.stdout, p.stdout
+print("new-layout team is no external brain ok")

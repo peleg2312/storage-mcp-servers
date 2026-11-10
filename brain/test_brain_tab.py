@@ -81,12 +81,12 @@ try:
     assert "brain tab: notes.md" in log, log
     h = call("GET", "history?name=notes.md")
     assert h["repo"] and any("brain tab: notes.md" in e["subject"] for e in h["entries"]), h
-    # show / edit: the token travels on stdin and lands in the team repository's mcp.json
+    # show / edit: the token travels on stdin and lands in the team plugin's .mcp.json (the only copy)
     sh = call("GET", "team-show?name=san")
     assert sh["ok"] and sh["mcp_servers"]["powermax"]["configured"] is False and "zoning-audit" in sh["skills"], sh.get("out")
     r = call("POST", "team-edit", {"name": "san", "change": {"title": "SAN team", "mcp_servers": {"powermax": {"url": "http://pm.example:8000/mcp", "token": "tok-123456"}}}})
     assert r["ok"] and "edited team san" in r["out"] and "pushed" in r["out"], r
-    servers = json.load(open(os.path.join(home, ".claude", "brain", "teams", "san", "mcp.json")))
+    servers = json.load(open(os.path.join(home, ".claude", "brain", "teams", "san", "paas-brain-san", ".mcp.json")))["mcpServers"]
     assert servers["powermax"]["headers"]["Authorization"] == "Bearer tok-123456", servers
     assert call("GET", "team-show?name=san")["title"] == "SAN team"
     mcp = {m["name"]: m for m in call("GET", "overview")["mcp"]}      # the team plugin's servers are listed, not only ~/.claude.json's

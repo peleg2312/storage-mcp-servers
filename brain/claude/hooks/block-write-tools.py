@@ -394,6 +394,53 @@ def shell_check(cmd, depth=0):
     return worst
 
 
+FILE_TOOLS = {"Edit", "Write", "MultiEdit", "NotebookEdit"}
+RULE_NAMES = ("main.md", "persona.md", "storage.md", "coding.md")
+# a path into the brain folder inside a shell command (~/.claude/brain/..., $HOME/..., /home/x/.claude/brain/...)
+BRAIN_PATH = re.compile(r"""(?:~|\$\{?HOME\}?|/)[^\s'"|;&<>()`]*?\.claude/brain/[^\s'"|;&<>()`]+""")
+SEG = re.compile(r"\|\||&&|[;|&\n]")
+
+
+def team_rule(path):
+    """a file of the active team's rules/ (the team repository's own rules, linked into ~/.claude/brain): only people
+    change those, in the team repository or the Brain tab's team editor"""
+    if not path:
+        return False
+    home = os.environ.get("CLAUDE_HOME") or os.path.expanduser("~/.claude")
+    brain = os.path.realpath(os.path.join(home, "brain"))
+    teams = os.path.join(brain, "teams") + os.sep
+    rp = os.path.realpath(os.path.expanduser(str(path)))
+    if rp.startswith(teams):
+        parts = rp[len(teams):].split(os.sep)
+        return len(parts) >= 3 and parts[1] == "rules"
+    name = os.path.basename(rp)                        # Windows: a hard link in the brain folder, not a symlink
+    if os.path.dirname(rp) == brain and name in RULE_NAMES:
+        try:
+            team = open(os.path.join(brain, "team"), encoding="utf-8").read().strip()
+        except OSError:
+            return False
+        return bool(team) and os.path.isfile(os.path.join(teams, team, "rules", name))
+    return False
+
+
+def shell_rule_write(cmd):
+    """the team rule a shell command would change (redirect or tee into it, sed / perl -i, mv, rm, truncate, ln, chmod, or
+    cp / install / rsync onto it), else None. Reading one (cat, grep, cp it elsewhere) passes."""
+    for seg in SEG.split(cmd):
+        for m in BRAIN_PATH.finditer(seg):
+            p = re.sub(r"^\$\{?HOME\}?", "~", m.group(0))
+            if not team_rule(p):
+                continue
+            at = re.escape(m.group(0))
+            words = seg.split()
+            if (re.search(r">>?\s*['\"]?" + at, seg) or re.search(r"\btee\s+(?:-\S+\s+)*['\"]?" + at, seg)
+                    or re.search(r"\b(?:sed|perl)\b[^\n]*\s(?:-[a-zA-Z]*i|--in-place)", seg)
+                    or re.search(r"\b(?:mv|rm|truncate|ln|chmod|unlink|shred)\b", seg) or re.search(r"\bdd\b[^\n]*\bof=", seg)
+                    or (re.search(r"\b(?:cp|install|rsync)\b", seg) and words and words[-1].strip("'\"") == m.group(0))):
+                return m.group(0)
+    return None
+
+
 def reason_for(tool_name, tool_input):
     tool = tool_name.split("__", 2)[-1]
     toks = tokens(tool)
@@ -489,6 +536,8 @@ def main():
         if rc:
             decide.why = "unreadable tool input"
             print("BLOCKED by the read-only policy: the guard could not read this call's input.", file=sys.stderr)
+    if str(data.get("tool_name") or "") in FILE_TOOLS and rc == 0:
+        return 0                                        # file edits are checked only for the team's rules: not audited
     audit(data, {0: "allow", 2: "block"}.get(rc, str(rc)) if not decide.asked else "ask", decide.why)
     return rc
 
@@ -514,8 +563,24 @@ def decide(data):
     # Bypass mode: the user has approved every change on this server, so the questions below are skipped except the
     # CRITICAL few (cluster sign-in, delete, reboot...); the blocks (storage, switches, UCS, VMware) stay in every mode
     bypass = data.get("permission_mode") == "bypassPermissions"
+    tool_input = data.get("tool_input") or {}
+    if name in FILE_TOOLS:
+        path = tool_input.get("file_path") or tool_input.get("notebook_path") or ""
+        if team_rule(path):
+            decide.why = "team rule file"
+            print(f"BLOCKED: {path} is one of the team's rules (rules/ in the team repository). Only people change the "
+                  "rules, in the team repository or the Brain tab's team editor: tell the user what you would change and "
+                  "why. Facts go to notes/ or captures/ instead.", file=sys.stderr)
+            return 2
+        return 0
     if name == "Bash":
-        cmd = str((data.get("tool_input") or {}).get("command", ""))
+        cmd = str(tool_input.get("command", ""))
+        hit = shell_rule_write(cmd)
+        if hit:
+            decide.why = "team rule file"
+            print(f"BLOCKED: this command would change {hit}, one of the team's rules (rules/ in the team repository). Only "
+                  "people change the rules: tell the user what you would change and why.", file=sys.stderr)
+            return 2
         if allowed_bash(cmd):
             return 0
         level, why = shell_check(cmd)
@@ -542,7 +607,6 @@ def decide(data):
         return 0
     if re.match(r"mcp__(plugin_presentations_)?deck__deck_(guide|build|read|icons|deliver)$", name):   # decks under ~/storage-reports: no infrastructure
         return 0
-    tool_input = data.get("tool_input") or {}
     if re.fullmatch(r"mcp__databases__(pg_execute|mongo_write)", name):
         # the user's own application databases (writable connections only, the server checks): confirm each write
         if bypass:

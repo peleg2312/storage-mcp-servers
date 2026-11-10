@@ -151,9 +151,9 @@ for tu in $TEAM_URLS; do
   n=${tu%%=*}; u=${tu#*=}
   if [ -d "/opt/paas/teams/$n/.git" ]; then               # already here: only the remote is recorded, nothing rebuilt
     python3 - "/opt/paas/teams/$n" "$u" <<'PY' && note "team $n: remote $u recorded (the team itself left as it is)"
-import json, os, subprocess, sys
+import glob, json, os, subprocess, sys
 d, u = sys.argv[1], sys.argv[2]
-p = os.path.join(d, "team.json")
+p = (sorted(glob.glob(os.path.join(d, "paas-brain-*", "team.json"))) + [os.path.join(d, "team.json")])[0]   # the plugin's (older: root)
 if os.path.isfile(p):
     t = json.load(open(p)); t["remote"] = u; json.dump(t, open(p, "w"), indent=2, sort_keys=True); open(p, "a").write("\n")
 subprocess.run(["git", "-C", d, "remote", "remove", "origin"], capture_output=True)

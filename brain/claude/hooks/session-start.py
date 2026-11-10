@@ -14,6 +14,9 @@ import time
 # (install-vm.sh --project <dir>); the documentation library is always shared in ~/.claude/brain/library
 HOME = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 USER_HOME = os.environ.get("CLAUDE_HOME") or os.path.expanduser("~/.claude")   # as the installers, paas-team and notes-check.py
+# where the person's memory is: the .claude this hook was installed into (~/.claude, or <project>/.claude), else (the hook runs
+# from a team plugin, whose brain/ holds only templates, or from /opt/paas on the multi-user VM) the person's ~/.claude
+MEM = HOME if os.path.basename(HOME) == ".claude" and os.path.exists(os.path.join(HOME, "brain", "notes.md")) else USER_HOME
 BOOTSTRAPPED = False                       # set when this very session set the team up from the plugin: sync and refresh then wait
 
 
@@ -95,10 +98,12 @@ def bare_plugin_rules():
                 BOOTSTRAPPED = True
     except Exception:
         pass
-    text = read(os.path.join(b, "CLAUDE.md"))
-    text = re.sub(r"^@~/\.claude/brain/persona\.md\s*$", read(os.path.join(b, "persona.md")).strip(), text, flags=re.M)
+    mine = os.path.join(USER_HOME, "brain")                   # set up: the team's own rules (links into its rules/)
+    src = lambda f, tpl: (read(os.path.join(mine, f)) if done else "") or read(os.path.join(b, tpl))
+    text = src("main.md", "CLAUDE.md")
+    text = re.sub(r"^@~/\.claude/brain/persona\.md\s*$", src("persona.md", "persona.md").strip(), text, flags=re.M)
     text = re.sub(r"^@\S+\s*$\n?", "", text, flags=re.M)      # notes.md and the like do not exist yet
-    rules = re.sub(r"^@\S+\s*$\n?", "", read(os.path.join(b, "storage.md")), flags=re.M)
+    rules = re.sub(r"^@\S+\s*$\n?", "", src("storage.md", "storage.md"), flags=re.M)
     if done:
         return (done + "First session: these are the brain's rules (from the next session they come from ~/.claude/CLAUDE.md).\n"
                 + text.strip() + "\n\n" + rules.strip() + "\n(No docs library yet: install-laptop.sh of storage-mcp-servers adds it.)")
@@ -124,7 +129,8 @@ def team_line():
         return (f"Brain: {name} (external, plugin {ext['plugin']}: its skills are /{ext['plugin']}:<skill>; follow its own "
                 f"instructions for its knowledge).")
     try:
-        meta = json.loads(read(os.path.join(tdir, "team.json")) or "{}")
+        meta = json.loads(next((read(f) for f in sorted(glob.glob(os.path.join(tdir, "paas-brain-*", "team.json")))
+                                + [os.path.join(tdir, "team.json")] if read(f)), "") or "{}")   # the plugin's (an older repository: its root copy)
     except ValueError:
         meta = {}
     line = f"Team: {name} ({meta.get('title', name)}, {meta.get('version', '?')})"
@@ -147,11 +153,9 @@ def team_line():
 
 
 def env_path():
-    # multi-user VM: everyone has their own environment.md (started from root's default in /opt/paas/brain)
-    own = os.path.join(USER_HOME, "brain", "environment.md")
-    if not os.path.exists(os.path.join(HOME, "brain", "notes.md")) and os.path.exists(own):
-        return own
-    return os.path.join(HOME, "brain", "environment.md")
+    # multi-user VM: everyone has their own environment.md (started from root's default in /opt/paas/brain, used until then)
+    own = os.path.join(MEM, "brain", "environment.md")
+    return own if os.path.exists(own) else os.path.join(HOME, "brain", "environment.md")
 
 
 def env_filled(text):
@@ -206,11 +210,14 @@ def stale_count(mem):
 
 def memory_line():
     """The memory catalog: notes.md is always loaded; the topic files are listed here and read on demand."""
-    # multi-user VM: hooks live in /opt/paas (no notes there), each person's notes in their own ~/.claude
-    mem = HOME if os.path.exists(os.path.join(HOME, "brain", "notes.md")) else USER_HOME
+    mem = MEM
     notes = read(os.path.join(mem, "brain", "notes.md"))
     n = len(notes.splitlines())
     line = f"notes.md: {sum(1 for l in notes.splitlines() if l.startswith('- '))} core facts, {n} lines"
+    link = os.path.join(mem, "brain", "notes.md")
+    if os.path.islink(link):              # team mode: Claude Code does not Write / Edit through a file link, so name the real place
+        line += (f" (notes.md, environment.md and tool-map.md are links: edit them at "
+                 f"{os.path.dirname(os.path.realpath(link)).replace(os.path.expanduser('~'), '~', 1)}/<file>)")
     if n > NOTES_CAP:
         line += (f" - OVER the {NOTES_CAP}-line cap: move facts most sessions do not need into notes/<topic>.md "
                  "(it is loaded every session)")
@@ -239,6 +246,12 @@ def memory_line():
     inc = glob.glob(os.path.join(USER_HOME, "brain", "incidents", "**", "*.md"), recursive=True)
     if inc:
         line += f".\nincidents: {len(inc)} under ~/.claude/brain/incidents/ (grep them; brain-learn writes them)"
+    books = sorted(glob.glob(os.path.join(mem, "brain", "runbooks", "*.md")))
+    if books:
+        names = [os.path.basename(b)[:-3] for b in books]
+        line += (f".\nrunbooks: {len(books)} tested procedures in ~/.claude/brain/runbooks/ ({', '.join(names[:15])}"
+                 + (f", ... {len(names) - 15} more" if len(names) > 15 else "")
+                 + "): before giving change steps, read a matching one and follow it")
     if topics:
         return line + ".\nMemory topics (read the one a question touches; grep notes/ for an unknown name):\n" + "\n".join(topics)
     return line + "; no topic files yet (notes/<topic>.md)."
@@ -277,8 +290,8 @@ def chats_rules():
     dst = os.path.join(chats, "CLAUDE.md")
     storage = next((p for p in (os.path.join(USER_HOME, "brain", "storage.md"), os.path.join(HOME, "brain", "storage.md"))
                     if os.path.exists(p)), None)
-    if HOME != USER_HOME and os.path.exists(os.path.join(HOME, "brain", "notes.md")):
-        return                                   # a project install never owns ~/chats
+    if MEM != USER_HOME:
+        return                                   # a project install never owns ~/chats (a team plugin's hooks do)
     if not storage or not os.path.isdir(chats) or (os.path.exists(dst) and not read(dst, 200).startswith(CHATS_MARK)):
         return                                   # no brain storage rules, no Chats folder, or a CLAUDE.md of his own
     srcs = [storage, env_path(), os.path.join(USER_HOME, "brain", "tool-map.md")]
@@ -312,10 +325,6 @@ def main():
         prune_tmp()
     except Exception:
         pass
-    try:
-        chats_rules()
-    except Exception:
-        pass
     # the shared brain is pulled first, so the team line sees a plugin that this very pull brought (printed in the usual order)
     order = (bare_plugin_rules, shared_line, team_line, library_line, environment_line, memory_line, hook_line)
     shown = (bare_plugin_rules, team_line, library_line, environment_line, memory_line, shared_line, hook_line)
@@ -325,6 +334,10 @@ def main():
             got[fn] = fn()
         except Exception:
             got[fn] = ""
+    try:
+        chats_rules()                      # after the pull: a rule the team just changed reaches the web UI's plain chats now
+    except Exception:
+        pass
     lines = [got[fn] for fn in shown]
     print("Storage brain: " + "\n".join(l for l in lines if l))
     return 0

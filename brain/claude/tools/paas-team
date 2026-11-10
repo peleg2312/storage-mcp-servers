@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """Team profiles of the brain: which brain (rules, skills, agents, knowledge) this account works with, switched in
 seconds. A team is a git repository published by brain/teams/publish.py: the plugin paas-brain-<team>/ plus
-knowledge/ (notes/, captures/, incidents/, tool-map.md). Each team the person added is a clone under
+knowledge/ (notes/, runbooks/, captures/, incidents/, tool-map.md) and rules/ (main.md, persona.md, storage.md, coding.md: the team's own
+rules, edited there and linked into ~/.claude/brain, never written by this tool). Each team the person added is a clone under
 ~/.claude/brain/teams/<team>; the active one is the Claude Code plugin paas-brain-<team> (enabled from that clone, the
 same plugin everyone installs) and its knowledge is linked into the brain's usual paths, so every skill, hook and the
 web UI keep reading ~/.claude/brain/notes.md, notes/, captures/, incidents/, tool-map.md, environment.md,
@@ -29,7 +30,7 @@ knowledge are still switched and the plugin is registered at the next `paas-team
                                    library built when its docs changed (install-shared.sh and the daily timer run it)
   paas-team edit <team>            change it from JSON on stdin (title, description, persona, rules, environment, skills,
                                    agents, mcp_servers {name: {url, type, token}}, remove_mcp): written into the team's
-                                   repository (filled-in servers also into the plugin's .mcp.json), committed, pushed,
+                                   plugin (filled-in servers into its .mcp.json, the others into team.json), committed, pushed,
                                    re-applied; the Brain tab's team editor uses it
 External brains: `paas-team add <name> <git url>` also takes any other Claude Code brain kept as its owners publish it (a
 repository with a plugin marketplace, a plugin folder, or plain skills/ and agents/): it is cloned as it is, marked in its
@@ -41,7 +42,7 @@ to the clone when it is added.
 Environment: PAAS_TEAMS (source directory: /opt/paas/teams on a multi-user VM, else ~/.claude/brain/team-sources,
 written by the installer), CLAUDE_HOME (default ~/.claude).
 Standard library, Python 3.9. The only credentials it handles are the team's MCP tokens, which `edit` writes into the
-team repository's mcp.json by the team's decision (see brain/teams/README.md); nothing else is ever written."""
+team plugin's .mcp.json by the team's decision (see brain/teams/README.md); nothing else is ever written."""
 import glob
 import hashlib
 import json
@@ -58,7 +59,12 @@ SOURCES = os.environ.get("PAAS_TEAMS") or ("/opt/paas/teams" if os.path.isdir("/
                                             else os.path.join(BRAIN, "team-sources"))   # multi-user VM, else the installer's copies
 STATE = os.path.join(TEAMS, ".installed.json")             # skills / agents the active team put into ~/.claude
 NAME = re.compile(r"^[a-z][a-z0-9_-]{0,31}$")
-LINKS = ("notes.md", "environment.md", "tool-map.md", "notes", "captures", "incidents")   # brain paths -> knowledge/
+LINKS = ("notes.md", "environment.md", "tool-map.md", "notes", "runbooks", "captures", "incidents")   # brain paths -> knowledge/
+# brain paths -> the team repository's rules/ (owned and edited by the team, never written by this tool); the plugin's brain/
+# file each one started from (publish.py creates rules/ from these once). A team repository published before rules/ existed
+# gets the plugin's copies as before.
+RULES = (("main.md", "CLAUDE.md"), ("persona.md", "persona.md"), ("storage.md", "storage.md"), ("coding.md", "coding.md"))
+IMPORT = "@~/.claude/brain/main.md"
 _IDENT = {}
 
 
@@ -144,6 +150,12 @@ def plugin_dir(tdir):
         if os.path.isfile(os.path.join(d, "team.json")):
             return d
     return ""
+
+
+def paas_team_repo(d):
+    """a team built by this brain: team.json in its plugin (paas-brain-<team>/team.json) or, in an older repository, at
+    its top; never an external brain"""
+    return os.path.isfile(os.path.join(d, "team.json")) or bool(glob.glob(os.path.join(d, "paas-brain-*", "team.json")))
 
 
 # ---- external brains (any other Claude Code brain, kept as it is) ---------------------------------------------------
@@ -598,7 +610,7 @@ def vm_brain(team, tdir=None):
     names = [team] + sorted(d for d in os.listdir(SOURCES) if d != team)
     for n in names:
         d = os.path.join(SOURCES, n)
-        if not NAME.match(n) or os.path.isfile(os.path.join(d, "team.json")) or not os.path.isdir(os.path.join(d, ".git")):
+        if not NAME.match(n) or paas_team_repo(d) or not os.path.isdir(os.path.join(d, ".git")):
             continue
         if (n == team and os.path.realpath(d) == os.path.realpath(tdir)) or same_remote(config_origin(d), mine):
             return n
@@ -727,7 +739,7 @@ def load_docs(team, force=False):
     too), then one incremental build. Skipped when the docs folder is the same commit tree as last time (--force builds
     anyway). The VM's teams folder copy is used first (what the docs service serves), else the person's clone."""
     tdir = next((d for d in (os.path.join(SOURCES, team), team_dir(team))
-                 if os.path.isdir(d) and not os.path.isfile(os.path.join(d, "team.json")) and (external(d) or find_plugin(d, team))), "")
+                 if os.path.isdir(d) and not paas_team_repo(d) and (external(d) or find_plugin(d, team))), "")
     if not tdir:
         die(f"no external brain {team!r} here")
     rec = external(tdir) or {"dir": find_plugin(tdir, team)[2], "env": {}}      # a VM copy root cloned: detected the same way
@@ -790,7 +802,7 @@ def load_docs(team, force=False):
 
 def brain_layout(tdir, name):
     """{folders (knowledge + inbox), library, docs} of an external brain at tdir, or {} when it is none"""
-    if not NAME.match(name) or os.path.isfile(os.path.join(tdir, "team.json")):
+    if not NAME.match(name) or paas_team_repo(tdir):
         return {}
     found = find_plugin(tdir, name)
     if not found:
@@ -805,7 +817,7 @@ def vm_externals():
     if not os.path.isdir(SOURCES):
         return []
     return [n for n in sorted(os.listdir(SOURCES)) if NAME.match(n) and os.path.isdir(os.path.join(SOURCES, n, ".git"))
-            and not os.path.isfile(os.path.join(SOURCES, n, "team.json")) and find_plugin(os.path.join(SOURCES, n), n)]
+            and not paas_team_repo(os.path.join(SOURCES, n)) and find_plugin(os.path.join(SOURCES, n), n)]
 
 
 def docs_all(pull=True):
@@ -1163,6 +1175,13 @@ def link_files(team=None):
         os.remove(p)
         os.link(t, p)
         out.append(name)
+    for name, _ in RULES:                  # the rules: the team's file wins (they are edited in the team repository, never here)
+        p, t = os.path.join(BRAIN, name), os.path.join(team_dir(team), "rules", name)
+        if not os.path.isfile(t) or os.path.islink(p) or not os.path.isfile(p) or same(p, t):
+            continue
+        os.remove(p)
+        os.link(t, p)
+        out.append(name)
     return out
 
 
@@ -1170,6 +1189,64 @@ def copy_rule(src, dst):
     if os.path.islink(dst):                                   # multi-user VM: a link to root's shared copy
         os.remove(dst)
     shutil.copy(src, dst)
+
+
+def rule_file(tdir, plug, name):
+    """where a rule of the team is read: the team repository's rules/<name>, else (an older team repository) the plugin's copy"""
+    own = os.path.join(tdir, "rules", name)
+    if os.path.isfile(own):
+        return own
+    return os.path.join(plug, "brain", dict(RULES)[name]) if plug else ""
+
+
+def link_rule(name, target):
+    """~/.claude/brain/<name> -> the team's rules/<name>. Nothing is written into the team's repository. A plain file there
+    is an earlier generated copy (copy_rule and the installers rewrote it every time), so the link replaces it."""
+    p = os.path.join(BRAIN, name)
+    if os.path.islink(p):
+        if os.readlink(p) == target:
+            return
+        os.remove(p)                                          # another team's rules, or root's shared copy (multi-user VM)
+    elif os.path.isfile(p):
+        if same(p, target):
+            return                                            # Windows: already the hard link
+        os.remove(p)
+    make_link(target, p)
+
+
+def ensure_import():
+    """~/.claude/CLAUDE.md imports ~/.claude/brain/main.md. A CLAUDE.md that is the brain's own full text (an installed VM:
+    its first line is the brain's title) would load the rules twice: it is kept as CLAUDE.md.bak.<time> and becomes the
+    import line; a CLAUDE.md of the person's own only gets the import line added."""
+    md = os.path.join(HOME, "CLAUDE.md")
+    text = read(md)
+    if IMPORT in text.split():
+        return
+    if text.startswith("# Brain:"):
+        import time
+        shutil.copy(md, md + ".bak." + time.strftime("%Y%m%d%H%M%S"))
+        write(md, "<!-- the brain's rules come from your team's repository (rules/main.md); add your own lines below -->\n"
+                  + IMPORT + "\n")
+        return
+    with open(md, "a", encoding="utf-8") as f:
+        f.write("\n" + IMPORT + "\n")
+
+
+def apply_rules(tdir, plug, persona=True):
+    """the team's rules into ~/.claude/brain: links into rules/ (the team repository), or copies of the plugin's for an older
+    team repository without rules/. main.md is linked only from rules/ (plugin installs copy it in bootstrap)."""
+    for name, tpl in RULES:
+        if name == "persona.md" and not persona:
+            continue
+        own = os.path.join(tdir, "rules", name)
+        if os.path.isfile(own):
+            link_rule(name, own)
+            if name == "main.md":
+                ensure_import()
+        elif name in ("persona.md", "storage.md"):
+            copy_rule(os.path.join(plug, "brain", tpl), os.path.join(BRAIN, name))
+        elif name == "coding.md" and not os.path.exists(os.path.join(BRAIN, name)):
+            shutil.copy(os.path.join(plug, "brain", tpl), os.path.join(BRAIN, name))
 
 
 def installed():
@@ -1225,9 +1302,44 @@ def plugin_mcp(plug, servers):
     return sorted(out)
 
 
+def load_servers(plug, tdir=None):
+    """The team's MCP servers from the one place they live, the plugin: the connected ones from its .mcp.json (docs-http
+    there is the team's docs-search), the ones still waiting for an address or a token from team.json's mcp_pending.
+    {name: entry} in the shape the team editor works on. A team repository published before this layout keeps them in
+    its own mcp.json (tdir): that one is read until publish.py or the team editor moves it into the plugin."""
+    if tdir and os.path.isfile(os.path.join(tdir, "mcp.json")):
+        return jload(os.path.join(tdir, "mcp.json"))
+    out = {}
+    for n, c in (jload(os.path.join(plug, ".mcp.json")).get("mcpServers") or {}).items():
+        if n != "docs-local" and isinstance(c, dict):
+            out["docs-search" if n == "docs-http" else n] = c
+    for n, c in (jload(os.path.join(plug, "team.json")).get("mcp_pending") or {}).items():
+        if isinstance(c, dict):
+            out.setdefault(n, c)
+    return out
+
+
+def save_servers(plug, servers, t=None):
+    """The servers back into the plugin, each in one place: the filled-in ones into .mcp.json (Claude Code connects them),
+    the rest (an address or token still missing, a command) into team.json's mcp_pending: in t when the caller writes
+    team.json itself, else into the file. Returns the names the plugin connects."""
+    names = plugin_mcp(plug, servers)
+    connected = {"docs-search" if n == "docs-http" else n for n in names}
+    pending = {n: c for n, c in sorted(servers.items())
+               if n not in connected and n not in ("docs-local", "docs-http") and isinstance(c, dict)}
+    meta = t if t is not None else jload(os.path.join(plug, "team.json"))
+    if pending:
+        meta["mcp_pending"] = pending
+    else:
+        meta.pop("mcp_pending", None)
+    if t is None:
+        write(os.path.join(plug, "team.json"), json.dumps(meta, indent=2, sort_keys=True) + "\n")
+    return names
+
+
 def apply_mcp(t, old, tdir):
-    """The team's MCP servers come with the plugin (its .mcp.json, built by publish.py and the team editor from the team
-    repository's mcp.json): nothing is registered per person. Servers an earlier version of this tool registered with
+    """The team's MCP servers come with the plugin (its .mcp.json, written by publish.py and the team editor): nothing is
+    registered per person. Servers an earlier version of this tool registered with
     `claude mcp add-json` or the marketplace are removed; a server still without an address gets a note. Returns {}."""
     prev = old.get("mcp", {})
     prev = {m: "market" for m in prev} if isinstance(prev, list) else prev
@@ -1238,10 +1350,10 @@ def apply_mcp(t, old, tdir):
         elif via == "market" and market_bin() and f"mcp/{m}" in mine:
             market("remove", f"mcp/{m}")
     allow_plugin_tools(t.get("name"), t.get("mcp", []))
-    servers = jload(os.path.join(tdir, "mcp.json"))
+    servers = load_servers(plugin_dir(tdir), tdir)
     for m in t.get("mcp", []):
         if m != "docs-local" and not mcp_ready(servers.get(m) or {}):
-            print(f"note: MCP {m}: no address or token in the team's mcp.json yet (Brain tab, Team, Edit)")
+            print(f"note: MCP {m}: no address or token for the team yet (Brain tab, Team, Edit)")
     return {}
 
 
@@ -1341,7 +1453,7 @@ def apply(team, say=True, skills=True, plugin_cmds=True, persona=True):
         die(f"team {team} is not added (paas-team add {team} [<source>])")
     t = info(tdir)
     k = os.path.join(tdir, "knowledge")
-    for d in ("notes", "captures", "incidents"):
+    for d in ("notes", "runbooks", "captures", "incidents"):
         os.makedirs(os.path.join(k, d), exist_ok=True)
     first = not read(os.path.join(BRAIN, "team")).strip()     # first team ever: the person's files move in
     os.makedirs(BRAIN, exist_ok=True)
@@ -1350,15 +1462,11 @@ def apply(team, say=True, skills=True, plugin_cmds=True, persona=True):
     for name in ("notes.md", "environment.md", "tool-map.md"):    # the team's memory files start from the templates
         if not os.path.exists(os.path.join(k, name)):
             shutil.copy(os.path.join(plug, "brain", name), os.path.join(k, name))
-    if persona:
-        copy_rule(os.path.join(plug, "brain", "persona.md"), os.path.join(BRAIN, "persona.md"))
-    copy_rule(os.path.join(plug, "brain", "storage.md"), os.path.join(BRAIN, "storage.md"))
+    apply_rules(tdir, plug, persona)                          # links into the team's rules/ (or the plugin's copies)
     mine, copy = os.path.join(plug, "bin", "paas-team"), os.path.join(HOME, "tools", "paas-team")
     if os.path.isfile(mine) and os.path.isfile(copy) and read(mine) != read(copy):   # the copy follows the plugin's version
         shutil.copy(mine, copy)
         os.chmod(copy, 0o755)
-    if not os.path.exists(os.path.join(BRAIN, "coding.md")):
-        shutil.copy(os.path.join(plug, "brain", "coding.md"), os.path.join(BRAIN, "coding.md"))
     if skills and plugin_cmds:                                # a refresh after a sync needs none: the plugin loads in place;
         apply_plugin(team, tdir)                              # a bootstrap from inside the plugin already provides them
     write(STATE, json.dumps({"skills": [], "agents": [], "mcp": apply_mcp(t, installed(), tdir)}, indent=2) + "\n")
@@ -1370,7 +1478,7 @@ def apply(team, say=True, skills=True, plugin_cmds=True, persona=True):
     ignore = os.path.join(BRAIN, ".gitignore")                # the old whole-brain history never tracks the team clones
     if os.path.isdir(os.path.join(BRAIN, ".git")):
         lines = read(ignore).splitlines()
-        for l in ("teams/", "team-sources/", "team", "persona.md"):
+        for l in ("teams/", "team-sources/", "team", "persona.md", "main.md", "storage.md", "coding.md"):
             if l not in lines:
                 lines.append(l)
         write(ignore, "\n".join(lines) + "\n")
@@ -1394,17 +1502,16 @@ def bootstrap(team, source):
     and this tool in ~/.claude/tools. No `claude plugin` command (the plugin is installed and enabled already)."""
     add(team, source, quiet=True)
     t = apply(team, say=False, skills=False, persona=False)
-    plug = plugin_dir(team_dir(team))
-    shutil.copy(os.path.join(plug, "brain", "CLAUDE.md"), os.path.join(BRAIN, "main.md"))
-    md = os.path.join(HOME, "CLAUDE.md")
-    if "@~/.claude/brain/main.md" not in read(md).split():
-        with open(md, "a", encoding="utf-8") as f:
-            f.write("\n@~/.claude/brain/main.md\n")
+    tdir = team_dir(team)
+    plug = plugin_dir(tdir)
+    if not os.path.isfile(os.path.join(tdir, "rules", "main.md")):   # an older team repository: the plugin's copy (apply linked rules/ otherwise)
+        shutil.copy(os.path.join(plug, "brain", "CLAUDE.md"), os.path.join(BRAIN, "main.md"))
+    ensure_import()
     tools = os.path.join(HOME, "tools")
     os.makedirs(tools, exist_ok=True)
     shutil.copy(os.path.abspath(__file__), os.path.join(tools, "paas-team"))
     os.chmod(os.path.join(tools, "paas-team"), 0o755)
-    copy_rule(os.path.join(plug, "brain", "persona.md"), os.path.join(BRAIN, "persona.md"))   # last: the hook's "done" mark
+    apply_rules(tdir, plug)                                   # the persona after everything else: its presence is the hook's "done" mark
     print(f"team {team} ({t.get('title', team)}) set up from the plugin: knowledge in {os.path.join(team_dir(team), 'knowledge')}, "
           f"rules imported from ~/.claude/brain/main.md; tool: ~/.claude/tools/paas-team")
 
@@ -1551,6 +1658,12 @@ def off():
             write(p, read(tpl) if os.path.isfile(tpl) else "")
         else:
             os.makedirs(p, exist_ok=True)
+    for name, _ in RULES:              # the team's rules stay usable as plain copies (rewritten by the next team or install)
+        p, r = os.path.join(BRAIN, name), os.path.join(team_dir(t), "rules", name)
+        if os.path.isfile(r) and (os.path.islink(p) or (os.path.isfile(p) and same(p, r))):
+            text = read(p)
+            os.remove(p)
+            write(p, text)
     old = installed()
     if shutil.which("claude"):
         claude("disable", f"paas-brain-{t}@paas-brain-{t}")
@@ -1598,11 +1711,11 @@ def show(team):
     if not plug:
         die(f"no team {team}")
     t = info(tdir)
-    servers = jload(os.path.join(tdir, "mcp.json"))
+    servers = load_servers(plug, tdir)
     b = os.path.join(plug, "brain")
     return {"name": team, "title": t.get("title", team), "description": t.get("description", ""), "version": t.get("version", ""),
             "local": tdir == team_dir(team), "remote": remote_of(tdir) or t.get("remote") or None, "active": active() == team,
-            "persona": read(os.path.join(b, "persona.md")), "rules": read(os.path.join(b, "storage.md")),
+            "persona": read(rule_file(tdir, plug, "persona.md")), "rules": read(rule_file(tdir, plug, "storage.md")),
             "environment": read(os.path.join(b, "environment.md")),
             "skills": t.get("skills", []), "agents": t.get("agents", []), "mcp": t.get("mcp", []),
             "mcp_servers": {n: {"type": c.get("type", "http" if c.get("url") else "stdio"), "url": c.get("url", ""),
@@ -1632,14 +1745,16 @@ def edit(team, change):
     b = os.path.join(plug, "brain")
     pj = os.path.join(plug, "team.json")
     t = jload(pj)
-    rj = os.path.join(tdir, "team.json")
-    r = jload(rj)
+    old_root = jload(os.path.join(tdir, "team.json"))          # an older repository's copy: its remote moves into the plugin's
+    if old_root.get("remote") and not t.get("remote"):
+        t["remote"] = old_root["remote"]
     for k in ("title", "description"):
         if isinstance(change.get(k), str):
-            t[k] = r[k] = change[k].strip()
+            t[k] = change[k].strip()
     for k, f in (("persona", "persona.md"), ("rules", "storage.md"), ("environment", "environment.md")):
         if isinstance(change.get(k), str) and change[k].strip():
-            write(os.path.join(b, f), change[k].rstrip() + "\n")
+            own = os.path.join(tdir, "rules", f)           # the team's rules/ when the repository has it, else the plugin's copy
+            write(own if f != "environment.md" and os.path.isfile(own) else os.path.join(b, f), change[k].rstrip() + "\n")
     for kind in ("skills", "agents"):
         if not isinstance(change.get(kind), list):
             continue
@@ -1660,7 +1775,7 @@ def edit(team, change):
             os.makedirs(os.path.dirname(dst), exist_ok=True)
             shutil.copytree(src, dst, ignore=shutil.ignore_patterns(".user-skill", "__pycache__")) if kind == "skills" else shutil.copy(src, dst)
         t[kind] = want
-    servers = jload(os.path.join(tdir, "mcp.json"))
+    servers = load_servers(plug, tdir)
     for n in change.get("remove_mcp") or []:
         servers.pop(str(n), None)
     for n, c in (change.get("mcp_servers") or {}).items():
@@ -1682,12 +1797,12 @@ def edit(team, change):
         servers[n] = cur
     removed = {str(n) for n in change.get("remove_mcp") or []}
     t["mcp"] = ["docs-local"] + [n for n in dict.fromkeys(list(t.get("mcp", [])) + list(servers)) if n != "docs-local" and n not in removed]
-    r["mcp"] = t["mcp"]
-    write(os.path.join(tdir, "mcp.json"), json.dumps(servers, indent=2, sort_keys=True) + "\n")
-    plugin_mcp(plug, servers)                                # the plugin connects the filled-in servers for every member
+    save_servers(plug, servers, t)                           # the plugin connects the filled-in servers for every member
     write(pj, json.dumps(t, indent=2, sort_keys=True) + "\n")
-    r["version"] = bump_version(plug)                        # a new version string: plugin-mode members get the new copy
-    write(rj, json.dumps(r, indent=2, sort_keys=True) + "\n")
+    bump_version(plug)                                       # a new version string: plugin-mode members get the new copy
+    for old in ("mcp.json", "team.json"):                    # one copy: an older repository's root files are now in the plugin
+        if os.path.isfile(os.path.join(tdir, old)):
+            os.remove(os.path.join(tdir, old))
     git(tdir, "add", "-A", timeout=30)
     git(tdir, "commit", "-q", "-m", f"brain tab: team {team} edited", timeout=30)
     pushed = ""

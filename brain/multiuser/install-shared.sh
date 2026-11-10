@@ -128,10 +128,13 @@ ln -sfn "$P/bin/paas-team" /usr/local/bin/paas-team
 #   python3 brain/teams/publish.py <team> --to <its GitLab url>      (then members get it at their next session start)
 python3 "$BRAIN/teams/publish.py" --all --only-missing --to "$P/teams" $DOCS_OPTS > "$P/teams.log" 2>&1 || { cat "$P/teams.log"; echo "install-shared: publishing the teams failed (see above)"; exit 1; }
 sed 's/^/teams: /' "$P/teams.log"; rm -f "$P/teams.log"
-for tj in "$P"/teams/*/team.json; do
+DONE=""
+for tj in "$P"/teams/*/paas-brain-*/team.json "$P"/teams/*/team.json; do   # the plugin's team.json (an older repository: its root copy)
   [ -f "$tj" ] || continue
-  t=$(basename "$(dirname "$tj")"); remote=$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1])).get("remote") or "")' "$tj")
+  case "$tj" in */paas-brain-*/team.json) t=$(basename "$(dirname "$(dirname "$tj")")") ;; *) t=$(basename "$(dirname "$tj")") ;; esac
+  remote=$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1])).get("remote") or "")' "$tj")
   [ -n "$remote" ] && [ -d "$BRAIN/teams/$t" ] || continue
+  case " $DONE " in *" $t "*) continue ;; esac; DONE="$DONE $t"
   refs=$(GIT_TERMINAL_PROMPT=0 git -c credential.helper="$P/bin/paas-git-credential" -c credential.useHttpPath=true ls-remote -q -- "$remote" 2>/dev/null) || { echo "teams: $t: $remote not reachable now; left alone"; continue; }
   if [ -z "$refs" ]; then                                   # a new, empty GitLab project: the team's first content
     python3 "$BRAIN/teams/publish.py" "$t" --to "$remote" $DOCS_OPTS 2>&1 | sed "s/^/teams: $t -> GitLab (first content): /" || true

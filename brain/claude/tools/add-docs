@@ -2,7 +2,8 @@
 # Add your own documents to the offline docs library (searched by docs-local like everything else):
 #   put PDF / HTML / Markdown / text files in ~/.claude/brain/inbox/<vendor>/<product>/   (loose files: local/inbox)
 #   then run:  add-docs
-#   add-docs --brain   index ~/.claude/brain/notes/*.md and incidents/**/*.md (local/brain-notes, local/brain-incidents) into
+#   add-docs --brain   index ~/.claude/brain/notes/*.md, runbooks/*.md and incidents/**/*.md (local/brain-notes,
+#                      local/brain-runbooks, local/brain-incidents) into
 #                      ~/.claude/brain/brain.db ($BRAIN_DB), the person's own small index that docs-local searches with the
 #                      library (the shared library is read-only on the multi-user VM; the session-start hook runs this)
 # Or fetch pages the VM can reach (intranet wiki, internal portal, vendor page through the proxy) straight in:
@@ -22,8 +23,9 @@ if [ "${1:-}" = "--brain" ]; then
   # copies (mtime kept, so unchanged pages are not re-read) in a staging tree shaped local/<product>/<file>; rebuilt
   # each run, so a page removed from notes/ leaves the index. captures, notes.md and environment.md stay out.
   B=${BRAIN:-$HOME/.claude/brain}; S=$B/.brain-index
-  rm -rf "$S"; mkdir -p "$S/local/brain-notes" "$S/local/brain-incidents"
+  rm -rf "$S"; mkdir -p "$S/local/brain-notes" "$S/local/brain-runbooks" "$S/local/brain-incidents"
   for f in "$B"/notes/*.md; do [ -f "$f" ] && cp -p "$f" "$S/local/brain-notes/"; done
+  for f in "$B"/runbooks/*.md; do [ -f "$f" ] && cp -p "$f" "$S/local/brain-runbooks/"; done
   find "$B/incidents" -name '*.md' -type f 2>/dev/null | while read -r f; do
     cp -p "$f" "$S/local/brain-incidents/$(basename "$(dirname "$f")")-$(basename "$f")"
   done

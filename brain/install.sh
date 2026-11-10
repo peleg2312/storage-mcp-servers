@@ -47,7 +47,7 @@ LIBDST=$USER_DST/brain/library         # shared by every install on this VM
 [ ! -L "$LIBDST" ] || LIBDST=$(readlink -f "$LIBDST")   # multi-user VM: root's library is a link to /opt/paas/library
 esc() { printf '%s' "$1" | sed 's/[&#\\]/\\&/g'; }   # a path as a sed replacement ('#' is our delimiter)
 TS=$(date +%Y%m%d%H%M%S)
-mkdir -p "$DST/skills" "$DST/agents" "$DST/hooks" "$DST/brain" "$DST/brain/notes" "$DST/banner" "$USER_DST/brain" "$HOME/storage-reports"
+mkdir -p "$DST/skills" "$DST/agents" "$DST/hooks" "$DST/brain" "$DST/brain/notes" "$DST/brain/runbooks" "$DST/banner" "$USER_DST/brain" "$HOME/storage-reports"
 
 # CLAUDE.md (imports rewritten for the project layout), skills, agents, hooks, brain files
 # Project mode never replaces a CLAUDE.md that is not ours (no first-line marker): the brain text goes to
@@ -59,23 +59,34 @@ if [ -n "$PROJECT" ] && [ -f "$CLAUDE_MD" ] && [ "$(head -n1 "$CLAUDE_MD")" != "
   grep -qF "${IMPORT_PREFIX}main.md" "$CLAUDE_MD" || printf '\n## Storage brain\n%smain.md\n' "$IMPORT_PREFIX" >> "$CLAUDE_MD"
   echo "note: $CLAUDE_MD is your own; left as is, the brain rules are imported from $BRAIN_MD"
 fi
-TMP_MD=$(mktemp)
-sed "s#@~/\.claude/brain/#$(esc "$IMPORT_PREFIX")#" "$SRC/CLAUDE.md" > "$TMP_MD"
-if [ -z "$PROJECT" ] && [ -f "$CLAUDE_MD" ] && ! cmp -s "$TMP_MD" "$CLAUDE_MD"; then
-  cp "$CLAUDE_MD" "$CLAUDE_MD.bak.$TS"; echo "backed up existing $CLAUDE_MD -> CLAUDE.md.bak.$TS"
+# a rule file linked into a team repository's rules/ (paas-team) is the team's own: never written from here
+team_rule() {   # $1 is the active team's rules/<name> itself (a symlink, or a Windows hard link: same file)
+  _t=$(cat "$(dirname "$1")/team" 2>/dev/null) && [ -n "$_t" ] && [ "$1" -ef "$(dirname "$1")/teams/$_t/rules/$(basename "$1")" ]
+}
+if [ -z "$PROJECT" ] && team_rule "$DST/brain/main.md"; then
+  grep -qxF '@~/.claude/brain/main.md' "$CLAUDE_MD" 2>/dev/null || printf '\n@~/.claude/brain/main.md\n' >> "$CLAUDE_MD"
+  echo "rules: your team's (rules/ in its repository, linked into $DST/brain); $CLAUDE_MD left as is"
+else
+  TMP_MD=$(mktemp)
+  sed "s#@~/\.claude/brain/#$(esc "$IMPORT_PREFIX")#" "$SRC/CLAUDE.md" > "$TMP_MD"
+  if [ -z "$PROJECT" ] && [ -f "$CLAUDE_MD" ] && ! cmp -s "$TMP_MD" "$CLAUDE_MD"; then
+    cp "$CLAUDE_MD" "$CLAUDE_MD.bak.$TS"; echo "backed up existing $CLAUDE_MD -> CLAUDE.md.bak.$TS"
+  fi
+  cp "$TMP_MD" "$BRAIN_MD"; rm -f "$TMP_MD"
 fi
-cp "$TMP_MD" "$BRAIN_MD"; rm -f "$TMP_MD"
 # the storage rules: loaded in plain chats (~/chats, see below) and in a project install; code projects read them on demand.
 # The persona ("who you work for") is the team profile's (brain/teams/<team>/persona.md; san without --team).
 # With --team, paas-team (below) puts the team's persona, rules, skills and agents in place instead of these copies.
 if [ -z "$TEAM" ]; then
-  sed "s#@~/\.claude/brain/#$(esc "$IMPORT_PREFIX")#" "$SRC/brain/storage.md" > "$DST/brain/storage.md"
-  [ ! -L "$DST/brain/persona.md" ] || rm -f "$DST/brain/persona.md"
-  cp "$HERE/teams/san/persona.md" "$DST/brain/persona.md"
+  team_rule "$DST/brain/storage.md" || sed "s#@~/\.claude/brain/#$(esc "$IMPORT_PREFIX")#" "$SRC/brain/storage.md" > "$DST/brain/storage.md"
+  if ! team_rule "$DST/brain/persona.md"; then
+    [ ! -L "$DST/brain/persona.md" ] || rm -f "$DST/brain/persona.md"
+    cp "$HERE/teams/san/persona.md" "$DST/brain/persona.md"
+  fi
   cp -R "$SRC/skills/." "$DST/skills/"
   cp -R "$SRC/agents/." "$DST/agents/"
 fi
-cp "$SRC/brain/coding.md" "$DST/brain/coding.md"      # coding rules, read on demand by code work only
+team_rule "$DST/brain/coding.md" || cp "$SRC/brain/coding.md" "$DST/brain/coding.md"      # coding rules, read on demand by code work only
 [ -z "$PROJECT" ] || grep -q "^@.*storage\.md" "$BRAIN_MD" || printf '\n## Storage rules\n%sstorage.md\n' "$IMPORT_PREFIX" >> "$BRAIN_MD"
 if [ -n "$PROJECT" ]; then
   # project mode: every ~/.claude path in the brain text points into <dir>/.claude, except the shared library

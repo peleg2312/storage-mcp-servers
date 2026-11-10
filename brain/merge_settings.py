@@ -70,7 +70,7 @@ if no_hooks:                                             # the team plugin runs 
     for groups in (pre, post, ups, start, stop):
         drop(groups, BRAIN_HOOKS)
 else:
-    hook(pre, "block-write-tools.py", 10, "mcp__.*|Bash")   # a timed-out hook lets the call through: keep slack
+    hook(pre, "block-write-tools.py", 10, "mcp__.*|Bash|Edit|Write|MultiEdit|NotebookEdit")   # file tools: the team's rules only; a timed-out hook lets the call through: keep slack
     hook(post, "docs-hints.py", 5, "mcp__.*")                # meaning of EMS / alerts / codes seen in live results
     hook(post, "py-lint.py", 5, "Edit|Write|MultiEdit")      # ruff findings on every .py file Claude edits
     hook(post, "notes-check.py", 20, "Edit|Write|MultiEdit")  # secrets / real IPs; commit + push (+ one pull when a teammate pushed first)

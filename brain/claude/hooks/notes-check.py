@@ -74,6 +74,7 @@ def findings(path):
 
 def note_files():
     return [os.path.join(BRAIN, "notes.md")] + sorted(glob.glob(os.path.join(BRAIN, "notes", "*.md"))) + \
+        sorted(glob.glob(os.path.join(BRAIN, "runbooks", "*.md"))) + \
         sorted(glob.glob(os.path.join(BRAIN, "captures", "*.md"))) + \
         sorted(glob.glob(os.path.join(BRAIN, "incidents", "**", "*.md"), recursive=True))
 
@@ -82,8 +83,8 @@ def stale(days):
     cut = datetime.date.today() - datetime.timedelta(days=days)
     n = 0
     for f in note_files():
-        if os.sep + "incidents" + os.sep in f:
-            continue                       # --stale: notes and captures only
+        if os.sep + "incidents" + os.sep in f or os.sep + "runbooks" + os.sep in f:
+            continue                       # --stale: notes and captures only (a runbook's dates are its history)
         try:
             lines = open(f, encoding="utf-8", errors="replace").read().splitlines()
         except OSError:
@@ -117,6 +118,11 @@ def index():
     lines += [f"## Core facts: {core} in [notes.md](notes.md) (loaded every session)", ""]
     lines += ["## Topics (read when a question touches them)", ""] + (topics or ["- none yet"]) + [""]
     lines += ["## Knowledge pages", ""] + (pages or ["- none yet"]) + [""]
+    books = []
+    for f in sorted(glob.glob(os.path.join(k, "runbooks", "*.md"))):
+        title = open(f, encoding="utf-8", errors="replace").read().split("\n", 1)[0].lstrip("# ").strip()[:90]
+        books.append(f"- [{os.path.basename(f)}](runbooks/{os.path.basename(f)}): {title}")
+    lines += ["## Runbooks (tested procedures, run by a person)", ""] + (books or ["- none yet"]) + [""]
     caps = sorted(glob.glob(os.path.join(k, "captures", "*.md")))
     lines += [f"## Captures waiting for curation: {len(caps)}", ""] + [f"- [{os.path.basename(c)}](captures/{os.path.basename(c)})" for c in caps[:40]] + [""]
     inc = sorted(glob.glob(os.path.join(k, "incidents", "*", "*.md")))
@@ -210,8 +216,8 @@ def commit(message, rel=None):
         idx = index()
         extra = ["--", rel, idx] if rel and idx else (["--", rel] if rel else [])
         held = [] if rel else unclean()               # a whole-tree commit never carries a file that still holds a secret
-        if held:
-            extra = ["--", "."] + [":!" + h for h in held]
+        if not rel:                                   # nor the team's rules/: people commit those themselves (team editor, git)
+            extra = ["--", "."] + [":!" + h for h in held] + ([":!rules"] if REPO != BRAIN else [])
         git(["add", "-A"] + extra, 4)
         git(["commit", "-q", "-m", message], 4)
         if upstream():       # a failed push is retried by the next --sync or session start; never a credential prompt
@@ -230,13 +236,16 @@ def commit(message, rel=None):
 
 
 def notify_docs():
-    """The team's docs-search service (mcp.json of the team repository: url with ?team=<team>, bearer token) re-indexes
+    """The team's docs-search service (docs-http in the team plugin's .mcp.json: url with ?team=<team>, bearer token) re-indexes
     the team's knowledge at once, so teammates search the new page seconds after the push. Best effort, 3 s, silent."""
     try:
         import ssl
         import urllib.request
-        servers = json.load(open(os.path.join(REPO, "mcp.json"), encoding="utf-8"))
-        cfg = servers.get("docs-search") or {}
+        cfg = {}
+        for f in glob.glob(os.path.join(REPO, "paas-brain-*", ".mcp.json")):
+            cfg = (json.load(open(f, encoding="utf-8")).get("mcpServers") or {}).get("docs-http") or cfg
+        if not cfg and os.path.isfile(os.path.join(REPO, "mcp.json")):     # an older team repository
+            cfg = json.load(open(os.path.join(REPO, "mcp.json"), encoding="utf-8")).get("docs-search") or {}
         url = cfg.get("url", "")
         if "HOST" in url or "?team=" not in url:
             return
@@ -399,10 +408,12 @@ def hook():
             relink_files()
             path = os.path.realpath(os.path.join(REPO, "knowledge", name))
     roots = [os.path.realpath(p) + os.sep for p in (BRAIN, os.path.expanduser("~/storage-reports"))]
-    if not path.startswith(tuple(roots)) or not os.path.isfile(path) or os.path.basename(path) == "mcp.json":
+    if not path.startswith(tuple(roots)) or not os.path.isfile(path) or os.path.basename(path) in ("mcp.json", ".mcp.json"):
         return 0                                   # a team's mcp.json carries its servers' tokens by the owner's decision
     f = findings(path)
     repo = os.path.realpath(REPO) + os.sep         # team mode: the real file lives in the team clone
+    if path.startswith(repo + "rules" + os.sep):  # the team's rules: never committed by this hook (the guard blocks Claude there)
+        return 0
     if path.startswith(repo) and not f:            # a file holding a secret is not committed: the redacted save is
         commit("brain: " + path[len(repo):], path[len(repo):])
     if f:

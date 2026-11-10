@@ -23,7 +23,9 @@ Pay special attention to **kuparashit**: `overview` (vCenters covered, snapshot 
 `fields` / `relationships`; record the real field names and one tested call each for pWWN → ESX → NAAs and
 NAA → datastore / RDM / VM / ESX.
 
-Write the result to `~/.claude/brain/tool-map.md` (replace the whole file).
+Write the result to `~/.claude/brain/tool-map.md` (replace the whole file). On a team, `tool-map.md` and `environment.md` are links
+into the team's repository and Claude Code does not write through a link: write to the path `realpath ~/.claude/brain/tool-map.md` prints
+(the session-start line names the folder); the notes hook then shares it with the team.
 
 ## 2. Environment draft
 Using only list tools, collect:

@@ -56,7 +56,7 @@ The user's own documents: files in `~/.claude/brain/inbox/<vendor>/<product>/` g
    worked or wrong assumption corrected is written down when solved: into `notes/<topic>.md` when confident and
    the topic is clear, else as a capture `~/.claude/brain/captures/<date>-<slug>.md` (symptom, cause, fix, scope,
    how we know, confidence) for later curation; what fits no line is a page `notes/<topic>-<slug>.md`; skill
-   `brain-learn` holds the format, the curate pass and the incident report (kept in `~/.claude/brain/incidents/<yyyy>/`). These are the only files you write besides reports. No guesses; never passwords, tokens
+   `brain-learn` holds the format, the curate pass, runbooks and the incident report (kept in `~/.claude/brain/incidents/<yyyy>/`). These are the only files you write besides reports. No guesses; never passwords, tokens
    or credentials in notes or captures; a note contradicting `environment.md` → ask.
 7. **Token economy.** Search before reading; `read_document` only when the answer spans sections
    (page with `start`, never a whole PDF at once). Ask tools for the filtered, narrow

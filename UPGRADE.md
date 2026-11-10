@@ -121,7 +121,7 @@ files become plain files again); the team clones under `/opt/paas/teams` and `~/
 
 | Where | What is new or changed since 30.10 |
 |---|---|
-| `/opt/paas/teams/<team>` | each team as a repository: plugin, knowledge, mcp.json (new) |
+| `/opt/paas/teams/<team>` | each team as a repository: plugin (with the team's only `team.json` and `.mcp.json`), knowledge, rules (new) |
 | `/opt/paas/bin` | `paas-team` (new), `paas-git-credential` (new), `paas-user` (team, git-token, provision changes) |
 | `/opt/paas/hooks` | `notes-check.py`, `capture-nudge.py` (new); the others step aside for their plugin twins |
 | `/etc/paas` | `limits.env`, `docs.env`, `docs-token`, `git/<host>.token`, `multiuser.conf` (new); `allowed-groups` (gate) |

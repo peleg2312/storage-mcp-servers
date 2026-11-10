@@ -29,14 +29,29 @@ brain/test_budgets.py` then checks its budgets (rules + environment + tool map u
 ## What gets built
 
 `python3 brain/plugin/build.py <out> --team nas` builds the plugin `paas-brain-nas/` (skills, agents, hooks with
-`hooks.json`, `docs-local`, plus `brain/` with persona.md, storage.md and the environment / tool-map / notes templates,
-and `team.json` with the resolved lists). `python3 brain/teams/publish.py nas --to <dir|git-url>` wraps it into the
+`hooks.json`, `docs-local`, plus `brain/` with the templates a new team repository starts from: CLAUDE.md, persona.md,
+storage.md, coding.md and environment / tool-map / notes, and `team.json` with the resolved lists). `python3 brain/teams/publish.py nas --to <dir|git-url>` wraps it into the
 **team repository**:
 
 ```
 .claude-plugin/marketplace.json      paas-brain-nas/        knowledge/{notes,captures,incidents}/  knowledge/tool-map.md
-knowledge/notes.md, environment.md   mcp.json (the team's live MCP servers with address and token)   team.json   README.md
+knowledge/notes.md, environment.md   rules/{main,persona,storage,coding}.md   README.md
 ```
+**One copy of everything, inside the plugin.** Claude Code installs only the plugin folder (`paas-brain-nas/`), so the team's
+definition and servers live there and nowhere else: `paas-brain-nas/team.json` (lists, version, the `remote` a first session
+clones from, `library`, and `mcp_pending`: servers still without an address or token) and `paas-brain-nas/.mcp.json` (the
+connected servers, the only place their address and token are). The knowledge does not travel in the plugin: the plugin's
+session-start hook clones the whole repository (knowledge, rules) from that `remote`. A repository from before this layout
+(`mcp.json` and `team.json` at its root) is moved into the plugin by the next `publish.py` or team editor save.
+**The team's rules live in its repository, next to its knowledge.** `rules/` is created from the brain's templates by the first
+publish and is the team's own from then on: `main.md` (the golden rules, imported by every member's `~/.claude/CLAUDE.md`),
+`persona.md`, `storage.md`, `coding.md`. Nothing writes into an existing file there: a later publish keeps the team's text and
+only reports that the brain's template is newer (`git diff --no-index` shows what changed), `paas-team` links the files into
+`~/.claude/brain` instead of copying them, the installers skip a rule file that is such a link, and the notes hook never commits
+`rules/`. Claude cannot change them either: the read-only guard blocks its Edit / Write and shell writes there (a safety net, not
+a sandbox). People change the rules in the repository (commit and push; protect `rules/` in GitLab for review) or with the Brain
+tab's team editor; every member gets the change at the next session start. `check.py` keeps them short (main.md 120 lines,
+persona.md 30, storage.md 150, coding.md 60) and free of secrets.
 One git repository per team, in GitLab: `python3 brain/teams/publish.py nas --to git@gitlab.example.com:storage/brain-nas.git`
 (clone, rebuild the plugin, commit, push; the url is recorded as the team's remote). Members' brains push their notes,
 captures and incidents into `knowledge/`. The repository also carries `bin/paas-team`, so a clone of it is a complete install source: the standard Claude
@@ -47,8 +62,8 @@ as the marketplace):
 claude plugin marketplace add <url> && claude plugin install paas-brain-nas@paas-brain-nas
 ```
 At the first session the plugin's session-start hook sets the team up itself (`bin/paas-team bootstrap`): it clones the
-team repository recorded in the plugin's `team.json` as `~/.claude/brain/teams/nas`, links the memory files into it, writes
-persona.md and storage.md, puts the core rules in `~/.claude/brain/main.md` with one import line in your `~/.claude/CLAUDE.md`,
+team repository recorded in the plugin's `team.json` as `~/.claude/brain/teams/nas`, links the memory files and the team's
+`rules/` into it (main.md, persona.md, storage.md, coding.md) with one import line in your `~/.claude/CLAUDE.md`,
 and copies `paas-team` to `~/.claude/tools`. From then on every note is committed and pushed to the team repository like on
 the VM; `git clone` is not needed. When the repository is unreachable, the hook prints the persona and rules as context
 instead and tries again next session. Plugins stay read-only content in Claude Code's cache; the hook is what lets this one
@@ -66,22 +81,23 @@ Laptops use the person's own GitLab login.
 
 ## MCP servers per team
 
-The team repository's `mcp.json` holds the team's live MCP servers with address and token (`{"powermax": {"type": "http",
-"url": "http://...:8000/mcp", "headers": {"Authorization": "Bearer ..."}}}`), created from the catalog with HOST / TOKEN
-placeholders at the first publish and filled in the Brain tab's team editor (or by hand). Every filled-in http server is
-written into the plugin's `.mcp.json` (publish.py and the editor both do it, through `paas-team`'s `plugin_mcp`), so Claude
-Code connects it wherever the plugin is enabled, VM or laptop, and nothing is registered per person; a server still on its
-placeholders is left out and named in a note at a switch; a server the person added themselves is theirs. The Team tab
+Each of the team's servers is in exactly one place in the plugin. At the first publish every server the team starts with
+gets its catalog shape with HOST / TOKEN placeholders in `team.json`'s `mcp_pending`; the Brain tab's team editor fills in
+the address and token, and a complete server moves into the plugin's `.mcp.json` (`{"mcpServers": {"powermax": {"type":
+"http", "url": "http://...:8000/mcp", "headers": {"Authorization": "Bearer ..."}}}}`; `paas-team`'s `save_servers`, used by
+publish.py and the editor), so Claude Code connects it wherever the plugin is enabled, VM or laptop, and nothing is
+registered per person; a server still pending is named in a note at a switch; a server the person added themselves is
+theirs. `check.py` fails a `.mcp.json` entry that still holds a placeholder. The Team tab
 shows which servers the plugin connects. `docs-search` is not listed twice: its address and token ride in `docs-local`'s
 environment, and `docs-local` bridges to it (stdio to HTTPS, the VM's certificate from `lib/paas-ui.crt`) on a machine without
-the library. The owner's decision: the tokens in `mcp.json` and `.mcp.json` are readable by everyone with access to the team's
+the library. The owner's decision: the tokens in the plugin's `.mcp.json` are readable by everyone with access to the team's
 GitLab project, so use read-only tokens for the read-only servers and rotate them when someone leaves; the notes hook never
 asks to redact those files. Claude Code names a plugin's tools `mcp__plugin_paas-brain-<team>_<server>__<tool>`: `build.py` writes
 that form into the agents' `tools:` lists for the team's servers, `paas-team use` puts the matching `permissions.allow` rules into the
 person's settings.json (the previous team's go), and the read-only guard reads the form as the bare name, so a server added
 to a team in the editor is usable by the agents and needs no permission prompt at the next session.
 
-**Several servers of one kind** (three CommCells, two ONTAP clusters): name them `<catalog name>-<suffix>` in team.json
+**Several servers of one kind** (three CommCells, two ONTAP clusters): name them `<catalog name>-<suffix>` in the team definition's team.json
 (`commvault-env1`, `commvault-env2`): the first publish gives each the catalog entry's shape, and each gets its own address
 and token in the team editor. Agents list each one in their `tools:` (`mcp__commvault-env1__*`).
 
@@ -213,7 +229,11 @@ the same file when they are committed, so a broken edit is caught at the push, n
    knowledge is the whole `docs-local` index and the VM's `docs-search` supplies the library. It follows the active team.
 3. **Learn.** A solved problem, a quirk, a corrected assumption is written down (golden rule 6): a dated line with a
    confidence word (verified / observed / hypothesis) and its source into notes/<topic>.md, a capture under captures/ when
-   the topic is unclear, a page notes/<topic>-<slug>.md when it needs sections, an incident postmortem under incidents/.
+   the topic is unclear, a page notes/<topic>-<slug>.md when it needs sections, an incident postmortem under incidents/,
+   and a **runbook** under runbooks/<topic>-<task>.md when a change procedure the person ran worked: Pre-checks, Procedure,
+   Verification, Rollback (check.py requires these four), Scope, History; every command is for the person to run. Session
+   start lists the runbooks and Claude follows a matching one before writing change steps of its own; they are searched
+   with the notes (docs index, product `brain-runbooks`) and listed in INDEX.md.
    The stop hook asks once after a long session without a capture. Agents end with a Learned line the parent files.
 4. **Guard.** The notes hook scans every save for secrets and private addresses and sends them back for redaction before
    anything is committed; the team repository's check.py runs the same patterns at every push, and notes fact lines
@@ -323,10 +343,12 @@ paas-team sync              pull / push the team's knowledge; re-applies the plu
 paas-team remote nas <url>  the team's GitLab repository; paas-team off: no team
 ```
 `paas-team use none` leaves every team: the team's plugin is disabled (its skills, agents and MCP servers with it), the person's own and marketplace ones stay,
-the memory files become plain files and persona.md / storage.md stay as editable copies.
+the memory files become plain files and the rules (main.md, persona.md, storage.md, coding.md) stay as plain copies of the team's.
 
-A switch rewrites `~/.claude/brain/persona.md` and `storage.md`, repoints `notes.md`, `environment.md`, `tool-map.md`,
-`notes/`, `captures/`, `incidents/` (symlinks into `~/.claude/brain/teams/<team>/knowledge/`), and swaps the team's
+A switch repoints `main.md`, `persona.md`, `storage.md`, `coding.md` (symlinks into the team's `rules/`; a CLAUDE.md that was
+the brain's full text is kept as `CLAUDE.md.bak.<time>` and becomes the import line, so the rules load once) and `notes.md`,
+`environment.md`, `tool-map.md`, `notes/`, `captures/`, `incidents/` (symlinks into `~/.claude/brain/teams/<team>/knowledge/`;
+Windows without the symlink right: hard links, re-made after each pull), and swaps the team's
 Claude Code plugin: `paas-brain-<team>` installed and enabled from the person's clone (a marketplace added from a local
 path loads in place, so a sync brings new skills to the next session with no update step), the other teams' plugins
 disabled. This is the same install on the VM and on every laptop: skills are `/paas-brain-<team>:<skill>`, the hooks and
