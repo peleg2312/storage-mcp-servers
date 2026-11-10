@@ -18,6 +18,12 @@ const MEMORY = {
   'notes.md': path.join(C, 'brain', 'notes.md'), 'environment.md': path.join(C, 'brain', 'environment.md'),
   'tool-map.md': path.join(C, 'brain', 'tool-map.md'), 'CLAUDE.md': path.join(C, 'CLAUDE.md'),
 };
+// without a team (or a team whose repository has no rules/ yet): the rule files beside the memory, in ~/.claude/brain
+const OWN_RULES = ['persona.md', 'storage.md', 'coding.md'];
+for (const n of OWN_RULES) MEMORY[n] = path.join(C, 'brain', n);
+// a team's rules: every file in its repository's rules/ folder (main.md, persona.md, storage.md, coding.md and any other)
+const RULE = /^rules\/((?:[\w][\w.-]{0,60}\/){0,3}[\w][\w.-]{0,100})$/;
+const RULE_ORDER = ['main.md', 'persona.md', 'storage.md', 'coding.md'];
 const CAPTURES = path.join(C, 'brain', 'captures');
 const CAPTURE = /^captures\/([\w][\w.-]{0,100}\.md)$/;     // a file directly in captures/, never a deeper path
 const BRAIN = path.join(C, 'brain');
@@ -148,14 +154,15 @@ function extBrain() {
   const k = rec.knowledge || {};
   const rel = (x) => (typeof x === 'string' && x && !x.startsWith('.git') && !path.isAbsolute(x) && !x.split('/').includes('..') ? x : '');
   return { team: t.team, plugin: t.plugin, repo, title: rec.title || '', save: k.save === 'push' ? 'push' : 'merge-request', branch: rel(k.branch),
-    folders: (k.folders || []).map(rel).filter(Boolean), inbox: rel(k.inbox), templates: rel(k.templates), index: rel(k.index) };
+    folders: (k.folders || []).map(rel).filter(Boolean), inbox: rel(k.inbox), templates: rel(k.templates), index: rel(k.index),
+    rules: (Array.isArray(rec.rules_files) ? rec.rules_files : rec.rules ? [rec.rules] : []).map(rel).filter((x) => x && x.endsWith('.md')) };
 }
 // a page path inside one of the brain's knowledge folders (or its inbox / templates / index): the real file, else null
 function extFile(eb, rel, mustExist = true) {
   rel = String(rel || '');
   if (!/^[\w./ -]{1,300}\.md$/.test(rel) || rel.split('/').includes('..') || rel.startsWith('/')) return null;
   const roots = [...eb.folders, eb.inbox, eb.templates].filter(Boolean);
-  if (!(roots.some((r) => rel === r || rel.startsWith(`${r}/`)) || (eb.index && rel === eb.index))) return null;
+  if (!(roots.some((r) => rel === r || rel.startsWith(`${r}/`)) || (eb.index && rel === eb.index) || eb.rules.includes(rel))) return null;
   const p = path.join(eb.repo, rel);
   if (mustExist && !fs.existsSync(p)) return null;
   return inside(p, [eb.repo]) ? p : null;
@@ -188,7 +195,8 @@ function extOverview() {
   return { team: eb.team, plugin: eb.plugin, title: eb.title, save: eb.save, folders: eb.folders, inbox: eb.inbox, templates: eb.templates,
     index: eb.index && fs.existsSync(path.join(eb.repo, eb.index)) ? eb.index : '',
     pages: eb.folders.flatMap((f) => extPages(eb, f)), inboxPages: eb.inbox ? extPages(eb, eb.inbox, 500) : [],
-    templatePages: eb.templates ? extPages(eb, eb.templates, 50) : [] };
+    templatePages: eb.templates ? extPages(eb, eb.templates, 50) : [],
+    rulesPages: eb.rules.filter((r) => fs.existsSync(path.join(eb.repo, r))).map((r) => pageMeta(path.join(eb.repo, r), r)) };
 }
 // a change to the brain's knowledge, its way: a branch from its main line and a GitLab merge request (GitLab's own push
 // options open it, no glab needed), or a push to its main line only when its brain.json says "save": "push". Done in a
@@ -234,8 +242,58 @@ function teamFile(kind, name) {
   const f = kind === 'skill' ? path.join(t.dir, 'skills', name, 'SKILL.md') : kind === 'agent' ? path.join(t.dir, 'agents', `${name}.md`) : null;
   return f && fs.existsSync(f) ? { ...t, file: f } : null;
 }
+// the active team's rules/ folder in the person's clone (null: no team, an external brain, or an older repository)
+function teamRulesDir() {
+  const repo = repoDir();
+  if (!repo || repo === BRAIN) return null;
+  const d = path.join(repo, 'rules');
+  try { return fs.lstatSync(d).isDirectory() ? d : null; } catch { return null; }
+}
+// every file in it (up to four levels, no hidden files, no links, no .bak), main / persona / storage / coding first
+function ruleNames() {
+  const d = teamRulesDir();
+  if (!d) return [];
+  const out = [];
+  const walk = (dir, rel, depth) => {
+    let names = [];
+    try { names = fs.readdirSync(dir); } catch { return; }
+    for (const n of names.sort()) {
+      if (n.startsWith('.') || n.endsWith('.bak')) continue;
+      const p = path.join(dir, n); let st;
+      try { st = fs.lstatSync(p); } catch { continue; }
+      if (st.isDirectory() && depth < 3) walk(p, rel ? `${rel}/${n}` : n, depth + 1);
+      else if (st.isFile() && st.size < 500000) out.push(rel ? `${rel}/${n}` : n);
+    }
+  };
+  walk(d, '', 0);
+  const rank = (n) => { const k = RULE_ORDER.indexOf(n); return k < 0 ? RULE_ORDER.length : k; };
+  return out.sort((a, b) => rank(a) - rank(b) || a.localeCompare(b));
+}
+// the file behind rules/<name>, only inside the team's rules/ folder (never through a link out of it)
+function rulePath(name) {
+  const m = RULE.exec(String(name || ''));
+  const d = teamRulesDir();
+  if (!m || !d) return null;
+  const p = path.join(d, ...m[1].split('/'));
+  return inside(p, [d]) ? p : null;
+}
+// the memory tab's files: shared memory, then the rules (the team's rules/ folder, else your own), then CLAUDE.md
+function memoryList() {
+  const files = ['notes.md', 'environment.md', 'tool-map.md']
+    .map((name) => ({ name, editable: writable(MEMORY[name]), text: read(MEMORY[name]) }));
+  const rd = teamRulesDir();
+  const rules = rd
+    ? ruleNames().map((n) => { const p = path.join(rd, ...n.split('/')); return { name: `rules/${n}`, rules: 'team', editable: writable(p), text: read(p) }; })
+    : repoDir() && repoDir() !== BRAIN                              // a team repository from before rules/: the plugin's copies
+      ? ['main.md', ...OWN_RULES].map((name) => ({ name, rules: 'plugin', editable: false, text: read(path.join(C, 'brain', name)) }))
+      : OWN_RULES.map((name) => ({ name, rules: 'own', editable: writable(MEMORY[name]), text: read(MEMORY[name]) }));
+  const claude = { name: 'CLAUDE.md', editable: writable(MEMORY['CLAUDE.md']) || MULTI, text: read(MEMORY['CLAUDE.md']) ?? (MULTI ? '' : null) };
+  return [...files, ...rules, claude].filter((m) => m.text !== null);
+}
 // the file behind a memory name or captures/<file>, and its repository and path inside it (null: outside it)
 function memPath(name) {
+  const rp = rulePath(name);
+  if (rp) return { p: rp, ...locate(rp), cap: false };
   const cap = CAPTURE.exec(String(name || ''));
   const p = cap ? path.join(CAPTURES, cap[1]) : Object.hasOwn(MEMORY, name) ? MEMORY[name] : null;
   if (!p) return null;
@@ -396,15 +454,19 @@ function hooks() {
   for (const [source, file] of files) {
     const s = json(file) || {};
     const fromPlugin = source.startsWith('plugin ') || source.startsWith('team ');
+    // with a team on, the VM's own hooks do not run (they step aside for the team's from its git): not listed at all, except
+    // the three learning hooks an external brain that learns into its own git keeps (ext_learn.py)
     const asides = source === 'shared' && teamOn && MANAGED_HOOKS_STEP_ASIDE;
+    const learning = asides && t.external && !!(extRecord(t.team) || {}).learn;
     for (const [event, groups] of Object.entries(s.hooks || {})) {
       for (const g of groups || []) {
         for (const h of g.hooks || []) {
           const command = [h.command, ...(Array.isArray(h.args) ? h.args : [])].filter(Boolean).map(String).join(' ').replace(new RegExp(HOME, 'g'), '~');
           const id = (/([\w-]+)\.(?:py|sh|js)\b/.exec(command) || [])[1] || '';
+          if (asides && !(learning && LEARN_HOOKS.has(id))) continue;
           const [title, about0, canToggle] = HOOK_INFO[id] || [command.length > 70 ? `${command.slice(0, 69)}…` : command, '', false];
-          const about = asides ? `Stands aside while your team (${t.external ? t.plugin : t.team.toUpperCase()}) runs its own hooks from its git repository.${about0 ? ` ${about0}` : ''}` : about0;
-          out.push({ id, title, about, canToggle: canToggle && !fromPlugin && !asides, on: asides ? false : (fromPlugin || !off.has(id)), source, when: WHEN[event] || event, matcher: g.matcher || '*', command });
+          const about = asides ? `Keeps running for ${t.plugin}: saves what Claude learns into its own git (learning is on).${about0 ? ` ${about0}` : ''}` : about0;
+          out.push({ id, title, about, canToggle: canToggle && !fromPlugin && !asides, on: fromPlugin || asides || !off.has(id), source, when: WHEN[event] || event, matcher: g.matcher || '*', command });
         }
       }
     }
@@ -413,6 +475,7 @@ function hooks() {
 }
 // the VM's shared hooks step aside for an active team plugin (brain/claude/hooks, team_hooks_active); a VM whose hooks
 // predate that rule does not, so the list only says so when the installed copy carries it
+const LEARN_HOOKS = new Set(['session-start', 'notes-check', 'capture-nudge']);
 const MANAGED_HOOKS_STEP_ASIDE = (() => { try { return fs.readFileSync('/opt/paas/hooks/block-write-tools.py', 'utf8').includes('team_hooks_active'); } catch { return false; } })();
 
 // the servers this person's Claude connects: the active team plugin's (its .mcp.json, built from the team repository's
@@ -488,9 +551,7 @@ async function overview() {
     skills: skills(), agents: agents(), hooks: hooks(), mcp: mcpServers(), inbox: inbox(), captures: captures(),
     // multi-user VM: environment.md / tool-map.md are shared and only root writes them; the library too
     // CLAUDE.md is this account's own copy of the brain's rules, yours to change (a brain update replaces it)
-    memory: ['notes.md', 'environment.md', 'tool-map.md', 'CLAUDE.md']
-      .map((name) => ({ name, editable: writable(MEMORY[name]) || (MULTI && name === 'CLAUDE.md'),
-        text: read(MEMORY[name]) ?? (MULTI && name === 'CLAUDE.md' ? '' : null) })).filter((m) => m.text !== null),
+    memory: memoryList(),
     canShare: !!MARKET_BIN && writable(MINE),
     canAddDocs: !teamLibrary() && writable(LIB),           // a team library is filled by root (paas-library), not from here
   };
@@ -546,6 +607,16 @@ const routes = {
       if (fs.existsSync(p)) fs.copyFileSync(p, `${p}.bak`);
       fs.writeFileSync(p, t.endsWith('\n') ? t : `${t}\n`);
       await commitFile(p, `brain tab: ${b.name}`);
+      return { ok: true };
+    }
+    if (RULE.test(String(b.name || ''))) {                           // a team rule: the team's own, changed by a person here
+      const rp = rulePath(b.name);
+      if (!rp || !fs.existsSync(rp)) return { ok: false, out: "That file is not in your team's rules/ folder" };
+      if (!writable(rp)) return { ok: false, out: 'Not writable for you' };
+      const t = String(b.text ?? '');
+      if (t.length > 500000) return { ok: false, out: 'Too long' };
+      fs.writeFileSync(rp, t.endsWith('\n') ? t : `${t}\n`);          // no .bak beside it: the team repository keeps every version
+      await commitFile(rp, `brain tab: ${b.name}`);                    // committed and pushed: every member gets it at their next start
       return { ok: true };
     }
     if (!Object.hasOwn(MEMORY, b.name)) return { ok: false, out: 'That file is not editable here' };

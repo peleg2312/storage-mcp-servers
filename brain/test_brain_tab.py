@@ -81,6 +81,21 @@ try:
     assert "brain tab: notes.md" in log, log
     h = call("GET", "history?name=notes.md")
     assert h["repo"] and any("brain tab: notes.md" in e["subject"] for e in h["entries"]), h
+    # the team's rules: every file of its rules/ folder in the Memory tab (main first), saved into the team repository
+    # and pushed; nothing outside rules/ through a rules/ name; CLAUDE.md is the person's own lines
+    ov = call("GET", "overview")
+    names = [m["name"] for m in ov["memory"]]
+    assert names[:3] == ["notes.md", "environment.md", "tool-map.md"] and names[3:7] == ["rules/main.md", "rules/persona.md", "rules/storage.md", "rules/coding.md"], names
+    assert names[-1] == "CLAUDE.md" and "persona.md" not in names, names
+    main = next(m for m in ov["memory"] if m["name"] == "rules/main.md")
+    assert main["rules"] == "team" and main["editable"] and len(main["text"]) > 200, main["name"]
+    r = call("POST", "memory", {"name": "rules/coding.md", "text": "# Coding\n- our own coding rule\n"})
+    assert r["ok"], r
+    src_coding = subprocess.run(["git", "-C", os.path.join(work, "sources", "san"), "show", "HEAD:rules/coding.md"], capture_output=True, text=True).stdout
+    assert "our own coding rule" in src_coding, src_coding
+    assert any("brain tab: rules/coding.md" in e["subject"] for e in call("GET", "history?name=rules/coding.md")["entries"])
+    assert not call("POST", "memory", {"name": "rules/../notes.md", "text": "x"})["ok"]
+    assert not call("POST", "memory", {"name": "rules/new.md", "text": "x"})["ok"]      # only files the rules/ folder has
     # show / edit: the token travels on stdin and lands in the team plugin's .mcp.json (the only copy)
     sh = call("GET", "team-show?name=san")
     assert sh["ok"] and sh["mcp_servers"]["powermax"]["configured"] is False and "zoning-audit" in sh["skills"], sh.get("out")

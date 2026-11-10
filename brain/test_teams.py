@@ -684,6 +684,15 @@ log = claude_log()
 assert "mcp remove -s user docs-local" in log and log.count("mcp add-json -s user docs-local") == 1 and "--team-index" not in log, log
 os.remove(os.path.join(home, ".claude.json"))
 team("use", "san")
+# its rules in a folder of another name, said by root without touching it: every .md in it is read in every chat
+open(os.path.join(work, "sources", "multi.brain.json"), "w").write(json.dumps({"rules": ["kb", "CLAUDE.md"]}))
+team("use", "multi")
+mrec = json.load(open(os.path.join(brain, "teams", "multi", ".git", "paas-external.json")))
+assert mrec["rules_files"] == ["kb/k0.md", "kb/k1.md", "kb/k2.md", "CLAUDE.md"] and mrec["rules"] == "kb/k0.md", mrec["rules_files"]
+pers = open(os.path.join(brain, "persona.md")).read()
+assert all("@" + os.path.join(brain, "teams", "multi", r) in pers for r in mrec["rules_files"]), pers
+os.remove(os.path.join(work, "sources", "multi.brain.json"))
+team("use", "none")
 # never into another library: a brain whose brain.json names an existing library (a team's own) is refused
 os.makedirs(os.path.join(libs, "flashback", "docs", "commvault", "11.40")); open(os.path.join(libs, "flashback", "docs", "commvault", "11.40", "x.html"), "w").write("x")
 open(os.path.join(work, "sources", "ob.brain.json"), "w").write(json.dumps({"library": "flashback"}))

@@ -333,7 +333,7 @@ export function mount(container, api) {
       : emptyBlock('Ask your admin to connect a tool server, or add one from the Marketplace.', '', null, { icon: 'box', title: 'No MCP servers configured' }).outerHTML}
       <div class="row" style="margin-top:10px"><button class="btn ghost sm chk">${icon('play')} Check connections</button><span class="sub">runs <code>claude mcp list</code></span></div><pre class="st" role="status" style="display:none"></pre></div>
       <div class="card"><h3>Hooks</h3><div class="sub" style="margin-bottom:10px">Small helpers that run around Claude's steps. Switching one off applies to your chats only.</div>${data.hooks.length ? data.hooks.map((h) => `<div class="hk">
-        <div class="hk-t"><b>${esc(h.title)}</b> <span class="badge">${h.source === 'shared' ? 'shared' : /^(plugin|team) /.test(String(h.source || '')) ? esc(h.source) : 'yours'}</span>${h.source === 'shared' && !h.on && !h.canToggle ? ' <span class="badge">standing aside</span>' : ''}
+        <div class="hk-t"><b>${esc(h.title)}</b> <span class="badge">${h.source === 'shared' ? 'shared' : /^(plugin|team) /.test(String(h.source || '')) ? esc(h.source) : 'yours'}</span>
         <div class="sub">${esc(h.about || h.command)}</div><div class="sub">${esc(h.when)}${h.matcher !== '*' ? ` · <code>${esc(h.matcher)}</code>` : ''}</div></div>
         ${h.canToggle ? `<label class="sw"><input type="checkbox" role="switch" aria-label="${esc(h.title)}" data-hk="${esc(h.id)}" ${h.on ? 'checked' : ''}><span></span></label>`
           : `<span class="sub">${h.source === 'shared' && !h.on ? 'Your team\'s own copy runs instead' : String(h.source || '').startsWith('team ') ? 'From your team\'s git repository' : h.id === 'block-write-tools' ? 'On for chats without a team: keeps your storage read-only' : String(h.source || '').startsWith('plugin ') ? 'Comes with the plugin' : 'Set by root'}</span>`}</div>`).join('')
@@ -632,6 +632,7 @@ export function mount(container, api) {
       pane.innerHTML = `${top}${field('Find a page', '<input class="em-q" aria-label="Find a page" placeholder="title or path" autocomplete="off" spellcheck="false">')}
         ${x.pages.length ? [...groups.entries()].map(([g, list]) => `<div class="sec-label">${esc(g)} (${list.length})</div>${list.map(row).join('')}`).join('') : '<div class="sub">No pages yet.</div>'}
         ${x.inbox ? `<div class="sec-label">Inbox: waiting to be curated (${x.inboxPages.length})</div>${x.inboxPages.map(row).join('') || '<div class="sub">Empty.</div>'}` : ''}
+        ${(x.rulesPages || []).length ? `<div class="sec-label">Its rules: what Claude follows in every chat (${x.rulesPages.length})</div>${x.rulesPages.map(row).join('')}` : ''}
         ${x.index ? `<div class="sub" style="margin-top:12px"><button class="btn ghost sm em-open" data-path="${esc(x.index)}">Open ${esc(x.index)}</button></div>` : ''}`;
       pane.querySelector('.em-q').addEventListener('input', (e) => {
         const q = e.target.value.trim().toLowerCase();
@@ -686,15 +687,32 @@ export function mount(container, api) {
     });
   }
 
+  // what a memory file is, in one line above it
+  function memHint(m) {
+    const team = data.pluginTeam ? data.pluginTeam.toUpperCase() : '';
+    const what = { 'rules/main.md': 'the golden rules', 'rules/persona.md': 'who Claude is for the team', 'rules/storage.md': 'the storage rules',
+      'rules/coding.md': 'the coding rules (read before code changes)', 'persona.md': 'who Claude is', 'storage.md': 'the storage rules', 'coding.md': 'the coding rules (read before code changes)' }[m.name];
+    if (m.rules === 'team') {
+      return `${what ? `${what[0].toUpperCase()}${what.slice(1)} of team <b>${esc(team)}</b>. ` : `A rules file of team <b>${esc(team)}</b>. `}`
+        + (m.editable ? 'Shared with the whole team: a save is committed and pushed to the team repository, and every member gets it at their next chat. Claude itself cannot change the rules. History shows every version.'
+          : 'Not writable for you.');
+    }
+    if (m.rules === 'plugin') return `${what ? `${what[0].toUpperCase()}${what.slice(1)} of team <b>${esc(team)}</b>, ` : ''}from its plugin (paas-brain-${esc(data.pluginTeam || '')}/brain/: the team repository's older layout). To change the rules here, move the team to the new layout once (publish.py: its rules/ folder), or change them in Team, More, Edit a team.`;
+    if (!m.editable) return 'Shared file: only root changes it.';
+    if (m.rules === 'own') return `${what ? `${what[0].toUpperCase()}${what.slice(1)}. ` : ''}Your own copy: a brain update may replace it. Edit and save; the previous version is kept as a .bak file.`;
+    if (m.name === 'CLAUDE.md') return data.pluginTeam && data.memory.some((x) => x.name === 'rules/main.md')
+      ? 'Your own lines only, below the line that loads the team\'s rules (keep that line). The rules themselves are in rules/main.md, rules/persona.md, rules/storage.md and rules/coding.md here.'
+      : `What Claude reads at the start of every session.${data.pluginTeam ? '' : ' A brain update replaces this file: keep lasting facts in notes.md.'} The previous version is kept as a .bak file.`;
+    return 'What Claude reads at the start of every session. Edit and save; the previous version is kept as a .bak file.';
+  }
+
   function renderMemory(i = 0, cap = null) {
     if (data.external && !memOwn && !cap) return renderExtMemory();
     const m = cap || data.memory[i];
     if (!m) { pane.replaceChildren(emptyBlock('Claude creates them the first time it saves a note.', '', null, { icon: 'file', title: 'No memory files found' })); return; }
     dirty = false;
-    pane.innerHTML = `${cap ? '' : `<div class="sub" style="margin-bottom:10px">${data.pluginTeam ? `Team <b>${esc(data.pluginTeam.toUpperCase())}</b>: notes, environment and tool map are the team's shared memory, synced through the team repository at every save. Switch in the Team tab.` : 'Your own memory files. Pick a team in the Team tab to share notes, environment and tool map with that team.'}</div>`}<div class="seg" role="group" aria-label="Memory file">${data.memory.map((x, k) => `<button data-i="${k}" aria-pressed="${k === i}">${esc(x.name)}</button>`).join('')}</div>
-      <div class="sub" style="margin:12px 0 8px">${m.editable
-        ? `What Claude reads at the start of every session. Edit and save; the previous version is kept as a .bak file.${m.name === 'CLAUDE.md' ? (data.pluginTeam ? ' Your own lines only: the brain\'s rules come from your team\'s rules/ folder through the @~/.claude/brain/main.md line (keep that line).' : ' A brain update replaces this file: keep lasting facts in notes.md.') : ''}`
-        : 'Shared file: only root changes it.'}</div>
+    pane.innerHTML = `${cap ? '' : `<div class="sub" style="margin-bottom:10px">${data.pluginTeam ? `Team <b>${esc(data.pluginTeam.toUpperCase())}</b>: notes, environment and tool map are the team's shared memory${data.memory.some((x) => x.rules === 'team') ? ', and rules/ its rules' : ''}, synced through the team repository at every save. Switch in the Team tab.` : 'Your own memory files. Pick a team in the Team tab to share notes, environment and tool map with that team.'}</div>`}<div class="seg" role="group" aria-label="Memory file">${data.memory.map((x, k) => `<button data-i="${k}" aria-pressed="${k === i}">${esc(x.name)}</button>`).join('')}</div>
+      <div class="sub" style="margin:12px 0 8px">${memHint(m)}</div>
       ${m.editable ? `${field(`${esc(m.name)}`, `<textarea class="mt" spellcheck="false">${esc(m.text)}</textarea>`)}
         <div class="row sticky"><button class="btn save">Save</button><button class="btn ghost hist">History</button><span class="stbox"></span></div><div class="histbox"></div>` : `<pre>${esc(m.text)}</pre>`}
       ${cap ? '' : `<div class="sub" style="margin:18px 0 8px"><b>Captures</b>: what Claude wrote down for later curation (ask it to "curate the captures").</div>

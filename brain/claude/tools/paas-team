@@ -393,7 +393,8 @@ def ext_layout(tdir, rec, name=None):
                           "save": save if save in ("merge-request", "push") else "merge-request",
                           "branch": str(kn.get("branch", ""))},
             "docs": docs, "library": str(bj.get("library") or (name if docs else "")),
-            "rules": rules_file(tdir, rec, bj), "plugins": brain_plugins(tdir, rec, bj), "learn": learn}
+            "rules": rules_file(tdir, rec, bj), "rules_files": rules_list(tdir, rec, bj), "plugins": brain_plugins(tdir, rec, bj),
+            "learn": learn}
 
 
 LEARN_KINDS = ("notes", "runbooks", "incidents", "captures")
@@ -468,19 +469,40 @@ def set_learn(team, mode):
           f"captures {lay['captures']}" + (f", its guide {lay['guide']}" if lay["guide"] else "") + "; starts with the next chat")
 
 
-def rules_file(tdir, rec, bj):
-    """the brain's own rules for every session: brain.json "rules" (a file; "" = none), else CLAUDE.md of a brain that is
-    no packaged plugin (its .claude folder, plain skills, or only CLAUDE.md): a plugin's repository CLAUDE.md is usually
-    about developing that repository, not instructions for its users"""
+def rules_list(tdir, rec, bj):
+    """the brain's own rule files, read in every session: brain.json "rules" (a file, a folder - every .md in it - or a list
+    of them; "" = none), else its rules/ folder when it has Markdown there, plus CLAUDE.md of a brain that is no packaged
+    plugin (its .claude folder, plain skills, or only CLAUDE.md): a plugin's repository CLAUDE.md is usually about
+    developing that repository, not instructions for its users"""
     if "rules" in bj:
-        r = str(bj.get("rules") or "").strip().strip("/")
+        want = bj.get("rules") if isinstance(bj.get("rules"), list) else [bj.get("rules")]
+    else:
+        want = ["rules"] if os.path.isdir(os.path.join(tdir, "rules")) else []
+        if rec.get("dir") in (".", ".claude"):
+            want += [next((r for r in ("CLAUDE.md", ".claude/CLAUDE.md") if os.path.isfile(os.path.join(tdir, r))), "")]
+    real = os.path.realpath(tdir)
+    out = []
+    for w in want:
+        r = str(w or "").strip().strip("/")
         p = os.path.realpath(os.path.join(tdir, r))
-        return r if r and ".." not in r.split("/") and p.startswith(os.path.realpath(tdir) + os.sep) and os.path.isfile(p) else ""
-    if rec.get("dir") in (".", ".claude"):
-        for r in ("CLAUDE.md", ".claude/CLAUDE.md"):
-            if os.path.isfile(os.path.join(tdir, r)):
-                return r
-    return ""
+        if not r or ".." in r.split("/") or r.split("/")[0] == ".git" or not p.startswith(real + os.sep):
+            continue
+        if os.path.isfile(p) and r.endswith(".md"):
+            out.append(r)
+        elif os.path.isdir(p) and not os.path.islink(p):
+            for dp, dirs, fs in os.walk(p):
+                dirs[:] = sorted(d for d in dirs if not d.startswith(".") and not os.path.islink(os.path.join(dp, d)))
+                for f in sorted(fs):
+                    fp = os.path.join(dp, f)
+                    if f.endswith(".md") and not f.lower().startswith("readme") and not os.path.islink(fp) \
+                            and os.path.realpath(fp).startswith(real + os.sep):
+                        out.append(os.path.relpath(fp, tdir).replace(os.sep, "/"))
+    return list(dict.fromkeys(out))[:40]
+
+
+def rules_file(tdir, rec, bj):
+    """the first of the brain's rule files (kept for older readers of the record)"""
+    return (rules_list(tdir, rec, bj) or [""])[0]
 
 
 def brain_plugins(tdir, rec, bj):
@@ -593,7 +615,8 @@ def ext_info(tdir):
             "agents": agents, "mcp": mcp, "plugin_dir": plug, "external": True, "plugin": e["plugin"],
             "marketplace": e["marketplace"], "env": sorted(env), "settings": settings,
             "knowledge": e.get("knowledge") or {}, "library": e.get("library", ""), "docs": e.get("docs", ""),
-            "rules": e.get("rules", ""), "plugins": e.get("plugins") or [e["plugin"]], "learn": e.get("learn")}
+            "rules": e.get("rules", ""), "rules_files": e.get("rules_files") or ([e["rules"]] if e.get("rules") else []),
+            "plugins": e.get("plugins") or [e["plugin"]], "learn": e.get("learn")}
 
 
 def plugin_id(team):
@@ -801,7 +824,8 @@ def apply_external(team, say=True):
           f"{EXT_PERSONA}**{t['title']}** brain (Claude Code plugin `{t['plugin']}`, repository "
           f"{tdir}): its skills, agents, hooks and MCP servers come from that plugin; follow its own instructions and keep "
           f"its knowledge where it says (it has its own workflow, for example merge requests). The golden rules still apply.\n"
-          + (f"\n## {t['title']}: its own rules\n@{os.path.join(tdir, t['rules'])}\n" if t.get("rules") else "")
+          + (f"\n## {t['title']}: its own rules\n" + "".join(f"@{os.path.join(tdir, r)}\n" for r in t["rules_files"])
+             if t.get("rules_files") else "")
           + ("\nWhat you learn is kept in this brain's own git (learning is on): the session start says in which folders and "
              "how; those replace ~/.claude/brain for notes, captures, runbooks and incidents.\n" if t.get("learn") else ""))
     write(STATE, json.dumps({"skills": [], "agents": [], "mcp": {}}) + "\n")
