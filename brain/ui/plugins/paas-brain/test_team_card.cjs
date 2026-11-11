@@ -62,7 +62,8 @@ const HTML = `<!doctype html><meta charset="utf-8"><title>smoke</title><style>:r
   if (!/What a team is/.test(await page.locator('.pane').textContent())) throw new Error('explainer missing');
   if (await page.locator('.trow').count() !== 3) throw new Error('three rows expected');
   const extRow = await page.locator('.trow', { hasText: 'team-brain' }).innerHTML();
-  if (!/external brain/.test(extRow) || !/its own repository/.test(extRow)) throw new Error('external row: ' + extRow);
+  // every brain looks the same: no 'external' label, its git shown as every team's shared memory
+  if (/external/i.test(extRow) || !/shared memory in <code>https:\/\/gitlab.example.com\/platform\/team-brain.git/.test(extRow)) throw new Error('brain row: ' + extRow);
   // one click switches to NAS, no dialog
   await seg.nth(2).click();
   await page.locator('.tseg button[aria-pressed="true"]', { hasText: 'NAS' }).waitFor({ timeout: 10000 });
@@ -89,7 +90,7 @@ const HTML = `<!doctype html><meta charset="utf-8"><title>smoke</title><style>:r
   await page.locator('.tseg button', { hasText: 'team-brain' }).click();
   await page.locator('.tseg button[aria-pressed="true"]', { hasText: 'team-brain' }).waitFor({ timeout: 10000 });
   const lineExt = await page.locator('.tline').innerHTML();
-  if (!/external brain \(its skills: \/team-brain:/.test(lineExt)) throw new Error('external line: ' + lineExt);
+  if (/external/i.test(lineExt) || !/shared memory \(its skills: \/team-brain:/.test(lineExt)) throw new Error('brain line: ' + lineExt);
   await page.locator('.tmore > summary').click();
   if (await page.locator('.tsel option', { hasText: 'team-brain' }).count() !== 0) throw new Error('external brain in the editor dropdown');
   await page.locator('.tenv > summary').click();

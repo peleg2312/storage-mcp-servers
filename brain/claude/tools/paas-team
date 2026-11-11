@@ -144,11 +144,13 @@ def team_dir(team):
 
 
 def plugin_dir(tdir):
-    """the plugin folder named by the repository's marketplace.json (paas-brain-<team>)"""
+    """the plugin folder of a team built by this brain (publish.py): paas-brain-<team>, named by the repository's
+    marketplace.json. Another brain's plugin, even with a team.json of its own (brain-sds/), is no such team: it is
+    switched as a brain kept as it is (external)."""
     mk = jload(os.path.join(tdir, ".claude-plugin", "marketplace.json"))
-    for p in mk.get("plugins", []):
-        d = os.path.join(tdir, p.get("source", "").lstrip("./"))
-        if os.path.isfile(os.path.join(d, "team.json")):
+    for p in mk.get("plugins", []) if isinstance(mk.get("plugins"), list) else []:
+        d = os.path.join(tdir, str(p.get("source", "")).lstrip("./"))
+        if os.path.basename(os.path.normpath(d)).startswith("paas-brain-") and os.path.isfile(os.path.join(d, "team.json")):
             return d
     for d in glob.glob(os.path.join(tdir, "paas-brain-*")):
         if os.path.isfile(os.path.join(d, "team.json")):
@@ -158,8 +160,9 @@ def plugin_dir(tdir):
 
 def paas_team_repo(d):
     """a team built by this brain: team.json in its plugin (paas-brain-<team>/team.json) or, in an older repository, at
-    its top; never an external brain"""
-    return os.path.isfile(os.path.join(d, "team.json")) or bool(glob.glob(os.path.join(d, "paas-brain-*", "team.json")))
+    its top beside a paas-brain-<team> plugin; never an external brain"""
+    return bool(glob.glob(os.path.join(d, "paas-brain-*", "team.json"))) or (
+        os.path.isfile(os.path.join(d, "team.json")) and bool(glob.glob(os.path.join(d, "paas-brain-*"))))
 
 
 # ---- external brains (any other Claude Code brain, kept as it is) ---------------------------------------------------
@@ -215,7 +218,7 @@ def find_plugin(tdir, name):
     cl = os.path.join(tdir, ".claude")                          # a project-style brain: its .claude folder as the plugin
     if os.path.isdir(cl) and not os.path.islink(cl) and any(os.path.isdir(os.path.join(cl, x)) for x in ("skills", "agents", "commands")):
         files = {".claude/.claude-plugin/plugin.json": {"name": name, "version": "0.0.0",
-                                                          "description": f"{name} (the .claude folder of an external brain)"},
+                                                          "description": f"{name} (the .claude folder of a brain)"},
                  ".claude-plugin/marketplace.json": {"name": name, "owner": {"name": "external brain"},
                                                      "plugins": [{"name": name, "source": "./.claude"}]}}
         hooks = project_part(tdir, os.path.join(".claude", "settings.json"), "hooks")
@@ -227,7 +230,7 @@ def find_plugin(tdir, name):
         return name, name, cl, files
     if any(os.path.isdir(os.path.join(tdir, x)) for x in ("skills", "agents", "commands")) or os.path.isfile(os.path.join(tdir, "CLAUDE.md")):
         return name, name, tdir, {".claude-plugin/plugin.json": {"name": name, "version": "0.0.0",
-                                                                  "description": f"{name} (skills and agents of an external brain)"},
+                                                                  "description": f"{name} (skills and agents of a brain)"},
                                   ".claude-plugin/marketplace.json": {"name": name, "owner": {"name": "external brain"},
                                                                       "plugins": [{"name": name, "source": "./"}]}}
     return None
@@ -354,6 +357,12 @@ def config_vars(tdir):
     return out
 
 
+def plugin_team_json(tdir, rec):
+    """a team-style brain's own description of itself: team.json in its plugin folder (brain-sds/team.json), or {}"""
+    d = os.path.realpath(os.path.join(tdir, rec.get("dir") or "."))
+    return jload(os.path.join(d, "team.json")) if d.startswith(os.path.realpath(tdir)) else {}
+
+
 def ext_layout(tdir, rec, name=None):
     """what the record keeps about an external brain besides its plugin: the settings it reads (brain.json, then every
     ${VAR} its .mcp.json uses, then what was set), its knowledge folders, inbox, templates, how knowledge is saved, its docs"""
@@ -380,19 +389,24 @@ def ext_layout(tdir, rec, name=None):
     inbox = inside(tdir, kn.get("inbox") or "inbox")
     templates = inside(tdir, kn.get("templates") or "templates")
     index = str(kn.get("index") or ("INDEX.md" if os.path.isfile(os.path.join(tdir, "INDEX.md")) else ""))
-    save = str(kn.get("save") or "merge-request")
+    tj = plugin_team_json(tdir, rec)                              # a team-style brain (its plugin has a team.json)
+    save = str(kn.get("save") or ("push" if tj else "merge-request"))   # a team shares its knowledge straight away
     learn = learn_layout(tdir, bj, save if save in ("merge-request", "push") else "merge-request", str(kn.get("branch", "")), inbox)
     for k in LEARN_KINDS if learn else ():                       # its learning folders are searched with its knowledge
         top = learn[k].split("/")[0]
         if os.path.isdir(os.path.join(tdir, top)) and top not in folders and not any(learn[k].startswith(f + "/") for f in folders):
             folders.append(top)
-    docs = inside(tdir, bj.get("docs") or "docs/upstream")
+    tlib = str(tj.get("library") or "") if NAME.match(str(tj.get("library") or "")) else ""
+    index = next((r for r in ([bj.get("docs_index")] if bj.get("docs_index") else ["library/docs.db"]) if r and isinstance(r, str)
+                  and ".." not in r.split("/") and not r.startswith("/") and os.path.isfile(os.path.join(tdir, r))), "")
+    docs = inside(tdir, bj.get("docs") or "docs/upstream") or (inside(tdir, "docs") if not bj.get("docs") and (tlib or index) else "")
     name = name or os.path.basename(tdir)
-    return {"title": str(bj.get("title", "")), "description": str(bj.get("description", "")), "settings_schema": schema,
+    return {"title": str(bj.get("title") or tj.get("title") or ""), "description": str(bj.get("description") or tj.get("description") or ""),
+            "settings_schema": schema, "docs_index": index if docs else "",
             "knowledge": {"folders": folders, "inbox": inbox, "templates": templates, "index": index,
                           "save": save if save in ("merge-request", "push") else "merge-request",
                           "branch": str(kn.get("branch", ""))},
-            "docs": docs, "library": str(bj.get("library") or (name if docs else "")),
+            "docs": docs, "library": str(bj.get("library") or tlib or (name if docs else "")),
             "rules": rules_file(tdir, rec, bj), "rules_files": rules_list(tdir, rec, bj), "plugins": brain_plugins(tdir, rec, bj),
             "learn": learn}
 
@@ -445,7 +459,7 @@ def set_learn(team, mode):
     in the brain's repository changes), anyone else into their own clone's .git/paas-brain.json (this machine only)"""
     tdir = team_dir(team)
     if not external(tdir):
-        die(f"{team} is not an external brain here (a team built here already shares its notes)")
+        die(f"{team}: its notes already go to its own git (a team built by this brain)")
     if mode:
         if mode not in ("merge-request", "push", "off"):
             die("learn: merge-request, push or off")
@@ -788,8 +802,8 @@ def apply_external(team, say=True):
     refresh_layout(tdir)                                        # the repository may have changed since it was added
     t = ext_info(tdir)
     prev = active()
-    if prev and prev != team and not external(team_dir(prev)):
-        unlink_team(prev)
+    if prev and prev != team:
+        unlink_team(prev)                                     # its knowledge links go (a team's or a brain's alike)
     if shutil.which("claude"):
         mk = t["marketplace"]
         rc, out = claude("marketplace", "add", tdir)
@@ -814,7 +828,9 @@ def apply_external(team, say=True):
     apply_mcp({"mcp": []}, installed(), tdir)                 # the previous team's servers and permission rules go
     clear_ext_env()                                           # the previous brain's settings and docs-local
     env = apply_ext_env(team)
-    docs = ext_docs_mcp(team)
+    linked = ext_rules(tdir)
+    shared = ext_links(tdir, t)
+    docs = "" if "docs-local" in (t.get("mcp") or []) else ext_docs_mcp(team)   # its plugin brings its own: never a second
     pp = os.path.join(BRAIN, "persona.md")
     if os.path.islink(pp):                                    # multi-user VM: a link to root's shared default, never written through
         os.remove(pp)
@@ -824,8 +840,8 @@ def apply_external(team, say=True):
           f"{EXT_PERSONA}**{t['title']}** brain (Claude Code plugin `{t['plugin']}`, repository "
           f"{tdir}): its skills, agents, hooks and MCP servers come from that plugin; follow its own instructions and keep "
           f"its knowledge where it says (it has its own workflow, for example merge requests). The golden rules still apply.\n"
-          + (f"\n## {t['title']}: its own rules\n" + "".join(f"@{os.path.join(tdir, r)}\n" for r in t["rules_files"])
-             if t.get("rules_files") else "")
+          + (f"\n## {t['title']}: its own rules\n" + "".join(f"@{os.path.join(tdir, r)}\n" for r in t["rules_files"] if r not in linked)
+             if [r for r in t.get("rules_files") or [] if r not in linked] else "")
           + ("\nWhat you learn is kept in this brain's own git (learning is on): the session start says in which folders and "
              "how; those replace ~/.claude/brain for notes, captures, runbooks and incidents.\n" if t.get("learn") else ""))
     write(STATE, json.dumps({"skills": [], "agents": [], "mcp": {}}) + "\n")
@@ -834,10 +850,74 @@ def apply_external(team, say=True):
     if say:
         print(f"brain {team} ({t['title']}) active: plugin {t['plugin']}, {len(t['skills'])} skills, {len(t['agents'])} agents"
               + (f", MCP {', '.join(t['mcp'])}" if t["mcp"] else "") + (f", version {t['version']}" if t["version"] else "")
-              + f"; external brain, kept as it is in {tdir}" + (f"; settings: {', '.join(env)}" if env else "")
+              + f"; from its own repository ({tdir})" + (f"; settings: {', '.join(env)}" if env else "")
               + (f"; docs-local: its knowledge + {docs}" if docs else ""))
         print(f"Its skills are /{t['plugin']}:<skill>. Start a new Claude session (or a new chat in the web UI) to work with it.")
     return t
+
+
+VM_DEFAULTS = os.environ.get("PAAS_BRAIN_DEFAULTS") or "/opt/paas/brain"   # the VM's rules for no team (CLAUDE.md = main.md)
+
+
+def team_layout(tdir, t):
+    """a brain laid out as a team (knowledge/ with its notes, and it shares them straight to its git): every brain like
+    that is used the same way, whoever built it"""
+    return os.path.isdir(os.path.join(tdir, "knowledge")) and (t.get("knowledge") or {}).get("save") == "push"
+
+
+def ext_links(tdir, t):
+    """a brain laid out as a team: its knowledge files linked into ~/.claude/brain as a team's are (notes.md, notes/,
+    runbooks/ ...), so Claude, the Brain tab and the hooks find them where they always are. Unlike a team's first use,
+    the person's own files are never merged into it (nothing is written into its repository): they are kept beside as
+    <name>.pre-team and come back when the brain is left. Returns the names linked."""
+    if not team_layout(tdir, t):
+        return []
+    out = []
+    real = os.path.realpath(tdir)
+    for name in LINKS:
+        target = os.path.join(tdir, "knowledge", name)
+        if not os.path.exists(target) or os.path.islink(target) or not os.path.realpath(target).startswith(real + os.sep):
+            continue
+        p = os.path.join(BRAIN, name)
+        if os.path.islink(p):
+            if os.readlink(p) == target:
+                out.append(name)
+                continue
+            os.remove(p)                                      # another team's or brain's link
+        elif is_junction(p):
+            os.rmdir(p)
+        elif os.path.exists(p):
+            if same(p, target):
+                out.append(name)
+                continue
+            park(p)                                           # the person's own: kept aside, given back when leaving
+        make_link(target, p)
+        out.append(name)
+    return out
+
+
+def ext_rules(tdir):
+    """an external brain's rules/main.md, storage.md, coding.md (what a team built here has in its rules/) linked into
+    ~/.claude/brain in place of the previous team's, main.md through the import line in ~/.claude/CLAUDE.md, exactly as a
+    team's are; a rule it does not have goes back to the VM's default when it was another brain's. Nothing is written
+    into the brain's repository. Returns the rules/<name> it linked (the persona imports the rest of its rule files)."""
+    linked = []
+    real = os.path.realpath(tdir)
+    for name, tpl in RULES:
+        if name == "persona.md":                              # the persona is written here: it names the brain, imports its own
+            continue
+        own, p = os.path.join(tdir, "rules", name), os.path.join(BRAIN, name)
+        if os.path.isfile(own) and not os.path.islink(own) and os.path.realpath(own).startswith(real + os.sep):
+            link_rule(name, own)
+            linked.append("rules/" + name)
+            if name == "main.md":
+                ensure_import()
+        elif os.path.islink(p) and os.path.realpath(p).startswith(os.path.realpath(TEAMS) + os.sep):
+            d = os.path.join(VM_DEFAULTS, tpl)                # another team's or brain's rule: the VM's own again
+            if os.path.isfile(d):
+                os.remove(p)
+                shutil.copy(d, p)
+    return linked
 
 
 def load_docs(team, force=False):
@@ -848,7 +928,7 @@ def load_docs(team, force=False):
     tdir = next((d for d in (os.path.join(SOURCES, team), team_dir(team))
                  if os.path.isdir(d) and not paas_team_repo(d) and (external(d) or find_plugin(d, team))), "")
     if not tdir:
-        die(f"no external brain {team!r} here")
+        die(f"no brain {team!r} with its own docs folder here")
     rec = external(tdir) or {"dir": find_plugin(tdir, team)[2], "env": {}}      # a VM copy root cloned: detected the same way
     lay = ext_layout(tdir, rec, team)
     if not lay["docs"] or not lay["library"] or not NAME.match(lay["library"]):
@@ -866,7 +946,7 @@ def load_docs(team, force=False):
     who = read(owner).strip()
     has_docs = os.path.isdir(os.path.join(ldir, "docs")) and any(os.scandir(os.path.join(ldir, "docs")))
     if (who and who != team) or (not who and has_docs):
-        print(f"library {lay['library']}: already holds other documents ({who or 'not from an external brain'}); "
+        print(f"library {lay['library']}: already holds other documents ({who or 'not from a brain'}); "
               f"{team}'s docs are not mixed in: name another library in its brain.json (\"library\")")
         return 1
     if not who:
@@ -874,11 +954,30 @@ def load_docs(team, force=False):
         write(owner, team + "\n")
         os.chmod(owner, 0o644)
     rc, tree = git(tdir, "rev-parse", "HEAD:" + lay["docs"], timeout=10)
+    if lay.get("docs_index"):                                 # and its index: both must be the same commit's
+        rc2, itree = git(tdir, "rev-parse", "HEAD:" + lay["docs_index"], timeout=10)
+        rc, tree = (rc or rc2), f"{tree}+{itree}"
     mark = os.path.join(ldir, ".source-" + team)
     if not force and rc == 0 and tree and os.path.isfile(os.path.join(ldir, "docs.db")) and read(mark).strip() == tree:
         print(f"library {lay['library']}: {team}'s docs unchanged ({tree[:10]}), nothing to build")
         return 0
     src = os.path.join(tdir, lay["docs"])
+    if lay.get("docs_index"):                                 # built ahead by the brain: copied as it is, nothing re-indexed
+        dst = os.path.join(ldir, "docs")
+        shutil.rmtree(dst, ignore_errors=True)
+        shutil.copytree(src, dst, symlinks=False, ignore=shutil.ignore_patterns(".*"))
+        shutil.copy2(os.path.join(tdir, lay["docs_index"]), os.path.join(ldir, "docs.db.new"))
+        os.replace(os.path.join(ldir, "docs.db.new"), os.path.join(ldir, "docs.db"))
+        for dp, dirs, fs in os.walk(ldir):                    # read by every account and the docs service
+            os.chmod(dp, 0o755)
+            for f in fs:
+                os.chmod(os.path.join(dp, f), 0o644)
+        n = sum(len(fs) for _, _, fs in os.walk(dst))
+        print(f"library {lay['library']}: {n} documents and the index {team} built ({lay['docs_index']}), copied as they are")
+        if rc == 0 and tree:
+            write(mark, tree + "\n")
+            os.chmod(mark, 0o644)
+        return 0
     subs = sorted(d for d in os.listdir(src) if os.path.isdir(os.path.join(src, d)) and not d.startswith(".") and not os.path.islink(os.path.join(src, d)))
     dst = os.path.join(ldir, "docs", re.sub(r"[^a-z0-9_.-]+", "-", team.lower()))
     shutil.rmtree(dst, ignore_errors=True)                    # mirrored: the docs in git are the library's
@@ -934,7 +1033,7 @@ def docs_all(pull=True):
     bad = 0
     for n in vm_externals():
         d = os.path.join(SOURCES, n)
-        if pull and remote_of(d) and git(d, "status", "--porcelain", timeout=30)[1]:
+        if pull and remote_of(d) and git(d, "status", "--porcelain", "--untracked-files=no", timeout=30)[1]:   # a file root added beside is fine
             print(f"{n}: changed by hand on this VM: not pulled, left as it is (git -C {d} status)")
         elif pull and remote_of(d):
             helper = "/opt/paas/bin/paas-git-credential"
@@ -956,7 +1055,7 @@ def set_env(team, pairs):
     tdir = team_dir(team)
     e = external(tdir)
     if not e:
-        die(f"{team} is not an external brain (paas-team edit changes a team's MCP servers)")
+        die(f"{team} takes no settings here (paas-team edit changes a team's MCP servers)")
     env = dict(e.get("env") or {})
     for p in pairs:
         if "=" not in p or not re.match(r"^[A-Za-z_][A-Za-z0-9_]*$", p.split("=", 1)[0]):
@@ -1690,7 +1789,7 @@ def sync():
     if external(team_dir(t)):                                 # its own workflow: never a commit or a push from here
         tdir = team_dir(t)
         if git(tdir, "status", "--porcelain", timeout=10)[1]:
-            print(f"brain {t}: local changes in {tdir}, not pulled (it is an external brain: its own tools commit)")
+            print(f"brain {t}: local changes in {tdir}, not pulled (its own tools commit them)")
             return 0
         rc, out = git(tdir, "pull", "--ff-only", "-q", timeout=60)
         refresh_layout(tdir)
@@ -1734,6 +1833,13 @@ def off():
             for pid in plugin_ids(t):
                 claude("disable", pid)
         clear_ext_env()
+        unlink_team(t)                                        # its knowledge links go; your own files come back
+        for name, _ in RULES:                                 # its rules stay usable as plain copies, as a team's do
+            p = os.path.join(BRAIN, name)
+            if os.path.islink(p) and os.path.realpath(p).startswith(os.path.realpath(team_dir(t)) + os.sep):
+                text = read(p)
+                os.remove(p)
+                write(p, text)
         default = "/opt/paas/brain/persona.md"                # the VM's default persona (no team chosen)
         pp = os.path.join(BRAIN, "persona.md")
         if os.path.isfile(default):
@@ -1836,7 +1942,7 @@ def show(team):
 def edit(team, change):
     """apply a JSON change to the team's repository (local clone; added first when needed), commit, push, re-apply"""
     if external(team_dir(team)):
-        die(f"{team} is an external brain: change it in its own repository (its settings: paas-team env {team} KEY=VALUE)")
+        die(f"{team} is changed in its own repository (its settings: paas-team env {team} KEY=VALUE)")
     add(team, None, quiet=True)
     tdir = team_dir(team)
     if remote_of(tdir):                                       # edit on top of what the team has now
@@ -1961,7 +2067,7 @@ def main(a):
             for t in d["teams"]:
                 print("%s %-8s %-28s %s%s%s" % ("*" if t["active"] else " ", t["name"], t["title"][:28],
                                                "local" if t["local"] else "available", f", {t['version']}" if t["version"] else "",
-                                               f", external brain (plugin {t.get('plugin')})" if t.get("external") else ""))
+                                               f", plugin {t.get('plugin')}" if t.get("external") else ""))
             if not d["teams"]:
                 print("no teams (paas-team add <team> <git url>)")
     elif cmd == "add" and len(a) >= 2:

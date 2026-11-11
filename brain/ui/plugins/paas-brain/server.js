@@ -53,11 +53,15 @@ function extRecord(team) {
   const r = json(path.join(BRAIN, 'teams', team, '.git', 'paas-external.json'));
   return r && r.plugin && r.marketplace ? r : null;
 }
+// a brain laid out as a team (knowledge/, and its knowledge goes straight to its git): used here exactly as a team built
+// by this brain, whoever built it; any other brain's clone is never written from here (its changes are proposed)
+const teamLayout = (d, rec) => fs.existsSync(path.join(d, 'knowledge')) && (rec.knowledge || {}).save === 'push';
 function repoDir() {
   const team = (read(path.join(BRAIN, 'team'), 200) || '').trim();
-  if (TEAM_NAME.test(team) && !extRecord(team)) {          // an external brain's clone is never written from here
+  if (TEAM_NAME.test(team)) {
     const d = path.join(BRAIN, 'teams', team);
-    if (fs.existsSync(path.join(d, '.git'))) return d;
+    const rec = extRecord(team);
+    if (fs.existsSync(path.join(d, '.git')) && (!rec || teamLayout(d, rec))) return d;
   }
   return fs.existsSync(path.join(BRAIN, '.git')) ? BRAIN : null;
 }
@@ -125,8 +129,10 @@ async function teamWriteBack(kind, name, file) {
 }
 // bump the plugin version (plugin-mode members get the copy), commit the plugin folder, push when there is an upstream
 async function teamCommit(repo, team, kind, name) {
-  if (TEAM_BIN) await run('python3', [TEAM_BIN, 'bump', team], 20000);
-  await git(repo, ['add', '-A', '--', `paas-brain-${team}`]);
+  const t = pluginTeam();                                    // a brain's own plugin folder (brain-sds/): no version bump, it loads in place
+  const rel = t && t.external ? path.relative(repo, t.dir) || '.' : `paas-brain-${team}`;
+  if (TEAM_BIN && !(t && t.external)) await run('python3', [TEAM_BIN, 'bump', team], 20000);
+  await git(repo, ['add', '-A', '--', rel]);
   await git(repo, ['commit', '-q', '-m', `brain tab: team ${kind} ${name}`]);
   const up = await git(repo, ['rev-parse', '--abbrev-ref', '@{upstream}']);
   if (up.ok) await run('git', ['-C', repo, 'push', '-q'], 10000);
@@ -191,7 +197,7 @@ function extPages(eb, root, limit = 3000) {
 }
 function extOverview() {
   const eb = extBrain();
-  if (!eb) return null;
+  if (!eb || repoDir() === eb.repo) return null;                    // laid out as a team: the same Memory tab as every team
   return { team: eb.team, plugin: eb.plugin, title: eb.title, save: eb.save, folders: eb.folders, inbox: eb.inbox, templates: eb.templates,
     index: eb.index && fs.existsSync(path.join(eb.repo, eb.index)) ? eb.index : '',
     pages: eb.folders.flatMap((f) => extPages(eb, f)), inboxPages: eb.inbox ? extPages(eb, eb.inbox, 500) : [],
@@ -284,9 +290,10 @@ function memoryList() {
   const rd = teamRulesDir();
   const rules = rd
     ? ruleNames().map((n) => { const p = path.join(rd, ...n.split('/')); return { name: `rules/${n}`, rules: 'team', editable: writable(p), text: read(p) }; })
-    : repoDir() && repoDir() !== BRAIN                              // a team repository from before rules/: the plugin's copies
+    : extBrain() ? []                                                // a brain without rules/ of its own: nothing to list here
+      : repoDir() && repoDir() !== BRAIN                              // a team repository from before rules/: the plugin's copies
       ? ['main.md', ...OWN_RULES].map((name) => ({ name, rules: 'plugin', editable: false, text: read(path.join(C, 'brain', name)) }))
-      : OWN_RULES.map((name) => ({ name, rules: 'own', editable: writable(MEMORY[name]), text: read(MEMORY[name]) }));
+        : OWN_RULES.map((name) => ({ name, rules: 'own', editable: writable(MEMORY[name]), text: read(MEMORY[name]) }));
   const claude = { name: 'CLAUDE.md', editable: writable(MEMORY['CLAUDE.md']) || MULTI, text: read(MEMORY['CLAUDE.md']) ?? (MULTI ? '' : null) };
   return [...files, ...rules, claude].filter((m) => m.text !== null);
 }
@@ -692,8 +699,8 @@ const routes = {
     const tf = fs.existsSync(p) ? null : teamFile(b.kind, b.name);
     if (tf) {                                                          // plugin mode: write into the clone, push for the team
       if (b.create) return { ok: false, out: `"${b.name}" already exists` };
-      if (tf.external) return { ok: false, out: `"${b.name}" belongs to the external brain ${tf.team}: change it in its own repository` };
       const repo = repoDir();
+      if (tf.external && repo !== path.join(BRAIN, 'teams', tf.team)) return { ok: false, out: `"${b.name}" is changed in ${tf.team}'s own repository` };
       if (!repo || repo === BRAIN) return { ok: false, out: 'The team repository is not available' };
       if (!inside(tf.file, [repo])) return OUTSIDE;
       fs.writeFileSync(tf.file, text.endsWith('\n') ? text : `${text}\n`);
@@ -773,7 +780,7 @@ const routes = {
   'POST /team-env': async (_q, b) => {
     if (!TEAM_BIN) return { ok: false, out: 'Teams are not installed on this VM' };
     const name = String(b.name || '');
-    if (!TEAM_NAME.test(name) || !extRecord(name)) return { ok: false, out: 'Not an external brain' };
+    if (!TEAM_NAME.test(name) || !extRecord(name)) return { ok: false, out: 'That brain takes no settings here' };
     const pairs = (Array.isArray(b.pairs) ? b.pairs : []).map(String).filter((x) => /^[A-Za-z_][A-Za-z0-9_]{0,63}=[^\n]{0,2000}$/.test(x)).slice(0, 40);
     if (!pairs.length) return { ok: false, out: 'Nothing to set: KEY=VALUE, one per line (KEY= removes it)' };
     return run('python3', [TEAM_BIN, 'env', name, ...pairs]);
@@ -781,13 +788,13 @@ const routes = {
   // an external brain's knowledge: one page, read-only here (GET), and a proposed change (POST: branch + merge request)
   'GET /ext-page': async (q) => {
     const eb = extBrain();
-    if (!eb) return { ok: false, out: 'No external brain active' };
+    if (!eb) return { ok: false, out: 'No brain with its own knowledge view is active' };
     const p = extFile(eb, q.get('path'));
     return p ? { ok: true, path: q.get('path'), text: read(p) ?? '' } : { ok: false, out: 'Not one of its knowledge pages' };
   },
   'POST /ext-propose': async (_q, b) => {
     const eb = extBrain();
-    if (!eb) return { ok: false, out: 'No external brain active' };
+    if (!eb) return { ok: false, out: 'No brain with its own knowledge view is active' };
     const rel = String(b.path || '');
     if (!extFile(eb, rel, !b.create)) return { ok: false, out: 'Give a page inside its knowledge folders or inbox, ending in .md' };
     if (b.create && fs.existsSync(path.join(eb.repo, rel))) return { ok: false, out: 'That page already exists: open it and propose a change' };

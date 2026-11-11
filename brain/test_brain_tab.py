@@ -134,6 +134,29 @@ try:
     assert not r["ok"], r
     r = call("POST", "team-add", {"name": "Bad Name", "url": "x"})
     assert not r["ok"], r
+    # a brain laid out as a team but built elsewhere (its plugin brain-x/, rules/, knowledge/): the same Memory tab as a
+    # team's, its rules and memory saved into its own repository and pushed; no separate view for it
+    bx = os.path.join(work, "sources", "bx")
+    for rel, text in {".claude-plugin/marketplace.json": json.dumps({"name": "brain-x", "owner": {"name": "x"}, "plugins": [{"name": "brain-x", "source": "./brain-x"}]}),
+                      "brain-x/.claude-plugin/plugin.json": json.dumps({"name": "brain-x"}), "brain-x/team.json": json.dumps({"name": "bx", "title": "Team X"}),
+                      "rules/main.md": "# X golden rules\n", "rules/persona.md": "# X persona\n", "rules/storage.md": "# X storage\n",
+                      "knowledge/notes.md": "# Notes\n", "knowledge/environment.md": "# Env\n", "knowledge/notes/ceph.md": "# Ceph\n"}.items():
+        os.makedirs(os.path.dirname(os.path.join(bx, rel)), exist_ok=True); open(os.path.join(bx, rel), "w").write(text)
+    for c in (["init", "-q", "-b", "main"], ["add", "-A"], ["-c", "user.name=t", "-c", "user.email=t@t", "commit", "-qm", "init"],
+              ["config", "receive.denyCurrentBranch", "updateInstead"]):
+        subprocess.run(["git", "-C", bx, *c], check=True, capture_output=True)
+    assert call("POST", "team-add", {"name": "bx", "url": bx})["ok"]
+    assert call("POST", "team", {"name": "bx"})["ok"] and call("GET", "team")["active"] == "bx"
+    ov = call("GET", "overview")
+    names = [m["name"] for m in ov["memory"]]
+    assert ov["external"] is None and names[:2] == ["notes.md", "environment.md"] and "rules/main.md" in names and "rules/storage.md" in names, (ov["external"], names)
+    r = call("POST", "memory", {"name": "rules/storage.md", "text": "# X storage\n- a rule set in the Brain tab\n"})
+    assert r["ok"], r
+    shown = subprocess.run(["git", "-C", bx, "show", "HEAD:rules/storage.md"], capture_output=True, text=True).stdout
+    assert "set in the Brain tab" in shown, shown
+    r = call("POST", "memory", {"name": "notes.md", "text": "# Notes\n- a fact from the tab 2026-11-11 verified\n"})
+    assert r["ok"] and "fact from the tab" in subprocess.run(["git", "-C", bx, "show", "HEAD:knowledge/notes.md"], capture_output=True, text=True).stdout
+    assert call("POST", "team", {"name": "none"})["ok"]
     print("brain tab backend ok")
 finally:
     proc.kill()

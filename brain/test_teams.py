@@ -533,7 +533,7 @@ assert [x["name"] for x in rec["settings_schema"]] == ["OB_DIR"] and rec["librar
 assert run(["git", "-C", clone, "status", "--porcelain"])[1] == "", "the clone stays clean for its own pulls"
 open(os.path.join(home, "claude.log"), "w").close()
 o = team("use", "ob")
-assert "external brain" in o and "/ob:<skill>" in o, o
+assert "from its own repository" in o and "/ob:<skill>" in o, o
 log = claude_log()
 assert f"plugin marketplace add {clone}" in log and "plugin install ob@ob --scope user" in log and "plugin disable paas-brain-san@paas-brain-san" in log, log
 st = json.load(open(os.path.join(home, ".claude", "settings.json")))
@@ -774,4 +774,67 @@ assert "Learning for" not in hk("session-start.py", {})
 assert team("learn", "lr").count("learning OFF") == 1
 team("use", "san")
 print("external brain learning ok")
+
+# 14. a brain laid out as a team but built elsewhere (like sds-brain: plugin brain-x/ with its own team.json, rules/,
+#     knowledge/, docs/ and a prebuilt library index): switched like every team, nothing in its repository changes. Its
+#     rules replace the previous team's (a rule it lacks goes back to the VM default), its knowledge is linked where a
+#     team's is (your own notes kept aside, given back when you leave), no second docs-local, its prebuilt library copied
+#     as it is
+sys.path.insert(0, os.path.join(R, "docs-search-mcp"))
+import docs_index  # noqa: E402
+bx = os.path.join(work, "bx-src")
+mkrepo(bx, {".claude-plugin/marketplace.json": json.dumps({"name": "brain-x", "owner": {"name": "x"}, "plugins": [{"name": "brain-x", "source": "./brain-x"}]}),
+            "brain-x/.claude-plugin/plugin.json": json.dumps({"name": "brain-x"}),
+            "brain-x/team.json": json.dumps({"name": "bx", "title": "Team X", "description": "object storage", "library": "xl"}),
+            "brain-x/.mcp.json": json.dumps({"mcpServers": {"docs-local": {"command": "python3", "args": ["x"]}}}),
+            "brain-x/skills/triage/SKILL.md": "---\nname: triage\ndescription: t\n---\nx\n",
+            "rules/main.md": "# X golden rules\n", "rules/persona.md": "# X persona\n", "rules/storage.md": "# X storage rules\n",
+            "knowledge/notes.md": "# Notes\n- x fact\n", "knowledge/environment.md": "# Env X\n", "knowledge/notes/ceph.md": "# Ceph\n",
+            "knowledge/runbooks/.keep": "", "docs/acme/widget/guide.md": "# Widget guide\nThe widget quorum needs three nodes.\n"})
+docs_index.build(os.path.join(bx, "docs"), os.path.join(bx, "library", "docs.db"), log=lambda *_: None)
+run(["git", "-C", bx, "add", "-A"]); run(["git", "-C", bx, "-c", "user.name=t", "-c", "user.email=t@t", "commit", "-qm", "index"])
+defaults = os.path.join(work, "vm-defaults"); os.makedirs(defaults)
+open(os.path.join(defaults, "coding.md"), "w").write("# VM coding rules\n")
+xe = dict(env, PAAS_BRAIN_DEFAULTS=defaults, PAAS_LIBRARIES=libs)
+xteam = lambda *a: run([sys.executable, TOOL, *a], e=xe)[1]
+xteam("use", "san")
+open(os.path.join(home, "claude.log"), "w").close()
+xteam("add", "bx", bx)
+xc = os.path.join(brain, "teams", "bx")
+o = xteam("use", "bx")
+assert "Team X" in o and "external" not in o.lower(), o
+assert os.readlink(os.path.join(brain, "main.md")) == os.path.join(xc, "rules", "main.md")
+assert os.readlink(os.path.join(brain, "storage.md")) == os.path.join(xc, "rules", "storage.md")
+assert not os.path.islink(os.path.join(brain, "coding.md")) and "VM coding" in open(os.path.join(brain, "coding.md")).read()
+assert os.readlink(os.path.join(brain, "notes.md")) == os.path.join(xc, "knowledge", "notes.md")
+assert os.readlink(os.path.join(brain, "notes")) == os.path.join(xc, "knowledge", "notes")
+assert "@" + os.path.join(xc, "rules", "persona.md") in open(os.path.join(brain, "persona.md")).read()
+assert "@~/.claude/brain/main.md" in open(os.path.join(home, ".claude", "CLAUDE.md")).read()
+log = claude_log()
+assert "plugin install brain-x@brain-x --scope user" in log and "mcp add-json" not in log, log
+xrec = json.load(open(os.path.join(xc, ".git", "paas-external.json")))
+assert xrec["title"] == "Team X" and xrec["knowledge"]["save"] == "push" and xrec["library"] == "xl" and xrec["docs"] == "docs" \
+    and xrec["docs_index"] == "library/docs.db", xrec
+assert run(["git", "-C", xc, "status", "--porcelain"])[1] == "", "its repository stays exactly as it is"
+# back to SAN: SAN's rules and knowledge again
+xteam("use", "san")
+assert os.readlink(os.path.join(brain, "main.md")).endswith(os.path.join("teams", "san", "rules", "main.md"))
+assert os.readlink(os.path.join(brain, "notes.md")).endswith(os.path.join("teams", "san", "knowledge", "notes.md"))
+# your own notes (no team) are kept aside while it is on and come back after it
+xteam("use", "none")
+open(os.path.join(brain, "notes.md"), "w").write("# My notes\n- mine\n")
+xteam("use", "bx")
+assert os.path.islink(os.path.join(brain, "notes.md")) and "x fact" not in open(os.path.join(brain, "notes.md.pre-team")).read()
+assert "mine" not in open(os.path.join(xc, "knowledge", "notes.md")).read(), "never merged into its repository"
+xteam("use", "none")
+assert not os.path.islink(os.path.join(brain, "notes.md")) and "mine" in open(os.path.join(brain, "notes.md")).read()
+assert not os.path.islink(os.path.join(brain, "main.md")) and "X golden" in open(os.path.join(brain, "main.md")).read()
+# its prebuilt library, copied as it is on the VM
+src_bx = os.path.join(work, "sources", "bx"); run(["git", "clone", "-q", bx, src_bx])
+o = run([sys.executable, TOOL, "docs", "bx"], e=dict(xe, PAAS_TEAMS=os.path.join(work, "sources")))[1]
+assert "copied as they are" in o and os.path.isfile(os.path.join(libs, "xl", "docs.db")) \
+    and os.path.isfile(os.path.join(libs, "xl", "docs", "acme", "widget", "guide.md")), o
+assert json.loads(team("layout", src_bx, "bx")) == {"folders": ["knowledge"], "library": "xl", "docs": "docs"}
+xteam("use", "san")
+print("a brain laid out as a team, built elsewhere ok")
 shutil.rmtree(work, ignore_errors=True)

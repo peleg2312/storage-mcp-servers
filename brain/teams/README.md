@@ -282,6 +282,35 @@ It keeps its own workflow: the brain's notes hook never commits or pushes into i
 The VM's read-only guard and managed hooks still apply to its tools. Switching back to a team or to "No team" disables its
 plugin and removes its settings. Root can offer one to everyone by cloning it into `/opt/paas/teams/<name>`.
 
+### Every brain is switched the same way
+
+The Brain tab's switch does not tell brains apart by who built them. A brain whose repository is laid out as a team
+(`knowledge/` and, usually, `rules/`; its knowledge goes straight to its git) is used exactly like SAN, NAS or Flashback,
+whether this repository's `publish.py` built it or another team did (for example `sds-brain`, with its plugin `brain-sds/`
+and its own `team.json`). Nothing in its repository is changed:
+- its plugin (any folder name) is installed and enabled from the clone; its own hooks run (on the VM the brain's step aside);
+- its `rules/main.md`, `storage.md`, `coding.md` replace the previous team's (a rule it lacks goes back to the VM's
+  default) and `main.md` loads through the import line in `~/.claude/CLAUDE.md`; its `persona.md` and any other rule file
+  are read in every chat;
+- its `knowledge/` (notes.md, environment.md, tool-map.md, notes/, runbooks/, captures/, incidents/) is linked into
+  `~/.claude/brain` like a team's; your own files are kept aside as `<name>.pre-team` (never merged into its repository)
+  and come back when you leave it;
+- the Memory tab is the team one: its notes, environment, tool map and every file of `rules/`, saved into its repository
+  and pushed; a team skill changed in the Skills tab goes to its plugin and is pushed;
+- its plugin's `team.json` gives its title, description and library name; its `docs/` folder becomes that library on the
+  VM, and a prebuilt index in its repository (`library/docs.db`) is copied as it is (nothing re-indexed);
+- its plugin's own `docs-local` is used (no second one is registered).
+
+A brain that keeps its knowledge another way (merge requests, or no `knowledge/` folder) keeps the knowledge view with
+"Propose a change"; that is the brain's own setting (`brain.json` `"knowledge": {"save": ...}`), not a different kind of brain.
+
+On the VM, root adds one once, from its git url, like any team:
+```
+sh brain/multiuser/install-multiuser.sh --team sds=<its git url>
+```
+Then everyone picks it in the Brain tab. Its own `vm-setup.py` is not needed for that; it only adds the VM's docs-http
+address to its plugin's `.mcp.json` (for laptops), which may be run as well.
+
 ### Brains of any shape
 
 | The brain's repository | What it becomes (nothing in it is changed) |
