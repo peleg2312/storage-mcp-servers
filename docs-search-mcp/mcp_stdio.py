@@ -391,6 +391,15 @@ def origin_url(repo):
     return u.group(1) if u else ""
 
 
+def teamlike(clone, ext):
+    """a brain laid out as a team, whoever built it: its knowledge is knowledge/ (notes/, runbooks/, captures/,
+    incidents/) and nothing else besides an inbox. Its index is then built exactly as a team's (per-fact notes, captures
+    marked, runbooks), with the same fingerprint a member's docs-local computes, so the members share it."""
+    k = os.path.join(clone, "knowledge")
+    others = [f for f in ext.get("folders") or [] if f not in ("knowledge", "inbox")]
+    return not others and os.path.isdir(k) and not os.path.islink(k) and any(os.path.isdir(os.path.join(k, d)) for d in KNOWLEDGE_DIRS)
+
+
 def external_files(root, folders):
     """the knowledge pages of an external brain: *.md under its knowledge folders (and inbox), regular files inside the
     repository only (a symlink is never followed), README / templates left out"""
@@ -571,6 +580,8 @@ class Teams:
                             clone = os.path.join(self.dir, team)
                 else:
                     clone = os.path.join(self.dir, team)       # no remote: the VM's copy is all there is
+                if ext and teamlike(clone, ext):               # laid out as a team (knowledge/notes, runbooks ...): indexed as one,
+                    ext = None                                 # so a member's docs-local finds this index the same as a team's
                 k = clone if ext else os.path.join(clone, "knowledge")
                 files = external_files(clone, ext["folders"]) if ext else knowledge_files(k)
                 state = knowledge_state(k, files)

@@ -394,3 +394,24 @@ p = subprocess.run([sys.executable, os.path.join(root, "bin", "paas-team"), "doc
                    env=dict(os.environ, PAAS_TEAMS=xdir, PAAS_LIBRARIES=xlibs, CLAUDE_HOME=os.path.join(root, "ch")))
 assert "newteam" not in p.stdout, p.stdout
 print("new-layout team is no external brain ok")
+
+# a brain laid out as a team but built elsewhere (plugin brain-x/ with its own team.json, knowledge/notes ...): indexed
+# exactly as a team's, with the fingerprint a member's docs-local computes from its clone, so members share the index
+tl = os.path.join(xdir, "teamlike")
+for rel, text in {".claude-plugin/marketplace.json": json.dumps({"name": "brain-x", "owner": {"name": "x"}, "plugins": [{"name": "brain-x", "source": "./brain-x"}]}),
+                  "brain-x/.claude-plugin/plugin.json": "{}", "brain-x/team.json": json.dumps({"name": "teamlike"}),
+                  "rules/main.md": "# rules\n", "knowledge/notes.md": "# Notes\n",
+                  "knowledge/notes/ceph.md": "# Ceph\n- 2026-11-11 · osd.12 flaps on host b3 · observed · me\n",
+                  "knowledge/runbooks/rgw-restart.md": "# RGW restart\n## Pre-checks\n## Procedure\n## Verification\n## Rollback\n"}.items():
+    os.makedirs(os.path.dirname(os.path.join(tl, rel)), exist_ok=True); open(os.path.join(tl, rel), "w").write(text)
+subprocess.run(["git", "init", "-q", tl], check=True)
+T4 = ms.Teams(xdir, xstate, print, xlibs)
+assert T4.external("teamlike") is not None and ms.teamlike(tl, T4.external("teamlike"))
+T4.refresh("teamlike")
+k = os.path.join(tl, "knowledge")
+assert open(T4.db("teamlike") + ".stamp").read().strip() == ms.knowledge_state(k, ms.knowledge_files(k)), "a member's clone matches"
+import sqlite3
+kinds = sorted({r[0] for r in sqlite3.connect(T4.db("teamlike")).execute("select product from docs")})
+assert kinds == ["brain-notes", "brain-runbooks"], kinds
+assert not ms.teamlike(kbb, T2.external("kbbrain") or {"folders": ["kb"]}), "knowledge kept elsewhere: indexed by its folders"
+print("team-like brain indexed as a team ok")
