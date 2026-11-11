@@ -592,6 +592,8 @@ def team_meta(folder):
     try:
         mk = json.load(open(os.path.join(folder, ".claude-plugin", "marketplace.json")))
         plug = os.path.join(folder, mk["plugins"][0]["source"].lstrip("./"))
+        if not os.path.basename(os.path.normpath(plug)).startswith("paas-brain-"):
+            return None                                      # another brain's plugin (brain-sds/): listed once, as a brain (external_items)
         t = json.load(open(os.path.join(plug, "team.json")))
         try:                                                 # an older repository's root copy (the plugin's is the only one now)
             t.update({k: v for k, v in json.load(open(os.path.join(folder, "team.json"))).items() if k in ("title", "description", "remote")})
@@ -658,8 +660,9 @@ def external_brains():
 def external_items():
     act = active_team()
     return [{"kind": "plugin", "name": f"brain-{n}", "team": n, "external": True, "title": t.get("title") or n, "source": "",
-             "author": None, "description": (t.get("description") or "") + f" (another brain, kept as it is: plugin {t.get('plugin') or '?'})",
-             "skills": [], "agents": [], "mcp": t.get("mcp") or [], "version": t.get("version") or "", "id": f"plugin/brain-{n}",
+             "author": None, "description": t.get("description") or "",
+             "skills": t.get("skill_names") or [], "agents": t.get("agent_names") or [], "mcp": t.get("mcp") or [],
+             "version": t.get("version") or "", "id": f"plugin/brain-{n}",
              "added": bool(t.get("local")), "enabled": n == act, "update": False, "ready": True} for n, t in external_brains().items()]
 
 

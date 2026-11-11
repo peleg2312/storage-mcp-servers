@@ -837,4 +837,39 @@ assert "copied as they are" in o and os.path.isfile(os.path.join(libs, "xl", "do
 assert json.loads(team("layout", src_bx, "bx")) == {"folders": ["knowledge"], "library": "xl", "docs": "docs"}
 xteam("use", "san")
 print("a brain laid out as a team, built elsewhere ok")
+
+# 15. the VM's copy belongs to root, a member's git refuses another owner's repository ("dubious ownership"): the switch
+#     reads its git address from its config and clones from there, or from the copy itself when that address is not
+#     reachable; the team list names it as it names itself (stood in for by an owner other than the test's, when root)
+if os.geteuid() == 0:
+    own_bare = os.path.join(work, "own.git"); run(["git", "clone", "-q", "--bare", bx, own_bare])
+    own = os.path.join(work, "sources", "ownx"); run(["git", "clone", "-q", own_bare, own])
+    subprocess.run(["chown", "-R", "65534", own], check=True)
+    row = next(t for t in json.loads(team("list", "--json"))["teams"] if t["name"] == "ownx")
+    assert row["title"] == "Team X" and row["skills"] == 1 and row["remote"] == own_bare and not row["local"], row
+    team("add", "ownx")
+    assert run(["git", "-C", os.path.join(brain, "teams", "ownx"), "remote", "get-url", "origin"])[1].strip() == own_bare
+    shutil.rmtree(os.path.join(brain, "teams", "ownx"))
+    subprocess.run(["chown", "-R", "0", own], check=True)
+    run(["git", "-C", own, "remote", "set-url", "origin", "https://unreachable.invalid/x.git"])
+    subprocess.run(["chown", "-R", "65534", own], check=True)
+    o = team("add", "ownx")
+    oc = os.path.join(brain, "teams", "ownx")
+    assert "using" in o and os.path.isfile(os.path.join(oc, ".git", "paas-external.json")), o
+    assert run(["git", "-C", oc, "remote", "get-url", "origin"])[1].strip() == "https://unreachable.invalid/x.git"
+    subprocess.run(["chown", "-R", "0", own], check=True)
+    print("root's copy of another owner ok")
+
+# 16. the Market lists a brain once, whoever built it: a team built here as plugin/paas-brain-<team>, any other brain
+#     (its own plugin folder and team.json) as plugin/brain-<name>, both by title with their skills and agents
+mk = os.path.join(work, "market16"); os.makedirs(mk); open(os.path.join(mk, "index.json"), "w").write("[]")
+code = ("import json, sys; sys.path.insert(0, sys.argv[1]); import paas_market as pm\n"
+        "print(json.dumps([[i['id'], i['title'], len(i['skills'])] for i in pm.listing() if i['kind'] == 'plugin' and i.get('team')]))")
+o = subprocess.run([sys.executable, "-c", code, os.path.join(R, "brain", "marketplace")], capture_output=True, text=True,
+                   env=dict(env, PAAS_MARKET=mk, PAAS_TEAMS=os.path.join(work, "sources")), timeout=120)
+rows = json.loads(o.stdout or "[]")
+bxs = [r for r in rows if r[0].endswith("-bx")]
+assert bxs == [["plugin/brain-bx", "Team X", 1]], (rows, o.stderr[-300:])
+assert any(r[0] == "plugin/paas-brain-san" for r in rows), rows
+print("one Market card per brain ok")
 shutil.rmtree(work, ignore_errors=True)

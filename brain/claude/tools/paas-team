@@ -1155,6 +1155,7 @@ def listing():
                       "version": t.get("version", ""), "local": True, "active": name == act,
                       "source": None, "remote": remote_of(tdir) or t.get("remote") or None,
                       "skills": len(t.get("skills", [])), "agents": len(t.get("agents", [])),
+                      "skill_names": list(t.get("skills", [])), "agent_names": list(t.get("agents", [])),
                       "mcp": t.get("mcp", []), "external": bool(t.get("external")), "plugin": t.get("plugin"),
                       "env": t.get("env", []), "settings": t.get("settings", []), "knowledge": t.get("knowledge"),
                       "library": t.get("library") or None, "docs": t.get("docs") or None,
@@ -1165,11 +1166,20 @@ def listing():
             continue
         if not plugin_dir(sdir):                              # another brain root cloned here for everyone
             f = find_plugin(sdir, name)
-            pj = jload(os.path.join(f[2], ".claude-plugin", "plugin.json")) if f else {}
-            teams.append({"name": name, "title": pj.get("name") or name, "description": str(pj.get("description", "")),
+            pd = f[2] if f else ""
+            pj = jload(os.path.join(pd, ".claude-plugin", "plugin.json")) if f else {}
+            tj, bj = (jload(os.path.join(pd, "team.json")) if f else {}), brain_json(sdir)   # how it describes itself
+            sk = os.path.join(pd, "skills")
+            ag = os.path.join(pd, "agents")
+            skills = sorted(d for d in (os.listdir(sk) if os.path.isdir(sk) else []) if os.path.isfile(os.path.join(sk, d, "SKILL.md")))
+            agents = sorted(a[:-3] for a in (os.listdir(ag) if os.path.isdir(ag) else []) if a.endswith(".md"))
+            mcp = sorted((jload(os.path.join(pd, ".mcp.json")).get("mcpServers") or {})) if f else []
+            teams.append({"name": name, "title": str(bj.get("title") or tj.get("title") or pj.get("name") or name),
+                          "description": str(bj.get("description") or tj.get("description") or pj.get("description", "")),
                           "version": str(pj.get("version", "")), "local": False, "active": False, "source": sdir,
-                          "remote": remote_of(sdir) or None, "skills": 0, "agents": 0, "mcp": [], "mcp_added": [],
-                          "external": True, "plugin": f[1] if f else None, "env": []})
+                          "remote": config_origin(sdir) or None,   # read from its config: git refuses root's copy
+                          "skills": len(skills), "agents": len(agents), "skill_names": skills, "agent_names": agents,
+                          "mcp": mcp, "mcp_added": mcp, "external": True, "plugin": f[1] if f else None, "env": []})
             continue
         t = info(sdir)
         teams.append({"name": name, "title": t.get("title", name), "description": t.get("description", ""),
@@ -1181,6 +1191,28 @@ def listing():
 
 
 # ---- add -----------------------------------------------------------------------------------------------------
+
+def clone_local(source, dest):
+    """git clone of a folder on this machine, also when it belongs to another account (root's copies in the VM's teams
+    folder: git refuses "dubious ownership"). The exception for that one folder is given the way git honours it, in a
+    global config for this command only that includes the person's own (their credential helper, identity)."""
+    import tempfile
+    fd, cfg = tempfile.mkstemp(prefix="paas-team-git-", suffix=".cfg")
+    try:
+        with os.fdopen(fd, "w") as f:
+            for inc in (os.environ.get("GIT_CONFIG_GLOBAL") or os.path.expanduser("~/.gitconfig"),
+                        os.path.join(os.environ.get("XDG_CONFIG_HOME") or os.path.expanduser("~/.config"), "git", "config")):
+                if os.path.isfile(inc):
+                    f.write(f"[include]\n\tpath = {inc}\n")
+            f.write(f"[safe]\n\tdirectory = {source}\n\tdirectory = {os.path.join(source, '.git')}\n")
+        r = subprocess.run(["git", "clone", "-q", "--", source, dest], capture_output=True, text=True, timeout=120,
+                           stdin=subprocess.DEVNULL, env=dict(os.environ, GIT_TERMINAL_PROMPT="0", GIT_CONFIG_GLOBAL=cfg))
+        return r.returncode, (r.stdout + r.stderr).strip()
+    except Exception as e:
+        return 124, str(e)
+    finally:
+        os.remove(cfg)
+
 
 def add(team, source=None, quiet=False):
     if not NAME.match(team or ""):
@@ -1201,9 +1233,9 @@ def add(team, source=None, quiet=False):
     src_dir = os.path.join(SOURCES, team)
     if not source:
         if plugin_dir(src_dir):
-            source = info(src_dir).get("remote") or remote_of(src_dir) or src_dir     # GitLab first: members push there
+            source = info(src_dir).get("remote") or config_origin(src_dir) or src_dir     # GitLab first: members push there
         elif os.path.isdir(os.path.join(src_dir, ".git")) and find_plugin(src_dir, team):   # an external brain root put here
-            source = remote_of(src_dir) or src_dir
+            source = config_origin(src_dir) or src_dir                 # root's copy: git refuses another owner's repository
         else:
             die(f"no team {team!r}: give its git url or directory (paas-team add {team} <source>)")
     bare = os.path.isdir(source) and os.path.isfile(os.path.join(source, "HEAD")) and os.path.isdir(os.path.join(source, "objects"))
@@ -1230,12 +1262,12 @@ def add(team, source=None, quiet=False):
     else:
         url_later = info(source).get("remote") or "" if os.path.isdir(source) and plugin_dir(source) else ""   # a copy of the team repository: GitLab stays origin
         if os.path.isdir(source) and not plugin_dir(source):
-            url_later = remote_of(source)
+            url_later = config_origin(source)
     source = os.path.abspath(source)
     if not plugin_dir(source) and not find_plugin(source, team):
         die(f"{source} is not a team repository (no paas-brain-<team>/team.json) and holds no other Claude Code brain")
     if os.path.isdir(os.path.join(source, ".git")):
-        rc, out = git(TEAMS, "clone", "-q", "--", source, tmp, timeout=120)
+        rc, out = clone_local(source, tmp)
         if rc:
             shutil.rmtree(tmp, ignore_errors=True)
             die(f"clone of {source} failed: {out[-300:]}")
