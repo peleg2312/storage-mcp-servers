@@ -52,8 +52,13 @@ Raise one level for production impact or many repeats; lower one level when it i
 Give a one-line reason (`why`) for each priority.
 
 ## 5. Fill the report JSON
-Folder: `~/block-alerts/<YYYYmmdd-HHMM>/`; file `report.json`. Plain, short sentences a busy engineer reads in
-one pass. Email language: the language the user writes in (`"lang": "he"` for Hebrew, else `"en"`).
+Folder: `~/block-alerts/<YYYYmmdd-HHMM>/`; file `report.json`. The mail must fit about one screen: **short**.
+- `summary` 1-2 sentences; `actions` at most 3, one line each.
+- Per alert: `what` 1 sentence (+ `impact` 1 sentence), `cause` and `live` one short line each, `why` one line,
+  `steps` at most 3 short steps, `commands` at most 2, `sources` at most 2. P3 / P4: `what` + `steps` only.
+- INFO alerts are shown as one line at the bottom (title + count): no other fields needed.
+- More than 8 non-INFO alerts: the 8 most urgent in full, the rest grouped as one alert per kind
+  (e.g. "5 more ports with CRC errors") - the details stay in the chat answer, not the mail. Email language: the language the user writes in (`"lang": "he"` for Hebrew, else `"en"`).
 ```json
 {
   "title": "PowerMax and MDS alerts - last 24 h",
@@ -88,9 +93,9 @@ Get the script out of this file once (it is the block between the `# >>>` and `#
 ```bash
 S=$(find ~/.claude /opt/paas -path '*block-alerts/SKILL.md' 2>/dev/null | head -1)
 mkdir -p ~/.config/block-alerts
-sed -n '/^# >>> block_alerts_mail.py v1$/,/^# <<< block_alerts_mail.py$/p' "$S" > ~/.config/block-alerts/block_alerts_mail.py
+sed -n '/^# >>> block_alerts_mail.py v2$/,/^# <<< block_alerts_mail.py$/p' "$S" > ~/.config/block-alerts/block_alerts_mail.py
 ```
-(If `~/.config/block-alerts/block_alerts_mail.py` already starts with `# >>> block_alerts_mail.py v1`, skip this.)
+(If `~/.config/block-alerts/block_alerts_mail.py` already starts with `# >>> block_alerts_mail.py v2`, skip this.)
 Then, with `M=~/.config/block-alerts/block_alerts_mail.py` and `R=~/block-alerts/<folder>`:
 1. `python3 $M $R/report.json --html $R/email.html` - fix any error it prints (it validates the JSON).
 2. Show the user in the chat: the subject line, the count per priority, the "do first" list, and the path of
@@ -116,7 +121,7 @@ and send the first report to the user only (`--to <their address>`) so they see 
 
 ## The script (do not edit; extract it as in step 6)
 ```python
-# >>> block_alerts_mail.py v1
+# >>> block_alerts_mail.py v2
 """block-alerts mail: the alert report JSON -> an Outlook-safe HTML email (+ plain text), standard library only.
   python3 block_alerts_mail.py report.json --html out.html     preview in a browser
   python3 block_alerts_mail.py report.json --eml out.eml       Outlook draft (open it, press Send)
@@ -142,13 +147,12 @@ T = {
                impact="Impact", cause="Likely cause", steps="What to do", cmds="Commands", live="Current state",
                bug="Known bug / fixed in", src="Sources", why="Why this priority", system="System", obj="Object",
                code="Alert", vsev="Vendor severity", seen="Seen", count="Count", actby="Act by",
-               summary="Summary", alerts="alerts", more="more", source="Source",
-               footer="Prepared by Claude from the alert source, the offline documentation library and read-only "
-                      "checks. Commands are for you to run: review each step before you change anything."),
+               summary="Summary", now="Now", fix="Fix", also="No action needed", alerts="alerts", more="more", source="Source",
+               footer="Prepared by Claude from the alerts, the offline docs and read-only checks. Review each step before you run it."),
     "he": dict(report="דוח התראות אחסון", overview="כל ההתראות", act="לטפל קודם", what="מה זה", impact="השפעה",
                cause="סיבה אפשרית", steps="מה לעשות", cmds="פקודות", live="מצב נוכחי", bug="באג ידוע / תוקן בגרסה",
                src="מקורות", why="למה העדיפות הזו", system="מערכת", obj="רכיב", code="התראה", vsev="חומרת יצרן",
-               seen="נראה", count="כמות", actby="לטפל עד", summary="סיכום", alerts="התראות", more="נוספות",
+               seen="נראה", count="כמות", actby="לטפל עד", summary="סיכום", now="עכשיו", fix="תיקון", also="לא נדרשת פעולה", alerts="התראות", more="נוספות",
                source="מקור",
                footer="הוכן על ידי Claude ממקור ההתראות, ספריית התיעוד הלא מקוונת ובדיקות לקריאה בלבד. "
                       "הפקודות מיועדות להרצה על ידך: בדוק כל צעד לפני שינוי."),
@@ -206,81 +210,64 @@ def actby(a, lang):
 
 def pill(p, lang):
     _, _, fg, bg, bd, _ = PRI[p]
-    txt = label(p, lang) if p == "INFO" else f"{p} &middot; {e(label(p, lang))}"
-    return (f'<table {TBL} style="border-collapse:separate"><tr><td bgcolor="{bg}" style="{F}font-size:12px;'
-            f'line-height:16px;mso-line-height-rule:exactly;font-weight:700;color:{fg};padding:3px 10px;'
-            f'border:1px solid {bd};border-radius:12px;white-space:nowrap">{txt}</td></tr></table>')
+    txt = e(label(p, lang)) if p == "INFO" else f"{p} {e(label(p, lang))}"
+    return (f'<table {TBL}><tr><td bgcolor="{bg}" style="{F}font-size:11px;line-height:15px;'
+            f'mso-line-height-rule:exactly;font-weight:700;color:{fg};padding:2px 8px;border:1px solid {bd};'
+            f'border-radius:10px;white-space:nowrap">{txt}</td></tr></table>')
 
 
-def numbered(items, colour, al):
-    rows = ""
-    for i, t in enumerate(items, 1):
-        rows += (f'<tr><td width="30" valign="top" style="padding:0 0 8px 0"><table {TBL}><tr>'
-                 f'<td width="22" height="22" align="center" bgcolor="{colour}" style="{F}font-size:12px;'
-                 f'line-height:22px;mso-line-height-rule:exactly;font-weight:700;color:#FFFFFF;border-radius:11px">'
-                 f'{i}</td></tr></table></td><td valign="top" align="{al}" style="{F}font-size:14px;line-height:21px;'
-                 f'mso-line-height-rule:exactly;color:#101828;padding:1px 0 8px 0">{br(t)}</td></tr>')
-    return f'<table {TBL} width="100%">{rows}</table>'
+def row(label_, body, al):
+    return (f'<tr><td align="{al}" style="{F}font-size:14px;line-height:20px;mso-line-height-rule:exactly;'
+            f'color:#101828;padding:3px 0 0 0"><b style="color:#475467">{e(label_)}:</b> {body}</td></tr>')
 
 
-def section(title, body, al):
-    return (f'<tr><td align="{al}" style="padding:14px 0 0 0;{F}"><p style="margin:0 0 5px 0;font-size:11px;'
-            f'line-height:16px;font-weight:700;letter-spacing:0.6px;text-transform:uppercase;color:#667085">'
-            f'{e(title)}</p>{body}</td></tr>')
-
-
-def para(t):
-    return f'<p style="margin:0;{F}font-size:14px;line-height:21px;mso-line-height-rule:exactly;color:#101828">{br(t)}</p>'
-
-
-def card(a, t, lang, al):
+def card(a, t, lang, al, op):
     p = a["priority"]
-    fg, bg = PRI[p][2], PRI[p][3]
-    sub = " &middot; ".join(e(x) for x in (" ".join(filter(None, [a.get("vendor"), a.get("product")])),
-                                          a.get("system")) if x)
-    seen = " &rarr; ".join(e(x) for x in (a.get("first_seen"), a.get("last_seen")) if x)
-    meta = [(t["obj"], e(a.get("object"))), (t["code"], e(a.get("code"))),
-            (t["vsev"], e(a.get("vendor_severity"))), (t["count"], e(a.get("count")) if a.get("count") else ""),
-            (t["seen"], seen), (t["actby"], f'<b style="color:{fg}">{e(actby(a, lang))}</b>')]
-    meta = [(k, v) for k, v in meta if v]
-    mrows = "".join(
-        f'<tr><td width="34%" valign="top" align="{al}" style="{F}font-size:12px;line-height:18px;color:#667085;'
-        f'padding:3px 8px 3px 0">{e(k)}</td><td valign="top" align="{al}" style="{F}font-size:13px;line-height:18px;'
-        f'color:#101828;padding:3px 0">{v}</td></tr>' for k, v in meta)
+    fg = PRI[p][2]
+    n = str(a.get("count") or "")
+    parts = [e(" ".join(filter(None, [a.get("product"), a.get("system")]))), e(a.get("object")),
+             f"&times;{e(n)}" if n not in ("", "0", "1") else "", e(a.get("last_seen") or a.get("first_seen"))]
+    sub = " &middot; ".join(x for x in parts if x)
     body = ""
-    if a.get("why"):
-        body += (f'<tr><td style="padding:12px 0 0 0"><table {TBL} width="100%"><tr><td bgcolor="{bg}" align="{al}" '
-                 f'style="{F}font-size:13px;line-height:19px;color:{fg};padding:8px 12px;border-radius:6px">'
-                 f'<b>{e(t["why"])}:</b> {br(a["why"])}</td></tr></table></td></tr>')
-    for k in ("what", "impact", "cause", "live", "known_bug"):
-        if a.get(k):
-            body += section(t[{"known_bug": "bug"}.get(k, k)], para(a[k]), al)
+    what = " ".join(x for x in (a.get("what"), a.get("impact")) if x)
+    if what:
+        body += row(t["what"], br(what), al)
+    if a.get("cause"):
+        body += row(t["cause"], br(a["cause"]), al)
+    if a.get("live"):
+        body += row(t["now"], br(a["live"]), al)
     if a["steps"]:
-        body += section(t["steps"], numbered(a["steps"], fg, al), al)
+        body += row(t["fix"], "&nbsp; ".join(f'<b style="color:{fg}">{i}.</b>&nbsp;{br(x)}'
+                                             for i, x in enumerate(a["steps"], 1)), al)
+    if a.get("known_bug"):
+        body += row(t["bug"], br(a["known_bug"]), al)
     if a["commands"]:
         cmd = "<br>".join(e(c).replace("\n", "<br>") for c in a["commands"])
-        body += section(t["cmds"], f'<table {TBL} width="100%"><tr><td bgcolor="#F2F4F7" dir="ltr" align="left" '
-                                   f'style="{MONO}font-size:13px;line-height:20px;color:#1D2939;padding:10px 12px;'
-                                   f'border:1px solid #EAECF0;border-radius:6px">{cmd}</td></tr></table>', al)
+        body += (f'<tr><td style="padding:6px 0 0 0"><table {TBL} width="100%"><tr><td bgcolor="#F2F4F7" dir="ltr" '
+                 f'align="left" style="{MONO}font-size:12px;line-height:18px;mso-line-height-rule:exactly;'
+                 f'color:#1D2939;padding:6px 10px">{cmd}</td></tr></table></td></tr>')
     if a["sources"]:
         items = []
         for s in a["sources"]:
             s = s if isinstance(s, dict) else {"title": s}
-            u = str(s.get("url") or "")
-            name = e(s.get("title") or u)
+            u, name = str(s.get("url") or ""), e(s.get("title") or s.get("url") or "")
             items.append(f'<a href="{e(u)}" style="color:#175CD3;text-decoration:underline">{name}</a>'
                          if u.startswith(("http://", "https://")) else name)
-        body += section(t["src"], f'<p style="margin:0;{F}font-size:13px;line-height:20px;color:#475467">'
-                                  + "<br>".join(items) + "</p>", al)
-    return (f'<table {TBL} width="100%" bgcolor="#FFFFFF" style="border:1px solid #EAECF0;border-radius:10px;'
-            f'border-collapse:separate"><tr><td width="6" bgcolor="{fg}" style="font-size:0;line-height:0">&nbsp;</td>'
-            f'<td valign="top" style="padding:18px 20px 20px 20px"><table {TBL} width="100%">'
-            f'<tr><td align="{al}">{pill(p, lang)}</td></tr>'
-            f'<tr><td align="{al}" style="{F}font-size:18px;line-height:24px;mso-line-height-rule:exactly;'
-            f'font-weight:700;color:#101828;padding:8px 0 2px 0">{e(a["title"])}</td></tr>'
-            f'<tr><td align="{al}" style="{F}font-size:13px;line-height:18px;color:#475467;padding:0 0 10px 0">'
-            f'{sub}</td></tr><tr><td style="border-top:1px solid #EAECF0;padding:8px 0 0 0">'
-            f'<table {TBL} width="100%">{mrows}</table></td></tr>{body}</table></td></tr></table>')
+        body += (f'<tr><td align="{al}" style="{F}font-size:12px;line-height:18px;color:#667085;padding:5px 0 0 0">'
+                 f'{e(t["src"])}: ' + " &middot; ".join(items) + "</td></tr>")
+    why = (f'<tr><td align="{al}" style="{F}font-size:13px;line-height:18px;color:{fg};padding:2px 0 0 0">'
+           f'{br(a["why"])}</td></tr>') if a.get("why") else ""
+    return (f'<table {TBL} width="100%" bgcolor="#FFFFFF" style="border:1px solid #EAECF0"><tr>'
+            f'<td width="4" bgcolor="{fg}" style="font-size:0;line-height:0">&nbsp;</td>'
+            f'<td valign="top" style="padding:10px 14px 12px 14px"><table {TBL} width="100%">'
+            f'<tr><td><table {TBL} width="100%"><tr>'
+            f'<td valign="middle" width="1" style="padding:0 8px 0 0">{pill(p, lang)}</td>'
+            f'<td valign="middle" align="{al}" style="{F}font-size:16px;line-height:21px;mso-line-height-rule:exactly;'
+            f'font-weight:700;color:#101828">{e(a["title"])}</td>'
+            f'<td valign="middle" align="{op}" class="ab" style="{F}font-size:13px;line-height:18px;font-weight:700;'
+            f'color:{fg};white-space:nowrap;padding:0 0 0 8px">{e(actby(a, lang))}</td></tr></table></td></tr>'
+            f'<tr><td align="{al}" style="{F}font-size:12px;line-height:17px;color:#667085;padding:3px 0 0 0">{sub}</td></tr>'
+            f'{why}{body}</table></td></tr></table>')
 
 
 def counts(r):
@@ -301,66 +288,53 @@ def subject(r):
 def render(r):
     lang = r["lang"]
     t, rtl = T[lang], lang == "he"
-    al, d = ("right" if rtl else "left"), ("rtl" if rtl else "ltr")
+    al, op, d = ("right", "left", "rtl") if rtl else ("left", "right", "ltr")
     c, top = counts(r), r["alerts"][0]["priority"]
-    tiles = "".join(
-        f'<td width="20%" align="center" valign="top" style="padding:0 3px"><table {TBL} width="100%"><tr>'
-        f'<td align="center" bgcolor="{PRI[p][3] if c[p] else "#F9FAFB"}" style="padding:10px 4px;border-radius:8px;'
-        f'border:1px solid {PRI[p][4] if c[p] else "#EAECF0"}"><p style="margin:0;{F}font-size:24px;line-height:28px;'
-        f'font-weight:700;color:{PRI[p][2] if c[p] else "#98A2B3"}">{c[p]}</p><p style="margin:2px 0 0 0;{F}'
-        f'font-size:11px;line-height:14px;font-weight:600;color:{PRI[p][2] if c[p] else "#98A2B3"}">'
-        f'{e(label(p, lang))}</p></td></tr></table></td>' for p in ORDER)
     status = " &middot; ".join(f"{c[p]} {e(label(p, lang))}" for p in ORDER if c[p])
-    over = "".join(
-        f'<tr><td valign="middle" align="{al}" style="padding:9px 8px;border-top:1px solid #EAECF0">'
-        f'{pill(a["priority"], lang)}</td><td valign="middle" align="{al}" style="{F}padding:9px 8px;'
-        f'border-top:1px solid #EAECF0"><p style="margin:0;font-size:14px;line-height:19px;font-weight:600;'
-        f'color:#101828">{e(a["title"])}</p><p style="margin:0;font-size:12px;line-height:17px;color:#667085">'
-        f'{e(" ".join(filter(None, [a.get("product"), a.get("system")])))}</p></td>'
-        f'<td valign="middle" align="center" style="{F}font-size:13px;color:#344054;padding:9px 8px;'
-        f'border-top:1px solid #EAECF0">{e(a.get("count") or 1)}</td><td valign="middle" align="{al}" '
-        f'style="{F}font-size:13px;font-weight:700;color:{PRI[a["priority"]][2]};padding:9px 8px;'
-        f'border-top:1px solid #EAECF0;white-space:nowrap">{e(actby(a, lang))}</td></tr>' for a in r["alerts"])
-    head = lambda s, a2=al: (f'<td align="{a2}" style="{F}font-size:11px;font-weight:700;letter-spacing:0.5px;'
-                             f'text-transform:uppercase;color:#667085;padding:0 8px 6px 8px">{e(s)}</td>')
+    act = [a for a in r["alerts"] if a["priority"] != "INFO"]
+    info = [a for a in r["alerts"] if a["priority"] == "INFO"]
     blocks = []
     if r.get("summary"):
-        blocks.append(f'<tr><td align="{al}" style="padding:20px 24px 0 24px"><p style="margin:0 0 6px 0;{F}'
-                      f'font-size:16px;line-height:22px;font-weight:700;color:#101828">{e(t["summary"])}</p>'
-                      f'{para(r["summary"])}</td></tr>')
+        blocks.append(f'<tr><td class="px" align="{al}" style="padding:14px 20px 0 20px;{F}font-size:14px;'
+                      f'line-height:21px;mso-line-height-rule:exactly;color:#101828">{br(r["summary"])}</td></tr>')
     if r["actions"]:
         fg, bg, bd = PRI[top][2], PRI[top][3], PRI[top][4]
-        blocks.append(f'<tr><td style="padding:18px 24px 0 24px"><table {TBL} width="100%"><tr><td bgcolor="{bg}" '
-                      f'align="{al}" style="padding:16px 18px 8px 18px;border:1px solid {bd};border-radius:10px">'
-                      f'<p style="margin:0 0 10px 0;{F}font-size:16px;line-height:22px;font-weight:700;color:{fg}">'
-                      f'{e(t["act"])}</p>{numbered(r["actions"], fg, al)}</td></tr></table></td></tr>')
-    blocks.append(f'<tr><td style="padding:22px 24px 0 24px"><p style="margin:0 0 8px 0;{F}font-size:16px;'
-                  f'line-height:22px;font-weight:700;color:#101828">{e(t["overview"])}</p><table {TBL} width="100%">'
-                  f'<tr>{head("")}{head(t["code"])}{head(t["count"], "center")}{head(t["actby"])}</tr>{over}'
-                  f'</table></td></tr>')
-    for a in r["alerts"]:
-        blocks.append(f'<tr><td style="padding:16px 24px 0 24px">{card(a, t, lang, al)}</td></tr>')
-    pre = e(f'{status} - ' + " | ".join(r["actions"][:2] or [r["alerts"][0]["title"]]))
+        items = "".join(f'<tr><td align="{al}" style="{F}font-size:14px;line-height:20px;mso-line-height-rule:exactly;'
+                        f'color:#101828;padding:2px 0"><b style="color:{fg}">{i}.</b>&nbsp; {br(x)}</td></tr>'
+                        for i, x in enumerate(r["actions"], 1))
+        blocks.append(f'<tr><td class="px" style="padding:12px 20px 0 20px"><table {TBL} width="100%"><tr>'
+                      f'<td bgcolor="{bg}" style="padding:10px 14px;border:1px solid {bd}"><table {TBL} width="100%">'
+                      f'<tr><td align="{al}" style="{F}font-size:13px;line-height:18px;font-weight:700;color:{fg};'
+                      f'padding:0 0 4px 0">{e(t["act"])}</td></tr>{items}</table></td></tr></table></td></tr>')
+    for a in act:
+        blocks.append(f'<tr><td class="px" style="padding:10px 20px 0 20px">{card(a, t, lang, al, op)}</td></tr>')
+    if info:
+        names = " &middot; ".join(e(a["title"]) + (f" (&times;{e(a['count'])})" if a.get("count") else "")
+                                  for a in info)
+        blocks.append(f'<tr><td class="px" align="{al}" style="padding:12px 20px 0 20px;{F}font-size:13px;'
+                      f'line-height:19px;color:#475467"><b>{e(t["also"])}:</b> {names}</td></tr>')
+    pre = e(f'{len(r["alerts"])} {t["alerts"]}: ' + " · ".join(f"{c[p]} {label(p, lang)}" for p in ORDER if c[p])
+            + " - " + " | ".join(r["actions"][:2] or [r["alerts"][0]["title"]]))
     sub = " &middot; ".join(e(x) for x in (r.get("generated"), r.get("source")) if x)
     return f'''<!DOCTYPE html>
 <html lang="{lang}" dir="{d}" xmlns="http://www.w3.org/1999/xhtml" xmlns:o="urn:schemas-microsoft-com:office:office">
 <head><meta http-equiv="Content-Type" content="text/html; charset=utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="color-scheme" content="light"><meta name="supported-color-schemes" content="light"><title>{e(subject(r))}</title>
+<meta name="x-apple-disable-message-reformatting"><meta name="color-scheme" content="light dark"><meta name="supported-color-schemes" content="light dark">
+<title>{e(subject(r))}</title>
 <!--[if mso]><xml><o:OfficeDocumentSettings><o:PixelsPerInch>96</o:PixelsPerInch></o:OfficeDocumentSettings></xml><![endif]-->
+<style>@media only screen and (max-width:520px){{.px{{padding-left:10px!important;padding-right:10px!important}}.ab{{font-size:12px!important}}}}</style>
 </head>
 <body dir="{d}" style="margin:0;padding:0;background-color:#F2F4F7;-webkit-text-size-adjust:100%;-ms-text-size-adjust:100%">
-<div style="display:none;max-height:0;overflow:hidden;mso-hide:all;font-size:1px;line-height:1px;color:#F2F4F7">{pre}</div>
-<table {TBL} width="100%" bgcolor="#F2F4F7" dir="{d}"><tr><td align="center" style="padding:24px 12px">
-<!--[if mso]><table {TBL} width="680" align="center"><tr><td><![endif]-->
-<table {TBL} width="100%" dir="{d}" style="max-width:680px" bgcolor="#FFFFFF">
-<tr><td bgcolor="#0B1F3A" align="{al}" style="padding:24px 24px 20px 24px">
-<p style="margin:0;{F}font-size:12px;line-height:16px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#9DB2CE">{e(t["report"])}</p>
-<p style="margin:6px 0 0 0;{F}font-size:22px;line-height:28px;font-weight:700;color:#FFFFFF">{e(r.get("title") or t["report"])}</p>
-<p style="margin:6px 0 0 0;{F}font-size:13px;line-height:18px;color:#C7D2E0">{sub}</p></td></tr>
-<tr><td bgcolor="{PRI[top][2]}" align="{al}" style="padding:10px 24px;{F}font-size:14px;line-height:20px;font-weight:700;color:#FFFFFF">{len(r["alerts"])} {e(t["alerts"])}: {status}</td></tr>
-<tr><td style="padding:18px 21px 0 21px"><table {TBL} width="100%"><tr>{tiles}</tr></table></td></tr>
+<div style="display:none;max-height:0;overflow:hidden;mso-hide:all;font-size:1px;line-height:1px;color:#F2F4F7">{pre}&#8203;&nbsp;&#8203;&nbsp;&#8203;&nbsp;&#8203;&nbsp;</div>
+<table {TBL} width="100%" bgcolor="#F2F4F7" dir="{d}"><tr><td align="center" class="px" style="padding:16px 8px">
+<!--[if mso]><table {TBL} width="640" align="center"><tr><td><![endif]-->
+<table {TBL} width="100%" dir="{d}" style="max-width:640px" bgcolor="#FFFFFF">
+<tr><td class="px" bgcolor="#0B1F3A" align="{al}" style="padding:14px 20px">
+<p style="margin:0;{F}font-size:18px;line-height:24px;mso-line-height-rule:exactly;font-weight:700;color:#FFFFFF">{e(r.get("title") or t["report"])}</p>
+<p style="margin:2px 0 0 0;{F}font-size:12px;line-height:17px;color:#C7D2E0">{sub}</p></td></tr>
+<tr><td class="px" bgcolor="{PRI[top][2]}" align="{al}" style="padding:7px 20px;{F}font-size:13px;line-height:18px;font-weight:700;color:#FFFFFF">{len(r["alerts"])} {e(t["alerts"])}: {status}</td></tr>
 {"".join(blocks)}
-<tr><td align="{al}" style="padding:24px 24px 24px 24px"><p style="margin:0;padding:14px 0 0 0;border-top:1px solid #EAECF0;{F}font-size:12px;line-height:18px;color:#667085">{e(t["footer"])}</p></td></tr>
+<tr><td class="px" align="{al}" style="padding:14px 20px 16px 20px;{F}font-size:11px;line-height:16px;color:#98A2B3">{e(t["footer"])}</td></tr>
 </table>
 <!--[if mso]></td></tr></table><![endif]-->
 </td></tr></table></body></html>'''
