@@ -4,7 +4,8 @@ paas-kit  -  VM-wide add-ons for Claude, kept apart from the brain
 One install (root). rtk and Headroom are on for every user on the VM, including users created later, whatever brain
 (team) they use, or none - no question asked, and users cannot turn them off (Claude's managed settings rank above
 anyone's own settings); only root can (below). The coding plugins (code-graph, fastapi-api, ponytail) are plugins of
-the paas Market: each user adds the ones they want. It does not change the brain, any team repository,
+the paas Market: each user adds the ones they want. Each plugin is self-contained (its own engine and wheels, no
+need for the kit): it works the same on the VM and on a laptop that adds it from the paas Market. It does not change the brain, any team repository,
 managed-settings.json or anyone's own settings.
 
 WHAT IS IN IT
@@ -37,11 +38,14 @@ OPTIONAL: plugins of the paas Market (each user adds them; root can force one on
   code-graph         for large code bases: a graph of the git repository (functions, classes, imports, callers,
                      tests) the model asks instead of reading many files - what a change breaks, who calls what,
                      review context. Built once per repository (/code-graph:build), kept up to date after edits.
+                     Carries the code-review-graph wheels: on the VM one shared environment (/opt/paas/plugin-venvs,
+                     built at install); elsewhere it builds its own in ~/.cache/paas-plugins on first use (about
+                     a minute, the first session says "preparing").
                      Measured on this repository: 2.4x faster on call-chain / impact questions; Grep stays the tool
                      for one-step lookups (the skill says so). Plus ast-grep (structural code search) on the PATH.
   fastapi-api        build Python REST APIs offline: /fastapi-api:new <name> (template with tests), `paas-kit venv`
                      (FastAPI, uvicorn, pydantic, SQLAlchemy, alembic, psycopg, httpx, pytest, ruff, mypy from the
-                     kit's wheels, Python 3.12 or 3.9), the rules skill and an api-reviewer agent.
+                     plugin's own wheels, Python 3.12 or 3.9), the rules skill and an api-reviewer agent.
 
   ponytail           coding mode (DietrichGebert/ponytail 5.3.3, MIT, offline copy in brain-plugins/): reuse what
                      exists, write the smallest correct change, never cut validation, security or tests; ends each
@@ -50,7 +54,8 @@ OPTIONAL: plugins of the paas Market (each user adds them; root can force one on
                      not run the tests it was asked to run, and said so. For coding, not storage chats.
                      It is a plugin of the paas Market (the brain's catalogue, brain-dev): the installer adds it to
                      /opt/paas/plugins when the brain there does not carry it yet. Users add it in the Market.
-                     Root, for everyone: paas-kit plugin on ponytail (off: back to each user's choice). Needs node.
+                     Root, for everyone: paas-kit plugin on ponytail (off: back to each user's choice). Needs Node.js:
+                     the web UI's own, or the system's; without it the hooks stay quiet and the commands still work.
 
 NEEDS
   RHEL 9 (or similar) with python3.12:  dnf install -y python3.12      About 1.5 GB free in /opt. Headroom: about
@@ -90,4 +95,4 @@ LICENSES
 FILES
   /opt/paas-kit/{kit,bin,venv,tiktoken}   /etc/paas-kit/kit.json   /etc/claude-code/managed-settings.d/60-paas-kit.json
   /etc/systemd/system/paas-headroom.service, paas-kit-watch.{service,timer}
-  /usr/local/bin/{paas-kit,code-review-graph,ast-grep,rtk}
+  /usr/local/bin/{paas-kit,ast-grep,rtk}   /opt/paas/plugin-venvs (code-graph's shared environment)

@@ -39,4 +39,4 @@ user), or the user runs `/code-graph:build`. After a `git pull` or a branch swit
 2. Before changing a function used elsewhere: `get_impact_radius_tool`, and say which callers and tests change.
 3. A review of a change: list the affected callers and tests that are not covered by the diff.
 4. The graph is structure, not truth about behaviour: confirm in the code before you state how something works.
-5. Structural search in the shell (patterns, not text): `ast-grep run -p 'foo($A)' -l python src/`.
+5. The graph is local and offline: `.code-review-graph/` in the repository (git ignores it).

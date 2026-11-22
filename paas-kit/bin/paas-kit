@@ -296,50 +296,23 @@ def status():
               + ("" if shutil.which("node") else "   WARNING: node is not on the PATH, its hooks cannot run"))
     print("rtk           rtk's own hook; left as typed: " + (", ".join(c.get("rtk_exclude", RTK_EXCLUDE)) or "nothing")
           + "; your savings: paas-kit gain")
-    crg = f"{D}/venv/crg/bin/code-review-graph"
-    print(f"code graph    {'ready' if os.path.exists(crg) else 'missing'}: paas-kit graph build  (in a git repository)")
-    print(f"FastAPI       paas-kit venv .   (Python {', '.join(v for v in ('3.12', '3.9') if glob.glob(f'{D}/kit/wheels/api-py{v.replace(".", "")}/*.whl'))})")
 
 
 def venv(rest):
-    target, py = ".", None
-    i = 0
-    while i < len(rest):
-        if rest[i] == "--python" and i + 1 < len(rest):
-            py = rest[i + 1]
-            i += 2
-        else:
-            target = rest[i]
-            i += 1
-    cands = [py] if py else ["3.12", "3.9"]
-    for v in cands:
-        exe = shutil.which(f"python{v}")
-        wheels = f"{D}/kit/wheels/api-py{v.replace('.', '')}"
-        if exe and glob.glob(wheels + "/*.whl"):
-            break
-    else:
-        sys.exit(f"paas-kit: no python{' or python'.join(cands)} with kit wheels (the kit has 3.12 and 3.9)")
-    dst = os.path.join(os.path.abspath(target), ".venv")
-    if not os.path.exists(os.path.join(dst, "bin", "python")):
-        subprocess.run([exe, "-m", "venv", dst], check=True)
-    pkgs = ["fastapi[standard]", "uvicorn", "pydantic", "pydantic-settings", "httpx", "sqlalchemy", "alembic",
-            "psycopg[binary]", "python-jose", "passlib", "python-multipart", "pytest", "pytest-asyncio", "ruff", "mypy"]
-    req = os.path.join(os.path.abspath(target), "requirements.txt")
-    cmd = [os.path.join(dst, "bin", "pip"), "install", "-q", "--no-index", "--find-links", wheels]
-    r = subprocess.run(cmd + (["-r", req] if os.path.exists(req) else pkgs))
-    if r.returncode and os.path.exists(req):
-        print("some of requirements.txt is not in the kit; installing the kit's FastAPI stack instead")
-        r = subprocess.run(cmd + pkgs)
-    if r.returncode:
-        sys.exit(r.returncode)
-    print(f"{dst} ready (Python {v}): . {dst}/bin/activate")
+    """the fastapi-api plugin's own venv command (the plugin carries the wheels)"""
+    exe = "/opt/paas/plugins/fastapi-api/bin/fastapi-venv"
+    if not os.path.exists(exe):
+        sys.exit("paas-kit: the fastapi-api plugin is not in the paas Market here (/opt/paas/plugins)")
+    os.execv(exe, [exe] + rest)
 
 
 def graph(rest):
-    exe = f"{D}/venv/crg/bin/code-review-graph"
-    if not os.path.exists(exe):
-        sys.exit("paas-kit: code-review-graph is not installed (sudo sh install.sh in the kit)")
-    os.execv(exe, [exe] + rest)
+    """code-review-graph from the code-graph plugin's own environment"""
+    env = subprocess.run(["/opt/paas/plugins/code-graph/bin/crg-env"], capture_output=True, text=True).stdout.strip() \
+        if os.path.exists("/opt/paas/plugins/code-graph/bin/crg-env") else ""
+    if not env:
+        sys.exit("paas-kit: code-graph's environment is not built here (root: /opt/paas/plugins/code-graph/bin/setup-shared)")
+    os.execv(f"{env}/bin/code-review-graph", [f"{env}/bin/code-review-graph"] + rest)
 
 
 def main():

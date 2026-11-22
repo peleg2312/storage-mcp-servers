@@ -1,6 +1,8 @@
 {
   "name": "code-graph",
-  "version": "1.0.0",
-  "description": "A graph of your git repository for large code bases (code-review-graph, offline): impact of a change, callers, review context",
-  "author": {"name": "paas-kit"}
+  "version": "2.0.0",
+  "description": "A graph of your git repository for large code bases (code-review-graph 2.4, offline, carries its own engine): impact of a change, callers of callers, review context",
+  "author": {
+    "name": "storage brain"
+  }
 }

@@ -195,25 +195,25 @@
         "name": "Dietrich Gebert"
       },
       "homepage": "https://github.com/DietrichGebert/ponytail",
-      "description": "Coding mode (MIT, offline copy of ponytail 5.3.3): reuse what exists, write the smallest correct change, never cut validation, security or tests; /ponytail-review, /ponytail-audit. Measured here: about 18% faster, 19% fewer output tokens, 35% less code. For coding, not storage chats. Needs node."
+      "description": "Coding mode (MIT, offline copy of ponytail 5.3.3): reuse what exists, write the smallest correct change, never cut validation, security or tests; /ponytail-review, /ponytail-audit. Measured here: about 18% faster, 19% fewer output tokens, 35% less code. For coding, not storage chats. Needs Node.js (the web UI's own, or the system's)."
     },
     {
       "name": "code-graph",
       "source": "./code-graph",
       "category": "development",
       "author": {
-        "name": "paas-kit"
+        "name": "storage brain"
       },
-      "description": "A graph of your git repository (functions, imports, callers, tests) for large code bases: what a change breaks, callers of callers, review context. Measured: 2.4x faster on call-chain questions; Grep stays the tool for one-step lookups. Needs the paas-kit (its code-review-graph engine)."
+      "description": "A graph of your git repository (functions, imports, callers, tests) for large code bases: what a change breaks, callers of callers, review context. Measured: 2.4x faster on call-chain questions; Grep stays the tool for one-step lookups. Carries its own engine (code-review-graph, offline wheels for Linux + Python 3.12; on another machine with internet it downloads them); the first session on a machine prepares it (about a minute)."
     },
     {
       "name": "fastapi-api",
       "source": "./fastapi-api",
       "category": "development",
       "author": {
-        "name": "paas-kit"
+        "name": "storage brain"
       },
-      "description": "Build Python REST APIs with FastAPI offline: /fastapi-api:new <name> (tested template), paas-kit venv (FastAPI stack from the kit's wheels, Python 3.12 / 3.9), the rules skill and an api-reviewer agent. Needs the paas-kit."
+      "description": "Build Python REST APIs with FastAPI offline: /fastapi-api:new <name> (tested template), fastapi-venv (FastAPI stack from the plugin's own wheels, Python 3.12 / 3.9; with internet on another machine it downloads), the rules skill and an api-reviewer agent."
     }
   ]
 }

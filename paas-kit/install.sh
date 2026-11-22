@@ -8,13 +8,13 @@
 #   sudo sh install.sh --no-headroom            install Headroom but leave it off (paas-kit headroom on, later)
 #
 # What it touches (nothing of the brain, no team repository, no user's own settings):
-#   /opt/paas-kit/                 the kit, two Python 3.12 venvs (Headroom, code-review-graph), rtk, wheels, tiktoken
+#   /opt/paas-kit/                 the kit, a Python 3.12 venv (Headroom), rtk, wheels, tiktoken
 #                                  data
 #   /etc/paas-kit/kit.json         its settings
 #   /etc/claude-code/managed-settings.d/60-paas-kit.json   Claude settings for everyone, above anyone's own: rtk on
 #                                  and, with Headroom on,
 #                                  ANTHROPIC_BASE_URL=http://127.0.0.1:8787; never managed-settings.json
-#   paas-headroom.service, paas-kit-watch.timer (systemd); /usr/local/bin/paas-kit, code-review-graph, ast-grep
+#   paas-headroom.service, paas-kit-watch.timer (systemd); /usr/local/bin/paas-kit, rtk, ast-grep
 set -eu
 KIT=$(cd "$(dirname "$0")" && pwd)
 [ "$(id -u)" = 0 ] || { echo "run it as root: sudo sh $0 $*"; exit 1; }
@@ -47,13 +47,10 @@ venv() {   # venv <name> <wheels> <packages...>: a fresh venv; the old one comes
 }
 echo "== Headroom (venv, offline wheels)"
 venv headroom headroom "headroom-ai[proxy]"
-echo "== code-review-graph (venv, offline wheels)"
-venv crg crg code-review-graph
 chmod -R a+rX "$D"
 
 ln -sf "$D/bin/paas-kit" /usr/local/bin/paas-kit
 ln -sf "$D/bin/rtk" /usr/local/bin/rtk
-ln -sf "$D/venv/crg/bin/code-review-graph" /usr/local/bin/code-review-graph
 ln -sf "$D/venv/headroom/bin/ast-grep" /usr/local/bin/ast-grep
 
 echo "== settings"
@@ -128,8 +125,12 @@ if not any(x.get("name") == name for x in m.get("plugins", [])):
     print(f"paas Market: added the optional plugin {name}")
 PY
   done
+  rm -rf "$D/venv/crg"                       # older kits ran code-graph from here; the plugin carries its own engine now
+  for s in /opt/paas/plugins/*/bin/setup-shared; do   # a plugin's shared part, once for every user (code-graph's environment)
+    [ -x "$s" ] && { PAAS_PLUGIN_VENVS=/opt/paas/plugin-venvs "$s" || echo "note: $s failed; each user builds their own on first use"; }
+  done
 else
-  echo "note: no paas Market on this VM (/opt/paas/plugins); the optional plugins (ponytail) are not offered"
+  echo "note: no paas Market on this VM (/opt/paas/plugins); the optional plugins are not offered here"
 fi
 command -v node >/dev/null 2>&1 || echo "note: node is not on the PATH; the optional ponytail plugin needs it for its hooks"
 echo

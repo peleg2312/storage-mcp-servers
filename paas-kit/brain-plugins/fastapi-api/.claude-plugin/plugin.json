@@ -1,6 +1,0 @@
-{
-  "name": "fastapi-api",
-  "version": "1.0.0",
-  "description": "Build Python REST APIs with FastAPI offline: template, venv from the VM's wheels, rules, reviewer agent",
-  "author": {"name": "paas-kit"}
-}

@@ -1,0 +1,3 @@
+#!/bin/sh
+# root, on a multi-user VM (the brain installer and the paas-kit run it): code-graph's environment once for every user
+exec "$(cd "$(dirname "$0")" && pwd)/crg-env" --shared

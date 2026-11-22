@@ -1,0 +1,3 @@
+#!/bin/sh
+# SessionStart hook: tells the model where this plugin's own venv command is (the plugin works without any other kit)
+echo "fastapi-api plugin: make a project's Python venv offline with: $(cd "$(dirname "$0")" && pwd)/fastapi-venv <project dir>"

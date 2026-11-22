@@ -1,0 +1,39 @@
+#!/usr/bin/env python3
+"""fastapi-venv [DIR] [--python 3.12|3.9]: a Python venv in DIR/.venv with FastAPI and its stack, from the plugin's own
+wheels (Linux x86_64, Python 3.12 and 3.9), offline. Uses DIR/requirements.txt when everything in it is in the wheels.
+On a machine the wheels do not fit (macOS, another Python) and with internet, pip downloads instead. Part of the
+fastapi-api plugin; needs nothing else."""
+import glob, os, shutil, subprocess, sys
+ROOT = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
+PKGS = ["fastapi[standard]", "uvicorn", "pydantic", "pydantic-settings", "httpx", "sqlalchemy", "alembic", "psycopg[binary]",
+        "python-jose", "passlib", "python-multipart", "pytest", "pytest-asyncio", "ruff", "mypy"]
+args = sys.argv[1:]; target, want = ".", None
+while args:
+    a = args.pop(0)
+    if a == "--python" and args: want = args.pop(0)
+    elif a in ("-h", "--help"): print(__doc__); sys.exit(0)
+    else: target = a
+target = os.path.abspath(target); dst = os.path.join(target, ".venv")
+exe, ver = None, None
+for v in ([want] if want else ["3.12", "3.9", "3.13", "3.11", "3.10"]):
+    e = shutil.which(f"python{v}")
+    if e: exe, ver = e, v; break
+if not exe: sys.exit("fastapi-venv: no python3.12 or python3.9 here (RHEL: dnf install -y python3.12)")
+wheels = os.path.join(ROOT, "wheels", "py" + ver.replace(".", ""))
+os.makedirs(target, exist_ok=True)
+if not os.path.exists(os.path.join(dst, "bin", "python")):
+    subprocess.run([exe, "-m", "venv", dst], check=True)
+pip = [os.path.join(dst, "bin", "pip"), "install", "-q"]
+req = os.path.join(target, "requirements.txt")
+what = ["-r", req] if os.path.exists(req) else PKGS
+ok = False
+if glob.glob(wheels + "/*.whl"):
+    ok = subprocess.run(pip + ["--no-index", "--find-links", wheels] + what).returncode == 0
+    if not ok and what != PKGS:
+        print("fastapi-venv: something in requirements.txt is not in the plugin's wheels; installing its FastAPI stack")
+        ok = subprocess.run(pip + ["--no-index", "--find-links", wheels] + PKGS).returncode == 0
+if not ok:
+    print("fastapi-venv: the plugin's wheels do not fit this machine; trying the package index (needs internet)")
+    ok = subprocess.run(pip + what).returncode == 0
+if not ok: sys.exit("fastapi-venv: could not install the packages")
+print(f"{dst} ready (Python {ver}): . {dst}/bin/activate")

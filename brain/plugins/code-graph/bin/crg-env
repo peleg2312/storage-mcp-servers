@@ -1,0 +1,43 @@
+#!/bin/sh
+# code-graph plugin: its own Python environment with code-review-graph, built from the plugin's own wheels (../wheels:
+# Linux x86_64, Python 3.12). Works on the VM and on any PC the plugin is installed on, without the paas-kit.
+#   crg-env            print the environment's folder if it is ready (exit 1 if not)
+#   crg-env --build    build this user's environment now (one build at a time). Offline from ../wheels; if this
+#                      machine needs other wheels (macOS, another Python) and has internet, pip downloads them
+#   crg-env --shared   root on a multi-user VM: one environment for every user (/opt/paas/plugin-venvs)
+# Order: the shared environment, else the user's own (~/.cache/paas-plugins).
+ROOT=$(cd "$(dirname "$0")/.." && pwd)
+VER=$(ls "$ROOT/wheels" | cksum | cut -d' ' -f1)
+SHARED=${PAAS_PLUGIN_VENVS:-/opt/paas/plugin-venvs}/code-graph-$VER
+USER_ENV=${XDG_CACHE_HOME:-$HOME/.cache}/paas-plugins/code-graph-$VER
+PY=""
+for p in python3.12 python3.13 python3.11 python3.10 python3; do
+  command -v "$p" >/dev/null 2>&1 && "$p" -c 'import sys; sys.exit(0 if sys.version_info >= (3, 10) else 1)' 2>/dev/null && { PY=$(command -v "$p"); break; }
+done
+build() {   # build <target>: in <target>.new, renamed in when it works
+  [ -n "$PY" ] || { echo "code-graph: needs Python 3.10+ (RHEL: dnf install -y python3.12)" >&2; return 1; }
+  mkdir -p "$(dirname "$1")"
+  mkdir "$1.lock" 2>/dev/null || return 0          # someone else is building it
+  rm -rf "$1.new"
+  if "$PY" -m venv "$1.new" >/dev/null 2>&1 && \
+     { "$1.new/bin/pip" install -q --no-index --find-links "$ROOT/wheels" code-review-graph >/dev/null 2>&1 || \
+       "$1.new/bin/pip" install -q "code-review-graph==2.4.0" >/dev/null 2>&1; }; then
+    for f in $(grep -rl "$1.new" "$1.new/bin" 2>/dev/null); do sed -i.bak "s#$1.new#$1#g" "$f" && rm -f "$f.bak"; done
+    rm -rf "$1"; mv "$1.new" "$1"
+  else
+    rm -rf "$1.new"; echo "code-graph: could not build its environment (Python $("$PY" --version 2>&1 | cut -d' ' -f2); offline wheels are for Linux x86_64 Python 3.12)" >&2
+  fi
+  rmdir "$1.lock"
+}
+case ${1:-} in
+  --shared)
+    [ "$(id -u)" = 0 ] || { echo "crg-env --shared: run as root"; exit 1; }
+    [ -x "$SHARED/bin/code-review-graph" ] || build "$SHARED"
+    for old in "$(dirname "$SHARED")"/code-graph-*; do [ "$old" = "$SHARED" ] || [ ! -d "$old" ] || rm -rf "$old"; done
+    chmod -R a+rX "$(dirname "$SHARED")" 2>/dev/null
+    [ -x "$SHARED/bin/code-review-graph" ] && echo "code-graph: environment ready for every user ($SHARED)" ;;
+  --build) [ -x "$SHARED/bin/code-review-graph" ] || [ -x "$USER_ENV/bin/code-review-graph" ] || build "$USER_ENV" ;;
+  *)
+    for e in "$SHARED" "$USER_ENV"; do [ -x "$e/bin/code-review-graph" ] && { echo "$e"; exit 0; }; done
+    exit 1 ;;
+esac

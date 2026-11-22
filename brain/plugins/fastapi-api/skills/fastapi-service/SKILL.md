@@ -1,12 +1,13 @@
 ---
 name: fastapi-service
-description: Use when building or changing a Python REST API / web service / backend (FastAPI, uvicorn, pydantic, SQLAlchemy, alembic, pytest) on this air-gapped VM - new project, new endpoint, database model, settings, tests, or a container for OpenShift. Holds the offline setup (paas-kit venv), the project layout and the rules.
+description: Use when building or changing a Python REST API / web service / backend (FastAPI, uvicorn, pydantic, SQLAlchemy, alembic, pytest) on this air-gapped VM - new project, new endpoint, database model, settings, tests, or a container for OpenShift. Holds the offline setup (the plugin's fastapi-venv), the project layout and the rules.
 ---
 # FastAPI services on this VM (offline)
 
-Nothing is downloaded here: packages come from the VM's wheels.
+Nothing is downloaded here: packages come from the plugin's own wheels.
 - New project: `/fastapi-api:new <name>` (copies the template, makes `.venv`, runs the tests).
-- Existing project: `paas-kit venv .` makes `./.venv` (Python 3.12, else 3.9) with FastAPI, uvicorn, pydantic v2,
+- Existing project: the plugin's `fastapi-venv <dir>` (its full path is given at session start: "fastapi-api plugin: make
+  a project's Python venv offline with: .../fastapi-venv") makes `<dir>/.venv` (Python 3.12, else 3.9) with FastAPI, uvicorn, pydantic v2,
   pydantic-settings, SQLAlchemy 2, alembic, psycopg 3, httpx, python-jose, passlib, python-multipart, pytest,
   pytest-asyncio, ruff, mypy. A `requirements.txt` there is used when everything in it is in the wheels.
 - `pip install` of anything else fails offline: say which package is missing; do not invent a workaround.
@@ -43,5 +44,6 @@ Run: `.venv/bin/uvicorn app.main:app --reload --port 8000`; docs at /docs. Check
 ## Container for OpenShift
 A `Containerfile` from the internal registry's Python image (ask the user for its name; never a public registry):
 copy the wheels the project needs into the image (`pip download` is impossible here; use
-`pip wheel -w wheels -r requirements.txt --no-index --find-links /opt/paas-kit/kit/wheels/api-py312`), run as a
+`pip wheel -w wheels -r requirements.txt --no-index --find-links <the plugin folder>/wheels/py312` (the plugin folder is the
+parent of the bin folder named at session start)), run as a
 non-root user, `uvicorn app.main:app --host 0.0.0.0 --port 8080`, readiness probe `/readyz`, liveness `/healthz`.

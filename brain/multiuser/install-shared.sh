@@ -49,6 +49,9 @@ for d in tools hooks banner themes; do swap "$BRAIN/claude/$d" "$d"; done
 cp "$BRAIN/../docs-search-mcp/docs_index.py" "$P/tools/docs_index.py"     # add-docs of every account runs it (the swap above replaced the folder)
 command -v setfacl >/dev/null 2>&1 || { echo "install-shared: the acl package is required (dnf install acl): directory groups and the services read /opt/paas through ACLs"; exit 1; }
 swap "$BRAIN/plugins" plugins                                   # Claude Code plugins, offered in the marketplace
+for s in "$P"/plugins/*/bin/setup-shared; do                   # a plugin's shared part (code-graph: its environment)
+  [ -x "$s" ] && { PAAS_PLUGIN_VENVS="$P/plugin-venvs" "$s" || echo "plugin setup: $s failed (each user builds their own on first use)"; }
+done
 DEVTOOLS_VENV=$P/devtools-venv sh "$BRAIN/devtools/install-devtools.sh" || echo "devtools: skipped (see above)"
 chmod -R a+rX "$P/library" "$P/brain" "$P/tools" "$P/hooks" "$P/banner" "$P/themes" "$P/plugins"
 [ ! -d "$P/devtools-venv" ] || chmod -R a+rX "$P/devtools-venv"   # optional: the venv may have been skipped
