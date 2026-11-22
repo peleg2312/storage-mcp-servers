@@ -1,0 +1,173 @@
+{
+ "headline": "השכפול ל-DR למטה — לטפל מיד",
+ "generated": "Mon 23 Nov 2026, 07:30",
+ "window": "24 שעות אחרונות",
+ "lang": "he",
+ "source": "powermax, powerflex, mds and ucs-central MCP (read-only), vCenter alarms via Aria",
+ "summary": "תקלה אמיתית אחת: קבוצת SRDF 10 ל-DC2 למטה מאז 02:14. שתי התראות נובעות מאותה סיבה - SFP תקול ב-MDS-A fc1/5.",
+ "actions": [
+  "Open a case with the WAN team: DC1→DC2 RDF links down since 02:14 (both RDF ports online, no remote partner)",
+  "Replace the SFP in MDS-A fc1/5, then rescan ESX-12 to bring path vmhba2:C0:T3 back",
+  "Replace drive SDS-03 slot 7 (rebuild already complete)"
+ ],
+ "alerts": [
+  {
+   "priority": "P1",
+   "state": "new",
+   "since": "02:14 (5 h)",
+   "title": "קבוצת SRDF 10 - כל הקישורים למטה",
+   "vendor": "Dell",
+   "product": "PowerMax",
+   "system": "000197900123",
+   "object": "RDF group 10 → DC2 (000197900456)",
+   "code": "Event 1220 - SRDF link down",
+   "vendor_severity": "Critical",
+   "count": 3,
+   "first_seen": "02:14",
+   "last_seen": "02:20",
+   "message": "RDF group 10 (0x0A): all RDF links are offline. Remote Symmetrix 000197900456 not reachable.",
+   "why": "השכפול ל-DR מושבת 5 שעות - ה-RPO כבר נחצה.",
+   "what": "כל קישורי SRDF בקבוצה 10 למטה; כתיבות ב-DC1 לא מועתקות ל-DC2.",
+   "impact": "42 production devices (SG prod_oracle) have no DR copy since 02:14.",
+   "confidence": "likely",
+   "cause": "The inter-site path, not the array: both RDF directors are up but see no remote partner.",
+   "evidence": [
+    "RDF ports 1E:4 and 2E:4 online, link state Offline, 0 remote ports seen",
+    "No RDF port, director or array alert on either side",
+    "Both ports went down within 6 s of each other at 02:14 - points to a shared WAN / DWDM path"
+   ],
+   "steps": [
+    "Ask the WAN team to check the DC1→DC2 DWDM / IP path used by the RDF ports at 02:14",
+    "When the links are up, resume the pairs",
+    "Watch invalid tracks drain to 0 before closing the incident"
+   ],
+   "commands": [
+    "symrdf -sid 123 -rdfg 10 -sg prod_oracle query",
+    "symrdf -sid 123 -rdfg 10 -sg prod_oracle resume   # after links are up"
+   ],
+   "verify": "symrdf query shows pair state Synchronized and invalid tracks 0.",
+   "sources": [
+    {
+     "title": "PowerMax Events and Alerts Guide - event 1220 (PowerMaxOS 10)",
+     "url": "https://dl.dell.com/pm-events"
+    },
+    {
+     "title": "SRDF CLI User Guide - resume",
+     "url": "https://dl.dell.com/srdf-cli"
+    }
+   ]
+  },
+  {
+   "priority": "P2",
+   "state": "new",
+   "since": "Sun 22:40 (9 h)",
+   "title": "ESX-12 lost one path to datastore DS-PROD-07",
+   "vendor": "VMware",
+   "product": "vSphere",
+   "system": "esx-12.dc1",
+   "object": "vmhba2:C0:T3:L12 (DS-PROD-07)",
+   "code": "esx.problem.storage.redundancy.degraded",
+   "vendor_severity": "Warning",
+   "count": 1,
+   "first_seen": "Sun 22:40",
+   "message": "Path redundancy to storage device naa.600009700001979001235330 30304531 degraded. Path vmhba2:C0:T3:L12 is down. 1 remaining active paths.",
+   "why": "The datastore runs on one path - one more failure takes 14 VMs down.",
+   "what": "ESX-12 has one of its two paths to DS-PROD-07 down; it still works on fabric B.",
+   "impact": "No outage now, but no redundancy for 14 VMs.",
+   "confidence": "confirmed",
+   "cause": "Same root cause as the CRC alert below: the SFP on MDS-A fc1/5 (ESX-12 vmhba2) is failing.",
+   "evidence": [
+    "vmhba2 WWPN 21:00:00:24:ff:4c:12:a2 logs in on MDS-A fc1/5",
+    "fc1/5 RX power -11.8 dBm (low alarm -11.0)",
+    "Path went dead 3 min after CRC errors started climbing"
+   ],
+   "steps": [
+    "Fix the SFP on MDS-A fc1/5 (next alert)",
+    "Rescan vmhba2 on ESX-12 and check both paths are Active"
+   ],
+   "commands": [
+    "esxcli storage core path list -d naa.60000970000197900123533030304531"
+   ],
+   "verify": "2 paths Active (I/O) for the device; vCenter alarm clears.",
+   "related": "Caused by: CRC errors on MDS-A fc1/5"
+  },
+  {
+   "priority": "P3",
+   "state": "ongoing",
+   "since": "Sun 22:37 (9 h)",
+   "title": "CRC errors on MDS-A fc1/5",
+   "vendor": "Cisco",
+   "product": "MDS",
+   "system": "MDS-A",
+   "object": "fc1/5 (ESX-12 vmhba2)",
+   "code": "rx_crc / %PORT-5-IF_DOWN_LINK_FAILURE",
+   "vendor_severity": "Warning",
+   "count": 118,
+   "first_seen": "Sun 22:37",
+   "last_seen": "07:01",
+   "message": "%PORT-5-IF_DOWN_LINK_FAILURE: %$VSAN 10%$ Interface fc1/5 is down (Link failure loss of signal)",
+   "why": "It already cost ESX-12 a path; it will keep flapping until the optic is replaced.",
+   "what": "Frames arrive damaged on this port and the link drops.",
+   "confidence": "confirmed",
+   "cause": "A failing SFP: receive power is below the alarm threshold.",
+   "evidence": [
+    "118 CRC errors in 9 h, 0 before Sun 22:37",
+    "Transceiver RX power -11.8 dBm, low alarm -11.0 dBm",
+    "Peer HBA reports no errors on its side"
+   ],
+   "steps": [
+    "Replace the SFP in fc1/5 (same type: 32G SW)",
+    "If errors continue: replace the cable",
+    "Clear counters and watch 1 hour"
+   ],
+   "commands": [
+    "show interface fc1/5 transceiver details",
+    "show interface fc1/5 counters | i crc"
+   ],
+   "verify": "RX power above -9 dBm and CRC counter stays at 0 for 1 hour.",
+   "related": "Causes: ESX-12 path loss above"
+  },
+  {
+   "priority": "P3",
+   "state": "ongoing",
+   "since": "Sun 11:02 (20 h)",
+   "title": "PowerFlex drive failed - rebuild finished",
+   "vendor": "Dell",
+   "product": "PowerFlex",
+   "system": "pfx-prod",
+   "object": "SDS-03 /dev/sdh (pd01 / sp-ssd)",
+   "code": "DEVICE_FAILED",
+   "vendor_severity": "Major",
+   "count": 1,
+   "first_seen": "Sun 11:02",
+   "message": "Device /dev/sdh on SDS SDS-03 failed. Rebuild started for 1.8 TB.",
+   "why": "Data is fully protected again; the pool has one fewer drive of spare capacity.",
+   "what": "One SSD failed; PowerFlex rebuilt its data onto the other drives.",
+   "confidence": "confirmed",
+   "cause": "Drive hardware failure.",
+   "evidence": [
+    "Rebuild completed Sun 13:47, 0 degraded capacity",
+    "pd01 spare capacity 9% (policy 10%)"
+   ],
+   "steps": [
+    "Replace the drive in SDS-03 slot 7",
+    "Add the new device to sp-ssd and let it rebalance"
+   ],
+   "commands": [
+    "scli --query_all_devices --sds_name SDS-03"
+   ],
+   "verify": "New device Normal, spare capacity back to ≥10%."
+  },
+  {
+   "priority": "INFO",
+   "state": "resolved",
+   "title": "UCS FI-A PSU 2 input lost (restored 03:10)",
+   "count": 1
+  },
+  {
+   "priority": "INFO",
+   "title": "Unisphere logins",
+   "count": 7
+  }
+ ]
+}

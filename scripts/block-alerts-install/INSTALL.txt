@@ -1,0 +1,43 @@
+block-alerts  -  storage alerts in, a clear Outlook email out
+=============================================================
+
+What it does: you tell Claude where the alerts are (pasted, a file, or the PowerMax / PowerFlex / ONTAP / MDS /
+UCS / Aria MCP) and how to read them. Claude groups them, explains each one from the offline docs, checks the live
+state read-only, finds the cause, rates how urgent it is, says what to do, and emails you a morning report:
+headline, counts, what is new since the last report, "do first", a triage table, and one card per problem
+(diagnosis with evidence, fix steps, commands, how to verify the fix, the alert as the system wrote it).
+
+The email's HTML is complete and fixed inside the skill (block_alerts_mail.py): Claude only fills in the content
+(report.json) and runs the script - it never writes HTML. See block-alerts/examples/email.html for the result.
+
+INSTALL
+  unzip block-alerts-<version>.zip && cd block-alerts-<version>
+  sh install.sh --check                test first (needs python3 3.9+, nothing else)
+  sh install.sh                        for you only      -> ~/.claude/skills/block-alerts
+  sudo sh install.sh --all             for every user on the VM, and users created later (/etc/skel)
+  Then start a new Claude session (web UI: a new chat).
+
+  On a laptop (macOS / Linux): the same "sh install.sh". On Windows without sh: copy the block-alerts folder to
+  %USERPROFILE%\.claude\skills\block-alerts
+
+USE (in Claude)
+  "block alerts: the PowerMax and MDS alerts of the last 24 h, email them to me"
+  "summarize these alerts and send me the mail: <paste>"
+  "same as yesterday" - once you say "always like this", it remembers the source (~/.config/block-alerts/)
+
+FIRST MAIL: Claude asks for the mail relay (SMTP host of your Exchange, port, From, To). A password, if needed,
+  you put in a file yourself (never in the chat):
+    install -m 600 /dev/null ~/.config/block-alerts/smtp.pass && vi ~/.config/block-alerts/smtp.pass
+  Test without sending:  python3 ~/.claude/skills/block-alerts/block_alerts_mail.py --check
+  No relay? Claude makes an Outlook draft (.eml): double-click it, check, press Send.
+
+TRY THE LOOK WITHOUT CLAUDE
+  python3 block-alerts/block_alerts_mail.py block-alerts/examples/report.json --html /tmp/e.html --eml /tmp/e.eml
+  open /tmp/e.eml in Outlook (a draft; nothing is sent).
+
+REMOVE
+  rm -rf ~/.claude/skills/block-alerts            (all users: the same under each /home/*/.claude/skills and /etc/skel)
+
+SAFE BY DESIGN
+  Read-only toward every system (no acknowledge / clear / change); commands in the email are for you to run.
+  The script uses only the Python standard library and talks only to the mail relay you configure.

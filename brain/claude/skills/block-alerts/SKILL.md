@@ -5,8 +5,15 @@ description: Take storage alerts from any vendor (PowerMax, PowerFlex, ONTAP, Po
 # Block alerts: alerts in, a clear Outlook report out
 
 The user tells you **where the alerts are and how to read them**. You turn them into a short, accurate report and
-email it. The email is rendered by the script at the end of this file (Outlook-safe HTML + plain text). **Do not write
-the HTML yourself**: fill the JSON (step 5) and run the script.
+email it.
+
+**The email's HTML is fixed and complete in `block_alerts_mail.py`** (next to this file, and the same code at the end
+of this file): the layout, colours, Outlook rules, phone layout, Hebrew right-to-left and the plain-text copy.
+`examples/email.html` is exactly what it produces from `examples/report.json`. Your only job is the content:
+- **Never write, edit or add HTML or CSS**, never build the mail another way, never paste HTML into a message.
+- Fill `report.json` (step 5, `examples/report.json` is a complete one) and run the script (step 6).
+- Something should look different? That is a change to the script for the user / maintainer, not something you
+  improvise in a report.
 
 Never change anything on a system: no acknowledge / clear / delete of alerts, no config change. MCP calls are
 read-only (list / get / show). Commands in the report are for the user to run.
@@ -111,14 +118,15 @@ the cards below hold the detail. Keep every field short.
 `commands`: read-only check commands, or the fix commands the docs give (with `<placeholders>`), never invented.
 
 ## 6. Render, check, send
-Get the script out of this file once (it is the block between the `# >>>` and `# <<<` lines below):
+The script (Python 3.9+, standard library only):
 ```bash
-S=$(find ~/.claude /opt/paas -path '*block-alerts/SKILL.md' 2>/dev/null | head -1)
-mkdir -p ~/.config/block-alerts
-sed -n '/^# >>> block_alerts_mail.py v7$/,/^# <<< block_alerts_mail.py$/p' "$S" > ~/.config/block-alerts/block_alerts_mail.py
+D=$(dirname "$(find ~/.claude /opt/paas -path '*skills/block-alerts/SKILL.md' 2>/dev/null | head -1)")
+M=$D/block_alerts_mail.py
+# only SKILL.md was copied (no .py next to it): take the script from the end of this file
+[ -f "$M" ] || { M=~/.config/block-alerts/block_alerts_mail.py; mkdir -p ~/.config/block-alerts
+  sed -n '/^# >>> block_alerts_mail.py v7$/,/^# <<< block_alerts_mail.py$/p' "$D/SKILL.md" > "$M"; }
 ```
-(If `~/.config/block-alerts/block_alerts_mail.py` already starts with `# >>> block_alerts_mail.py v7`, skip this.)
-Then, with `M=~/.config/block-alerts/block_alerts_mail.py` and `R=~/block-alerts/<folder>`:
+Then, with `R=~/block-alerts/<folder>`:
 1. `python3 $M $R/report.json --html $R/email.html` - fix any error it prints (it validates the JSON).
 2. Show the user in the chat: the subject line, the count per priority, the "do first" list, and the path of
    `email.html` (they can open it to see the mail).
