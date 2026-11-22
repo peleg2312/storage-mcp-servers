@@ -1,6 +1,6 @@
 ---
 name: code-graph
-description: Use in a large code base, before reading many files - to find where something is defined, who calls a function, what a change will break, which tests cover it, how the modules fit together, or to review a diff. Uses the code-graph MCP tools (a prebuilt graph of the git repository) instead of grep-and-read.
+description: Use for questions that follow the code more than one step - what a change will break, callers of callers, which flows or tests a change touches, reviewing a diff, how the modules fit together - in a git repository. Uses the code-graph MCP tools (a prebuilt graph). For a one-step lookup (where X is defined, who calls X directly) Grep is faster.
 ---
 # Code graph: answer code questions from the graph, read only what it points to
 
@@ -9,6 +9,12 @@ import, call and test, kept on disk in `.code-review-graph/` (ignored by git). I
 files to find the same thing costs far more context. Load its tools with one ToolSearch:
 `select:mcp__code-graph__list_graph_stats_tool,mcp__code-graph__query_graph_tool,mcp__code-graph__get_impact_radius_tool,mcp__code-graph__semantic_search_nodes_tool`
 (add the others below when the task needs them).
+
+## When to use it (measured on this VM's own code)
+- One step - where is X defined, which files call X directly: **use Grep**, not the graph (Grep answered these in half the
+  time with the same result; the graph only added tool loading and turns).
+- More than one step - callers of callers, what breaks if X changes, impact of a diff, flows, architecture, review:
+  **use the graph** (2.4x faster, 44% fewer input tokens, and fewer mistakes than grep-and-read).
 
 ## First: is there a graph?
 `list_graph_stats_tool`. No nodes -> `build_or_update_graph_tool` (a big repository takes minutes; tell the

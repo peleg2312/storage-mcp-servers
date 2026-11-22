@@ -40,18 +40,19 @@ WHAT IS IN IT
                      (FastAPI, uvicorn, pydantic, SQLAlchemy, alembic, psycopg, httpx, pytest, ruff, mypy from the
                      kit's wheels, Python 3.12 or 3.9), the rules skill and an api-reviewer agent.
 
-OPTIONAL (each user switches it on for themselves)
-  ponytail           coding mode (DietrichGebert/ponytail 5.3.3, MIT, offline copy in marketplace-extras/): reuse what
+OPTIONAL (in the paas Market; each user adds it)
+  ponytail           coding mode (DietrichGebert/ponytail 5.3.3, MIT, offline copy in brain-plugins/): reuse what
                      exists, write the smallest correct change, never cut validation, security or tests; ends each
                      reply with what was skipped; /ponytail-review, /ponytail-audit. Measured here on two FastAPI tasks
                      with a small model: about 18% faster, 19% fewer output tokens, 35% less code; once the model did
                      not run the tests it was asked to run, and said so. For coding, not storage chats.
-                     Users: /plugin -> paas-kit-extras -> ponytail, or the paas Market (source paas-kit-extras).
+                     It is a plugin of the paas Market (the brain's catalogue, brain-dev): the installer adds it to
+                     /opt/paas/plugins when the brain there does not carry it yet. Users add it in the Market.
                      Root, for everyone: paas-kit plugin on ponytail (off: back to each user's choice). Needs node.
 
 NEEDS
-  RHEL 9 (or similar) with python3.12:  dnf install -y python3.12      About 1.5 GB free in /opt; Headroom uses
-  about 0.3 GB of memory.
+  RHEL 9 (or similar) with python3.12:  dnf install -y python3.12      About 1.5 GB free in /opt. Headroom: about
+  0.9 GB of memory (2 workers), a few percent of one CPU core for 5 users at once ("workers" in /etc/paas-kit/kit.json).
 
 INSTALL (root)
   unzip paas-kit-<version>.zip

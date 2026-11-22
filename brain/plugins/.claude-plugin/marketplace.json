@@ -186,6 +186,16 @@
       "source": "./chrome-devtools",
       "category": "development",
       "homepage": "https://github.com/ChromeDevTools/chrome-devtools-mcp"
+    },
+    {
+      "name": "ponytail",
+      "source": "./ponytail",
+      "category": "development",
+      "author": {
+        "name": "Dietrich Gebert"
+      },
+      "homepage": "https://github.com/DietrichGebert/ponytail",
+      "description": "Coding mode (MIT, offline copy of ponytail 5.3.3): reuse what exists, write the smallest correct change, never cut validation, security or tests; /ponytail-review, /ponytail-audit. Measured here: about 18% faster, 19% fewer output tokens, 35% less code. For coding, not storage chats. Needs node."
     }
   ]
 }

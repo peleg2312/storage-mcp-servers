@@ -35,7 +35,7 @@ DROPIN = "/etc/claude-code/managed-settings.d/60-paas-kit.json"
 PORT = 8787
 LOCAL = f"http://127.0.0.1:{PORT}"
 PLUGINS = ("rtk", "code-graph", "fastapi-api")          # on for everyone unless root turns one off
-EXTRAS = {"ponytail": "paas-kit-extras"}                  # optional: each user switches it on (/plugin, Market);
+EXTRAS = {"ponytail": "brain-dev"}                        # optional, in the paas Market (/opt/paas/plugins): each user adds it;
                                                           # root can turn it on for everyone (paas-kit plugin on ponytail)
 # rtk leaves these as typed (measured, see README): oc/kubectl logs keeps only the last 100 lines; describe is not
 # checked; aws turns JSON into one sample item; ps cuts command lines; ruff keeps a per-rule summary without file:line;
@@ -122,8 +122,7 @@ def apply(c=None, quiet=False):
     on = bool(c["headroom"] and c["upstream"] and healthy())
     s = {
         "extraKnownMarketplaces": {"paas-kit": {"source": {"source": "directory", "path": f"{D}/kit/marketplace"}},
-                                   "paas-kit-extras": {"source": {"source": "directory",
-                                                                  "path": f"{D}/kit/marketplace-extras"}}},
+                                   },
         "enabledPlugins": {f"{p}@paas-kit": bool(v) for p, v in c["plugins"].items() if p in PLUGINS},
     }
     s["env"] = {"RTK_TELEMETRY_DISABLED": "1", "RTK_SUPPRESS_HOOK_WARNING": "1",
@@ -134,7 +133,8 @@ def apply(c=None, quiet=False):
     # air-gapped: the web tools can never answer; denied tools leave every session's tool list (~2-3k tokens)
     s["permissions"] = {"deny": ["WebFetch", "WebSearch"]}
     for p, mk in EXTRAS.items():                 # optional plugins: forced on only when root asked; else each user's choice
-        if c["plugins"].get(p) is True:
+        if c["plugins"].get(p) is True and os.path.isdir(f"/opt/paas/plugins/{p}"):
+            s["extraKnownMarketplaces"][mk] = {"source": {"source": "directory", "path": "/opt/paas/plugins"}}
             s["enabledPlugins"][f"{p}@{mk}"] = True
     if on:
         s["env"]["ANTHROPIC_BASE_URL"] = LOCAL
@@ -204,8 +204,9 @@ def run_headroom():
     #  - no per-minute rate limit (it would be one limit for all users of the VM), no Anthropic subscription polling.
     args = [f"{D}/venv/headroom/bin/headroom", "proxy", "--host", "127.0.0.1", "--port", str(PORT),
             "--anthropic-api-url", c["upstream"], "--mode", "token", "--no-rate-limit", "--no-subscription-tracking",
-            # several workers: measured 20 users at once, 1 worker +320 ms a request, 4 workers +135 ms (direct 169 ms)
-            "--workers", str(c.get("workers") or max(1, min(4, (os.cpu_count() or 2) // 2)))]
+            # 2 workers by default: 5 users at once used 6-11% of one core (peaks of one core for a second), ~0.45 GB
+            # of memory a worker; 20 users at once: +320 ms a request with 1 worker, +135 ms with 4 ("workers" in kit.json)
+            "--workers", str(c.get("workers") or min(2, os.cpu_count() or 1))]
     if not os.path.isdir(f"{D}/hf/hub"):
         args += ["--disable-kompress"]            # the kit ships without Kompress (little saving, ~0.8 GB RAM, lossy)
     if c["profile"] == "safe":
@@ -289,7 +290,7 @@ def status():
     print("plugins       " + ", ".join(f"{p} {'on' if v else 'off'}" for p, v in c["plugins"].items()) +
           "   (on for every user; only root turns them off: paas-kit plugin off <name>)")
     for p in EXTRAS:
-        print(f"{p:13} {'on for every user (root)' if c['plugins'].get(p) is True else 'optional: each user switches it on in /plugin or the Market'}"
+        print(f"{p:13} {'on for every user (root)' if c['plugins'].get(p) is True else 'optional: each user adds it in the paas Market' if os.path.isdir(f'/opt/paas/plugins/{p}') else 'not in the paas Market (no /opt/paas/plugins on this VM)'}"
               + ("" if shutil.which("node") else "   WARNING: node is not on the PATH, its hooks cannot run"))
     print("rtk           rtk's own hook; left as typed: " + (", ".join(c.get("rtk_exclude", RTK_EXCLUDE)) or "nothing")
           + "; your savings: paas-kit gain")

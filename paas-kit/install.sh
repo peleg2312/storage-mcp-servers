@@ -101,15 +101,28 @@ else
 fi
 /usr/local/bin/paas-kit apply
 
-# the kit's own plugins are on for everyone: no Market card for them (older kits added one). The optional extras
-# (ponytail) are a Market source of their own, so each user adds them there or in /plugin.
-if command -v paas-market >/dev/null 2>&1; then
-  paas-market source remove paas-kit >/dev/null 2>&1 || true
-  if paas-market source list 2>/dev/null | grep -q '^paas-kit-extras '; then
-    paas-market source sync paas-kit-extras >/dev/null 2>&1 || true
-  else
-    paas-market source add "$D/kit/marketplace-extras" paas-kit-extras >/dev/null 2>&1 || true
-  fi
+# the kit's own plugins are on for everyone: no Market card for them (older kits added one, and a paas-kit-extras one).
+! command -v paas-market >/dev/null 2>&1 || { paas-market source remove paas-kit; paas-market source remove paas-kit-extras; } >/dev/null 2>&1 || true
+# optional plugins go into the paas Market's own plugin catalogue (the brain's /opt/paas/plugins, marketplace brain-dev),
+# when that brain version does not carry them yet; brain updates carry them from now on (brain/plugins/)
+if [ -f /opt/paas/plugins/.claude-plugin/marketplace.json ]; then
+  for p in "$D"/kit/brain-plugins/*/; do
+    p=$(basename "$p")
+    [ -d "/opt/paas/plugins/$p" ] || { cp -R "$D/kit/brain-plugins/$p" "/opt/paas/plugins/$p"; chmod -R a+rX "/opt/paas/plugins/$p"; }
+    python3 - "/opt/paas/plugins/.claude-plugin/marketplace.json" "$p" "$D/kit/brain-plugins/$p/.claude-plugin/plugin.json" <<'PY'
+import json, sys
+mf, name, pj = sys.argv[1:]
+m = json.load(open(mf))
+if not any(x.get("name") == name for x in m.get("plugins", [])):
+    d = json.load(open(pj))
+    m["plugins"].append({"name": name, "source": "./" + name, "category": "development",
+                         "description": d.get("description", ""), "author": d.get("author", {})})
+    json.dump(m, open(mf, "w"), indent=2)
+    print(f"paas Market: added the optional plugin {name}")
+PY
+  done
+else
+  echo "note: no paas Market on this VM (/opt/paas/plugins); the optional plugins (ponytail) are not offered"
 fi
 command -v node >/dev/null 2>&1 || echo "note: node is not on the PATH; the optional ponytail plugin needs it for its hooks"
 echo
