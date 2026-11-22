@@ -8,7 +8,7 @@
     {
       "name": "rtk",
       "source": "./rtk",
-      "description": "Shorter shell output for the model: long test, linter, grep / find, git and log output filtered after the command ran (rtk); the command itself is never changed"
+      "description": "Shorter shell output for the model (rtk, with its own hook): commands rtk knows - git, ls, cat, grep, find, tests, builds, oc / kubectl / docker, curl ... - run in their short form"
     },
     {
       "name": "code-graph",

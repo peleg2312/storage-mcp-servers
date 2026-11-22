@@ -1,0 +1,13 @@
+#!/bin/sh
+# PreToolUse (Bash) hook of the rtk plugin: rtk's own Claude Code hook (`rtk hook claude`), exactly as rtk ships it,
+# so commands rtk knows run in their short form. One check in front, only when the command mentions rtk at all:
+# the model may not write `rtk ...` itself (see rtk-hook).
+export RTK_TELEMETRY_DISABLED=1 RTK_SUPPRESS_HOOK_WARNING=1
+IN=$(cat)
+case $IN in
+  *rtk*)
+    OUT=$(printf '%s' "$IN" | python3 /opt/paas-kit/bin/rtk-hook 2>/dev/null)
+    if [ -n "$OUT" ]; then printf '%s\n' "$OUT"; exit 0; fi ;;
+esac
+printf '%s' "$IN" | /opt/paas-kit/bin/rtk hook claude 2>/dev/null
+exit 0

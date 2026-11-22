@@ -1,10 +1,7 @@
 {
   "hooks": {
     "PreToolUse": [
-      {"matcher": "Bash", "hooks": [{"type": "command", "command": "python3 /opt/paas-kit/bin/rtk-hook pre", "timeout": 10}]}
-    ],
-    "PostToolUse": [
-      {"matcher": "Bash", "hooks": [{"type": "command", "command": "python3 /opt/paas-kit/bin/rtk-hook post", "timeout": 30}]}
+      {"matcher": "Bash", "hooks": [{"type": "command", "command": "/opt/paas-kit/bin/rtk-pre", "timeout": 10}]}
     ]
   }
 }

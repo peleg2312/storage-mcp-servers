@@ -8,7 +8,8 @@
 #   sudo sh install.sh --no-headroom            install Headroom but leave it off (paas-kit headroom on, later)
 #
 # What it touches (nothing of the brain, no team repository, no user's own settings):
-#   /opt/paas-kit/                 the kit, two Python 3.12 venvs (Headroom, code-review-graph), rtk, wheels, tiktoken data
+#   /opt/paas-kit/                 the kit, two Python 3.12 venvs (Headroom, code-review-graph), rtk, wheels, tiktoken
+#                                  data, the Kompress model (hf/)
 #   /etc/paas-kit/kit.json         its settings
 #   /etc/claude-code/managed-settings.d/60-paas-kit.json   Claude settings for everyone, above anyone's own: the kit's
 #                                  plugins on (rtk, code-graph, fastapi-api) and, with Headroom on,
@@ -35,6 +36,7 @@ rm -rf "$D/kit.new"; cp -R "$KIT" "$D/kit.new"
 rm -rf "$D/kit.old"; [ ! -d "$D/kit" ] || mv "$D/kit" "$D/kit.old"; mv "$D/kit.new" "$D/kit"; rm -rf "$D/kit.old"
 rm -rf "$D/bin"; cp -R "$D/kit/bin" "$D/bin"; cp "$D/kit/rtk/rtk" "$D/bin/rtk"; chmod 755 "$D/bin/"*
 rm -rf "$D/tiktoken"; cp -R "$D/kit/tiktoken" "$D/tiktoken"
+rm -rf "$D/hf"; cp -R "$D/kit/hf" "$D/hf"          # Kompress model (Headroom's AI text compressor), offline
 
 venv() {   # venv <name> <wheels> <packages...>: a fresh venv; the old one comes back if the install fails
   n=$1; w=$2; shift 2       # (a venv records its own path, so it is built under its final name)
@@ -71,8 +73,10 @@ elif not c.get("upstream"):
                                    capture_output=True, text=True).stdout.strip()
 if fresh or not hr:
     c["headroom"] = hr and bool(c.get("upstream"))
-c.setdefault("profile", "safe")
-c.setdefault("rtk_rewrite", True)
+c.setdefault("profile", "full")
+c.pop("rtk_rewrite", None)
+if not c.get("profile_chosen"):
+    c["profile"] = "full"           # Headroom as it ships (older kits started in "safe")
 c.setdefault("plugins", {})
 for p in ("rtk", "code-graph", "fastapi-api"):
     c["plugins"].setdefault(p, True)
