@@ -16,12 +16,14 @@ WHAT IS IN IT
                      read-only guard does not look inside "rtk oc delete ..."); rtk's own rewrites are not affected.
                      Permission modes: auto and bypass rewrite with no question; in default mode Claude asks before
                      an rtk command it has not been allowed (as with rtk anywhere).
-  Headroom           a small local service between Claude and the model (GLM), run with Headroom's own defaults:
-                     each new tool result is compressed once - JSON lists become compact tables (every row kept,
-                     50-70% fewer tokens), long logs keep their errors and the rest is fetched back on request,
-                     long text goes through Kompress (Headroom's AI text compressor, included and offline) - and
-                     earlier turns are left as they were, so the model server's prompt cache keeps working.
-                     Root: paas-kit headroom profile safe = only JSON tables, nothing ever left out.
+  Headroom           a small local service between Claude and the model (GLM). Profile safe (the default):
+                     JSON lists from the MCP servers become compact tables, every row and value kept
+                     (measured: volume list 70%, host list 53%, port list 68% fewer tokens). profile full
+                     adds Headroom's other compressors: long logs keep their errors and the rest is fetched
+                     back on request, long text goes through Kompress (its AI text compressor, included, offline).
+                     Runs in token mode: every tool result is compressed, also when Claude makes many tool calls in
+                     a row (Headroom's cache mode does not then); the compressed form is the same on every request,
+                     so the model server's prompt cache keeps working.
                      If Headroom stops, a check every minute sends new sessions straight to the model again.
   code-graph plugin  for large code bases: a graph of the git repository (functions, classes, imports, callers,
                      tests) the model asks instead of reading many files - what a change breaks, who calls what,
@@ -51,7 +53,7 @@ USE
               paas-kit gain            your rtk savings
   in Claude:  /code-graph:build        /fastapi-api:new my-api  (the skills load by themselves when they fit)
   root:       paas-kit headroom off | on               all sessions straight to the model / through Headroom
-              paas-kit headroom profile full | safe    full (default): Headroom as it ships / safe: JSON tables only
+              paas-kit headroom profile safe | full    safe (default): JSON tables only / full: every compressor
               paas-kit headroom upstream <url>         another model address
               paas-kit plugin off | on rtk             a plugin for every user (also code-graph, fastapi-api)
   logs:       journalctl -u paas-headroom              savings: paas-kit status

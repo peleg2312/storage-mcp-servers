@@ -73,10 +73,10 @@ elif not c.get("upstream"):
                                    capture_output=True, text=True).stdout.strip()
 if fresh or not hr:
     c["headroom"] = hr and bool(c.get("upstream"))
-c.setdefault("profile", "full")
+c.setdefault("profile", "safe")
 c.pop("rtk_rewrite", None)
 if not c.get("profile_chosen"):
-    c["profile"] = "full"           # Headroom as it ships (older kits started in "safe")
+    c["profile"] = "safe"           # JSON tables only: nothing left out (root: paas-kit headroom profile full)
 c.setdefault("plugins", {})
 for p in ("rtk", "code-graph", "fastapi-api"):
     c["plugins"].setdefault(p, True)

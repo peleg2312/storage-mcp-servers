@@ -8,9 +8,9 @@
 
 root only:
   paas-kit headroom on | off              send every Claude session through Headroom, or straight to the model again
-  paas-kit headroom profile full | safe   full (default): Headroom as it ships - every compressor, Kompress (its AI
-                                          text compressor), long logs shortened with the rest fetched back on request
-                                          safe: only JSON tables made compact, nothing ever left out
+  paas-kit headroom profile safe | full   safe (default): JSON tables made compact, nothing ever left out
+                                          full: also every other Headroom compressor and Kompress (its AI text
+                                          compressor); long logs shortened, the rest fetched back on request
   paas-kit headroom upstream <url>        the model address Headroom forwards to (found at install)
   paas-kit plugin on | off <name>         a kit plugin for every user (rtk, code-graph, fastapi-api)
   paas-kit apply                          write the Claude settings file from /etc/paas-kit/kit.json
@@ -31,7 +31,7 @@ DROPIN = "/etc/claude-code/managed-settings.d/60-paas-kit.json"
 PORT = 8787
 LOCAL = f"http://127.0.0.1:{PORT}"
 PLUGINS = ("rtk", "code-graph", "fastapi-api")
-DEFAULT = {"upstream": "", "headroom": True, "profile": "full", "plugins": {p: True for p in PLUGINS}}
+DEFAULT = {"upstream": "", "headroom": True, "profile": "safe", "plugins": {p: True for p in PLUGINS}}
 
 
 def load():
@@ -158,12 +158,14 @@ def run_headroom():
             env.setdefault("SSL_CERT_FILE", ca)
             env.setdefault("REQUESTS_CA_BUNDLE", ca)
             break
-    # Headroom's own defaults (cache mode: each new tool result compressed once, earlier turns left as they were so
-    # the model server's prompt cache keeps working; every compressor; Kompress; CCR). Changed for a shared,
-    # offline VM only: no per-minute rate limit (it would be one limit for all users), no Anthropic subscription
-    # polling (nothing to poll here).
+    # Headroom's own defaults (every compressor; Kompress; CCR), with three changes:
+    #  - token mode: Headroom's default cache mode compresses nothing while Claude makes several tool calls in a row
+    #    without a new user message (Claude Code's normal loop) - measured: 8% vs 54% saved on the same session. Token
+    #    mode compresses every result; the compressed form is the same on every request, so the model server's
+    #    prompt cache still hits.
+    #  - no per-minute rate limit (it would be one limit for all users of the VM), no Anthropic subscription polling.
     args = [f"{D}/venv/headroom/bin/headroom", "proxy", "--host", "127.0.0.1", "--port", str(PORT),
-            "--anthropic-api-url", c["upstream"], "--no-rate-limit", "--no-subscription-tracking"]
+            "--anthropic-api-url", c["upstream"], "--mode", "token", "--no-rate-limit", "--no-subscription-tracking"]
     if c["profile"] == "safe":
         args += ["--no-ccr", "--compressor", "smart_crusher", "--disable-kompress"]   # JSON compact, nothing dropped
     os.execve(args[0], args, env)
