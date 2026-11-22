@@ -248,6 +248,7 @@ def row(label_, body, al):
 def facts(a, t, al):
     """the alert's own data, as a compact grid (2 pairs per row; one per row on a phone)"""
     seen = " &rarr; ".join(e(x) for x in dict.fromkeys(filter(None, [a.get("first_seen"), a.get("last_seen")])))
+    seen = f'<span dir="ltr" style="unicode-bidi:isolate">{seen}</span>' if seen else ""
     n = str(a.get("count") or "")
     items = [(t["system"], e(" ".join(filter(None, [a.get("vendor"), a.get("product"), a.get("system")])))),
              (t["obj"], e(a.get("object"))), (t["code"], e(a.get("code"))),
