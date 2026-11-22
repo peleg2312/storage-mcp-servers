@@ -12,8 +12,9 @@ root only:
                                           full: also Headroom's other compressors; long logs shortened, the rest
                                           fetched back on request (lossy: not recommended)
   paas-kit headroom upstream <url>        the model address Headroom forwards to (found at install)
-  paas-kit plugin on | off <name>         a kit plugin for every user (rtk, code-graph, fastapi-api), or ponytail
-                                          (optional; on = forced for everyone, off = each user's own choice)
+  paas-kit plugin on | off <name>         rtk (on for everyone; off = off for everyone), or code-graph / fastapi-api
+                                          / ponytail (paas Market plugins: on = forced for everyone, off = each
+                                          user's own choice)
   paas-kit rtk exclude <cmd>... | none | default   commands rtk leaves as typed (default: "oc logs" "kubectl logs"
                                           "oc describe" "kubectl describe"; a prefix, e.g. "oc get pv" or "grep")
   paas-kit apply                          write the Claude settings file from /etc/paas-kit/kit.json
@@ -34,8 +35,9 @@ CONF = "/etc/paas-kit/kit.json"
 DROPIN = "/etc/claude-code/managed-settings.d/60-paas-kit.json"
 PORT = 8787
 LOCAL = f"http://127.0.0.1:{PORT}"
-PLUGINS = ("rtk", "code-graph", "fastapi-api")          # on for everyone unless root turns one off
-EXTRAS = {"ponytail": "brain-dev"}                        # optional, in the paas Market (/opt/paas/plugins): each user adds it;
+PLUGINS = ("rtk",)                                       # on for everyone unless root turns it off
+EXTRAS = {"code-graph": "brain-dev", "fastapi-api": "brain-dev", "ponytail": "brain-dev"}
+                                                          # optional, in the paas Market (/opt/paas/plugins): each user adds it;
                                                           # root can turn it on for everyone (paas-kit plugin on ponytail)
 # rtk leaves these as typed (measured, see README): oc/kubectl logs keeps only the last 100 lines; describe is not
 # checked; aws turns JSON into one sample item; ps cuts command lines; ruff keeps a per-rule summary without file:line;
@@ -255,7 +257,7 @@ def plugin_cmd(rest):
     root()
     if len(rest) != 2 or rest[0] not in ("on", "off") or rest[1] not in PLUGINS + tuple(EXTRAS):
         sys.exit("usage: paas-kit plugin on | off " + " | ".join(PLUGINS + tuple(EXTRAS))
-                 + "   (ponytail off = back to each user's own choice)")
+                 + "   (for the paas Market plugins, off = back to each user's own choice)")
     c = load()
     c["plugins"][rest[1]] = rest[0] == "on"
     save(c)

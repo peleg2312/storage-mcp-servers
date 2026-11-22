@@ -1,9 +1,10 @@
 paas-kit  -  VM-wide add-ons for Claude, kept apart from the brain
 ====================================================================
 
-One install (root) and every user on the VM has all of it on, including users created later, whatever brain (team)
-they use, or none - no question asked, and users cannot turn it off (Claude's managed settings rank above anyone's
-own settings). Only root turns parts off (below). It does not change the brain, any team repository,
+One install (root). rtk and Headroom are on for every user on the VM, including users created later, whatever brain
+(team) they use, or none - no question asked, and users cannot turn them off (Claude's managed settings rank above
+anyone's own settings); only root can (below). The coding plugins (code-graph, fastapi-api, ponytail) are plugins of
+the paas Market: each user adds the ones they want. It does not change the brain, any team repository,
 managed-settings.json or anyone's own settings.
 
 WHAT IS IN IT
@@ -32,15 +33,16 @@ WHAT IS IN IT
                      a row (Headroom's cache mode does not then); the compressed form is the same on every request,
                      so the model server's prompt cache keeps working.
                      If Headroom stops, a check every minute sends new sessions straight to the model again.
-  code-graph plugin  for large code bases: a graph of the git repository (functions, classes, imports, callers,
+OPTIONAL: plugins of the paas Market (each user adds them; root can force one on for everyone)
+  code-graph         for large code bases: a graph of the git repository (functions, classes, imports, callers,
                      tests) the model asks instead of reading many files - what a change breaks, who calls what,
                      review context. Built once per repository (/code-graph:build), kept up to date after edits.
-                     Plus ast-grep (structural code search) on the PATH.
-  fastapi-api plugin build Python REST APIs offline: /fastapi-api:new <name> (template with tests), `paas-kit venv`
+                     Measured on this repository: 2.4x faster on call-chain / impact questions; Grep stays the tool
+                     for one-step lookups (the skill says so). Plus ast-grep (structural code search) on the PATH.
+  fastapi-api        build Python REST APIs offline: /fastapi-api:new <name> (template with tests), `paas-kit venv`
                      (FastAPI, uvicorn, pydantic, SQLAlchemy, alembic, psycopg, httpx, pytest, ruff, mypy from the
                      kit's wheels, Python 3.12 or 3.9), the rules skill and an api-reviewer agent.
 
-OPTIONAL (in the paas Market; each user adds it)
   ponytail           coding mode (DietrichGebert/ponytail 5.3.3, MIT, offline copy in brain-plugins/): reuse what
                      exists, write the smallest correct change, never cut validation, security or tests; ends each
                      reply with what was skipped; /ponytail-review, /ponytail-audit. Measured here on two FastAPI tasks
@@ -68,12 +70,14 @@ UPDATE
 USE
   everyone:   paas-kit status          paas-kit venv .          paas-kit graph build | update | status
               paas-kit gain            your rtk savings
-  in Claude:  /code-graph:build        /fastapi-api:new my-api  (the skills load by themselves when they fit)
+  in Claude:  /code-graph:build        /fastapi-api:new my-api  (after adding those plugins in the paas Market)
   root:       paas-kit headroom off | on               all sessions straight to the model / through Headroom
               paas-kit headroom profile safe | full    safe (default): JSON tables only / full: every compressor
               paas-kit rtk exclude oc kubectl grep     commands rtk leaves as typed (none / default)
               paas-kit headroom upstream <url>         another model address
-              paas-kit plugin off | on rtk             a plugin for every user (also code-graph, fastapi-api)
+              paas-kit plugin off | on rtk             rtk off / on for everyone
+              paas-kit plugin on | off code-graph      a Market plugin forced on for everyone / back to each user's choice
+                                                       (also fastapi-api, ponytail)
   logs:       journalctl -u paas-headroom              savings: paas-kit status
 
 REMOVE

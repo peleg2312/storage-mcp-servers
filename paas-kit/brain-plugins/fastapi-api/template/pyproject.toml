@@ -1,0 +1,20 @@
+[project]
+name = "my-api"
+version = "0.1.0"
+requires-python = ">=3.9"
+dependencies = ["fastapi", "uvicorn", "pydantic-settings", "sqlalchemy"]
+
+[tool.ruff]
+line-length = 120
+target-version = "py39"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP", "S", "ASYNC"]
+ignore = ["S101", "UP006", "UP007", "UP035", "UP045", "B008"]
+
+[tool.mypy]
+ignore_missing_imports = true
+plugins = ["pydantic.mypy"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

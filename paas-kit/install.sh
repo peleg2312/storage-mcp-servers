@@ -11,8 +11,8 @@
 #   /opt/paas-kit/                 the kit, two Python 3.12 venvs (Headroom, code-review-graph), rtk, wheels, tiktoken
 #                                  data
 #   /etc/paas-kit/kit.json         its settings
-#   /etc/claude-code/managed-settings.d/60-paas-kit.json   Claude settings for everyone, above anyone's own: the kit's
-#                                  plugins on (rtk, code-graph, fastapi-api) and, with Headroom on,
+#   /etc/claude-code/managed-settings.d/60-paas-kit.json   Claude settings for everyone, above anyone's own: rtk on
+#                                  and, with Headroom on,
 #                                  ANTHROPIC_BASE_URL=http://127.0.0.1:8787; never managed-settings.json
 #   paas-headroom.service, paas-kit-watch.timer (systemd); /usr/local/bin/paas-kit, code-review-graph, ast-grep
 set -eu
@@ -82,8 +82,11 @@ if c.get("rtk_exclude") in (None, ["oc", "kubectl", "grep", "egrep", "rg"],     
 if not c.get("profile_chosen"):
     c["profile"] = "safe"           # JSON tables only: nothing left out (root: paas-kit headroom profile full)
 c.setdefault("plugins", {})
-for p in ("rtk", "code-graph", "fastapi-api"):
-    c["plugins"].setdefault(p, True)
+c["plugins"].setdefault("rtk", True)
+if not c.get("market_plugins"):   # earlier kits forced code-graph and fastapi-api on for everyone: now each user's choice
+    for p in ("code-graph", "fastapi-api"):
+        c["plugins"].pop(p, None)
+    c["market_plugins"] = True
 json.dump(c, open(conf, "w"), indent=2)
 os.chmod(conf, 0o644)
 print("model address:", c["upstream"] or "NOT FOUND (Headroom stays off: paas-kit headroom upstream <url>, then paas-kit headroom on)")
@@ -103,12 +106,16 @@ fi
 
 # the kit's own plugins are on for everyone: no Market card for them (older kits added one, and a paas-kit-extras one).
 ! command -v paas-market >/dev/null 2>&1 || { paas-market source remove paas-kit; paas-market source remove paas-kit-extras; } >/dev/null 2>&1 || true
-# optional plugins go into the paas Market's own plugin catalogue (the brain's /opt/paas/plugins, marketplace brain-dev),
+# the optional plugins (code-graph, fastapi-api, ponytail) go into the paas Market's own plugin catalogue (the brain's /opt/paas/plugins, marketplace brain-dev),
 # when that brain version does not carry them yet; brain updates carry them from now on (brain/plugins/)
 if [ -f /opt/paas/plugins/.claude-plugin/marketplace.json ]; then
   for p in "$D"/kit/brain-plugins/*/; do
     p=$(basename "$p")
-    [ -d "/opt/paas/plugins/$p" ] || { cp -R "$D/kit/brain-plugins/$p" "/opt/paas/plugins/$p"; chmod -R a+rX "/opt/paas/plugins/$p"; }
+    # a copy the kit put there is refreshed; one the brain carries (no .paas-kit mark) is the brain's
+    if [ ! -d "/opt/paas/plugins/$p" ] || [ -f "/opt/paas/plugins/$p/.paas-kit" ]; then
+      rm -rf "/opt/paas/plugins/$p.new"; cp -R "$D/kit/brain-plugins/$p" "/opt/paas/plugins/$p.new"; touch "/opt/paas/plugins/$p.new/.paas-kit"
+      rm -rf "/opt/paas/plugins/$p"; mv "/opt/paas/plugins/$p.new" "/opt/paas/plugins/$p"; chmod -R a+rX "/opt/paas/plugins/$p"
+    fi
     python3 - "/opt/paas/plugins/.claude-plugin/marketplace.json" "$p" "$D/kit/brain-plugins/$p/.claude-plugin/plugin.json" <<'PY'
 import json, sys
 mf, name, pj = sys.argv[1:]

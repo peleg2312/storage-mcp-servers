@@ -1,0 +1,8 @@
+{
+  "hooks": {
+    "PostToolUse": [
+      {"matcher": "Edit|Write|MultiEdit",
+       "hooks": [{"type": "command", "command": "/opt/paas-kit/bin/crg-hook", "timeout": 10}]}
+    ]
+  }
+}

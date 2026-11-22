@@ -3,22 +3,12 @@
   "owner": {
     "name": "paas-kit"
   },
-  "description": "VM-wide add-ons, on for every user (root decides): shorter shell output (rtk), a code graph for large code bases, a FastAPI kit",
+  "description": "paas-kit: shorter shell output (rtk), on for every user. The optional coding plugins are in the paas Market.",
   "plugins": [
     {
       "name": "rtk",
       "source": "./rtk",
       "description": "Shorter shell output for the model (rtk, with its own hook): commands rtk knows - git, ls, cat, grep, find, tests, builds, oc / kubectl / docker, curl ... - run in their short form"
-    },
-    {
-      "name": "code-graph",
-      "source": "./code-graph",
-      "description": "A graph of your git repository (functions, classes, imports, callers, tests) for large code bases: what a change touches, who calls what, review context, without reading whole files"
-    },
-    {
-      "name": "fastapi-api",
-      "source": "./fastapi-api",
-      "description": "Build Python REST APIs with FastAPI offline: project template, a venv from the VM's wheels, the rules for routes, settings, database, tests, and an API reviewer agent"
     }
   ]
 }
