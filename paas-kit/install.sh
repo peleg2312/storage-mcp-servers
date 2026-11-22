@@ -108,8 +108,16 @@ fi
 if [ -f /opt/paas/plugins/.claude-plugin/marketplace.json ]; then
   for p in "$D"/kit/brain-plugins/*/; do
     p=$(basename "$p")
-    # a copy the kit put there is refreshed; one the brain carries (no .paas-kit mark) is the brain's
-    if [ ! -d "/opt/paas/plugins/$p" ] || [ -f "/opt/paas/plugins/$p/.paas-kit" ]; then
+    # a copy the kit put there is refreshed; one the brain carries (no .paas-kit mark) is the brain's - unless it is an
+    # older one that still runs from the kit (/opt/paas-kit/..., paas-kit venv) or lacks the plugin's own launchers
+    old=0; T=/opt/paas/plugins/$p
+    if [ -d "$T" ] && [ ! -f "$T/.paas-kit" ]; then
+      grep -rqsE '/opt/paas-kit|paas-kit venv' "$T/.mcp.json" "$T/hooks" "$T/commands" "$T/skills" && old=1
+      for f in "$D/kit/brain-plugins/$p"/bin/* "$D/kit/brain-plugins/$p"/hooks/*.sh; do
+        [ -e "$f" ] && [ ! -e "$T/${f#"$D/kit/brain-plugins/$p/"}" ] && old=1
+      done
+    fi
+    if [ ! -d "$T" ] || [ -f "$T/.paas-kit" ] || [ $old = 1 ]; then
       rm -rf "/opt/paas/plugins/$p.new"; cp -R "$D/kit/brain-plugins/$p" "/opt/paas/plugins/$p.new"; touch "/opt/paas/plugins/$p.new/.paas-kit"
       rm -rf "/opt/paas/plugins/$p"; mv "/opt/paas/plugins/$p.new" "/opt/paas/plugins/$p"; chmod -R a+rX "/opt/paas/plugins/$p"
     fi
