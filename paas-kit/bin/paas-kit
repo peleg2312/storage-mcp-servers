@@ -12,7 +12,8 @@ root only:
                                           full: also Headroom's other compressors; long logs shortened, the rest
                                           fetched back on request (lossy: not recommended)
   paas-kit headroom upstream <url>        the model address Headroom forwards to (found at install)
-  paas-kit plugin on | off <name>         a kit plugin for every user (rtk, code-graph, fastapi-api)
+  paas-kit plugin on | off <name>         a kit plugin for every user (rtk, code-graph, fastapi-api), or ponytail
+                                          (optional; on = forced for everyone, off = each user's own choice)
   paas-kit rtk exclude <cmd>... | none | default   commands rtk leaves as typed (default: "oc logs" "kubectl logs"
                                           "oc describe" "kubectl describe"; a prefix, e.g. "oc get pv" or "grep")
   paas-kit apply                          write the Claude settings file from /etc/paas-kit/kit.json
@@ -33,7 +34,9 @@ CONF = "/etc/paas-kit/kit.json"
 DROPIN = "/etc/claude-code/managed-settings.d/60-paas-kit.json"
 PORT = 8787
 LOCAL = f"http://127.0.0.1:{PORT}"
-PLUGINS = ("rtk", "code-graph", "fastapi-api")
+PLUGINS = ("rtk", "code-graph", "fastapi-api")          # on for everyone unless root turns one off
+EXTRAS = {"ponytail": "paas-kit-extras"}                  # optional: each user switches it on (/plugin, Market);
+                                                          # root can turn it on for everyone (paas-kit plugin on ponytail)
 # rtk leaves these as typed (measured, see README): oc/kubectl logs keeps only the last 100 lines; describe is not
 # checked; aws turns JSON into one sample item; ps cuts command lines; ruff keeps a per-rule summary without file:line;
 # ls in long format drops owner, date and exact sizes. A pattern starting with ^ is a regular expression.
@@ -118,8 +121,10 @@ def apply(c=None, quiet=False):
     c = c or load()
     on = bool(c["headroom"] and c["upstream"] and healthy())
     s = {
-        "extraKnownMarketplaces": {"paas-kit": {"source": {"source": "directory", "path": f"{D}/kit/marketplace"}}},
-        "enabledPlugins": {f"{p}@paas-kit": bool(v) for p, v in c["plugins"].items()},
+        "extraKnownMarketplaces": {"paas-kit": {"source": {"source": "directory", "path": f"{D}/kit/marketplace"}},
+                                   "paas-kit-extras": {"source": {"source": "directory",
+                                                                  "path": f"{D}/kit/marketplace-extras"}}},
+        "enabledPlugins": {f"{p}@paas-kit": bool(v) for p, v in c["plugins"].items() if p in PLUGINS},
     }
     s["env"] = {"RTK_TELEMETRY_DISABLED": "1", "RTK_SUPPRESS_HOOK_WARNING": "1",
                 # lossless speed-ups for an offline VM (the brain sets the same; the kit works without it):
@@ -128,6 +133,9 @@ def apply(c=None, quiet=False):
                 "ENABLE_TOOL_SEARCH": "true", "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC": "1", "DISABLE_AUTOUPDATER": "1"}
     # air-gapped: the web tools can never answer; denied tools leave every session's tool list (~2-3k tokens)
     s["permissions"] = {"deny": ["WebFetch", "WebSearch"]}
+    for p, mk in EXTRAS.items():                 # optional plugins: forced on only when root asked; else each user's choice
+        if c["plugins"].get(p) is True:
+            s["enabledPlugins"][f"{p}@{mk}"] = True
     if on:
         s["env"]["ANTHROPIC_BASE_URL"] = LOCAL
     rtk_config(c)
@@ -244,8 +252,9 @@ def headroom_cmd(rest):
 
 def plugin_cmd(rest):
     root()
-    if len(rest) != 2 or rest[0] not in ("on", "off") or rest[1] not in PLUGINS:
-        sys.exit("usage: paas-kit plugin on | off " + " | ".join(PLUGINS))
+    if len(rest) != 2 or rest[0] not in ("on", "off") or rest[1] not in PLUGINS + tuple(EXTRAS):
+        sys.exit("usage: paas-kit plugin on | off " + " | ".join(PLUGINS + tuple(EXTRAS))
+                 + "   (ponytail off = back to each user's own choice)")
     c = load()
     c["plugins"][rest[1]] = rest[0] == "on"
     save(c)
@@ -279,6 +288,9 @@ def status():
             pass
     print("plugins       " + ", ".join(f"{p} {'on' if v else 'off'}" for p, v in c["plugins"].items()) +
           "   (on for every user; only root turns them off: paas-kit plugin off <name>)")
+    for p in EXTRAS:
+        print(f"{p:13} {'on for every user (root)' if c['plugins'].get(p) is True else 'optional: each user switches it on in /plugin or the Market'}"
+              + ("" if shutil.which("node") else "   WARNING: node is not on the PATH, its hooks cannot run"))
     print("rtk           rtk's own hook; left as typed: " + (", ".join(c.get("rtk_exclude", RTK_EXCLUDE)) or "nothing")
           + "; your savings: paas-kit gain")
     crg = f"{D}/venv/crg/bin/code-review-graph"

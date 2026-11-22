@@ -101,8 +101,17 @@ else
 fi
 /usr/local/bin/paas-kit apply
 
-# the kit's plugins are on for everyone; a Market card would offer a Remove that does nothing (older kits added one)
-! command -v paas-market >/dev/null 2>&1 || paas-market source remove paas-kit >/dev/null 2>&1 || true
+# the kit's own plugins are on for everyone: no Market card for them (older kits added one). The optional extras
+# (ponytail) are a Market source of their own, so each user adds them there or in /plugin.
+if command -v paas-market >/dev/null 2>&1; then
+  paas-market source remove paas-kit >/dev/null 2>&1 || true
+  if paas-market source list 2>/dev/null | grep -q '^paas-kit-extras '; then
+    paas-market source sync paas-kit-extras >/dev/null 2>&1 || true
+  else
+    paas-market source add "$D/kit/marketplace-extras" paas-kit-extras >/dev/null 2>&1 || true
+  fi
+fi
+command -v node >/dev/null 2>&1 || echo "note: node is not on the PATH; the optional ponytail plugin needs it for its hooks"
 echo
 /usr/local/bin/paas-kit status
 echo

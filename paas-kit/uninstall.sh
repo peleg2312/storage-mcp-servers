@@ -8,7 +8,7 @@ rm -f /etc/claude-code/managed-settings.d/60-paas-kit.json
 systemctl disable --now paas-headroom paas-kit-watch.timer >/dev/null 2>&1
 rm -f /etc/systemd/system/paas-headroom.service /etc/systemd/system/paas-kit-watch.service /etc/systemd/system/paas-kit-watch.timer
 systemctl daemon-reload
-command -v paas-market >/dev/null 2>&1 && paas-market source remove paas-kit >/dev/null 2>&1
+command -v paas-market >/dev/null 2>&1 && { paas-market source remove paas-kit; paas-market source remove paas-kit-extras; } >/dev/null 2>&1
 for f in paas-kit code-review-graph ast-grep rtk; do
   case $(readlink /usr/local/bin/$f 2>/dev/null) in /opt/paas-kit/*) rm -f /usr/local/bin/$f ;; esac
 done
