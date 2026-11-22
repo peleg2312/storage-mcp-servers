@@ -9,7 +9,7 @@
 #
 # What it touches (nothing of the brain, no team repository, no user's own settings):
 #   /opt/paas-kit/                 the kit, two Python 3.12 venvs (Headroom, code-review-graph), rtk, wheels, tiktoken
-#                                  data, the Kompress model (hf/)
+#                                  data
 #   /etc/paas-kit/kit.json         its settings
 #   /etc/claude-code/managed-settings.d/60-paas-kit.json   Claude settings for everyone, above anyone's own: the kit's
 #                                  plugins on (rtk, code-graph, fastapi-api) and, with Headroom on,
@@ -36,7 +36,7 @@ rm -rf "$D/kit.new"; cp -R "$KIT" "$D/kit.new"
 rm -rf "$D/kit.old"; [ ! -d "$D/kit" ] || mv "$D/kit" "$D/kit.old"; mv "$D/kit.new" "$D/kit"; rm -rf "$D/kit.old"
 rm -rf "$D/bin"; cp -R "$D/kit/bin" "$D/bin"; cp "$D/kit/rtk/rtk" "$D/bin/rtk"; chmod 755 "$D/bin/"*
 rm -rf "$D/tiktoken"; cp -R "$D/kit/tiktoken" "$D/tiktoken"
-rm -rf "$D/hf"; cp -R "$D/kit/hf" "$D/hf"          # Kompress model (Headroom's AI text compressor), offline
+rm -rf "$D/hf"; [ ! -d "$D/kit/hf" ] || cp -R "$D/kit/hf" "$D/hf"   # Kompress model, only in a kit built with it
 
 venv() {   # venv <name> <wheels> <packages...>: a fresh venv; the old one comes back if the install fails
   n=$1; w=$2; shift 2       # (a venv records its own path, so it is built under its final name)
@@ -75,8 +75,10 @@ if fresh or not hr:
     c["headroom"] = hr and bool(c.get("upstream"))
 c.setdefault("profile", "safe")
 c.pop("rtk_rewrite", None)
-if c.get("rtk_exclude") in (None, ["oc", "kubectl", "grep", "egrep", "rg"]):   # unset, or the previous kit's default
-    c["rtk_exclude"] = ["oc logs", "kubectl logs", "oc describe", "kubectl describe"]
+if c.get("rtk_exclude") in (None, ["oc", "kubectl", "grep", "egrep", "rg"],                 # unset, or an earlier
+                            ["oc logs", "kubectl logs", "oc describe", "kubectl describe"]):  # kit's default list
+    c["rtk_exclude"] = ["oc logs", "kubectl logs", "oc describe", "kubectl describe", "aws", "ps", "ruff",
+                        r"^ls\s+(.*\s)?-[a-zA-Z]*l", r"^ls\s+(.*\s)?--format=long"]
 if not c.get("profile_chosen"):
     c["profile"] = "safe"           # JSON tables only: nothing left out (root: paas-kit headroom profile full)
 c.setdefault("plugins", {})

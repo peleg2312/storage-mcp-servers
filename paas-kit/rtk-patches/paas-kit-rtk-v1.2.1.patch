@@ -114,6 +114,58 @@ index d2f8d74..b5914b6 100644
              status_max_files: 15,
              status_max_untracked: 10,
              passthrough_max_chars: 2000,
+diff --git a/src/core/toml_filter.rs b/src/core/toml_filter.rs
+index 576ce0d..2d77f79 100644
+--- a/src/core/toml_filter.rs
++++ b/src/core/toml_filter.rs
+@@ -703,13 +703,13 @@ pub fn apply_filter_with_info(filter: &CompiledFilter, stdout: &str) -> (String,
+             lines = result;
+             noncontiguous_drop = true;
+         }
+-    } else if let Some(head) = filter.head_lines {
++    } else if let Some(head) = filter.head_lines.map(|h| h.max(1000)) {
+         if total > head {
+             lines.truncate(head);
+             lines.push(format!("... ({} lines omitted)", total - head));
+             head_cut = Some(head);
+         }
+-    } else if let Some(tail) = filter.tail_lines
++    } else if let Some(tail) = filter.tail_lines.map(|t| t.max(1000))
+         && total > tail
+     {
+         let omitted = total - tail;
+@@ -720,7 +720,8 @@ pub fn apply_filter_with_info(filter: &CompiledFilter, stdout: &str) -> (String,
+ 
+     // 7. max_lines — absolute cap applied after head/tail (includes omit messages)
+     let mut max_cut: Option<usize> = None;
+-    if let Some(max) = filter.max_lines
++    // paas-kit: never cut below 2000 lines (the built-in filters cut df at 20, rsync at 20, gcc at 50 ...)
++    if let Some(max) = filter.max_lines.map(|m| m.max(2000))
+         && lines.len() > max
+     {
+         let dropped = lines.len() - max;
+diff --git a/src/core/truncate.rs b/src/core/truncate.rs
+index 58285f6..49c9efb 100644
+--- a/src/core/truncate.rs
++++ b/src/core/truncate.rs
+@@ -2,13 +2,13 @@
+ //! ("Truncation Caps") for the cap classes, config policy, and deviation rules.
+ 
+ /// Errors: most actionable, shown the most.
+-pub const CAP_ERRORS: usize = 20;
++pub const CAP_ERRORS: usize = 1000; // paas-kit: show everything (was 20)
+ /// Warnings and test failures: lower signal density than errors.
+-pub const CAP_WARNINGS: usize = 10;
++pub const CAP_WARNINGS: usize = 500; // paas-kit: show everything (was 10)
+ /// Flat lists (PRs, services, packages): one line per item.
+-pub const CAP_LIST: usize = 20;
++pub const CAP_LIST: usize = 500; // paas-kit: show everything (was 20)
+ /// Inventories (`pip list`, `docker images`): exhaustive lookups.
+-pub const CAP_INVENTORY: usize = 50;
++pub const CAP_INVENTORY: usize = 1000; // paas-kit: show everything (was 50)
+ 
+ /// A cap reduced for a verbose data class. Falls back to `cap` when `by >= cap`
+ /// so a deviation can never empty the list; `0` stays `0`. `const fn`, underflow-safe.
 diff --git a/src/lib.rs b/src/lib.rs
 index cf9fa7f..ea49a64 100644
 --- a/src/lib.rs
@@ -127,3 +179,26 @@ index cf9fa7f..ea49a64 100644
          max_len: usize,
          /// Max results to show
          // No short: `-m` is GNU grep's --max-count (stop after N matches per
+diff --git a/src/parser/formatter.rs b/src/parser/formatter.rs
+index e26ef9c..4063eb3 100644
+--- a/src/parser/formatter.rs
++++ b/src/parser/formatter.rs
+@@ -58,15 +58,15 @@ impl TokenFormatter for TestResult {
+ 
+         if !self.failures.is_empty() {
+             lines.push(String::new());
+-            for (idx, failure) in self.failures.iter().enumerate().take(5) {
++            for (idx, failure) in self.failures.iter().enumerate().take(500) { // paas-kit (was 5)
+                 lines.push(format!("{}. {}", idx + 1, failure.test_name));
+                 for line in failure.error_message.lines() {
+                     lines.push(format!("   {}", line));
+                 }
+             }
+ 
+-            if self.failures.len() > 5 {
+-                lines.push(format!("\n... +{} more failures", self.failures.len() - 5));
++            if self.failures.len() > 500 {
++                lines.push(format!("\n... +{} more failures", self.failures.len() - 500));
+             }
+         }
+ 

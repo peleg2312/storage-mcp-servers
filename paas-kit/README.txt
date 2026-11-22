@@ -14,17 +14,20 @@ WHAT IS IN IT
                      types plain commands and never needs to know. What rtk cut: rtk recall <hash> (rtk prints it).
                      One check in front: a command the model writes as "rtk ..." itself is refused (the brain's
                      read-only guard does not look inside "rtk oc delete ..."); rtk's own rewrites are not affected.
-                     rtk is built from source with a small patch (rtk-patches/): oc / kubectl get pods lists every
-                     unhealthy pod with its real reason (CrashLoopBackOff, ImagePullBackOff, OOMKilled, not ready),
-                     where rtk as shipped counts crash-looping pods as running and shows 10 at most; grep keeps whole
-                     lines (400 characters) and up to 500 matches a file. Left as typed by default: oc logs, kubectl
-                     logs (rtk keeps only the last 100 lines), oc describe, kubectl describe.
-                     Root: paas-kit rtk exclude <cmd prefix>... | none | default.
+                     rtk is built from source with a patch (rtk-patches/), tested command by command on storage,
+                     Kubernetes, Linux and coding output: oc / kubectl get pods lists every unhealthy pod with its real
+                     reason (rtk as shipped counts crash-looping pods as running and shows 10); grep keeps whole lines;
+                     no list is cut any more (rtk cut pytest failures at 5, ls at 50, df / rsync at 20 lines, ...).
+                     Left as typed by default, because rtk loses facts there: oc / kubectl logs (last 100 lines only),
+                     oc / kubectl describe, aws (JSON reduced to one sample item), ps (command lines cut), ruff (rule
+                     summary without file:line), ls -l (owner, date, exact size). Root: paas-kit rtk exclude <cmd
+                     prefix or ^regex>... | none | default.
   Headroom           a small local service between Claude and the model (GLM). Profile safe (the default):
                      strict lossless - JSON lists from the MCP servers become compact tables, every row and value kept
                      (measured: volume list 70%, host list 53%, port list 68% fewer tokens). profile full
                      adds Headroom's other compressors: long logs keep their errors and the rest is fetched
-                     back on request, long text goes through Kompress (its AI text compressor, included, offline).
+                     back on request (lossy, not recommended). Kompress (Headroom's AI text compressor) is not shipped:
+                     in testing it saved 2-11%, cost ~0.8 GB RAM and seconds of CPU, and damaged answers.
                      Runs in token mode: every tool result is compressed, also when Claude makes many tool calls in
                      a row (Headroom's cache mode does not then); the compressed form is the same on every request,
                      so the model server's prompt cache keeps working.
@@ -38,8 +41,8 @@ WHAT IS IN IT
                      kit's wheels, Python 3.12 or 3.9), the rules skill and an api-reviewer agent.
 
 NEEDS
-  RHEL 9 (or similar) with python3.12:  dnf install -y python3.12      About 2 GB free in /opt; Headroom uses
-  about 0.8 GB of memory with Kompress loaded.
+  RHEL 9 (or similar) with python3.12:  dnf install -y python3.12      About 1.5 GB free in /opt; Headroom uses
+  about 0.3 GB of memory.
 
 INSTALL (root)
   unzip paas-kit-<version>.zip

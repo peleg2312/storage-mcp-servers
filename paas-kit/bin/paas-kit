@@ -9,8 +9,8 @@
 root only:
   paas-kit headroom on | off              send every Claude session through Headroom, or straight to the model again
   paas-kit headroom profile safe | full   safe (default): JSON tables made compact, nothing ever left out
-                                          full: also every other Headroom compressor and Kompress (its AI text
-                                          compressor); long logs shortened, the rest fetched back on request
+                                          full: also Headroom's other compressors; long logs shortened, the rest
+                                          fetched back on request (lossy: not recommended)
   paas-kit headroom upstream <url>        the model address Headroom forwards to (found at install)
   paas-kit plugin on | off <name>         a kit plugin for every user (rtk, code-graph, fastapi-api)
   paas-kit rtk exclude <cmd>... | none | default   commands rtk leaves as typed (default: "oc logs" "kubectl logs"
@@ -34,10 +34,14 @@ DROPIN = "/etc/claude-code/managed-settings.d/60-paas-kit.json"
 PORT = 8787
 LOCAL = f"http://127.0.0.1:{PORT}"
 PLUGINS = ("rtk", "code-graph", "fastapi-api")
-# rtk leaves these as typed: "oc logs" keeps only the last 100 lines; describe output is not summarised safely.
-# (The kit's rtk is patched: every problem pod with its real reason, whole grep lines, up to 500 matches a file.)
-RTK_EXCLUDE = ["oc logs", "kubectl logs", "oc describe", "kubectl describe"]
-RTK_EXCLUDE_OLD = ["oc", "kubectl", "grep", "egrep", "rg"]
+# rtk leaves these as typed (measured, see README): oc/kubectl logs keeps only the last 100 lines; describe is not
+# checked; aws turns JSON into one sample item; ps cuts command lines; ruff keeps a per-rule summary without file:line;
+# ls in long format drops owner, date and exact sizes. A pattern starting with ^ is a regular expression.
+# (The kit's rtk is patched: every problem pod with its real reason, whole grep lines, and its list limits raised so
+# nothing is cut: 10/20/50 items -> 500/1000, rule-file line limits -> 2000, test failures 5 -> 500.)
+RTK_EXCLUDE = ["oc logs", "kubectl logs", "oc describe", "kubectl describe", "aws", "ps", "ruff",
+               r"^ls\s+(.*\s)?-[a-zA-Z]*l", r"^ls\s+(.*\s)?--format=long"]
+RTK_EXCLUDE_OLD = [["oc", "kubectl", "grep", "egrep", "rg"], ["oc logs", "kubectl logs", "oc describe", "kubectl describe"]]
 DEFAULT = {"upstream": "", "headroom": True, "profile": "safe", "rtk_exclude": RTK_EXCLUDE, "plugins": {p: True for p in PLUGINS}}
 
 
@@ -117,7 +121,13 @@ def apply(c=None, quiet=False):
         "extraKnownMarketplaces": {"paas-kit": {"source": {"source": "directory", "path": f"{D}/kit/marketplace"}}},
         "enabledPlugins": {f"{p}@paas-kit": bool(v) for p, v in c["plugins"].items()},
     }
-    s["env"] = {"RTK_TELEMETRY_DISABLED": "1", "RTK_SUPPRESS_HOOK_WARNING": "1"}
+    s["env"] = {"RTK_TELEMETRY_DISABLED": "1", "RTK_SUPPRESS_HOOK_WARNING": "1",
+                # lossless speed-ups for an offline VM (the brain sets the same; the kit works without it):
+                # MCP tool descriptions load only when a task needs them, no update / telemetry traffic that waits
+                # on timeouts
+                "ENABLE_TOOL_SEARCH": "true", "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC": "1", "DISABLE_AUTOUPDATER": "1"}
+    # air-gapped: the web tools can never answer; denied tools leave every session's tool list (~2-3k tokens)
+    s["permissions"] = {"deny": ["WebFetch", "WebSearch"]}
     if on:
         s["env"]["ANTHROPIC_BASE_URL"] = LOCAL
     rtk_config(c)
@@ -139,7 +149,7 @@ def rtk_config(c):
     d = f"{D}/rtk-config/rtk"
     os.makedirs(d, exist_ok=True)
     os.chmod(f"{D}/rtk-config", 0o755); os.chmod(d, 0o755)
-    ex = [x for x in c.get("rtk_exclude", RTK_EXCLUDE) if re.match(r"^[\w.+ -]+$", x)]
+    ex = [x for x in c.get("rtk_exclude", RTK_EXCLUDE) if re.match(r"^[\w.+ -]+$", x) or x.startswith("^")]
     tmp = f"{d}/config.toml.tmp"
     open(tmp, "w").write("# written by paas-kit (paas-kit rtk exclude ...)\n[hooks]\nexclude_commands = " + json.dumps(ex) + "\n")
     os.chmod(tmp, 0o644)
@@ -185,7 +195,11 @@ def run_headroom():
     #    prompt cache still hits.
     #  - no per-minute rate limit (it would be one limit for all users of the VM), no Anthropic subscription polling.
     args = [f"{D}/venv/headroom/bin/headroom", "proxy", "--host", "127.0.0.1", "--port", str(PORT),
-            "--anthropic-api-url", c["upstream"], "--mode", "token", "--no-rate-limit", "--no-subscription-tracking"]
+            "--anthropic-api-url", c["upstream"], "--mode", "token", "--no-rate-limit", "--no-subscription-tracking",
+            # several workers: measured 20 users at once, 1 worker +320 ms a request, 4 workers +135 ms (direct 169 ms)
+            "--workers", str(c.get("workers") or max(1, min(4, (os.cpu_count() or 2) // 2)))]
+    if not os.path.isdir(f"{D}/hf/hub"):
+        args += ["--disable-kompress"]            # the kit ships without Kompress (little saving, ~0.8 GB RAM, lossy)
     if c["profile"] == "safe":
         # JSON made compact, nothing ever dropped: without HEADROOM_LOSSLESS_ONLY the crusher samples ~15-50 items of
         # nested results (Prometheus / Harvest) and, with --no-ccr, says nothing about the rest (measured: 15 of 250 kept)
