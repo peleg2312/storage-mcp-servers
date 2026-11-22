@@ -14,11 +14,12 @@ WHAT IS IN IT
                      types plain commands and never needs to know. What rtk cut: rtk recall <hash> (rtk prints it).
                      One check in front: a command the model writes as "rtk ..." itself is refused (the brain's
                      read-only guard does not look inside "rtk oc delete ..."); rtk's own rewrites are not affected.
-                     Left as typed by default: oc, kubectl, grep, egrep, rg - measured on storage work, rtk listed
-                     10 of 39 failing pods (all as "Pending") and hid most I/O-error lines of a log, and a small
-                     model then could not answer. Root: paas-kit rtk exclude <cmd>... | none | default.
-                     Permission modes: auto and bypass rewrite with no question; in default mode Claude asks before
-                     an rtk command it has not been allowed (as with rtk anywhere).
+                     rtk is built from source with a small patch (rtk-patches/): oc / kubectl get pods lists every
+                     unhealthy pod with its real reason (CrashLoopBackOff, ImagePullBackOff, OOMKilled, not ready),
+                     where rtk as shipped counts crash-looping pods as running and shows 10 at most; grep keeps whole
+                     lines (400 characters) and up to 500 matches a file. Left as typed by default: oc logs, kubectl
+                     logs (rtk keeps only the last 100 lines), oc describe, kubectl describe.
+                     Root: paas-kit rtk exclude <cmd prefix>... | none | default.
   Headroom           a small local service between Claude and the model (GLM). Profile safe (the default):
                      strict lossless - JSON lists from the MCP servers become compact tables, every row and value kept
                      (measured: volume list 70%, host list 53%, port list 68% fewer tokens). profile full

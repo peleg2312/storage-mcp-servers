@@ -5,7 +5,8 @@
 #                       api-py312/*.whl and api-py39/*.whl (fastapi[standard] uvicorn pydantic pydantic-settings httpx
 #                       sqlalchemy alembic psycopg[binary] python-jose passlib python-multipart pytest pytest-asyncio
 #                       ruff mypy)   tiktoken/<sha1 of the encoding url> (cl100k_base, o200k_base, p50k_base, r50k_base)
-#                       rtk/rtk (cargo build --release --locked --target x86_64-unknown-linux-musl, rtk-ai/rtk v1.2.1)
+#                       rtk/rtk (rtk-ai/rtk v1.2.1, git apply paas-kit/rtk-patches/*.patch, cargo build --release --locked
+#                       --target x86_64-unknown-linux-musl with CC=musl-gcc)
 #                       hf/ (HF_HOME after KompressCompressor().preload(): chopratejas/kompress-v2-base onnx + tokenizer)
 # Get them on a machine with internet, e.g.:
 #   pip download -d headroom --only-binary=:all: --python-version 3.12 --platform manylinux_2_28_x86_64 "headroom-ai[proxy]"
@@ -20,7 +21,7 @@ find "$K" -name __pycache__ -prune -exec rm -rf {} +
 mkdir -p "$K/wheels"
 for d in headroom crg api-py312 api-py39; do cp -R "$PAY/$d" "$K/wheels/$d"; done
 cp -R "$PAY/tiktoken" "$K/tiktoken"
-cp -R "$PAY/rtk" "$K/rtk"            # rtk (static x86_64 binary, rtk-ai/rtk v1.2.1) + its LICENSE
+cp -R "$PAY/rtk" "$K/rtk"            # rtk (static x86_64, rtk-ai/rtk v1.2.1 + rtk-patches/) + its LICENSE
 cp -R "$PAY/hf" "$K/hf"              # Hugging Face cache with the Kompress ONNX model + ModernBERT tokenizer
 echo "$V" > "$K/VERSION"
 chmod +x "$K/install.sh" "$K/uninstall.sh" "$K/bin/paas-kit" "$K/bin/crg-mcp" "$K/bin/crg-hook" "$K/bin/rtk-hook" "$K/bin/rtk-pre" "$K/rtk/rtk"

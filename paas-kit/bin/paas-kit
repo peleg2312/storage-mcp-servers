@@ -13,7 +13,8 @@ root only:
                                           compressor); long logs shortened, the rest fetched back on request
   paas-kit headroom upstream <url>        the model address Headroom forwards to (found at install)
   paas-kit plugin on | off <name>         a kit plugin for every user (rtk, code-graph, fastapi-api)
-  paas-kit rtk exclude <cmd>... | none | default   commands rtk leaves as typed (default: oc kubectl grep egrep rg)
+  paas-kit rtk exclude <cmd>... | none | default   commands rtk leaves as typed (default: "oc logs" "kubectl logs"
+                                          "oc describe" "kubectl describe"; a prefix, e.g. "oc get pv" or "grep")
   paas-kit apply                          write the Claude settings file from /etc/paas-kit/kit.json
   paas-kit watch                          (timer, every minute) Headroom down -> sessions go straight to the model
 """
@@ -33,7 +34,10 @@ DROPIN = "/etc/claude-code/managed-settings.d/60-paas-kit.json"
 PORT = 8787
 LOCAL = f"http://127.0.0.1:{PORT}"
 PLUGINS = ("rtk", "code-graph", "fastapi-api")
-RTK_EXCLUDE = ["oc", "kubectl", "grep", "egrep", "rg"]   # measured: rtk hid failing pods and log matches; these run as typed
+# rtk leaves these as typed: "oc logs" keeps only the last 100 lines; describe output is not summarised safely.
+# (The kit's rtk is patched: every problem pod with its real reason, whole grep lines, up to 500 matches a file.)
+RTK_EXCLUDE = ["oc logs", "kubectl logs", "oc describe", "kubectl describe"]
+RTK_EXCLUDE_OLD = ["oc", "kubectl", "grep", "egrep", "rg"]
 DEFAULT = {"upstream": "", "headroom": True, "profile": "safe", "rtk_exclude": RTK_EXCLUDE, "plugins": {p: True for p in PLUGINS}}
 
 
@@ -135,7 +139,7 @@ def rtk_config(c):
     d = f"{D}/rtk-config/rtk"
     os.makedirs(d, exist_ok=True)
     os.chmod(f"{D}/rtk-config", 0o755); os.chmod(d, 0o755)
-    ex = [x for x in c.get("rtk_exclude", RTK_EXCLUDE) if re.match(r"^[\w.+-]+$", x)]
+    ex = [x for x in c.get("rtk_exclude", RTK_EXCLUDE) if re.match(r"^[\w.+ -]+$", x)]
     tmp = f"{d}/config.toml.tmp"
     open(tmp, "w").write("# written by paas-kit (paas-kit rtk exclude ...)\n[hooks]\nexclude_commands = " + json.dumps(ex) + "\n")
     os.chmod(tmp, 0o644)
@@ -261,7 +265,7 @@ def status():
             pass
     print("plugins       " + ", ".join(f"{p} {'on' if v else 'off'}" for p, v in c["plugins"].items()) +
           "   (on for every user; only root turns them off: paas-kit plugin off <name>)")
-    print("rtk           rtk's own hook; left as typed: " + (" ".join(c.get("rtk_exclude", RTK_EXCLUDE)) or "nothing")
+    print("rtk           rtk's own hook; left as typed: " + (", ".join(c.get("rtk_exclude", RTK_EXCLUDE)) or "nothing")
           + "; your savings: paas-kit gain")
     crg = f"{D}/venv/crg/bin/code-review-graph"
     print(f"code graph    {'ready' if os.path.exists(crg) else 'missing'}: paas-kit graph build  (in a git repository)")
@@ -328,12 +332,12 @@ def main():
         root()
         if rest[:1] != ["exclude"] or len(rest) < 2:
             sys.exit("usage: paas-kit rtk exclude <command>... | none | default   (now: "
-                     + " ".join(load().get("rtk_exclude", RTK_EXCLUDE)) + ")")
+                     + ", ".join(load().get("rtk_exclude", RTK_EXCLUDE)) + ")")
         c = load()
         c["rtk_exclude"] = [] if rest[1:] == ["none"] else RTK_EXCLUDE if rest[1:] == ["default"] else rest[1:]
         save(c)
         apply(c)
-        print("rtk leaves as typed: " + (" ".join(c["rtk_exclude"]) or "nothing"))
+        print("rtk leaves as typed: " + (", ".join(c["rtk_exclude"]) or "nothing"))
     elif cmd == "apply":
         apply()
     elif cmd == "watch":
