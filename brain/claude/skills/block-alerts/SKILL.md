@@ -53,6 +53,9 @@ Give a one-line reason (`why`) for each priority.
 
 ## 5. Fill the report JSON
 Folder: `~/block-alerts/<YYYYmmdd-HHMM>/`; file `report.json`. The mail must fit about one screen: **short**.
+- `headline` (the big title and the start of the subject): what matters most + when to act, max ~8
+  words, e.g. "SRDF to DR is down — act now", "All clear — 3 informational alerts". Not a generic
+  "alerts report" title.
 - `summary` 1-2 sentences; `actions` at most 3, one line each.
 - Per alert: `what` 1 sentence (+ `impact` 1 sentence), `cause` and `live` one short line each, `why` one line,
   `steps` at most 3 short steps, `commands` at most 2, `sources` at most 2. P3 / P4: `what` + `steps` only.
@@ -61,9 +64,9 @@ Folder: `~/block-alerts/<YYYYmmdd-HHMM>/`; file `report.json`. The mail must fit
   (e.g. "5 more ports with CRC errors") - the details stay in the chat answer, not the mail. Email language: the language the user writes in (`"lang": "he"` for Hebrew, else `"en"`).
 ```json
 {
-  "title": "PowerMax and MDS alerts - last 24 h",
-  "source": "powermax MCP alerts + MDS syslog, 2026-11-22 06:00-18:00",
-  "generated": "2026-11-22 18:40",
+  "headline": "SRDF to DR is down — act now",
+  "generated": "22 Nov 2026, 18:40", "window": "last 24 h",
+  "source": "powermax MCP alerts + MDS syslog",
   "lang": "en",
   "summary": "2-3 sentences: what is going on overall, what is urgent, what is noise.",
   "actions": ["The 1-5 most important things to do first, most urgent first, each one line"],
@@ -93,9 +96,9 @@ Get the script out of this file once (it is the block between the `# >>>` and `#
 ```bash
 S=$(find ~/.claude /opt/paas -path '*block-alerts/SKILL.md' 2>/dev/null | head -1)
 mkdir -p ~/.config/block-alerts
-sed -n '/^# >>> block_alerts_mail.py v2$/,/^# <<< block_alerts_mail.py$/p' "$S" > ~/.config/block-alerts/block_alerts_mail.py
+sed -n '/^# >>> block_alerts_mail.py v3$/,/^# <<< block_alerts_mail.py$/p' "$S" > ~/.config/block-alerts/block_alerts_mail.py
 ```
-(If `~/.config/block-alerts/block_alerts_mail.py` already starts with `# >>> block_alerts_mail.py v2`, skip this.)
+(If `~/.config/block-alerts/block_alerts_mail.py` already starts with `# >>> block_alerts_mail.py v3`, skip this.)
 Then, with `M=~/.config/block-alerts/block_alerts_mail.py` and `R=~/block-alerts/<folder>`:
 1. `python3 $M $R/report.json --html $R/email.html` - fix any error it prints (it validates the JSON).
 2. Show the user in the chat: the subject line, the count per priority, the "do first" list, and the path of
@@ -121,7 +124,7 @@ and send the first report to the user only (`--to <their address>`) so they see 
 
 ## The script (do not edit; extract it as in step 6)
 ```python
-# >>> block_alerts_mail.py v2
+# >>> block_alerts_mail.py v3
 """block-alerts mail: the alert report JSON -> an Outlook-safe HTML email (+ plain text), standard library only.
   python3 block_alerts_mail.py report.json --html out.html     preview in a browser
   python3 block_alerts_mail.py report.json --eml out.eml       Outlook draft (open it, press Send)
@@ -143,16 +146,16 @@ ORDER = list(PRI)
 WORDS = {"critical": "P1", "fatal": "P1", "emergency": "P1", "alert": "P1", "high": "P2", "major": "P2",
          "error": "P2", "medium": "P3", "warning": "P3", "minor": "P3", "low": "P4", "notice": "P4"}
 T = {
-    "en": dict(report="Storage alert report", overview="All alerts", act="Do first", what="What it is",
+    "en": dict(report="Storage alerts", overview="All alerts", act="Do first", what="What it is",
                impact="Impact", cause="Likely cause", steps="What to do", cmds="Commands", live="Current state",
                bug="Known bug / fixed in", src="Sources", why="Why this priority", system="System", obj="Object",
                code="Alert", vsev="Vendor severity", seen="Seen", count="Count", actby="Act by",
-               summary="Summary", now="Now", fix="Fix", also="No action needed", alerts="alerts", more="more", source="Source",
+               summary="Summary", now="Now", fix="Fix", also="No action needed", alerts="alerts", alert="alert", more="more", source="Source",
                footer="Prepared by Claude from the alerts, the offline docs and read-only checks. Review each step before you run it."),
-    "he": dict(report="דוח התראות אחסון", overview="כל ההתראות", act="לטפל קודם", what="מה זה", impact="השפעה",
+    "he": dict(report="התראות אחסון", overview="כל ההתראות", act="לטפל קודם", what="מה זה", impact="השפעה",
                cause="סיבה אפשרית", steps="מה לעשות", cmds="פקודות", live="מצב נוכחי", bug="באג ידוע / תוקן בגרסה",
                src="מקורות", why="למה העדיפות הזו", system="מערכת", obj="רכיב", code="התראה", vsev="חומרת יצרן",
-               seen="נראה", count="כמות", actby="לטפל עד", summary="סיכום", now="עכשיו", fix="תיקון", also="לא נדרשת פעולה", alerts="התראות", more="נוספות",
+               seen="נראה", count="כמות", actby="לטפל עד", summary="סיכום", now="עכשיו", fix="תיקון", also="לא נדרשת פעולה", alerts="התראות", alert="התראה", more="נוספות",
                source="מקור",
                footer="הוכן על ידי Claude ממקור ההתראות, ספריית התיעוד הלא מקוונת ובדיקות לקריאה בלבד. "
                       "הפקודות מיועדות להרצה על ידך: בדוק כל צעד לפני שינוי."),
@@ -208,9 +211,9 @@ def actby(a, lang):
     return ACT_HE.get(v, v) if lang == "he" else v
 
 
-def pill(p, lang):
+def pill(p, lang, text_=None):
     _, _, fg, bg, bd, _ = PRI[p]
-    txt = e(label(p, lang)) if p == "INFO" else f"{p} {e(label(p, lang))}"
+    txt = e(text_) if text_ else (e(label(p, lang)) if p == "INFO" else f"{p} {e(label(p, lang))}")
     return (f'<table {TBL}><tr><td bgcolor="{bg}" style="{F}font-size:11px;line-height:15px;'
             f'mso-line-height-rule:exactly;font-weight:700;color:{fg};padding:2px 8px;border:1px solid {bd};'
             f'border-radius:10px;white-space:nowrap">{txt}</td></tr></table>')
@@ -261,7 +264,7 @@ def card(a, t, lang, al, op):
             f'<td width="4" bgcolor="{fg}" style="font-size:0;line-height:0">&nbsp;</td>'
             f'<td valign="top" style="padding:10px 14px 12px 14px"><table {TBL} width="100%">'
             f'<tr><td><table {TBL} width="100%"><tr>'
-            f'<td valign="middle" width="1" style="padding:0 8px 0 0">{pill(p, lang)}</td>'
+            f'<td valign="middle" width="1" style="padding:{"0 0 0 8px" if al == "right" else "0 8px 0 0"}">{pill(p, lang)}</td>'
             f'<td valign="middle" align="{al}" style="{F}font-size:16px;line-height:21px;mso-line-height-rule:exactly;'
             f'font-weight:700;color:#101828">{e(a["title"])}</td>'
             f'<td valign="middle" align="{op}" class="ab" style="{F}font-size:13px;line-height:18px;font-weight:700;'
@@ -277,12 +280,26 @@ def counts(r):
     return c
 
 
+def headline(r):
+    a = r["alerts"][0]
+    return r.get("headline") or (a["title"] + ("" if a["priority"] == "INFO" else f" \u2014 {actby(a, r['lang'])}"))
+
+
+def systems(r):
+    seen = []
+    for a in r["alerts"]:
+        x = " ".join(filter(None, [a.get("product"), a.get("system")]))
+        if x and x not in seen:
+            seen.append(x)
+    return seen
+
+
 def subject(r):
     al, lang = r["alerts"], r["lang"]
-    top = al[0]["priority"]
-    more = f" (+{len(al) - 1} {T[lang]['more']})" if len(al) > 1 else ""
-    tag = f"[{top} {label(top, lang)}]" if top != "INFO" else f"[{label(top, lang)}]"
-    return f"{tag} {len(al)} {T[lang]['alerts']} - {al[0]['title']}{more}"
+    top, c = al[0]["priority"], counts(r)
+    tag = top if top != "INFO" else label(top, lang)
+    real = ", ".join(f"{c[p]} {label(p, lang)}" for p in ORDER[:-1] if c[p])
+    return f"{tag} \u00b7 {headline(r)} \u00b7 {len(al)} {T[lang]['alerts'] if len(al) != 1 else T[lang]['alert']}" + (f" ({real})" if real else "")
 
 
 def render(r):
@@ -315,7 +332,10 @@ def render(r):
                       f'line-height:19px;color:#475467"><b>{e(t["also"])}:</b> {names}</td></tr>')
     pre = e(f'{len(r["alerts"])} {t["alerts"]}: ' + " · ".join(f"{c[p]} {label(p, lang)}" for p in ORDER if c[p])
             + " - " + " | ".join(r["actions"][:2] or [r["alerts"][0]["title"]]))
-    sub = " &middot; ".join(e(x) for x in (r.get("generated"), r.get("source")) if x)
+    kicker = " &middot; ".join(e(x) for x in (t["report"].upper(), r.get("generated"), r.get("window")) if x)
+    chips = "".join(f'<td style="padding:0 6px 6px 0">{pill(p, lang, f"{c[p]} {label(p, lang)}")}</td>'
+                    for p in ORDER if c[p])
+    sysline = " &middot; ".join(f'<span style="white-space:nowrap">{e(x)}</span>' for x in systems(r)[:6])
     return f'''<!DOCTYPE html>
 <html lang="{lang}" dir="{d}" xmlns="http://www.w3.org/1999/xhtml" xmlns:o="urn:schemas-microsoft-com:office:office">
 <head><meta http-equiv="Content-Type" content="text/html; charset=utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
@@ -329,12 +349,14 @@ def render(r):
 <table {TBL} width="100%" bgcolor="#F2F4F7" dir="{d}"><tr><td align="center" class="px" style="padding:16px 8px">
 <!--[if mso]><table {TBL} width="640" align="center"><tr><td><![endif]-->
 <table {TBL} width="100%" dir="{d}" style="max-width:640px" bgcolor="#FFFFFF">
-<tr><td class="px" bgcolor="#0B1F3A" align="{al}" style="padding:14px 20px">
-<p style="margin:0;{F}font-size:18px;line-height:24px;mso-line-height-rule:exactly;font-weight:700;color:#FFFFFF">{e(r.get("title") or t["report"])}</p>
-<p style="margin:2px 0 0 0;{F}font-size:12px;line-height:17px;color:#C7D2E0">{sub}</p></td></tr>
-<tr><td class="px" bgcolor="{PRI[top][2]}" align="{al}" style="padding:7px 20px;{F}font-size:13px;line-height:18px;font-weight:700;color:#FFFFFF">{len(r["alerts"])} {e(t["alerts"])}: {status}</td></tr>
+<tr><td bgcolor="{PRI[top][2]}" height="5" style="font-size:0;line-height:0;mso-line-height-rule:exactly;height:5px">&nbsp;</td></tr>
+<tr><td class="px" align="{al}" style="padding:16px 20px 0 20px">
+<p style="margin:0;{F}font-size:12px;line-height:16px;mso-line-height-rule:exactly;font-weight:600;letter-spacing:0.5px;color:#667085">{kicker}</p>
+<p style="margin:6px 0 10px 0;{F}font-size:22px;line-height:28px;mso-line-height-rule:exactly;font-weight:700;color:#101828">{e(headline(r))}</p>
+<table {TBL} align="{al}"><tr>{chips}</tr></table>
+<p style="clear:both;margin:2px 0 0 0;{F}font-size:12px;line-height:17px;color:#98A2B3">{sysline}</p></td></tr>
 {"".join(blocks)}
-<tr><td class="px" align="{al}" style="padding:14px 20px 16px 20px;{F}font-size:11px;line-height:16px;color:#98A2B3">{e(t["footer"])}</td></tr>
+<tr><td class="px" align="{al}" style="padding:14px 20px 16px 20px;{F}font-size:11px;line-height:16px;color:#98A2B3">{(e(t["source"]) + ": " + e(r["source"]) + "<br>") if r.get("source") else ""}{e(t["footer"])}</td></tr>
 </table>
 <!--[if mso]></td></tr></table><![endif]-->
 </td></tr></table></body></html>'''
@@ -343,8 +365,8 @@ def render(r):
 def text(r):
     t, lang = T[r["lang"]], r["lang"]
     c = counts(r)
-    out = [subject(r), "=" * 60, (r.get("title") or t["report"]),
-           " | ".join(x for x in (r.get("generated"), r.get("source")) if x),
+    out = [headline(r), "=" * 60, " | ".join(x for x in (t["report"], r.get("generated"), r.get("window")) if x),
+           " · ".join(systems(r)),
            " · ".join(f"{c[p]} {label(p, lang)}" for p in ORDER if c[p]), ""]
     if r.get("summary"):
         out += [t["summary"].upper(), r["summary"], ""]
