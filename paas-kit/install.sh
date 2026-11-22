@@ -1,18 +1,19 @@
 #!/bin/sh
 # paas-kit: VM-wide add-ons, apart from the brain (works with any brain, or none). Run once as root; every user,
-# and every user created later, gets it. Running it again updates the kit and keeps /etc/paas-kit/kit.json.
+# and every user created later, has them on, with no question asked; users cannot turn them off - only root can
+# (paas-kit headroom off, paas-kit plugin off <name>). Running it again updates the kit and keeps /etc/paas-kit/kit.json.
 #
 #   sudo sh install.sh                          everything; Headroom forwards to the model address the VM uses today
 #   sudo sh install.sh --upstream <url>         the model address to forward to, when it is not found by itself
 #   sudo sh install.sh --no-headroom            install Headroom but leave it off (paas-kit headroom on, later)
 #
 # What it touches (nothing of the brain, no team repository, no user's own settings):
-#   /opt/paas-kit/                 the kit, two Python 3.12 venvs (Headroom, code-review-graph), wheels, tiktoken data
+#   /opt/paas-kit/                 the kit, two Python 3.12 venvs (Headroom, code-review-graph), rtk, wheels, tiktoken data
 #   /etc/paas-kit/kit.json         its settings
-#   /etc/claude-code/managed-settings.d/60-paas-kit.json   Claude settings for everyone: the kit's plugins (and, with
-#                                  Headroom on, ANTHROPIC_BASE_URL=http://127.0.0.1:8787); never managed-settings.json
+#   /etc/claude-code/managed-settings.d/60-paas-kit.json   Claude settings for everyone, above anyone's own: the kit's
+#                                  plugins on (rtk, code-graph, fastapi-api) and, with Headroom on,
+#                                  ANTHROPIC_BASE_URL=http://127.0.0.1:8787; never managed-settings.json
 #   paas-headroom.service, paas-kit-watch.timer (systemd); /usr/local/bin/paas-kit, code-review-graph, ast-grep
-#   the paas Market: a source "paas-kit" when paas-market is on the VM
 set -eu
 KIT=$(cd "$(dirname "$0")" && pwd)
 [ "$(id -u)" = 0 ] || { echo "run it as root: sudo sh $0 $*"; exit 1; }
@@ -32,7 +33,7 @@ mkdir -p "$D/venv" /etc/paas-kit
 echo "== kit files -> $D/kit"
 rm -rf "$D/kit.new"; cp -R "$KIT" "$D/kit.new"
 rm -rf "$D/kit.old"; [ ! -d "$D/kit" ] || mv "$D/kit" "$D/kit.old"; mv "$D/kit.new" "$D/kit"; rm -rf "$D/kit.old"
-rm -rf "$D/bin"; cp -R "$D/kit/bin" "$D/bin"
+rm -rf "$D/bin"; cp -R "$D/kit/bin" "$D/bin"; cp "$D/kit/rtk/rtk" "$D/bin/rtk"; chmod 755 "$D/bin/"*
 rm -rf "$D/tiktoken"; cp -R "$D/kit/tiktoken" "$D/tiktoken"
 
 venv() {   # venv <name> <wheels> <packages...>: a fresh venv; the old one comes back if the install fails
@@ -70,7 +71,9 @@ elif not c.get("upstream"):
 if fresh or not hr:
     c["headroom"] = hr and bool(c.get("upstream"))
 c.setdefault("profile", "safe")
-c.setdefault("plugins", {"code-graph": True, "fastapi-api": True})
+c.setdefault("plugins", {})
+for p in ("rtk", "code-graph", "fastapi-api"):
+    c["plugins"].setdefault(p, True)
 json.dump(c, open(conf, "w"), indent=2)
 os.chmod(conf, 0o644)
 print("model address:", c["upstream"] or "NOT FOUND (Headroom stays off: paas-kit headroom upstream <url>, then paas-kit headroom on)")
@@ -88,14 +91,8 @@ else
 fi
 /usr/local/bin/paas-kit apply
 
-if command -v paas-market >/dev/null 2>&1; then
-  echo "== paas Market"
-  if paas-market source list 2>/dev/null | grep -q '^paas-kit '; then
-    paas-market source sync paas-kit || true
-  else
-    paas-market source add "$D/kit/marketplace" paas-kit || true
-  fi
-fi
+# the kit's plugins are on for everyone; a Market card would offer a Remove that does nothing (older kits added one)
+! command -v paas-market >/dev/null 2>&1 || paas-market source remove paas-kit >/dev/null 2>&1 || true
 echo
 /usr/local/bin/paas-kit status
 echo

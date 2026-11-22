@@ -1,0 +1,6 @@
+{
+  "name": "rtk",
+  "version": "1.0.0",
+  "description": "Shorter shell output for the model (rtk): long test, linter, grep / find, git and log output is filtered after the command ran; the command itself is never changed",
+  "author": {"name": "paas-kit"}
+}

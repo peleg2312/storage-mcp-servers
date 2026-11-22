@@ -4,13 +4,14 @@
   paas-kit status                         what is on, Headroom health and savings, the plugins
   paas-kit venv [DIR] [--python 3.12|3.9] a Python venv with FastAPI and its stack in DIR/.venv (offline wheels)
   paas-kit graph <code-review-graph args> the code graph tool (build / update / status / impact ...)
+  paas-kit gain                           your rtk savings (tokens saved by shorter shell output)
 
 root only:
   paas-kit headroom on | off              send every Claude session through Headroom, or straight to the model again
   paas-kit headroom profile safe | max    safe: JSON tables made compact, nothing dropped (default)
                                           max: also shortens logs and long text; hidden parts come back on request
   paas-kit headroom upstream <url>        the model address Headroom forwards to (found at install)
-  paas-kit plugin on | off <name>         a kit plugin for every user (code-graph, fastapi-api)
+  paas-kit plugin on | off <name>         a kit plugin for every user (rtk, code-graph, fastapi-api)
   paas-kit apply                          write the Claude settings file from /etc/paas-kit/kit.json
   paas-kit watch                          (timer, every minute) Headroom down -> sessions go straight to the model
 """
@@ -28,7 +29,7 @@ CONF = "/etc/paas-kit/kit.json"
 DROPIN = "/etc/claude-code/managed-settings.d/60-paas-kit.json"
 PORT = 8787
 LOCAL = f"http://127.0.0.1:{PORT}"
-PLUGINS = ("code-graph", "fastapi-api")
+PLUGINS = ("rtk", "code-graph", "fastapi-api")
 DEFAULT = {"upstream": "", "headroom": True, "profile": "safe", "plugins": {p: True for p in PLUGINS}}
 
 
@@ -231,7 +232,7 @@ def status():
         except Exception:
             pass
     print("plugins       " + ", ".join(f"{p} {'on' if v else 'off'}" for p, v in c["plugins"].items()) +
-          "   (for every user; Claude: /plugin, or the Market)")
+          "   (on for every user; only root turns them off: paas-kit plugin off <name>)")
     crg = f"{D}/venv/crg/bin/code-review-graph"
     print(f"code graph    {'ready' if os.path.exists(crg) else 'missing'}: paas-kit graph build  (in a git repository)")
     print(f"FastAPI       paas-kit venv .   (Python {', '.join(v for v in ('3.12', '3.9') if glob.glob(f'{D}/kit/wheels/api-py{v.replace(".", "")}/*.whl'))})")
@@ -287,6 +288,8 @@ def main():
         venv(rest)
     elif cmd == "graph":
         graph(rest)
+    elif cmd == "gain":
+        os.execv(f"{D}/bin/rtk", [f"{D}/bin/rtk", "gain"] + rest)
     elif cmd == "headroom":
         headroom_cmd(rest)
     elif cmd == "plugin":
