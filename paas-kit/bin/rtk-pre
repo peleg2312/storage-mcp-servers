@@ -1,8 +1,9 @@
 #!/bin/sh
 # PreToolUse (Bash) hook of the rtk plugin: rtk's own Claude Code hook (`rtk hook claude`), exactly as rtk ships it,
 # so commands rtk knows run in their short form. One check in front, only when the command mentions rtk at all:
-# the model may not write `rtk ...` itself (see rtk-hook).
-export RTK_TELEMETRY_DISABLED=1 RTK_SUPPRESS_HOOK_WARNING=1
+# the model may not write `rtk ...` itself (see rtk-hook). Commands in /opt/paas-kit/rtk-config/rtk/config.toml
+# (paas-kit rtk exclude) are left as typed.
+export XDG_CONFIG_HOME=/opt/paas-kit/rtk-config RTK_TELEMETRY_DISABLED=1 RTK_SUPPRESS_HOOK_WARNING=1
 IN=$(cat)
 case $IN in
   *rtk*)

@@ -13,12 +13,14 @@ root only:
                                           compressor); long logs shortened, the rest fetched back on request
   paas-kit headroom upstream <url>        the model address Headroom forwards to (found at install)
   paas-kit plugin on | off <name>         a kit plugin for every user (rtk, code-graph, fastapi-api)
+  paas-kit rtk exclude <cmd>... | none | default   commands rtk leaves as typed (default: oc kubectl grep egrep rg)
   paas-kit apply                          write the Claude settings file from /etc/paas-kit/kit.json
   paas-kit watch                          (timer, every minute) Headroom down -> sessions go straight to the model
 """
 import glob
 import json
 import os
+import re
 import shutil
 import subprocess
 import sys
@@ -31,7 +33,8 @@ DROPIN = "/etc/claude-code/managed-settings.d/60-paas-kit.json"
 PORT = 8787
 LOCAL = f"http://127.0.0.1:{PORT}"
 PLUGINS = ("rtk", "code-graph", "fastapi-api")
-DEFAULT = {"upstream": "", "headroom": True, "profile": "safe", "plugins": {p: True for p in PLUGINS}}
+RTK_EXCLUDE = ["oc", "kubectl", "grep", "egrep", "rg"]   # measured: rtk hid failing pods and log matches; these run as typed
+DEFAULT = {"upstream": "", "headroom": True, "profile": "safe", "rtk_exclude": RTK_EXCLUDE, "plugins": {p: True for p in PLUGINS}}
 
 
 def load():
@@ -113,6 +116,7 @@ def apply(c=None, quiet=False):
     s["env"] = {"RTK_TELEMETRY_DISABLED": "1", "RTK_SUPPRESS_HOOK_WARNING": "1"}
     if on:
         s["env"]["ANTHROPIC_BASE_URL"] = LOCAL
+    rtk_config(c)
     os.makedirs(os.path.dirname(DROPIN), exist_ok=True)
     tmp = DROPIN + ".tmp"
     json.dump(s, open(tmp, "w"), indent=2)
@@ -124,6 +128,18 @@ def apply(c=None, quiet=False):
         print(f"new Claude sessions go {state}; plugins: " +
               ", ".join(f"{p} {'on' if v else 'off'}" for p, v in c["plugins"].items()))
     return on
+
+
+def rtk_config(c):
+    """/opt/paas-kit/rtk-config/rtk/config.toml (rtk-pre points rtk's hook at it): commands rtk leaves as typed"""
+    d = f"{D}/rtk-config/rtk"
+    os.makedirs(d, exist_ok=True)
+    os.chmod(f"{D}/rtk-config", 0o755); os.chmod(d, 0o755)
+    ex = [x for x in c.get("rtk_exclude", RTK_EXCLUDE) if re.match(r"^[\w.+-]+$", x)]
+    tmp = f"{d}/config.toml.tmp"
+    open(tmp, "w").write("# written by paas-kit (paas-kit rtk exclude ...)\n[hooks]\nexclude_commands = " + json.dumps(ex) + "\n")
+    os.chmod(tmp, 0o644)
+    os.replace(tmp, f"{d}/config.toml")
 
 
 def watch():
@@ -167,7 +183,10 @@ def run_headroom():
     args = [f"{D}/venv/headroom/bin/headroom", "proxy", "--host", "127.0.0.1", "--port", str(PORT),
             "--anthropic-api-url", c["upstream"], "--mode", "token", "--no-rate-limit", "--no-subscription-tracking"]
     if c["profile"] == "safe":
-        args += ["--no-ccr", "--compressor", "smart_crusher", "--disable-kompress"]   # JSON compact, nothing dropped
+        # JSON made compact, nothing ever dropped: without HEADROOM_LOSSLESS_ONLY the crusher samples ~15-50 items of
+        # nested results (Prometheus / Harvest) and, with --no-ccr, says nothing about the rest (measured: 15 of 250 kept)
+        args += ["--no-ccr", "--compressor", "smart_crusher", "--disable-kompress"]
+        env["HEADROOM_LOSSLESS_ONLY"] = "1"
     os.execve(args[0], args, env)
 
 
@@ -242,7 +261,8 @@ def status():
             pass
     print("plugins       " + ", ".join(f"{p} {'on' if v else 'off'}" for p, v in c["plugins"].items()) +
           "   (on for every user; only root turns them off: paas-kit plugin off <name>)")
-    print("rtk           rtk's own hook: commands it knows run in their short form; your savings: paas-kit gain")
+    print("rtk           rtk's own hook; left as typed: " + (" ".join(c.get("rtk_exclude", RTK_EXCLUDE)) or "nothing")
+          + "; your savings: paas-kit gain")
     crg = f"{D}/venv/crg/bin/code-review-graph"
     print(f"code graph    {'ready' if os.path.exists(crg) else 'missing'}: paas-kit graph build  (in a git repository)")
     print(f"FastAPI       paas-kit venv .   (Python {', '.join(v for v in ('3.12', '3.9') if glob.glob(f'{D}/kit/wheels/api-py{v.replace(".", "")}/*.whl'))})")
@@ -304,6 +324,16 @@ def main():
         headroom_cmd(rest)
     elif cmd == "plugin":
         plugin_cmd(rest)
+    elif cmd == "rtk":
+        root()
+        if rest[:1] != ["exclude"] or len(rest) < 2:
+            sys.exit("usage: paas-kit rtk exclude <command>... | none | default   (now: "
+                     + " ".join(load().get("rtk_exclude", RTK_EXCLUDE)) + ")")
+        c = load()
+        c["rtk_exclude"] = [] if rest[1:] == ["none"] else RTK_EXCLUDE if rest[1:] == ["default"] else rest[1:]
+        save(c)
+        apply(c)
+        print("rtk leaves as typed: " + (" ".join(c["rtk_exclude"]) or "nothing"))
     elif cmd == "apply":
         apply()
     elif cmd == "watch":

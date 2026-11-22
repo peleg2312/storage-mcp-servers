@@ -14,10 +14,13 @@ WHAT IS IN IT
                      types plain commands and never needs to know. What rtk cut: rtk recall <hash> (rtk prints it).
                      One check in front: a command the model writes as "rtk ..." itself is refused (the brain's
                      read-only guard does not look inside "rtk oc delete ..."); rtk's own rewrites are not affected.
+                     Left as typed by default: oc, kubectl, grep, egrep, rg - measured on storage work, rtk listed
+                     10 of 39 failing pods (all as "Pending") and hid most I/O-error lines of a log, and a small
+                     model then could not answer. Root: paas-kit rtk exclude <cmd>... | none | default.
                      Permission modes: auto and bypass rewrite with no question; in default mode Claude asks before
                      an rtk command it has not been allowed (as with rtk anywhere).
   Headroom           a small local service between Claude and the model (GLM). Profile safe (the default):
-                     JSON lists from the MCP servers become compact tables, every row and value kept
+                     strict lossless - JSON lists from the MCP servers become compact tables, every row and value kept
                      (measured: volume list 70%, host list 53%, port list 68% fewer tokens). profile full
                      adds Headroom's other compressors: long logs keep their errors and the rest is fetched
                      back on request, long text goes through Kompress (its AI text compressor, included, offline).
@@ -54,6 +57,7 @@ USE
   in Claude:  /code-graph:build        /fastapi-api:new my-api  (the skills load by themselves when they fit)
   root:       paas-kit headroom off | on               all sessions straight to the model / through Headroom
               paas-kit headroom profile safe | full    safe (default): JSON tables only / full: every compressor
+              paas-kit rtk exclude oc kubectl grep     commands rtk leaves as typed (none / default)
               paas-kit headroom upstream <url>         another model address
               paas-kit plugin off | on rtk             a plugin for every user (also code-graph, fastapi-api)
   logs:       journalctl -u paas-headroom              savings: paas-kit status

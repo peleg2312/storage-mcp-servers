@@ -75,6 +75,7 @@ if fresh or not hr:
     c["headroom"] = hr and bool(c.get("upstream"))
 c.setdefault("profile", "safe")
 c.pop("rtk_rewrite", None)
+c.setdefault("rtk_exclude", ["oc", "kubectl", "grep", "egrep", "rg"])
 if not c.get("profile_chosen"):
     c["profile"] = "safe"           # JSON tables only: nothing left out (root: paas-kit headroom profile full)
 c.setdefault("plugins", {})
