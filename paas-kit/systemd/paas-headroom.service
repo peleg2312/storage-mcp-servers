@@ -1,0 +1,21 @@
+[Unit]
+Description=Headroom: makes the model's input smaller for every Claude session on this VM (paas-kit)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+ExecStart=/usr/bin/python3 /opt/paas-kit/bin/paas-kit run-headroom
+DynamicUser=yes
+StateDirectory=paas-headroom
+Environment=HOME=/var/lib/paas-headroom
+WorkingDirectory=/var/lib/paas-headroom
+Restart=always
+RestartSec=3
+NoNewPrivileges=yes
+ProtectSystem=strict
+ProtectHome=yes
+PrivateTmp=yes
+MemoryMax=3G
+
+[Install]
+WantedBy=multi-user.target

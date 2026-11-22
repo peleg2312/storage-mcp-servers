@@ -1,0 +1,10 @@
+#!/bin/sh
+# PostToolUse hook of the code-graph plugin (Edit / Write / MultiEdit): bring the graph up to date with the change,
+# in the background, only where a graph was built. Never blocks or fails the edit.
+D=/opt/paas-kit
+IN=$(cat)
+DIR=${CLAUDE_PROJECT_DIR:-$PWD}
+ROOT=$(git -C "$DIR" rev-parse --show-toplevel 2>/dev/null) || exit 0
+[ -f "$ROOT/.code-review-graph/graph.db" ] && [ -x "$D/venv/crg/bin/code-review-graph" ] || exit 0
+( printf '%s' "$IN" | HF_HUB_OFFLINE=1 timeout 300 "$D/venv/crg/bin/code-review-graph" hook-update >/dev/null 2>&1 & ) >/dev/null 2>&1
+exit 0

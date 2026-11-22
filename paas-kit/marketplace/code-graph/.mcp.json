@@ -1,0 +1,5 @@
+{
+  "mcpServers": {
+    "code-graph": {"command": "/opt/paas-kit/bin/crg-mcp", "args": []}
+  }
+}

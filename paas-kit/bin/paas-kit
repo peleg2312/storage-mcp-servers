@@ -1,0 +1,308 @@
+#!/usr/bin/env python3
+"""paas-kit: the VM-wide add-ons kept apart from the brain (any brain or none).
+
+  paas-kit status                         what is on, Headroom health and savings, the plugins
+  paas-kit venv [DIR] [--python 3.12|3.9] a Python venv with FastAPI and its stack in DIR/.venv (offline wheels)
+  paas-kit graph <code-review-graph args> the code graph tool (build / update / status / impact ...)
+
+root only:
+  paas-kit headroom on | off              send every Claude session through Headroom, or straight to the model again
+  paas-kit headroom profile safe | max    safe: JSON tables made compact, nothing dropped (default)
+                                          max: also shortens logs and long text; hidden parts come back on request
+  paas-kit headroom upstream <url>        the model address Headroom forwards to (found at install)
+  paas-kit plugin on | off <name>         a kit plugin for every user (code-graph, fastapi-api)
+  paas-kit apply                          write the Claude settings file from /etc/paas-kit/kit.json
+  paas-kit watch                          (timer, every minute) Headroom down -> sessions go straight to the model
+"""
+import glob
+import json
+import os
+import shutil
+import subprocess
+import sys
+import time
+import urllib.request
+
+D = "/opt/paas-kit"
+CONF = "/etc/paas-kit/kit.json"
+DROPIN = "/etc/claude-code/managed-settings.d/60-paas-kit.json"
+PORT = 8787
+LOCAL = f"http://127.0.0.1:{PORT}"
+PLUGINS = ("code-graph", "fastapi-api")
+DEFAULT = {"upstream": "", "headroom": True, "profile": "safe", "plugins": {p: True for p in PLUGINS}}
+
+
+def load():
+    try:
+        c = json.load(open(CONF))
+    except (OSError, ValueError):
+        c = {}
+    out = {**DEFAULT, **c}
+    out["plugins"] = {**DEFAULT["plugins"], **c.get("plugins", {})}
+    return out
+
+
+def save(c):
+    os.makedirs(os.path.dirname(CONF), exist_ok=True)
+    tmp = CONF + ".tmp"
+    json.dump(c, open(tmp, "w"), indent=2)
+    os.chmod(tmp, 0o644)
+    os.replace(tmp, CONF)
+
+
+def root():
+    if os.geteuid() != 0:
+        sys.exit("paas-kit: run this as root (sudo paas-kit ...)")
+
+
+def healthy(timeout=3):
+    try:
+        with urllib.request.urlopen(LOCAL + "/health", timeout=timeout) as r:
+            return json.load(r).get("status") == "healthy"
+    except Exception:
+        return False
+
+
+# ---------------------------------------------------------------- the model address in use before the kit
+def _env_from_json(path):
+    try:
+        return (json.load(open(path)).get("env") or {}).get("ANTHROPIC_BASE_URL", "")
+    except (OSError, ValueError, AttributeError):
+        return ""
+
+
+def detect_upstream():
+    """ANTHROPIC_BASE_URL as the VM sets it today (managed settings, /etc/environment, profile.d, people's settings)"""
+    found = []
+    files = ["/etc/claude-code/managed-settings.json"] + sorted(
+        f for f in glob.glob("/etc/claude-code/managed-settings.d/*.json") if f != DROPIN)
+    for f in files:
+        found.append(_env_from_json(f))
+    for f in ["/etc/environment"] + sorted(glob.glob("/etc/profile.d/*.sh")):
+        try:
+            for line in open(f, errors="replace"):
+                line = line.strip()
+                if "ANTHROPIC_BASE_URL=" in line and not line.startswith("#"):
+                    found.append(line.split("ANTHROPIC_BASE_URL=", 1)[1].split()[0].strip("'\";"))
+        except OSError:
+            pass
+    homes = ["/root"] + sorted(glob.glob("/home/*"))
+    votes = {}
+    for h in homes:
+        u = _env_from_json(os.path.join(h, ".claude", "settings.json"))
+        if u:
+            votes[u] = votes.get(u, 0) + 1
+    found += sorted(votes, key=votes.get, reverse=True)
+    for u in found:
+        if u and not u.startswith(LOCAL) and "127.0.0.1:%d" % PORT not in u and "localhost:%d" % PORT not in u:
+            return u.rstrip("/")
+    return ""
+
+
+# ---------------------------------------------------------------- Claude settings for everyone
+def apply(c=None, quiet=False):
+    root()
+    c = c or load()
+    on = bool(c["headroom"] and c["upstream"] and healthy())
+    s = {
+        "extraKnownMarketplaces": {"paas-kit": {"source": {"source": "directory", "path": f"{D}/kit/marketplace"}}},
+        "enabledPlugins": {f"{p}@paas-kit": bool(v) for p, v in c["plugins"].items()},
+    }
+    if on:
+        s["env"] = {"ANTHROPIC_BASE_URL": LOCAL}
+    os.makedirs(os.path.dirname(DROPIN), exist_ok=True)
+    tmp = DROPIN + ".tmp"
+    json.dump(s, open(tmp, "w"), indent=2)
+    os.chmod(tmp, 0o644)
+    os.replace(tmp, DROPIN)
+    if not quiet:
+        state = "through Headroom" if on else "straight to the model" + (
+            " (Headroom is not answering)" if c["headroom"] and c["upstream"] else "")
+        print(f"new Claude sessions go {state}; plugins: " +
+              ", ".join(f"{p} {'on' if v else 'off'}" for p, v in c["plugins"].items()))
+    return on
+
+
+def watch():
+    """every minute: keep the settings in line with Headroom's health, so a dead proxy never blocks anyone"""
+    root()
+    c = load()
+    want = bool(c["headroom"] and c["upstream"])
+    try:
+        now = "ANTHROPIC_BASE_URL" in (json.load(open(DROPIN)).get("env") or {})
+    except (OSError, ValueError):
+        now = None
+    up = healthy() or (time.sleep(5) or healthy())
+    if now is None or now != (want and up):
+        on = apply(c, quiet=True)
+        subprocess.run(["logger", "-t", "paas-kit", "Headroom %s: new sessions go %s" % (
+            "up" if up else "down", "through Headroom" if on else "straight to the model")])
+    if want and not up:
+        subprocess.run(["systemctl", "restart", "paas-headroom"], capture_output=True)
+
+
+# ---------------------------------------------------------------- the Headroom service
+def run_headroom():
+    """ExecStart of paas-headroom.service: Headroom with the flags of the chosen profile"""
+    c = load()
+    if not c["upstream"]:
+        sys.exit("paas-kit: no model address; root: paas-kit headroom upstream <url>")
+    env = dict(os.environ, TIKTOKEN_CACHE_DIR=f"{D}/tiktoken", HF_HUB_OFFLINE="1", TRANSFORMERS_OFFLINE="1",
+               HEADROOM_TELEMETRY="off", LITELLM_LOCAL_MODEL_COST_MAP="True", DO_NOT_TRACK="1")
+    for ca in ("/etc/pki/tls/certs/ca-bundle.crt", "/etc/ssl/certs/ca-certificates.crt"):
+        if os.path.exists(ca):                     # the VM's own CAs (an internal model endpoint's certificate)
+            env.setdefault("SSL_CERT_FILE", ca)
+            env.setdefault("REQUESTS_CA_BUNDLE", ca)
+            break
+    args = [f"{D}/venv/headroom/bin/headroom", "proxy", "--host", "127.0.0.1", "--port", str(PORT),
+            "--anthropic-api-url", c["upstream"], "--mode", "token", "--no-http2", "--no-cache", "--no-rate-limit",
+            "--no-learn", "--no-subscription-tracking", "--disable-kompress"]
+    if c["profile"] != "max":
+        args += ["--no-ccr", "--compressor", "smart_crusher"]   # JSON made compact, every row and value kept
+    os.execve(args[0], args, env)
+
+
+def headroom_cmd(rest):
+    root()
+    c = load()
+    if not rest:
+        sys.exit("usage: paas-kit headroom on | off | profile safe|max | upstream <url>")
+    if rest[0] in ("on", "off"):
+        c["headroom"] = rest[0] == "on"
+        if c["headroom"] and not c["upstream"]:
+            c["upstream"] = detect_upstream()
+            if not c["upstream"]:
+                sys.exit("paas-kit: the model address was not found; give it: paas-kit headroom upstream <url>")
+    elif rest[0] == "profile" and len(rest) > 1 and rest[1] in ("safe", "max"):
+        c["profile"] = rest[1]
+    elif rest[0] == "upstream" and len(rest) > 1:
+        if rest[1].startswith(LOCAL):
+            sys.exit("paas-kit: that is Headroom itself; give the model's own address")
+        c["upstream"] = rest[1].rstrip("/")
+    else:
+        sys.exit("usage: paas-kit headroom on | off | profile safe|max | upstream <url>")
+    save(c)
+    if c["headroom"]:
+        subprocess.run(["systemctl", "enable", "--now", "paas-headroom"], capture_output=True)
+        subprocess.run(["systemctl", "restart", "paas-headroom"], capture_output=True)
+        for _ in range(60):
+            if healthy():
+                break
+            time.sleep(1)
+    else:
+        subprocess.run(["systemctl", "disable", "--now", "paas-headroom"], capture_output=True)
+    apply(c)
+    print("running Claude sessions keep their setting until they are started again")
+
+
+def plugin_cmd(rest):
+    root()
+    if len(rest) != 2 or rest[0] not in ("on", "off") or rest[1] not in PLUGINS:
+        sys.exit("usage: paas-kit plugin on | off " + " | ".join(PLUGINS))
+    c = load()
+    c["plugins"][rest[1]] = rest[0] == "on"
+    save(c)
+    apply(c)
+
+
+# ---------------------------------------------------------------- for everyone
+def status():
+    c = load()
+    up = healthy()
+    try:
+        drop = json.load(open(DROPIN))
+    except (OSError, ValueError):
+        drop = {}
+    via = "ANTHROPIC_BASE_URL" in (drop.get("env") or {})
+    print(f"Headroom      {'wanted' if c['headroom'] else 'off'}, profile {c['profile']}, "
+          f"{'answering' if up else 'not answering'} on {LOCAL}")
+    print(f"model         {c['upstream'] or '(not set)'}")
+    print(f"new sessions  {'through Headroom' if via else 'straight to the model'}")
+    if up:
+        try:
+            with urllib.request.urlopen(LOCAL + "/stats", timeout=3) as r:
+                st = json.load(r)
+            tok = st.get("tokens") or {}
+            saved, before = tok.get("saved"), tok.get("total_before_compression") or tok.get("proxy_total_before_compression")
+            req = (st.get("requests") or {}).get("total")
+            if saved is not None:
+                print(f"savings       {saved:,} tokens saved" + (f" of {before:,} ({100 * saved // before}%)" if before else "") +
+                      (f" over {req:,} requests" if req else "") + " since the service started")
+        except Exception:
+            pass
+    print("plugins       " + ", ".join(f"{p} {'on' if v else 'off'}" for p, v in c["plugins"].items()) +
+          "   (for every user; Claude: /plugin, or the Market)")
+    crg = f"{D}/venv/crg/bin/code-review-graph"
+    print(f"code graph    {'ready' if os.path.exists(crg) else 'missing'}: paas-kit graph build  (in a git repository)")
+    print(f"FastAPI       paas-kit venv .   (Python {', '.join(v for v in ('3.12', '3.9') if glob.glob(f'{D}/kit/wheels/api-py{v.replace(".", "")}/*.whl'))})")
+
+
+def venv(rest):
+    target, py = ".", None
+    i = 0
+    while i < len(rest):
+        if rest[i] == "--python" and i + 1 < len(rest):
+            py = rest[i + 1]
+            i += 2
+        else:
+            target = rest[i]
+            i += 1
+    cands = [py] if py else ["3.12", "3.9"]
+    for v in cands:
+        exe = shutil.which(f"python{v}")
+        wheels = f"{D}/kit/wheels/api-py{v.replace('.', '')}"
+        if exe and glob.glob(wheels + "/*.whl"):
+            break
+    else:
+        sys.exit(f"paas-kit: no python{' or python'.join(cands)} with kit wheels (the kit has 3.12 and 3.9)")
+    dst = os.path.join(os.path.abspath(target), ".venv")
+    if not os.path.exists(os.path.join(dst, "bin", "python")):
+        subprocess.run([exe, "-m", "venv", dst], check=True)
+    pkgs = ["fastapi[standard]", "uvicorn", "pydantic", "pydantic-settings", "httpx", "sqlalchemy", "alembic",
+            "psycopg[binary]", "python-jose", "passlib", "python-multipart", "pytest", "pytest-asyncio", "ruff", "mypy"]
+    req = os.path.join(os.path.abspath(target), "requirements.txt")
+    cmd = [os.path.join(dst, "bin", "pip"), "install", "-q", "--no-index", "--find-links", wheels]
+    r = subprocess.run(cmd + (["-r", req] if os.path.exists(req) else pkgs))
+    if r.returncode and os.path.exists(req):
+        print("some of requirements.txt is not in the kit; installing the kit's FastAPI stack instead")
+        r = subprocess.run(cmd + pkgs)
+    if r.returncode:
+        sys.exit(r.returncode)
+    print(f"{dst} ready (Python {v}): . {dst}/bin/activate")
+
+
+def graph(rest):
+    exe = f"{D}/venv/crg/bin/code-review-graph"
+    if not os.path.exists(exe):
+        sys.exit("paas-kit: code-review-graph is not installed (sudo sh install.sh in the kit)")
+    os.execv(exe, [exe] + rest)
+
+
+def main():
+    a = sys.argv[1:]
+    cmd, rest = (a[0], a[1:]) if a else ("status", [])
+    if cmd in ("status", "-s"):
+        status()
+    elif cmd == "venv":
+        venv(rest)
+    elif cmd == "graph":
+        graph(rest)
+    elif cmd == "headroom":
+        headroom_cmd(rest)
+    elif cmd == "plugin":
+        plugin_cmd(rest)
+    elif cmd == "apply":
+        apply()
+    elif cmd == "watch":
+        watch()
+    elif cmd == "run-headroom":
+        run_headroom()
+    elif cmd == "detect-upstream":
+        print(detect_upstream())
+    else:
+        print(__doc__.strip())
+        sys.exit(0 if cmd in ("-h", "--help", "help") else 1)
+
+
+if __name__ == "__main__":
+    main()

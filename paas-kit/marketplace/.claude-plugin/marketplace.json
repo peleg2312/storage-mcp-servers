@@ -1,0 +1,11 @@
+{
+  "name": "paas-kit",
+  "owner": {"name": "paas-kit"},
+  "description": "VM-wide add-ons for coding, apart from the brain: a code graph for large code bases and a FastAPI kit",
+  "plugins": [
+    {"name": "code-graph", "source": "./code-graph",
+     "description": "A graph of your git repository (functions, classes, imports, callers, tests) for large code bases: what a change touches, who calls what, review context, without reading whole files"},
+    {"name": "fastapi-api", "source": "./fastapi-api",
+     "description": "Build Python REST APIs with FastAPI offline: project template, a venv from the VM's wheels, the rules for routes, settings, database, tests, and an API reviewer agent"}
+  ]
+}

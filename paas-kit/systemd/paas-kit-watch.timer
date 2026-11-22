@@ -1,0 +1,10 @@
+[Unit]
+Description=paas-kit: check Headroom every minute
+
+[Timer]
+OnBootSec=1min
+OnUnitActiveSec=1min
+AccuracySec=10s
+
+[Install]
+WantedBy=timers.target

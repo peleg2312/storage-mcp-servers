@@ -1,0 +1,6 @@
+[Unit]
+Description=paas-kit: Claude sessions skip Headroom while it is down
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/python3 /opt/paas-kit/bin/paas-kit watch
