@@ -50,6 +50,7 @@ venv crg crg code-review-graph
 chmod -R a+rX "$D"
 
 ln -sf "$D/bin/paas-kit" /usr/local/bin/paas-kit
+ln -sf "$D/bin/rtk" /usr/local/bin/rtk
 ln -sf "$D/venv/crg/bin/code-review-graph" /usr/local/bin/code-review-graph
 ln -sf "$D/venv/headroom/bin/ast-grep" /usr/local/bin/ast-grep
 
@@ -71,6 +72,7 @@ elif not c.get("upstream"):
 if fresh or not hr:
     c["headroom"] = hr and bool(c.get("upstream"))
 c.setdefault("profile", "safe")
+c.setdefault("rtk_rewrite", True)
 c.setdefault("plugins", {})
 for p in ("rtk", "code-graph", "fastapi-api"):
     c["plugins"].setdefault(p, True)

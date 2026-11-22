@@ -7,13 +7,20 @@ own settings). Only root turns parts off (below). It does not change the brain, 
 managed-settings.json or anyone's own settings.
 
 WHAT IS IN IT
-  rtk                shorter shell output for the model. After a command ran, long output of tests (pytest, go test,
-                     cargo, vitest, ctest), linters (mypy, ruff, tsc), grep / rg / find, git log / diff / status and
-                     long logs (journalctl, oc / kubectl logs, tail) is filtered: failures, errors and changed lines
-                     stay, passing noise goes (e.g. 149 lines of pytest -> 13 with the failure and its diff). The
-                     command itself is never changed, so the brain's guard and the permission rules see exactly what
-                     runs. The model gets the full output with "| cat" at the end of the command. A command the model
-                     writes as "rtk ..." is refused (it would hide the real command from the guard).
+  rtk                shorter shell output for the model, two ways:
+                     1. commands that only read are run in rtk's short form - git status / log / diff, ls, tree,
+                        cat / head / tail, grep / rg / find, tests (pytest, go, cargo, npm test, vitest ...), linters,
+                        builds, oc / kubectl / helm get-describe-logs, docker ps, curl GET, aws describe / ls,
+                        psql -c SELECT, systemctl status. "git status" becomes "rtk git status": the same command,
+                        compact output. The kit's guard around it: a command is rewritten only when every part of it
+                        reads (oc delete, kubectl apply, curl POST, git push, helm upgrade, sudo, > file ... always run
+                        exactly as typed), rtk's form has the same commands and files, every guard hook (the brain's
+                        read-only guard, a team's) lets the original through without a block or a question, and it
+                        adds no permission prompt. Root: paas-kit rtk rewrite off (only step 2 then).
+                     2. long output of the rest (tests, linters, grep / find, git, logs) is filtered after it ran:
+                        failures, errors and changed lines stay (e.g. 149 lines of pytest -> 13 with the failure).
+                     The full output: rtk recall <hash> (shown when rtk cut something), or "| cat" at the end.
+                     A command the model writes as "rtk ..." itself is refused (except rtk recall / rtk gain).
   Headroom           a small local service between Claude and the model (GLM). Before each request reaches the
                      model it makes tool results smaller: JSON lists from the MCP servers (volumes, hosts, ports,
                      pods ...) become one compact table - every row and every value kept, 50-70% fewer tokens on
@@ -50,6 +57,7 @@ USE
                                                        hidden lines back); safe (default) never drops anything
               paas-kit headroom upstream <url>         another model address
               paas-kit plugin off | on rtk             a plugin for every user (also code-graph, fastapi-api)
+              paas-kit rtk rewrite off | on            rtk only filters output after commands ran / also runs them short
   logs:       journalctl -u paas-headroom              savings: paas-kit status
 
 REMOVE
@@ -62,4 +70,4 @@ LICENSES
 FILES
   /opt/paas-kit/{kit,bin,venv,tiktoken}   /etc/paas-kit/kit.json   /etc/claude-code/managed-settings.d/60-paas-kit.json
   /etc/systemd/system/paas-headroom.service, paas-kit-watch.{service,timer}
-  /usr/local/bin/{paas-kit,code-review-graph,ast-grep}   (rtk itself: /opt/paas-kit/bin/rtk, not on the PATH)
+  /usr/local/bin/{paas-kit,code-review-graph,ast-grep,rtk}

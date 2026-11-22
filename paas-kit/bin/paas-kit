@@ -12,6 +12,8 @@ root only:
                                           max: also shortens logs and long text; hidden parts come back on request
   paas-kit headroom upstream <url>        the model address Headroom forwards to (found at install)
   paas-kit plugin on | off <name>         a kit plugin for every user (rtk, code-graph, fastapi-api)
+  paas-kit rtk rewrite on | off           rtk runs reading commands in its short form (on), or only filters long
+                                          output after the command ran (off)
   paas-kit apply                          write the Claude settings file from /etc/paas-kit/kit.json
   paas-kit watch                          (timer, every minute) Headroom down -> sessions go straight to the model
 """
@@ -30,7 +32,7 @@ DROPIN = "/etc/claude-code/managed-settings.d/60-paas-kit.json"
 PORT = 8787
 LOCAL = f"http://127.0.0.1:{PORT}"
 PLUGINS = ("rtk", "code-graph", "fastapi-api")
-DEFAULT = {"upstream": "", "headroom": True, "profile": "safe", "plugins": {p: True for p in PLUGINS}}
+DEFAULT = {"upstream": "", "headroom": True, "profile": "safe", "rtk_rewrite": True, "plugins": {p: True for p in PLUGINS}}
 
 
 def load():
@@ -109,8 +111,10 @@ def apply(c=None, quiet=False):
         "extraKnownMarketplaces": {"paas-kit": {"source": {"source": "directory", "path": f"{D}/kit/marketplace"}}},
         "enabledPlugins": {f"{p}@paas-kit": bool(v) for p, v in c["plugins"].items()},
     }
+    s["env"] = {"RTK_TELEMETRY_DISABLED": "1", "RTK_SUPPRESS_HOOK_WARNING": "1",
+                "PAAS_KIT_RTK_REWRITE": "1" if c.get("rtk_rewrite", True) else "0"}
     if on:
-        s["env"] = {"ANTHROPIC_BASE_URL": LOCAL}
+        s["env"]["ANTHROPIC_BASE_URL"] = LOCAL
     os.makedirs(os.path.dirname(DROPIN), exist_ok=True)
     tmp = DROPIN + ".tmp"
     json.dump(s, open(tmp, "w"), indent=2)
@@ -233,6 +237,8 @@ def status():
             pass
     print("plugins       " + ", ".join(f"{p} {'on' if v else 'off'}" for p, v in c["plugins"].items()) +
           "   (on for every user; only root turns them off: paas-kit plugin off <name>)")
+    print(f"rtk           {'rewrites reading commands to their short form' if c.get('rtk_rewrite', True) else 'filters long output only'}"
+          "; your savings: paas-kit gain")
     crg = f"{D}/venv/crg/bin/code-review-graph"
     print(f"code graph    {'ready' if os.path.exists(crg) else 'missing'}: paas-kit graph build  (in a git repository)")
     print(f"FastAPI       paas-kit venv .   (Python {', '.join(v for v in ('3.12', '3.9') if glob.glob(f'{D}/kit/wheels/api-py{v.replace(".", "")}/*.whl'))})")
@@ -294,6 +300,14 @@ def main():
         headroom_cmd(rest)
     elif cmd == "plugin":
         plugin_cmd(rest)
+    elif cmd == "rtk":
+        root()
+        if rest[:1] != ["rewrite"] or rest[1:] not in (["on"], ["off"]):
+            sys.exit("usage: paas-kit rtk rewrite on | off")
+        c = load()
+        c["rtk_rewrite"] = rest[1] == "on"
+        save(c)
+        apply(c)
     elif cmd == "apply":
         apply()
     elif cmd == "watch":

@@ -1,12 +1,20 @@
 #!/usr/bin/env python3
-"""rtk plugin hooks (paas-kit). The command Claude runs is never changed: the brain's guard and the permission rules
-see exactly what runs. Only the output the model reads afterwards is made shorter.
+"""rtk plugin hooks (paas-kit): shorter command output for the model.
+
+  rtk-hook pre    PreToolUse (Bash): commands that only read (or build / test locally) - git, ls, grep, find, cat,
+                  tests, linters, builds, oc / kubectl / helm get-describe-logs, docker ps, curl GET, aws describe,
+                  psql SELECT ... - are rewritten to their rtk form (`rtk git status`), which runs the same command and
+                  prints a compact result. The kit's own guard around it: a command is rewritten only when
+                    1. every part of it reads (anything that changes something runs exactly as typed),
+                    2. rtk's rewrite has the same commands in the same order (rtk only put in front),
+                    3. every guard hook for Bash (the brain's read-only guard, a team's guard, /etc/paas-kit/guards.txt)
+                       lets the ORIGINAL command through without a block or a question,
+                    4. it adds no permission prompt (in default mode only when Claude's allow rules cover it).
+                  A command the model writes as `rtk ...` is refused (except rtk recall / rtk gain).
 
   rtk-hook post   PostToolUse (Bash): long output of tests, linters, grep / find, git log / diff / status and logs goes
                   through `rtk pipe -f <filter>` (failures, errors and changed lines kept; passing noise dropped).
                   The model can always get the full output: the same command with `| cat` at the end is not filtered.
-  rtk-hook pre    PreToolUse (Bash): a command the model writes as `rtk ...` is refused (rtk runs commands itself, which
-                  would hide the real command from the guard); the model runs the plain command instead.
 Any error: the output stays as it was. Python 3.6+.
 """
 import json
@@ -84,6 +92,8 @@ def post(ev):
     if not isinstance(resp, dict) or not isinstance(resp.get("stdout"), str):
         return
     out = resp["stdout"]
+    if re.search(r"(^|[\s;&|(/])rtk\s", cmd):
+        return                                          # rtk ran it (rewritten): already short
     f = pick(cmd)
     if not f or len(out) < MIN_CHARS or (f == "log" and out.count("\n") < LOG_MIN_LINES):
         return
@@ -99,17 +109,229 @@ def post(ev):
 
 
 RTK_CMD = re.compile(r"(^|[;&|(`]\s*|\$\(\s*|\b(sudo|env|exec|command|xargs|timeout\s+\S+)\s+)(\S*/)?rtk(\s|$)")
+RTK_OK = re.compile(r"^\s*(\S*/)?rtk\s+(gain|recall|--version|--help)\b[^;&|`$]*$")   # rtk's own read-backs
+
+# ------------------------------------------------------------------ the kit's own guard around the rewrite
+# A command is rewritten only when every part of it only reads (or builds / tests locally). Everything else runs as
+# the model typed it, so every guard, permission rule and prompt sees the real command.
+SPLIT = re.compile(r"\|\||&&|;|\|")
+READ_VERBS = {
+    "oc": {"get", "describe", "logs", "top", "explain", "api-resources", "api-versions", "version", "events", "status",
+           "whoami", "projects", "auth"},
+    "kubectl": {"get", "describe", "logs", "top", "explain", "api-resources", "api-versions", "version", "events",
+                "auth", "cluster-info"},
+    "helm": {"list", "ls", "status", "get", "history", "show", "search", "version", "template", "lint"},
+    "docker": {"ps", "images", "logs", "inspect", "version", "info", "stats", "history"},
+    "podman": {"ps", "images", "logs", "inspect", "version", "info", "stats", "history"},
+    "git": {"status", "log", "diff", "show", "branch", "blame", "ls-files", "rev-parse", "describe", "shortlog",
+            "remote", "tag", "stash list", "grep", "fetch"},
+    "systemctl": {"status", "show", "list-units", "list-unit-files", "is-active", "is-enabled", "is-failed", "cat"},
+    "gh": {"pr", "issue", "run", "repo", "api"},                   # sub-verbs checked below
+    "glab": {"mr", "issue", "ci", "repo"},
+}
+LOCAL_TOOLS = {"ls", "tree", "cat", "head", "tail", "less", "wc", "grep", "egrep", "rg", "ag", "find", "fd", "diff",
+               "env", "printenv", "du", "df", "stat", "file", "journalctl", "dmesg", "jq", "yq", "echo", "pwd", "which",
+               "pytest", "py.test", "tox", "nox", "mypy", "ruff", "black", "flake8", "pylint", "tsc", "eslint", "prettier",
+               "jest", "vitest", "playwright", "ctest", "make", "go", "cargo", "npm", "pnpm", "yarn", "bun", "npx",
+               "pnpx", "bunx", "dotnet", "mvn", "gradle", "next", "ng", "prisma", "wget", "curl", "aws", "psql"}
+WRITE_WORDS = re.compile(r"(^|\s)(-delete|-exec|-execdir|-ok|--write|-w|--fix|--in-place|-i)(\s|$)")
+TOOL_RULES = {
+    # local dev tools that can also change things: only their reading / building / testing forms
+    "go": {"test", "build", "vet", "list", "version", "env", "doc"},
+    "cargo": {"test", "build", "check", "clippy", "nextest", "tree", "metadata", "doc"},
+    "npm": {"test", "run", "ls", "list", "outdated", "view", "audit"},
+    "pnpm": {"test", "run", "ls", "list", "outdated", "why"},
+    "yarn": {"test", "run", "list", "why"},
+    "bun": {"test", "run"},
+    "dotnet": {"build", "test", "list"},
+    "prisma": {"validate", "format", "version"},
+    "aws": None, "psql": None, "curl": None, "wget": None,       # checked by their own rules below
+}
+
+
+def seg_reads(seg):
+    """True when this one command only reads (or builds / tests locally)"""
+    if re.search(r"(^|[^<>&0-9])>|>>|<<|\$\(|`|\bsudo\b|\bdoas\b|\bsu\b", seg):
+        return False
+    w = words(seg)
+    if not w:
+        return False
+    c, rest = w[0], w[1:]
+    verb = next((x for x in rest if not x.startswith("-")), "")
+    if c in READ_VERBS:
+        if c == "git" and verb == "stash":
+            return len(rest) > 1 and rest[1] == "list"
+        if c == "git" and verb in ("branch", "tag", "remote"):
+            return not any(x in ("-d", "-D", "--delete", "-m", "-M", "add", "remove", "rm", "rename", "set-url",
+                                 "--force", "-f") for x in rest[1:])
+        if c in ("gh", "glab"):
+            sub = [x for x in rest if not x.startswith("-")]
+            return len(sub) > 1 and sub[1] in ("list", "view", "status", "checks", "diff", "ls")
+        if c in ("oc", "kubectl") and verb == "auth":
+            return "can-i" in rest
+        if c in ("oc", "kubectl") and any(x in ("-w", "--watch", "--watch-only") for x in rest):
+            return False                                 # never ends: rtk would wait for the end to summarize
+        return verb in READ_VERBS[c]
+    if c not in LOCAL_TOOLS:
+        return False
+    if WRITE_WORDS.search(" " + " ".join(rest) + " ") and c not in ("pytest", "py.test", "grep", "egrep", "rg", "jq"):
+        return False
+    if c == "aws":
+        sub = [x for x in rest if not x.startswith("-")]
+        return len(sub) > 1 and re.match(r"^(describe|list|get|head)-|^(ls|describe|list)$", sub[1]) is not None
+    if c == "psql":
+        q = " ".join(rest)
+        return re.search(r"(^|\s)(-c|--command)\s", q) is not None and \
+            re.search(r"\b(insert|update|delete|drop|alter|create|truncate|grant|revoke|copy|call|do|vacuum|reindex|"
+                      r"cluster|lock|comment|security|refresh|import|load|set|reset|begin|commit)\b", q, re.I) is None
+    if c in ("curl", "wget"):
+        q = " ".join(rest)
+        return re.search(r"(^|\s)(-X|--request)\s*(?!GET\b|HEAD\b)\S|(^|\s)(-d|--data\S*|-F|--form\S*|-T|--upload-file|"
+                         r"--json|-o|--output|-O|--remote-name)(\s|=|$)|--post", q) is None and c == "curl"
+    rule = TOOL_RULES.get(c, "any")
+    if rule == "any":
+        return True
+    if c in ("npm", "pnpm", "yarn", "bun") and verb == "run":
+        script = next((x for x in rest[1:] if not x.startswith("-")), "")
+        return re.match(r"^(test|lint|build|check|typecheck|type-check|tsc|format:check|ci)([:\-].*)?$", script) is not None
+    return verb in rule
+
+
+def all_read(cmd):
+    parts = [p.strip() for p in SPLIT.split(cmd) if p.strip()]
+    return bool(parts) and all(seg_reads(p) for p in parts)
+
+
+READ_AS = {"read": {"cat", "head", "tail", "less"}, "test": None, "err": None, "summary": None}
+
+
+def same_commands(orig, new):
+    """rtk's rewrite may only put rtk in front of the same commands (same order, same files and words, nothing
+    added); `rtk read` stands for cat / head / tail"""
+    a = [p.strip() for p in SPLIT.split(orig) if p.strip()]
+    b = [p.strip() for p in SPLIT.split(new) if p.strip()]
+    if len(a) != len(b):
+        return False
+    for x, y in zip(a, b):
+        wx, wy = words(x), y.split()
+        if not wx or not wy:
+            return False
+        if os.path.basename(wy[0]) != "rtk":
+            if x != y:
+                return False
+            continue
+        wy = words(" ".join(wy[1:]))
+        if not wy:
+            return False
+        if wy[0] in READ_AS:
+            if not READ_AS[wy[0]] or wx[0] not in READ_AS[wy[0]]:
+                return False
+        elif wy[0] != wx[0]:
+            return False
+        args = lambda w: {t for t in w[1:] if not t.startswith("-") and not t.isdigit()}
+        if not args(wx) <= args(wy):
+            return False
+    return True
+
+
+def guards():
+    """every PreToolUse hook for Bash that is a guard (its command names block / guard / deny / safe / read-only),
+    from the managed settings, the user's settings and the project's, plus /etc/paas-kit/guards.txt"""
+    files = ["/etc/claude-code/managed-settings.json"] + sorted(
+        f for f in __import__("glob").glob("/etc/claude-code/managed-settings.d/*.json"))
+    home = os.path.expanduser("~")
+    proj = os.environ.get("CLAUDE_PROJECT_DIR") or os.getcwd()
+    files += [os.path.join(home, ".claude", "settings.json"), os.path.join(proj, ".claude", "settings.json"),
+              os.path.join(proj, ".claude", "settings.local.json")]
+    cmds = []
+    for f in files:
+        try:
+            hooks = (json.load(open(f)).get("hooks") or {}).get("PreToolUse") or []
+        except (OSError, ValueError, AttributeError):
+            continue
+        for g in hooks:
+            m = g.get("matcher") or ""
+            try:
+                if m and m != "*" and not re.fullmatch(m, "Bash"):
+                    continue
+            except re.error:
+                continue
+            for h in g.get("hooks") or []:
+                c = h.get("command") or ""
+                if c and "rtk-hook" not in c and re.search(r"block|guard|deny|safe|read.?only", c, re.I):
+                    cmds.append(c)
+    try:
+        cmds += [l.strip() for l in open("/etc/paas-kit/guards.txt") if l.strip() and not l.startswith("#")]
+    except OSError:
+        pass
+    seen = []
+    for c in cmds:
+        if c not in seen:
+            seen.append(c)
+    return seen
+
+
+def guards_allow(ev):
+    """the original command through every guard; any block, ask, error or timeout -> no rewrite"""
+    data = json.dumps(ev)
+    for c in guards():
+        try:
+            r = subprocess.run(c, shell=True, input=data, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                               universal_newlines=True, timeout=8)
+        except Exception:
+            return False
+        if r.returncode != 0:
+            return False
+        out = r.stdout.strip()
+        if out:
+            try:
+                o = json.loads(out)
+            except ValueError:
+                continue
+            d = (o.get("hookSpecificOutput") or {}).get("permissionDecision") or o.get("decision")
+            if d and d not in ("allow", "approve"):
+                return False
+            if o.get("continue") is False:
+                return False
+    return True
+
+
+AUTO_MODES = {"bypassPermissions", "dontAsk", "auto"}   # no permission prompt for the rewritten form
 
 
 def pre(ev):
     if ev.get("tool_name") != "Bash":
         return
     cmd = (ev.get("tool_input") or {}).get("command") or ""
-    if RTK_CMD.search(cmd) and not re.match(r"^\s*(\S*/)?rtk\s+(gain|--version|--help)\b", cmd):
-        print(json.dumps({"hookSpecificOutput": {
-            "hookEventName": "PreToolUse", "permissionDecision": "deny",
-            "permissionDecisionReason": "Do not call rtk: output is shortened for you after each command. "
-                                        "Run the plain command (without rtk)."}}))
+    if RTK_CMD.search(cmd):
+        if not RTK_OK.match(cmd):
+            print(json.dumps({"hookSpecificOutput": {
+                "hookEventName": "PreToolUse", "permissionDecision": "deny",
+                "permissionDecisionReason": "Do not call rtk yourself: commands are shortened for you automatically. "
+                                            "Run the plain command (rtk recall <hash> and rtk gain are fine)."}}))
+        return
+    if os.environ.get("PAAS_KIT_RTK_REWRITE", "1") == "0" or len(cmd) > 4000 or "\n" in cmd.strip():
+        return
+    if not all_read(cmd):
+        return                                           # changes something: runs exactly as typed
+    env = dict(os.environ, RTK_TELEMETRY_DISABLED="1", RTK_SUPPRESS_HOOK_WARNING="1")
+    r = subprocess.run([RTK, "rewrite", cmd], stdout=subprocess.PIPE, stderr=subprocess.DEVNULL,
+                       universal_newlines=True, timeout=5, env=env)
+    new = r.stdout.strip()
+    if r.returncode not in (0, 3) or not new or new == cmd or not same_commands(cmd, new):
+        return
+    mode = ev.get("permission_mode") or "default"
+    if r.returncode == 3 and mode not in AUTO_MODES:
+        # rtk: Claude's allow rules do not cover every command. The plain form might still run without a question
+        # (Claude knows ls / git status / grep read only), the rtk form would ask: keep the plain command.
+        return
+    if not guards_allow(ev):
+        return                                           # a guard objects: it decides on the real command
+    out = {"hookEventName": "PreToolUse", "updatedInput": dict(ev.get("tool_input") or {}, command=new)}
+    if r.returncode == 0 and mode not in AUTO_MODES:
+        out["permissionDecision"] = "allow"              # allow rules already cover every command in it
+        out["permissionDecisionReason"] = "paas-kit rtk: same command, shorter output"
+    print(json.dumps({"hookSpecificOutput": out}))
 
 
 def main():
