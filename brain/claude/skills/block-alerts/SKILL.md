@@ -64,7 +64,7 @@ the cards below hold the detail. Keep every field short.
 - `headline` (the big title and the start of the subject): what matters most + when to act, max ~8
   words, e.g. "SRDF to DR is down — act now", "All clear — 3 informational alerts". Not a generic
   "alerts report" title.
-- `summary` 1-2 sentences; `actions` at most 3, one line each.
+- `summary` 1-2 sentences: what is going on overall and what to fix first (there is no separate "do first" list).
 - Per alert: `message` = the alert's own text as the system wrote it (one line, verbatim, IDs kept), and every
   fact you have: `vendor`, `product`, `system`, `object`, `code`, `vendor_severity`, `count`, `first_seen`,
   `last_seen` (they show as a details grid). `what` 1 sentence (+ `impact` 1 sentence), `cause` and `live` one short line each, `why` one line,
@@ -91,7 +91,6 @@ the cards below hold the detail. Keep every field short.
   "source": "powermax MCP alerts + MDS syslog",
   "lang": "en",
   "summary": "2-3 sentences: what is going on overall, what is urgent, what is noise.",
-  "actions": ["The 1-5 most important things to do first, most urgent first, each one line"],
   "alerts": [{
     "priority": "P1",
     "title": "SRDF group 10 - all links down",
@@ -124,7 +123,7 @@ D=$(dirname "$(find ~/.claude /opt/paas -path '*skills/block-alerts/SKILL.md' 2>
 M=$D/block_alerts_mail.py
 # only SKILL.md was copied (no .py next to it): take the script from the end of this file
 [ -f "$M" ] || { M=~/.config/block-alerts/block_alerts_mail.py; mkdir -p ~/.config/block-alerts
-  sed -n '/^# >>> block_alerts_mail.py v8$/,/^# <<< block_alerts_mail.py$/p' "$D/SKILL.md" > "$M"; }
+  sed -n '/^# >>> block_alerts_mail.py v9$/,/^# <<< block_alerts_mail.py$/p' "$D/SKILL.md" > "$M"; }
 ```
 Then, with `R=~/block-alerts/<folder>`:
 1. `python3 $M $R/report.json --html $R/email.html` - fix any error it prints (it validates the JSON).
@@ -151,7 +150,7 @@ and send the first report to the user only (`--to <their address>`) so they see 
 
 ## The script (do not edit; extract it as in step 6)
 ```python
-# >>> block_alerts_mail.py v8
+# >>> block_alerts_mail.py v9
 """block-alerts mail: the alert report JSON -> an Outlook-safe HTML email (+ plain text), standard library only.
   python3 block_alerts_mail.py report.json --html out.html     preview in a browser
   python3 block_alerts_mail.py report.json --eml out.eml       Outlook draft (open it, press Send)
@@ -408,28 +407,28 @@ def card(a, t, lang, al, op, idx):
 
 
 def triage(r, t, lang, al, op):
-    """every alert on one line: the morning scan"""
-    th = lambda x, a2=al, w="": (f'<td align="{a2}" {w} style="{F}font-size:11px;line-height:15px;font-weight:800;'
-                                 f'letter-spacing:0.8px;color:{MUTED};padding:0 10px 8px 0;border-bottom:1px solid {LINE}">'
-                                 f'{e(x).upper()}</td>')
+    """every alert on one compact line: dot, priority, problem · system, status, since, act by"""
+    th = lambda x, a2=al, cls="": (f'<td align="{a2}"{cls} style="{F}font-size:10px;line-height:14px;font-weight:800;'
+                                   f'letter-spacing:0.8px;color:{MUTED};padding:0 8px 5px 0;border-bottom:1px solid {LINE}">'
+                                   f'{e(x).upper()}</td>')
     rows = ""
     for i, a in enumerate(r["alerts"], 1):
         p = a["priority"]
-        td = f'style="{F}font-size:14px;line-height:20px;color:{INK};padding:10px 10px 10px 0;border-bottom:1px solid {LINE}"'
+        td = f'{F}font-size:13px;line-height:18px;color:{INK};padding:6px 8px 6px 0;border-bottom:1px solid #F1F5F9'
         title = (f'<a href="#a{i}" style="color:{INK};text-decoration:none;font-weight:700">{e(a["title"])}</a>'
-                 if p != "INFO" else e(a["title"]))
-        rows += (f'<tr><td valign="middle" {td.replace("padding:10px 10px", "padding:10px 12px")}>{pill(p, lang)}</td>'
-                 f'<td valign="middle" align="{al}" {td}>{title}<br><span style="font-size:12px;color:{MUTED}">'
-                 f'{e(" ".join(filter(None, [a.get("product"), a.get("system")])))}</span>'
-                 + (f'<br><span style="font-size:12px;color:#7C3AED;font-weight:600">&#8627; {e(a["related"])}</span>'
-                    if a.get("related") else "") + '</td>'
-                 f'<td valign="middle" class="hm" align="{al}" {td}>{st_badge(a, lang)}</td>'
-                 f'<td valign="middle" class="hm" align="{al}" {td.replace(INK, MUTED)}><span dir="ltr" style="unicode-bidi:isolate">{e(a.get("since") or "")}</span></td>'
-                 f'<td valign="middle" align="{op}" {td.replace("padding:10px 10px 10px 0", "padding:10px 0")}>'
-                 f'<b style="color:{PRI[p][2]};white-space:nowrap">{e(actby(a, lang))}</b></td></tr>')
-    return (f'<table {TBL} width="100%"><tr>{th("")}{th(t["problem"])}<td class="hm"></td>'
-            f'<td class="hm"></td>{th(t["actby"], op)}</tr>{rows}</table>').replace(
-        '<td class="hm"></td><td class="hm"></td>', th(t["state"]).replace("<td ", '<td class="hm" ') + th(t["since"]).replace("<td ", '<td class="hm" '))
+                 if p != "INFO" else f'<span style="color:{BODY}">{e(a["title"])}</span>')
+        where = " ".join(filter(None, [a.get("product"), a.get("system")]))
+        rows += (f'<tr><td valign="middle" style="{td};white-space:nowrap;font-weight:800;color:{PRI[p][2]}">'
+                 f'{ICON[p]}&nbsp;{"" if p == "INFO" else p}</td>'
+                 f'<td valign="middle" align="{al}" style="{td}">{title}'
+                 + (f'<span style="color:{MUTED}"> &middot; {e(where)}</span>' if where else "") + '</td>'
+                 f'<td valign="middle" class="hm" align="{al}" style="{td}">{st_badge(a, lang)}</td>'
+                 f'<td valign="middle" class="hm" align="{al}" style="{td};color:{MUTED};white-space:nowrap">'
+                 f'<span dir="ltr" style="unicode-bidi:isolate">{e(a.get("since") or "")}</span></td>'
+                 f'<td valign="middle" align="{op}" style="{td};padding-right:0;padding-left:0;font-weight:800;'
+                 f'color:{PRI[p][2]};white-space:nowrap">{e(actby(a, lang))}</td></tr>')
+    return (f'<table {TBL} width="100%"><tr>{th("")}{th(t["problem"])}{th(t["state"], al, " class=hm")}'
+            f'{th(t["since"], al, " class=hm")}{th(t["actby"], op)}</tr>{rows}</table>')
 
 
 def counts(r):
@@ -480,37 +479,30 @@ def render(r):
     since = "".join(f'<td style="padding:{"0 0 0 6px" if rtl else "0 6px 0 0"}">'
                     f'{badge(f"{n} {STATE[s][1 if rtl else 0]}", STATE[s][2], STATE[s][3], 12)}</td>' for s, n in states.items())
     tiles = "".join(
-        f'<td valign="top" style="padding:{"0 0 0 8px" if rtl else "0 8px 0 0"}"><table {TBL}><tr>'
-        f'<td bgcolor="#FFFFFF" align="{al}" style="padding:9px 16px 9px 14px;border-radius:12px;border:1px solid {PRI[p][4]}">'
-        f'<span style="font-size:16px;line-height:28px">{ICON[p]}</span>&nbsp;'
-        f'<span style="{F}font-size:24px;line-height:28px;font-weight:800;color:{PRI[p][2]}">{c[p]}</span>'
-        f'<span style="{F}font-size:13px;line-height:28px;font-weight:700;color:{PRI[p][2]}">&nbsp; {e(label(p, lang))}</span>'
+        f'<td valign="middle" style="padding:{"0 0 0 6px" if rtl else "0 6px 0 0"}"><table {TBL}><tr>'
+        f'<td bgcolor="#FFFFFF" align="{al}" style="padding:3px 10px 3px 8px;border-radius:999px;border:1px solid {PRI[p][4]};white-space:nowrap">'
+        f'<span style="font-size:11px;line-height:18px">{ICON[p]}</span>&nbsp;'
+        f'<span style="{F}font-size:14px;line-height:18px;font-weight:800;color:{PRI[p][2]}">{c[p]}</span>'
+        f'<span style="{F}font-size:12px;line-height:18px;font-weight:700;color:{PRI[p][2]}">&nbsp;{e(label(p, lang))}</span>'
         f'</td></tr></table></td>' for p in ORDER if c[p])
     when = " &middot; ".join(f'<span dir="auto" style="unicode-bidi:isolate">{e(x)}</span>'
                              for x in (r.get("generated"), r.get("window")) if x)
     total = len(r["alerts"])
-    bar = "".join(f'<td width="{max(1, round(100 * c[p] / total))}%" height="8" bgcolor="{"#12B76A" if not act else PRI[p][2]}" '
-                  f'style="font-size:0;line-height:0;height:8px">&nbsp;</td>' for p in ORDER if c[p])
-    hero_tiles = (f'<table {TBL}><tr><td style="padding:18px 0 0 0"><table {TBL}><tr>{tiles}'
+    bar = "".join(f'<td width="{max(1, round(100 * c[p] / total))}%" height="5" bgcolor="{"#12B76A" if not act else PRI[p][2]}" '
+                  f'style="font-size:0;line-height:0;height:5px">&nbsp;</td>' for p in ORDER if c[p])
+    hero_tiles = (f'<table {TBL}><tr><td style="padding:12px 0 0 0"><table {TBL}><tr>{tiles}'
                   + (f'<td valign="middle" class="hm" style="padding:{"0 12px 0 0" if rtl else "0 0 0 12px"};{F}font-size:12px;'
                      f'color:{MUTED};white-space:nowrap">{EMO["vs"]} {e(t["vs"])}:</td><td valign="middle" class="hm" '
                      f'style="padding:{"0 8px 0 0" if rtl else "0 0 0 8px"}"><table {TBL}><tr>{since}</tr></table></td>' if since else "")
-                  + f'</tr></table></td></tr></table><table {TBL} width="100%"><tr><td style="padding:16px 0 0 0">'
+                  + f'</tr></table></td></tr></table><table {TBL} width="100%"><tr><td style="padding:12px 0 0 0">'
                   f'<table {TBL} width="100%"><tr>{bar}</tr></table></td></tr></table>')
     blocks = []
     if r.get("summary"):
-        blocks.append(f'<tr><td class="px" align="{al}" style="{px};padding-top:18px;{F}font-size:17px;'
-                      f'line-height:27px;mso-line-height-rule:exactly;color:{BODY}">{br(r["summary"])}</td></tr>')
-    if r["actions"]:
-        blocks.append(f'<tr><td class="px" style="{px};padding-top:20px"><table {TBL} width="100%"><tr>'
-                      f'<td bgcolor="{PRI[top][3]}" class="cp" style="padding:18px 22px 12px 22px;border-radius:12px">'
-                      f'<p style="margin:0 0 12px 0;{F}font-size:12px;line-height:16px;font-weight:800;letter-spacing:1px;'
-                      f'color:{fg}">{EMO["act"]} {e(t["act"]).upper()}</p>{nlist(r["actions"], fg, al, 16)}</td></tr></table></td></tr>')
-    blocks.append(f'<tr><td class="px" align="{al}" style="{px};padding-top:28px"><p style="margin:0 0 10px 0;{F}'
-                  f'font-size:18px;line-height:24px;font-weight:800;color:{INK}">{EMO["overview"]} {e(t["overview"])}</p>'
-                  f'{triage(r, t, lang, al, op)}</td></tr>')
+        blocks.append(f'<tr><td class="px" align="{al}" style="{px};padding-top:14px;{F}font-size:15px;'
+                      f'line-height:23px;mso-line-height-rule:exactly;color:{BODY}">{br(r["summary"])}</td></tr>')
+    blocks.append(f'<tr><td class="px" align="{al}" style="{px};padding-top:16px">{triage(r, t, lang, al, op)}</td></tr>')
     for i, a in act:
-        blocks.append(f'<tr><td class="px" style="{px};padding-top:20px">{card(a, t, lang, al, op, i)}</td></tr>')
+        blocks.append(f'<tr><td class="px" style="{px};padding-top:16px">{card(a, t, lang, al, op, i)}</td></tr>')
     if info and act:
         names = " &nbsp;&middot;&nbsp; ".join(e(a["title"]) + (f" (&times;{e(a['count'])})" if a.get("count") else "")
                                              for a in info)
@@ -520,7 +512,7 @@ def render(r):
     hbg = "#ECFDF3" if clear else PRI[top][3]
     hfg = "#067647" if clear else fg
     pre = e(f'{len(r["alerts"])} {t["alerts"]}: ' + " · ".join(f"{c[p]} {label(p, lang)}" for p in ORDER if c[p])
-            + " - " + " | ".join(r["actions"][:2] or [r["alerts"][0]["title"]]))
+            + " - " + (r.get("summary") or r["alerts"][0]["title"])[:140])
     sysline = " &nbsp;&middot;&nbsp; ".join(f'<span style="white-space:nowrap">{e(x)}</span>' for x in systems(r)[:8])
     return f'''<!DOCTYPE html>
 <html lang="{lang}" dir="{d}" xmlns="http://www.w3.org/1999/xhtml" xmlns:o="urn:schemas-microsoft-com:office:office">
@@ -535,11 +527,11 @@ def render(r):
 <table {TBL} width="100%" bgcolor="#FFFFFF" dir="{d}"><tr><td align="{al}">
 <!--[if mso]><table {TBL} width="{W}"><tr><td><![endif]-->
 <table {TBL} width="100%" dir="{d}" style="max-width:{W}px" bgcolor="#FFFFFF">
-<tr><td class="px" style="{px};padding-top:24px"><table {TBL} width="100%"><tr><td bgcolor="{hbg}" class="cp" align="{al}" style="padding:24px 28px 22px 28px;border-radius:16px">
+<tr><td class="px" style="{px};padding-top:18px"><table {TBL} width="100%"><tr><td bgcolor="{hbg}" class="cp" align="{al}" style="padding:16px 22px 14px 22px;border-radius:14px">
 <table {TBL} width="100%"><tr><td align="{al}" style="{F}font-size:15px;line-height:20px;font-weight:700;color:{hfg}">{e(hello(lang))} &nbsp;<span style="font-size:11px;font-weight:800;letter-spacing:1.2px;color:{MUTED}">{e(t["report"]).upper()}</span></td>
 <td align="{op}" class="hm" style="{F}font-size:12px;line-height:16px;color:{MUTED};white-space:nowrap">{when}</td></tr></table>
-<p class="h1" style="margin:10px 0 0 0;{F}font-size:32px;line-height:38px;mso-line-height-rule:exactly;font-weight:800;letter-spacing:-0.5px;color:{INK}">{e(headline(r))}</p>
-{f'<p style="margin:8px 0 0 0;{F}font-size:13px;line-height:19px;color:{BODY}">{EMO["sys"]} {sysline}</p>' if sysline else ""}
+<p class="h1" style="margin:6px 0 0 0;{F}font-size:26px;line-height:32px;mso-line-height-rule:exactly;font-weight:800;letter-spacing:-0.5px;color:{INK}">{e(headline(r))}</p>
+{f'<p style="margin:4px 0 0 0;{F}font-size:12px;line-height:17px;color:{BODY}">{EMO["sys"]} {sysline}</p>' if sysline else ""}
 {hero_tiles}</td></tr></table></td></tr>
 {"".join(blocks)}
 <tr><td class="px" align="{al}" style="{px};padding-top:28px;padding-bottom:26px"><p style="margin:0;padding-top:14px;border-top:1px solid {LINE};{F}font-size:12px;line-height:18px;color:#94A3B8"><span style="font-size:15px;line-height:22px;color:{BODY};font-weight:700">{e(t["bye"])}</span><br><br>{(e(t["source"]) + ": " + e(r["source"]) + "<br>") if r.get("source") else ""}{e(t["footer"])}</p></td></tr>
@@ -556,8 +548,6 @@ def text(r):
            " · ".join(f"{c[p]} {label(p, lang)}" for p in ORDER if c[p]), ""]
     if r.get("summary"):
         out += [t["summary"].upper(), r["summary"], ""]
-    if r["actions"]:
-        out += [t["act"].upper()] + [f"  {i}. {x}" for i, x in enumerate(r["actions"], 1)] + [""]
     for a in r["alerts"]:
         out += ["-" * 60, f"[{a['priority']} {label(a['priority'], lang)}] {a['title']}",
                 " · ".join(str(x) for x in (a.get("vendor"), a.get("product"), a.get("system"), a.get("object")) if x),

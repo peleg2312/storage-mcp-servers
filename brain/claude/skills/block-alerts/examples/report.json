@@ -5,11 +5,6 @@
  "lang": "en",
  "source": "powermax, powerflex, mds and ucs-central MCP (read-only), vCenter alarms via Aria",
  "summary": "One real outage: SRDF group 10 to DC2 has been down since 02:14, so 42 production devices are not protected at DR. Two problems share one cause - a failing SFP on MDS-A fc1/5 is behind both the CRC errors and ESX-12 losing a path. The PowerFlex rebuild finished; the drive still has to be replaced.",
- "actions": [
-  "Open a case with the WAN team: DC1→DC2 RDF links down since 02:14 (both RDF ports online, no remote partner)",
-  "Replace the SFP in MDS-A fc1/5, then rescan ESX-12 to bring path vmhba2:C0:T3 back",
-  "Replace drive SDS-03 slot 7 (rebuild already complete)"
- ],
  "alerts": [
   {
    "priority": "P1",

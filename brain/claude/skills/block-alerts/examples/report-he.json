@@ -5,11 +5,6 @@
  "lang": "he",
  "source": "powermax, powerflex, mds and ucs-central MCP (read-only), vCenter alarms via Aria",
  "summary": "תקלה אמיתית אחת: קבוצת SRDF 10 ל-DC2 למטה מאז 02:14. שתי התראות נובעות מאותה סיבה - SFP תקול ב-MDS-A fc1/5.",
- "actions": [
-  "Open a case with the WAN team: DC1→DC2 RDF links down since 02:14 (both RDF ports online, no remote partner)",
-  "Replace the SFP in MDS-A fc1/5, then rescan ESX-12 to bring path vmhba2:C0:T3 back",
-  "Replace drive SDS-03 slot 7 (rebuild already complete)"
- ],
  "alerts": [
   {
    "priority": "P1",
