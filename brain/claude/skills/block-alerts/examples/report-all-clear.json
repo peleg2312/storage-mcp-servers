@@ -1,0 +1,1 @@
+{"lang": "en", "generated": "Mon 23 Nov 2026, 07:30", "window": "last 24 h", "source": "powermax, mds MCP", "summary": "Quiet night: two informational events, nothing needs you.", "alerts": [{"priority": "INFO", "state": "resolved", "title": "UCS FI-A PSU 2 input lost (restored 03:10)"}, {"priority": "INFO", "title": "Unisphere logins", "count": 7}]}

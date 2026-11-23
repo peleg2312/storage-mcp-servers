@@ -124,7 +124,7 @@ D=$(dirname "$(find ~/.claude /opt/paas -path '*skills/block-alerts/SKILL.md' 2>
 M=$D/block_alerts_mail.py
 # only SKILL.md was copied (no .py next to it): take the script from the end of this file
 [ -f "$M" ] || { M=~/.config/block-alerts/block_alerts_mail.py; mkdir -p ~/.config/block-alerts
-  sed -n '/^# >>> block_alerts_mail.py v7$/,/^# <<< block_alerts_mail.py$/p' "$D/SKILL.md" > "$M"; }
+  sed -n '/^# >>> block_alerts_mail.py v8$/,/^# <<< block_alerts_mail.py$/p' "$D/SKILL.md" > "$M"; }
 ```
 Then, with `R=~/block-alerts/<folder>`:
 1. `python3 $M $R/report.json --html $R/email.html` - fix any error it prints (it validates the JSON).
@@ -151,7 +151,7 @@ and send the first report to the user only (`--to <their address>`) so they see 
 
 ## The script (do not edit; extract it as in step 6)
 ```python
-# >>> block_alerts_mail.py v7
+# >>> block_alerts_mail.py v8
 """block-alerts mail: the alert report JSON -> an Outlook-safe HTML email (+ plain text), standard library only.
   python3 block_alerts_mail.py report.json --html out.html     preview in a browser
   python3 block_alerts_mail.py report.json --eml out.eml       Outlook draft (open it, press Send)
@@ -173,13 +173,13 @@ ORDER = list(PRI)
 WORDS = {"critical": "P1", "fatal": "P1", "emergency": "P1", "alert": "P1", "high": "P2", "major": "P2",
          "error": "P2", "medium": "P3", "warning": "P3", "minor": "P3", "low": "P4", "notice": "P4"}
 T = {
-    "en": dict(report="Storage alerts", overview="All alerts", act="Do first", what="What it means",
+    "en": dict(report="Storage alerts", overview="Triage", bye="\u2615 Have a calm shift!", clear="\U0001F389 All clear \u2014 nothing needs you today", act="Do first", what="What it means",
                impact="Impact", cause="Likely cause", steps="What to do", cmds="Commands", live="Current state",
                bug="Known bug / fixed in", src="Sources", why="Why this priority", system="System", obj="Component",
                code="Alert code", vsev="Vendor severity", seen="Seen", count="Count", actby="Act by",
                summary="Summary", now="Now", fix="Fix", also="No action needed", msg="Alert message", diag="Diagnosis", verify="Verify the fix", rel="Related", problem="Problem", state="Status", since="Since", vs="Since last report", alerts="alerts", alert="alert", more="more", source="Source",
                footer="Prepared by Claude from the alerts, the offline docs and read-only checks. Review each step before you run it."),
-    "he": dict(report="התראות אחסון", overview="כל ההתראות", act="לטפל קודם", what="מה זה", impact="השפעה",
+    "he": dict(report="התראות אחסון", overview="תמונת מצב", bye="\u2615 משמרת רגועה!", clear="\U0001F389 הכל תקין \u2014 אין מה לטפל היום", act="לטפל קודם", what="מה זה", impact="השפעה",
                cause="סיבה אפשרית", steps="מה לעשות", cmds="פקודות", live="מצב נוכחי", bug="באג ידוע / תוקן בגרסה",
                src="מקורות", why="למה העדיפות הזו", system="מערכת", obj="רכיב", code="התראה", vsev="חומרת יצרן",
                seen="נראה", count="כמות", actby="לטפל עד", summary="סיכום", now="עכשיו", fix="תיקון", also="לא נדרשת פעולה", msg="הודעת ההתראה", diag="אבחון", verify="בדיקה שתוקן", rel="קשור", problem="בעיה", state="סטטוס", since="מאז", vs="מאז הדוח הקודם", alerts="התראות", alert="התראה", more="נוספות",
@@ -248,6 +248,23 @@ CONFID = {"confirmed": ("Confirmed", "מאומת", "#065F46", "#D1FAE5"), "likel
         "possible": ("Possible", "אפשרי", "#475467", "#F2F4F7")}
 
 
+ICON = {"P1": "\U0001F534", "P2": "\U0001F7E0", "P3": "\U0001F7E1", "P4": "\U0001F535", "INFO": "\u26AA"}
+EMO = dict(what="\U0001F4A1", diag="\U0001F50D", fix="\U0001F6E0\uFE0F", verify="\u2705", bug="\U0001F41E",
+           msg="\U0001F9FE", rel="\U0001F517", src="\U0001F4DA", act="\U0001F680", also="\U0001F60C",
+           overview="\U0001F4CB", vs="\U0001F504", sys="\U0001F5C4\uFE0F")
+
+
+def hello(lang):
+    """a friendly opening by the local hour"""
+    h = __import__("datetime").datetime.now().hour
+    k = 0 if h < 12 else 1 if h < 18 else 2
+    if lang == "he":
+        return ("\u2600\uFE0F \u05D1\u05D5\u05E7\u05E8 \u05D8\u05D5\u05D1",
+                "\U0001F324\uFE0F \u05E6\u05D4\u05E8\u05D9\u05D9\u05DD \u05D8\u05D5\u05D1\u05D9\u05DD",
+                "\U0001F319 \u05E2\u05E8\u05D1 \u05D8\u05D5\u05D1")[k]
+    return ("\u2600\uFE0F Good morning", "\U0001F324\uFE0F Good afternoon", "\U0001F319 Good evening")[k]
+
+
 def badge(txt, fg, bg, size=11):
     return (f'<table {TBL} style="display:inline-table"><tr><td bgcolor="{bg}" style="{F}font-size:{size}px;'
             f'line-height:{size + 5}px;mso-line-height-rule:exactly;font-weight:700;letter-spacing:0.4px;color:{fg};'
@@ -256,7 +273,7 @@ def badge(txt, fg, bg, size=11):
 
 def pill(p, lang, text_=None):
     _, _, fg, bg, _, _ = PRI[p]
-    return badge(text_ or (label(p, lang) if p == "INFO" else f"{p} {label(p, lang)}"), fg, bg, 12)
+    return badge(text_ or (ICON[p] + " " + (label(p, lang) if p == "INFO" else f"{p} {label(p, lang)}")), fg, bg, 12)
 
 
 def st_badge(a, lang):
@@ -300,7 +317,7 @@ def side(a, t, al):
     out = ""
     if a.get("message"):
         out += (f'<p style="margin:0 0 4px 0;{F}font-size:11px;line-height:15px;font-weight:800;letter-spacing:0.8px;'
-                f'color:{MUTED}">{e(t["msg"]).upper()}</p><table {TBL} width="100%"><tr><td bgcolor="#FFFFFF" '
+                f'color:{MUTED}">{EMO["msg"]} {e(t["msg"]).upper()}</p><table {TBL} width="100%"><tr><td bgcolor="#FFFFFF" '
                 f'dir="auto" align="{al}" style="{MONO}font-size:12px;line-height:18px;mso-line-height-rule:exactly;'
                 f'color:{BODY};padding:9px 11px;border:1px solid {LINE};border-radius:6px;word-break:break-word">'
                 f'{br(a["message"])}</td></tr></table>')
@@ -317,7 +334,7 @@ def side(a, t, al):
                     f'color:{INK}">{v}</p>')
     if a.get("related"):
         out += (f'<p style="margin:14px 0 0 0;{F}font-size:11px;line-height:15px;font-weight:800;letter-spacing:0.8px;'
-                f'color:{MUTED}">{e(t["rel"]).upper()}</p><p style="margin:1px 0 0 0;{F}font-size:14px;line-height:20px;'
+                f'color:{MUTED}">{EMO["rel"]} {e(t["rel"]).upper()}</p><p style="margin:1px 0 0 0;{F}font-size:14px;line-height:20px;'
                 f'color:#7C3AED;font-weight:600">&#8627; {br(a["related"])}</p>')
     if a["sources"]:
         items = []
@@ -327,7 +344,7 @@ def side(a, t, al):
             items.append(f'<a href="{e(u)}" style="color:#2563EB;text-decoration:none;font-weight:600">{name}</a>'
                          if u.startswith(("http://", "https://")) else name)
         out += (f'<p style="margin:14px 0 0 0;{F}font-size:11px;line-height:15px;font-weight:800;letter-spacing:0.8px;'
-                f'color:{MUTED}">{e(t["src"]).upper()}</p><p style="margin:1px 0 0 0;{F}font-size:13px;line-height:19px;'
+                f'color:{MUTED}">{EMO["src"]} {e(t["src"]).upper()}</p><p style="margin:1px 0 0 0;{F}font-size:13px;line-height:19px;'
                 f'color:{INK}">' + "<br>".join(items) + "</p>")
     return out
 
@@ -343,7 +360,7 @@ def card(a, t, lang, al, op, idx):
                  f'padding:10px 14px;border-radius:8px">{br(a["why"])}</td></tr></table></td></tr>')
     what = " ".join(x for x in (a.get("what"), a.get("impact")) if x)
     if what:
-        main += sec(t["what"], para(what), al)
+        main += sec(EMO["what"] + " " + t["what"], para(what), al)
     if a.get("cause") or a.get("evidence"):
         cf = str(a.get("confidence") or "").lower()
         tag = (f' &nbsp;<span style="color:{CONFID[cf][2]};background-color:{CONFID[cf][3]};padding:1px 7px;'
@@ -352,18 +369,18 @@ def card(a, t, lang, al, op, idx):
         ev = list(a.get("evidence") or []) + ([a["live"]] if a.get("live") else [])
         if ev:
             body += f'<table {TBL} width="100%"><tr><td style="padding:6px 0 0 0">{blist(ev, al)}</td></tr></table>'
-        main += sec(t["diag"], body, al, tag)
+        main += sec(EMO["diag"] + " " + t["diag"], body, al, tag)
     if a["steps"]:
-        main += sec(t["fix"], nlist(a["steps"], fg, al), al)
+        main += sec(EMO["fix"] + " " + t["fix"], nlist(a["steps"], fg, al), al)
     if a["commands"]:
         cmd = "<br>".join(e(c).replace("\n", "<br>") for c in a["commands"])
         main += (f'<tr><td style="padding:6px 0 0 0"><table {TBL} width="100%"><tr><td bgcolor="#0F172A" dir="ltr" '
                  f'align="left" style="{MONO}font-size:13px;line-height:21px;mso-line-height-rule:exactly;'
                  f'color:#E2E8F0;padding:11px 14px;border-radius:8px">{cmd}</td></tr></table></td></tr>')
     if a.get("verify"):
-        main += sec(t["verify"], para(a["verify"], 14, BODY), al)
+        main += sec(EMO["verify"] + " " + t["verify"], para(a["verify"], 14, BODY), al)
     if a.get("known_bug"):
-        main += sec(t["bug"], para(a["known_bug"], 14, BODY), al)
+        main += sec(EMO["bug"] + " " + t["bug"], para(a["known_bug"], 14, BODY), al)
     sd = side(a, t, al)
     gap = "padding:0 22px 0 0" if al == "left" else "padding:0 0 0 22px"
     sgap = "padding:0 0 0 18px;border-left:1px solid #E2E8F0" if al == "left" else "padding:0 18px 0 0;border-right:1px solid #E2E8F0"
@@ -424,7 +441,9 @@ def counts(r):
 
 def headline(r):
     a = r["alerts"][0]
-    return r.get("headline") or (a["title"] + ("" if a["priority"] == "INFO" else f" — {actby(a, r['lang'])}"))
+    if r.get("headline"):
+        return r["headline"]
+    return T[r["lang"]]["clear"] if a["priority"] == "INFO" else f"{a['title']} \u2014 {actby(a, r['lang'])}"
 
 
 def systems(r):
@@ -462,17 +481,23 @@ def render(r):
                     f'{badge(f"{n} {STATE[s][1 if rtl else 0]}", STATE[s][2], STATE[s][3], 12)}</td>' for s, n in states.items())
     tiles = "".join(
         f'<td valign="top" style="padding:{"0 0 0 8px" if rtl else "0 8px 0 0"}"><table {TBL}><tr>'
-        f'<td bgcolor="{PRI[p][3]}" align="{al}" style="padding:9px 16px 9px 16px;border-radius:10px">'
+        f'<td bgcolor="#FFFFFF" align="{al}" style="padding:9px 16px 9px 14px;border-radius:12px;border:1px solid {PRI[p][4]}">'
+        f'<span style="font-size:16px;line-height:28px">{ICON[p]}</span>&nbsp;'
         f'<span style="{F}font-size:24px;line-height:28px;font-weight:800;color:{PRI[p][2]}">{c[p]}</span>'
         f'<span style="{F}font-size:13px;line-height:28px;font-weight:700;color:{PRI[p][2]}">&nbsp; {e(label(p, lang))}</span>'
         f'</td></tr></table></td>' for p in ORDER if c[p])
     when = " &middot; ".join(f'<span dir="auto" style="unicode-bidi:isolate">{e(x)}</span>'
                              for x in (r.get("generated"), r.get("window")) if x)
-    blocks = [f'<tr><td class="px" style="{px};padding-top:20px"><table {TBL}><tr>{tiles}'
-              + (f'<td valign="middle" style="padding:{"0 12px 0 0" if rtl else "0 0 0 12px"};{F}font-size:12px;'
-                 f'color:{MUTED};white-space:nowrap">{e(t["vs"])}:</td><td valign="middle" style="padding:{"0 8px 0 0" if rtl else "0 0 0 8px"}">'
-                 f'<table {TBL}><tr>{since}</tr></table></td>' if since else "")
-              + '</tr></table></td></tr>']
+    total = len(r["alerts"])
+    bar = "".join(f'<td width="{max(1, round(100 * c[p] / total))}%" height="8" bgcolor="{"#12B76A" if not act else PRI[p][2]}" '
+                  f'style="font-size:0;line-height:0;height:8px">&nbsp;</td>' for p in ORDER if c[p])
+    hero_tiles = (f'<table {TBL}><tr><td style="padding:18px 0 0 0"><table {TBL}><tr>{tiles}'
+                  + (f'<td valign="middle" class="hm" style="padding:{"0 12px 0 0" if rtl else "0 0 0 12px"};{F}font-size:12px;'
+                     f'color:{MUTED};white-space:nowrap">{EMO["vs"]} {e(t["vs"])}:</td><td valign="middle" class="hm" '
+                     f'style="padding:{"0 8px 0 0" if rtl else "0 0 0 8px"}"><table {TBL}><tr>{since}</tr></table></td>' if since else "")
+                  + f'</tr></table></td></tr></table><table {TBL} width="100%"><tr><td style="padding:16px 0 0 0">'
+                  f'<table {TBL} width="100%"><tr>{bar}</tr></table></td></tr></table>')
+    blocks = []
     if r.get("summary"):
         blocks.append(f'<tr><td class="px" align="{al}" style="{px};padding-top:18px;{F}font-size:17px;'
                       f'line-height:27px;mso-line-height-rule:exactly;color:{BODY}">{br(r["summary"])}</td></tr>')
@@ -480,15 +505,20 @@ def render(r):
         blocks.append(f'<tr><td class="px" style="{px};padding-top:20px"><table {TBL} width="100%"><tr>'
                       f'<td bgcolor="{PRI[top][3]}" class="cp" style="padding:18px 22px 12px 22px;border-radius:12px">'
                       f'<p style="margin:0 0 12px 0;{F}font-size:12px;line-height:16px;font-weight:800;letter-spacing:1px;'
-                      f'color:{fg}">{e(t["act"]).upper()}</p>{nlist(r["actions"], fg, al, 16)}</td></tr></table></td></tr>')
-    blocks.append(f'<tr><td class="px" style="{px};padding-top:26px">{triage(r, t, lang, al, op)}</td></tr>')
+                      f'color:{fg}">{EMO["act"]} {e(t["act"]).upper()}</p>{nlist(r["actions"], fg, al, 16)}</td></tr></table></td></tr>')
+    blocks.append(f'<tr><td class="px" align="{al}" style="{px};padding-top:28px"><p style="margin:0 0 10px 0;{F}'
+                  f'font-size:18px;line-height:24px;font-weight:800;color:{INK}">{EMO["overview"]} {e(t["overview"])}</p>'
+                  f'{triage(r, t, lang, al, op)}</td></tr>')
     for i, a in act:
         blocks.append(f'<tr><td class="px" style="{px};padding-top:20px">{card(a, t, lang, al, op, i)}</td></tr>')
-    if info:
+    if info and act:
         names = " &nbsp;&middot;&nbsp; ".join(e(a["title"]) + (f" (&times;{e(a['count'])})" if a.get("count") else "")
                                              for a in info)
         blocks.append(f'<tr><td class="px" align="{al}" style="{px};padding-top:20px;{F}font-size:14px;'
-                      f'line-height:22px;color:{MUTED}"><b style="color:{BODY}">{e(t["also"])}:</b> {names}</td></tr>')
+                      f'line-height:22px;color:{MUTED}"><b style="color:{BODY}">{EMO["also"]} {e(t["also"])}:</b> {names}</td></tr>')
+    clear = not act
+    hbg = "#ECFDF3" if clear else PRI[top][3]
+    hfg = "#067647" if clear else fg
     pre = e(f'{len(r["alerts"])} {t["alerts"]}: ' + " · ".join(f"{c[p]} {label(p, lang)}" for p in ORDER if c[p])
             + " - " + " | ".join(r["actions"][:2] or [r["alerts"][0]["title"]]))
     sysline = " &nbsp;&middot;&nbsp; ".join(f'<span style="white-space:nowrap">{e(x)}</span>' for x in systems(r)[:8])
@@ -505,13 +535,14 @@ def render(r):
 <table {TBL} width="100%" bgcolor="#FFFFFF" dir="{d}"><tr><td align="{al}">
 <!--[if mso]><table {TBL} width="{W}"><tr><td><![endif]-->
 <table {TBL} width="100%" dir="{d}" style="max-width:{W}px" bgcolor="#FFFFFF">
-<tr><td class="px" align="{al}" style="{px};padding-top:26px">
-<table {TBL} width="100%"><tr><td align="{al}" style="{F}font-size:12px;line-height:16px;font-weight:800;letter-spacing:1.4px;color:{fg}">&#9679;&nbsp; {e(t["report"]).upper()}</td>
-<td align="{op}" style="{F}font-size:12px;line-height:16px;color:{MUTED};white-space:nowrap">{when}</td></tr></table>
+<tr><td class="px" style="{px};padding-top:24px"><table {TBL} width="100%"><tr><td bgcolor="{hbg}" class="cp" align="{al}" style="padding:24px 28px 22px 28px;border-radius:16px">
+<table {TBL} width="100%"><tr><td align="{al}" style="{F}font-size:15px;line-height:20px;font-weight:700;color:{hfg}">{e(hello(lang))} &nbsp;<span style="font-size:11px;font-weight:800;letter-spacing:1.2px;color:{MUTED}">{e(t["report"]).upper()}</span></td>
+<td align="{op}" class="hm" style="{F}font-size:12px;line-height:16px;color:{MUTED};white-space:nowrap">{when}</td></tr></table>
 <p class="h1" style="margin:10px 0 0 0;{F}font-size:32px;line-height:38px;mso-line-height-rule:exactly;font-weight:800;letter-spacing:-0.5px;color:{INK}">{e(headline(r))}</p>
-<p style="margin:8px 0 0 0;{F}font-size:13px;line-height:19px;color:{MUTED}">{sysline}</p></td></tr>
+{f'<p style="margin:8px 0 0 0;{F}font-size:13px;line-height:19px;color:{BODY}">{EMO["sys"]} {sysline}</p>' if sysline else ""}
+{hero_tiles}</td></tr></table></td></tr>
 {"".join(blocks)}
-<tr><td class="px" align="{al}" style="{px};padding-top:28px;padding-bottom:26px"><p style="margin:0;padding-top:14px;border-top:1px solid {LINE};{F}font-size:12px;line-height:18px;color:#94A3B8">{(e(t["source"]) + ": " + e(r["source"]) + "<br>") if r.get("source") else ""}{e(t["footer"])}</p></td></tr>
+<tr><td class="px" align="{al}" style="{px};padding-top:28px;padding-bottom:26px"><p style="margin:0;padding-top:14px;border-top:1px solid {LINE};{F}font-size:12px;line-height:18px;color:#94A3B8"><span style="font-size:15px;line-height:22px;color:{BODY};font-weight:700">{e(t["bye"])}</span><br><br>{(e(t["source"]) + ": " + e(r["source"]) + "<br>") if r.get("source") else ""}{e(t["footer"])}</p></td></tr>
 </table>
 <!--[if mso]></td></tr></table><![endif]-->
 </td></tr></table></body></html>'''
@@ -546,7 +577,7 @@ def text(r):
             s = s if isinstance(s, dict) else {"title": s}
             out.append(f"  - {s.get('title', '')} {s.get('url', '')}".rstrip())
         out.append("")
-    return "\n".join(out + [t["footer"]])
+    return "\n".join(out + [t["bye"], t["footer"]])
 
 
 def conf():

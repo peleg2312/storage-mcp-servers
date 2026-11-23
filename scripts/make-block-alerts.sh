@@ -17,6 +17,7 @@ sed -n "/^$TAG\$/,/^# <<< block_alerts_mail.py\$/p" "$SK/SKILL.md" > "$S/block_a
 python3 -m py_compile "$S/block_alerts_mail.py"; rm -rf "$S/__pycache__"
 cp "$SK/examples/"*.json "$S/examples/"
 (cd "$S/examples" && python3 ../block_alerts_mail.py report.json --html email.html --eml email.eml >/dev/null \
+  && python3 ../block_alerts_mail.py report-all-clear.json --html email-all-clear.html >/dev/null \
   && python3 ../block_alerts_mail.py report-he.json --html email-he.html >/dev/null \
   && python3 -c "import email,email.policy;m=email.message_from_bytes(open('email.eml','rb').read(),policy=email.policy.default);open('email.txt','w').write(m.get_body(('plain',)).get_content())")
 cp "$HERE/scripts/block-alerts-install/install.sh" "$HERE/scripts/block-alerts-install/INSTALL.txt" "$B/"
