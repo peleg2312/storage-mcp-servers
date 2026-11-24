@@ -8,14 +8,31 @@ import json
 import re
 import sys
 
-RTK_CMD = re.compile(r"(^|[;&|(`\n]\s*|\$\(\s*|\b(sudo|env|exec|command|xargs|nohup|timeout\s+\S+|sh\s+-c|bash\s+-c)\s+['\"]?)"
+RTK_CMD = re.compile(r"(^|[;&|(`\n]\s*|\$\(\s*|\b(sudo|env|exec|command|xargs|nohup|eval|timeout\s+\S+|sh\s+-c|bash\s+-c|su\s+-c)\s+['\"]?)"
                      r"(\S*/)?rtk(\s|$)")
 RTK_OK = re.compile(r"^\s*(\S*/)?rtk\s+(gain|recall|--version|--help)\b[^;&|`$\n]*$")
+# text that is only data, never run: here-document bodies and quoted strings (a commit message, a file's content).
+# A quoted string after `-c` (sh -c, bash -c, su -c) or `eval` is code and stays.
+HEREDOC = re.compile(r"<<-?\s*(['\"]?)(\w+)\1[^\n]*\n.*?\n\s*\2\s*(?=\n|$)", re.S)
+QUOTED = re.compile(r"'[^']*'|\"(?:\\.|[^\"\\])*\"")
+
+
+def code_only(cmd):
+    cmd = HEREDOC.sub(" ", cmd)
+    out, last = [], 0
+    for m in QUOTED.finditer(cmd):
+        before = cmd[last:m.start()]
+        keep = re.search(r"(-c|\beval)\s*$", cmd[:m.start()])
+        out.append(before + (m.group(0)[1:-1] if keep else "''"))
+        last = m.end()
+    return "".join(out) + cmd[last:]
+
+
 
 try:
     ev = json.load(sys.stdin)
     cmd = (ev.get("tool_input") or {}).get("command") or ""
-    if RTK_CMD.search(cmd) and not RTK_OK.match(cmd):
+    if RTK_CMD.search(code_only(cmd)) and not RTK_OK.match(cmd):
         print(json.dumps({"hookSpecificOutput": {
             "hookEventName": "PreToolUse", "permissionDecision": "deny",
             "permissionDecisionReason": "Do not call rtk yourself: commands are shortened for you automatically. "
