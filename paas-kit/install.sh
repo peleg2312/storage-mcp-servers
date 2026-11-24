@@ -107,6 +107,7 @@ fi
 # when that brain version does not carry them yet; brain updates carry them from now on (brain/plugins/)
 if [ -f /opt/paas/plugins/.claude-plugin/marketplace.json ]; then
   for p in "$D"/kit/brain-plugins/*/; do
+    [ -d "$p" ] || continue          # a slim kit carries no plugins: the brain update brings them
     p=$(basename "$p")
     # a copy the kit put there is refreshed; one the brain carries (no .paas-kit mark) is the brain's - unless it is an
     # older one that still runs from the kit (/opt/paas-kit/..., paas-kit venv) or lacks the plugin's own launchers

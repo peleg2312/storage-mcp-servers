@@ -18,6 +18,7 @@ for t in brain/test_*.py; do run brain "$(basename "$t")" "$PY"; done
 for t in docs-search-mcp/test_*.py powermax-mcp/test_*.py powerflex-mcp/test_*.py ucsc-mcp/test_*.py; do
   run "$(dirname "$t")" "$(basename "$t")" "$PY"; done
 for t in mds-mcp/test_*.py; do run mds-mcp "$(basename "$t")" "$MDS_PY"; done
+run paas-kit test_rtk_hook.py "$PY"   # the kit guard: model-typed calls refused, text that only mentions the tool allowed
 if command -v node >/dev/null; then
   run brain/ui/plugins/paas-schedule "server.js --self-test" node
   run brain/multiuser "gate.js --self-test" node          # idle stop and allowed-groups logic
